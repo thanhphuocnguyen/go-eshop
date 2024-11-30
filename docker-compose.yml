@@ -1,0 +1,48 @@
+name: eshop
+services:
+  redis:
+    image: redis:latest
+    container_name: eshop-redis
+    ports:
+      - "6380:6379"
+    networks:
+      - eshop-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  postgres:
+    image: postgres:16
+    container_name: eshop-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: eshop
+    ports:
+      - "5433:5432"
+    networks:
+      - eshop-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d eshop -U root"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  web:
+    build: .
+    container_name: eshop-web
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+          condition: service_healthy
+      redis:
+          condition: service_healthy
+    environment:
+      REDIS_SERVER_ADDRESS: redis:6379
+      POSTGRES_SERVER_ADDRESS: postgres:5432
+    networks:
+      - eshop-network
+networks:
+  eshop-network:
+    driver: bridge

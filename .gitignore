@@ -1,0 +1,7 @@
+/eshop
+tmp/
+*.env
+*.envrc
+dump.rdb
+cpu.pprof
+mem.pprof
