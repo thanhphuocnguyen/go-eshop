@@ -22,16 +22,26 @@ func NewPasetoTokenGenerator() TokenGenerator {
 	}
 }
 
-func (g *PasetoTokenGenerator) GenerateToken(userID int64, username string, userRole sqlc.UserRole, duration time.Duration) (string, error) {
+func (g *PasetoTokenGenerator) GenerateToken(userID int64, username string, userRole sqlc.UserRole, duration time.Duration) (string, Payload, error) {
+	payload := Payload{
+		ID:        uuid.New(),
+		Username:  username,
+		Role:      userRole,
+		UserId:    userID,
+		IssuedAt:  time.Now(),
+		ExpiredAt: time.Now().Add(duration),
+	}
+
 	token := paseto.NewToken()
-	token.Set("username", username)
-	token.Set("id", uuid.New().String())
-	token.Set("role", userRole)
-	token.Set("user_id", userID)
-	token.SetExpiration(time.Now().Add(duration))
-	token.SetNotBefore(time.Now())
-	token.SetIssuedAt(time.Now())
-	return token.V4Encrypt(g.symmetricKey, g.implicit), nil
+	token.Set("username", payload.Username)
+	token.Set("id", payload.ID)
+	token.Set("role", payload.Role)
+	token.Set("user_id", payload.UserId)
+	token.SetExpiration(payload.ExpiredAt)
+	token.SetNotBefore(payload.IssuedAt)
+	token.SetIssuedAt(payload.IssuedAt)
+
+	return token.V4Encrypt(g.symmetricKey, g.implicit), payload, nil
 }
 
 func (g *PasetoTokenGenerator) VerifyToken(token string) (*Payload, error) {

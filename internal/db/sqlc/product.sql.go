@@ -33,7 +33,6 @@ INSERT INTO
         name,
         description,
         sku,
-        image_url,
         stock,
         price
     )
@@ -43,8 +42,7 @@ VALUES
         $2,
         $3,
         $4,
-        $5,
-        $6
+        $5
     )
 RETURNING id, name, description, sku, image_url, stock, archived, price, updated_at, created_at
 `
@@ -53,7 +51,6 @@ type CreateProductParams struct {
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
 	Sku         string         `json:"sku"`
-	ImageUrl    string         `json:"image_url"`
 	Stock       int32          `json:"stock"`
 	Price       pgtype.Numeric `json:"price"`
 }
@@ -63,7 +60,6 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		arg.Name,
 		arg.Description,
 		arg.Sku,
-		arg.ImageUrl,
 		arg.Stock,
 		arg.Price,
 	)
@@ -128,6 +124,10 @@ SELECT
     id, name, description, sku, image_url, stock, archived, price, updated_at, created_at
 FROM
     products
+WHERE
+    archived = COALESCE($3, archived) AND
+    name ILIKE COALESCE($4, name) AND
+    sku ILIKE COALESCE($5, sku)
 ORDER BY
     id
 LIMIT $1
@@ -135,12 +135,21 @@ OFFSET $2
 `
 
 type ListProductsParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Limit    int32       `json:"limit"`
+	Offset   int32       `json:"offset"`
+	Archived pgtype.Bool `json:"archived"`
+	Name     pgtype.Text `json:"name"`
+	Sku      pgtype.Text `json:"sku"`
 }
 
 func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error) {
-	rows, err := q.db.Query(ctx, listProducts, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, listProducts,
+		arg.Limit,
+		arg.Offset,
+		arg.Archived,
+		arg.Name,
+		arg.Sku,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -222,4 +231,44 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const updateProductImage = `-- name: UpdateProductImage :exec
+UPDATE
+    products
+SET
+    image_url = $2
+WHERE
+    id = $1
+RETURNING id, name, description, sku, image_url, stock, archived, price, updated_at, created_at
+`
+
+type UpdateProductImageParams struct {
+	ID       int64       `json:"id"`
+	ImageUrl pgtype.Text `json:"image_url"`
+}
+
+func (q *Queries) UpdateProductImage(ctx context.Context, arg UpdateProductImageParams) error {
+	_, err := q.db.Exec(ctx, updateProductImage, arg.ID, arg.ImageUrl)
+	return err
+}
+
+const updateProductStock = `-- name: UpdateProductStock :exec
+UPDATE
+    products
+SET
+    stock = stock + $2
+WHERE
+    id = $1
+RETURNING id, name, description, sku, image_url, stock, archived, price, updated_at, created_at
+`
+
+type UpdateProductStockParams struct {
+	ID    int64 `json:"id"`
+	Stock int32 `json:"stock"`
+}
+
+func (q *Queries) UpdateProductStock(ctx context.Context, arg UpdateProductStockParams) error {
+	_, err := q.db.Exec(ctx, updateProductStock, arg.ID, arg.Stock)
+	return err
 }

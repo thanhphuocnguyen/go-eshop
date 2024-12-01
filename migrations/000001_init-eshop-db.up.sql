@@ -3,7 +3,7 @@ CREATE TYPE "user_role" AS ENUM (
   'user'
 );
 
-CREATE TYPE "order_status" AS ENUM (
+CREATE TYPE  "order_status" AS ENUM (
   'wait_for_confirming',
   'confirmed',
   'delivering',
@@ -47,10 +47,10 @@ CREATE TABLE "products" (
   "name" varchar NOT NULL,
   "description" text NOT NULL,
   "sku" varchar NOT NULL,
-  "image_url" varchar NOT NULL,
+  "image_url" varchar,
   "stock" int NOT NULL,
   "archived" bool NOT NULL DEFAULT false,
-  "price" decimal NOT NULL,
+  "price" numeric(6,4) NOT NULL,
   "updated_at" timestamptz NOT NULL DEFAULT '0001-01-01 00:00:00Z',
   "created_at" timestamptz NOT NULL DEFAULT (now())
 );
@@ -67,7 +67,7 @@ CREATE TABLE "cart_items" (
   "id" bigserial PRIMARY KEY,
   "product_id" bigint NOT NULL,
   "cart_id" bigint NOT NULL,
-  "quantity" int NOT NULL,
+  "quantity" smallint NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT (now())
 );
 
@@ -105,7 +105,7 @@ CREATE TABLE "shippings" (
   "created_at" timestamptz NOT NULL DEFAULT (now())
 );
 
-CREATE TABLE "attribute_valeus" (
+CREATE TABLE "attribute_values" (
   "id" bigserial PRIMARY KEY,
   "attribute_id" bigint NOT NULL,
   "value" varchar NOT NULL,
@@ -165,7 +165,6 @@ CREATE INDEX ON "shippings" ("order_id");
 
 CREATE INDEX ON "category_products" ("category_id", "product_id");
 
-
 ALTER TABLE "carts" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
 
 ALTER TABLE "cart_items" ADD FOREIGN KEY ("product_id") REFERENCES "products" ("id");
@@ -182,7 +181,7 @@ ALTER TABLE "order_items" ADD FOREIGN KEY ("order_id") REFERENCES "orders" ("id"
 
 ALTER TABLE "shippings" ADD FOREIGN KEY ("order_id") REFERENCES "orders" ("id");
 
-ALTER TABLE "attribute_valeus" ADD FOREIGN KEY ("attribute_id") REFERENCES "attributes" ("id");
+ALTER TABLE "attribute_values" ADD FOREIGN KEY ("attribute_id") REFERENCES "attributes" ("id");
 
 ALTER TABLE "category_products" ADD FOREIGN KEY ("category_id") REFERENCES "categories" ("id");
 

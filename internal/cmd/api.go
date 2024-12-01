@@ -33,16 +33,18 @@ func APICmd(ctx context.Context, cfg config.Config) *cobra.Command {
 				return err
 			}
 			server := api.Server(cfg.HttpAddr)
-			log.Info().Msg("API server created")
+
 			go func() {
 				log.Info().Msgf("api server started at :%s", cfg.HttpAddr)
 				_ = server.ListenAndServe()
 			}()
+
 			<-ctx.Done()
 
 			_ = server.Shutdown(ctx)
-			_ = taskDistributor.Shutdown()
 			log.Info().Msg("API server shutdown")
+			_ = taskDistributor.Shutdown()
+			log.Info().Msg("Task distributor shutdown")
 			pg.Close()
 			log.Info().Msg("Postgres instance closed")
 			return nil

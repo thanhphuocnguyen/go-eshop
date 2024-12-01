@@ -5,6 +5,12 @@ create-migration:
 migrate-up:
 	@echo "Running migrations..."
 	migrate -path migrations -database "$(DB_URL)" up
+migrate-down:
+	@echo "Running migrations..."
+	migrate -path migrations -database "$(DB_URL)" down
+migrate-drop:
+	@echo "Running migrations..."
+	migrate -path migrations -database "$(DB_URL)" drop
 serve:
 	@echo "Starting server..."
 	go run main.go
@@ -14,7 +20,13 @@ sqlc:
 build:
 	@echo "Building application..."
 	go build ./cmd/eshop
+run:
+	@echo "Running application..."
+	go run ./cmd/eshop/main.go api, worker
 run-docker:
 	@echo "Running docker..."
 	docker-compose up -d
+gen-swagger:
+	@echo "Generating swagger..."
+	swag init -d internal/api -g server.go --parseInternal --parseDependency
 .PHONY: create-migration migrate-up serve sqlc build

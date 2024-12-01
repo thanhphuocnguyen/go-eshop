@@ -18,7 +18,7 @@ INSERT INTO cart_items(cart_id, product_id, quantity) VALUES ($1, $2, $3) RETURN
 type AddProductToCartParams struct {
 	CartID    int64 `json:"cart_id"`
 	ProductID int64 `json:"product_id"`
-	Quantity  int32 `json:"quantity"`
+	Quantity  int16 `json:"quantity"`
 }
 
 func (q *Queries) AddProductToCart(ctx context.Context, arg AddProductToCartParams) (CartItem, error) {
@@ -67,12 +67,12 @@ LIMIT 1
 type GetCartByIDRow struct {
 	ID          int64          `json:"id"`
 	UserID      int64          `json:"user_id"`
-	Quantity    int32          `json:"quantity"`
+	Quantity    int16          `json:"quantity"`
 	ProductID   int64          `json:"product_id"`
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
 	Price       pgtype.Numeric `json:"price"`
-	ImageUrl    string         `json:"image_url"`
+	ImageUrl    pgtype.Text    `json:"image_url"`
 }
 
 func (q *Queries) GetCartByID(ctx context.Context, id int64) (GetCartByIDRow, error) {

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -234,7 +235,7 @@ type Attribute struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-type AttributeValeu struct {
+type AttributeValue struct {
 	ID          int64       `json:"id"`
 	AttributeID int64       `json:"attribute_id"`
 	Value       string      `json:"value"`
@@ -254,7 +255,7 @@ type CartItem struct {
 	ID        int64     `json:"id"`
 	ProductID int64     `json:"product_id"`
 	CartID    int64     `json:"cart_id"`
-	Quantity  int32     `json:"quantity"`
+	Quantity  int16     `json:"quantity"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
@@ -312,12 +313,23 @@ type Product struct {
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
 	Sku         string         `json:"sku"`
-	ImageUrl    string         `json:"image_url"`
+	ImageUrl    pgtype.Text    `json:"image_url"`
 	Stock       int32          `json:"stock"`
 	Archived    bool           `json:"archived"`
 	Price       pgtype.Numeric `json:"price"`
 	UpdatedAt   time.Time      `json:"updated_at"`
 	CreatedAt   time.Time      `json:"created_at"`
+}
+
+type Session struct {
+	ID           uuid.UUID `json:"id"`
+	UserID       int64     `json:"user_id"`
+	RefreshToken string    `json:"refresh_token"`
+	UserAgent    string    `json:"user_agent"`
+	ClientIp     string    `json:"client_ip"`
+	IsBlocked    bool      `json:"is_blocked"`
+	ExpiredAt    time.Time `json:"expired_at"`
+	CreatedAt    time.Time `json:"created_at"`
 }
 
 type Shipping struct {

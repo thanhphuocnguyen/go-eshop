@@ -1,0 +1,149 @@
+basePath: /api/v1
+definitions:
+  api.createProductRequest:
+    properties:
+      description:
+        type: string
+      image_url:
+        type: string
+      name:
+        type: string
+      price:
+        type: string
+      sku:
+        type: string
+      stock:
+        type: integer
+    required:
+    - description
+    - image_url
+    - name
+    - price
+    - sku
+    - stock
+    type: object
+  api.productResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      image_url:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      sku:
+        type: string
+      stock:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  gin.H:
+    additionalProperties: {}
+    type: object
+host: localhost:4000
+info:
+  contact: {}
+  description: This is a sample server for a simple e-commerce API.
+  title: E-Commerce API
+paths:
+  /products:
+    get:
+      consumes:
+      - application/json
+      description: get list of products
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/api.productResponse'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get list of products
+      tags:
+      - products
+    post:
+      consumes:
+      - application/json
+      description: create a new product with the input payload
+      parameters:
+      - description: Product input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/api.createProductRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.productResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Create a new product
+      tags:
+      - products
+  /products/{product_id}:
+    get:
+      consumes:
+      - application/json
+      description: get a product detail by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.productResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get a product detail by ID
+      tags:
+      - product detail
+swagger: "2.0"

@@ -6,6 +6,8 @@ package sqlc
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 type Querier interface {
@@ -13,16 +15,22 @@ type Querier interface {
 	ArchiveProduct(ctx context.Context, id int64) error
 	CreateCart(ctx context.Context, userID int64) (Cart, error)
 	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
+	CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteProduct(ctx context.Context, id int64) error
+	DeleteUser(ctx context.Context, id int64) error
 	GetCartByID(ctx context.Context, id int64) (GetCartByIDRow, error)
 	GetProduct(ctx context.Context, id int64) (Product, error)
+	GetSession(ctx context.Context, id uuid.UUID) (Session, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id int64) (User, error)
+	GetUserByUsername(ctx context.Context, username string) (User, error)
 	ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	RemoveProductFromCart(ctx context.Context, arg RemoveProductFromCartParams) error
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
+	UpdateProductImage(ctx context.Context, arg UpdateProductImageParams) error
+	UpdateProductStock(ctx context.Context, arg UpdateProductStockParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }
 

@@ -7,6 +7,6 @@ import (
 )
 
 type TokenGenerator interface {
-	GenerateToken(userID int64, username string, userRole sqlc.UserRole, duration time.Duration) (string, error)
+	GenerateToken(userID int64, username string, userRole sqlc.UserRole, duration time.Duration) (string, Payload, error)
 	VerifyToken(token string) (*Payload, error)
 }

@@ -18,26 +18,23 @@ INSERT INTO
         email,
         username,
         hashed_password,
-        full_name,
-        role
+        full_name
     )
 VALUES
     (
         $1,
         $2,
         $3,
-        $4,
-        $5
+        $4
     )
 RETURNING id, role, username, email, full_name, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at
 `
 
 type CreateUserParams struct {
-	Email          string   `json:"email"`
-	Username       string   `json:"username"`
-	HashedPassword string   `json:"hashed_password"`
-	FullName       string   `json:"full_name"`
-	Role           UserRole `json:"role"`
+	Email          string `json:"email"`
+	Username       string `json:"username"`
+	HashedPassword string `json:"hashed_password"`
+	FullName       string `json:"full_name"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -46,7 +43,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.Username,
 		arg.HashedPassword,
 		arg.FullName,
-		arg.Role,
 	)
 	var i User
 	err := row.Scan(
@@ -63,6 +59,18 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const deleteUser = `-- name: DeleteUser :exec
+DELETE FROM
+    users
+WHERE
+    id = $1
+`
+
+func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, deleteUser, id)
+	return err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
@@ -101,10 +109,40 @@ FROM
     users
 WHERE
     id = $1
+LIMIT 1
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
 	row := q.db.QueryRow(ctx, getUserByID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Role,
+		&i.Username,
+		&i.Email,
+		&i.FullName,
+		&i.HashedPassword,
+		&i.VerifiedEmail,
+		&i.VerifiedPhone,
+		&i.PasswordChangedAt,
+		&i.UpdatedAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getUserByUsername = `-- name: GetUserByUsername :one
+SELECT
+    id, role, username, email, full_name, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at
+FROM
+    users
+WHERE
+    username = $1
+LIMIT 1
+`
+
+func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByUsername, username)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -175,11 +213,11 @@ UPDATE
     users
 SET
     email = coalesce($1, email),
-    hashed_password = coalesce($2, hashed_password),
-    full_name = coalesce($3, full_name),
-    role = coalesce($4, role),
-    verified_email = coalesce($5, verified_email),
-    verified_phone = coalesce($6, verified_phone),
+    full_name = coalesce($2, full_name),
+    role = coalesce($3, role),
+    verified_email = coalesce($4, verified_email),
+    verified_phone = coalesce($5, verified_phone),
+    hashed_password = coalesce($6, hashed_password),
     password_changed_at = coalesce($7, password_changed_at),
     updated_at = $8
 WHERE
@@ -189,11 +227,11 @@ RETURNING id, role, username, email, full_name, hashed_password, verified_email,
 
 type UpdateUserParams struct {
 	Email             pgtype.Text        `json:"email"`
-	HashedPassword    pgtype.Text        `json:"hashed_password"`
 	FullName          pgtype.Text        `json:"full_name"`
 	Role              NullUserRole       `json:"role"`
 	VerifiedEmail     pgtype.Bool        `json:"verified_email"`
 	VerifiedPhone     pgtype.Bool        `json:"verified_phone"`
+	HashedPassword    pgtype.Text        `json:"hashed_password"`
 	PasswordChangedAt pgtype.Timestamptz `json:"password_changed_at"`
 	UpdatedAt         time.Time          `json:"updated_at"`
 	ID                int64              `json:"id"`
@@ -202,11 +240,11 @@ type UpdateUserParams struct {
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
 	row := q.db.QueryRow(ctx, updateUser,
 		arg.Email,
-		arg.HashedPassword,
 		arg.FullName,
 		arg.Role,
 		arg.VerifiedEmail,
 		arg.VerifiedPhone,
+		arg.HashedPassword,
 		arg.PasswordChangedAt,
 		arg.UpdatedAt,
 		arg.ID,

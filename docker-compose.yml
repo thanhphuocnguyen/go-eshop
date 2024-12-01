@@ -24,7 +24,7 @@ services:
     networks:
       - eshop-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d eshop -U root"]
+      test: ["CMD-SHELL", "pg_isready -d eshop -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -39,8 +39,8 @@ services:
       redis:
           condition: service_healthy
     environment:
-      REDIS_SERVER_ADDRESS: redis:6379
-      POSTGRES_SERVER_ADDRESS: postgres:5432
+      REDIS_URL: redis://redis:6379
+      DB_URL: postgres://postgres:postgres@postgres:5432/eshop?sslmode=disable
     networks:
       - eshop-network
 networks:

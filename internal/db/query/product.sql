@@ -4,7 +4,6 @@ INSERT INTO
         name,
         description,
         sku,
-        image_url,
         stock,
         price
     )
@@ -14,8 +13,7 @@ VALUES
         $2,
         $3,
         $4,
-        $5,
-        $6
+        $5
     )
 RETURNING *;
 
@@ -33,6 +31,10 @@ SELECT
     *
 FROM
     products
+WHERE
+    archived = COALESCE(sqlc.narg('archived'), archived) AND
+    name ILIKE COALESCE(sqlc.narg('name'), name) AND
+    sku ILIKE COALESCE(sqlc.narg('sku'), sku)
 ORDER BY
     id
 LIMIT $1
@@ -65,6 +67,24 @@ UPDATE
     products
 SET
     archived = true
+WHERE
+    id = $1
+RETURNING *;
+
+-- name: UpdateProductStock :exec
+UPDATE
+    products
+SET
+    stock = stock + $2
+WHERE
+    id = $1
+RETURNING *;
+
+-- name: UpdateProductImage :exec
+UPDATE
+    products
+SET
+    image_url = $2
 WHERE
     id = $1
 RETURNING *;

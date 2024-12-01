@@ -4,18 +4,25 @@ INSERT INTO
         email,
         username,
         hashed_password,
-        full_name,
-        role
+        full_name
     )
 VALUES
     (
         $1,
         $2,
         $3,
-        $4,
-        $5
+        $4
     )
 RETURNING *;
+
+-- name: GetUserByUsername :one
+SELECT
+    *
+FROM
+    users
+WHERE
+    username = $1
+LIMIT 1;
 
 -- name: GetUserByEmail :one
 SELECT
@@ -32,7 +39,8 @@ SELECT
 FROM
     users
 WHERE
-    id = $1;
+    id = $1
+LIMIT 1;
 
 -- name: ListUsers :many
 SELECT
@@ -49,14 +57,20 @@ UPDATE
     users
 SET
     email = coalesce(sqlc.narg('email'), email),
-    hashed_password = coalesce(sqlc.narg('hashed_password'), hashed_password),
     full_name = coalesce(sqlc.narg('full_name'), full_name),
     role = coalesce(sqlc.narg('role'), role),
     verified_email = coalesce(sqlc.narg('verified_email'), verified_email),
     verified_phone = coalesce(sqlc.narg('verified_phone'), verified_phone),
+    hashed_password = coalesce(sqlc.narg('hashed_password'), hashed_password),
     password_changed_at = coalesce(sqlc.narg('password_changed_at'), password_changed_at),
     updated_at = sqlc.arg('updated_at')
 WHERE
     id = sqlc.arg('id')
 RETURNING *;
 
+
+-- name: DeleteUser :exec
+DELETE FROM
+    users
+WHERE
+    id = $1;
