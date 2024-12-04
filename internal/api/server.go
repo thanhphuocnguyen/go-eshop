@@ -58,7 +58,7 @@ func (sv *Server) initializeRouter() {
 	{
 		product := v1.Group("/products")
 		{
-			product.POST("", sv.createProduct)
+			product.Use(authMiddleware(sv.tokenGenerator)).POST("", sv.createProduct)
 			product.GET(":product_id", sv.getProduct)
 			product.GET("", sv.listProducts)
 		}
@@ -66,7 +66,16 @@ func (sv *Server) initializeRouter() {
 		{
 			user.POST("/register", sv.createUser)
 			user.POST("/login", sv.loginUser)
-			user.PATCH("", sv.updateUser)
+			user.Use(authMiddleware(sv.tokenGenerator)).PATCH("", sv.updateUser)
+		}
+		cart := v1.Group("/carts")
+		{
+			cart.Use(authMiddleware(sv.tokenGenerator)).POST("", sv.createCart)
+			cart.GET("", sv.getCart)
+			cart.POST("/add-new-item", sv.addProductToCart)
+			cart.POST("/remove", sv.removeProductFromCart)
+			cart.POST("/checkout", sv.checkout)
+			cart.PUT("/cart-items", sv.updateCartProductItems)
 		}
 	}
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
@@ -83,4 +92,11 @@ func (s *Server) Server(addr string) *http.Server {
 
 func errorResponse(err error) gin.H {
 	return gin.H{"error": err.Error()}
+}
+func errorsResponse(err []error) gin.H {
+	var errs []string
+	for _, e := range err {
+		errs = append(errs, e.Error())
+	}
+	return gin.H{"errors": errs}
 }

@@ -19,7 +19,7 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteProduct(ctx context.Context, id int64) error
 	DeleteUser(ctx context.Context, id int64) error
-	GetCartByID(ctx context.Context, id int64) (GetCartByIDRow, error)
+	GetCartByUserID(ctx context.Context, userID int64) ([]GetCartByUserIDRow, error)
 	GetProduct(ctx context.Context, id int64) (Product, error)
 	GetSession(ctx context.Context, id uuid.UUID) (Session, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
@@ -30,6 +30,7 @@ type Querier interface {
 	RemoveProductFromCart(ctx context.Context, arg RemoveProductFromCartParams) error
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
 	UpdateProductImage(ctx context.Context, arg UpdateProductImageParams) error
+	UpdateProductQuantity(ctx context.Context, arg UpdateProductQuantityParams) error
 	UpdateProductStock(ctx context.Context, arg UpdateProductStockParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 }
