@@ -16,10 +16,11 @@ type Querier interface {
 	CreateCart(ctx context.Context, userID int64) (Cart, error)
 	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
 	CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error)
-	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
 	DeleteProduct(ctx context.Context, id int64) error
 	DeleteUser(ctx context.Context, id int64) error
-	GetCartByUserID(ctx context.Context, userID int64) ([]GetCartByUserIDRow, error)
+	GetCartByUserID(ctx context.Context, userID int64) (Cart, error)
+	GetCartDetailByUserID(ctx context.Context, userID int64) ([]GetCartDetailByUserIDRow, error)
 	GetProduct(ctx context.Context, id int64) (Product, error)
 	GetSession(ctx context.Context, id uuid.UUID) (Session, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
@@ -32,7 +33,7 @@ type Querier interface {
 	UpdateProductImage(ctx context.Context, arg UpdateProductImageParams) error
 	UpdateProductQuantity(ctx context.Context, arg UpdateProductQuantityParams) error
 	UpdateProductStock(ctx context.Context, arg UpdateProductStockParams) error
-	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
+	UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateUserRow, error)
 }
 
 var _ Querier = (*Queries)(nil)

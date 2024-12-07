@@ -32,7 +32,7 @@ func (sv *Server) createCart(c *gin.Context) {
 func (sv *Server) getCart(c *gin.Context) {
 	userID := c.GetInt64("user_id")
 
-	cart, err := sv.postgres.GetCartByUserID(c, userID)
+	cart, err := sv.postgres.GetCartDetailByUserID(c, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -61,7 +61,7 @@ type cartResponse struct {
 	CartItems    []cartItem `json:"cart_items"`
 }
 
-func mapToCartResponse(cart []sqlc.GetCartByUserIDRow) cartResponse {
+func mapToCartResponse(cart []sqlc.GetCartDetailByUserIDRow) cartResponse {
 	if len(cart) == 0 {
 		return cartResponse{}
 	}
@@ -118,7 +118,7 @@ func (sv *Server) addProductToCart(c *gin.Context) {
 			return
 		}
 	} else {
-		cartId = cart[0].Cart.ID
+		cartId = cart.ID
 	}
 
 	_, err = sv.postgres.AddProductToCart(c, sqlc.AddProductToCartParams{

@@ -27,7 +27,7 @@ VALUES
         $3,
         $4
     )
-RETURNING id, role, username, email, full_name, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at
+RETURNING id, email, username, full_name, role, verified_email, verified_phone, created_at, updated_at
 `
 
 type CreateUserParams struct {
@@ -37,26 +37,36 @@ type CreateUserParams struct {
 	FullName       string `json:"full_name"`
 }
 
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+type CreateUserRow struct {
+	ID            int64     `json:"id"`
+	Email         string    `json:"email"`
+	Username      string    `json:"username"`
+	FullName      string    `json:"full_name"`
+	Role          UserRole  `json:"role"`
+	VerifiedEmail bool      `json:"verified_email"`
+	VerifiedPhone bool      `json:"verified_phone"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
 	row := q.db.QueryRow(ctx, createUser,
 		arg.Email,
 		arg.Username,
 		arg.HashedPassword,
 		arg.FullName,
 	)
-	var i User
+	var i CreateUserRow
 	err := row.Scan(
 		&i.ID,
-		&i.Role,
-		&i.Username,
 		&i.Email,
+		&i.Username,
 		&i.FullName,
-		&i.HashedPassword,
+		&i.Role,
 		&i.VerifiedEmail,
 		&i.VerifiedPhone,
-		&i.PasswordChangedAt,
-		&i.UpdatedAt,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -222,7 +232,7 @@ SET
     updated_at = $8
 WHERE
     id = $9
-RETURNING id, role, username, email, full_name, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at
+RETURNING id, email, username, full_name, role, verified_email, verified_phone, created_at, updated_at
 `
 
 type UpdateUserParams struct {
@@ -237,7 +247,19 @@ type UpdateUserParams struct {
 	ID                int64              `json:"id"`
 }
 
-func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
+type UpdateUserRow struct {
+	ID            int64     `json:"id"`
+	Email         string    `json:"email"`
+	Username      string    `json:"username"`
+	FullName      string    `json:"full_name"`
+	Role          UserRole  `json:"role"`
+	VerifiedEmail bool      `json:"verified_email"`
+	VerifiedPhone bool      `json:"verified_phone"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateUserRow, error) {
 	row := q.db.QueryRow(ctx, updateUser,
 		arg.Email,
 		arg.FullName,
@@ -249,19 +271,17 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		arg.UpdatedAt,
 		arg.ID,
 	)
-	var i User
+	var i UpdateUserRow
 	err := row.Scan(
 		&i.ID,
-		&i.Role,
-		&i.Username,
 		&i.Email,
+		&i.Username,
 		&i.FullName,
-		&i.HashedPassword,
+		&i.Role,
 		&i.VerifiedEmail,
 		&i.VerifiedPhone,
-		&i.PasswordChangedAt,
-		&i.UpdatedAt,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }

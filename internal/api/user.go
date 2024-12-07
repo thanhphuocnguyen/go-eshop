@@ -52,7 +52,7 @@ func (sv *Server) createUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, mapToUserResponse(user))
+	c.JSON(http.StatusOK, user)
 }
 
 type createUserResponse struct {
@@ -63,18 +63,6 @@ type createUserResponse struct {
 	UpdatedAt         string `json:"updated_at"`
 	PasswordChangedAt string `json:"password_changed_at"`
 }
-
-func mapToUserResponse(user sqlc.User) createUserResponse {
-	return createUserResponse{
-		Email:             user.Email,
-		FullName:          user.FullName,
-		Username:          user.Username,
-		CreatedAt:         user.CreatedAt.String(),
-		UpdatedAt:         user.UpdatedAt.String(),
-		PasswordChangedAt: user.PasswordChangedAt.String(),
-	}
-}
-
 type loginUserRequest struct {
 	Username string `json:"username" binding:"required,min=3,max=32"`
 	Password string `json:"password" binding:"required,min=6,max=32"`
@@ -202,11 +190,22 @@ func (sv *Server) updateUser(c *gin.Context) {
 			Valid:  true,
 		},
 	}
-	user, err = sv.postgres.UpdateUser(c, arg)
+	updatedUser, err := sv.postgres.UpdateUser(c, arg)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
-	c.JSON(http.StatusOK, mapToUserResponse(user))
+	c.JSON(http.StatusOK, updatedUser)
+}
+
+func mapToUserResponse(user sqlc.User) createUserResponse {
+	return createUserResponse{
+		Email:             user.Email,
+		FullName:          user.FullName,
+		Username:          user.Username,
+		CreatedAt:         user.CreatedAt.String(),
+		UpdatedAt:         user.UpdatedAt.String(),
+		PasswordChangedAt: user.PasswordChangedAt.String(),
+	}
 }

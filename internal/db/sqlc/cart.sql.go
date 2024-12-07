@@ -53,7 +53,24 @@ func (q *Queries) CreateCart(ctx context.Context, userID int64) (Cart, error) {
 	return i, err
 }
 
-const getCartByUserID = `-- name: GetCartByUserID :many
+const getCartByUserID = `-- name: GetCartByUserID :one
+SELECT id, checked_out_at, user_id, updated_at, created_at FROM carts WHERE user_id = $1
+`
+
+func (q *Queries) GetCartByUserID(ctx context.Context, userID int64) (Cart, error) {
+	row := q.db.QueryRow(ctx, getCartByUserID, userID)
+	var i Cart
+	err := row.Scan(
+		&i.ID,
+		&i.CheckedOutAt,
+		&i.UserID,
+		&i.UpdatedAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getCartDetailByUserID = `-- name: GetCartDetailByUserID :many
 SELECT carts.id, carts.checked_out_at, carts.user_id, carts.updated_at, carts.created_at, cart_items.id, cart_items.product_id, cart_items.cart_id, cart_items.quantity, cart_items.created_at, products.id, products.name, products.description, products.sku, products.image_url, products.stock, products.archived, products.price, products.updated_at, products.created_at
 FROM carts
 JOIN cart_items ON carts.id = cart_items.cart_id
@@ -61,21 +78,21 @@ JOIN products ON cart_items.product_id = products.id
 WHERE carts.user_id = $1
 `
 
-type GetCartByUserIDRow struct {
+type GetCartDetailByUserIDRow struct {
 	Cart     Cart     `json:"cart"`
 	CartItem CartItem `json:"cart_item"`
 	Product  Product  `json:"product"`
 }
 
-func (q *Queries) GetCartByUserID(ctx context.Context, userID int64) ([]GetCartByUserIDRow, error) {
-	rows, err := q.db.Query(ctx, getCartByUserID, userID)
+func (q *Queries) GetCartDetailByUserID(ctx context.Context, userID int64) ([]GetCartDetailByUserIDRow, error) {
+	rows, err := q.db.Query(ctx, getCartDetailByUserID, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetCartByUserIDRow{}
+	items := []GetCartDetailByUserIDRow{}
 	for rows.Next() {
-		var i GetCartByUserIDRow
+		var i GetCartDetailByUserIDRow
 		if err := rows.Scan(
 			&i.Cart.ID,
 			&i.Cart.CheckedOutAt,

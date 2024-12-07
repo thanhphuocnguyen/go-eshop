@@ -5,7 +5,10 @@ VALUES
     ($1) 
 RETURNING *;
 
--- name: GetCartByUserID :many
+-- name: GetCartByUserID :one
+SELECT * FROM carts WHERE user_id = $1;
+
+-- name: GetCartDetailByUserID :many
 SELECT sqlc.embed(carts), sqlc.embed(cart_items), sqlc.embed(products)
 FROM carts
 JOIN cart_items ON carts.id = cart_items.cart_id

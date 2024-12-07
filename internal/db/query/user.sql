@@ -13,7 +13,7 @@ VALUES
         $3,
         $4
     )
-RETURNING *;
+RETURNING id, email, username, full_name, role, verified_email, verified_phone, created_at, updated_at;
 
 -- name: GetUserByUsername :one
 SELECT
@@ -66,7 +66,7 @@ SET
     updated_at = sqlc.arg('updated_at')
 WHERE
     id = sqlc.arg('id')
-RETURNING *;
+RETURNING id, email, username, full_name, role, verified_email, verified_phone, created_at, updated_at;
 
 
 -- name: DeleteUser :exec
