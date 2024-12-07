@@ -7,7 +7,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/postgres"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
 )
@@ -39,13 +38,12 @@ func (sv *Server) createProduct(c *gin.Context) {
 		return
 	}
 
-	price := pgtype.Numeric{}
-	if err := price.Scan(fmt.Sprintf("%.2f", product.Price)); err != nil {
+	price, err := parsePgNumeric(product.Price)
+
+	if err != nil {
 		c.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
-
-	log.Info().Msgf("Price: %v", price)
 
 	newProduct, err := sv.postgres.CreateProduct(c, sqlc.CreateProductParams{
 		Name:        product.Name,
@@ -63,7 +61,7 @@ func (sv *Server) createProduct(c *gin.Context) {
 	c.JSON(http.StatusCreated, newProduct)
 }
 
-type getAccountParams struct {
+type getProductParams struct {
 	ProductID int64 `uri:"product_id" binding:"required"`
 }
 
@@ -80,7 +78,7 @@ type getAccountParams struct {
 // @Failure 500 {object} gin.H
 // @Router /products/{product_id} [get]
 func (sv *Server) getProduct(c *gin.Context) {
-	var params getAccountParams
+	var params getProductParams
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -100,8 +98,8 @@ func (sv *Server) getProduct(c *gin.Context) {
 }
 
 type listProductsParams struct {
-	Page     int32 `form:"page" binding:"required"`
-	PageSize int32 `form:"page_size" binding:"required"`
+	Page     int32 `form:"page" binding:"required,min=1"`
+	PageSize int32 `form:"page_size" binding:"required,min=1,max=100"`
 }
 
 // GetProducts godoc
@@ -166,4 +164,108 @@ func convertToProductResponse(product sqlc.Product) productResponse {
 		UpdatedAt:   product.UpdatedAt.String(),
 		CreatedAt:   product.CreatedAt.String(),
 	}
+}
+
+// Remove Product godoc
+// @Summary Remove a product by ID
+// @Schemes http
+// @Description remove a product by ID
+// @Tags products
+// @Accept json
+// @Param product_id path int true "Product ID"
+// @Produce json
+// @Success 200 {object} gin.H
+// @Failure 404 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /products/{product_id} [delete]
+func (sv *Server) removeProduct(c *gin.Context) {
+	var params getProductParams
+	if err := c.ShouldBindUri(&params); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := sv.postgres.DeleteProduct(c, params.ProductID)
+	if err != nil {
+		if errors.Is(err, postgres.ErrorRecordNotFound) {
+			c.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Product deleted"})
+}
+
+// Update Product godoc
+// @Summary Update a product by ID
+// @Schemes http
+// @Description update a product by ID
+// @Tags products
+// @Accept json
+// @Param product_id path int true "Product ID"
+// @Param input body createProductRequest true "Product input"
+// @Produce json
+// @Success 200 {object} productResponse
+// @Failure 404 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /products/{product_id} [put]
+type updateProductRequest struct {
+	Name        string  `json:"name" binding:"required"`
+	Description string  `json:"description" binding:"required"`
+	Sku         string  `json:"sku" binding:"required"`
+	Stock       int32   `json:"stock" binding:"required"`
+	Price       float32 `json:"price" binding:"required"`
+}
+
+func (sv *Server) updateProduct(c *gin.Context) {
+	var params getProductParams
+	if err := c.ShouldBindUri(&params); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	var product updateProductRequest
+	if err := c.ShouldBindJSON(&product); err != nil {
+		c.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	price, err := parsePgNumeric(product.Price)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	updated, err := sv.postgres.UpdateProduct(c, sqlc.UpdateProductParams{
+		ID:          params.ProductID,
+		Name:        getPgTypeText(product.Name),
+		Description: getPgTypeText(product.Description),
+		Sku:         getPgTypeText(product.Sku),
+		Stock:       pgtype.Int4{Int32: product.Stock, Valid: true},
+		Price:       price,
+	})
+	if err != nil {
+		if errors.Is(err, postgres.ErrorRecordNotFound) {
+			c.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	c.JSON(http.StatusOK, convertToProductResponse(updated))
+}
+
+func getPgTypeText(value string) pgtype.Text {
+	return pgtype.Text{
+		String: value,
+		Valid:  true,
+	}
+}
+
+func parsePgNumeric(value float32) (pgtype.Numeric, error) {
+
+	price := pgtype.Numeric{}
+	if err := price.Scan(fmt.Sprintf("%.2f", value)); err != nil {
+		return price, err
+	}
+	return price, nil
 }

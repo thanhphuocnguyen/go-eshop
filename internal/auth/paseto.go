@@ -1,12 +1,12 @@
 package auth
 
 import (
-	"log"
 	"strconv"
 	"time"
 
 	"aidanwoods.dev/go-paseto"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
 )
 
@@ -33,10 +33,10 @@ func (g *PasetoTokenGenerator) GenerateToken(userID int64, username string, user
 	}
 
 	token := paseto.NewToken()
-	token.Set("username", payload.Username)
-	token.Set("id", payload.ID)
-	token.Set("role", payload.Role)
-	token.Set("user_id", payload.UserId)
+	token.SetString("username", payload.Username)
+	token.SetString("id", payload.ID.String())
+	token.SetString("role", string(payload.Role))
+	token.SetString("user_id", strconv.Itoa(int(payload.UserId)))
 	token.SetExpiration(payload.ExpiredAt)
 	token.SetNotBefore(payload.IssuedAt)
 	token.SetIssuedAt(payload.IssuedAt)
@@ -50,6 +50,7 @@ func (g *PasetoTokenGenerator) VerifyToken(token string) (*Payload, error) {
 	parsedToken, err := parser.ParseV4Local(g.symmetricKey, token, g.implicit)
 
 	if err != nil {
+		log.Error().Err(err).Msg("failed to parse token")
 		if paseto.RuleError.Is(paseto.RuleError{}, err) {
 			return nil, ErrExpiredToken
 		}
@@ -58,7 +59,7 @@ func (g *PasetoTokenGenerator) VerifyToken(token string) (*Payload, error) {
 
 	payload, err := getPayloadFromParsedData(parsedToken)
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err).Msg("failed to get payload from parsed data")
 		return nil, ErrInvalidToken
 	}
 	return payload, nil

@@ -6,7 +6,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
+	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
 )
 
 const (
@@ -23,7 +25,6 @@ func authMiddleware(tokenGenerator auth.TokenGenerator) gin.HandlerFunc {
 			return
 		}
 		authGroup := strings.Fields(authorization)
-		fmt.Println(authGroup)
 		if len(authGroup) != 2 || authGroup[0] != authorizationType {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, errorResponse(fmt.Errorf("authorization header is not provided")))
 			return
@@ -38,5 +39,24 @@ func authMiddleware(tokenGenerator auth.TokenGenerator) gin.HandlerFunc {
 
 		ctx.Set(authorizationPayload, payload)
 		ctx.Next()
+	}
+}
+
+func roleMiddleware(roles ...sqlc.UserRole) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		payload, ok := ctx.MustGet(authorizationPayload).(*auth.Payload)
+		if !ok {
+			log.Error().Msg("Role middleware: cannot get authorization payload")
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, errorResponse(fmt.Errorf("authorization payload is not provided")))
+			return
+		}
+
+		for _, r := range roles {
+			if r == payload.Role {
+				ctx.Next()
+				return
+			}
+		}
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, errorResponse(fmt.Errorf("user does not have permission")))
 	}
 }

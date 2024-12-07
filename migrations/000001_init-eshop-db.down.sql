@@ -11,6 +11,7 @@ ALTER TABLE "orders" DROP CONSTRAINT orders_user_id_fkey;
 ALTER TABLE "cart_items" DROP CONSTRAINT cart_items_cart_id_fkey;
 ALTER TABLE "cart_items" DROP CONSTRAINT cart_items_product_id_fkey;
 ALTER TABLE "carts" DROP CONSTRAINT carts_user_id_fkey;
+ALTER TABLE "sessions" DROP CONSTRAINT "sessions_user_id_fkey";
 
 -- Drop indexes
 DROP INDEX IF EXISTS products_price_idx;
@@ -37,6 +38,7 @@ DROP TABLE IF EXISTS "cart_items";
 DROP TABLE IF EXISTS "carts";
 DROP TABLE IF EXISTS "products";
 DROP TABLE IF EXISTS "users";
+DROP TABLE IF EXISTS "sessions";
 
 -- Drop types
 DROP TYPE IF EXISTS "card_type";

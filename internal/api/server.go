@@ -11,6 +11,7 @@ import (
 	docs "github.com/thanhphuocnguyen/go-eshop/docs"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/postgres"
+	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 )
 
@@ -58,9 +59,12 @@ func (sv *Server) initializeRouter() {
 	{
 		product := v1.Group("/products")
 		{
-			product.Use(authMiddleware(sv.tokenGenerator)).POST("", sv.createProduct)
 			product.GET(":product_id", sv.getProduct)
 			product.GET("", sv.listProducts)
+			productAuthRoutes := product.Group("").Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sqlc.UserRoleAdmin))
+			productAuthRoutes.POST("", sv.createProduct)
+			productAuthRoutes.PUT("", sv.updateProduct)
+			productAuthRoutes.DELETE(":product_id", sv.removeProduct)
 		}
 		user := v1.Group("/users")
 		{
@@ -70,7 +74,7 @@ func (sv *Server) initializeRouter() {
 		}
 		cart := v1.Group("/carts")
 		{
-			cart.Use(authMiddleware(sv.tokenGenerator)).POST("", sv.createCart)
+			cart.POST("", sv.createCart)
 			cart.GET("", sv.getCart)
 			cart.POST("/add-new-item", sv.addProductToCart)
 			cart.POST("/remove", sv.removeProductFromCart)

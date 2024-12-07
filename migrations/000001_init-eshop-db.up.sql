@@ -30,7 +30,7 @@ CREATE TYPE "card_type" AS ENUM (
 
 CREATE TABLE "users" (
   "id" bigserial PRIMARY KEY,
-  "role" user_role NOT NULL,
+  "role" user_role NOT NULL DEFAULT 'user',
   "username" varchar UNIQUE NOT NULL,
   "email" varchar UNIQUE NOT NULL,
   "full_name" varchar NOT NULL,
@@ -50,7 +50,7 @@ CREATE TABLE "products" (
   "image_url" varchar,
   "stock" int NOT NULL,
   "archived" bool NOT NULL DEFAULT false,
-  "price" numeric(6,4) NOT NULL,
+  "price" numeric(8,2) NOT NULL,
   "updated_at" timestamptz NOT NULL DEFAULT '0001-01-01 00:00:00Z',
   "created_at" timestamptz NOT NULL DEFAULT (now())
 );
@@ -144,6 +144,20 @@ CREATE TABLE "payment_infos" (
   "is_verified" bool NOT NULL DEFAULT false,
   "created_at" timestamptz NOT NULL DEFAULT (now())
 );
+
+CREATE TABLE
+    "sessions" (
+        "id" uuid PRIMARY KEY,
+        "user_id" bigint NOT NULL,
+        "refresh_token" varchar NOT NULL,
+        "user_agent" varchar NOT NULL,
+        "client_ip" varchar NOT NULL,
+        "is_blocked" boolean NOT NULL DEFAULT false,
+        "expired_at" timestamptz NOT NULL,
+        "created_at" timestamptz NOT NULL DEFAULT (now ())
+    );
+
+ALTER TABLE "sessions" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
 
 CREATE INDEX ON "products" ("price");
 

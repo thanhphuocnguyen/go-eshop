@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/thanhphuocnguyen/go-eshop/internal/db/postgres"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
 )
 
@@ -102,10 +103,27 @@ func (sv *Server) addProductToCart(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
+	var cartId int64
+	cart, err := sv.postgres.GetCartByUserID(c, req.UserID)
+	if err != nil {
+		if err == postgres.ErrorRecordNotFound {
+			newCart, err := sv.postgres.CreateCart(c, req.UserID)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, errorResponse(err))
+				return
+			}
+			cartId = newCart.ID
+		} else {
+			c.JSON(http.StatusInternalServerError, errorResponse(err))
+			return
+		}
+	} else {
+		cartId = cart[0].Cart.ID
+	}
 
-	_, err := sv.postgres.AddProductToCart(c, sqlc.AddProductToCartParams{
+	_, err = sv.postgres.AddProductToCart(c, sqlc.AddProductToCartParams{
 		ProductID: req.ProductID,
-		CartID:    req.UserID,
+		CartID:    cartId,
 		Quantity:  req.Quantity,
 	})
 

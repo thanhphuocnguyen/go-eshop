@@ -12,10 +12,10 @@ import (
 )
 
 type CreateUserRequest struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
-	FullName string `json:"full_name" binding:"required"`
-	Email    string `json:"email" binding:"required,email"`
+	Username string `json:"username" binding:"required,min=3,max=32"`
+	Password string `json:"password" binding:"required,min=6,max=32"`
+	FullName string `json:"full_name" binding:"required,min=3,max=32"`
+	Email    string `json:"email" binding:"required,email,max=255"`
 }
 
 // createUser godoc
@@ -76,14 +76,14 @@ func mapToUserResponse(user sqlc.User) createUserResponse {
 }
 
 type loginUserRequest struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	Username string `json:"username" binding:"required,min=3,max=32"`
+	Password string `json:"password" binding:"required,min=6,max=32"`
 }
 
 type loginResponse struct {
 	SessionID            uuid.UUID          `json:"session_id"`
 	Token                string             `json:"token"`
-	TokenExpireAt        time.Time          `json:"access_token_expire_at"`
+	TokenExpireAt        time.Time          `json:"token_expire_at"`
 	RefreshToken         string             `json:"refresh_token"`
 	RefreshTokenExpireAt time.Time          `json:"refresh_token_expire_at"`
 	User                 createUserResponse `json:"user"`
