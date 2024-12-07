@@ -13,32 +13,13 @@ type createCartRequest struct {
 	UserID int64 `json:"user_id" binding:"required"`
 }
 
-func (sv *Server) createCart(c *gin.Context) {
-	var cart createCartRequest
-	if err := c.ShouldBindJSON(&cart); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	newCart, err := sv.postgres.CreateCart(c, cart.UserID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-
-	c.JSON(http.StatusOK, newCart)
+type itemUpdate struct {
+	ProductID int64 `json:"product_id" binding:"required"`
+	Quantity  int16 `json:"quantity" binding:"required"`
 }
-
-func (sv *Server) getCart(c *gin.Context) {
-	userID := c.GetInt64("user_id")
-
-	cart, err := sv.postgres.GetCartDetailByUserID(c, userID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-
-	c.JSON(http.StatusOK, mapToCartResponse(cart))
+type updateCartRequest struct {
+	CartID int64        `json:"cart_id" binding:"required"`
+	Items  []itemUpdate `json:"items" binding:"required"`
 }
 
 type cartItem struct {
@@ -59,6 +40,69 @@ type cartResponse struct {
 	UpdatedAt    time.Time  `json:"updated_at"`
 	CreatedAt    time.Time  `json:"created_at"`
 	CartItems    []cartItem `json:"cart_items"`
+}
+
+type addProductToCartRequest struct {
+	UserID    int64 `json:"user_id" binding:"required"`
+	ProductID int64 `json:"product_id" binding:"required"`
+	Quantity  int16 `json:"quantity" binding:"required"`
+}
+
+type removeProductFromCartRequest struct {
+	CartID    int64 `json:"cart_id" binding:"required"`
+	ProductID int64 `json:"product_id" binding:"required"`
+}
+
+// ------------------------------ Handlers ------------------------------
+
+// CreateCart godoc
+// @Summary Create a new cart
+// @Schemes http
+// @Description create a new cart for a user
+// @Tags carts
+// @Accept json
+// @Param input body createCartRequest true "Cart input"
+// @Produce json
+// @Success 200 {object} cartResponse
+// @Failure 400 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /carts [post]
+func (sv *Server) createCart(c *gin.Context) {
+	var cart createCartRequest
+	if err := c.ShouldBindJSON(&cart); err != nil {
+		c.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	newCart, err := sv.postgres.CreateCart(c, cart.UserID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, newCart)
+}
+
+// GetCart godoc
+// @Summary Get cart details by user ID
+// @Schemes http
+// @Description get cart details by user ID
+// @Tags carts
+// @Accept json
+// @Produce json
+// @Success 200 {object} cartResponse
+// @Failure 500 {object} gin.H
+// @Router /carts [get]
+func (sv *Server) getCart(c *gin.Context) {
+	userID := c.GetInt64("user_id")
+
+	cart, err := sv.postgres.GetCartDetailByUserID(c, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, mapToCartResponse(cart))
 }
 
 func mapToCartResponse(cart []sqlc.GetCartDetailByUserIDRow) cartResponse {
@@ -91,12 +135,18 @@ func mapToCartResponse(cart []sqlc.GetCartDetailByUserIDRow) cartResponse {
 	}
 }
 
-type addProductToCartRequest struct {
-	UserID    int64 `json:"user_id" binding:"required"`
-	ProductID int64 `json:"product_id" binding:"required"`
-	Quantity  int16 `json:"quantity" binding:"required"`
-}
-
+// AddProductToCart godoc
+// @Summary Add a product to the cart
+// @Schemes http
+// @Description add a product to the cart
+// @Tags carts
+// @Accept json
+// @Param input body addProductToCartRequest true "Add product to cart input"
+// @Produce json
+// @Success 200 {object} gin.H
+// @Failure 400 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /carts/products [post]
 func (sv *Server) addProductToCart(c *gin.Context) {
 	var req addProductToCartRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -135,11 +185,18 @@ func (sv *Server) addProductToCart(c *gin.Context) {
 	c.JSON(http.StatusOK, "product added to cart")
 }
 
-type removeProductFromCartRequest struct {
-	CartID    int64 `json:"cart_id" binding:"required"`
-	ProductID int64 `json:"product_id" binding:"required"`
-}
-
+// RemoveProductFromCart godoc
+// @Summary Remove a product from the cart
+// @Schemes http
+// @Description remove a product from the cart
+// @Tags carts
+// @Accept json
+// @Param input body removeProductFromCartRequest true "Remove product from cart input"
+// @Produce json
+// @Success 200 {object} gin.H
+// @Failure 400 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /carts/products [delete]
 func (sv *Server) removeProductFromCart(c *gin.Context) {
 	var req removeProductFromCartRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -158,19 +215,23 @@ func (sv *Server) removeProductFromCart(c *gin.Context) {
 
 	c.JSON(http.StatusOK, "product removed from cart")
 }
+
 func (sv *Server) checkout(c *gin.Context) {
 
 }
 
-type itemUpdate struct {
-	ProductID int64 `json:"product_id" binding:"required"`
-	Quantity  int16 `json:"quantity" binding:"required"`
-}
-type updateCartRequest struct {
-	CartID int64        `json:"cart_id" binding:"required"`
-	Items  []itemUpdate `json:"items" binding:"required"`
-}
-
+// UpdateCartProductItems godoc
+// @Summary Update product items in the cart
+// @Schemes http
+// @Description update product items in the cart
+// @Tags carts
+// @Accept json
+// @Param input body updateCartRequest true "Update cart items input"
+// @Produce json
+// @Success 200 {object} gin.H
+// @Failure 400 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /carts/products [put]
 func (sv *Server) updateCartProductItems(c *gin.Context) {
 	var req updateCartRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

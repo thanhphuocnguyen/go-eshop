@@ -1,26 +1,156 @@
 basePath: /api/v1
 definitions:
-  api.createProductRequest:
+  api.addProductToCartRequest:
+    properties:
+      product_id:
+        type: integer
+      quantity:
+        type: integer
+      user_id:
+        type: integer
+    required:
+    - product_id
+    - quantity
+    - user_id
+    type: object
+  api.cartItem:
     properties:
       description:
         type: string
+      id:
+        type: integer
       image_url:
         type: string
       name:
         type: string
       price:
+        type: number
+      product_id:
+        type: integer
+      quantity:
+        type: integer
+      sku:
         type: string
+    type: object
+  api.cartResponse:
+    properties:
+      cart_items:
+        items:
+          $ref: '#/definitions/api.cartItem'
+        type: array
+      checked_out:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  api.createCartRequest:
+    properties:
+      user_id:
+        type: integer
+    required:
+    - user_id
+    type: object
+  api.createProductRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
       sku:
         type: string
       stock:
         type: integer
     required:
     - description
-    - image_url
     - name
     - price
     - sku
     - stock
+    type: object
+  api.createUserRequest:
+    properties:
+      email:
+        maxLength: 255
+        type: string
+      full_name:
+        maxLength: 32
+        minLength: 3
+        type: string
+      password:
+        maxLength: 32
+        minLength: 6
+        type: string
+      username:
+        maxLength: 32
+        minLength: 3
+        type: string
+    required:
+    - email
+    - full_name
+    - password
+    - username
+    type: object
+  api.createUserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      password_changed_at:
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+  api.itemUpdate:
+    properties:
+      product_id:
+        type: integer
+      quantity:
+        type: integer
+    required:
+    - product_id
+    - quantity
+    type: object
+  api.loginResponse:
+    properties:
+      refresh_token:
+        type: string
+      refresh_token_expire_at:
+        type: string
+      session_id:
+        type: string
+      token:
+        type: string
+      token_expire_at:
+        type: string
+      user:
+        $ref: '#/definitions/api.createUserResponse'
+    type: object
+  api.loginUserRequest:
+    properties:
+      password:
+        maxLength: 32
+        minLength: 6
+        type: string
+      username:
+        maxLength: 32
+        minLength: 3
+        type: string
+    required:
+    - password
+    - username
     type: object
   api.productResponse:
     properties:
@@ -43,15 +173,236 @@ definitions:
       updated_at:
         type: string
     type: object
+  api.removeProductFromCartRequest:
+    properties:
+      cart_id:
+        type: integer
+      product_id:
+        type: integer
+    required:
+    - cart_id
+    - product_id
+    type: object
+  api.updateCartRequest:
+    properties:
+      cart_id:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/api.itemUpdate'
+        type: array
+    required:
+    - cart_id
+    - items
+    type: object
+  api.updateUserRequest:
+    properties:
+      email:
+        type: string
+      full_name:
+        type: string
+      role:
+        $ref: '#/definitions/sqlc.UserRole'
+      user_id:
+        type: integer
+    required:
+    - user_id
+    type: object
   gin.H:
     additionalProperties: {}
     type: object
+  sqlc.CreateUserRow:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: integer
+      role:
+        $ref: '#/definitions/sqlc.UserRole'
+      updated_at:
+        type: string
+      username:
+        type: string
+      verified_email:
+        type: boolean
+      verified_phone:
+        type: boolean
+    type: object
+  sqlc.UpdateUserRow:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: integer
+      role:
+        $ref: '#/definitions/sqlc.UserRole'
+      updated_at:
+        type: string
+      username:
+        type: string
+      verified_email:
+        type: boolean
+      verified_phone:
+        type: boolean
+    type: object
+  sqlc.UserRole:
+    enum:
+    - admin
+    - user
+    type: string
+    x-enum-varnames:
+    - UserRoleAdmin
+    - UserRoleUser
 host: localhost:4000
 info:
   contact: {}
   description: This is a sample server for a simple e-commerce API.
   title: E-Commerce API
 paths:
+  /carts:
+    get:
+      consumes:
+      - application/json
+      description: get cart details by user ID
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.cartResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get cart details by user ID
+      tags:
+      - carts
+    post:
+      consumes:
+      - application/json
+      description: create a new cart for a user
+      parameters:
+      - description: Cart input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/api.createCartRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.cartResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Create a new cart
+      tags:
+      - carts
+  /carts/products:
+    delete:
+      consumes:
+      - application/json
+      description: remove a product from the cart
+      parameters:
+      - description: Remove product from cart input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/api.removeProductFromCartRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Remove a product from the cart
+      tags:
+      - carts
+    post:
+      consumes:
+      - application/json
+      description: add a product to the cart
+      parameters:
+      - description: Add product to cart input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/api.addProductToCartRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Add a product to the cart
+      tags:
+      - carts
+    put:
+      consumes:
+      - application/json
+      description: update product items in the cart
+      parameters:
+      - description: Update cart items input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/api.updateCartRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Update product items in the cart
+      tags:
+      - carts
   /products:
     get:
       consumes:
@@ -118,6 +469,34 @@ paths:
       tags:
       - products
   /products/{product_id}:
+    delete:
+      consumes:
+      - application/json
+      description: remove a product by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gin.H'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Remove a product by ID
+      tags:
+      - products
     get:
       consumes:
       - application/json
@@ -146,4 +525,70 @@ paths:
       summary: Get a product detail by ID
       tags:
       - product detail
+  /users:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user
+      parameters:
+      - description: User info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/api.createUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sqlc.CreateUserRow'
+      summary: Create a new user
+      tags:
+      - users
+  /users/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Update user info
+      parameters:
+      - description: User info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/api.updateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sqlc.UpdateUserRow'
+      summary: Update user info
+      tags:
+      - users
+  /users/login:
+    post:
+      consumes:
+      - application/json
+      description: Login to the system
+      parameters:
+      - description: User info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/api.loginUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.loginResponse'
+      summary: Login to the system
+      tags:
+      - users
 swagger: "2.0"

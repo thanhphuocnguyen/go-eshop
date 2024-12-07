@@ -11,12 +11,56 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
 )
 
-type CreateUserRequest struct {
+type createUserRequest struct {
 	Username string `json:"username" binding:"required,min=3,max=32"`
 	Password string `json:"password" binding:"required,min=6,max=32"`
 	FullName string `json:"full_name" binding:"required,min=3,max=32"`
 	Email    string `json:"email" binding:"required,email,max=255"`
 }
+
+type createUserResponse struct {
+	Email             string `json:"email"`
+	FullName          string `json:"full_name"`
+	Username          string `json:"username"`
+	CreatedAt         string `json:"created_at"`
+	UpdatedAt         string `json:"updated_at"`
+	PasswordChangedAt string `json:"password_changed_at"`
+}
+type loginUserRequest struct {
+	Username string `json:"username" binding:"required,min=3,max=32"`
+	Password string `json:"password" binding:"required,min=6,max=32"`
+}
+
+type loginResponse struct {
+	SessionID            uuid.UUID          `json:"session_id"`
+	Token                string             `json:"token"`
+	TokenExpireAt        time.Time          `json:"token_expire_at"`
+	RefreshToken         string             `json:"refresh_token"`
+	RefreshTokenExpireAt time.Time          `json:"refresh_token_expire_at"`
+	User                 createUserResponse `json:"user"`
+}
+
+type updateUserRequest struct {
+	UserID   int64         `json:"user_id" binding:"required"`
+	FullName string        `json:"full_name"`
+	Email    string        `json:"email" binding:"email"`
+	Role     sqlc.UserRole `json:"role"`
+}
+
+// ------------------------------ Mappers ------------------------------
+
+func mapToUserResponse(user sqlc.User) createUserResponse {
+	return createUserResponse{
+		Email:             user.Email,
+		FullName:          user.FullName,
+		Username:          user.Username,
+		CreatedAt:         user.CreatedAt.String(),
+		UpdatedAt:         user.UpdatedAt.String(),
+		PasswordChangedAt: user.PasswordChangedAt.String(),
+	}
+}
+
+// ------------------------------ Handlers ------------------------------
 
 // createUser godoc
 // @Summary Create a new user
@@ -25,10 +69,10 @@ type CreateUserRequest struct {
 // @Accept  json
 // @Produce  json
 // @Param input body createUserRequest true "User info"
-// @Success 200 {object} createUserResponse
+// @Success 200 {object} sqlc.CreateUserRow
 // @Router /users [post]
 func (sv *Server) createUser(c *gin.Context) {
-	var req CreateUserRequest
+	var req createUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, errorResponse(err))
 		return
@@ -53,28 +97,6 @@ func (sv *Server) createUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, user)
-}
-
-type createUserResponse struct {
-	Email             string `json:"email"`
-	FullName          string `json:"full_name"`
-	Username          string `json:"username"`
-	CreatedAt         string `json:"created_at"`
-	UpdatedAt         string `json:"updated_at"`
-	PasswordChangedAt string `json:"password_changed_at"`
-}
-type loginUserRequest struct {
-	Username string `json:"username" binding:"required,min=3,max=32"`
-	Password string `json:"password" binding:"required,min=6,max=32"`
-}
-
-type loginResponse struct {
-	SessionID            uuid.UUID          `json:"session_id"`
-	Token                string             `json:"token"`
-	TokenExpireAt        time.Time          `json:"token_expire_at"`
-	RefreshToken         string             `json:"refresh_token"`
-	RefreshTokenExpireAt time.Time          `json:"refresh_token_expire_at"`
-	User                 createUserResponse `json:"user"`
 }
 
 // loginUser godoc
@@ -142,13 +164,6 @@ func (sv *Server) loginUser(c *gin.Context) {
 	})
 }
 
-type updateUserRequest struct {
-	UserID   int64         `json:"user_id" binding:"required"`
-	FullName string        `json:"full_name"`
-	Email    string        `json:"email" binding:"email"`
-	Role     sqlc.UserRole `json:"role"`
-}
-
 // updateUser godoc
 // @Summary Update user info
 // @Description Update user info
@@ -156,7 +171,7 @@ type updateUserRequest struct {
 // @Accept  json
 // @Produce  json
 // @Param input body updateUserRequest true "User info"
-// @Success 200 {object} createUserResponse
+// @Success 200 {object} sqlc.UpdateUserRow
 // @Router /users/{id} [patch]
 func (sv *Server) updateUser(c *gin.Context) {
 	var req updateUserRequest
@@ -197,15 +212,4 @@ func (sv *Server) updateUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, updatedUser)
-}
-
-func mapToUserResponse(user sqlc.User) createUserResponse {
-	return createUserResponse{
-		Email:             user.Email,
-		FullName:          user.FullName,
-		Username:          user.Username,
-		CreatedAt:         user.CreatedAt.String(),
-		UpdatedAt:         user.UpdatedAt.String(),
-		PasswordChangedAt: user.PasswordChangedAt.String(),
-	}
 }
