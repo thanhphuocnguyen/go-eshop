@@ -17,7 +17,7 @@ type Payload struct {
 	ID        uuid.UUID     `json:"id"`
 	Username  string        `json:"username"`
 	Role      sqlc.UserRole `json:"role"`
-	UserId    int64         `json:"user_id"`
+	UserID    int64         `json:"user_id"`
 	IssuedAt  time.Time     `json:"issued_at"`
 	ExpiredAt time.Time     `json:"expired_at"`
 }

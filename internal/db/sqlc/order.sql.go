@@ -140,6 +140,74 @@ func (q *Queries) GetOrder(ctx context.Context, id int64) (Order, error) {
 	return i, err
 }
 
+const getOrderDetails = `-- name: GetOrderDetails :many
+SELECT
+    orders.id, orders.user_id, orders.status, orders.shipping_id, orders.payment_type, orders.payment_status, orders.is_cod, orders.confirmed_at, orders.cancelled_at, orders.delivered_at, orders.updated_at, orders.created_at, order_items.id, order_items.product_id, order_items.order_id, order_items.quantity, order_items.price, order_items.created_at, products.id, products.name, products.description, products.sku, products.image_url, products.stock, products.archived, products.price, products.updated_at, products.created_at
+FROM
+    orders
+JOIN
+    order_items ON order_items.order_id = orders.id
+JOIN
+    products ON order_items.product_id = products.id
+WHERE
+    orders.id = $1
+`
+
+type GetOrderDetailsRow struct {
+	Order     Order     `json:"order"`
+	OrderItem OrderItem `json:"order_item"`
+	Product   Product   `json:"product"`
+}
+
+func (q *Queries) GetOrderDetails(ctx context.Context, id int64) ([]GetOrderDetailsRow, error) {
+	rows, err := q.db.Query(ctx, getOrderDetails, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetOrderDetailsRow{}
+	for rows.Next() {
+		var i GetOrderDetailsRow
+		if err := rows.Scan(
+			&i.Order.ID,
+			&i.Order.UserID,
+			&i.Order.Status,
+			&i.Order.ShippingID,
+			&i.Order.PaymentType,
+			&i.Order.PaymentStatus,
+			&i.Order.IsCod,
+			&i.Order.ConfirmedAt,
+			&i.Order.CancelledAt,
+			&i.Order.DeliveredAt,
+			&i.Order.UpdatedAt,
+			&i.Order.CreatedAt,
+			&i.OrderItem.ID,
+			&i.OrderItem.ProductID,
+			&i.OrderItem.OrderID,
+			&i.OrderItem.Quantity,
+			&i.OrderItem.Price,
+			&i.OrderItem.CreatedAt,
+			&i.Product.ID,
+			&i.Product.Name,
+			&i.Product.Description,
+			&i.Product.Sku,
+			&i.Product.ImageUrl,
+			&i.Product.Stock,
+			&i.Product.Archived,
+			&i.Product.Price,
+			&i.Product.UpdatedAt,
+			&i.Product.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listOrderItems = `-- name: ListOrderItems :many
 SELECT
     id, product_id, order_id, quantity, price, created_at

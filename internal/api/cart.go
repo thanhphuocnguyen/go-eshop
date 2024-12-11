@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/postgres"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
 )
@@ -56,13 +57,7 @@ type removeProductFromCartRequest struct {
 
 type checkoutRequest struct {
 	CartID      int64  `json:"cart_id" binding:"required"`
-	Phone       string `json:"phone" binding:"required"`
-	Address     string `json:"address" binding:"min=10,max=255"`
-	City        string `json:"city" binding:"min=3,max=32"`
-	District    string `json:"district" binding:"min=3,max=32"`
-	Ward        string `json:"ward" binding:"min=3,max=32"`
-	ZipCode     string `json:"zip_code" binding:"min=3,max=32"`
-	FullName    string `json:"full_name" binding:"min=3,max=32,alphanum"`
+	IsCod       bool   `json:"is_cod" binding:"required"`
 	PaymentType string `json:"payment_type" binding:"required"`
 }
 
@@ -237,7 +232,7 @@ func (sv *Server) removeProductFromCart(c *gin.Context) {
 // @Accept json
 // @Param input body checkoutRequest true "Update cart items input"
 // @Produce json
-// @Success 200 {object} gin.H
+// @Success 200 {object} sqlc.Order
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /carts/products [post]
@@ -248,15 +243,43 @@ func (sv *Server) checkout(c *gin.Context) {
 		return
 	}
 
-	_, err := sv.postgres.GetCart(c, req.CartID)
+	user, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user not found"})
+		return
+	}
+
+	cart, err := sv.postgres.GetCart(c, req.CartID)
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "cart not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "cart not found"})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
+
+	if cart.UserID != user.UserID {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "cart does not belong to the user"})
+		return
+	}
+
+	order, err := sv.postgres.CheckoutCartTx(c, postgres.CheckoutCartParams{
+		UserID: user.UserID,
+		CartID: cart.ID,
+		CreateOrderParams: sqlc.CreateOrderParams{
+			UserID:      user.UserID,
+			PaymentType: sqlc.PaymentType(req.PaymentType),
+			IsCod:       req.IsCod,
+		},
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, order.Order)
 }
 
 // updateCartProductItems godoc

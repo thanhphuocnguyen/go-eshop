@@ -26,6 +26,7 @@ type Querier interface {
 	GetCart(ctx context.Context, id int64) (Cart, error)
 	GetCartDetail(ctx context.Context, id int64) ([]GetCartDetailRow, error)
 	GetOrder(ctx context.Context, id int64) (Order, error)
+	GetOrderDetails(ctx context.Context, id int64) ([]GetOrderDetailsRow, error)
 	GetProduct(ctx context.Context, id int64) (Product, error)
 	GetSession(ctx context.Context, id uuid.UUID) (Session, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)

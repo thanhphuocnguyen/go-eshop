@@ -81,6 +81,15 @@ func (sv *Server) initializeRouter() {
 			cart.POST("/checkout", sv.checkout)
 			cart.PUT("/cart-items", sv.updateCartProductItems)
 		}
+		order := v1.Group("/orders").Use(authMiddleware(sv.tokenGenerator))
+		{
+			order.GET("", sv.orderList)
+			order.GET(":id", sv.orderDetail)
+			order.PUT(":id/cancel", sv.cancelOrder)
+			adminOrder := order.Use(roleMiddleware(sqlc.UserRoleAdmin))
+			adminOrder.PUT(":id/change-status", sv.changeOrderStatus)
+			adminOrder.PUT(":id/change-payment-status", sv.changeOrderPaymentStatus)
+		}
 	}
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 

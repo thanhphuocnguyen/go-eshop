@@ -22,6 +22,18 @@ WHERE
     id = $1
 LIMIT 1;
 
+-- name: GetOrderDetails :many
+SELECT
+    sqlc.embed(orders), sqlc.embed(order_items), sqlc.embed(products)
+FROM
+    orders
+JOIN
+    order_items ON order_items.order_id = orders.id
+JOIN
+    products ON order_items.product_id = products.id
+WHERE
+    orders.id = $1;
+
 -- name: ListOrders :many
 SELECT
     *

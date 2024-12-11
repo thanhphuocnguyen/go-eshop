@@ -27,7 +27,7 @@ func (g *PasetoTokenGenerator) GenerateToken(userID int64, username string, user
 		ID:        uuid.New(),
 		Username:  username,
 		Role:      userRole,
-		UserId:    userID,
+		UserID:    userID,
 		IssuedAt:  time.Now(),
 		ExpiredAt: time.Now().Add(duration),
 	}
@@ -36,7 +36,7 @@ func (g *PasetoTokenGenerator) GenerateToken(userID int64, username string, user
 	token.SetString("username", payload.Username)
 	token.SetString("id", payload.ID.String())
 	token.SetString("role", string(payload.Role))
-	token.SetString("user_id", strconv.Itoa(int(payload.UserId)))
+	token.SetString("user_id", strconv.Itoa(int(payload.UserID)))
 	token.SetExpiration(payload.ExpiredAt)
 	token.SetNotBefore(payload.IssuedAt)
 	token.SetIssuedAt(payload.IssuedAt)
@@ -105,7 +105,7 @@ func getPayloadFromParsedData(t *paseto.Token) (*Payload, error) {
 	return &Payload{
 		ID:        idUUID,
 		Username:  username,
-		UserId:    userId,
+		UserID:    userId,
 		Role:      sqlc.UserRole(role),
 		IssuedAt:  issuedAt,
 		ExpiredAt: expiredAt,
