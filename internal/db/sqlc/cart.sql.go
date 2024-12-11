@@ -7,6 +7,8 @@ package sqlc
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const addProductToCart = `-- name: AddProductToCart :one
@@ -32,6 +34,15 @@ func (q *Queries) AddProductToCart(ctx context.Context, arg AddProductToCartPara
 	return i, err
 }
 
+const clearCart = `-- name: ClearCart :exec
+DELETE FROM cart_items WHERE cart_id = $1
+`
+
+func (q *Queries) ClearCart(ctx context.Context, cartID int64) error {
+	_, err := q.db.Exec(ctx, clearCart, cartID)
+	return err
+}
+
 const createCart = `-- name: CreateCart :one
 INSERT INTO 
     carts (user_id) 
@@ -53,12 +64,12 @@ func (q *Queries) CreateCart(ctx context.Context, userID int64) (Cart, error) {
 	return i, err
 }
 
-const getCartByUserID = `-- name: GetCartByUserID :one
-SELECT id, checked_out_at, user_id, updated_at, created_at FROM carts WHERE user_id = $1
+const getCart = `-- name: GetCart :one
+SELECT id, checked_out_at, user_id, updated_at, created_at FROM carts WHERE id = $1
 `
 
-func (q *Queries) GetCartByUserID(ctx context.Context, userID int64) (Cart, error) {
-	row := q.db.QueryRow(ctx, getCartByUserID, userID)
+func (q *Queries) GetCart(ctx context.Context, id int64) (Cart, error) {
+	row := q.db.QueryRow(ctx, getCart, id)
 	var i Cart
 	err := row.Scan(
 		&i.ID,
@@ -70,29 +81,29 @@ func (q *Queries) GetCartByUserID(ctx context.Context, userID int64) (Cart, erro
 	return i, err
 }
 
-const getCartDetailByUserID = `-- name: GetCartDetailByUserID :many
+const getCartDetail = `-- name: GetCartDetail :many
 SELECT carts.id, carts.checked_out_at, carts.user_id, carts.updated_at, carts.created_at, cart_items.id, cart_items.product_id, cart_items.cart_id, cart_items.quantity, cart_items.created_at, products.id, products.name, products.description, products.sku, products.image_url, products.stock, products.archived, products.price, products.updated_at, products.created_at
 FROM carts
 JOIN cart_items ON carts.id = cart_items.cart_id
 JOIN products ON cart_items.product_id = products.id
-WHERE carts.user_id = $1
+WHERE carts.id = $1
 `
 
-type GetCartDetailByUserIDRow struct {
+type GetCartDetailRow struct {
 	Cart     Cart     `json:"cart"`
 	CartItem CartItem `json:"cart_item"`
 	Product  Product  `json:"product"`
 }
 
-func (q *Queries) GetCartDetailByUserID(ctx context.Context, userID int64) ([]GetCartDetailByUserIDRow, error) {
-	rows, err := q.db.Query(ctx, getCartDetailByUserID, userID)
+func (q *Queries) GetCartDetail(ctx context.Context, id int64) ([]GetCartDetailRow, error) {
+	rows, err := q.db.Query(ctx, getCartDetail, id)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetCartDetailByUserIDRow{}
+	items := []GetCartDetailRow{}
 	for rows.Next() {
-		var i GetCartDetailByUserIDRow
+		var i GetCartDetailRow
 		if err := rows.Scan(
 			&i.Cart.ID,
 			&i.Cart.CheckedOutAt,
@@ -136,6 +147,20 @@ type RemoveProductFromCartParams struct {
 
 func (q *Queries) RemoveProductFromCart(ctx context.Context, arg RemoveProductFromCartParams) error {
 	_, err := q.db.Exec(ctx, removeProductFromCart, arg.CartID, arg.ProductID)
+	return err
+}
+
+const setCartCheckoutAt = `-- name: SetCartCheckoutAt :exec
+UPDATE carts SET checked_out_at = $1 WHERE id = $2
+`
+
+type SetCartCheckoutAtParams struct {
+	CheckedOutAt pgtype.Timestamptz `json:"checked_out_at"`
+	ID           int64              `json:"id"`
+}
+
+func (q *Queries) SetCartCheckoutAt(ctx context.Context, arg SetCartCheckoutAtParams) error {
+	_, err := q.db.Exec(ctx, setCartCheckoutAt, arg.CheckedOutAt, arg.ID)
 	return err
 }
 

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -43,7 +44,7 @@ type cartResponse struct {
 }
 
 type addProductToCartRequest struct {
-	UserID    int64 `json:"user_id" binding:"required"`
+	CartID    int64 `json:"cart_id" binding:"required"`
 	ProductID int64 `json:"product_id" binding:"required"`
 	Quantity  int16 `json:"quantity" binding:"required"`
 }
@@ -51,6 +52,18 @@ type addProductToCartRequest struct {
 type removeProductFromCartRequest struct {
 	CartID    int64 `json:"cart_id" binding:"required"`
 	ProductID int64 `json:"product_id" binding:"required"`
+}
+
+type checkoutRequest struct {
+	CartID      int64  `json:"cart_id" binding:"required"`
+	Phone       string `json:"phone" binding:"required"`
+	Address     string `json:"address" binding:"min=10,max=255"`
+	City        string `json:"city" binding:"min=3,max=32"`
+	District    string `json:"district" binding:"min=3,max=32"`
+	Ward        string `json:"ward" binding:"min=3,max=32"`
+	ZipCode     string `json:"zip_code" binding:"min=3,max=32"`
+	FullName    string `json:"full_name" binding:"min=3,max=32,alphanum"`
+	PaymentType string `json:"payment_type" binding:"required"`
 }
 
 // ------------------------------ Handlers ------------------------------
@@ -96,7 +109,7 @@ func (sv *Server) createCart(c *gin.Context) {
 func (sv *Server) getCart(c *gin.Context) {
 	userID := c.GetInt64("user_id")
 
-	cart, err := sv.postgres.GetCartDetailByUserID(c, userID)
+	cart, err := sv.postgres.GetCartDetail(c, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -105,7 +118,7 @@ func (sv *Server) getCart(c *gin.Context) {
 	c.JSON(http.StatusOK, mapToCartResponse(cart))
 }
 
-func mapToCartResponse(cart []sqlc.GetCartDetailByUserIDRow) cartResponse {
+func mapToCartResponse(cart []sqlc.GetCartDetailRow) cartResponse {
 	if len(cart) == 0 {
 		return cartResponse{}
 	}
@@ -154,10 +167,10 @@ func (sv *Server) addProductToCart(c *gin.Context) {
 		return
 	}
 	var cartId int64
-	cart, err := sv.postgres.GetCartByUserID(c, req.UserID)
+	cart, err := sv.postgres.GetCart(c, req.CartID)
 	if err != nil {
 		if err == postgres.ErrorRecordNotFound {
-			newCart, err := sv.postgres.CreateCart(c, req.UserID)
+			newCart, err := sv.postgres.CreateCart(c, req.CartID)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, errorResponse(err))
 				return
@@ -185,7 +198,7 @@ func (sv *Server) addProductToCart(c *gin.Context) {
 	c.JSON(http.StatusOK, "product added to cart")
 }
 
-// RemoveProductFromCart godoc
+// removeProductFromCart godoc
 // @Summary Remove a product from the cart
 // @Schemes http
 // @Description remove a product from the cart
@@ -216,11 +229,37 @@ func (sv *Server) removeProductFromCart(c *gin.Context) {
 	c.JSON(http.StatusOK, "product removed from cart")
 }
 
+// checkout godoc
+// @Summary Update product items in the cart
+// @Schemes http
+// @Description update product items in the cart
+// @Tags carts
+// @Accept json
+// @Param input body checkoutRequest true "Update cart items input"
+// @Produce json
+// @Success 200 {object} gin.H
+// @Failure 400 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /carts/products [post]
 func (sv *Server) checkout(c *gin.Context) {
+	var req checkoutRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
 
+	_, err := sv.postgres.GetCart(c, req.CartID)
+	if err != nil {
+		if errors.Is(err, postgres.ErrorRecordNotFound) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "cart not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
 }
 
-// UpdateCartProductItems godoc
+// updateCartProductItems godoc
 // @Summary Update product items in the cart
 // @Schemes http
 // @Description update product items in the cart

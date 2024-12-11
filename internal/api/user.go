@@ -12,10 +12,10 @@ import (
 )
 
 type createUserRequest struct {
-	Username string `json:"username" binding:"required,min=3,max=32"`
-	Password string `json:"password" binding:"required,min=6,max=32"`
-	FullName string `json:"full_name" binding:"required,min=3,max=32"`
-	Email    string `json:"email" binding:"required,email,max=255"`
+	Username string `json:"username" binding:"required,min=3,max=32,alphanum"`
+	Password string `json:"password" binding:"required,min=6,max=32,alphanum"`
+	FullName string `json:"full_name" binding:"required,min=3,max=32,alphanum"`
+	Email    string `json:"email" binding:"required,email,max=255,min=6"`
 }
 
 type createUserResponse struct {
@@ -27,10 +27,16 @@ type createUserResponse struct {
 	PasswordChangedAt string `json:"password_changed_at"`
 }
 type loginUserRequest struct {
-	Username string `json:"username" binding:"required,min=3,max=32"`
-	Password string `json:"password" binding:"required,min=6,max=32"`
+	Username string `json:"username" binding:"required,min=3,max=32,alphanum"`
+	Password string `json:"password" binding:"required,min=6,max=32,alphanum"`
 }
 
+type updateUserRequest struct {
+	UserID   int64         `json:"user_id" binding:"required,min=1"`
+	FullName string        `json:"full_name,omitempty" binding:"omitempty,min=3,max=32,alphanum"`
+	Email    string        `json:"email" binding:"email,max=255,min=6"`
+	Role     sqlc.UserRole `json:"role"`
+}
 type loginResponse struct {
 	SessionID            uuid.UUID          `json:"session_id"`
 	Token                string             `json:"token"`
@@ -38,13 +44,6 @@ type loginResponse struct {
 	RefreshToken         string             `json:"refresh_token"`
 	RefreshTokenExpireAt time.Time          `json:"refresh_token_expire_at"`
 	User                 createUserResponse `json:"user"`
-}
-
-type updateUserRequest struct {
-	UserID   int64         `json:"user_id" binding:"required"`
-	FullName string        `json:"full_name"`
-	Email    string        `json:"email" binding:"email"`
-	Role     sqlc.UserRole `json:"role"`
 }
 
 // ------------------------------ Mappers ------------------------------
@@ -197,13 +196,16 @@ func (sv *Server) updateUser(c *gin.Context) {
 			String: req.Email,
 			Valid:  true,
 		},
-		Role: sqlc.NullUserRole{
-			UserRole: req.Role,
-		},
 		FullName: pgtype.Text{
 			String: req.FullName,
 			Valid:  true,
 		},
+	}
+
+	if user.Role == sqlc.UserRoleAdmin {
+		arg.Role = sqlc.NullUserRole{
+			UserRole: req.Role,
+		}
 	}
 	updatedUser, err := sv.postgres.UpdateUser(c, arg)
 	if err != nil {

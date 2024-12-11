@@ -5,9 +5,15 @@ create-migration:
 migrate-up:
 	@echo "Running migrations..."
 	migrate -path migrations -database "$(DB_URL)" up
+migrate-up-1:
+	@echo "Running migrations up 1..."
+	migrate -path migrations -database "$(DB_URL)" up 1
 migrate-down:
-	@echo "Running migrations..."
+	@echo "Running migrations down..."
 	migrate -path migrations -database "$(DB_URL)" down
+migrate-down-1:
+	@echo "Running migrations down 1..."
+	migrate -path migrations -database "$(DB_URL)" down 1
 migrate-drop:
 	@echo "Running migrations..."
 	migrate -path migrations -database "$(DB_URL)" drop

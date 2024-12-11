@@ -85,7 +85,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
 
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT
-    id, role, username, email, full_name, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at
+    id, role, username, email, full_name, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at, phone
 FROM
     users
 WHERE
@@ -108,13 +108,14 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.PasswordChangedAt,
 		&i.UpdatedAt,
 		&i.CreatedAt,
+		&i.Phone,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
 SELECT
-    id, role, username, email, full_name, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at
+    id, role, username, email, full_name, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at, phone
 FROM
     users
 WHERE
@@ -137,13 +138,14 @@ func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
 		&i.PasswordChangedAt,
 		&i.UpdatedAt,
 		&i.CreatedAt,
+		&i.Phone,
 	)
 	return i, err
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
 SELECT
-    id, role, username, email, full_name, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at
+    id, role, username, email, full_name, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at, phone
 FROM
     users
 WHERE
@@ -166,13 +168,14 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.PasswordChangedAt,
 		&i.UpdatedAt,
 		&i.CreatedAt,
+		&i.Phone,
 	)
 	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many
 SELECT
-    id, role, username, email, full_name, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at
+    id, role, username, email, full_name, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at, phone
 FROM
     users
 ORDER BY
@@ -207,6 +210,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 			&i.PasswordChangedAt,
 			&i.UpdatedAt,
 			&i.CreatedAt,
+			&i.Phone,
 		); err != nil {
 			return nil, err
 		}

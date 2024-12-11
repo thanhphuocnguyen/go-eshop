@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/thanhphuocnguyen/go-eshop/config"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
@@ -13,7 +14,7 @@ import (
 
 type Store interface {
 	sqlc.Querier
-	// TODO: Add more methods to satisfy the business logic of the application for transactions
+	CheckoutCartTx(ctx context.Context, arg CheckoutCartParams) (CheckoutCartTxResult, error)
 	Close()
 }
 
@@ -75,4 +76,21 @@ func (pg *Postgres) Close() {
 	if pg.Pool != nil {
 		pg.Pool.Close()
 	}
+}
+
+func (store *Postgres) execTx(ctx context.Context, fn func(*sqlc.Queries) error) error {
+	tx, err := store.Pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return err
+	}
+	q := sqlc.New(tx)
+	err = fn(q)
+	if err != nil {
+		if rbErr := tx.Rollback(ctx); rbErr != nil {
+			return fmt.Errorf("tx error: %v, rb error: %v", err, rbErr)
+		}
+		return err
+	}
+
+	return tx.Commit(ctx)
 }

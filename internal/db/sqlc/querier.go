@@ -13,22 +13,31 @@ import (
 type Querier interface {
 	AddProductToCart(ctx context.Context, arg AddProductToCartParams) (CartItem, error)
 	ArchiveProduct(ctx context.Context, id int64) error
+	ClearCart(ctx context.Context, cartID int64) error
 	CreateCart(ctx context.Context, userID int64) (Cart, error)
+	CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error)
+	CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (OrderItem, error)
 	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
 	CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
+	DeleteOrder(ctx context.Context, id int64) error
 	DeleteProduct(ctx context.Context, id int64) error
 	DeleteUser(ctx context.Context, id int64) error
-	GetCartByUserID(ctx context.Context, userID int64) (Cart, error)
-	GetCartDetailByUserID(ctx context.Context, userID int64) ([]GetCartDetailByUserIDRow, error)
+	GetCart(ctx context.Context, id int64) (Cart, error)
+	GetCartDetail(ctx context.Context, id int64) ([]GetCartDetailRow, error)
+	GetOrder(ctx context.Context, id int64) (Order, error)
 	GetProduct(ctx context.Context, id int64) (Product, error)
 	GetSession(ctx context.Context, id uuid.UUID) (Session, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id int64) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
+	ListOrderItems(ctx context.Context, arg ListOrderItemsParams) ([]OrderItem, error)
+	ListOrders(ctx context.Context, arg ListOrdersParams) ([]Order, error)
 	ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	RemoveProductFromCart(ctx context.Context, arg RemoveProductFromCartParams) error
+	SetCartCheckoutAt(ctx context.Context, arg SetCartCheckoutAtParams) error
+	UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order, error)
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
 	UpdateProductImage(ctx context.Context, arg UpdateProductImageParams) error
 	UpdateProductQuantity(ctx context.Context, arg UpdateProductQuantityParams) error

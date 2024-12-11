@@ -14,7 +14,6 @@ func GetPgTypeText(value string) pgtype.Text {
 }
 
 func ParsePgNumeric(value float32) (pgtype.Numeric, error) {
-
 	price := pgtype.Numeric{}
 	if err := price.Scan(fmt.Sprintf("%.2f", value)); err != nil {
 		return price, err

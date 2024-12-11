@@ -11,22 +11,23 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/util"
 )
 
-type createProductRequest struct {
-	Name        string  `json:"name" binding:"required"`
-	Description string  `json:"description" binding:"required"`
-	Sku         string  `json:"sku" binding:"required"`
-	Stock       int32   `json:"stock" binding:"required"`
-	Price       float32 `json:"price" binding:"required"`
+type productRequest struct {
+	Name        string  `json:"name" binding:"required,min=3,max=100"`
+	Description string  `json:"description" binding:"required,min=10,max=1000"`
+	Sku         string  `json:"sku" binding:"required,alphanum"`
+	Stock       int32   `json:"stock" binding:"required,gt=0"`
+	Price       float32 `json:"price" binding:"required,gt=0,lt=10000"`
 }
 
 type getProductParams struct {
-	ProductID int64 `uri:"product_id" binding:"required"`
+	ProductID int64 `uri:"product_id" binding:"required,min=1"`
 }
 
 type listProductsParams struct {
 	Page     int32 `form:"page" binding:"required,min=1"`
 	PageSize int32 `form:"page_size" binding:"required,min=1,max=100"`
 }
+
 type productResponse struct {
 	ID          int64   `json:"id"`
 	Name        string  `json:"name"`
@@ -39,14 +40,6 @@ type productResponse struct {
 	CreatedAt   string  `json:"created_at"`
 }
 
-type updateProductRequest struct {
-	Name        string  `json:"name" binding:"required"`
-	Description string  `json:"description" binding:"required"`
-	Sku         string  `json:"sku" binding:"required"`
-	Stock       int32   `json:"stock" binding:"required"`
-	Price       float32 `json:"price" binding:"required"`
-}
-
 // ------------------------------ Handlers ------------------------------
 // CreateProduct godoc
 // @Summary Create a new product
@@ -54,14 +47,14 @@ type updateProductRequest struct {
 // @Description create a new product with the input payload
 // @Tags products
 // @Accept json
-// @Param input body createProductRequest true "Product input"
+// @Param input body productRequest true "Product input"
 // @Produce json
 // @Success 200 {object} productResponse
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /products [post]
 func (sv *Server) createProduct(c *gin.Context) {
-	var product createProductRequest
+	var product productRequest
 	if err := c.ShouldBindJSON(&product); err != nil {
 		c.JSON(http.StatusBadRequest, errorResponse(err))
 		return
@@ -213,7 +206,7 @@ func (sv *Server) removeProduct(c *gin.Context) {
 // @Tags products
 // @Accept json
 // @Param product_id path int true "Product ID"
-// @Param input body createProductRequest true "Product input"
+// @Param input body productRequest true "Product input"
 // @Produce json
 // @Success 200 {object} productResponse
 // @Failure 404 {object} gin.H
@@ -225,7 +218,7 @@ func (sv *Server) updateProduct(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	var product updateProductRequest
+	var product productRequest
 	if err := c.ShouldBindJSON(&product); err != nil {
 		c.JSON(http.StatusBadRequest, errorResponse(err))
 		return

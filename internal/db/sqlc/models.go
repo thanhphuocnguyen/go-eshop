@@ -354,4 +354,17 @@ type User struct {
 	PasswordChangedAt time.Time `json:"password_changed_at"`
 	UpdatedAt         time.Time `json:"updated_at"`
 	CreatedAt         time.Time `json:"created_at"`
+	Phone             string    `json:"phone"`
+}
+
+type UserAddress struct {
+	ID        int64       `json:"id"`
+	UserID    int64       `json:"user_id"`
+	Phone     string      `json:"phone"`
+	Address1  string      `json:"address_1"`
+	Address2  pgtype.Text `json:"address_2"`
+	Ward      pgtype.Text `json:"ward"`
+	District  pgtype.Text `json:"district"`
+	City      string      `json:"city"`
+	IsPrimary bool        `json:"is_primary"`
 }
