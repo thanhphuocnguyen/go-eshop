@@ -55,17 +55,6 @@ const docTemplate = `{
                     "carts"
                 ],
                 "summary": "Create a new cart",
-                "parameters": [
-                    {
-                        "description": "Cart input",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.createCartRequest"
-                        }
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -354,7 +343,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.productRequest"
+                            "$ref": "#/definitions/api.createProductRequest"
                         }
                     }
                 ],
@@ -449,7 +438,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.productRequest"
+                            "$ref": "#/definitions/api.updateProductRequest"
                         }
                     }
                 ],
@@ -517,6 +506,50 @@ const docTemplate = `{
                 }
             }
         },
+        "/products/{product_id}/remove-image": {
+            "delete": {
+                "description": "upload a product image by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Upload a product image by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "product_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
         "/products/{product_id}/upload-image": {
             "post": {
                 "description": "upload a product image by ID",
@@ -536,6 +569,13 @@ const docTemplate = `{
                         "description": "Product ID",
                         "name": "product_id",
                         "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Image file",
+                        "name": "file",
+                        "in": "formData",
                         "required": true
                     }
                 ],
@@ -668,14 +708,10 @@ const docTemplate = `{
         "api.addProductToCartRequest": {
             "type": "object",
             "required": [
-                "cart_id",
                 "product_id",
                 "quantity"
             ],
             "properties": {
-                "cart_id": {
-                    "type": "integer"
-                },
                 "product_id": {
                     "type": "integer"
                 },
@@ -684,7 +720,7 @@ const docTemplate = `{
                 }
             }
         },
-        "api.cartItem": {
+        "api.cartItemResponse": {
             "type": "object",
             "properties": {
                 "description": {
@@ -719,7 +755,7 @@ const docTemplate = `{
                 "cart_items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.cartItem"
+                        "$ref": "#/definitions/api.cartItemResponse"
                     }
                 },
                 "checked_out": {
@@ -758,13 +794,33 @@ const docTemplate = `{
                 }
             }
         },
-        "api.createCartRequest": {
+        "api.createProductRequest": {
             "type": "object",
             "required": [
-                "user_id"
+                "description",
+                "name",
+                "price",
+                "sku",
+                "stock"
             ],
             "properties": {
-                "user_id": {
+                "description": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "minLength": 10
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 3
+                },
+                "price": {
+                    "type": "number"
+                },
+                "sku": {
+                    "type": "string"
+                },
+                "stock": {
                     "type": "integer"
                 }
             }
@@ -775,6 +831,7 @@ const docTemplate = `{
                 "email",
                 "full_name",
                 "password",
+                "phone",
                 "username"
             ],
             "properties": {
@@ -792,6 +849,11 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 32,
                     "minLength": 6
+                },
+                "phone": {
+                    "type": "string",
+                    "maxLength": 15,
+                    "minLength": 10
                 },
                 "username": {
                     "type": "string",
@@ -891,37 +953,6 @@ const docTemplate = `{
                 }
             }
         },
-        "api.productRequest": {
-            "type": "object",
-            "required": [
-                "description",
-                "name",
-                "price",
-                "sku",
-                "stock"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string",
-                    "maxLength": 1000,
-                    "minLength": 10
-                },
-                "name": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 3
-                },
-                "price": {
-                    "type": "number"
-                },
-                "sku": {
-                    "type": "string"
-                },
-                "stock": {
-                    "type": "integer"
-                }
-            }
-        },
         "api.productResponse": {
             "type": "object",
             "properties": {
@@ -984,6 +1015,30 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/api.itemUpdate"
                     }
+                }
+            }
+        },
+        "api.updateProductRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "minLength": 10
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 3
+                },
+                "price": {
+                    "type": "number"
+                },
+                "sku": {
+                    "type": "string"
+                },
+                "stock": {
+                    "type": "integer"
                 }
             }
         },

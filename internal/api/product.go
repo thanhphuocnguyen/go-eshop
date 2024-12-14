@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/postgres"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
 	"github.com/thanhphuocnguyen/go-eshop/internal/util"
@@ -54,7 +55,7 @@ type productResponse struct {
 // @Description create a new product with the input payload
 // @Tags products
 // @Accept json
-// @Param input body productRequest true "Product input"
+// @Param input body createProductRequest true "Product input"
 // @Produce json
 // @Success 200 {object} productResponse
 // @Failure 400 {object} gin.H
@@ -105,7 +106,7 @@ func (sv *Server) createProduct(c *gin.Context) {
 func (sv *Server) getProduct(c *gin.Context) {
 	var params getProductParams
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
@@ -189,7 +190,7 @@ func convertToProductResponse(product sqlc.Product) productResponse {
 func (sv *Server) removeProduct(c *gin.Context) {
 	var params getProductParams
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
@@ -219,7 +220,7 @@ func (sv *Server) removeProduct(c *gin.Context) {
 // @Tags products
 // @Accept json
 // @Param product_id path int true "Product ID"
-// @Param input body productRequest true "Product input"
+// @Param input body updateProductRequest true "Product input"
 // @Produce json
 // @Success 200 {object} productResponse
 // @Failure 404 {object} gin.H
@@ -228,7 +229,7 @@ func (sv *Server) removeProduct(c *gin.Context) {
 func (sv *Server) updateProduct(c *gin.Context) {
 	var params getProductParams
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 	var product updateProductRequest
@@ -236,17 +237,18 @@ func (sv *Server) updateProduct(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
-
-	price, err := util.ParsePgNumeric(product.Price)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
 	updateBody := sqlc.UpdateProductParams{
-		ID:    params.ProductID,
-		Price: price,
+		ID: params.ProductID,
 	}
+	if product.Price != 0 {
+		price, err := util.ParsePgNumeric(product.Price)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, errorResponse(err))
+			return
+		}
+		updateBody.Price = price
+	}
+
 	if product.Name != "" {
 		updateBody.Name = pgtype.Text{
 			String: product.Name,
@@ -287,43 +289,106 @@ func (sv *Server) updateProduct(c *gin.Context) {
 // @Tags products
 // @Accept json
 // @Param product_id path int true "Product ID"
+// @Param file formData file true "Image file"
 // @Produce json
 // @Success 200 {object} gin.H
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /products/{product_id}/upload-image [post]
 func (sv *Server) uploadProductImage(c *gin.Context) {
+	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, errorResponse(errors.New("missing user payload in context")))
+		return
+	}
 	file, _ := c.FormFile("file")
 	if file == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "file is required"})
 		return
 	}
-	var productID getProductParams
-	if err := c.ShouldBindUri(&productID); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+
+	var param getProductParams
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	product, err := sv.postgres.GetProduct(c, productID.ProductID)
+	product, err := sv.postgres.GetProduct(c, param.ProductID)
 
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	c.SaveUploadedFile(file, "/assets/images")
+	fileName := util.GetImageName(file.Filename, authPayload.UserID, product.ID)
+	filePath := imageAssetsDir + fileName
+	err = c.SaveUploadedFile(file, util.GetImageURL(fileName))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
 
-	product.ImageUrl = pgtype.Text{
-		String: "/assets/images/" + file.Filename,
+	imageUrl := pgtype.Text{
+		String: filePath,
 		Valid:  true,
 	}
+
 	product, err = sv.postgres.UpdateProduct(c, sqlc.UpdateProductParams{
+		ID:       product.ID,
+		ImageUrl: imageUrl,
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	c.JSON(http.StatusOK, convertToProductResponse(product))
+}
+
+// UploadProductImage godoc
+// @Summary Upload a product image by ID
+// @Schemes http
+// @Description upload a product image by ID
+// @Tags products
+// @Accept json
+// @Param product_id path int true "Product ID"
+// @Produce json
+// @Success 200 {object} gin.H
+// @Failure 404 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /products/{product_id}/remove-image [delete]
+func (sv *Server) removeProductImage(c *gin.Context) {
+	var param getProductParams
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	product, err := sv.postgres.GetProduct(c, param.ProductID)
+
+	if err != nil {
+		if errors.Is(err, postgres.ErrorRecordNotFound) {
+			c.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		c.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	product.ImageUrl = pgtype.Text{
+		String: "",
+		Valid:  false,
+	}
+
+	product, err = sv.postgres.UpdateProduct(c, sqlc.UpdateProductParams{
+		ID:       product.ID,
 		ImageUrl: product.ImageUrl,
 	})
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return

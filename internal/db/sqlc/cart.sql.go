@@ -65,11 +65,11 @@ func (q *Queries) CreateCart(ctx context.Context, userID int64) (Cart, error) {
 }
 
 const getCart = `-- name: GetCart :one
-SELECT id, checked_out_at, user_id, updated_at, created_at FROM carts WHERE id = $1
+SELECT id, checked_out_at, user_id, updated_at, created_at FROM carts WHERE checked_out_at IS NULL AND user_id = $1 LIMIT 1
 `
 
-func (q *Queries) GetCart(ctx context.Context, id int64) (Cart, error) {
-	row := q.db.QueryRow(ctx, getCart, id)
+func (q *Queries) GetCart(ctx context.Context, userID int64) (Cart, error) {
+	row := q.db.QueryRow(ctx, getCart, userID)
 	var i Cart
 	err := row.Scan(
 		&i.ID,
@@ -86,7 +86,7 @@ SELECT carts.id, carts.checked_out_at, carts.user_id, carts.updated_at, carts.cr
 FROM carts
 JOIN cart_items ON carts.id = cart_items.cart_id
 JOIN products ON cart_items.product_id = products.id
-WHERE carts.id = $1
+WHERE carts.user_id = $1 AND carts.checked_out_at IS NULL
 `
 
 type GetCartDetailRow struct {
@@ -95,8 +95,8 @@ type GetCartDetailRow struct {
 	Product  Product  `json:"product"`
 }
 
-func (q *Queries) GetCartDetail(ctx context.Context, id int64) ([]GetCartDetailRow, error) {
-	rows, err := q.db.Query(ctx, getCartDetail, id)
+func (q *Queries) GetCartDetail(ctx context.Context, userID int64) ([]GetCartDetailRow, error) {
+	rows, err := q.db.Query(ctx, getCartDetail, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func (q *Queries) RemoveProductFromCart(ctx context.Context, arg RemoveProductFr
 }
 
 const setCartCheckoutAt = `-- name: SetCartCheckoutAt :exec
-UPDATE carts SET checked_out_at = $1 WHERE id = $2
+UPDATE carts SET checked_out_at = $1, updated_at = NOW() WHERE id = $2
 `
 
 type SetCartCheckoutAtParams struct {
@@ -164,17 +164,11 @@ func (q *Queries) SetCartCheckoutAt(ctx context.Context, arg SetCartCheckoutAtPa
 	return err
 }
 
-const updateProductQuantity = `-- name: UpdateProductQuantity :exec
-UPDATE cart_items SET quantity = $1 WHERE cart_id = $2 AND product_id = $3
+const updateCart = `-- name: UpdateCart :exec
+UPDATE carts SET updated_at = NOW() WHERE id = $1 RETURNING id, checked_out_at, user_id, updated_at, created_at
 `
 
-type UpdateProductQuantityParams struct {
-	Quantity  int16 `json:"quantity"`
-	CartID    int64 `json:"cart_id"`
-	ProductID int64 `json:"product_id"`
-}
-
-func (q *Queries) UpdateProductQuantity(ctx context.Context, arg UpdateProductQuantityParams) error {
-	_, err := q.db.Exec(ctx, updateProductQuantity, arg.Quantity, arg.CartID, arg.ProductID)
+func (q *Queries) UpdateCart(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, updateCart, id)
 	return err
 }

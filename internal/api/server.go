@@ -31,6 +31,10 @@ type Server struct {
 	tokenGenerator  auth.TokenGenerator
 }
 
+const (
+	imageAssetsDir = "assets/images/"
+)
+
 func NewAPI(cfg config.Config, postgres postgres.Store, taskDistributor worker.TaskDistributor) (*Server, error) {
 	tokenGenerator := auth.NewPasetoTokenGenerator()
 	server := &Server{
@@ -44,18 +48,19 @@ func NewAPI(cfg config.Config, postgres postgres.Store, taskDistributor worker.T
 }
 
 func (sv *Server) initializeRouter() {
-	router := gin.New()
+	router := gin.Default()
 	router.Use(gin.Recovery())
 	cors := cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowCredentials: true,
 	})
-	router.MaxMultipartMemory = 8 << 20 // 8 MiB
 	router.Use(cors)
-	router.Static("/assets", "../../assets")
 
+	router.MaxMultipartMemory = 8 << 20 // 8 MiB
 	docs.SwaggerInfo.BasePath = "/api/v1"
+
+	router.Static("/assets", "./assets")
 
 	v1 := router.Group("/api/v1")
 	{
@@ -65,25 +70,30 @@ func (sv *Server) initializeRouter() {
 			user.POST("/login", sv.loginUser)
 			user.Use(authMiddleware(sv.tokenGenerator)).PATCH("", sv.updateUser)
 		}
+
 		product := v1.Group("/products")
 		{
 			product.GET(":product_id", sv.getProduct)
 			product.GET("", sv.listProducts)
 			productAuthRoutes := product.Group("").Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sqlc.UserRoleAdmin))
 			productAuthRoutes.POST("", sv.createProduct)
-			productAuthRoutes.POST(":product_id/upload-image", sv.uploadProductImage)
 			productAuthRoutes.PUT(":product_id", sv.updateProduct)
 			productAuthRoutes.DELETE(":product_id", sv.removeProduct)
+			productAuthRoutes.POST(":product_id/upload-image", sv.uploadProductImage)
+			productAuthRoutes.DELETE(":product_id/remove-image", sv.removeProductImage)
 		}
-		cart := v1.Group("/carts")
+
+		cart := v1.Group("/carts").Use(authMiddleware(sv.tokenGenerator))
 		{
 			cart.POST("", sv.createCart)
 			cart.GET("", sv.getCart)
-			cart.POST("/add-new-item", sv.addProductToCart)
+			cart.POST("/add-product", sv.addProductToCart)
 			cart.POST("/remove", sv.removeProductFromCart)
 			cart.POST("/checkout", sv.checkout)
-			cart.PUT("/cart-items", sv.updateCartProductItems)
+			cart.PUT("/item-quantity", sv.updateCartItemQuantity)
+			cart.PUT("/clear", sv.clearCart)
 		}
+
 		order := v1.Group("/orders").Use(authMiddleware(sv.tokenGenerator))
 		{
 			order.GET("", sv.orderList)
@@ -108,11 +118,4 @@ func (s *Server) Server(addr string) *http.Server {
 
 func errorResponse(err error) gin.H {
 	return gin.H{"error": err.Error()}
-}
-func errorsResponse(err []error) gin.H {
-	var errs []string
-	for _, e := range err {
-		errs = append(errs, e.Error())
-	}
-	return gin.H{"errors": errs}
 }

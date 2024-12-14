@@ -7,7 +7,6 @@ package sqlc
 
 import (
 	"context"
-	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -189,9 +188,9 @@ SET
     image_url = coalesce($4, image_url),
     stock = coalesce($5, stock),
     price = coalesce($6, price),
-    updated_at = $7
+    updated_at = NOW()
 WHERE
-    id = $8
+    id = $7
 RETURNING id, name, description, sku, image_url, stock, archived, price, updated_at, created_at
 `
 
@@ -202,7 +201,6 @@ type UpdateProductParams struct {
 	ImageUrl    pgtype.Text    `json:"image_url"`
 	Stock       pgtype.Int4    `json:"stock"`
 	Price       pgtype.Numeric `json:"price"`
-	UpdatedAt   time.Time      `json:"updated_at"`
 	ID          int64          `json:"id"`
 }
 
@@ -214,7 +212,6 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		arg.ImageUrl,
 		arg.Stock,
 		arg.Price,
-		arg.UpdatedAt,
 		arg.ID,
 	)
 	var i Product

@@ -2,18 +2,15 @@ basePath: /api/v1
 definitions:
   api.addProductToCartRequest:
     properties:
-      cart_id:
-        type: integer
       product_id:
         type: integer
       quantity:
         type: integer
     required:
-    - cart_id
     - product_id
     - quantity
     type: object
-  api.cartItem:
+  api.cartItemResponse:
     properties:
       description:
         type: string
@@ -36,7 +33,7 @@ definitions:
     properties:
       cart_items:
         items:
-          $ref: '#/definitions/api.cartItem'
+          $ref: '#/definitions/api.cartItemResponse'
         type: array
       checked_out:
         type: string
@@ -62,12 +59,28 @@ definitions:
     - is_cod
     - payment_type
     type: object
-  api.createCartRequest:
+  api.createProductRequest:
     properties:
-      user_id:
+      description:
+        maxLength: 1000
+        minLength: 10
+        type: string
+      name:
+        maxLength: 100
+        minLength: 3
+        type: string
+      price:
+        type: number
+      sku:
+        type: string
+      stock:
         type: integer
     required:
-    - user_id
+    - description
+    - name
+    - price
+    - sku
+    - stock
     type: object
   api.createUserRequest:
     properties:
@@ -83,6 +96,10 @@ definitions:
         maxLength: 32
         minLength: 6
         type: string
+      phone:
+        maxLength: 15
+        minLength: 10
+        type: string
       username:
         maxLength: 32
         minLength: 3
@@ -91,6 +108,7 @@ definitions:
     - email
     - full_name
     - password
+    - phone
     - username
     type: object
   api.createUserResponse:
@@ -154,29 +172,6 @@ definitions:
     - password
     - username
     type: object
-  api.productRequest:
-    properties:
-      description:
-        maxLength: 1000
-        minLength: 10
-        type: string
-      name:
-        maxLength: 100
-        minLength: 3
-        type: string
-      price:
-        type: number
-      sku:
-        type: string
-      stock:
-        type: integer
-    required:
-    - description
-    - name
-    - price
-    - sku
-    - stock
-    type: object
   api.productResponse:
     properties:
       created_at:
@@ -219,6 +214,23 @@ definitions:
     required:
     - cart_id
     - items
+    type: object
+  api.updateProductRequest:
+    properties:
+      description:
+        maxLength: 1000
+        minLength: 10
+        type: string
+      name:
+        maxLength: 100
+        minLength: 3
+        type: string
+      price:
+        type: number
+      sku:
+        type: string
+      stock:
+        type: integer
     type: object
   api.updateUserRequest:
     properties:
@@ -407,13 +419,6 @@ paths:
       consumes:
       - application/json
       description: create a new cart for a user
-      parameters:
-      - description: Cart input
-        in: body
-        name: input
-        required: true
-        schema:
-          $ref: '#/definitions/api.createCartRequest'
       produces:
       - application/json
       responses:
@@ -604,7 +609,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/api.productRequest'
+          $ref: '#/definitions/api.createProductRequest'
       produces:
       - application/json
       responses:
@@ -695,7 +700,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/api.productRequest'
+          $ref: '#/definitions/api.updateProductRequest'
       produces:
       - application/json
       responses:
@@ -714,6 +719,35 @@ paths:
       summary: Update a product by ID
       tags:
       - products
+  /products/{product_id}/remove-image:
+    delete:
+      consumes:
+      - application/json
+      description: upload a product image by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gin.H'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Upload a product image by ID
+      tags:
+      - products
   /products/{product_id}/upload-image:
     post:
       consumes:
@@ -725,6 +759,11 @@ paths:
         name: product_id
         required: true
         type: integer
+      - description: Image file
+        in: formData
+        name: file
+        required: true
+        type: file
       produces:
       - application/json
       responses:

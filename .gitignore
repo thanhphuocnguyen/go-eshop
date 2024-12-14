@@ -5,3 +5,5 @@ tmp/
 dump.rdb
 cpu.pprof
 mem.pprof
+block.pprof
+assets

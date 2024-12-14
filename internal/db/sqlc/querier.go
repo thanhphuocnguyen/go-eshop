@@ -23,8 +23,8 @@ type Querier interface {
 	DeleteOrder(ctx context.Context, id int64) error
 	DeleteProduct(ctx context.Context, id int64) error
 	DeleteUser(ctx context.Context, id int64) error
-	GetCart(ctx context.Context, id int64) (Cart, error)
-	GetCartDetail(ctx context.Context, id int64) ([]GetCartDetailRow, error)
+	GetCart(ctx context.Context, userID int64) (Cart, error)
+	GetCartDetail(ctx context.Context, userID int64) ([]GetCartDetailRow, error)
 	GetOrder(ctx context.Context, id int64) (Order, error)
 	GetOrderDetails(ctx context.Context, id int64) ([]GetOrderDetailsRow, error)
 	GetProduct(ctx context.Context, id int64) (Product, error)
@@ -38,10 +38,11 @@ type Querier interface {
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	RemoveProductFromCart(ctx context.Context, arg RemoveProductFromCartParams) error
 	SetCartCheckoutAt(ctx context.Context, arg SetCartCheckoutAtParams) error
+	UpdateCart(ctx context.Context, id int64) error
+	UpdateCartItemQuantity(ctx context.Context, arg UpdateCartItemQuantityParams) error
 	UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order, error)
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
 	UpdateProductImage(ctx context.Context, arg UpdateProductImageParams) error
-	UpdateProductQuantity(ctx context.Context, arg UpdateProductQuantityParams) error
 	UpdateProductStock(ctx context.Context, arg UpdateProductStockParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateUserRow, error)
 }

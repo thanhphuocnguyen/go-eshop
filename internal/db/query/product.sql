@@ -51,7 +51,7 @@ SET
     image_url = coalesce(sqlc.narg('image_url'), image_url),
     stock = coalesce(sqlc.narg('stock'), stock),
     price = coalesce(sqlc.narg('price'), price),
-    updated_at = sqlc.arg('updated_at')
+    updated_at = NOW()
 WHERE
     id = sqlc.arg('id')
 RETURNING *;
