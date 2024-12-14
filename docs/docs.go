@@ -134,7 +134,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "add a product to the cart",
+                "description": "update product items in the cart",
                 "consumes": [
                     "application/json"
                 ],
@@ -144,15 +144,15 @@ const docTemplate = `{
                 "tags": [
                     "carts"
                 ],
-                "summary": "Add a product to the cart",
+                "summary": "Update product items in the cart",
                 "parameters": [
                     {
-                        "description": "Add product to cart input",
+                        "description": "Update cart items input",
                         "name": "input",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.addProductToCartRequest"
+                            "$ref": "#/definitions/api.checkoutRequest"
                         }
                     }
                 ],
@@ -160,7 +160,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/sqlc.Order"
                         }
                     },
                     "400": {
@@ -209,6 +209,66 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/orders": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "List orders of the current user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "orders"
+                ],
+                "summary": "List orders",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.listOrderResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/gin.H"
                         }
@@ -294,7 +354,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.createProductRequest"
+                            "$ref": "#/definitions/api.productRequest"
                         }
                     }
                 ],
@@ -363,6 +423,57 @@ const docTemplate = `{
                     }
                 }
             },
+            "put": {
+                "description": "update a product by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Update a product by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "product_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Product input",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.productRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.productResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            },
             "delete": {
                 "description": "remove a product by ID",
                 "consumes": [
@@ -375,6 +486,50 @@ const docTemplate = `{
                     "products"
                 ],
                 "summary": "Remove a product by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "product_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/products/{product_id}/upload-image": {
+            "post": {
+                "description": "upload a product image by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Upload a product image by ID",
                 "parameters": [
                     {
                         "type": "integer",
@@ -513,18 +668,18 @@ const docTemplate = `{
         "api.addProductToCartRequest": {
             "type": "object",
             "required": [
+                "cart_id",
                 "product_id",
-                "quantity",
-                "user_id"
+                "quantity"
             ],
             "properties": {
+                "cart_id": {
+                    "type": "integer"
+                },
                 "product_id": {
                     "type": "integer"
                 },
                 "quantity": {
-                    "type": "integer"
-                },
-                "user_id": {
                     "type": "integer"
                 }
             }
@@ -584,6 +739,25 @@ const docTemplate = `{
                 }
             }
         },
+        "api.checkoutRequest": {
+            "type": "object",
+            "required": [
+                "cart_id",
+                "is_cod",
+                "payment_type"
+            ],
+            "properties": {
+                "cart_id": {
+                    "type": "integer"
+                },
+                "is_cod": {
+                    "type": "boolean"
+                },
+                "payment_type": {
+                    "type": "string"
+                }
+            }
+        },
         "api.createCartRequest": {
             "type": "object",
             "required": [
@@ -591,33 +765,6 @@ const docTemplate = `{
             ],
             "properties": {
                 "user_id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "api.createProductRequest": {
-            "type": "object",
-            "required": [
-                "description",
-                "name",
-                "price",
-                "sku",
-                "stock"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "price": {
-                    "type": "number"
-                },
-                "sku": {
-                    "type": "string"
-                },
-                "stock": {
                     "type": "integer"
                 }
             }
@@ -633,7 +780,8 @@ const docTemplate = `{
             "properties": {
                 "email": {
                     "type": "string",
-                    "maxLength": 255
+                    "maxLength": 255,
+                    "minLength": 6
                 },
                 "full_name": {
                     "type": "string",
@@ -690,6 +838,17 @@ const docTemplate = `{
                 }
             }
         },
+        "api.listOrderResponse": {
+            "type": "object",
+            "properties": {
+                "orders": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sqlc.Order"
+                    }
+                }
+            }
+        },
         "api.loginResponse": {
             "type": "object",
             "properties": {
@@ -729,6 +888,37 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 32,
                     "minLength": 3
+                }
+            }
+        },
+        "api.productRequest": {
+            "type": "object",
+            "required": [
+                "description",
+                "name",
+                "price",
+                "sku",
+                "stock"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "minLength": 10
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 3
+                },
+                "price": {
+                    "type": "number"
+                },
+                "sku": {
+                    "type": "string"
+                },
+                "stock": {
+                    "type": "integer"
                 }
             }
         },
@@ -804,22 +994,65 @@ const docTemplate = `{
             ],
             "properties": {
                 "email": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 6
                 },
                 "full_name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 3
                 },
                 "role": {
                     "$ref": "#/definitions/sqlc.UserRole"
                 },
                 "user_id": {
-                    "type": "integer"
+                    "type": "integer",
+                    "minimum": 1
                 }
             }
         },
         "gin.H": {
             "type": "object",
             "additionalProperties": {}
+        },
+        "pgtype.InfinityModifier": {
+            "type": "integer",
+            "enum": [
+                1,
+                0,
+                -1
+            ],
+            "x-enum-varnames": [
+                "Infinity",
+                "Finite",
+                "NegativeInfinity"
+            ]
+        },
+        "pgtype.Int8": {
+            "type": "object",
+            "properties": {
+                "int64": {
+                    "type": "integer"
+                },
+                "valid": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "pgtype.Timestamptz": {
+            "type": "object",
+            "properties": {
+                "infinityModifier": {
+                    "$ref": "#/definitions/pgtype.InfinityModifier"
+                },
+                "time": {
+                    "type": "string"
+                },
+                "valid": {
+                    "type": "boolean"
+                }
+            }
         },
         "sqlc.CreateUserRow": {
             "type": "object",
@@ -852,6 +1085,90 @@ const docTemplate = `{
                     "type": "boolean"
                 }
             }
+        },
+        "sqlc.Order": {
+            "type": "object",
+            "properties": {
+                "cancelled_at": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
+                },
+                "confirmed_at": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "delivered_at": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_cod": {
+                    "type": "boolean"
+                },
+                "payment_status": {
+                    "$ref": "#/definitions/sqlc.PaymentStatus"
+                },
+                "payment_type": {
+                    "$ref": "#/definitions/sqlc.PaymentType"
+                },
+                "shipping_id": {
+                    "$ref": "#/definitions/pgtype.Int8"
+                },
+                "status": {
+                    "$ref": "#/definitions/sqlc.OrderStatus"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "sqlc.OrderStatus": {
+            "type": "string",
+            "enum": [
+                "wait_for_confirming",
+                "confirmed",
+                "delivering",
+                "delivered",
+                "cancelled",
+                "refunded",
+                "completed"
+            ],
+            "x-enum-varnames": [
+                "OrderStatusWaitForConfirming",
+                "OrderStatusConfirmed",
+                "OrderStatusDelivering",
+                "OrderStatusDelivered",
+                "OrderStatusCancelled",
+                "OrderStatusRefunded",
+                "OrderStatusCompleted"
+            ]
+        },
+        "sqlc.PaymentStatus": {
+            "type": "string",
+            "enum": [
+                "not_paid",
+                "paid"
+            ],
+            "x-enum-varnames": [
+                "PaymentStatusNotPaid",
+                "PaymentStatusPaid"
+            ]
+        },
+        "sqlc.PaymentType": {
+            "type": "string",
+            "enum": [
+                "cash",
+                "transfer"
+            ],
+            "x-enum-varnames": [
+                "PaymentTypeCash",
+                "PaymentTypeTransfer"
+            ]
         },
         "sqlc.UpdateUserRow": {
             "type": "object",

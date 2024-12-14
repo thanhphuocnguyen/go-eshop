@@ -2,16 +2,16 @@ basePath: /api/v1
 definitions:
   api.addProductToCartRequest:
     properties:
+      cart_id:
+        type: integer
       product_id:
         type: integer
       quantity:
         type: integer
-      user_id:
-        type: integer
     required:
+    - cart_id
     - product_id
     - quantity
-    - user_id
     type: object
   api.cartItem:
     properties:
@@ -49,6 +49,19 @@ definitions:
       user_id:
         type: integer
     type: object
+  api.checkoutRequest:
+    properties:
+      cart_id:
+        type: integer
+      is_cod:
+        type: boolean
+      payment_type:
+        type: string
+    required:
+    - cart_id
+    - is_cod
+    - payment_type
+    type: object
   api.createCartRequest:
     properties:
       user_id:
@@ -56,29 +69,11 @@ definitions:
     required:
     - user_id
     type: object
-  api.createProductRequest:
-    properties:
-      description:
-        type: string
-      name:
-        type: string
-      price:
-        type: number
-      sku:
-        type: string
-      stock:
-        type: integer
-    required:
-    - description
-    - name
-    - price
-    - sku
-    - stock
-    type: object
   api.createUserRequest:
     properties:
       email:
         maxLength: 255
+        minLength: 6
         type: string
       full_name:
         maxLength: 32
@@ -123,6 +118,13 @@ definitions:
     - product_id
     - quantity
     type: object
+  api.listOrderResponse:
+    properties:
+      orders:
+        items:
+          $ref: '#/definitions/sqlc.Order'
+        type: array
+    type: object
   api.loginResponse:
     properties:
       refresh_token:
@@ -151,6 +153,29 @@ definitions:
     required:
     - password
     - username
+    type: object
+  api.productRequest:
+    properties:
+      description:
+        maxLength: 1000
+        minLength: 10
+        type: string
+      name:
+        maxLength: 100
+        minLength: 3
+        type: string
+      price:
+        type: number
+      sku:
+        type: string
+      stock:
+        type: integer
+    required:
+    - description
+    - name
+    - price
+    - sku
+    - stock
     type: object
   api.productResponse:
     properties:
@@ -198,18 +223,49 @@ definitions:
   api.updateUserRequest:
     properties:
       email:
+        maxLength: 255
+        minLength: 6
         type: string
       full_name:
+        maxLength: 32
+        minLength: 3
         type: string
       role:
         $ref: '#/definitions/sqlc.UserRole'
       user_id:
+        minimum: 1
         type: integer
     required:
     - user_id
     type: object
   gin.H:
     additionalProperties: {}
+    type: object
+  pgtype.InfinityModifier:
+    enum:
+    - 1
+    - 0
+    - -1
+    type: integer
+    x-enum-varnames:
+    - Infinity
+    - Finite
+    - NegativeInfinity
+  pgtype.Int8:
+    properties:
+      int64:
+        type: integer
+      valid:
+        type: boolean
+    type: object
+  pgtype.Timestamptz:
+    properties:
+      infinityModifier:
+        $ref: '#/definitions/pgtype.InfinityModifier'
+      time:
+        type: string
+      valid:
+        type: boolean
     type: object
   sqlc.CreateUserRow:
     properties:
@@ -232,6 +288,67 @@ definitions:
       verified_phone:
         type: boolean
     type: object
+  sqlc.Order:
+    properties:
+      cancelled_at:
+        $ref: '#/definitions/pgtype.Timestamptz'
+      confirmed_at:
+        $ref: '#/definitions/pgtype.Timestamptz'
+      created_at:
+        type: string
+      delivered_at:
+        $ref: '#/definitions/pgtype.Timestamptz'
+      id:
+        type: integer
+      is_cod:
+        type: boolean
+      payment_status:
+        $ref: '#/definitions/sqlc.PaymentStatus'
+      payment_type:
+        $ref: '#/definitions/sqlc.PaymentType'
+      shipping_id:
+        $ref: '#/definitions/pgtype.Int8'
+      status:
+        $ref: '#/definitions/sqlc.OrderStatus'
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  sqlc.OrderStatus:
+    enum:
+    - wait_for_confirming
+    - confirmed
+    - delivering
+    - delivered
+    - cancelled
+    - refunded
+    - completed
+    type: string
+    x-enum-varnames:
+    - OrderStatusWaitForConfirming
+    - OrderStatusConfirmed
+    - OrderStatusDelivering
+    - OrderStatusDelivered
+    - OrderStatusCancelled
+    - OrderStatusRefunded
+    - OrderStatusCompleted
+  sqlc.PaymentStatus:
+    enum:
+    - not_paid
+    - paid
+    type: string
+    x-enum-varnames:
+    - PaymentStatusNotPaid
+    - PaymentStatusPaid
+  sqlc.PaymentType:
+    enum:
+    - cash
+    - transfer
+    type: string
+    x-enum-varnames:
+    - PaymentTypeCash
+    - PaymentTypeTransfer
   sqlc.UpdateUserRow:
     properties:
       created_at:
@@ -348,21 +465,21 @@ paths:
     post:
       consumes:
       - application/json
-      description: add a product to the cart
+      description: update product items in the cart
       parameters:
-      - description: Add product to cart input
+      - description: Update cart items input
         in: body
         name: input
         required: true
         schema:
-          $ref: '#/definitions/api.addProductToCartRequest'
+          $ref: '#/definitions/api.checkoutRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/sqlc.Order'
         "400":
           description: Bad Request
           schema:
@@ -371,7 +488,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/gin.H'
-      summary: Add a product to the cart
+      summary: Update product items in the cart
       tags:
       - carts
     put:
@@ -403,6 +520,44 @@ paths:
       summary: Update product items in the cart
       tags:
       - carts
+  /orders:
+    get:
+      consumes:
+      - application/json
+      description: List orders of the current user
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.listOrderResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - ApiKeyAuth: []
+      summary: List orders
+      tags:
+      - orders
   /products:
     get:
       consumes:
@@ -449,7 +604,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/api.createProductRequest'
+          $ref: '#/definitions/api.productRequest'
       produces:
       - application/json
       responses:
@@ -525,6 +680,69 @@ paths:
       summary: Get a product detail by ID
       tags:
       - product detail
+    put:
+      consumes:
+      - application/json
+      description: update a product by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: integer
+      - description: Product input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/api.productRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.productResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Update a product by ID
+      tags:
+      - products
+  /products/{product_id}/upload-image:
+    post:
+      consumes:
+      - application/json
+      description: upload a product image by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gin.H'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Upload a product image by ID
+      tags:
+      - products
   /users:
     post:
       consumes:

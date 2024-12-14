@@ -44,33 +44,36 @@ func NewAPI(cfg config.Config, postgres postgres.Store, taskDistributor worker.T
 }
 
 func (sv *Server) initializeRouter() {
-	router := gin.Default()
+	router := gin.New()
 	router.Use(gin.Recovery())
 	cors := cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowCredentials: true,
 	})
+	router.MaxMultipartMemory = 8 << 20 // 8 MiB
 	router.Use(cors)
 	router.Static("/assets", "../../assets")
 
 	docs.SwaggerInfo.BasePath = "/api/v1"
+
 	v1 := router.Group("/api/v1")
 	{
+		user := v1.Group("/users")
+		{
+			user.POST("/register", sv.createUser)
+			user.POST("/login", sv.loginUser)
+			user.Use(authMiddleware(sv.tokenGenerator)).PATCH("", sv.updateUser)
+		}
 		product := v1.Group("/products")
 		{
 			product.GET(":product_id", sv.getProduct)
 			product.GET("", sv.listProducts)
 			productAuthRoutes := product.Group("").Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sqlc.UserRoleAdmin))
 			productAuthRoutes.POST("", sv.createProduct)
-			productAuthRoutes.PUT("", sv.updateProduct)
+			productAuthRoutes.POST(":product_id/upload-image", sv.uploadProductImage)
+			productAuthRoutes.PUT(":product_id", sv.updateProduct)
 			productAuthRoutes.DELETE(":product_id", sv.removeProduct)
-		}
-		user := v1.Group("/users")
-		{
-			user.POST("/register", sv.createUser)
-			user.POST("/login", sv.loginUser)
-			user.Use(authMiddleware(sv.tokenGenerator)).PATCH("", sv.updateUser)
 		}
 		cart := v1.Group("/carts")
 		{

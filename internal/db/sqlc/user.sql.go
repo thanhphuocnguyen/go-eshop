@@ -17,15 +17,17 @@ INSERT INTO
     users (
         email,
         username,
-        hashed_password,
-        full_name
+        phone,
+        full_name,
+        hashed_password
     )
 VALUES
     (
         $1,
         $2,
         $3,
-        $4
+        $4,
+        $5
     )
 RETURNING id, email, username, full_name, role, verified_email, verified_phone, created_at, updated_at
 `
@@ -33,8 +35,9 @@ RETURNING id, email, username, full_name, role, verified_email, verified_phone, 
 type CreateUserParams struct {
 	Email          string `json:"email"`
 	Username       string `json:"username"`
-	HashedPassword string `json:"hashed_password"`
+	Phone          string `json:"phone"`
 	FullName       string `json:"full_name"`
+	HashedPassword string `json:"hashed_password"`
 }
 
 type CreateUserRow struct {
@@ -53,8 +56,9 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 	row := q.db.QueryRow(ctx, createUser,
 		arg.Email,
 		arg.Username,
-		arg.HashedPassword,
+		arg.Phone,
 		arg.FullName,
+		arg.HashedPassword,
 	)
 	var i CreateUserRow
 	err := row.Scan(

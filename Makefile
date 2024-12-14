@@ -28,7 +28,7 @@ build:
 	go build ./cmd/eshop
 run:
 	@echo "Running application..."
-	go run ./cmd/eshop/main.go api, worker
+	go run ./cmd/eshop --profile api
 run-docker:
 	@echo "Running docker..."
 	docker-compose up -d

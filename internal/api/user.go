@@ -14,7 +14,8 @@ import (
 type createUserRequest struct {
 	Username string `json:"username" binding:"required,min=3,max=32,alphanum"`
 	Password string `json:"password" binding:"required,min=6,max=32,alphanum"`
-	FullName string `json:"full_name" binding:"required,min=3,max=32,alphanum"`
+	FullName string `json:"full_name" binding:"required,min=3,max=32"`
+	Phone    string `json:"phone" binding:"required,min=10,max=15"`
 	Email    string `json:"email" binding:"required,email,max=255,min=6"`
 }
 
@@ -88,6 +89,7 @@ func (sv *Server) createUser(c *gin.Context) {
 		HashedPassword: hashedPassword,
 		FullName:       req.FullName,
 		Email:          req.Email,
+		Phone:          req.Phone,
 	}
 	user, err := sv.postgres.CreateUser(c, arg)
 	if err != nil {

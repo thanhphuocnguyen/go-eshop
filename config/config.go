@@ -15,6 +15,7 @@ type Config struct {
 	AccessTokenDuration  time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
 	RefreshTokenDuration time.Duration `mapstructure:"REFRESH_TOKEN_DURATION"`
 	Env                  string        `mapstructure:"ENV"`
+	CloudinaryUrl        string        `mapstructure:"CLOUDINARY_URL"`
 }
 
 func LoadConfig(path string) (cfg Config, err error) {

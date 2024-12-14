@@ -26,6 +26,10 @@ type orderDetailResponse struct {
 	Products      []productResponse  `json:"products"`
 }
 
+type listOrderResponse struct {
+	Orders []sqlc.Order `json:"orders"`
+}
+
 // @Summary List orders
 // @Description List orders of the current user
 // @Tags orders
@@ -34,10 +38,10 @@ type orderDetailResponse struct {
 // @Param limit query int false "Limit"
 // @Param offset query int false "Offset"
 // @Security ApiKeyAuth
-// @Success 200 {object} ListOrdersResponse
-// @Failure 400 {object} ErrorResponse
-// @Failure 401 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
+// @Success 200 {object} listOrderResponse
+// @Failure 400 {object} gin.H
+// @Failure 401 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /orders [get]
 func (sv *Server) orderList(c *gin.Context) {
 	user, ok := c.MustGet(authorizationPayload).(*auth.Payload)
@@ -61,7 +65,7 @@ func (sv *Server) orderList(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	c.JSON(http.StatusOK, orders)
+	c.JSON(http.StatusOK, listOrderResponse{orders})
 }
 
 func (sv *Server) orderDetail(c *gin.Context) {

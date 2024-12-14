@@ -3,15 +3,17 @@ INSERT INTO
     users (
         email,
         username,
-        hashed_password,
-        full_name
+        phone,
+        full_name,
+        hashed_password
     )
 VALUES
     (
         $1,
         $2,
         $3,
-        $4
+        $4,
+        $5
     )
 RETURNING id, email, username, full_name, role, verified_email, verified_phone, created_at, updated_at;
 
