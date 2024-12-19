@@ -9,7 +9,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
 )
 
-type CheckoutCartParams struct {
+type CheckoutCartTxParams struct {
 	UserID int64 `json:"user_id"`
 	CartID int64 `json:"cart_id"`
 	sqlc.CreateOrderParams
@@ -20,7 +20,7 @@ type CheckoutCartTxResult struct {
 	Order sqlc.Order `json:"order"`
 }
 
-func (s *Postgres) CheckoutCartTx(ctx context.Context, arg CheckoutCartParams) (CheckoutCartTxResult, error) {
+func (s *Postgres) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxParams) (CheckoutCartTxResult, error) {
 	var result CheckoutCartTxResult
 	err := s.execTx(ctx, func(q *sqlc.Queries) error {
 		var err error

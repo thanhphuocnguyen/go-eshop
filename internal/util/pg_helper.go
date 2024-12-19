@@ -20,3 +20,10 @@ func ParsePgNumeric(value float32) (pgtype.Numeric, error) {
 	}
 	return price, nil
 }
+
+func GetPgTypeBool(value bool) pgtype.Bool {
+	return pgtype.Bool{
+		Bool:  value,
+		Valid: true,
+	}
+}

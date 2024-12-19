@@ -19,6 +19,7 @@ type createProductRequest struct {
 	Stock       int32   `json:"stock" binding:"required,gt=0"`
 	Price       float32 `json:"price" binding:"required,gt=0,lt=10000"`
 }
+
 type updateProductRequest struct {
 	Name        string  `json:"name" binding:"omitempty,min=3,max=100"`
 	Description string  `json:"description" binding:"omitempty,min=10,max=1000"`
@@ -28,7 +29,7 @@ type updateProductRequest struct {
 }
 
 type getProductParams struct {
-	ProductID int64 `uri:"product_id" binding:"required,min=1"`
+	ID int64 `uri:"id" binding:"required,min=1"`
 }
 
 type listProductsParams struct {
@@ -49,7 +50,8 @@ type productResponse struct {
 }
 
 // ------------------------------ Handlers ------------------------------
-// CreateProduct godoc
+
+// createProduct godoc
 // @Summary Create a new product
 // @Schemes http
 // @Description create a new product with the input payload
@@ -91,7 +93,7 @@ func (sv *Server) createProduct(c *gin.Context) {
 	c.JSON(http.StatusCreated, newProduct)
 }
 
-// GetProductDetail godoc
+// getProduct godoc
 // @Summary Get a product detail by ID
 // @Schemes http
 // @Description get a product detail by ID
@@ -110,7 +112,7 @@ func (sv *Server) getProduct(c *gin.Context) {
 		return
 	}
 
-	product, err := sv.postgres.GetProduct(c, params.ProductID)
+	product, err := sv.postgres.GetProduct(c, params.ID)
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, errorResponse(err))
@@ -123,7 +125,7 @@ func (sv *Server) getProduct(c *gin.Context) {
 	c.JSON(http.StatusOK, convertToProductResponse(product))
 }
 
-// GetProducts godoc
+// listProducts godoc
 // @Summary Get list of products
 // @Schemes http
 // @Description get list of products
@@ -175,7 +177,7 @@ func convertToProductResponse(product sqlc.Product) productResponse {
 	}
 }
 
-// Remove Product godoc
+// removeProduct godoc
 // @Summary Remove a product by ID
 // @Schemes http
 // @Description remove a product by ID
@@ -194,7 +196,7 @@ func (sv *Server) removeProduct(c *gin.Context) {
 		return
 	}
 
-	_, err := sv.postgres.GetProduct(c, params.ProductID)
+	_, err := sv.postgres.GetProduct(c, params.ID)
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, errorResponse(err))
@@ -204,7 +206,7 @@ func (sv *Server) removeProduct(c *gin.Context) {
 		return
 	}
 
-	err = sv.postgres.DeleteProduct(c, params.ProductID)
+	err = sv.postgres.DeleteProduct(c, params.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -213,7 +215,7 @@ func (sv *Server) removeProduct(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Product deleted"})
 }
 
-// UpdateProduct godoc
+// updateProduct godoc
 // @Summary Update a product by ID
 // @Schemes http
 // @Description update a product by ID
@@ -238,7 +240,7 @@ func (sv *Server) updateProduct(c *gin.Context) {
 		return
 	}
 	updateBody := sqlc.UpdateProductParams{
-		ID: params.ProductID,
+		ID: params.ID,
 	}
 	if product.Price != 0 {
 		price, err := util.ParsePgNumeric(product.Price)
@@ -313,7 +315,7 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 		return
 	}
 
-	product, err := sv.postgres.GetProduct(c, param.ProductID)
+	product, err := sv.postgres.GetProduct(c, param.ID)
 
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
@@ -349,10 +351,10 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 	c.JSON(http.StatusOK, convertToProductResponse(product))
 }
 
-// UploadProductImage godoc
-// @Summary Upload a product image by ID
+// RemoveProductImage godoc
+// @Summary Remove a product image by ID
 // @Schemes http
-// @Description upload a product image by ID
+// @Description remove a product image by ID
 // @Tags products
 // @Accept json
 // @Param product_id path int true "Product ID"
@@ -368,7 +370,7 @@ func (sv *Server) removeProductImage(c *gin.Context) {
 		return
 	}
 
-	product, err := sv.postgres.GetProduct(c, param.ProductID)
+	product, err := sv.postgres.GetProduct(c, param.ID)
 
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {

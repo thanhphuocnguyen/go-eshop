@@ -47,7 +47,7 @@ func roleMiddleware(roles ...sqlc.UserRole) gin.HandlerFunc {
 		payload, ok := ctx.MustGet(authorizationPayload).(*auth.Payload)
 		if !ok {
 			log.Error().Msg("Role middleware: cannot get authorization payload")
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, errorResponse(fmt.Errorf("authorization payload is not provided")))
+			ctx.AbortWithStatusJSON(http.StatusForbidden, errorResponse(fmt.Errorf("authorization payload is not provided")))
 			return
 		}
 

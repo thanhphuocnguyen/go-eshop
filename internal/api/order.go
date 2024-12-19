@@ -9,10 +9,12 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
 )
 
+// ---------------------------------------------- API Models ----------------------------------------------
 type orderListQuery struct {
 	Limit  int32 `form:"limit,default=10" binding:"required,min=5,max=100"`
 	Offset int32 `form:"offset,default=0" binding:"required,min=0"`
 }
+
 type orderIDParams struct {
 	ID int64 `uri:"id" binding:"required,min=1"`
 }
@@ -29,6 +31,8 @@ type orderDetailResponse struct {
 type listOrderResponse struct {
 	Orders []sqlc.Order `json:"orders"`
 }
+
+//---------------------------------------------- API Handlers ----------------------------------------------
 
 // @Summary List orders
 // @Description List orders of the current user
@@ -68,6 +72,18 @@ func (sv *Server) orderList(c *gin.Context) {
 	c.JSON(http.StatusOK, listOrderResponse{orders})
 }
 
+// @Summary Get order detail
+// @Description Get order detail by order ID
+// @Tags orders
+// @Accept json
+// @Produce json
+// @Param id path int true "Order ID"
+// @Security ApiKeyAuth
+// @Success 200 {object} orderDetailResponse
+// @Failure 400 {object} gin.H
+// @Failure 401 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /orders/{id} [get]
 func (sv *Server) orderDetail(c *gin.Context) {
 	var params orderIDParams
 	if err := c.ShouldBindUri(&params); err != nil {
@@ -106,6 +122,18 @@ func (sv *Server) orderDetail(c *gin.Context) {
 	c.JSON(http.StatusOK, orderDetailResponse)
 }
 
+// @Summary Cancel order
+// @Description Cancel order by order ID
+// @Tags orders
+// @Accept json
+// @Produce json
+// @Param id path int true "Order ID"
+// @Security ApiKeyAuth
+// @Success 200 {object} sqlc.Order
+// @Failure 400 {object} gin.H
+// @Failure 401 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /orders/{id}/cancel [put]
 func (sv *Server) cancelOrder(c *gin.Context) {
 	user, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
@@ -143,9 +171,36 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 	c.JSON(http.StatusOK, order)
 }
 
+// @Summary Change order status
+// @Description Change order status by order ID
+// @Tags orders
+// @Accept json
+// @Produce json
+// @Param id path int true "Order ID"
+// @Param status body string true "Status"
+// @Security ApiKeyAuth
+// @Success 200 {object} sqlc.Order
+// @Failure 400 {object} gin.H
+// @Failure 401 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /orders/{id}/status [put]
 func (sv *Server) changeOrderStatus(c *gin.Context) {
 
 }
+
+// @Summary Change order payment status
+// @Description Change order payment status by order ID
+// @Tags orders
+// @Accept json
+// @Produce json
+// @Param id path int true "Order ID"
+// @Param status body string true "Payment Status"
+// @Security ApiKeyAuth
+// @Success 200 {object} sqlc.Order
+// @Failure 400 {object} gin.H
+// @Failure 401 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /orders/{id}/payment [put]
 func (sv *Server) changeOrderPaymentStatus(c *gin.Context) {
 
 }

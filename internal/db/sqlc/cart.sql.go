@@ -137,16 +137,16 @@ func (q *Queries) GetCartDetail(ctx context.Context, userID int64) ([]GetCartDet
 }
 
 const removeProductFromCart = `-- name: RemoveProductFromCart :exec
-DELETE FROM cart_items WHERE cart_id = $1 AND product_id = $2
+DELETE FROM cart_items WHERE cart_id = $1 AND id = $2
 `
 
 type RemoveProductFromCartParams struct {
-	CartID    int64 `json:"cart_id"`
-	ProductID int64 `json:"product_id"`
+	CartID int64 `json:"cart_id"`
+	ID     int64 `json:"id"`
 }
 
 func (q *Queries) RemoveProductFromCart(ctx context.Context, arg RemoveProductFromCartParams) error {
-	_, err := q.db.Exec(ctx, removeProductFromCart, arg.CartID, arg.ProductID)
+	_, err := q.db.Exec(ctx, removeProductFromCart, arg.CartID, arg.ID)
 	return err
 }
 

@@ -1,6 +1,8 @@
 package api
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -8,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
+	"github.com/thanhphuocnguyen/go-eshop/internal/db/postgres"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
 )
 
@@ -216,4 +219,32 @@ func (sv *Server) updateUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, updatedUser)
+}
+
+// getUser godoc
+// @Summary Get user info
+// @Description Get user info
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} createUserResponse
+// @Router /users [get]
+func (sv *Server) getUser(c *gin.Context) {
+	authPayload, ok := c.MustGet(authorizationPayload).(auth.Payload)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, fmt.Errorf("authorization payload is not provided"))
+		return
+	}
+
+	user, err := sv.postgres.GetUserByID(c, authPayload.UserID)
+	if err != nil {
+		if errors.Is(err, postgres.ErrorRecordNotFound) {
+			c.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, mapToUserResponse(user))
 }

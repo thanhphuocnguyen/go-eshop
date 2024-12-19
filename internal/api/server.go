@@ -66,35 +66,46 @@ func (sv *Server) initializeRouter() {
 	{
 		user := v1.Group("/users")
 		{
-			user.POST("/register", sv.createUser)
-			user.POST("/login", sv.loginUser)
-			user.Use(authMiddleware(sv.tokenGenerator)).PATCH("", sv.updateUser)
+			user.POST("register", sv.createUser)
+			user.POST("login", sv.loginUser)
+			userAuthRoutes := user.Group("").Use(authMiddleware(sv.tokenGenerator))
+			userAuthRoutes.GET("", sv.getUser)
+			userAuthRoutes.PATCH("", sv.updateUser)
 		}
-
-		product := v1.Group("/products")
+		userAddress := user.Group("/address").Use(authMiddleware(sv.tokenGenerator))
 		{
-			product.GET(":product_id", sv.getProduct)
+			userAddress.POST("", sv.createAddress)
+			userAddress.GET("", sv.listAddresses)
+			userAddress.PUT(":id", sv.updateAddress)
+			userAddress.DELETE(":id", sv.removeAddress)
+		}
+		product := v1.Group("/product")
+		{
+			product.GET(":id", sv.getProduct)
 			product.GET("", sv.listProducts)
 			productAuthRoutes := product.Group("").Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sqlc.UserRoleAdmin))
 			productAuthRoutes.POST("", sv.createProduct)
-			productAuthRoutes.PUT(":product_id", sv.updateProduct)
-			productAuthRoutes.DELETE(":product_id", sv.removeProduct)
-			productAuthRoutes.POST(":product_id/upload-image", sv.uploadProductImage)
-			productAuthRoutes.DELETE(":product_id/remove-image", sv.removeProductImage)
+			productAuthRoutes.PUT(":id", sv.updateProduct)
+			productAuthRoutes.DELETE(":id", sv.removeProduct)
+			productAuthRoutes.POST(":id/upload-image", sv.uploadProductImage)
+			productAuthRoutes.DELETE(":id/remove-image", sv.removeProductImage)
 		}
 
-		cart := v1.Group("/carts").Use(authMiddleware(sv.tokenGenerator))
+		cart := v1.Group("/cart")
 		{
+			cart.Use(authMiddleware(sv.tokenGenerator))
 			cart.POST("", sv.createCart)
 			cart.GET("", sv.getCart)
-			cart.POST("/add-product", sv.addProductToCart)
-			cart.POST("/remove", sv.removeProductFromCart)
-			cart.POST("/checkout", sv.checkout)
-			cart.PUT("/item-quantity", sv.updateCartItemQuantity)
-			cart.PUT("/clear", sv.clearCart)
+			cart.POST("checkout", sv.checkout)
+
+			cartItem := cart.Group("/item")
+			cartItem.POST("", sv.addCartItem)
+			cartItem.DELETE(":id", sv.removeCartItem)
+			cartItem.PUT(":id/quantity", sv.updateCartItemQuantity)
+			cartItem.PUT("clear", sv.clearCart)
 		}
 
-		order := v1.Group("/orders").Use(authMiddleware(sv.tokenGenerator))
+		order := v1.Group("/order").Use(authMiddleware(sv.tokenGenerator))
 		{
 			order.GET("", sv.orderList)
 			order.GET(":id", sv.orderDetail)
@@ -118,4 +129,8 @@ func (s *Server) Server(addr string) *http.Server {
 
 func errorResponse(err error) gin.H {
 	return gin.H{"error": err.Error()}
+}
+
+func boolResponse(ok bool) gin.H {
+	return gin.H{"ok": ok}
 }

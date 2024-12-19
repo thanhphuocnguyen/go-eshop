@@ -14,7 +14,7 @@ import (
 
 type Store interface {
 	sqlc.Querier
-	CheckoutCartTx(ctx context.Context, arg CheckoutCartParams) (CheckoutCartTxResult, error)
+	CheckoutCartTx(ctx context.Context, arg CheckoutCartTxParams) (CheckoutCartTxResult, error)
 	Close()
 }
 

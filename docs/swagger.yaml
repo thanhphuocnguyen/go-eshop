@@ -1,5 +1,52 @@
 basePath: /api/v1
 definitions:
+  api.CreateAddressParams:
+    properties:
+      address_1:
+        type: string
+      address_2:
+        type: string
+      city:
+        type: string
+      district:
+        type: string
+      is_default:
+        type: boolean
+      phone:
+        type: string
+      user_id:
+        type: integer
+      ward:
+        type: string
+    required:
+    - address_1
+    - city
+    - district
+    - phone
+    - user_id
+    - ward
+    type: object
+  api.UpdateAddressParams:
+    properties:
+      address_1:
+        type: string
+      address_2:
+        type: string
+      city:
+        type: string
+      district:
+        type: string
+      is_default:
+        type: boolean
+      phone:
+        type: string
+      user_id:
+        type: integer
+      ward:
+        type: string
+    required:
+    - user_id
+    type: object
   api.addProductToCartRequest:
     properties:
       product_id:
@@ -126,16 +173,6 @@ definitions:
       username:
         type: string
     type: object
-  api.itemUpdate:
-    properties:
-      product_id:
-        type: integer
-      quantity:
-        type: integer
-    required:
-    - product_id
-    - quantity
-    type: object
   api.listOrderResponse:
     properties:
       orders:
@@ -172,6 +209,23 @@ definitions:
     - password
     - username
     type: object
+  api.orderDetailResponse:
+    properties:
+      id:
+        type: integer
+      payment_status:
+        $ref: '#/definitions/sqlc.PaymentStatus'
+      payment_type:
+        $ref: '#/definitions/sqlc.PaymentType'
+      products:
+        items:
+          $ref: '#/definitions/api.productResponse'
+        type: array
+      status:
+        $ref: '#/definitions/sqlc.OrderStatus'
+      total:
+        type: number
+    type: object
   api.productResponse:
     properties:
       created_at:
@@ -193,27 +247,12 @@ definitions:
       updated_at:
         type: string
     type: object
-  api.removeProductFromCartRequest:
+  api.updateCartItemRequest:
     properties:
-      cart_id:
-        type: integer
-      product_id:
+      quantity:
         type: integer
     required:
-    - cart_id
-    - product_id
-    type: object
-  api.updateCartRequest:
-    properties:
-      cart_id:
-        type: integer
-      items:
-        items:
-          $ref: '#/definitions/api.itemUpdate'
-        type: array
-    required:
-    - cart_id
-    - items
+    - quantity
     type: object
   api.updateProductRequest:
     properties:
@@ -267,6 +306,13 @@ definitions:
     properties:
       int64:
         type: integer
+      valid:
+        type: boolean
+    type: object
+  pgtype.Text:
+    properties:
+      string:
+        type: string
       valid:
         type: boolean
     type: object
@@ -382,6 +428,27 @@ definitions:
       verified_phone:
         type: boolean
     type: object
+  sqlc.UserAddress:
+    properties:
+      address_1:
+        type: string
+      address_2:
+        $ref: '#/definitions/pgtype.Text'
+      city:
+        type: string
+      district:
+        $ref: '#/definitions/pgtype.Text'
+      id:
+        type: integer
+      is_primary:
+        type: boolean
+      phone:
+        type: string
+      user_id:
+        type: integer
+      ward:
+        $ref: '#/definitions/pgtype.Text'
+    type: object
   sqlc.UserRole:
     enum:
     - admin
@@ -396,6 +463,98 @@ info:
   description: This is a sample server for a simple e-commerce API.
   title: E-Commerce API
 paths:
+  /address:
+    get:
+      consumes:
+      - application/json
+      description: Get list of addresses
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/sqlc.UserAddress'
+            type: array
+      summary: Get list of addresses
+      tags:
+      - address
+    post:
+      consumes:
+      - application/json
+      description: Create a new address
+      parameters:
+      - description: Create Address
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/api.CreateAddressParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sqlc.UserAddress'
+      summary: Create a new address
+      tags:
+      - address
+  /address/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove an address
+      parameters:
+      - description: Address ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: Remove an address
+      tags:
+      - address
+    put:
+      consumes:
+      - application/json
+      description: Update an address
+      parameters:
+      - description: Address ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update Address
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/api.UpdateAddressParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sqlc.UserAddress'
+      summary: Update an address
+      tags:
+      - address
   /carts:
     get:
       consumes:
@@ -437,36 +596,7 @@ paths:
       summary: Create a new cart
       tags:
       - carts
-  /carts/products:
-    delete:
-      consumes:
-      - application/json
-      description: remove a product from the cart
-      parameters:
-      - description: Remove product from cart input
-        in: body
-        name: input
-        required: true
-        schema:
-          $ref: '#/definitions/api.removeProductFromCartRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/gin.H'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/gin.H'
-      summary: Remove a product from the cart
-      tags:
-      - carts
+  /carts/checkout:
     post:
       consumes:
       - application/json
@@ -496,6 +626,87 @@ paths:
       summary: Update product items in the cart
       tags:
       - carts
+  /carts/clear:
+    delete:
+      consumes:
+      - application/json
+      description: clear the cart
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Clear the cart
+      tags:
+      - carts
+  /carts/products:
+    delete:
+      consumes:
+      - application/json
+      description: remove a product from the cart
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gin.H'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Remove a product from the cart
+      tags:
+      - carts
+    post:
+      consumes:
+      - application/json
+      description: add a product to the cart
+      parameters:
+      - description: Add product to cart input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/api.addProductToCartRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.cartResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Add a product to the cart
+      tags:
+      - carts
     put:
       consumes:
       - application/json
@@ -506,14 +717,14 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/api.updateCartRequest'
+          $ref: '#/definitions/api.updateCartItemRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.cartResponse'
         "400":
           description: Bad Request
           schema:
@@ -561,6 +772,158 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: List orders
+      tags:
+      - orders
+  /orders/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get order detail by order ID
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.orderDetailResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - ApiKeyAuth: []
+      summary: Get order detail
+      tags:
+      - orders
+  /orders/{id}/cancel:
+    put:
+      consumes:
+      - application/json
+      description: Cancel order by order ID
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sqlc.Order'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - ApiKeyAuth: []
+      summary: Cancel order
+      tags:
+      - orders
+  /orders/{id}/payment:
+    put:
+      consumes:
+      - application/json
+      description: Change order payment status by order ID
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Payment Status
+        in: body
+        name: status
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sqlc.Order'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - ApiKeyAuth: []
+      summary: Change order payment status
+      tags:
+      - orders
+  /orders/{id}/status:
+    put:
+      consumes:
+      - application/json
+      description: Change order status by order ID
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Status
+        in: body
+        name: status
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sqlc.Order'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      security:
+      - ApiKeyAuth: []
+      summary: Change order status
       tags:
       - orders
   /products:
@@ -723,7 +1086,7 @@ paths:
     delete:
       consumes:
       - application/json
-      description: upload a product image by ID
+      description: remove a product image by ID
       parameters:
       - description: Product ID
         in: path
@@ -745,7 +1108,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/gin.H'
-      summary: Upload a product image by ID
+      summary: Remove a product image by ID
       tags:
       - products
   /products/{product_id}/upload-image:
@@ -783,6 +1146,20 @@ paths:
       tags:
       - products
   /users:
+    get:
+      consumes:
+      - application/json
+      description: Get user info
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.createUserResponse'
+      summary: Get user info
+      tags:
+      - users
     post:
       consumes:
       - application/json

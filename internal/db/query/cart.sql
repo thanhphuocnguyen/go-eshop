@@ -19,7 +19,7 @@ WHERE carts.user_id = $1 AND carts.checked_out_at IS NULL;
 INSERT INTO cart_items(cart_id, product_id, quantity) VALUES ($1, $2, $3) RETURNING *;
 
 -- name: RemoveProductFromCart :exec
-DELETE FROM cart_items WHERE cart_id = $1 AND product_id = $2;
+DELETE FROM cart_items WHERE cart_id = $1 AND id = $2;
 
 -- name: ClearCart :exec
 DELETE FROM cart_items WHERE cart_id = $1;
