@@ -14,6 +14,7 @@ type Querier interface {
 	AddProductToCart(ctx context.Context, arg AddProductToCartParams) (CartItem, error)
 	ArchiveProduct(ctx context.Context, id int64) error
 	ClearCart(ctx context.Context, cartID int64) error
+	CountCartItem(ctx context.Context, cartID int64) (int64, error)
 	CreateAddress(ctx context.Context, arg CreateAddressParams) (UserAddress, error)
 	CreateCart(ctx context.Context, userID int64) (Cart, error)
 	CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error)
@@ -37,7 +38,7 @@ type Querier interface {
 	GetUserByUsername(ctx context.Context, username string) (User, error)
 	ListAddresses(ctx context.Context, arg ListAddressesParams) ([]UserAddress, error)
 	ListOrderItems(ctx context.Context, arg ListOrderItemsParams) ([]OrderItem, error)
-	ListOrders(ctx context.Context, arg ListOrdersParams) ([]Order, error)
+	ListOrders(ctx context.Context, arg ListOrdersParams) ([]ListOrdersRow, error)
 	ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	RemoveProductFromCart(ctx context.Context, arg RemoveProductFromCartParams) error

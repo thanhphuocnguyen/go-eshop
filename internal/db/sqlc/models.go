@@ -276,6 +276,7 @@ type CategoryProduct struct {
 type Order struct {
 	ID            int64              `json:"id"`
 	UserID        int64              `json:"user_id"`
+	UserAddressID int64              `json:"user_address_id"`
 	Status        OrderStatus        `json:"status"`
 	ShippingID    pgtype.Int8        `json:"shipping_id"`
 	PaymentType   PaymentType        `json:"payment_type"`
@@ -284,6 +285,7 @@ type Order struct {
 	ConfirmedAt   pgtype.Timestamptz `json:"confirmed_at"`
 	CancelledAt   pgtype.Timestamptz `json:"cancelled_at"`
 	DeliveredAt   pgtype.Timestamptz `json:"delivered_at"`
+	RefundedAt    pgtype.Timestamptz `json:"refunded_at"`
 	UpdatedAt     time.Time          `json:"updated_at"`
 	CreatedAt     time.Time          `json:"created_at"`
 }
@@ -347,6 +349,7 @@ type User struct {
 	Role              UserRole  `json:"role"`
 	Username          string    `json:"username"`
 	Email             string    `json:"email"`
+	Phone             string    `json:"phone"`
 	FullName          string    `json:"full_name"`
 	HashedPassword    string    `json:"hashed_password"`
 	VerifiedEmail     bool      `json:"verified_email"`
@@ -354,17 +357,20 @@ type User struct {
 	PasswordChangedAt time.Time `json:"password_changed_at"`
 	UpdatedAt         time.Time `json:"updated_at"`
 	CreatedAt         time.Time `json:"created_at"`
-	Phone             string    `json:"phone"`
 }
 
 type UserAddress struct {
-	ID        int64       `json:"id"`
-	UserID    int64       `json:"user_id"`
-	Phone     string      `json:"phone"`
-	Address1  string      `json:"address_1"`
-	Address2  pgtype.Text `json:"address_2"`
-	Ward      pgtype.Text `json:"ward"`
-	District  pgtype.Text `json:"district"`
-	City      string      `json:"city"`
-	IsPrimary bool        `json:"is_primary"`
+	ID        int64              `json:"id"`
+	UserID    int64              `json:"user_id"`
+	Phone     string             `json:"phone"`
+	Address1  string             `json:"address_1"`
+	Address2  pgtype.Text        `json:"address_2"`
+	Ward      pgtype.Text        `json:"ward"`
+	District  string             `json:"district"`
+	City      string             `json:"city"`
+	IsPrimary bool               `json:"is_primary"`
+	IsDeleted bool               `json:"is_deleted"`
+	CreatedAt time.Time          `json:"created_at"`
+	UpdatedAt time.Time          `json:"updated_at"`
+	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
 }

@@ -3,13 +3,15 @@ INSERT INTO
     orders (
         user_id,
         payment_type,
-        is_cod
+        is_cod,
+        user_address_id
     )
 VALUES
     (
         $1,
         $2,
-        $3
+        $3,
+        $4
     )
 RETURNING *;
 
@@ -24,25 +26,30 @@ LIMIT 1;
 
 -- name: GetOrderDetails :many
 SELECT
-    sqlc.embed(orders), sqlc.embed(order_items), sqlc.embed(products)
+    sqlc.embed(orders), sqlc.embed(order_items), sqlc.embed(products), sqlc.embed(user_addresses)
 FROM
     orders
 JOIN
     order_items ON order_items.order_id = orders.id
 JOIN
     products ON order_items.product_id = products.id
+JOIN
+    user_addresses ON orders.user_address_id = user_addresses.id
 WHERE
     orders.id = $1;
 
 -- name: ListOrders :many
 SELECT
-    *
+    sqlc.embed(orders), count(*) as total_items, sum(order_items.price) as total_price
 FROM
     orders
+JOIN order_items ON order_items.order_id = orders.id
 WHERE
     user_id = $1
+GROUP BY
+    orders.id
 ORDER BY
-    id
+    orders.id
 LIMIT $2
 OFFSET $3;
 
@@ -56,6 +63,7 @@ SET
     confirmed_at = coalesce(sqlc.narg('confirmed_at'), confirmed_at),
     cancelled_at = coalesce(sqlc.narg('cancelled_at'), cancelled_at),
     delivered_at = coalesce(sqlc.narg('delivered_at'), delivered_at),
+    user_address_id = coalesce(sqlc.narg('user_address_id'), user_address_id),
     updated_at = sqlc.arg('updated_at')
 WHERE
     id = sqlc.arg('id')

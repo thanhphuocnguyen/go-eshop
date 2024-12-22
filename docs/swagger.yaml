@@ -57,6 +57,21 @@ definitions:
     - product_id
     - quantity
     type: object
+  api.addressResponse:
+    properties:
+      address:
+        type: string
+      address_2:
+        type: string
+      city:
+        type: string
+      district:
+        type: string
+      phone:
+        type: string
+      ward:
+        type: string
+    type: object
   api.cartItemResponse:
     properties:
       description:
@@ -95,6 +110,8 @@ definitions:
     type: object
   api.checkoutRequest:
     properties:
+      address_id:
+        type: integer
       cart_id:
         type: integer
       is_cod:
@@ -102,6 +119,7 @@ definitions:
       payment_type:
         type: string
     required:
+    - address_id
     - cart_id
     - is_cod
     - payment_type
@@ -158,21 +176,6 @@ definitions:
     - phone
     - username
     type: object
-  api.createUserResponse:
-    properties:
-      created_at:
-        type: string
-      email:
-        type: string
-      full_name:
-        type: string
-      password_changed_at:
-        type: string
-      updated_at:
-        type: string
-      username:
-        type: string
-    type: object
   api.listOrderResponse:
     properties:
       orders:
@@ -193,7 +196,7 @@ definitions:
       token_expire_at:
         type: string
       user:
-        $ref: '#/definitions/api.createUserResponse'
+        $ref: '#/definitions/api.userResponse'
     type: object
   api.loginUserRequest:
     properties:
@@ -289,6 +292,25 @@ definitions:
     required:
     - user_id
     type: object
+  api.userResponse:
+    properties:
+      addresses:
+        items:
+          $ref: '#/definitions/api.addressResponse'
+        type: array
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      password_changed_at:
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
   gin.H:
     additionalProperties: {}
     type: object
@@ -370,6 +392,8 @@ definitions:
         $ref: '#/definitions/sqlc.OrderStatus'
       updated_at:
         type: string
+      user_address_id:
+        type: integer
       user_id:
         type: integer
     type: object
@@ -437,9 +461,11 @@ definitions:
       city:
         type: string
       district:
-        $ref: '#/definitions/pgtype.Text'
+        type: string
       id:
         type: integer
+      is_deleted:
+        type: boolean
       is_primary:
         type: boolean
       phone:
@@ -1156,7 +1182,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.createUserResponse'
+            $ref: '#/definitions/api.userResponse'
       summary: Get user info
       tags:
       - users

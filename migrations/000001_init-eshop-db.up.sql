@@ -22,6 +22,7 @@ CREATE TABLE
     "role" user_role NOT NULL DEFAULT 'user',
     "username" varchar UNIQUE NOT NULL,
     "email" varchar UNIQUE NOT NULL,
+    "phone" varchar(12) NOT NULL,
     "full_name" varchar NOT NULL,
     "hashed_password" varchar NOT NULL,
     "verified_email" bool NOT NULL DEFAULT false,
@@ -67,6 +68,7 @@ CREATE TABLE
   "orders" (
     "id" bigserial PRIMARY KEY,
     "user_id" bigint NOT NULL,
+    "user_address_id" bigint NOT NULL,
     "status" order_status NOT NULL DEFAULT 'wait_for_confirming',
     "shipping_id" bigint,
     "payment_type" payment_type NOT NULL,
@@ -75,6 +77,7 @@ CREATE TABLE
     "confirmed_at" timestamptz,
     "cancelled_at" timestamptz,
     "delivered_at" timestamptz,
+    "refunded_at" timestamptz,
     "updated_at" timestamptz NOT NULL DEFAULT '0001-01-01 00:00:00Z',
     "created_at" timestamptz NOT NULL DEFAULT (now ())
   );

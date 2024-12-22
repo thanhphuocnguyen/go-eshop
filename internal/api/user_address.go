@@ -18,25 +18,23 @@ type GetAddressParams struct {
 }
 
 type CreateAddressParams struct {
-	UserID    int64  `json:"user_id" binding:"required"`
-	Phone     string `json:"phone" binding:"required"`
-	Address1  string `json:"address_1" binding:"required"`
-	Address2  string `json:"address_2"`
-	Ward      string `json:"ward" binding:"required"`
-	District  string `json:"district" binding:"required"`
-	City      string `json:"city" binding:"required"`
-	IsDefault bool   `json:"is_default"`
+	Phone     string  `json:"phone" binding:"required,min=10,max=15"`
+	Address1  string  `json:"address_1" binding:"required"`
+	Address2  *string `json:"address_2,omitempty" binding:"omitempty"`
+	Ward      string  `json:"ward,omitempty" binding:"omitempty"`
+	District  string  `json:"district" binding:"required"`
+	City      string  `json:"city" binding:"required"`
+	IsDefault bool    `json:"is_default,omitempty" binding:"omitempty"`
 }
 
 type UpdateAddressParams struct {
-	UserID    int64  `json:"user_id" binding:"required"`
-	Phone     string `json:"phone"`
-	Address1  string `json:"address_1"`
-	Address2  string `json:"address_2"`
-	Ward      string `json:"ward"`
-	District  string `json:"district"`
-	City      string `json:"city"`
-	IsDefault bool   `json:"is_default"`
+	Phone     *string `json:"phone" binding:"omitempty"`
+	Address1  *string `json:"address_1" binding:"omitempty"`
+	Address2  *string `json:"address_2" binding:"omitempty"`
+	Ward      *string `json:"ward" binding:"omitempty"`
+	District  *string `json:"district" binding:"omitempty"`
+	City      *string `json:"city" binding:"omitempty"`
+	IsDefault *bool   `json:"is_default" binding:"omitempty"`
 }
 
 type GetAddressListQuery struct {
@@ -56,25 +54,29 @@ type GetAddressListQuery struct {
 // @Success 200 {object} sqlc.UserAddress
 // @Router /address [post]
 func (sv *Server) createAddress(c *gin.Context) {
+	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, errorResponse(fmt.Errorf("authorization payload is not provided")))
+		return
+	}
+
 	var input CreateAddressParams
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 	payload := sqlc.CreateAddressParams{
-		UserID:   input.UserID,
+		UserID:   authPayload.UserID,
 		Phone:    input.Phone,
 		Address1: input.Address1,
 		City:     input.City,
+		District: input.District,
 	}
-	if input.Address2 != "" {
-		payload.Address2 = util.GetPgTypeText(input.Address2)
+	if input.Address2 != nil {
+		payload.Address2 = util.GetPgTypeText(*input.Address2)
 	}
 	if input.Ward != "" {
 		payload.Ward = util.GetPgTypeText(input.Ward)
-	}
-	if input.District != "" {
-		payload.District = util.GetPgTypeText(input.District)
 	}
 	address, err := sv.postgres.CreateAddress(c, payload)
 
@@ -147,7 +149,7 @@ func (sv *Server) updateAddress(c *gin.Context) {
 		return
 	}
 
-	address, err := sv.postgres.GetAddress(c, sqlc.GetAddressParams{
+	_, err := sv.postgres.GetAddress(c, sqlc.GetAddressParams{
 		ID:     param.ID,
 		UserID: authPayload.UserID,
 	})
@@ -162,31 +164,31 @@ func (sv *Server) updateAddress(c *gin.Context) {
 
 	payload := sqlc.UpdateAddressParams{
 		ID:     param.ID,
-		UserID: input.UserID,
+		UserID: authPayload.UserID,
 	}
-	if input.Phone != "" {
-		payload.Phone = util.GetPgTypeText(input.Phone)
+	if input.Phone != nil {
+		payload.Phone = util.GetPgTypeText(*input.Phone)
 	}
-	if input.City != "" {
-		payload.City = util.GetPgTypeText(input.City)
+	if input.City != nil {
+		payload.City = util.GetPgTypeText(*input.City)
 	}
-	if input.Address1 != "" {
-		payload.Address1 = util.GetPgTypeText(input.Address1)
+	if input.Address1 != nil {
+		payload.Address1 = util.GetPgTypeText(*input.Address1)
 	}
-	if input.Address2 != "" {
-		payload.Address2 = util.GetPgTypeText(input.Address2)
+	if input.Address2 != nil {
+		payload.Address2 = util.GetPgTypeText(*input.Address2)
 	}
-	if input.Ward != "" {
-		payload.Ward = util.GetPgTypeText(input.Ward)
+	if input.Ward != nil {
+		payload.Ward = util.GetPgTypeText(*input.Ward)
 	}
-	if input.District != "" {
-		payload.District = util.GetPgTypeText(input.District)
+	if input.District != nil {
+		payload.District = util.GetPgTypeText(*input.District)
 	}
-	if input.IsDefault {
-		payload.IsPrimary = util.GetPgTypeBool(true)
+	if input.IsDefault != nil {
+		payload.IsPrimary = util.GetPgTypeBool(*input.IsDefault)
 	}
 
-	address, err = sv.postgres.UpdateAddress(c, payload)
+	address, err := sv.postgres.UpdateAddress(c, payload)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -215,7 +217,26 @@ func (sv *Server) removeAddress(c *gin.Context) {
 		return
 	}
 
-	err := sv.postgres.DeleteAddress(c, sqlc.DeleteAddressParams{
+	address, err := sv.postgres.GetAddress(c, sqlc.GetAddressParams{
+		ID:     param.ID,
+		UserID: authPayload.UserID,
+	})
+
+	if err != nil {
+		if errors.Is(err, postgres.ErrorRecordNotFound) {
+			c.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	if address.IsDeleted {
+		c.JSON(http.StatusNotFound, errorResponse(fmt.Errorf("address has been removed")))
+		return
+	}
+
+	err = sv.postgres.DeleteAddress(c, sqlc.DeleteAddressParams{
 		ID:     param.ID,
 		UserID: authPayload.UserID,
 	})
@@ -227,5 +248,11 @@ func (sv *Server) removeAddress(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	c.JSON(http.StatusOK, nil)
+	c.JSON(http.StatusOK, responseMapper(struct {
+		Message string `json:"message"`
+		Success bool   `json:"success"`
+	}{
+		Message: "Address has been removed",
+		Success: true,
+	}, nil))
 }

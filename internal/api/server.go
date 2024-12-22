@@ -49,7 +49,10 @@ func NewAPI(cfg config.Config, postgres postgres.Store, taskDistributor worker.T
 
 func (sv *Server) initializeRouter() {
 	router := gin.Default()
-	router.Use(gin.Recovery())
+	if sv.config.Env == "production" {
+		gin.SetMode(gin.ReleaseMode)
+		router.Use(gin.Recovery())
+	}
 	cors := cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -64,25 +67,29 @@ func (sv *Server) initializeRouter() {
 
 	v1 := router.Group("/api/v1")
 	{
-		user := v1.Group("/users")
+		user := v1.Group("/user")
 		{
 			user.POST("register", sv.createUser)
 			user.POST("login", sv.loginUser)
+			//TODO: user.POST("refresh-token", sv.refreshToken)
 			userAuthRoutes := user.Group("").Use(authMiddleware(sv.tokenGenerator))
 			userAuthRoutes.GET("", sv.getUser)
 			userAuthRoutes.PATCH("", sv.updateUser)
 		}
-		userAddress := user.Group("/address").Use(authMiddleware(sv.tokenGenerator))
+
+		userAddress := v1.Group("/address").Use(authMiddleware(sv.tokenGenerator))
 		{
 			userAddress.POST("", sv.createAddress)
 			userAddress.GET("", sv.listAddresses)
-			userAddress.PUT(":id", sv.updateAddress)
+			userAddress.PATCH(":id", sv.updateAddress)
 			userAddress.DELETE(":id", sv.removeAddress)
 		}
+
 		product := v1.Group("/product")
 		{
 			product.GET(":id", sv.getProduct)
 			product.GET("", sv.listProducts)
+
 			productAuthRoutes := product.Group("").Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sqlc.UserRoleAdmin))
 			productAuthRoutes.POST("", sv.createProduct)
 			productAuthRoutes.PUT(":id", sv.updateProduct)
@@ -131,6 +138,6 @@ func errorResponse(err error) gin.H {
 	return gin.H{"error": err.Error()}
 }
 
-func boolResponse(ok bool) gin.H {
-	return gin.H{"ok": ok}
+func responseMapper(data interface{}, err error) gin.H {
+	return gin.H{"data": data, "error": err}
 }

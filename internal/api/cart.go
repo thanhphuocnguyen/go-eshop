@@ -45,9 +45,9 @@ type getCartItemParam struct {
 }
 
 type checkoutRequest struct {
-	CartID      int64  `json:"cart_id" binding:"required"`
-	IsCod       bool   `json:"is_cod" binding:"required"`
-	PaymentType string `json:"payment_type" binding:"required"`
+	IsCod       bool   `json:"is_cod" binding:"boolean"`
+	PaymentType string `json:"payment_type" binding:"required,oneof=cash transfer"`
+	AddressID   int64  `json:"address_id" binding:"required"`
 }
 
 // ------------------------------ Mappers ------------------------------
@@ -199,6 +199,10 @@ func (sv *Server) addCartItem(c *gin.Context) {
 
 	cartDetail, err := sv.postgres.GetCartDetail(c, authPayload.UserID)
 	if err != nil {
+		if errors.Is(err, postgres.ErrorRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "cart not found"})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
@@ -212,7 +216,7 @@ func (sv *Server) addCartItem(c *gin.Context) {
 
 		cartItem, err := sv.postgres.AddProductToCart(c, sqlc.AddProductToCartParams{
 			ProductID: req.ProductID,
-			CartID:    cartDetail[0].Cart.ID,
+			CartID:    newCart.ID,
 			Quantity:  req.Quantity,
 		})
 
@@ -331,9 +335,16 @@ func (sv *Server) checkout(c *gin.Context) {
 		return
 	}
 
-	user, ok := c.MustGet(authorizationPayload).(*auth.Payload)
-	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "user not found"})
+	address, err := sv.postgres.GetAddress(c, sqlc.GetAddressParams{
+		ID:     req.AddressID,
+		UserID: authPayload.UserID,
+	})
+	if err != nil {
+		if errors.Is(err, postgres.ErrorRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "address not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
@@ -347,19 +358,28 @@ func (sv *Server) checkout(c *gin.Context) {
 		return
 	}
 
-	if cart.UserID != user.UserID {
+	itemCnt, err := sv.postgres.CountCartItem(c, cart.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	if itemCnt == 0 {
+		c.JSON(http.StatusBadRequest, errorResponse(errors.New("cart is empty")))
+		return
+	}
+
+	if cart.UserID != authPayload.UserID {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "cart does not belong to the user"})
 		return
 	}
 
 	order, err := sv.postgres.CheckoutCartTx(c, postgres.CheckoutCartTxParams{
-		UserID: user.UserID,
-		CartID: cart.ID,
-		CreateOrderParams: sqlc.CreateOrderParams{
-			UserID:      user.UserID,
-			PaymentType: sqlc.PaymentType(req.PaymentType),
-			IsCod:       req.IsCod,
-		},
+		UserID:      authPayload.UserID,
+		CartID:      cart.ID,
+		AddressID:   address.ID,
+		PaymentType: sqlc.PaymentType(req.PaymentType),
+		IsCod:       req.IsCod,
 	})
 
 	if err != nil {
@@ -367,7 +387,7 @@ func (sv *Server) checkout(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": order.Order})
+	c.JSON(http.StatusOK, gin.H{"data": order})
 }
 
 // updateCartItemQuantity godoc
@@ -429,7 +449,7 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, mapToCartResponse(cartDetail))
+	c.JSON(http.StatusOK, responseMapper(mapToCartResponse(cartDetail), nil))
 }
 
 // clearCart godoc

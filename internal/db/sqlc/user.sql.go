@@ -19,7 +19,8 @@ INSERT INTO
         username,
         phone,
         full_name,
-        hashed_password
+        hashed_password,
+        role
     )
 VALUES
     (
@@ -27,17 +28,19 @@ VALUES
         $2,
         $3,
         $4,
-        $5
+        $5,
+        $6
     )
 RETURNING id, email, username, full_name, role, verified_email, verified_phone, created_at, updated_at
 `
 
 type CreateUserParams struct {
-	Email          string `json:"email"`
-	Username       string `json:"username"`
-	Phone          string `json:"phone"`
-	FullName       string `json:"full_name"`
-	HashedPassword string `json:"hashed_password"`
+	Email          string   `json:"email"`
+	Username       string   `json:"username"`
+	Phone          string   `json:"phone"`
+	FullName       string   `json:"full_name"`
+	HashedPassword string   `json:"hashed_password"`
+	Role           UserRole `json:"role"`
 }
 
 type CreateUserRow struct {
@@ -59,6 +62,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 		arg.Phone,
 		arg.FullName,
 		arg.HashedPassword,
+		arg.Role,
 	)
 	var i CreateUserRow
 	err := row.Scan(
@@ -89,7 +93,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
 
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT
-    id, role, username, email, full_name, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at, phone
+    id, role, username, email, phone, full_name, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at
 FROM
     users
 WHERE
@@ -105,6 +109,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.Role,
 		&i.Username,
 		&i.Email,
+		&i.Phone,
 		&i.FullName,
 		&i.HashedPassword,
 		&i.VerifiedEmail,
@@ -112,14 +117,13 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.PasswordChangedAt,
 		&i.UpdatedAt,
 		&i.CreatedAt,
-		&i.Phone,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
 SELECT
-    id, role, username, email, full_name, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at, phone
+    id, role, username, email, phone, full_name, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at
 FROM
     users
 WHERE
@@ -135,6 +139,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
 		&i.Role,
 		&i.Username,
 		&i.Email,
+		&i.Phone,
 		&i.FullName,
 		&i.HashedPassword,
 		&i.VerifiedEmail,
@@ -142,14 +147,13 @@ func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
 		&i.PasswordChangedAt,
 		&i.UpdatedAt,
 		&i.CreatedAt,
-		&i.Phone,
 	)
 	return i, err
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
 SELECT
-    id, role, username, email, full_name, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at, phone
+    id, role, username, email, phone, full_name, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at
 FROM
     users
 WHERE
@@ -165,6 +169,7 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.Role,
 		&i.Username,
 		&i.Email,
+		&i.Phone,
 		&i.FullName,
 		&i.HashedPassword,
 		&i.VerifiedEmail,
@@ -172,14 +177,13 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.PasswordChangedAt,
 		&i.UpdatedAt,
 		&i.CreatedAt,
-		&i.Phone,
 	)
 	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many
 SELECT
-    id, role, username, email, full_name, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at, phone
+    id, role, username, email, phone, full_name, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at
 FROM
     users
 ORDER BY
@@ -207,6 +211,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 			&i.Role,
 			&i.Username,
 			&i.Email,
+			&i.Phone,
 			&i.FullName,
 			&i.HashedPassword,
 			&i.VerifiedEmail,
@@ -214,7 +219,6 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 			&i.PasswordChangedAt,
 			&i.UpdatedAt,
 			&i.CreatedAt,
-			&i.Phone,
 		); err != nil {
 			return nil, err
 		}

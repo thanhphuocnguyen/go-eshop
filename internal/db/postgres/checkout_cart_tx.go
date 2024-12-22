@@ -10,26 +10,28 @@ import (
 )
 
 type CheckoutCartTxParams struct {
-	UserID int64 `json:"user_id"`
-	CartID int64 `json:"cart_id"`
-	sqlc.CreateOrderParams
+	UserID      int64            `json:"user_id"`
+	CartID      int64            `json:"cart_id"`
+	AddressID   int64            `json:"address_id"`
+	PaymentType sqlc.PaymentType `json:"payment_type"`
+	IsCod       bool             `json:"is_cod"`
 	//TODO: MakPaymentTransaction func() error
 }
-
 type CheckoutCartTxResult struct {
-	Order sqlc.Order `json:"order"`
+	sqlc.Order
+	Items []sqlc.OrderItem
 }
 
 func (s *Postgres) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxParams) (CheckoutCartTxResult, error) {
 	var result CheckoutCartTxResult
 	err := s.execTx(ctx, func(q *sqlc.Queries) error {
 		var err error
-		errChan := make(chan error)
 		// create order
 		result.Order, err = s.CreateOrder(ctx, sqlc.CreateOrderParams{
-			UserID:      arg.UserID,
-			PaymentType: arg.PaymentType,
-			IsCod:       arg.IsCod,
+			UserID:        arg.UserID,
+			PaymentType:   arg.PaymentType,
+			UserAddressID: arg.AddressID,
+			IsCod:         arg.IsCod,
 		})
 
 		if err != nil {
@@ -43,31 +45,20 @@ func (s *Postgres) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxParams)
 			return err
 		}
 		// create order items concurrently with goroutine and channel to handle error
-		go func() {
-			for _, item := range cartDetails {
-				// create order item for each cart item
-				_, err = s.CreateOrderItem(ctx, sqlc.CreateOrderItemParams{
-					ProductID: item.Product.ID,
-					OrderID:   result.Order.ID,
-					Quantity:  int32(item.CartItem.Quantity),
-					Price:     item.Product.Price,
-				})
-
-				if err != nil {
-					errChan <- err
-					return
-				}
-			}
-			// close the channel when all order items are created
-			close(errChan)
-		}()
-
-		// wait for all order items to be created
-		for err := range errChan {
+		var orderItems []sqlc.OrderItem
+		for _, item := range cartDetails {
+			// create order item for each cart item
+			item, err := s.CreateOrderItem(ctx, sqlc.CreateOrderItemParams{
+				ProductID: item.Product.ID,
+				OrderID:   result.Order.ID,
+				Quantity:  int32(item.CartItem.Quantity),
+				Price:     item.Product.Price,
+			})
 			if err != nil {
 				log.Error().Err(err).Msg("CreateOrderItem")
 				return err
 			}
+			orderItems = append(orderItems, item)
 		}
 
 		// set cart checkout at time
@@ -82,6 +73,8 @@ func (s *Postgres) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxParams)
 			log.Error().Err(err).Msg("SetCartCheckoutAt")
 			return err
 		}
+
+		result.Items = orderItems
 		return nil
 	})
 	if err != nil {

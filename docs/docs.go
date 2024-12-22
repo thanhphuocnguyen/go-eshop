@@ -1075,7 +1075,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.createUserResponse"
+                            "$ref": "#/definitions/api.userResponse"
                         }
                     }
                 }
@@ -1267,6 +1267,29 @@ const docTemplate = `{
                 }
             }
         },
+        "api.addressResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "address_2": {
+                    "type": "string"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "district": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "ward": {
+                    "type": "string"
+                }
+            }
+        },
         "api.cartItemResponse": {
             "type": "object",
             "properties": {
@@ -1325,11 +1348,15 @@ const docTemplate = `{
         "api.checkoutRequest": {
             "type": "object",
             "required": [
+                "address_id",
                 "cart_id",
                 "is_cod",
                 "payment_type"
             ],
             "properties": {
+                "address_id": {
+                    "type": "integer"
+                },
                 "cart_id": {
                     "type": "integer"
                 },
@@ -1409,29 +1436,6 @@ const docTemplate = `{
                 }
             }
         },
-        "api.createUserResponse": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "full_name": {
-                    "type": "string"
-                },
-                "password_changed_at": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
-        },
         "api.listOrderResponse": {
             "type": "object",
             "properties": {
@@ -1462,7 +1466,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "user": {
-                    "$ref": "#/definitions/api.createUserResponse"
+                    "$ref": "#/definitions/api.userResponse"
                 }
             }
         },
@@ -1603,6 +1607,35 @@ const docTemplate = `{
                 }
             }
         },
+        "api.userResponse": {
+            "type": "object",
+            "properties": {
+                "addresses": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.addressResponse"
+                    }
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "password_changed_at": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
         "gin.H": {
             "type": "object",
             "additionalProperties": {}
@@ -1724,6 +1757,9 @@ const docTemplate = `{
                 "updated_at": {
                     "type": "string"
                 },
+                "user_address_id": {
+                    "type": "integer"
+                },
                 "user_id": {
                     "type": "integer"
                 }
@@ -1817,10 +1853,13 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "district": {
-                    "$ref": "#/definitions/pgtype.Text"
+                    "type": "string"
                 },
                 "id": {
                     "type": "integer"
+                },
+                "is_deleted": {
+                    "type": "boolean"
                 },
                 "is_primary": {
                     "type": "boolean"

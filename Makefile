@@ -35,4 +35,4 @@ run-docker:
 gen-swagger:
 	@echo "Generating swagger..."
 	swag init -d internal/api -g server.go --parseInternal --parseDependency
-.PHONY: create-migration migrate-up serve sqlc build
+.PHONY: create-migration migrate-up serve sqlc build run run-docker gen-swagger migrate-up-1 migrate-down migrate-down-1 migrate-drop

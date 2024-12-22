@@ -9,6 +9,17 @@ import (
 	"context"
 )
 
+const countCartItem = `-- name: CountCartItem :one
+SELECT COUNT(*) FROM cart_items WHERE cart_id = $1
+`
+
+func (q *Queries) CountCartItem(ctx context.Context, cartID int64) (int64, error) {
+	row := q.db.QueryRow(ctx, countCartItem, cartID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const updateCartItemQuantity = `-- name: UpdateCartItemQuantity :exec
 UPDATE cart_items SET quantity = $1 WHERE id = $2 RETURNING id, product_id, cart_id, quantity, created_at
 `

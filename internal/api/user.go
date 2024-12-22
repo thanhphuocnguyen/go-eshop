@@ -12,23 +12,33 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/postgres"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
+	"github.com/thanhphuocnguyen/go-eshop/internal/util"
 )
 
 type createUserRequest struct {
-	Username string `json:"username" binding:"required,min=3,max=32,alphanum"`
+	Username string `json:"username" binding:"required,min=3,max=32,alphanum,lowercase"`
 	Password string `json:"password" binding:"required,min=6,max=32,alphanum"`
 	FullName string `json:"full_name" binding:"required,min=3,max=32"`
 	Phone    string `json:"phone" binding:"required,min=10,max=15"`
 	Email    string `json:"email" binding:"required,email,max=255,min=6"`
 }
 
-type createUserResponse struct {
-	Email             string `json:"email"`
-	FullName          string `json:"full_name"`
-	Username          string `json:"username"`
-	CreatedAt         string `json:"created_at"`
-	UpdatedAt         string `json:"updated_at"`
-	PasswordChangedAt string `json:"password_changed_at"`
+type userResponse struct {
+	Email             string            `json:"email"`
+	FullName          string            `json:"full_name"`
+	Username          string            `json:"username"`
+	CreatedAt         string            `json:"created_at"`
+	UpdatedAt         string            `json:"updated_at"`
+	PasswordChangedAt string            `json:"password_changed_at"`
+	Addresses         []addressResponse `json:"addresses"`
+}
+type addressResponse struct {
+	Address  string `json:"address"`
+	Address2 string `json:"address_2"`
+	City     string `json:"city"`
+	District string `json:"district"`
+	Ward     string `json:"ward"`
+	Phone    string `json:"phone"`
 }
 type loginUserRequest struct {
 	Username string `json:"username" binding:"required,min=3,max=32,alphanum"`
@@ -37,29 +47,40 @@ type loginUserRequest struct {
 
 type updateUserRequest struct {
 	UserID   int64         `json:"user_id" binding:"required,min=1"`
-	FullName string        `json:"full_name,omitempty" binding:"omitempty,min=3,max=32,alphanum"`
+	FullName *string       `json:"full_name,omitempty" binding:"omitempty,min=3,max=32,alphanum"`
 	Email    string        `json:"email" binding:"email,max=255,min=6"`
 	Role     sqlc.UserRole `json:"role"`
 }
 type loginResponse struct {
-	SessionID            uuid.UUID          `json:"session_id"`
-	Token                string             `json:"token"`
-	TokenExpireAt        time.Time          `json:"token_expire_at"`
-	RefreshToken         string             `json:"refresh_token"`
-	RefreshTokenExpireAt time.Time          `json:"refresh_token_expire_at"`
-	User                 createUserResponse `json:"user"`
+	SessionID            uuid.UUID    `json:"session_id"`
+	Token                string       `json:"token"`
+	TokenExpireAt        time.Time    `json:"token_expire_at"`
+	RefreshToken         string       `json:"refresh_token"`
+	RefreshTokenExpireAt time.Time    `json:"refresh_token_expire_at"`
+	User                 userResponse `json:"user"`
 }
 
 // ------------------------------ Mappers ------------------------------
 
-func mapToUserResponse(user sqlc.User) createUserResponse {
-	return createUserResponse{
+func mapToUserResponse(user sqlc.User) userResponse {
+	return userResponse{
 		Email:             user.Email,
 		FullName:          user.FullName,
 		Username:          user.Username,
 		CreatedAt:         user.CreatedAt.String(),
 		UpdatedAt:         user.UpdatedAt.String(),
 		PasswordChangedAt: user.PasswordChangedAt.String(),
+	}
+}
+
+func mapAddressToAddressResponse(address sqlc.UserAddress) addressResponse {
+	return addressResponse{
+		Address:  address.Address1,
+		Address2: address.Address2.String,
+		City:     address.City,
+		District: address.District,
+		Ward:     address.Ward.String,
+		Phone:    address.Phone,
 	}
 }
 
@@ -93,6 +114,9 @@ func (sv *Server) createUser(c *gin.Context) {
 		FullName:       req.FullName,
 		Email:          req.Email,
 		Phone:          req.Phone,
+	}
+	if req.Username == "admin" {
+		arg.Role = sqlc.UserRoleAdmin
 	}
 	user, err := sv.postgres.CreateUser(c, arg)
 	if err != nil {
@@ -201,10 +225,10 @@ func (sv *Server) updateUser(c *gin.Context) {
 			String: req.Email,
 			Valid:  true,
 		},
-		FullName: pgtype.Text{
-			String: req.FullName,
-			Valid:  true,
-		},
+	}
+
+	if req.FullName != nil {
+		arg.FullName = util.GetPgTypeText(*req.FullName)
 	}
 
 	if user.Role == sqlc.UserRoleAdmin {
@@ -227,12 +251,12 @@ func (sv *Server) updateUser(c *gin.Context) {
 // @Tags users
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} createUserResponse
+// @Success 200 {object} userResponse
 // @Router /users [get]
 func (sv *Server) getUser(c *gin.Context) {
-	authPayload, ok := c.MustGet(authorizationPayload).(auth.Payload)
+	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, fmt.Errorf("authorization payload is not provided"))
+		c.JSON(http.StatusInternalServerError, errorResponse(fmt.Errorf("authorization payload is not provided")))
 		return
 	}
 
@@ -246,5 +270,22 @@ func (sv *Server) getUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, mapToUserResponse(user))
+	userAddress, err := sv.postgres.ListAddresses(c, sqlc.ListAddressesParams{
+		UserID: user.ID,
+		Limit:  10,
+		Offset: 0,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	addressResp := make([]addressResponse, 0)
+	for _, address := range userAddress {
+		addressResp = append(addressResp, mapAddressToAddressResponse(address))
+	}
+	userResp := mapToUserResponse(user)
+	userResp.Addresses = addressResp
+
+	c.JSON(http.StatusOK, userResp)
 }

@@ -26,7 +26,7 @@ SELECT
 FROM
     user_addresses
 WHERE
-    id = $1 AND user_id = $2 AND is_primary = COALESCE(sqlc.narg('is_primary'), is_primary)
+    id = $1 AND user_id = $2 AND is_deleted = false AND is_primary = COALESCE(sqlc.narg('is_primary'), is_primary)
 LIMIT 1;
 
 -- name: ListAddresses :many
@@ -35,7 +35,7 @@ SELECT
 FROM
     user_addresses
 WHERE
-    user_id = $1
+    user_id = $1 AND is_deleted = false
 ORDER BY
     id
 LIMIT $2
@@ -51,15 +51,16 @@ SET
     ward = coalesce(sqlc.narg('ward'), ward),
     district = coalesce(sqlc.narg('district'), district),
     city = coalesce(sqlc.narg('city'), city),
-    is_primary = coalesce(sqlc.narg('is_primary'), is_primary),
-    updated_at = now()
+    is_primary = coalesce(sqlc.narg('is_primary'), is_primary)
 WHERE
     id = sqlc.arg('id') AND user_id = sqlc.arg('user_id')
 RETURNING *;
 
 -- name: DeleteAddress :exec
-DELETE FROM
+UPDATE
     user_addresses
+SET
+    is_deleted = true
 WHERE
     id = $1 AND user_id = $2;
 
@@ -67,7 +68,6 @@ WHERE
 UPDATE
     user_addresses
 SET
-    is_primary = $1,
-    updated_at = now()
+    is_primary = $1
 WHERE
     user_id = $2 AND id = $3;

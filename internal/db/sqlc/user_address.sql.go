@@ -31,7 +31,7 @@ VALUES
         $5,
         $6,
         $7
-    ) RETURNING id, user_id, phone, address_1, address_2, ward, district, city, is_primary
+    ) RETURNING id, user_id, phone, address_1, address_2, ward, district, city, is_primary, is_deleted, created_at, updated_at, deleted_at
 `
 
 type CreateAddressParams struct {
@@ -40,7 +40,7 @@ type CreateAddressParams struct {
 	Address1 string      `json:"address_1"`
 	Address2 pgtype.Text `json:"address_2"`
 	Ward     pgtype.Text `json:"ward"`
-	District pgtype.Text `json:"district"`
+	District string      `json:"district"`
 	City     string      `json:"city"`
 }
 
@@ -65,13 +65,19 @@ func (q *Queries) CreateAddress(ctx context.Context, arg CreateAddressParams) (U
 		&i.District,
 		&i.City,
 		&i.IsPrimary,
+		&i.IsDeleted,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
 
 const deleteAddress = `-- name: DeleteAddress :exec
-DELETE FROM
+UPDATE
     user_addresses
+SET
+    is_deleted = true
 WHERE
     id = $1 AND user_id = $2
 `
@@ -88,11 +94,11 @@ func (q *Queries) DeleteAddress(ctx context.Context, arg DeleteAddressParams) er
 
 const getAddress = `-- name: GetAddress :one
 SELECT
-    id, user_id, phone, address_1, address_2, ward, district, city, is_primary
+    id, user_id, phone, address_1, address_2, ward, district, city, is_primary, is_deleted, created_at, updated_at, deleted_at
 FROM
     user_addresses
 WHERE
-    id = $1 AND user_id = $2 AND is_primary = COALESCE($3, is_primary)
+    id = $1 AND user_id = $2 AND is_deleted = false AND is_primary = COALESCE($3, is_primary)
 LIMIT 1
 `
 
@@ -115,17 +121,21 @@ func (q *Queries) GetAddress(ctx context.Context, arg GetAddressParams) (UserAdd
 		&i.District,
 		&i.City,
 		&i.IsPrimary,
+		&i.IsDeleted,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
 
 const listAddresses = `-- name: ListAddresses :many
 SELECT
-    id, user_id, phone, address_1, address_2, ward, district, city, is_primary
+    id, user_id, phone, address_1, address_2, ward, district, city, is_primary, is_deleted, created_at, updated_at, deleted_at
 FROM
     user_addresses
 WHERE
-    user_id = $1
+    user_id = $1 AND is_deleted = false
 ORDER BY
     id
 LIMIT $2
@@ -157,6 +167,10 @@ func (q *Queries) ListAddresses(ctx context.Context, arg ListAddressesParams) ([
 			&i.District,
 			&i.City,
 			&i.IsPrimary,
+			&i.IsDeleted,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -172,8 +186,7 @@ const setPrimaryAddress = `-- name: SetPrimaryAddress :exec
 UPDATE
     user_addresses
 SET
-    is_primary = $1,
-    updated_at = now()
+    is_primary = $1
 WHERE
     user_id = $2 AND id = $3
 `
@@ -199,11 +212,10 @@ SET
     ward = coalesce($4, ward),
     district = coalesce($5, district),
     city = coalesce($6, city),
-    is_primary = coalesce($7, is_primary),
-    updated_at = now()
+    is_primary = coalesce($7, is_primary)
 WHERE
     id = $8 AND user_id = $9
-RETURNING id, user_id, phone, address_1, address_2, ward, district, city, is_primary
+RETURNING id, user_id, phone, address_1, address_2, ward, district, city, is_primary, is_deleted, created_at, updated_at, deleted_at
 `
 
 type UpdateAddressParams struct {
@@ -241,6 +253,10 @@ func (q *Queries) UpdateAddress(ctx context.Context, arg UpdateAddressParams) (U
 		&i.District,
 		&i.City,
 		&i.IsPrimary,
+		&i.IsDeleted,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }

@@ -11,8 +11,8 @@ import (
 
 // ---------------------------------------------- API Models ----------------------------------------------
 type orderListQuery struct {
-	Limit  int32 `form:"limit,default=10" binding:"required,min=5,max=100"`
-	Offset int32 `form:"offset,default=0" binding:"required,min=0"`
+	Page     int32 `form:"page" binding:"required,min=1"`
+	PageSize int32 `form:"page_size" binding:"required,min=1,max=100"`
 }
 
 type orderIDParams struct {
@@ -27,9 +27,18 @@ type orderDetailResponse struct {
 	PaymentStatus sqlc.PaymentStatus `json:"payment_status"`
 	Products      []productResponse  `json:"products"`
 }
-
+type orderResponse struct {
+	ID            int64              `json:"id"`
+	Total         float64            `json:"total"`
+	TotalItems    int32              `json:"total_items"`
+	Status        sqlc.OrderStatus   `json:"status"`
+	PaymentType   sqlc.PaymentType   `json:"payment_type"`
+	PaymentStatus sqlc.PaymentStatus `json:"payment_status"`
+	CreatedAt     string             `json:"created_at"`
+	UpdatedAt     string             `json:"updated_at"`
+}
 type listOrderResponse struct {
-	Orders []sqlc.Order `json:"orders"`
+	Orders []orderResponse `json:"orders"`
 }
 
 //---------------------------------------------- API Handlers ----------------------------------------------
@@ -61,15 +70,29 @@ func (sv *Server) orderList(c *gin.Context) {
 
 	orders, err := sv.postgres.ListOrders(c, sqlc.ListOrdersParams{
 		UserID: user.UserID,
-		Limit:  orderListQuery.Limit,
-		Offset: orderListQuery.Offset,
+		Limit:  orderListQuery.PageSize,
+		Offset: (orderListQuery.Page - 1) * orderListQuery.PageSize,
 	})
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	c.JSON(http.StatusOK, listOrderResponse{orders})
+	var orderResponses []orderResponse
+	for _, order := range orders {
+		orderResponses = append(orderResponses, orderResponse{
+			ID:            order.Order.ID,
+			Total:         float64(order.TotalPrice),
+			TotalItems:    int32(order.TotalItems),
+			Status:        order.Order.Status,
+			PaymentType:   order.Order.PaymentType,
+			PaymentStatus: order.Order.PaymentStatus,
+			CreatedAt:     order.Order.CreatedAt.String(),
+			UpdatedAt:     order.Order.UpdatedAt.String(),
+		})
+	}
+
+	c.JSON(http.StatusOK, listOrderResponse{orderResponses})
 }
 
 // @Summary Get order detail
