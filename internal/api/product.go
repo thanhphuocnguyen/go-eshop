@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -328,20 +329,25 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 
 	fileName := util.GetImageName(file.Filename, authPayload.UserID, product.ID)
 	filePath := imageAssetsDir + fileName
+	defer func() {
+		os.Remove(filePath)
+	}()
+
 	err = c.SaveUploadedFile(file, util.GetImageURL(fileName))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
-	imageUrl := pgtype.Text{
-		String: filePath,
-		Valid:  true,
+	url, err := sv.uploadService.UploadFile(c, file, filePath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
 	}
 
 	product, err = sv.postgres.UpdateProduct(c, sqlc.UpdateProductParams{
 		ID:       product.ID,
-		ImageUrl: imageUrl,
+		ImageUrl: util.GetPgTypeText(url),
 	})
 
 	if err != nil {

@@ -18,16 +18,18 @@ INSERT INTO
         user_id,
         payment_type,
         is_cod,
-        user_address_id
+        user_address_id,
+        cart_id
     )
 VALUES
     (
         $1,
         $2,
         $3,
-        $4
+        $4,
+        $5
     )
-RETURNING id, user_id, user_address_id, status, shipping_id, payment_type, payment_status, is_cod, confirmed_at, cancelled_at, delivered_at, refunded_at, updated_at, created_at
+RETURNING id, user_id, user_address_id, status, shipping_id, payment_type, payment_status, is_cod, cart_id, confirmed_at, cancelled_at, delivered_at, refunded_at, updated_at, created_at
 `
 
 type CreateOrderParams struct {
@@ -35,6 +37,7 @@ type CreateOrderParams struct {
 	PaymentType   PaymentType `json:"payment_type"`
 	IsCod         bool        `json:"is_cod"`
 	UserAddressID int64       `json:"user_address_id"`
+	CartID        int64       `json:"cart_id"`
 }
 
 func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {
@@ -43,6 +46,7 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 		arg.PaymentType,
 		arg.IsCod,
 		arg.UserAddressID,
+		arg.CartID,
 	)
 	var i Order
 	err := row.Scan(
@@ -54,6 +58,7 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 		&i.PaymentType,
 		&i.PaymentStatus,
 		&i.IsCod,
+		&i.CartID,
 		&i.ConfirmedAt,
 		&i.CancelledAt,
 		&i.DeliveredAt,
@@ -122,7 +127,7 @@ func (q *Queries) DeleteOrder(ctx context.Context, id int64) error {
 
 const getOrder = `-- name: GetOrder :one
 SELECT
-    id, user_id, user_address_id, status, shipping_id, payment_type, payment_status, is_cod, confirmed_at, cancelled_at, delivered_at, refunded_at, updated_at, created_at
+    id, user_id, user_address_id, status, shipping_id, payment_type, payment_status, is_cod, cart_id, confirmed_at, cancelled_at, delivered_at, refunded_at, updated_at, created_at
 FROM
     orders
 WHERE
@@ -142,6 +147,7 @@ func (q *Queries) GetOrder(ctx context.Context, id int64) (Order, error) {
 		&i.PaymentType,
 		&i.PaymentStatus,
 		&i.IsCod,
+		&i.CartID,
 		&i.ConfirmedAt,
 		&i.CancelledAt,
 		&i.DeliveredAt,
@@ -154,7 +160,7 @@ func (q *Queries) GetOrder(ctx context.Context, id int64) (Order, error) {
 
 const getOrderDetails = `-- name: GetOrderDetails :many
 SELECT
-    orders.id, orders.user_id, orders.user_address_id, orders.status, orders.shipping_id, orders.payment_type, orders.payment_status, orders.is_cod, orders.confirmed_at, orders.cancelled_at, orders.delivered_at, orders.refunded_at, orders.updated_at, orders.created_at, order_items.id, order_items.product_id, order_items.order_id, order_items.quantity, order_items.price, order_items.created_at, products.id, products.name, products.description, products.sku, products.image_url, products.stock, products.archived, products.price, products.updated_at, products.created_at, user_addresses.id, user_addresses.user_id, user_addresses.phone, user_addresses.address_1, user_addresses.address_2, user_addresses.ward, user_addresses.district, user_addresses.city, user_addresses.is_primary, user_addresses.is_deleted, user_addresses.created_at, user_addresses.updated_at, user_addresses.deleted_at
+    orders.id, orders.user_id, orders.user_address_id, orders.status, orders.shipping_id, orders.payment_type, orders.payment_status, orders.is_cod, orders.cart_id, orders.confirmed_at, orders.cancelled_at, orders.delivered_at, orders.refunded_at, orders.updated_at, orders.created_at, order_items.id, order_items.product_id, order_items.order_id, order_items.quantity, order_items.price, order_items.created_at, products.id, products.name, products.description, products.sku, products.image_url, products.stock, products.archived, products.price, products.updated_at, products.created_at, user_addresses.id, user_addresses.user_id, user_addresses.phone, user_addresses.address_1, user_addresses.address_2, user_addresses.ward, user_addresses.district, user_addresses.city, user_addresses.is_primary, user_addresses.is_deleted, user_addresses.created_at, user_addresses.updated_at, user_addresses.deleted_at
 FROM
     orders
 JOIN
@@ -192,6 +198,7 @@ func (q *Queries) GetOrderDetails(ctx context.Context, id int64) ([]GetOrderDeta
 			&i.Order.PaymentType,
 			&i.Order.PaymentStatus,
 			&i.Order.IsCod,
+			&i.Order.CartID,
 			&i.Order.ConfirmedAt,
 			&i.Order.CancelledAt,
 			&i.Order.DeliveredAt,
@@ -286,7 +293,7 @@ func (q *Queries) ListOrderItems(ctx context.Context, arg ListOrderItemsParams) 
 
 const listOrders = `-- name: ListOrders :many
 SELECT
-    orders.id, orders.user_id, orders.user_address_id, orders.status, orders.shipping_id, orders.payment_type, orders.payment_status, orders.is_cod, orders.confirmed_at, orders.cancelled_at, orders.delivered_at, orders.refunded_at, orders.updated_at, orders.created_at, count(*) as total_items, sum(order_items.price) as total_price
+    orders.id, orders.user_id, orders.user_address_id, orders.status, orders.shipping_id, orders.payment_type, orders.payment_status, orders.is_cod, orders.cart_id, orders.confirmed_at, orders.cancelled_at, orders.delivered_at, orders.refunded_at, orders.updated_at, orders.created_at, count(*) as total_items, sum(order_items.price) as total_price
 FROM
     orders
 JOIN order_items ON order_items.order_id = orders.id
@@ -330,6 +337,7 @@ func (q *Queries) ListOrders(ctx context.Context, arg ListOrdersParams) ([]ListO
 			&i.Order.PaymentType,
 			&i.Order.PaymentStatus,
 			&i.Order.IsCod,
+			&i.Order.CartID,
 			&i.Order.ConfirmedAt,
 			&i.Order.CancelledAt,
 			&i.Order.DeliveredAt,
@@ -363,7 +371,7 @@ SET
     updated_at = $8
 WHERE
     id = $9
-RETURNING id, user_id, user_address_id, status, shipping_id, payment_type, payment_status, is_cod, confirmed_at, cancelled_at, delivered_at, refunded_at, updated_at, created_at
+RETURNING id, user_id, user_address_id, status, shipping_id, payment_type, payment_status, is_cod, cart_id, confirmed_at, cancelled_at, delivered_at, refunded_at, updated_at, created_at
 `
 
 type UpdateOrderParams struct {
@@ -400,6 +408,7 @@ func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order
 		&i.PaymentType,
 		&i.PaymentStatus,
 		&i.IsCod,
+		&i.CartID,
 		&i.ConfirmedAt,
 		&i.CancelledAt,
 		&i.DeliveredAt,

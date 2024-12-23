@@ -48,7 +48,7 @@ INSERT INTO
     carts (user_id) 
 VALUES 
     ($1) 
-RETURNING id, checked_out_at, user_id, updated_at, created_at
+RETURNING id, checkout_at, user_id, updated_at, created_at
 `
 
 func (q *Queries) CreateCart(ctx context.Context, userID int64) (Cart, error) {
@@ -56,7 +56,7 @@ func (q *Queries) CreateCart(ctx context.Context, userID int64) (Cart, error) {
 	var i Cart
 	err := row.Scan(
 		&i.ID,
-		&i.CheckedOutAt,
+		&i.CheckoutAt,
 		&i.UserID,
 		&i.UpdatedAt,
 		&i.CreatedAt,
@@ -65,7 +65,7 @@ func (q *Queries) CreateCart(ctx context.Context, userID int64) (Cart, error) {
 }
 
 const getCart = `-- name: GetCart :one
-SELECT id, checked_out_at, user_id, updated_at, created_at FROM carts WHERE checked_out_at IS NULL AND user_id = $1 LIMIT 1
+SELECT id, checkout_at, user_id, updated_at, created_at FROM carts WHERE checkout_at IS NULL AND user_id = $1 LIMIT 1
 `
 
 func (q *Queries) GetCart(ctx context.Context, userID int64) (Cart, error) {
@@ -73,7 +73,7 @@ func (q *Queries) GetCart(ctx context.Context, userID int64) (Cart, error) {
 	var i Cart
 	err := row.Scan(
 		&i.ID,
-		&i.CheckedOutAt,
+		&i.CheckoutAt,
 		&i.UserID,
 		&i.UpdatedAt,
 		&i.CreatedAt,
@@ -82,11 +82,11 @@ func (q *Queries) GetCart(ctx context.Context, userID int64) (Cart, error) {
 }
 
 const getCartDetail = `-- name: GetCartDetail :many
-SELECT carts.id, carts.checked_out_at, carts.user_id, carts.updated_at, carts.created_at, cart_items.id, cart_items.product_id, cart_items.cart_id, cart_items.quantity, cart_items.created_at, products.id, products.name, products.description, products.sku, products.image_url, products.stock, products.archived, products.price, products.updated_at, products.created_at
+SELECT carts.id, carts.checkout_at, carts.user_id, carts.updated_at, carts.created_at, cart_items.id, cart_items.product_id, cart_items.cart_id, cart_items.quantity, cart_items.created_at, products.id, products.name, products.description, products.sku, products.image_url, products.stock, products.archived, products.price, products.updated_at, products.created_at
 FROM carts
 JOIN cart_items ON carts.id = cart_items.cart_id
 JOIN products ON cart_items.product_id = products.id
-WHERE carts.user_id = $1 AND carts.checked_out_at IS NULL
+WHERE carts.user_id = $1 AND carts.checkout_at IS NULL
 `
 
 type GetCartDetailRow struct {
@@ -106,7 +106,7 @@ func (q *Queries) GetCartDetail(ctx context.Context, userID int64) ([]GetCartDet
 		var i GetCartDetailRow
 		if err := rows.Scan(
 			&i.Cart.ID,
-			&i.Cart.CheckedOutAt,
+			&i.Cart.CheckoutAt,
 			&i.Cart.UserID,
 			&i.Cart.UpdatedAt,
 			&i.Cart.CreatedAt,
@@ -151,21 +151,21 @@ func (q *Queries) RemoveProductFromCart(ctx context.Context, arg RemoveProductFr
 }
 
 const setCartCheckoutAt = `-- name: SetCartCheckoutAt :exec
-UPDATE carts SET checked_out_at = $1, updated_at = NOW() WHERE id = $2
+UPDATE carts SET checkout_at = $1, updated_at = NOW() WHERE id = $2
 `
 
 type SetCartCheckoutAtParams struct {
-	CheckedOutAt pgtype.Timestamptz `json:"checked_out_at"`
-	ID           int64              `json:"id"`
+	CheckoutAt pgtype.Timestamptz `json:"checkout_at"`
+	ID         int64              `json:"id"`
 }
 
 func (q *Queries) SetCartCheckoutAt(ctx context.Context, arg SetCartCheckoutAtParams) error {
-	_, err := q.db.Exec(ctx, setCartCheckoutAt, arg.CheckedOutAt, arg.ID)
+	_, err := q.db.Exec(ctx, setCartCheckoutAt, arg.CheckoutAt, arg.ID)
 	return err
 }
 
 const updateCart = `-- name: UpdateCart :exec
-UPDATE carts SET updated_at = NOW() WHERE id = $1 RETURNING id, checked_out_at, user_id, updated_at, created_at
+UPDATE carts SET updated_at = NOW() WHERE id = $1 RETURNING id, checkout_at, user_id, updated_at, created_at
 `
 
 func (q *Queries) UpdateCart(ctx context.Context, id int64) error {

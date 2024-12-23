@@ -15,6 +15,7 @@ import (
 type Store interface {
 	sqlc.Querier
 	CheckoutCartTx(ctx context.Context, arg CheckoutCartTxParams) (CheckoutCartTxResult, error)
+	SetPrimaryAddressTx(ctx context.Context, arg SetPrimaryAddressTxParams) error
 	Close()
 }
 

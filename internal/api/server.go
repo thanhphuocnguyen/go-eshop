@@ -12,6 +12,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/postgres"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
+	"github.com/thanhphuocnguyen/go-eshop/internal/upload"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 )
 
@@ -29,19 +30,21 @@ type Server struct {
 	router          *gin.Engine
 	taskDistributor worker.TaskDistributor
 	tokenGenerator  auth.TokenGenerator
+	uploadService   upload.UploadService
 }
 
 const (
 	imageAssetsDir = "assets/images/"
 )
 
-func NewAPI(cfg config.Config, postgres postgres.Store, taskDistributor worker.TaskDistributor) (*Server, error) {
+func NewAPI(cfg config.Config, postgres postgres.Store, taskDistributor worker.TaskDistributor, uploadService upload.UploadService) (*Server, error) {
 	tokenGenerator := auth.NewPasetoTokenGenerator()
 	server := &Server{
 		tokenGenerator:  tokenGenerator,
 		postgres:        postgres,
 		config:          cfg,
 		taskDistributor: taskDistributor,
+		uploadService:   uploadService,
 	}
 	server.initializeRouter()
 	return server, nil

@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -32,6 +33,7 @@ func (s *Postgres) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxParams)
 			PaymentType:   arg.PaymentType,
 			UserAddressID: arg.AddressID,
 			IsCod:         arg.IsCod,
+			CartID:        arg.CartID,
 		})
 
 		if err != nil {
@@ -43,6 +45,10 @@ func (s *Postgres) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxParams)
 		if err != nil {
 			log.Error().Err(err).Msg("GetCartDetail")
 			return err
+		}
+		if len(cartDetails) == 0 {
+			log.Error().Msg("cart is empty")
+			return fmt.Errorf("cart is empty")
 		}
 		// create order items concurrently with goroutine and channel to handle error
 		var orderItems []sqlc.OrderItem
@@ -64,7 +70,7 @@ func (s *Postgres) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxParams)
 		// set cart checkout at time
 		err = s.SetCartCheckoutAt(ctx, sqlc.SetCartCheckoutAtParams{
 			ID: arg.CartID,
-			CheckedOutAt: pgtype.Timestamptz{
+			CheckoutAt: pgtype.Timestamptz{
 				Time:  time.Now(),
 				Valid: true,
 			},

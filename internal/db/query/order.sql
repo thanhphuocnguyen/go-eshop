@@ -4,14 +4,16 @@ INSERT INTO
         user_id,
         payment_type,
         is_cod,
-        user_address_id
+        user_address_id,
+        cart_id
     )
 VALUES
     (
         $1,
         $2,
         $3,
-        $4
+        $4,
+        $5
     )
 RETURNING *;
 

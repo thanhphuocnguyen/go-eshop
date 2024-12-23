@@ -68,7 +68,7 @@ func (sv *Server) orderList(c *gin.Context) {
 		return
 	}
 
-	orders, err := sv.postgres.ListOrders(c, sqlc.ListOrdersParams{
+	aggregatedOrders, err := sv.postgres.ListOrders(c, sqlc.ListOrdersParams{
 		UserID: user.UserID,
 		Limit:  orderListQuery.PageSize,
 		Offset: (orderListQuery.Page - 1) * orderListQuery.PageSize,
@@ -79,16 +79,17 @@ func (sv *Server) orderList(c *gin.Context) {
 		return
 	}
 	var orderResponses []orderResponse
-	for _, order := range orders {
+	for _, aggregated := range aggregatedOrders {
+		order := aggregated.Order
 		orderResponses = append(orderResponses, orderResponse{
-			ID:            order.Order.ID,
-			Total:         float64(order.TotalPrice),
-			TotalItems:    int32(order.TotalItems),
-			Status:        order.Order.Status,
-			PaymentType:   order.Order.PaymentType,
-			PaymentStatus: order.Order.PaymentStatus,
-			CreatedAt:     order.Order.CreatedAt.String(),
-			UpdatedAt:     order.Order.UpdatedAt.String(),
+			ID:            order.ID,
+			Total:         float64(aggregated.TotalPrice / 100),
+			TotalItems:    int32(aggregated.TotalItems),
+			Status:        order.Status,
+			PaymentType:   order.PaymentType,
+			PaymentStatus: order.PaymentStatus,
+			CreatedAt:     order.CreatedAt.String(),
+			UpdatedAt:     order.UpdatedAt.String(),
 		})
 	}
 
@@ -119,6 +120,11 @@ func (sv *Server) orderDetail(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
+
+	if len(orderDetails) == 0 {
+		c.JSON(http.StatusNotFound, errorResponse(errors.New("order not found")))
+		return
+	}
 	var orderDetailResponse orderDetailResponse
 	orderDetailResponse.ID = orderDetails[0].Order.ID
 
@@ -128,17 +134,18 @@ func (sv *Server) orderDetail(c *gin.Context) {
 	var total float64
 	for _, order := range orderDetails {
 		price, _ := order.Product.Price.Float64Value()
+		product := order.Product
 		total += price.Float64 * float64(order.OrderItem.Quantity)
 		orderDetailResponse.Products = append(orderDetailResponse.Products, productResponse{
-			ID:          order.Product.ID,
-			Name:        order.Product.Name,
+			ID:          product.ID,
+			Name:        product.Name,
 			Price:       price.Float64,
-			Description: order.Product.Description,
-			Sku:         order.Product.Sku,
-			ImageURL:    order.Product.ImageUrl.String,
-			Stock:       order.Product.Stock,
-			UpdatedAt:   order.Product.UpdatedAt.String(),
-			CreatedAt:   order.Product.CreatedAt.String(),
+			Description: product.Description,
+			Sku:         product.Sku,
+			ImageURL:    product.ImageUrl.String,
+			Stock:       product.Stock,
+			UpdatedAt:   product.UpdatedAt.String(),
+			CreatedAt:   product.CreatedAt.String(),
 		})
 	}
 	orderDetailResponse.Total = total

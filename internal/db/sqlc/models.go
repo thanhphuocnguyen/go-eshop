@@ -244,11 +244,11 @@ type AttributeValue struct {
 }
 
 type Cart struct {
-	ID           int64              `json:"id"`
-	CheckedOutAt pgtype.Timestamptz `json:"checked_out_at"`
-	UserID       int64              `json:"user_id"`
-	UpdatedAt    time.Time          `json:"updated_at"`
-	CreatedAt    time.Time          `json:"created_at"`
+	ID         int64              `json:"id"`
+	CheckoutAt pgtype.Timestamptz `json:"checkout_at"`
+	UserID     int64              `json:"user_id"`
+	UpdatedAt  time.Time          `json:"updated_at"`
+	CreatedAt  time.Time          `json:"created_at"`
 }
 
 type CartItem struct {
@@ -282,6 +282,7 @@ type Order struct {
 	PaymentType   PaymentType        `json:"payment_type"`
 	PaymentStatus PaymentStatus      `json:"payment_status"`
 	IsCod         bool               `json:"is_cod"`
+	CartID        int64              `json:"cart_id"`
 	ConfirmedAt   pgtype.Timestamptz `json:"confirmed_at"`
 	CancelledAt   pgtype.Timestamptz `json:"cancelled_at"`
 	DeliveredAt   pgtype.Timestamptz `json:"delivered_at"`

@@ -45,7 +45,7 @@ type getCartItemParam struct {
 }
 
 type checkoutRequest struct {
-	IsCod       bool   `json:"is_cod" binding:"boolean"`
+	IsCod       *bool  `json:"is_cod" binding:"boolean,omitempty"`
 	PaymentType string `json:"payment_type" binding:"required,oneof=cash transfer"`
 	AddressID   int64  `json:"address_id" binding:"required"`
 }
@@ -77,7 +77,7 @@ func mapToCartResponse(cartItems []sqlc.GetCartDetailRow) cartResponse {
 
 	return cartResponse{
 		ID:           cart.ID,
-		CheckedOutAt: cart.CheckedOutAt.Time,
+		CheckedOutAt: cart.CheckoutAt.Time,
 		UserID:       cart.UserID,
 		UpdatedAt:    cart.UpdatedAt,
 		CreatedAt:    cart.CreatedAt,
@@ -101,13 +101,13 @@ func mapToCartResponse(cartItems []sqlc.GetCartDetailRow) cartResponse {
 func (sv *Server) createCart(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "user not found"})
+		c.JSON(http.StatusBadRequest, errorResponse(errors.New("user not found")))
 		return
 	}
 	user, err := sv.postgres.GetUserByID(c, authPayload.UserID)
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "user is not existed"})
+			c.JSON(http.StatusNotFound, errorResponse(errors.New("user not found")))
 			return
 		}
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
@@ -115,7 +115,7 @@ func (sv *Server) createCart(c *gin.Context) {
 	}
 	_, err = sv.postgres.GetCart(c, authPayload.UserID)
 	if err == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "cart already existed"})
+		c.JSON(http.StatusBadRequest, errorResponse(errors.New("cart already existed")))
 		return
 	}
 
@@ -125,7 +125,7 @@ func (sv *Server) createCart(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, newCart)
+	c.JSON(http.StatusOK, responseMapper(newCart, nil))
 }
 
 // getCart godoc
@@ -177,7 +177,7 @@ func (sv *Server) getCart(c *gin.Context) {
 func (sv *Server) addCartItem(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "user not found"})
+		c.JSON(http.StatusBadRequest, errorResponse(errors.New("user not found")))
 		return
 	}
 
@@ -190,7 +190,7 @@ func (sv *Server) addCartItem(c *gin.Context) {
 	product, err := sv.postgres.GetProduct(c, req.ProductID)
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "product not found"})
+			c.JSON(http.StatusNotFound, errorResponse(errors.New("product not found")))
 			return
 		}
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
@@ -200,7 +200,7 @@ func (sv *Server) addCartItem(c *gin.Context) {
 	cartDetail, err := sv.postgres.GetCartDetail(c, authPayload.UserID)
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "cart not found"})
+			c.JSON(http.StatusNotFound, errorResponse(errors.New("cart not found")))
 			return
 		}
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
@@ -236,6 +236,7 @@ func (sv *Server) addCartItem(c *gin.Context) {
 			CartID:    cartDetail[0].Cart.ID,
 			Quantity:  req.Quantity,
 		})
+
 		sv.postgres.UpdateCart(c, cartDetail[0].Cart.ID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, errorResponse(err))
@@ -255,7 +256,7 @@ func (sv *Server) addCartItem(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, mapToCartResponse(cartDetail))
+	c.JSON(http.StatusOK, responseMapper(mapToCartResponse(cartDetail), nil))
 }
 
 // removeCartItem godoc
@@ -273,7 +274,7 @@ func (sv *Server) addCartItem(c *gin.Context) {
 func (sv *Server) removeCartItem(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "user not found"})
+		c.JSON(http.StatusBadRequest, errorResponse(errors.New("user not found")))
 		return
 	}
 
@@ -286,7 +287,7 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 	cart, err := sv.postgres.GetCart(c, authPayload.UserID)
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "cart not found"})
+			c.JSON(http.StatusNotFound, errorResponse(errors.New("cart not found")))
 			return
 		}
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
@@ -294,7 +295,7 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 	}
 
 	if cart.UserID != authPayload.UserID {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "cart does not belong to the user"})
+		c.JSON(http.StatusUnauthorized, errorResponse(errors.New("cart does not belong to the user")))
 		return
 	}
 
@@ -307,7 +308,7 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"success": true})
+	c.JSON(http.StatusOK, responseMapper("product removed", nil))
 }
 
 // checkout godoc
@@ -325,7 +326,7 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 func (sv *Server) checkout(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "user not found"})
+		c.JSON(http.StatusBadRequest, errorResponse(errors.New("user not found")))
 		return
 	}
 
@@ -341,7 +342,7 @@ func (sv *Server) checkout(c *gin.Context) {
 	})
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "address not found"})
+			c.JSON(http.StatusNotFound, errorResponse(errors.New("address not found")))
 			return
 		}
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
@@ -351,7 +352,7 @@ func (sv *Server) checkout(c *gin.Context) {
 	cart, err := sv.postgres.GetCart(c, authPayload.UserID)
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "cart not found"})
+			c.JSON(http.StatusNotFound, errorResponse(errors.New("cart not found")))
 			return
 		}
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
@@ -370,24 +371,32 @@ func (sv *Server) checkout(c *gin.Context) {
 	}
 
 	if cart.UserID != authPayload.UserID {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "cart does not belong to the user"})
+		c.JSON(http.StatusBadRequest, errorResponse(errors.New("cart does not belong to the user")))
 		return
 	}
 
-	order, err := sv.postgres.CheckoutCartTx(c, postgres.CheckoutCartTxParams{
+	params := postgres.CheckoutCartTxParams{
 		UserID:      authPayload.UserID,
 		CartID:      cart.ID,
 		AddressID:   address.ID,
 		PaymentType: sqlc.PaymentType(req.PaymentType),
-		IsCod:       req.IsCod,
-	})
+	}
+
+	if req.IsCod != nil && *req.IsCod {
+		params.IsCod = true
+		params.PaymentType = sqlc.PaymentTypeCash
+	} else {
+		params.IsCod = false
+	}
+
+	order, err := sv.postgres.CheckoutCartTx(c, params)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": order})
+	c.JSON(http.StatusOK, responseMapper(order, nil))
 }
 
 // updateCartItemQuantity godoc
@@ -426,12 +435,12 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 		return
 	}
 	if len(cartDetail) == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "cart not found"})
+		c.JSON(http.StatusNotFound, errorResponse(errors.New("cart not found")))
 		return
 	}
 
 	if cartDetail[0].Cart.UserID != authPayload.UserID {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "cart does not belong to the user"})
+		c.JSON(http.StatusBadRequest, errorResponse(errors.New("cart does not belong to the user")))
 		return
 	}
 
@@ -466,14 +475,14 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 func (sv *Server) clearCart(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "user not found"})
+		c.JSON(http.StatusBadRequest, errorResponse(errors.New("user not found")))
 		return
 	}
 
 	cart, err := sv.postgres.GetCart(c, authPayload.UserID)
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "cart not found"})
+			c.JSON(http.StatusNotFound, errorResponse(errors.New("cart not found")))
 			return
 		}
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
@@ -481,7 +490,7 @@ func (sv *Server) clearCart(c *gin.Context) {
 	}
 
 	if cart.UserID != authPayload.UserID {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "cart does not belong to the user"})
+		c.JSON(http.StatusBadRequest, errorResponse(errors.New("cart does not belong to the user")))
 		return
 	}
 

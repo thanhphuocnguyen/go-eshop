@@ -13,12 +13,7 @@ type SetPrimaryAddressTxParams struct {
 	UserID       int64 `json:"user_id"`
 }
 
-type SetPrimaryAddressTxResult struct {
-	Success bool `json:"success"`
-}
-
-func (s *Postgres) SetPrimaryAddressTx(ctx context.Context, arg SetPrimaryAddressTxParams) (SetPrimaryAddressTxResult, error) {
-	var result SetPrimaryAddressTxResult
+func (s *Postgres) SetPrimaryAddressTx(ctx context.Context, arg SetPrimaryAddressTxParams) error {
 	err := s.execTx(ctx, func(q *sqlc.Queries) error {
 		var err error
 		// get all user addresses
@@ -53,12 +48,11 @@ func (s *Postgres) SetPrimaryAddressTx(ctx context.Context, arg SetPrimaryAddres
 			log.Error().Err(err).Msg("Cannot toggle new primary address")
 			return err
 		}
-		result.Success = true
 		return nil
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("execTx")
 	}
 
-	return result, err
+	return err
 }

@@ -60,26 +60,36 @@ func (sv *Server) createAddress(c *gin.Context) {
 		return
 	}
 
-	var input CreateAddressParams
-	if err := c.ShouldBindJSON(&input); err != nil {
+	var req CreateAddressParams
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 	payload := sqlc.CreateAddressParams{
 		UserID:   authPayload.UserID,
-		Phone:    input.Phone,
-		Address1: input.Address1,
-		City:     input.City,
-		District: input.District,
+		Phone:    req.Phone,
+		Address1: req.Address1,
+		City:     req.City,
+		District: req.District,
 	}
-	if input.Address2 != nil {
-		payload.Address2 = util.GetPgTypeText(*input.Address2)
+	if req.Address2 != nil {
+		payload.Address2 = util.GetPgTypeText(*req.Address2)
 	}
-	if input.Ward != "" {
-		payload.Ward = util.GetPgTypeText(input.Ward)
+	if req.Ward != "" {
+		payload.Ward = util.GetPgTypeText(req.Ward)
 	}
 	address, err := sv.postgres.CreateAddress(c, payload)
 
+	if req.IsDefault {
+		err := sv.postgres.SetPrimaryAddressTx(c, postgres.SetPrimaryAddressTxParams{
+			NewPrimaryID: address.ID,
+			UserID:       authPayload.UserID,
+		})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, errorResponse(fmt.Errorf("failed to set primary address: %w", err)))
+			return
+		}
+	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -185,7 +195,16 @@ func (sv *Server) updateAddress(c *gin.Context) {
 		payload.District = util.GetPgTypeText(*input.District)
 	}
 	if input.IsDefault != nil {
-		payload.IsPrimary = util.GetPgTypeBool(*input.IsDefault)
+		if *input.IsDefault {
+			err := sv.postgres.SetPrimaryAddressTx(c, postgres.SetPrimaryAddressTxParams{
+				NewPrimaryID: param.ID,
+				UserID:       authPayload.UserID,
+			})
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, errorResponse(fmt.Errorf("failed to set primary address: %w", err)))
+				return
+			}
+		}
 	}
 
 	address, err := sv.postgres.UpdateAddress(c, payload)

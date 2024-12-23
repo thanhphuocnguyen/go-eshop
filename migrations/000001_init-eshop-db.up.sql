@@ -49,10 +49,11 @@ CREATE TABLE
 CREATE TABLE
   "carts" (
     "id" bigserial PRIMARY KEY,
-    "checked_out_at" timestamptz,
+    "checkout_at" timestamptz,
     "user_id" bigint NOT NULL,
     "updated_at" timestamptz NOT NULL DEFAULT '0001-01-01 00:00:00Z',
-    "created_at" timestamptz NOT NULL DEFAULT (now ())
+    "created_at" timestamptz NOT NULL DEFAULT (now ()),
+    UNIQUE ("id", "checkout_at")
   );
 
 CREATE TABLE
@@ -73,7 +74,8 @@ CREATE TABLE
     "shipping_id" bigint,
     "payment_type" payment_type NOT NULL,
     "payment_status" payment_status NOT NULL DEFAULT 'not_paid',
-    "is_cod" bool NOT NULL,
+    "is_cod" bool NOT NULL DEFAULT false,
+    "cart_id" bigint NOT NULL,
     "confirmed_at" timestamptz,
     "cancelled_at" timestamptz,
     "delivered_at" timestamptz,
@@ -123,7 +125,7 @@ CREATE TABLE
 CREATE TABLE
   "categories" (
     "id" bigserial PRIMARY KEY,
-    "name" varchar NOT NULL,
+    "name" varchar UNIQUE NOT NULL,
     "image_url" varchar,
     "published" bool NOT NULL DEFAULT true,
     "created_at" timestamptz NOT NULL DEFAULT (now ()),
@@ -160,7 +162,24 @@ CREATE TABLE
     "created_at" timestamptz NOT NULL DEFAULT (now ())
   );
 
-ALTER TABLE "sessions" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
+CREATE TABLE
+  "user_addresses" (
+    "id" bigserial PRIMARY KEY,
+    "user_id" bigint NOT NULL,
+    "phone" varchar(12) NOT NULL,
+    "address_1" varchar NOT NULL,
+    "address_2" varchar,
+    "ward" varchar(100),
+    "district" varchar(100) NOT NULL,
+    "city" varchar(100) NOT NULL,
+    "is_primary" bool NOT NULL DEFAULT false,
+    "is_deleted" bool NOT NULL DEFAULT false,
+    "created_at" timestamptz NOT NULL DEFAULT now (),
+    "updated_at" timestamptz NOT NULL DEFAULT '0001-01-01 00:00:00Z',
+    "deleted_at" timestamptz
+  );
+
+CREATE INDEX "idx_user_addresses_user_id" ON "user_addresses" ("user_id");
 
 CREATE INDEX ON "products" ("price");
 
@@ -205,3 +224,9 @@ ALTER TABLE "category_products" ADD FOREIGN KEY ("category_id") REFERENCES "cate
 ALTER TABLE "category_products" ADD FOREIGN KEY ("product_id") REFERENCES "products" ("id");
 
 ALTER TABLE "payment_infos" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
+
+ALTER TABLE "orders" ADD FOREIGN KEY ("user_address_id") REFERENCES "user_addresses" ("id");
+
+ALTER TABLE "user_addresses" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
+
+ALTER TABLE "sessions" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
