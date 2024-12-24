@@ -42,6 +42,7 @@ type Querier interface {
 	ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	RemoveProductFromCart(ctx context.Context, arg RemoveProductFromCartParams) error
+	ResetPrimaryAddress(ctx context.Context, userID int64) error
 	SetCartCheckoutAt(ctx context.Context, arg SetCartCheckoutAtParams) error
 	SetPrimaryAddress(ctx context.Context, arg SetPrimaryAddressParams) error
 	UpdateAddress(ctx context.Context, arg UpdateAddressParams) (UserAddress, error)

@@ -124,6 +124,18 @@ func (sv *Server) initializeRouter() {
 			adminOrder.PUT(":id/change-status", sv.changeOrderStatus)
 			adminOrder.PUT(":id/change-payment-status", sv.changeOrderPaymentStatus)
 		}
+
+		collection := v1.Group("/collection")
+		{
+			collection.GET("", sv.listCollections)
+			collectionAuthRoutes := collection.Group("").Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sqlc.UserRoleAdmin))
+			collectionAuthRoutes.POST("", sv.createCollection)
+			collectionAuthRoutes.GET(":id", sv.getCollectionByID)
+			collectionAuthRoutes.PUT(":id", sv.updateCollection)
+			collectionAuthRoutes.DELETE(":id", sv.removeCollection)
+			collectionAuthRoutes.POST(":id/product", sv.addProductToCollection)
+			collectionAuthRoutes.DELETE(":id/product", sv.deleteProductFromCollection)
+		}
 	}
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
@@ -141,6 +153,13 @@ func errorResponse(err error) gin.H {
 	return gin.H{"error": err.Error()}
 }
 
-func responseMapper(data interface{}, err error) gin.H {
-	return gin.H{"data": data, "error": err}
+func responseMapper(data interface{}, message *string, err *error) gin.H {
+	response := gin.H{"data": data}
+	if message != nil {
+		response["message"] = *message
+	}
+	if err != nil {
+		response["error"] = (*err).Error()
+	}
+	return response
 }

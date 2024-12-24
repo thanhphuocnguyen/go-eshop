@@ -125,7 +125,7 @@ func (sv *Server) createCart(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, responseMapper(newCart, nil))
+	c.JSON(http.StatusOK, responseMapper(newCart, nil, nil))
 }
 
 // getCart godoc
@@ -256,7 +256,7 @@ func (sv *Server) addCartItem(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, responseMapper(mapToCartResponse(cartDetail), nil))
+	c.JSON(http.StatusOK, responseMapper(mapToCartResponse(cartDetail), nil, nil))
 }
 
 // removeCartItem godoc
@@ -308,7 +308,7 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, responseMapper("product removed", nil))
+	c.JSON(http.StatusOK, responseMapper("product removed", nil, nil))
 }
 
 // checkout godoc
@@ -396,7 +396,7 @@ func (sv *Server) checkout(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, responseMapper(order, nil))
+	c.JSON(http.StatusOK, responseMapper(order, nil, nil))
 }
 
 // updateCartItemQuantity godoc
@@ -458,7 +458,7 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, responseMapper(mapToCartResponse(cartDetail), nil))
+	c.JSON(http.StatusOK, responseMapper(mapToCartResponse(cartDetail), nil, nil))
 }
 
 // clearCart godoc

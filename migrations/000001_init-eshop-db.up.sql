@@ -1,3 +1,14 @@
+-- Drop types
+DROP TYPE IF EXISTS "card_type";
+
+DROP TYPE IF EXISTS "payment_type";
+
+DROP TYPE IF EXISTS "payment_status";
+
+DROP TYPE IF EXISTS "order_status";
+
+DROP TYPE IF EXISTS "user_role";
+
 CREATE TYPE "user_role" AS ENUM ('admin', 'user');
 
 CREATE TYPE "order_status" AS ENUM (
@@ -41,7 +52,7 @@ CREATE TABLE
     "image_url" varchar,
     "stock" int NOT NULL,
     "archived" bool NOT NULL DEFAULT false,
-    "price" numeric(8, 2) NOT NULL,
+    "price" DECIMAL(10, 2) NOT NULL,
     "updated_at" timestamptz NOT NULL DEFAULT '0001-01-01 00:00:00Z',
     "created_at" timestamptz NOT NULL DEFAULT (now ())
   );
@@ -53,7 +64,7 @@ CREATE TABLE
     "user_id" bigint NOT NULL,
     "updated_at" timestamptz NOT NULL DEFAULT '0001-01-01 00:00:00Z',
     "created_at" timestamptz NOT NULL DEFAULT (now ()),
-    UNIQUE ("id", "checkout_at")
+    UNIQUE ("user_id", "checkout_at")
   );
 
 CREATE TABLE
@@ -62,7 +73,8 @@ CREATE TABLE
     "product_id" bigint NOT NULL,
     "cart_id" bigint NOT NULL,
     "quantity" smallint NOT NULL,
-    "created_at" timestamptz NOT NULL DEFAULT (now ())
+    "created_at" timestamptz NOT NULL DEFAULT (now ()),
+    UNIQUE ("product_id", "cart_id")
   );
 
 CREATE TABLE
@@ -70,12 +82,13 @@ CREATE TABLE
     "id" bigserial PRIMARY KEY,
     "user_id" bigint NOT NULL,
     "user_address_id" bigint NOT NULL,
-    "status" order_status NOT NULL DEFAULT 'wait_for_confirming',
     "shipping_id" bigint,
     "payment_type" payment_type NOT NULL,
-    "payment_status" payment_status NOT NULL DEFAULT 'not_paid',
-    "is_cod" bool NOT NULL DEFAULT false,
+    "total_price" DECIMAL(10, 2) NOT NULL,
     "cart_id" bigint NOT NULL,
+    "is_cod" bool NOT NULL DEFAULT false,
+    "status" order_status NOT NULL DEFAULT 'wait_for_confirming',
+    "payment_status" payment_status NOT NULL DEFAULT 'not_paid',
     "confirmed_at" timestamptz,
     "cancelled_at" timestamptz,
     "delivered_at" timestamptz,
@@ -90,7 +103,7 @@ CREATE TABLE
     "product_id" bigint NOT NULL,
     "order_id" bigint NOT NULL,
     "quantity" int NOT NULL,
-    "price" decimal NOT NULL,
+    "price" DECIMAL(10,2) NOT NULL,
     "created_at" timestamptz NOT NULL DEFAULT (now ())
   );
 
@@ -200,6 +213,12 @@ CREATE INDEX ON "order_items" ("product_id", "order_id");
 CREATE INDEX ON "shippings" ("order_id");
 
 CREATE INDEX ON "category_products" ("category_id", "product_id");
+
+CREATE INDEX ON "payment_infos" ("user_id");
+
+CREATE INDEX ON "sessions" ("user_id");
+
+CREATE INDEX ON "user_addresses" ("user_id", "is_primary");
 
 ALTER TABLE "carts" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
 

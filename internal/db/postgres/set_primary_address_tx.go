@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
 )
@@ -16,28 +15,12 @@ type SetPrimaryAddressTxParams struct {
 func (s *Postgres) SetPrimaryAddressTx(ctx context.Context, arg SetPrimaryAddressTxParams) error {
 	err := s.execTx(ctx, func(q *sqlc.Queries) error {
 		var err error
-		// get all user addresses
-		oldPrimary, err := s.GetAddress(ctx, sqlc.GetAddressParams{
-			UserID: arg.UserID,
-			IsPrimary: pgtype.Bool{
-				Bool:  true,
-				Valid: true,
-			},
-		})
+		err = s.ResetPrimaryAddress(ctx, arg.UserID)
 		if err != nil {
-			log.Error().Err(err).Msg("ListUserAddresses")
+			log.Error().Err(err).Msg("Cannot reset primary address")
 			return err
 		}
-		// set primary address
-		err = s.SetPrimaryAddress(ctx, sqlc.SetPrimaryAddressParams{
-			IsPrimary: false,
-			UserID:    arg.UserID,
-			ID:        oldPrimary.ID,
-		})
 
-		if err != nil {
-			log.Error().Err(err).Msg("Cannot toggle old primary address")
-		}
 		err = s.SetPrimaryAddress(ctx, sqlc.SetPrimaryAddressParams{
 			IsPrimary: true,
 			UserID:    arg.UserID,

@@ -182,6 +182,20 @@ func (q *Queries) ListAddresses(ctx context.Context, arg ListAddressesParams) ([
 	return items, nil
 }
 
+const resetPrimaryAddress = `-- name: ResetPrimaryAddress :exec
+UPDATE
+    user_addresses
+SET
+    is_primary = false
+WHERE
+    user_id = $1 AND is_primary = true
+`
+
+func (q *Queries) ResetPrimaryAddress(ctx context.Context, userID int64) error {
+	_, err := q.db.Exec(ctx, resetPrimaryAddress, userID)
+	return err
+}
+
 const setPrimaryAddress = `-- name: SetPrimaryAddress :exec
 UPDATE
     user_addresses

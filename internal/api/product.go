@@ -18,7 +18,7 @@ type createProductRequest struct {
 	Description string  `json:"description" binding:"required,min=10,max=1000"`
 	Sku         string  `json:"sku" binding:"required,alphanum"`
 	Stock       int32   `json:"stock" binding:"required,gt=0"`
-	Price       float32 `json:"price" binding:"required,gt=0,lt=10000"`
+	Price       float64 `json:"price" binding:"required,gt=0,lt=10000"`
 }
 
 type updateProductRequest struct {
@@ -26,7 +26,7 @@ type updateProductRequest struct {
 	Description string  `json:"description" binding:"omitempty,min=10,max=1000"`
 	Sku         string  `json:"sku" binding:"omitempty,alphanum"`
 	Stock       int32   `json:"stock" binding:"omitempty,gt=0,lt=10000"`
-	Price       float32 `json:"price" binding:"omitempty,gt=0,lt=10000"`
+	Price       float64 `json:"price" binding:"omitempty,gt=0,lt=10000"`
 }
 
 type getProductParams struct {
@@ -48,6 +48,23 @@ type productResponse struct {
 	Price       float64 `json:"price"`
 	UpdatedAt   string  `json:"updated_at"`
 	CreatedAt   string  `json:"created_at"`
+}
+
+// ------------------------------ Mapper ------------------------------
+
+func convertToProductResponse(product sqlc.Product) productResponse {
+	price, _ := product.Price.Float64Value()
+	return productResponse{
+		ID:          product.ID,
+		Name:        product.Name,
+		Description: product.Description,
+		Sku:         product.Sku,
+		ImageURL:    product.ImageUrl.String,
+		Stock:       product.Stock,
+		Price:       price.Float64,
+		UpdatedAt:   product.UpdatedAt.String(),
+		CreatedAt:   product.CreatedAt.String(),
+	}
 }
 
 // ------------------------------ Handlers ------------------------------
@@ -91,7 +108,7 @@ func (sv *Server) createProduct(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, newProduct)
+	c.JSON(http.StatusCreated, responseMapper(newProduct, nil, nil))
 }
 
 // getProduct godoc
@@ -123,7 +140,7 @@ func (sv *Server) getProduct(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, convertToProductResponse(product))
+	c.JSON(http.StatusOK, responseMapper(convertToProductResponse(product), nil, nil))
 }
 
 // listProducts godoc
@@ -160,22 +177,7 @@ func (sv *Server) listProducts(c *gin.Context) {
 		productResponses[i] = convertToProductResponse(product)
 	}
 
-	c.JSON(http.StatusOK, productResponses)
-}
-
-func convertToProductResponse(product sqlc.Product) productResponse {
-	price, _ := product.Price.Float64Value()
-	return productResponse{
-		ID:          product.ID,
-		Name:        product.Name,
-		Description: product.Description,
-		Sku:         product.Sku,
-		ImageURL:    product.ImageUrl.String,
-		Stock:       product.Stock,
-		Price:       price.Float64,
-		UpdatedAt:   product.UpdatedAt.String(),
-		CreatedAt:   product.CreatedAt.String(),
-	}
+	c.JSON(http.StatusOK, responseMapper(productResponses, nil, nil))
 }
 
 // removeProduct godoc
@@ -213,7 +215,8 @@ func (sv *Server) removeProduct(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Product deleted"})
+	message := "product deleted"
+	c.JSON(http.StatusOK, responseMapper(nil, &message, nil))
 }
 
 // updateProduct godoc
@@ -282,7 +285,7 @@ func (sv *Server) updateProduct(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	c.JSON(http.StatusOK, convertToProductResponse(updated))
+	c.JSON(http.StatusOK, responseMapper(convertToProductResponse(updated), nil, nil))
 }
 
 // UploadProductImage godoc
@@ -354,7 +357,7 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	c.JSON(http.StatusOK, convertToProductResponse(product))
+	c.JSON(http.StatusOK, responseMapper(convertToProductResponse(product), nil, nil))
 }
 
 // RemoveProductImage godoc
@@ -401,5 +404,5 @@ func (sv *Server) removeProductImage(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	c.JSON(http.StatusOK, convertToProductResponse(product))
+	c.JSON(http.StatusOK, responseMapper(convertToProductResponse(product), nil, nil))
 }

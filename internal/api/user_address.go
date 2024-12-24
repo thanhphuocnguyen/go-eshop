@@ -42,6 +42,32 @@ type GetAddressListQuery struct {
 	PageSize int32 `form:"page_size" binding:"required,min=1,max=100"`
 }
 
+// ------------------------------ API Models ------------------------------
+type AddressResponse struct {
+	ID        int64   `json:"id"`
+	Phone     string  `json:"phone"`
+	Address1  string  `json:"address_1"`
+	Address2  *string `json:"address_2,omitempty"`
+	Ward      *string `json:"ward"`
+	District  string  `json:"district"`
+	City      string  `json:"city"`
+	IsDefault bool    `json:"is_default"`
+}
+
+// ------------------------------ Mapper ------------------------------
+func mapAddressResponse(address sqlc.UserAddress) AddressResponse {
+	return AddressResponse{
+		ID:        address.ID,
+		Phone:     address.Phone,
+		Address1:  address.Address1,
+		Address2:  &address.Address2.String,
+		Ward:      &address.Ward.String,
+		District:  address.District,
+		City:      address.City,
+		IsDefault: address.IsPrimary,
+	}
+}
+
 // ------------------------------ Handlers ------------------------------
 
 // createAddress godoc
@@ -72,12 +98,14 @@ func (sv *Server) createAddress(c *gin.Context) {
 		City:     req.City,
 		District: req.District,
 	}
+
 	if req.Address2 != nil {
 		payload.Address2 = util.GetPgTypeText(*req.Address2)
 	}
 	if req.Ward != "" {
 		payload.Ward = util.GetPgTypeText(req.Ward)
 	}
+
 	address, err := sv.postgres.CreateAddress(c, payload)
 
 	if req.IsDefault {
@@ -90,11 +118,12 @@ func (sv *Server) createAddress(c *gin.Context) {
 			return
 		}
 	}
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	c.JSON(http.StatusOK, address)
+	c.JSON(http.StatusOK, responseMapper(mapAddressResponse(address), nil, nil))
 }
 
 // getAddresses godoc
@@ -128,8 +157,12 @@ func (sv *Server) listAddresses(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
+	addressesResponse := make([]AddressResponse, len(addresses))
+	for i, address := range addresses {
+		addressesResponse[i] = mapAddressResponse(address)
+	}
 
-	c.JSON(http.StatusOK, addresses)
+	c.JSON(http.StatusOK, responseMapper(addressesResponse, nil, nil))
 }
 
 // updateAddress godoc
@@ -212,7 +245,7 @@ func (sv *Server) updateAddress(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	c.JSON(http.StatusOK, address)
+	c.JSON(http.StatusOK, responseMapper(mapAddressResponse(address), nil, nil))
 }
 
 // removeAddress godoc
@@ -268,10 +301,8 @@ func (sv *Server) removeAddress(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, responseMapper(struct {
-		Message string `json:"message"`
-		Success bool   `json:"success"`
+		Success bool `json:"success"`
 	}{
-		Message: "Address has been removed",
 		Success: true,
-	}, nil))
+	}, nil, nil))
 }

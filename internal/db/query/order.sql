@@ -5,7 +5,8 @@ INSERT INTO
         payment_type,
         is_cod,
         user_address_id,
-        cart_id
+        cart_id,
+        total_price
     )
 VALUES
     (
@@ -13,7 +14,8 @@ VALUES
         $2,
         $3,
         $4,
-        $5
+        $5,
+        $6
     )
 RETURNING *;
 

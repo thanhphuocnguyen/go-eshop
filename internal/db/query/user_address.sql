@@ -71,3 +71,11 @@ SET
     is_primary = $1
 WHERE
     user_id = $2 AND id = $3;
+
+-- name: ResetPrimaryAddress :exec
+UPDATE
+    user_addresses
+SET
+    is_primary = false
+WHERE
+    user_id = $1 AND is_primary = true;

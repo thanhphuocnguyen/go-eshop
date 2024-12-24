@@ -277,12 +277,13 @@ type Order struct {
 	ID            int64              `json:"id"`
 	UserID        int64              `json:"user_id"`
 	UserAddressID int64              `json:"user_address_id"`
-	Status        OrderStatus        `json:"status"`
 	ShippingID    pgtype.Int8        `json:"shipping_id"`
 	PaymentType   PaymentType        `json:"payment_type"`
-	PaymentStatus PaymentStatus      `json:"payment_status"`
-	IsCod         bool               `json:"is_cod"`
+	TotalPrice    pgtype.Numeric     `json:"total_price"`
 	CartID        int64              `json:"cart_id"`
+	IsCod         bool               `json:"is_cod"`
+	Status        OrderStatus        `json:"status"`
+	PaymentStatus PaymentStatus      `json:"payment_status"`
 	ConfirmedAt   pgtype.Timestamptz `json:"confirmed_at"`
 	CancelledAt   pgtype.Timestamptz `json:"cancelled_at"`
 	DeliveredAt   pgtype.Timestamptz `json:"delivered_at"`
