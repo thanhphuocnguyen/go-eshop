@@ -2,7 +2,6 @@
 INSERT INTO
     orders (
         user_id,
-        payment_type,
         is_cod,
         user_address_id,
         cart_id,
@@ -14,8 +13,7 @@ VALUES
         $2,
         $3,
         $4,
-        $5,
-        $6
+        $5
     )
 RETURNING *;
 
@@ -62,8 +60,6 @@ UPDATE
     orders
 SET
     status = coalesce(sqlc.narg('status'), status),
-    shipping_id = coalesce(sqlc.narg('shipping_id'), shipping_id),
-    payment_status = coalesce(sqlc.narg('payment_status'), payment_status),
     confirmed_at = coalesce(sqlc.narg('confirmed_at'), confirmed_at),
     cancelled_at = coalesce(sqlc.narg('cancelled_at'), cancelled_at),
     delivered_at = coalesce(sqlc.narg('delivered_at'), delivered_at),

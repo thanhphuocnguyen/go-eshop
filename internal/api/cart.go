@@ -373,15 +373,13 @@ func (sv *Server) checkout(c *gin.Context) {
 	}
 
 	params := postgres.CheckoutCartTxParams{
-		UserID:      authPayload.UserID,
-		CartID:      cart.ID,
-		AddressID:   address.ID,
-		PaymentType: sqlc.PaymentType(req.PaymentType),
+		UserID:    authPayload.UserID,
+		CartID:    cart.ID,
+		AddressID: address.ID,
 	}
 
 	if req.IsCod != nil && *req.IsCod {
 		params.IsCod = true
-		params.PaymentType = sqlc.PaymentTypeCash
 	} else {
 		params.IsCod = false
 	}

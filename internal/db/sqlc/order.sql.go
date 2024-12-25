@@ -16,7 +16,6 @@ const createOrder = `-- name: CreateOrder :one
 INSERT INTO
     orders (
         user_id,
-        payment_type,
         is_cod,
         user_address_id,
         cart_id,
@@ -28,15 +27,13 @@ VALUES
         $2,
         $3,
         $4,
-        $5,
-        $6
+        $5
     )
-RETURNING id, user_id, user_address_id, shipping_id, payment_type, total_price, cart_id, is_cod, status, payment_status, confirmed_at, cancelled_at, delivered_at, refunded_at, updated_at, created_at
+RETURNING id, user_id, user_address_id, total_price, cart_id, is_cod, status, confirmed_at, cancelled_at, delivered_at, refunded_at, updated_at, created_at
 `
 
 type CreateOrderParams struct {
 	UserID        int64          `json:"user_id"`
-	PaymentType   PaymentType    `json:"payment_type"`
 	IsCod         bool           `json:"is_cod"`
 	UserAddressID int64          `json:"user_address_id"`
 	CartID        int64          `json:"cart_id"`
@@ -46,7 +43,6 @@ type CreateOrderParams struct {
 func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {
 	row := q.db.QueryRow(ctx, createOrder,
 		arg.UserID,
-		arg.PaymentType,
 		arg.IsCod,
 		arg.UserAddressID,
 		arg.CartID,
@@ -57,13 +53,10 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 		&i.ID,
 		&i.UserID,
 		&i.UserAddressID,
-		&i.ShippingID,
-		&i.PaymentType,
 		&i.TotalPrice,
 		&i.CartID,
 		&i.IsCod,
 		&i.Status,
-		&i.PaymentStatus,
 		&i.ConfirmedAt,
 		&i.CancelledAt,
 		&i.DeliveredAt,
@@ -132,7 +125,7 @@ func (q *Queries) DeleteOrder(ctx context.Context, id int64) error {
 
 const getOrder = `-- name: GetOrder :one
 SELECT
-    id, user_id, user_address_id, shipping_id, payment_type, total_price, cart_id, is_cod, status, payment_status, confirmed_at, cancelled_at, delivered_at, refunded_at, updated_at, created_at
+    id, user_id, user_address_id, total_price, cart_id, is_cod, status, confirmed_at, cancelled_at, delivered_at, refunded_at, updated_at, created_at
 FROM
     orders
 WHERE
@@ -147,13 +140,10 @@ func (q *Queries) GetOrder(ctx context.Context, id int64) (Order, error) {
 		&i.ID,
 		&i.UserID,
 		&i.UserAddressID,
-		&i.ShippingID,
-		&i.PaymentType,
 		&i.TotalPrice,
 		&i.CartID,
 		&i.IsCod,
 		&i.Status,
-		&i.PaymentStatus,
 		&i.ConfirmedAt,
 		&i.CancelledAt,
 		&i.DeliveredAt,
@@ -166,7 +156,7 @@ func (q *Queries) GetOrder(ctx context.Context, id int64) (Order, error) {
 
 const getOrderDetails = `-- name: GetOrderDetails :many
 SELECT
-    orders.id, orders.user_id, orders.user_address_id, orders.shipping_id, orders.payment_type, orders.total_price, orders.cart_id, orders.is_cod, orders.status, orders.payment_status, orders.confirmed_at, orders.cancelled_at, orders.delivered_at, orders.refunded_at, orders.updated_at, orders.created_at, order_items.id, order_items.product_id, order_items.order_id, order_items.quantity, order_items.price, order_items.created_at, products.id, products.name, products.description, products.sku, products.image_url, products.stock, products.archived, products.price, products.updated_at, products.created_at, user_addresses.id, user_addresses.user_id, user_addresses.phone, user_addresses.address_1, user_addresses.address_2, user_addresses.ward, user_addresses.district, user_addresses.city, user_addresses.is_primary, user_addresses.is_deleted, user_addresses.created_at, user_addresses.updated_at, user_addresses.deleted_at
+    orders.id, orders.user_id, orders.user_address_id, orders.total_price, orders.cart_id, orders.is_cod, orders.status, orders.confirmed_at, orders.cancelled_at, orders.delivered_at, orders.refunded_at, orders.updated_at, orders.created_at, order_items.id, order_items.product_id, order_items.order_id, order_items.quantity, order_items.price, order_items.created_at, products.id, products.name, products.description, products.sku, products.image_url, products.stock, products.archived, products.price, products.updated_at, products.created_at, user_addresses.id, user_addresses.user_id, user_addresses.phone, user_addresses.address_1, user_addresses.address_2, user_addresses.ward, user_addresses.district, user_addresses.city, user_addresses.is_primary, user_addresses.is_deleted, user_addresses.created_at, user_addresses.updated_at, user_addresses.deleted_at
 FROM
     orders
 JOIN
@@ -199,13 +189,10 @@ func (q *Queries) GetOrderDetails(ctx context.Context, id int64) ([]GetOrderDeta
 			&i.Order.ID,
 			&i.Order.UserID,
 			&i.Order.UserAddressID,
-			&i.Order.ShippingID,
-			&i.Order.PaymentType,
 			&i.Order.TotalPrice,
 			&i.Order.CartID,
 			&i.Order.IsCod,
 			&i.Order.Status,
-			&i.Order.PaymentStatus,
 			&i.Order.ConfirmedAt,
 			&i.Order.CancelledAt,
 			&i.Order.DeliveredAt,
@@ -300,7 +287,7 @@ func (q *Queries) ListOrderItems(ctx context.Context, arg ListOrderItemsParams) 
 
 const listOrders = `-- name: ListOrders :many
 SELECT
-    orders.id, orders.user_id, orders.user_address_id, orders.shipping_id, orders.payment_type, orders.total_price, orders.cart_id, orders.is_cod, orders.status, orders.payment_status, orders.confirmed_at, orders.cancelled_at, orders.delivered_at, orders.refunded_at, orders.updated_at, orders.created_at, count(*) as total_items, sum(order_items.price) as total_price
+    orders.id, orders.user_id, orders.user_address_id, orders.total_price, orders.cart_id, orders.is_cod, orders.status, orders.confirmed_at, orders.cancelled_at, orders.delivered_at, orders.refunded_at, orders.updated_at, orders.created_at, count(*) as total_items, sum(order_items.price) as total_price
 FROM
     orders
 JOIN order_items ON order_items.order_id = orders.id
@@ -339,13 +326,10 @@ func (q *Queries) ListOrders(ctx context.Context, arg ListOrdersParams) ([]ListO
 			&i.Order.ID,
 			&i.Order.UserID,
 			&i.Order.UserAddressID,
-			&i.Order.ShippingID,
-			&i.Order.PaymentType,
 			&i.Order.TotalPrice,
 			&i.Order.CartID,
 			&i.Order.IsCod,
 			&i.Order.Status,
-			&i.Order.PaymentStatus,
 			&i.Order.ConfirmedAt,
 			&i.Order.CancelledAt,
 			&i.Order.DeliveredAt,
@@ -370,22 +354,18 @@ UPDATE
     orders
 SET
     status = coalesce($1, status),
-    shipping_id = coalesce($2, shipping_id),
-    payment_status = coalesce($3, payment_status),
-    confirmed_at = coalesce($4, confirmed_at),
-    cancelled_at = coalesce($5, cancelled_at),
-    delivered_at = coalesce($6, delivered_at),
-    user_address_id = coalesce($7, user_address_id),
-    updated_at = $8
+    confirmed_at = coalesce($2, confirmed_at),
+    cancelled_at = coalesce($3, cancelled_at),
+    delivered_at = coalesce($4, delivered_at),
+    user_address_id = coalesce($5, user_address_id),
+    updated_at = $6
 WHERE
-    id = $9
-RETURNING id, user_id, user_address_id, shipping_id, payment_type, total_price, cart_id, is_cod, status, payment_status, confirmed_at, cancelled_at, delivered_at, refunded_at, updated_at, created_at
+    id = $7
+RETURNING id, user_id, user_address_id, total_price, cart_id, is_cod, status, confirmed_at, cancelled_at, delivered_at, refunded_at, updated_at, created_at
 `
 
 type UpdateOrderParams struct {
 	Status        NullOrderStatus    `json:"status"`
-	ShippingID    pgtype.Int8        `json:"shipping_id"`
-	PaymentStatus NullPaymentStatus  `json:"payment_status"`
 	ConfirmedAt   pgtype.Timestamptz `json:"confirmed_at"`
 	CancelledAt   pgtype.Timestamptz `json:"cancelled_at"`
 	DeliveredAt   pgtype.Timestamptz `json:"delivered_at"`
@@ -397,8 +377,6 @@ type UpdateOrderParams struct {
 func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order, error) {
 	row := q.db.QueryRow(ctx, updateOrder,
 		arg.Status,
-		arg.ShippingID,
-		arg.PaymentStatus,
 		arg.ConfirmedAt,
 		arg.CancelledAt,
 		arg.DeliveredAt,
@@ -411,13 +389,10 @@ func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order
 		&i.ID,
 		&i.UserID,
 		&i.UserAddressID,
-		&i.ShippingID,
-		&i.PaymentType,
 		&i.TotalPrice,
 		&i.CartID,
 		&i.IsCod,
 		&i.Status,
-		&i.PaymentStatus,
 		&i.ConfirmedAt,
 		&i.CancelledAt,
 		&i.DeliveredAt,

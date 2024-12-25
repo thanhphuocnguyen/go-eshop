@@ -11,11 +11,11 @@ import (
 )
 
 type CheckoutCartTxParams struct {
-	UserID      int64            `json:"user_id"`
-	CartID      int64            `json:"cart_id"`
-	AddressID   int64            `json:"address_id"`
-	PaymentType sqlc.PaymentType `json:"payment_type"`
-	IsCod       bool             `json:"is_cod"`
+	UserID      int64              `json:"user_id"`
+	CartID      int64              `json:"cart_id"`
+	AddressID   int64              `json:"address_id"`
+	PaymentType sqlc.PaymentMethod `json:"payment_type"`
+	IsCod       bool               `json:"is_cod"`
 	//TODO: MakPaymentTransaction func() error
 }
 type CheckoutCartTxResult struct {
@@ -71,7 +71,6 @@ func (s *Postgres) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxParams)
 
 		result.Order, err = s.CreateOrder(ctx, sqlc.CreateOrderParams{
 			UserID:        arg.UserID,
-			PaymentType:   arg.PaymentType,
 			UserAddressID: arg.AddressID,
 			IsCod:         arg.IsCod,
 			CartID:        arg.CartID,

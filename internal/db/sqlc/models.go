@@ -58,13 +58,13 @@ func (ns NullCardType) Value() (driver.Value, error) {
 type OrderStatus string
 
 const (
-	OrderStatusWaitForConfirming OrderStatus = "wait_for_confirming"
-	OrderStatusConfirmed         OrderStatus = "confirmed"
-	OrderStatusDelivering        OrderStatus = "delivering"
-	OrderStatusDelivered         OrderStatus = "delivered"
-	OrderStatusCancelled         OrderStatus = "cancelled"
-	OrderStatusRefunded          OrderStatus = "refunded"
-	OrderStatusCompleted         OrderStatus = "completed"
+	OrderStatusPending    OrderStatus = "pending"
+	OrderStatusConfirmed  OrderStatus = "confirmed"
+	OrderStatusDelivering OrderStatus = "delivering"
+	OrderStatusDelivered  OrderStatus = "delivered"
+	OrderStatusCancelled  OrderStatus = "cancelled"
+	OrderStatusRefunded   OrderStatus = "refunded"
+	OrderStatusCompleted  OrderStatus = "completed"
 )
 
 func (e *OrderStatus) Scan(src interface{}) error {
@@ -102,11 +102,55 @@ func (ns NullOrderStatus) Value() (driver.Value, error) {
 	return string(ns.OrderStatus), nil
 }
 
+type PaymentMethod string
+
+const (
+	PaymentMethodCreditCard PaymentMethod = "credit_card"
+	PaymentMethodPaypal     PaymentMethod = "paypal"
+	PaymentMethodCod        PaymentMethod = "cod"
+)
+
+func (e *PaymentMethod) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = PaymentMethod(s)
+	case string:
+		*e = PaymentMethod(s)
+	default:
+		return fmt.Errorf("unsupported scan type for PaymentMethod: %T", src)
+	}
+	return nil
+}
+
+type NullPaymentMethod struct {
+	PaymentMethod PaymentMethod `json:"payment_method"`
+	Valid         bool          `json:"valid"` // Valid is true if PaymentMethod is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullPaymentMethod) Scan(value interface{}) error {
+	if value == nil {
+		ns.PaymentMethod, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.PaymentMethod.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullPaymentMethod) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.PaymentMethod), nil
+}
+
 type PaymentStatus string
 
 const (
-	PaymentStatusNotPaid PaymentStatus = "not_paid"
-	PaymentStatusPaid    PaymentStatus = "paid"
+	PaymentStatusPending PaymentStatus = "pending"
+	PaymentStatusSuccess PaymentStatus = "success"
+	PaymentStatusFailed  PaymentStatus = "failed"
 )
 
 func (e *PaymentStatus) Scan(src interface{}) error {
@@ -142,48 +186,6 @@ func (ns NullPaymentStatus) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return string(ns.PaymentStatus), nil
-}
-
-type PaymentType string
-
-const (
-	PaymentTypeCash     PaymentType = "cash"
-	PaymentTypeTransfer PaymentType = "transfer"
-)
-
-func (e *PaymentType) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = PaymentType(s)
-	case string:
-		*e = PaymentType(s)
-	default:
-		return fmt.Errorf("unsupported scan type for PaymentType: %T", src)
-	}
-	return nil
-}
-
-type NullPaymentType struct {
-	PaymentType PaymentType `json:"payment_type"`
-	Valid       bool        `json:"valid"` // Valid is true if PaymentType is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullPaymentType) Scan(value interface{}) error {
-	if value == nil {
-		ns.PaymentType, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.PaymentType.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullPaymentType) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.PaymentType), nil
 }
 
 type UserRole string
@@ -229,18 +231,14 @@ func (ns NullUserRole) Value() (driver.Value, error) {
 }
 
 type Attribute struct {
-	ID        int64     `json:"id"`
-	Name      string    `json:"name"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	AttributeID int64  `json:"attribute_id"`
+	Name        string `json:"name"`
 }
 
 type AttributeValue struct {
-	ID          int64       `json:"id"`
-	AttributeID int64       `json:"attribute_id"`
-	Value       string      `json:"value"`
-	Color       pgtype.Text `json:"color"`
-	CreatedAt   time.Time   `json:"created_at"`
+	ValueID     int64  `json:"value_id"`
+	AttributeID int64  `json:"attribute_id"`
+	Value       string `json:"value"`
 }
 
 type Cart struct {
@@ -260,8 +258,9 @@ type CartItem struct {
 }
 
 type Category struct {
-	ID        int64       `json:"id"`
+	ID        int32       `json:"id"`
 	Name      string      `json:"name"`
+	SortOrder int16       `json:"sort_order"`
 	ImageUrl  pgtype.Text `json:"image_url"`
 	Published bool        `json:"published"`
 	CreatedAt time.Time   `json:"created_at"`
@@ -269,7 +268,7 @@ type Category struct {
 }
 
 type CategoryProduct struct {
-	CategoryID int64 `json:"category_id"`
+	CategoryID int32 `json:"category_id"`
 	ProductID  int64 `json:"product_id"`
 }
 
@@ -277,13 +276,10 @@ type Order struct {
 	ID            int64              `json:"id"`
 	UserID        int64              `json:"user_id"`
 	UserAddressID int64              `json:"user_address_id"`
-	ShippingID    pgtype.Int8        `json:"shipping_id"`
-	PaymentType   PaymentType        `json:"payment_type"`
 	TotalPrice    pgtype.Numeric     `json:"total_price"`
 	CartID        int64              `json:"cart_id"`
 	IsCod         bool               `json:"is_cod"`
 	Status        OrderStatus        `json:"status"`
-	PaymentStatus PaymentStatus      `json:"payment_status"`
 	ConfirmedAt   pgtype.Timestamptz `json:"confirmed_at"`
 	CancelledAt   pgtype.Timestamptz `json:"cancelled_at"`
 	DeliveredAt   pgtype.Timestamptz `json:"delivered_at"`
@@ -301,15 +297,15 @@ type OrderItem struct {
 	CreatedAt time.Time      `json:"created_at"`
 }
 
-type PaymentInfo struct {
-	ID          int64     `json:"id"`
-	UserID      int64     `json:"user_id"`
-	CardNumber  string    `json:"card_number"`
-	ExpiredDate time.Time `json:"expired_date"`
-	VccCode     string    `json:"vcc_code"`
-	CardType    CardType  `json:"card_type"`
-	IsVerified  bool      `json:"is_verified"`
-	CreatedAt   time.Time `json:"created_at"`
+type Payment struct {
+	ID            int32            `json:"id"`
+	OrderID       int32            `json:"order_id"`
+	Amount        pgtype.Numeric   `json:"amount"`
+	Method        PaymentMethod    `json:"method"`
+	Status        PaymentStatus    `json:"status"`
+	TransactionID pgtype.Text      `json:"transaction_id"`
+	CreatedAt     pgtype.Timestamp `json:"created_at"`
+	UpdatedAt     pgtype.Timestamp `json:"updated_at"`
 }
 
 type Product struct {
@@ -325,6 +321,16 @@ type Product struct {
 	CreatedAt   time.Time      `json:"created_at"`
 }
 
+type ProductVariant struct {
+	VariantID int64            `json:"variant_id"`
+	ProductID int64            `json:"product_id"`
+	Sku       string           `json:"sku"`
+	Price     pgtype.Numeric   `json:"price"`
+	Stock     pgtype.Int8      `json:"stock"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+	UpdatedAt pgtype.Timestamp `json:"updated_at"`
+}
+
 type Session struct {
 	ID           uuid.UUID `json:"id"`
 	UserID       int64     `json:"user_id"`
@@ -334,16 +340,6 @@ type Session struct {
 	IsBlocked    bool      `json:"is_blocked"`
 	ExpiredAt    time.Time `json:"expired_at"`
 	CreatedAt    time.Time `json:"created_at"`
-}
-
-type Shipping struct {
-	ID            int64          `json:"id"`
-	Vendor        string         `json:"vendor"`
-	OrderID       int64          `json:"order_id"`
-	Fee           pgtype.Numeric `json:"fee"`
-	Phone         string         `json:"phone"`
-	EstimatedDays int32          `json:"estimated_days"`
-	CreatedAt     time.Time      `json:"created_at"`
 }
 
 type User struct {
@@ -375,4 +371,10 @@ type UserAddress struct {
 	CreatedAt time.Time          `json:"created_at"`
 	UpdatedAt time.Time          `json:"updated_at"`
 	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type VariantAttribute struct {
+	ID        int64 `json:"id"`
+	VariantID int64 `json:"variant_id"`
+	ValueID   int64 `json:"value_id"`
 }

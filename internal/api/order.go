@@ -23,7 +23,6 @@ type orderDetailResponse struct {
 	ID            int64              `json:"id"`
 	Total         float64            `json:"total"`
 	Status        sqlc.OrderStatus   `json:"status"`
-	PaymentType   sqlc.PaymentType   `json:"payment_type"`
 	PaymentStatus sqlc.PaymentStatus `json:"payment_status"`
 	Products      []productResponse  `json:"products"`
 }
@@ -32,7 +31,6 @@ type orderResponse struct {
 	Total         float64            `json:"total"`
 	TotalItems    int32              `json:"total_items"`
 	Status        sqlc.OrderStatus   `json:"status"`
-	PaymentType   sqlc.PaymentType   `json:"payment_type"`
 	PaymentStatus sqlc.PaymentStatus `json:"payment_status"`
 	CreatedAt     string             `json:"created_at"`
 	UpdatedAt     string             `json:"updated_at"`
@@ -82,14 +80,12 @@ func (sv *Server) orderList(c *gin.Context) {
 	for _, aggregated := range aggregatedOrders {
 		order := aggregated.Order
 		orderResponses = append(orderResponses, orderResponse{
-			ID:            order.ID,
-			Total:         float64(aggregated.TotalPrice / 100),
-			TotalItems:    int32(aggregated.TotalItems),
-			Status:        order.Status,
-			PaymentType:   order.PaymentType,
-			PaymentStatus: order.PaymentStatus,
-			CreatedAt:     order.CreatedAt.String(),
-			UpdatedAt:     order.UpdatedAt.String(),
+			ID:         order.ID,
+			Total:      float64(aggregated.TotalPrice / 100),
+			TotalItems: int32(aggregated.TotalItems),
+			Status:     order.Status,
+			CreatedAt:  order.CreatedAt.String(),
+			UpdatedAt:  order.UpdatedAt.String(),
 		})
 	}
 
@@ -128,8 +124,6 @@ func (sv *Server) orderDetail(c *gin.Context) {
 	var orderDetailResponse orderDetailResponse
 	orderDetailResponse.ID = orderDetails[0].Order.ID
 
-	orderDetailResponse.PaymentStatus = orderDetails[0].Order.PaymentStatus
-	orderDetailResponse.PaymentType = orderDetails[0].Order.PaymentType
 	orderDetailResponse.Status = orderDetails[0].Order.Status
 	var total float64
 	for _, order := range orderDetails {
