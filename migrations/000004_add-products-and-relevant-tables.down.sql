@@ -1,6 +1,8 @@
 DROP INDEX IF EXISTS "products_price_idx";
 DROP INDEX IF EXISTS "products_archived_idx";
 
+
+DROP TABLE IF EXISTS images;
 DROP TABLE IF EXISTS variant_attributes;
 DROP TABLE IF EXISTS attribute_values;
 DROP TABLE IF EXISTS attributes;

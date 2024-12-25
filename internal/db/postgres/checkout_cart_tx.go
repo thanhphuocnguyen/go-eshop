@@ -81,6 +81,7 @@ func (s *Postgres) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxParams)
 			log.Error().Err(err).Msg("CreateOrder")
 			return err
 		}
+
 		return nil
 	})
 	if err != nil {

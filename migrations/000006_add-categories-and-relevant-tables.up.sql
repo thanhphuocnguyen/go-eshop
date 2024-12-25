@@ -2,11 +2,11 @@ CREATE TABLE
     "categories" (
         "id" serial PRIMARY KEY,
         "name" varchar UNIQUE NOT NULL,
-        "sort_order" smallint NOT NULL,
+        "sort_order" smallint NOT NULL UNIQUE CHECK ("sort_order" >= 0 AND "sort_order" <= 32767), 
         "image_url" varchar,
         "published" bool NOT NULL DEFAULT true,
         "created_at" timestamptz NOT NULL DEFAULT (now ()),
-        "updated_at" timestamptz NOT NULL DEFAULT '0001-01-01 00:00:00Z'
+        "updated_at" timestamptz NOT NULL DEFAULT (now ())
     );
 
 CREATE TABLE

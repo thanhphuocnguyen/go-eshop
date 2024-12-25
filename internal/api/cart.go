@@ -45,9 +45,8 @@ type getCartItemParam struct {
 }
 
 type checkoutRequest struct {
-	IsCod       *bool  `json:"is_cod"`
-	PaymentType string `json:"payment_type" binding:"required,oneof=cash transfer"`
-	AddressID   int64  `json:"address_id" binding:"required"`
+	PaymentMethod string `json:"payment_method" binding:"required,oneof=cod credit_card paypal cod"`
+	AddressID     int64  `json:"address_id" binding:"required"`
 }
 
 // ------------------------------ Mappers ------------------------------
@@ -376,12 +375,6 @@ func (sv *Server) checkout(c *gin.Context) {
 		UserID:    authPayload.UserID,
 		CartID:    cart.ID,
 		AddressID: address.ID,
-	}
-
-	if req.IsCod != nil && *req.IsCod {
-		params.IsCod = true
-	} else {
-		params.IsCod = false
 	}
 
 	order, err := sv.postgres.CheckoutCartTx(c, params)
