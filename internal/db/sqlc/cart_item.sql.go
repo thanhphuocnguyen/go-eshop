@@ -9,6 +9,15 @@ import (
 	"context"
 )
 
+const clearCart = `-- name: ClearCart :exec
+DELETE FROM cart_items WHERE cart_id = $1
+`
+
+func (q *Queries) ClearCart(ctx context.Context, cartID int64) error {
+	_, err := q.db.Exec(ctx, clearCart, cartID)
+	return err
+}
+
 const countCartItem = `-- name: CountCartItem :one
 SELECT COUNT(*) FROM cart_items WHERE cart_id = $1
 `
@@ -18,6 +27,23 @@ func (q *Queries) CountCartItem(ctx context.Context, cartID int64) (int64, error
 	var count int64
 	err := row.Scan(&count)
 	return count, err
+}
+
+const getCartItem = `-- name: GetCartItem :one
+SELECT id, product_id, cart_id, quantity, created_at FROM cart_items WHERE id = $1
+`
+
+func (q *Queries) GetCartItem(ctx context.Context, id int64) (CartItem, error) {
+	row := q.db.QueryRow(ctx, getCartItem, id)
+	var i CartItem
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.CartID,
+		&i.Quantity,
+		&i.CreatedAt,
+	)
+	return i, err
 }
 
 const updateCartItemQuantity = `-- name: UpdateCartItemQuantity :exec

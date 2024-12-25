@@ -34,15 +34,6 @@ func (q *Queries) AddProductToCart(ctx context.Context, arg AddProductToCartPara
 	return i, err
 }
 
-const clearCart = `-- name: ClearCart :exec
-DELETE FROM cart_items WHERE cart_id = $1
-`
-
-func (q *Queries) ClearCart(ctx context.Context, cartID int64) error {
-	_, err := q.db.Exec(ctx, clearCart, cartID)
-	return err
-}
-
 const createCart = `-- name: CreateCart :one
 INSERT INTO 
     carts (user_id) 

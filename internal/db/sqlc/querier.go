@@ -29,6 +29,7 @@ type Querier interface {
 	GetAddress(ctx context.Context, arg GetAddressParams) (UserAddress, error)
 	GetCart(ctx context.Context, userID int64) (Cart, error)
 	GetCartDetail(ctx context.Context, userID int64) ([]GetCartDetailRow, error)
+	GetCartItem(ctx context.Context, id int64) (CartItem, error)
 	GetOrder(ctx context.Context, id int64) (Order, error)
 	GetOrderDetails(ctx context.Context, id int64) ([]GetOrderDetailsRow, error)
 	GetProduct(ctx context.Context, id int64) (Product, error)

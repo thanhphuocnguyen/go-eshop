@@ -45,7 +45,7 @@ type getCartItemParam struct {
 }
 
 type checkoutRequest struct {
-	IsCod       *bool  `json:"is_cod" binding:"boolean,omitempty"`
+	IsCod       *bool  `json:"is_cod"`
 	PaymentType string `json:"payment_type" binding:"required,oneof=cash transfer"`
 	AddressID   int64  `json:"address_id" binding:"required"`
 }
@@ -152,10 +152,6 @@ func (sv *Server) getCart(c *gin.Context) {
 			return
 		}
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-	if len(cartDetails) == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "cart not found"})
 		return
 	}
 
@@ -340,6 +336,7 @@ func (sv *Server) checkout(c *gin.Context) {
 		ID:     req.AddressID,
 		UserID: authPayload.UserID,
 	})
+
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, errorResponse(errors.New("address not found")))
@@ -444,18 +441,26 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 		return
 	}
 
-	for i, item := range cartDetail {
+	var updateItem sqlc.UpdateCartItemQuantityParams
+	for _, item := range cartDetail {
 		if item.CartItem.ID == param.ID {
-			err := sv.postgres.UpdateCartItemQuantity(c, sqlc.UpdateCartItemQuantityParams{
+			updateItem = sqlc.UpdateCartItemQuantityParams{
 				ID:       param.ID,
 				Quantity: req.Quantity,
-			})
-			cartDetail[i].CartItem.Quantity = req.Quantity
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, errorResponse(err))
-				return
 			}
+			item.CartItem.Quantity = req.Quantity
+			break
 		}
+	}
+	if updateItem.ID == 0 {
+		c.JSON(http.StatusNotFound, errorResponse(errors.New("cart item not found")))
+		return
+	}
+
+	err = sv.postgres.UpdateCartItemQuantity(c, updateItem)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
 	}
 
 	c.JSON(http.StatusOK, responseMapper(mapToCartResponse(cartDetail), nil, nil))

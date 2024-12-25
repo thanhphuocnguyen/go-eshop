@@ -21,9 +21,6 @@ INSERT INTO cart_items(cart_id, product_id, quantity) VALUES ($1, $2, $3) RETURN
 -- name: RemoveProductFromCart :exec
 DELETE FROM cart_items WHERE cart_id = $1 AND id = $2;
 
--- name: ClearCart :exec
-DELETE FROM cart_items WHERE cart_id = $1;
-
 -- name: SetCartCheckoutAt :exec
 UPDATE carts SET checkout_at = $1, updated_at = NOW() WHERE id = $2;
 

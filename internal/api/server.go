@@ -107,12 +107,12 @@ func (sv *Server) initializeRouter() {
 			cart.POST("", sv.createCart)
 			cart.GET("", sv.getCart)
 			cart.POST("checkout", sv.checkout)
+			cart.PUT("clear", sv.clearCart)
 
 			cartItem := cart.Group("/item")
 			cartItem.POST("", sv.addCartItem)
 			cartItem.DELETE(":id", sv.removeCartItem)
 			cartItem.PUT(":id/quantity", sv.updateCartItemQuantity)
-			cartItem.PUT("clear", sv.clearCart)
 		}
 
 		order := v1.Group("/order").Use(authMiddleware(sv.tokenGenerator))
