@@ -55,6 +55,48 @@ func (ns NullCardType) Value() (driver.Value, error) {
 	return string(ns.CardType), nil
 }
 
+type CartStatus string
+
+const (
+	CartStatusActive     CartStatus = "active"
+	CartStatusCheckedOut CartStatus = "checked_out"
+)
+
+func (e *CartStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = CartStatus(s)
+	case string:
+		*e = CartStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for CartStatus: %T", src)
+	}
+	return nil
+}
+
+type NullCartStatus struct {
+	CartStatus CartStatus `json:"cart_status"`
+	Valid      bool       `json:"valid"` // Valid is true if CartStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullCartStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.CartStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.CartStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullCartStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.CartStatus), nil
+}
+
 type OrderStatus string
 
 const (
@@ -102,12 +144,71 @@ func (ns NullOrderStatus) Value() (driver.Value, error) {
 	return string(ns.OrderStatus), nil
 }
 
+type PaymentGateway string
+
+const (
+	PaymentGatewayStripe     PaymentGateway = "stripe"
+	PaymentGatewayPaypal     PaymentGateway = "paypal"
+	PaymentGatewayRazorpay   PaymentGateway = "razorpay"
+	PaymentGatewayVisa       PaymentGateway = "visa"
+	PaymentGatewayMastercard PaymentGateway = "mastercard"
+	PaymentGatewayAmex       PaymentGateway = "amex"
+	PaymentGatewayApplePay   PaymentGateway = "apple_pay"
+	PaymentGatewayGooglePay  PaymentGateway = "google_pay"
+	PaymentGatewayAmazonPay  PaymentGateway = "amazon_pay"
+	PaymentGatewayPhonePe    PaymentGateway = "phone_pe"
+	PaymentGatewayPaytm      PaymentGateway = "paytm"
+	PaymentGatewayUpi        PaymentGateway = "upi"
+	PaymentGatewayWallet     PaymentGateway = "wallet"
+	PaymentGatewayCod        PaymentGateway = "cod"
+	PaymentGatewayPostpaid   PaymentGateway = "postpaid"
+)
+
+func (e *PaymentGateway) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = PaymentGateway(s)
+	case string:
+		*e = PaymentGateway(s)
+	default:
+		return fmt.Errorf("unsupported scan type for PaymentGateway: %T", src)
+	}
+	return nil
+}
+
+type NullPaymentGateway struct {
+	PaymentGateway PaymentGateway `json:"payment_gateway"`
+	Valid          bool           `json:"valid"` // Valid is true if PaymentGateway is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullPaymentGateway) Scan(value interface{}) error {
+	if value == nil {
+		ns.PaymentGateway, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.PaymentGateway.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullPaymentGateway) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.PaymentGateway), nil
+}
+
 type PaymentMethod string
 
 const (
 	PaymentMethodCreditCard PaymentMethod = "credit_card"
 	PaymentMethodPaypal     PaymentMethod = "paypal"
 	PaymentMethodCod        PaymentMethod = "cod"
+	PaymentMethodDebitCard  PaymentMethod = "debit_card"
+	PaymentMethodApplePay   PaymentMethod = "apple_pay"
+	PaymentMethodWallet     PaymentMethod = "wallet"
+	PaymentMethodPostpaid   PaymentMethod = "postpaid"
 )
 
 func (e *PaymentMethod) Scan(src interface{}) error {
@@ -191,8 +292,9 @@ func (ns NullPaymentStatus) Value() (driver.Value, error) {
 type UserRole string
 
 const (
-	UserRoleAdmin UserRole = "admin"
-	UserRoleUser  UserRole = "user"
+	UserRoleAdmin     UserRole = "admin"
+	UserRoleUser      UserRole = "user"
+	UserRoleModerator UserRole = "moderator"
 )
 
 func (e *UserRole) Scan(src interface{}) error {
@@ -231,28 +333,27 @@ func (ns NullUserRole) Value() (driver.Value, error) {
 }
 
 type Attribute struct {
-	AttributeID int64  `json:"attribute_id"`
+	AttributeID int32  `json:"attribute_id"`
 	Name        string `json:"name"`
 }
 
 type AttributeValue struct {
-	ValueID     int64  `json:"value_id"`
-	AttributeID int64  `json:"attribute_id"`
+	ID          int32  `json:"id"`
+	AttributeID int32  `json:"attribute_id"`
 	Value       string `json:"value"`
 }
 
 type Cart struct {
-	ID         int64              `json:"id"`
-	CheckoutAt pgtype.Timestamptz `json:"checkout_at"`
-	UserID     int64              `json:"user_id"`
-	UpdatedAt  time.Time          `json:"updated_at"`
-	CreatedAt  time.Time          `json:"created_at"`
+	ID        int32     `json:"id"`
+	UserID    int64     `json:"user_id"`
+	UpdatedAt time.Time `json:"updated_at"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type CartItem struct {
-	ID        int64     `json:"id"`
+	ID        int32     `json:"id"`
 	ProductID int64     `json:"product_id"`
-	CartID    int64     `json:"cart_id"`
+	CartID    int32     `json:"cart_id"`
 	Quantity  int16     `json:"quantity"`
 	CreatedAt time.Time `json:"created_at"`
 }
@@ -272,17 +373,26 @@ type CategoryProduct struct {
 	ProductID  int64 `json:"product_id"`
 }
 
+type Image struct {
+	ImageID      int32            `json:"image_id"`
+	ProductID    pgtype.Int8      `json:"product_id"`
+	VariantID    pgtype.Int8      `json:"variant_id"`
+	ImageUrl     string           `json:"image_url"`
+	CloudinaryID pgtype.Text      `json:"cloudinary_id"`
+	IsPrimary    pgtype.Bool      `json:"is_primary"`
+	CreatedAt    pgtype.Timestamp `json:"created_at"`
+	UpdatedAt    pgtype.Timestamp `json:"updated_at"`
+}
+
 type Order struct {
 	ID            int64              `json:"id"`
 	UserID        int64              `json:"user_id"`
 	UserAddressID int64              `json:"user_address_id"`
 	TotalPrice    pgtype.Numeric     `json:"total_price"`
-	CartID        int64              `json:"cart_id"`
-	IsCod         bool               `json:"is_cod"`
 	Status        OrderStatus        `json:"status"`
 	ConfirmedAt   pgtype.Timestamptz `json:"confirmed_at"`
-	CancelledAt   pgtype.Timestamptz `json:"cancelled_at"`
 	DeliveredAt   pgtype.Timestamptz `json:"delivered_at"`
+	CancelledAt   pgtype.Timestamptz `json:"cancelled_at"`
 	RefundedAt    pgtype.Timestamptz `json:"refunded_at"`
 	UpdatedAt     time.Time          `json:"updated_at"`
 	CreatedAt     time.Time          `json:"created_at"`
@@ -298,14 +408,15 @@ type OrderItem struct {
 }
 
 type Payment struct {
-	ID            int32            `json:"id"`
-	OrderID       int32            `json:"order_id"`
-	Amount        pgtype.Numeric   `json:"amount"`
-	Method        PaymentMethod    `json:"method"`
-	Status        PaymentStatus    `json:"status"`
-	TransactionID pgtype.Text      `json:"transaction_id"`
-	CreatedAt     pgtype.Timestamp `json:"created_at"`
-	UpdatedAt     pgtype.Timestamp `json:"updated_at"`
+	ID            int32              `json:"id"`
+	OrderID       int64              `json:"order_id"`
+	Amount        pgtype.Numeric     `json:"amount"`
+	Method        PaymentMethod      `json:"method"`
+	Status        PaymentStatus      `json:"status"`
+	Gateway       NullPaymentGateway `json:"gateway"`
+	TransactionID pgtype.Text        `json:"transaction_id"`
+	CreatedAt     pgtype.Timestamp   `json:"created_at"`
+	UpdatedAt     pgtype.Timestamp   `json:"updated_at"`
 }
 
 type Product struct {
@@ -313,7 +424,6 @@ type Product struct {
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
 	Sku         string         `json:"sku"`
-	ImageUrl    pgtype.Text    `json:"image_url"`
 	Stock       int32          `json:"stock"`
 	Archived    bool           `json:"archived"`
 	Price       pgtype.Numeric `json:"price"`
@@ -322,7 +432,7 @@ type Product struct {
 }
 
 type ProductVariant struct {
-	VariantID int64            `json:"variant_id"`
+	ID        int64            `json:"id"`
 	ProductID int64            `json:"product_id"`
 	Sku       string           `json:"sku"`
 	Price     pgtype.Numeric   `json:"price"`
@@ -374,7 +484,7 @@ type UserAddress struct {
 }
 
 type VariantAttribute struct {
-	ID        int64 `json:"id"`
-	VariantID int64 `json:"variant_id"`
-	ValueID   int64 `json:"value_id"`
+	ID        int32 `json:"id"`
+	VariantID int32 `json:"variant_id"`
+	ValueID   int32 `json:"value_id"`
 }

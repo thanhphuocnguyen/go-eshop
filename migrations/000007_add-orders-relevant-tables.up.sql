@@ -26,7 +26,7 @@ CREATE TABLE
 CREATE TABLE
     payments (
         id SERIAL PRIMARY KEY,
-        order_id INT NOT NULL REFERENCES orders (id) ON DELETE CASCADE,
+        order_id BIGINT NOT NULL REFERENCES orders (id) ON DELETE CASCADE,
         amount DECIMAL(10, 2) NOT NULL,
         method payment_method NOT NULL, -- e.g., Credit Card, PayPal
         status payment_status NOT NULL DEFAULT 'pending', -- Pending, Success, Failed

@@ -39,32 +39,83 @@ type listProductsParams struct {
 }
 
 type productResponse struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Sku         string `json:"sku"`
+	Images      []struct {
+		ID  int32  `json:"id"`
+		URL string `json:"url"`
+	} `json:"image_url"`
+	Stock     int32   `json:"stock"`
+	Price     float64 `json:"price"`
+	UpdatedAt string  `json:"updated_at"`
+	CreatedAt string  `json:"created_at"`
+}
+
+type productListResponse struct {
 	ID          int64   `json:"id"`
 	Name        string  `json:"name"`
 	Description string  `json:"description"`
 	Sku         string  `json:"sku"`
-	ImageURL    string  `json:"image_url"`
+	ImageUrl    *string `json:"image_url"`
 	Stock       int32   `json:"stock"`
 	Price       float64 `json:"price"`
 	UpdatedAt   string  `json:"updated_at"`
 	CreatedAt   string  `json:"created_at"`
 }
 
+type removeProductImageRequest struct {
+	ID int32 `uri:"id" binding:"required,min=1"`
+}
+
 // ------------------------------ Mapper ------------------------------
 
-func convertToProductResponse(product sqlc.Product) productResponse {
+func mapToProductResponse(productRow []sqlc.GetProductDetailRow) productResponse {
+	product := productRow[0].Product
 	price, _ := product.Price.Float64Value()
-	return productResponse{
+	resp := productResponse{
 		ID:          product.ID,
 		Name:        product.Name,
 		Description: product.Description,
 		Sku:         product.Sku,
-		ImageURL:    product.ImageUrl.String,
 		Stock:       product.Stock,
 		Price:       price.Float64,
-		UpdatedAt:   product.UpdatedAt.String(),
-		CreatedAt:   product.CreatedAt.String(),
+
+		UpdatedAt: product.UpdatedAt.String(),
+		CreatedAt: product.CreatedAt.String(),
 	}
+	for _, img := range productRow {
+		if img.ImageID.Valid {
+			resp.Images = append(resp.Images, struct {
+				ID  int32  `json:"id"`
+				URL string `json:"url"`
+			}{
+				ID:  img.ImageID.Int32,
+				URL: img.ImageUrl.String,
+			})
+		}
+	}
+
+	return resp
+}
+func mapToListProductResponse(productRow sqlc.ListProductsRow) productListResponse {
+	price, _ := productRow.Price.Float64Value()
+	product := productListResponse{
+		ID:          productRow.ID,
+		Name:        productRow.Name,
+		Description: productRow.Description,
+		Sku:         productRow.Sku,
+		Stock:       productRow.Stock,
+		Price:       price.Float64,
+		UpdatedAt:   productRow.UpdatedAt.String(),
+		CreatedAt:   productRow.CreatedAt.String(),
+	}
+	if productRow.ImageUrl.Valid {
+		product.ImageUrl = &productRow.ImageUrl.String
+	}
+
+	return product
 }
 
 // ------------------------------ Handlers ------------------------------
@@ -130,7 +181,9 @@ func (sv *Server) getProduct(c *gin.Context) {
 		return
 	}
 
-	product, err := sv.postgres.GetProduct(c, params.ID)
+	productRow, err := sv.postgres.GetProductDetail(c, sqlc.GetProductDetailParams{
+		ID: params.ID,
+	})
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, errorResponse(err))
@@ -140,7 +193,7 @@ func (sv *Server) getProduct(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, responseMapper(convertToProductResponse(product), nil, nil))
+	c.JSON(http.StatusOK, responseMapper(mapToProductResponse(productRow), nil, nil))
 }
 
 // listProducts godoc
@@ -172,9 +225,9 @@ func (sv *Server) listProducts(c *gin.Context) {
 		return
 	}
 
-	productResponses := make([]productResponse, len(products))
+	productResponses := make([]productListResponse, len(products))
 	for i, product := range products {
-		productResponses[i] = convertToProductResponse(product)
+		productResponses[i] = mapToListProductResponse(product)
 	}
 
 	c.JSON(http.StatusOK, responseMapper(productResponses, nil, nil))
@@ -199,7 +252,9 @@ func (sv *Server) removeProduct(c *gin.Context) {
 		return
 	}
 
-	_, err := sv.postgres.GetProduct(c, params.ID)
+	_, err := sv.postgres.GetProduct(c, sqlc.GetProductParams{
+		ID: params.ID,
+	})
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, errorResponse(err))
@@ -285,7 +340,7 @@ func (sv *Server) updateProduct(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	c.JSON(http.StatusOK, responseMapper(convertToProductResponse(updated), nil, nil))
+	c.JSON(http.StatusOK, responseMapper(updated, nil, nil))
 }
 
 // UploadProductImage godoc
@@ -319,7 +374,9 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 		return
 	}
 
-	product, err := sv.postgres.GetProduct(c, param.ID)
+	product, err := sv.postgres.GetProduct(c, sqlc.GetProductParams{
+		ID: param.ID,
+	})
 
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
@@ -348,16 +405,24 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 		return
 	}
 
-	product, err = sv.postgres.UpdateProduct(c, sqlc.UpdateProductParams{
-		ID:       product.ID,
-		ImageUrl: util.GetPgTypeText(url),
+	img, err := sv.postgres.CreateImage(c, sqlc.CreateImageParams{
+		ProductID: pgtype.Int8{
+			Int64: product.ID,
+			Valid: true,
+		},
+		ImageUrl: url,
+		CloudinaryID: pgtype.Text{
+			String: fileName,
+			Valid:  true,
+		},
 	})
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	c.JSON(http.StatusOK, responseMapper(convertToProductResponse(product), nil, nil))
+
+	c.JSON(http.StatusOK, responseMapper(img, nil, nil))
 }
 
 // RemoveProductImage godoc
@@ -373,13 +438,27 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /products/{product_id}/remove-image [delete]
 func (sv *Server) removeProductImage(c *gin.Context) {
+	_, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, errorResponse(errors.New("missing user payload in context")))
+		return
+	}
+
 	var param getProductParams
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	product, err := sv.postgres.GetProduct(c, param.ID)
+	var req removeProductImageRequest
+	if err := c.ShouldBindUri(&req); err != nil {
+		c.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	product, err := sv.postgres.GetProduct(c, sqlc.GetProductParams{
+		ID: param.ID,
+	})
 
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
@@ -390,19 +469,29 @@ func (sv *Server) removeProductImage(c *gin.Context) {
 		return
 	}
 
-	product.ImageUrl = pgtype.Text{
-		String: "",
-		Valid:  false,
-	}
-
-	product, err = sv.postgres.UpdateProduct(c, sqlc.UpdateProductParams{
-		ID:       product.ID,
-		ImageUrl: product.ImageUrl,
+	img, err := sv.postgres.GetImagesByProductID(c, sqlc.GetImagesByProductIDParams{
+		ProductID: pgtype.Int8{
+			Int64: product.ID,
+			Valid: true,
+		},
+		ImageID: int32(req.ID),
 	})
-
 	if err != nil {
+		if errors.Is(err, postgres.ErrorRecordNotFound) {
+			c.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	c.JSON(http.StatusOK, responseMapper(convertToProductResponse(product), nil, nil))
+	if img.CloudinaryID.Valid {
+		err = sv.uploadService.RemoveFile(c, img.CloudinaryID.String)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, errorResponse(err))
+			return
+		}
+	} else {
+		c.JSON(http.StatusInternalServerError, errorResponse(errors.New("image not found")))
+		return
+	}
 }

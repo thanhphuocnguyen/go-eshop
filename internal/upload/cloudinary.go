@@ -34,3 +34,11 @@ func (s *CloudinaryUploadService) UploadFile(ctx context.Context, file interface
 	}
 	return uploadResult.SecureURL, nil
 }
+
+func (s *CloudinaryUploadService) RemoveFile(ctx context.Context, filename string) error {
+	_, err := s.cld.Upload.Destroy(ctx, uploader.DestroyParams{PublicID: filename})
+	if err != nil {
+		return err
+	}
+	return nil
+}

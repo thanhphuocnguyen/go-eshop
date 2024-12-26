@@ -1,4 +1,4 @@
--- name: CreatePayment :one
+-- name: CreatePaymentTransaction :one
 INSERT INTO
     payments (
         order_id,
@@ -11,3 +11,4 @@ VALUES
         $2,
         $3
     )
+RETURNING *;

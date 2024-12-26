@@ -136,10 +136,10 @@ func (sv *Server) orderDetail(c *gin.Context) {
 			Price:       price.Float64,
 			Description: product.Description,
 			Sku:         product.Sku,
-			ImageURL:    product.ImageUrl.String,
-			Stock:       product.Stock,
-			UpdatedAt:   product.UpdatedAt.String(),
-			CreatedAt:   product.CreatedAt.String(),
+			//TODO: ImageURL:    product.,
+			Stock:     product.Stock,
+			UpdatedAt: product.UpdatedAt.String(),
+			CreatedAt: product.CreatedAt.String(),
 		})
 	}
 	orderDetailResponse.Total = total

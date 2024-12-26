@@ -2,8 +2,6 @@ package postgres
 
 import (
 	"context"
-	"fmt"
-	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
@@ -11,16 +9,17 @@ import (
 )
 
 type CheckoutCartTxParams struct {
-	UserID      int64              `json:"user_id"`
-	CartID      int64              `json:"cart_id"`
-	AddressID   int64              `json:"address_id"`
-	PaymentType sqlc.PaymentMethod `json:"payment_type"`
-	IsCod       bool               `json:"is_cod"`
+	UserID        int64              `json:"user_id"`
+	CartID        int32              `json:"cart_id"`
+	AddressID     int64              `json:"address_id"`
+	PaymentMethod sqlc.PaymentMethod `json:"payment_method"`
+	IsCod         bool               `json:"is_cod"`
 	//TODO: MakPaymentTransaction func() error
 }
 type CheckoutCartTxResult struct {
 	sqlc.Order
-	Items []sqlc.OrderItem
+	Items   []sqlc.OrderItem
+	Payment sqlc.Payment
 }
 
 func (s *Postgres) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxParams) (CheckoutCartTxResult, error) {
@@ -28,19 +27,21 @@ func (s *Postgres) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxParams)
 	err := s.execTx(ctx, func(q *sqlc.Queries) error {
 		var err error
 		// get cart details
-		cartDetails, err := s.GetCartDetail(ctx, arg.CartID)
+		_, err = s.GetCart(ctx, arg.UserID)
 		if err != nil {
 			log.Error().Err(err).Msg("GetCartDetail")
 			return err
 		}
-		if len(cartDetails) == 0 {
-			log.Error().Msg("cart is empty")
-			return fmt.Errorf("cart is empty")
+
+		cartItems, err := s.GetCartItems(ctx, arg.CartID)
+		if err != nil {
+			log.Error().Err(err).Msg("GetCartItems")
+			return err
 		}
 		// create order items concurrently with goroutine and channel to handle error
 		var orderItems []sqlc.OrderItem
 		totalPrice := float64(0)
-		for _, item := range cartDetails {
+		for _, item := range cartItems {
 			// create order item for each cart item
 			item, err := s.CreateOrderItem(ctx, sqlc.CreateOrderItemParams{
 				ProductID: item.Product.ID,
@@ -58,22 +59,12 @@ func (s *Postgres) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxParams)
 			orderItems = append(orderItems, item)
 		}
 		result.Items = orderItems
-		// set cart checkout at time
-		err = s.SetCartCheckoutAt(ctx, sqlc.SetCartCheckoutAtParams{
-			ID:         arg.CartID,
-			CheckoutAt: util.GetPgTypeTimestamp(time.Now()),
-		})
-		if err != nil {
-			log.Error().Err(err).Msg("SetCartCheckoutAt")
-			return err
-		}
+
 		parsedPrice, _ := util.ParsePgNumeric(totalPrice)
 
 		result.Order, err = s.CreateOrder(ctx, sqlc.CreateOrderParams{
 			UserID:        arg.UserID,
 			UserAddressID: arg.AddressID,
-			IsCod:         arg.IsCod,
-			CartID:        arg.CartID,
 			TotalPrice:    parsedPrice,
 		})
 
@@ -82,6 +73,23 @@ func (s *Postgres) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxParams)
 			return err
 		}
 
+		// create payment transaction
+		payment, err := s.CreatePaymentTransaction(ctx, sqlc.CreatePaymentTransactionParams{
+			OrderID: result.Order.ID,
+			Amount:  parsedPrice, Method: arg.PaymentMethod,
+		})
+		if err != nil {
+			log.Error().Err(err).Msg("CreatePaymentTransaction")
+			return err
+		}
+		result.Payment = payment
+
+		// clear cart
+		err = s.ClearCart(ctx, arg.CartID)
+		if err != nil {
+			log.Error().Err(err).Msg("ClearCart")
+			return err
+		}
 		return nil
 	})
 	if err != nil {

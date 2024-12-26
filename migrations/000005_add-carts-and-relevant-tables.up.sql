@@ -1,10 +1,9 @@
 CREATE TABLE
     "carts" (
         "id" serial PRIMARY KEY,
-        "user_id" bigint NOT NULL REFERENCES "users" ("id") ON DELETE CASCADE,
+        "user_id" bigint NOT NULL UNIQUE REFERENCES "users" ("id") ON DELETE CASCADE,
         "updated_at" timestamptz NOT NULL DEFAULT (now ()),
-        "created_at" timestamptz NOT NULL DEFAULT (now ()),
-        UNIQUE ("user_id", "id")
+        "created_at" timestamptz NOT NULL DEFAULT (now ())
     );
 
 CREATE TABLE

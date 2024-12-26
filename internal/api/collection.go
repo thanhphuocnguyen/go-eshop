@@ -6,7 +6,7 @@ func (sv *Server) createCollection(c *gin.Context) {
 
 }
 
-func (sv *Server) getCollection(c *gin.Context) {
+func (sv *Server) getCollections(c *gin.Context) {
 
 }
 

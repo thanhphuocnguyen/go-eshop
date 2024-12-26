@@ -7,6 +7,7 @@ package sqlc
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -18,7 +19,7 @@ SET
     archived = true
 WHERE
     id = $1
-RETURNING id, name, description, sku, image_url, stock, archived, price, updated_at, created_at
+RETURNING id, name, description, sku, stock, archived, price, updated_at, created_at
 `
 
 func (q *Queries) ArchiveProduct(ctx context.Context, id int64) error {
@@ -43,7 +44,7 @@ VALUES
         $4,
         $5
     )
-RETURNING id, name, description, sku, image_url, stock, archived, price, updated_at, created_at
+RETURNING id, name, description, sku, stock, archived, price, updated_at, created_at
 `
 
 type CreateProductParams struct {
@@ -68,7 +69,6 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		&i.Name,
 		&i.Description,
 		&i.Sku,
-		&i.ImageUrl,
 		&i.Stock,
 		&i.Archived,
 		&i.Price,
@@ -92,23 +92,27 @@ func (q *Queries) DeleteProduct(ctx context.Context, id int64) error {
 
 const getProduct = `-- name: GetProduct :one
 SELECT
-    id, name, description, sku, image_url, stock, archived, price, updated_at, created_at
+    id, name, description, sku, stock, archived, price, updated_at, created_at
 FROM
     products
 WHERE
-    id = $1
-LIMIT 1
+    id = $1 AND
+    archived = COALESCE($2, archived)
 `
 
-func (q *Queries) GetProduct(ctx context.Context, id int64) (Product, error) {
-	row := q.db.QueryRow(ctx, getProduct, id)
+type GetProductParams struct {
+	ID       int64       `json:"id"`
+	Archived pgtype.Bool `json:"archived"`
+}
+
+func (q *Queries) GetProduct(ctx context.Context, arg GetProductParams) (Product, error) {
+	row := q.db.QueryRow(ctx, getProduct, arg.ID, arg.Archived)
 	var i Product
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Description,
 		&i.Sku,
-		&i.ImageUrl,
 		&i.Stock,
 		&i.Archived,
 		&i.Price,
@@ -118,11 +122,76 @@ func (q *Queries) GetProduct(ctx context.Context, id int64) (Product, error) {
 	return i, err
 }
 
-const listProducts = `-- name: ListProducts :many
+const getProductDetail = `-- name: GetProductDetail :many
 SELECT
-    id, name, description, sku, image_url, stock, archived, price, updated_at, created_at
+    products.id, products.name, products.description, products.sku, products.stock, products.archived, products.price, products.updated_at, products.created_at,
+    img.image_id AS image_id,
+    img.image_url AS image_url,
+    img.is_primary AS image_is_primary
 FROM
     products
+LEFT JOIN images AS img ON products.id = img.product_id
+WHERE
+    products.id = $1 AND
+    archived = COALESCE($2, archived)
+ORDER BY
+    img.is_primary DESC
+`
+
+type GetProductDetailParams struct {
+	ID       int64       `json:"id"`
+	Archived pgtype.Bool `json:"archived"`
+}
+
+type GetProductDetailRow struct {
+	Product        Product     `json:"product"`
+	ImageID        pgtype.Int4 `json:"image_id"`
+	ImageUrl       pgtype.Text `json:"image_url"`
+	ImageIsPrimary pgtype.Bool `json:"image_is_primary"`
+}
+
+func (q *Queries) GetProductDetail(ctx context.Context, arg GetProductDetailParams) ([]GetProductDetailRow, error) {
+	rows, err := q.db.Query(ctx, getProductDetail, arg.ID, arg.Archived)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetProductDetailRow
+	for rows.Next() {
+		var i GetProductDetailRow
+		if err := rows.Scan(
+			&i.Product.ID,
+			&i.Product.Name,
+			&i.Product.Description,
+			&i.Product.Sku,
+			&i.Product.Stock,
+			&i.Product.Archived,
+			&i.Product.Price,
+			&i.Product.UpdatedAt,
+			&i.Product.CreatedAt,
+			&i.ImageID,
+			&i.ImageUrl,
+			&i.ImageIsPrimary,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listProducts = `-- name: ListProducts :many
+SELECT
+    products.id, products.name, products.description, products.sku, products.stock, products.archived, products.price, products.updated_at, products.created_at,
+    img.image_id AS image_id,
+    img.image_url AS image_url,
+    img.is_primary AS image_is_primary
+FROM
+    products
+LEFT JOIN images AS img ON products.id = img.product_id AND img.is_primary = TRUE
 WHERE
     archived = COALESCE($3, archived) AND
     name ILIKE COALESCE($4, name) AND
@@ -141,7 +210,22 @@ type ListProductsParams struct {
 	Sku      pgtype.Text `json:"sku"`
 }
 
-func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]Product, error) {
+type ListProductsRow struct {
+	ID             int64          `json:"id"`
+	Name           string         `json:"name"`
+	Description    string         `json:"description"`
+	Sku            string         `json:"sku"`
+	Stock          int32          `json:"stock"`
+	Archived       bool           `json:"archived"`
+	Price          pgtype.Numeric `json:"price"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+	CreatedAt      time.Time      `json:"created_at"`
+	ImageID        pgtype.Int4    `json:"image_id"`
+	ImageUrl       pgtype.Text    `json:"image_url"`
+	ImageIsPrimary pgtype.Bool    `json:"image_is_primary"`
+}
+
+func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]ListProductsRow, error) {
 	rows, err := q.db.Query(ctx, listProducts,
 		arg.Limit,
 		arg.Offset,
@@ -153,20 +237,22 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]P
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Product{}
+	var items []ListProductsRow
 	for rows.Next() {
-		var i Product
+		var i ListProductsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
 			&i.Description,
 			&i.Sku,
-			&i.ImageUrl,
 			&i.Stock,
 			&i.Archived,
 			&i.Price,
 			&i.UpdatedAt,
 			&i.CreatedAt,
+			&i.ImageID,
+			&i.ImageUrl,
+			&i.ImageIsPrimary,
 		); err != nil {
 			return nil, err
 		}
@@ -185,20 +271,18 @@ SET
     name = coalesce($1, name),
     description = coalesce($2, description),
     sku = coalesce($3, sku),
-    image_url = coalesce($4, image_url),
-    stock = coalesce($5, stock),
-    price = coalesce($6, price),
+    stock = coalesce($4, stock),
+    price = coalesce($5, price),
     updated_at = NOW()
 WHERE
-    id = $7
-RETURNING id, name, description, sku, image_url, stock, archived, price, updated_at, created_at
+    id = $6
+RETURNING id, name, description, sku, stock, archived, price, updated_at, created_at
 `
 
 type UpdateProductParams struct {
 	Name        pgtype.Text    `json:"name"`
 	Description pgtype.Text    `json:"description"`
 	Sku         pgtype.Text    `json:"sku"`
-	ImageUrl    pgtype.Text    `json:"image_url"`
 	Stock       pgtype.Int4    `json:"stock"`
 	Price       pgtype.Numeric `json:"price"`
 	ID          int64          `json:"id"`
@@ -209,7 +293,6 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		arg.Name,
 		arg.Description,
 		arg.Sku,
-		arg.ImageUrl,
 		arg.Stock,
 		arg.Price,
 		arg.ID,
@@ -220,7 +303,6 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		&i.Name,
 		&i.Description,
 		&i.Sku,
-		&i.ImageUrl,
 		&i.Stock,
 		&i.Archived,
 		&i.Price,
@@ -230,26 +312,6 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 	return i, err
 }
 
-const updateProductImage = `-- name: UpdateProductImage :exec
-UPDATE
-    products
-SET
-    image_url = $2
-WHERE
-    id = $1
-RETURNING id, name, description, sku, image_url, stock, archived, price, updated_at, created_at
-`
-
-type UpdateProductImageParams struct {
-	ID       int64       `json:"id"`
-	ImageUrl pgtype.Text `json:"image_url"`
-}
-
-func (q *Queries) UpdateProductImage(ctx context.Context, arg UpdateProductImageParams) error {
-	_, err := q.db.Exec(ctx, updateProductImage, arg.ID, arg.ImageUrl)
-	return err
-}
-
 const updateProductStock = `-- name: UpdateProductStock :exec
 UPDATE
     products
@@ -257,7 +319,7 @@ SET
     stock = stock + $2
 WHERE
     id = $1
-RETURNING id, name, description, sku, image_url, stock, archived, price, updated_at, created_at
+RETURNING id, name, description, sku, stock, archived, price, updated_at, created_at
 `
 
 type UpdateProductStockParams struct {

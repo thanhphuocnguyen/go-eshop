@@ -154,7 +154,7 @@ func (q *Queries) ListAddresses(ctx context.Context, arg ListAddressesParams) ([
 		return nil, err
 	}
 	defer rows.Close()
-	items := []UserAddress{}
+	var items []UserAddress
 	for rows.Next() {
 		var i UserAddress
 		if err := rows.Scan(

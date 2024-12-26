@@ -2,18 +2,14 @@
 INSERT INTO
     orders (
         user_id,
-        is_cod,
         user_address_id,
-        cart_id,
         total_price
     )
 VALUES
     (
         $1,
         $2,
-        $3,
-        $4,
-        $5
+        $3
     )
 RETURNING *;
 
@@ -31,11 +27,11 @@ SELECT
     sqlc.embed(orders), sqlc.embed(order_items), sqlc.embed(products), sqlc.embed(user_addresses)
 FROM
     orders
-JOIN
+LEFT JOIN
     order_items ON order_items.order_id = orders.id
-JOIN
+LEFT JOIN
     products ON order_items.product_id = products.id
-JOIN
+LEFT JOIN
     user_addresses ON orders.user_address_id = user_addresses.id
 WHERE
     orders.id = $1;
