@@ -187,8 +187,7 @@ const listProducts = `-- name: ListProducts :many
 SELECT
     products.id, products.name, products.description, products.sku, products.stock, products.archived, products.price, products.updated_at, products.created_at,
     img.image_id AS image_id,
-    img.image_url AS image_url,
-    img.is_primary AS image_is_primary
+    img.image_url AS image_url
 FROM
     products
 LEFT JOIN images AS img ON products.id = img.product_id AND img.is_primary = TRUE
@@ -211,18 +210,17 @@ type ListProductsParams struct {
 }
 
 type ListProductsRow struct {
-	ID             int64          `json:"id"`
-	Name           string         `json:"name"`
-	Description    string         `json:"description"`
-	Sku            string         `json:"sku"`
-	Stock          int32          `json:"stock"`
-	Archived       bool           `json:"archived"`
-	Price          pgtype.Numeric `json:"price"`
-	UpdatedAt      time.Time      `json:"updated_at"`
-	CreatedAt      time.Time      `json:"created_at"`
-	ImageID        pgtype.Int4    `json:"image_id"`
-	ImageUrl       pgtype.Text    `json:"image_url"`
-	ImageIsPrimary pgtype.Bool    `json:"image_is_primary"`
+	ID          int64          `json:"id"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Sku         string         `json:"sku"`
+	Stock       int32          `json:"stock"`
+	Archived    bool           `json:"archived"`
+	Price       pgtype.Numeric `json:"price"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	CreatedAt   time.Time      `json:"created_at"`
+	ImageID     pgtype.Int4    `json:"image_id"`
+	ImageUrl    pgtype.Text    `json:"image_url"`
 }
 
 func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]ListProductsRow, error) {
@@ -252,7 +250,6 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]L
 			&i.CreatedAt,
 			&i.ImageID,
 			&i.ImageUrl,
-			&i.ImageIsPrimary,
 		); err != nil {
 			return nil, err
 		}

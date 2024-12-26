@@ -13,9 +13,9 @@ definitions:
       is_default:
         type: boolean
       phone:
+        maxLength: 15
+        minLength: 10
         type: string
-      user_id:
-        type: integer
       ward:
         type: string
     required:
@@ -23,8 +23,6 @@ definitions:
     - city
     - district
     - phone
-    - user_id
-    - ward
     type: object
   api.UpdateAddressParams:
     properties:
@@ -40,12 +38,8 @@ definitions:
         type: boolean
       phone:
         type: string
-      user_id:
-        type: integer
       ward:
         type: string
-    required:
-    - user_id
     type: object
   api.addProductToCartRequest:
     properties:
@@ -88,8 +82,6 @@ definitions:
         type: integer
       quantity:
         type: integer
-      sku:
-        type: string
     type: object
   api.cartResponse:
     properties:
@@ -112,17 +104,16 @@ definitions:
     properties:
       address_id:
         type: integer
-      cart_id:
-        type: integer
-      is_cod:
-        type: boolean
-      payment_type:
+      payment_method:
+        enum:
+        - cod
+        - credit_card
+        - paypal
+        - cod
         type: string
     required:
     - address_id
-    - cart_id
-    - is_cod
-    - payment_type
+    - payment_method
     type: object
   api.createProductRequest:
     properties:
@@ -180,7 +171,7 @@ definitions:
     properties:
       orders:
         items:
-          $ref: '#/definitions/sqlc.Order'
+          $ref: '#/definitions/api.orderResponse'
         type: array
     type: object
   api.loginResponse:
@@ -218,8 +209,6 @@ definitions:
         type: integer
       payment_status:
         $ref: '#/definitions/sqlc.PaymentStatus'
-      payment_type:
-        $ref: '#/definitions/sqlc.PaymentType'
       products:
         items:
           $ref: '#/definitions/api.productResponse'
@@ -229,6 +218,32 @@ definitions:
       total:
         type: number
     type: object
+  api.orderResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      payment_status:
+        $ref: '#/definitions/sqlc.PaymentStatus'
+      status:
+        $ref: '#/definitions/sqlc.OrderStatus'
+      total:
+        type: number
+      total_items:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  api.productImage:
+    properties:
+      id:
+        type: integer
+      image_url:
+        type: string
+      is_primary:
+        type: boolean
+    type: object
   api.productResponse:
     properties:
       created_at:
@@ -237,8 +252,10 @@ definitions:
         type: string
       id:
         type: integer
-      image_url:
-        type: string
+      images:
+        items:
+          $ref: '#/definitions/api.productImage'
+        type: array
       name:
         type: string
       price:
@@ -311,6 +328,8 @@ definitions:
       username:
         type: string
     type: object
+  big.Int:
+    type: object
   gin.H:
     additionalProperties: {}
     type: object
@@ -324,10 +343,16 @@ definitions:
     - Infinity
     - Finite
     - NegativeInfinity
-  pgtype.Int8:
+  pgtype.Numeric:
     properties:
-      int64:
+      exp:
         type: integer
+      infinityModifier:
+        $ref: '#/definitions/pgtype.InfinityModifier'
+      int:
+        $ref: '#/definitions/big.Int'
+      naN:
+        type: boolean
       valid:
         type: boolean
     type: object
@@ -380,16 +405,12 @@ definitions:
         $ref: '#/definitions/pgtype.Timestamptz'
       id:
         type: integer
-      is_cod:
-        type: boolean
-      payment_status:
-        $ref: '#/definitions/sqlc.PaymentStatus'
-      payment_type:
-        $ref: '#/definitions/sqlc.PaymentType'
-      shipping_id:
-        $ref: '#/definitions/pgtype.Int8'
+      refunded_at:
+        $ref: '#/definitions/pgtype.Timestamptz'
       status:
         $ref: '#/definitions/sqlc.OrderStatus'
+      total_price:
+        $ref: '#/definitions/pgtype.Numeric'
       updated_at:
         type: string
       user_address_id:
@@ -399,7 +420,7 @@ definitions:
     type: object
   sqlc.OrderStatus:
     enum:
-    - wait_for_confirming
+    - pending
     - confirmed
     - delivering
     - delivered
@@ -408,7 +429,7 @@ definitions:
     - completed
     type: string
     x-enum-varnames:
-    - OrderStatusWaitForConfirming
+    - OrderStatusPending
     - OrderStatusConfirmed
     - OrderStatusDelivering
     - OrderStatusDelivered
@@ -417,20 +438,35 @@ definitions:
     - OrderStatusCompleted
   sqlc.PaymentStatus:
     enum:
-    - not_paid
-    - paid
+    - pending
+    - success
+    - failed
     type: string
     x-enum-varnames:
-    - PaymentStatusNotPaid
-    - PaymentStatusPaid
-  sqlc.PaymentType:
-    enum:
-    - cash
-    - transfer
-    type: string
-    x-enum-varnames:
-    - PaymentTypeCash
-    - PaymentTypeTransfer
+    - PaymentStatusPending
+    - PaymentStatusSuccess
+    - PaymentStatusFailed
+  sqlc.Product:
+    properties:
+      archived:
+        type: boolean
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      price:
+        $ref: '#/definitions/pgtype.Numeric'
+      sku:
+        type: string
+      stock:
+        type: integer
+      updated_at:
+        type: string
+    type: object
   sqlc.UpdateUserRow:
     properties:
       created_at:
@@ -460,6 +496,10 @@ definitions:
         $ref: '#/definitions/pgtype.Text'
       city:
         type: string
+      created_at:
+        type: string
+      deleted_at:
+        $ref: '#/definitions/pgtype.Timestamptz'
       district:
         type: string
       id:
@@ -470,6 +510,8 @@ definitions:
         type: boolean
       phone:
         type: string
+      updated_at:
+        type: string
       user_id:
         type: integer
       ward:
@@ -479,10 +521,12 @@ definitions:
     enum:
     - admin
     - user
+    - moderator
     type: string
     x-enum-varnames:
     - UserRoleAdmin
     - UserRoleUser
+    - UserRoleModerator
 host: localhost:4000
 info:
   contact: {}
@@ -1005,7 +1049,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.productResponse'
+            $ref: '#/definitions/sqlc.Product'
         "400":
           description: Bad Request
           schema:

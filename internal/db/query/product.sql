@@ -45,8 +45,7 @@ ORDER BY
 SELECT
     products.*,
     img.image_id AS image_id,
-    img.image_url AS image_url,
-    img.is_primary AS image_is_primary
+    img.image_url AS image_url
 FROM
     products
 LEFT JOIN images AS img ON products.id = img.product_id AND img.is_primary = TRUE

@@ -202,7 +202,7 @@ UPDATE
 SET
     is_primary = $1
 WHERE
-    user_id = $2 AND id = $3
+    user_id = $2 AND id = $3 AND is_deleted = false
 `
 
 type SetPrimaryAddressParams struct {
@@ -228,7 +228,7 @@ SET
     city = coalesce($6, city),
     is_primary = coalesce($7, is_primary)
 WHERE
-    id = $8 AND user_id = $9
+    id = $8 AND user_id = $9 AND is_deleted = false
 RETURNING id, user_id, phone, address_1, address_2, ward, district, city, is_primary, is_deleted, created_at, updated_at, deleted_at
 `
 

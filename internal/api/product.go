@@ -3,11 +3,9 @@ package api
 import (
 	"errors"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/postgres"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
 	"github.com/thanhphuocnguyen/go-eshop/internal/util"
@@ -22,11 +20,11 @@ type createProductRequest struct {
 }
 
 type updateProductRequest struct {
-	Name        string  `json:"name" binding:"omitempty,min=3,max=100"`
-	Description string  `json:"description" binding:"omitempty,min=10,max=1000"`
-	Sku         string  `json:"sku" binding:"omitempty,alphanum"`
-	Stock       int32   `json:"stock" binding:"omitempty,gt=0,lt=10000"`
-	Price       float64 `json:"price" binding:"omitempty,gt=0,lt=10000"`
+	Name        *string  `json:"name" binding:"omitempty,min=3,max=100"`
+	Description *string  `json:"description" binding:"omitempty,min=10,max=1000"`
+	Sku         *string  `json:"sku" binding:"omitempty,alphanum"`
+	Stock       *int32   `json:"stock" binding:"omitempty,gt=0,lt=10000"`
+	Price       *float64 `json:"price" binding:"omitempty,gt=0,lt=10000"`
 }
 
 type getProductParams struct {
@@ -38,19 +36,22 @@ type listProductsParams struct {
 	PageSize int32 `form:"page_size" binding:"required,min=1,max=100"`
 }
 
+type productImage struct {
+	ID        int32  `json:"id"`
+	IsPrimary bool   `json:"is_primary"`
+	ImageUrl  string `json:"image_url"`
+}
+
 type productResponse struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Sku         string `json:"sku"`
-	Images      []struct {
-		ID  int32  `json:"id"`
-		URL string `json:"url"`
-	} `json:"image_url"`
-	Stock     int32   `json:"stock"`
-	Price     float64 `json:"price"`
-	UpdatedAt string  `json:"updated_at"`
-	CreatedAt string  `json:"created_at"`
+	ID          int64          `json:"id"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Sku         string         `json:"sku"`
+	Images      []productImage `json:"images"`
+	Stock       int32          `json:"stock"`
+	Price       float64        `json:"price"`
+	UpdatedAt   string         `json:"updated_at"`
+	CreatedAt   string         `json:"created_at"`
 }
 
 type productListResponse struct {
@@ -87,13 +88,12 @@ func mapToProductResponse(productRow []sqlc.GetProductDetailRow) productResponse
 	}
 	for _, img := range productRow {
 		if img.ImageID.Valid {
-			resp.Images = append(resp.Images, struct {
-				ID  int32  `json:"id"`
-				URL string `json:"url"`
-			}{
-				ID:  img.ImageID.Int32,
-				URL: img.ImageUrl.String,
+			resp.Images = append(resp.Images, productImage{
+				ID:        img.ImageID.Int32,
+				IsPrimary: img.ImageIsPrimary.Bool,
+				ImageUrl:  img.ImageUrl.String,
 			})
+
 		}
 	}
 
@@ -128,7 +128,7 @@ func mapToListProductResponse(productRow sqlc.ListProductsRow) productListRespon
 // @Accept json
 // @Param input body createProductRequest true "Product input"
 // @Produce json
-// @Success 200 {object} productResponse
+// @Success 200 {object} sqlc.Product
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /products [post]
@@ -233,6 +233,76 @@ func (sv *Server) listProducts(c *gin.Context) {
 	c.JSON(http.StatusOK, responseMapper(productResponses, nil, nil))
 }
 
+// updateProduct godoc
+// @Summary Update a product by ID
+// @Schemes http
+// @Description update a product by ID
+// @Tags products
+// @Accept json
+// @Param product_id path int true "Product ID"
+// @Param input body updateProductRequest true "Product input"
+// @Produce json
+// @Success 200 {object} productResponse
+// @Failure 404 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /products/{product_id} [put]
+func (sv *Server) updateProduct(c *gin.Context) {
+	var params getProductParams
+	if err := c.ShouldBindUri(&params); err != nil {
+		c.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	var product updateProductRequest
+	if err := c.ShouldBindJSON(&product); err != nil {
+		c.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	updateBody := sqlc.UpdateProductParams{
+		ID: params.ID,
+	}
+	if product.Price != nil {
+		price, err := util.ParsePgNumeric(*product.Price)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, errorResponse(err))
+			return
+		}
+		updateBody.Price = price
+	}
+
+	if product.Name != nil {
+		updateBody.Name = pgtype.Text{
+			String: *product.Name,
+			Valid:  true,
+		}
+	}
+
+	if product.Description != nil {
+		updateBody.Description = pgtype.Text{
+			String: *product.Description,
+			Valid:  true,
+		}
+	}
+
+	if product.Sku != nil {
+		updateBody.Sku = pgtype.Text{
+			String: *product.Sku,
+			Valid:  true,
+		}
+	}
+
+	updated, err := sv.postgres.UpdateProduct(c, updateBody)
+	if err != nil {
+		if errors.Is(err, postgres.ErrorRecordNotFound) {
+			c.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, responseMapper(updated, nil, nil))
+}
+
 // removeProduct godoc
 // @Summary Remove a product by ID
 // @Schemes http
@@ -272,226 +342,4 @@ func (sv *Server) removeProduct(c *gin.Context) {
 
 	message := "product deleted"
 	c.JSON(http.StatusOK, responseMapper(nil, &message, nil))
-}
-
-// updateProduct godoc
-// @Summary Update a product by ID
-// @Schemes http
-// @Description update a product by ID
-// @Tags products
-// @Accept json
-// @Param product_id path int true "Product ID"
-// @Param input body updateProductRequest true "Product input"
-// @Produce json
-// @Success 200 {object} productResponse
-// @Failure 404 {object} gin.H
-// @Failure 500 {object} gin.H
-// @Router /products/{product_id} [put]
-func (sv *Server) updateProduct(c *gin.Context) {
-	var params getProductParams
-	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-	var product updateProductRequest
-	if err := c.ShouldBindJSON(&product); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-	updateBody := sqlc.UpdateProductParams{
-		ID: params.ID,
-	}
-	if product.Price != 0 {
-		price, err := util.ParsePgNumeric(product.Price)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, errorResponse(err))
-			return
-		}
-		updateBody.Price = price
-	}
-
-	if product.Name != "" {
-		updateBody.Name = pgtype.Text{
-			String: product.Name,
-			Valid:  true,
-		}
-	}
-
-	if product.Description != "" {
-		updateBody.Description = pgtype.Text{
-			String: product.Description,
-			Valid:  true,
-		}
-	}
-
-	if product.Sku != "" {
-		updateBody.Sku = pgtype.Text{
-			String: product.Sku,
-			Valid:  true,
-		}
-	}
-
-	updated, err := sv.postgres.UpdateProduct(c, updateBody)
-	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
-			c.JSON(http.StatusNotFound, errorResponse(err))
-			return
-		}
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-	c.JSON(http.StatusOK, responseMapper(updated, nil, nil))
-}
-
-// UploadProductImage godoc
-// @Summary Upload a product image by ID
-// @Schemes http
-// @Description upload a product image by ID
-// @Tags products
-// @Accept json
-// @Param product_id path int true "Product ID"
-// @Param file formData file true "Image file"
-// @Produce json
-// @Success 200 {object} gin.H
-// @Failure 404 {object} gin.H
-// @Failure 500 {object} gin.H
-// @Router /products/{product_id}/upload-image [post]
-func (sv *Server) uploadProductImage(c *gin.Context) {
-	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, errorResponse(errors.New("missing user payload in context")))
-		return
-	}
-	file, _ := c.FormFile("file")
-	if file == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "file is required"})
-		return
-	}
-
-	var param getProductParams
-	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	product, err := sv.postgres.GetProduct(c, sqlc.GetProductParams{
-		ID: param.ID,
-	})
-
-	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
-			c.JSON(http.StatusNotFound, errorResponse(err))
-			return
-		}
-		c.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	fileName := util.GetImageName(file.Filename, authPayload.UserID, product.ID)
-	filePath := imageAssetsDir + fileName
-	defer func() {
-		os.Remove(filePath)
-	}()
-
-	err = c.SaveUploadedFile(file, util.GetImageURL(fileName))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-
-	url, err := sv.uploadService.UploadFile(c, file, filePath)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-
-	img, err := sv.postgres.CreateImage(c, sqlc.CreateImageParams{
-		ProductID: pgtype.Int8{
-			Int64: product.ID,
-			Valid: true,
-		},
-		ImageUrl: url,
-		CloudinaryID: pgtype.Text{
-			String: fileName,
-			Valid:  true,
-		},
-	})
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-
-	c.JSON(http.StatusOK, responseMapper(img, nil, nil))
-}
-
-// RemoveProductImage godoc
-// @Summary Remove a product image by ID
-// @Schemes http
-// @Description remove a product image by ID
-// @Tags products
-// @Accept json
-// @Param product_id path int true "Product ID"
-// @Produce json
-// @Success 200 {object} gin.H
-// @Failure 404 {object} gin.H
-// @Failure 500 {object} gin.H
-// @Router /products/{product_id}/remove-image [delete]
-func (sv *Server) removeProductImage(c *gin.Context) {
-	_, ok := c.MustGet(authorizationPayload).(*auth.Payload)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, errorResponse(errors.New("missing user payload in context")))
-		return
-	}
-
-	var param getProductParams
-	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	var req removeProductImageRequest
-	if err := c.ShouldBindUri(&req); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	product, err := sv.postgres.GetProduct(c, sqlc.GetProductParams{
-		ID: param.ID,
-	})
-
-	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
-			c.JSON(http.StatusNotFound, errorResponse(err))
-			return
-		}
-		c.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	img, err := sv.postgres.GetImagesByProductID(c, sqlc.GetImagesByProductIDParams{
-		ProductID: pgtype.Int8{
-			Int64: product.ID,
-			Valid: true,
-		},
-		ImageID: int32(req.ID),
-	})
-	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
-			c.JSON(http.StatusNotFound, errorResponse(err))
-			return
-		}
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-	if img.CloudinaryID.Valid {
-		err = sv.uploadService.RemoveFile(c, img.CloudinaryID.String)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, errorResponse(err))
-			return
-		}
-	} else {
-		c.JSON(http.StatusInternalServerError, errorResponse(errors.New("image not found")))
-		return
-	}
 }

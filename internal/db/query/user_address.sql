@@ -53,7 +53,7 @@ SET
     city = coalesce(sqlc.narg('city'), city),
     is_primary = coalesce(sqlc.narg('is_primary'), is_primary)
 WHERE
-    id = sqlc.arg('id') AND user_id = sqlc.arg('user_id')
+    id = sqlc.arg('id') AND user_id = sqlc.arg('user_id') AND is_deleted = false
 RETURNING *;
 
 -- name: DeleteAddress :exec
@@ -70,7 +70,7 @@ UPDATE
 SET
     is_primary = $1
 WHERE
-    user_id = $2 AND id = $3;
+    user_id = $2 AND id = $3 AND is_deleted = false;
 
 -- name: ResetPrimaryAddress :exec
 UPDATE

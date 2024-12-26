@@ -808,7 +808,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.productResponse"
+                            "$ref": "#/definitions/sqlc.Product"
                         }
                     },
                     "400": {
@@ -1189,9 +1189,7 @@ const docTemplate = `{
                 "address_1",
                 "city",
                 "district",
-                "phone",
-                "user_id",
-                "ward"
+                "phone"
             ],
             "properties": {
                 "address_1": {
@@ -1210,10 +1208,9 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "phone": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "integer"
+                    "type": "string",
+                    "maxLength": 15,
+                    "minLength": 10
                 },
                 "ward": {
                     "type": "string"
@@ -1222,9 +1219,6 @@ const docTemplate = `{
         },
         "api.UpdateAddressParams": {
             "type": "object",
-            "required": [
-                "user_id"
-            ],
             "properties": {
                 "address_1": {
                     "type": "string"
@@ -1243,9 +1237,6 @@ const docTemplate = `{
                 },
                 "phone": {
                     "type": "string"
-                },
-                "user_id": {
-                    "type": "integer"
                 },
                 "ward": {
                     "type": "string"
@@ -1313,9 +1304,6 @@ const docTemplate = `{
                 },
                 "quantity": {
                     "type": "integer"
-                },
-                "sku": {
-                    "type": "string"
                 }
             }
         },
@@ -1349,22 +1337,20 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "address_id",
-                "cart_id",
-                "is_cod",
-                "payment_type"
+                "payment_method"
             ],
             "properties": {
                 "address_id": {
                     "type": "integer"
                 },
-                "cart_id": {
-                    "type": "integer"
-                },
-                "is_cod": {
-                    "type": "boolean"
-                },
-                "payment_type": {
-                    "type": "string"
+                "payment_method": {
+                    "type": "string",
+                    "enum": [
+                        "cod",
+                        "credit_card",
+                        "paypal",
+                        "cod"
+                    ]
                 }
             }
         },
@@ -1442,7 +1428,7 @@ const docTemplate = `{
                 "orders": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/sqlc.Order"
+                        "$ref": "#/definitions/api.orderResponse"
                     }
                 }
             }
@@ -1498,9 +1484,6 @@ const docTemplate = `{
                 "payment_status": {
                     "$ref": "#/definitions/sqlc.PaymentStatus"
                 },
-                "payment_type": {
-                    "$ref": "#/definitions/sqlc.PaymentType"
-                },
                 "products": {
                     "type": "array",
                     "items": {
@@ -1512,6 +1495,46 @@ const docTemplate = `{
                 },
                 "total": {
                     "type": "number"
+                }
+            }
+        },
+        "api.orderResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "payment_status": {
+                    "$ref": "#/definitions/sqlc.PaymentStatus"
+                },
+                "status": {
+                    "$ref": "#/definitions/sqlc.OrderStatus"
+                },
+                "total": {
+                    "type": "number"
+                },
+                "total_items": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.productImage": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "is_primary": {
+                    "type": "boolean"
                 }
             }
         },
@@ -1527,8 +1550,11 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
-                "image_url": {
-                    "type": "string"
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.productImage"
+                    }
                 },
                 "name": {
                     "type": "string"
@@ -1636,6 +1662,9 @@ const docTemplate = `{
                 }
             }
         },
+        "big.Int": {
+            "type": "object"
+        },
         "gin.H": {
             "type": "object",
             "additionalProperties": {}
@@ -1653,11 +1682,20 @@ const docTemplate = `{
                 "NegativeInfinity"
             ]
         },
-        "pgtype.Int8": {
+        "pgtype.Numeric": {
             "type": "object",
             "properties": {
-                "int64": {
+                "exp": {
                     "type": "integer"
+                },
+                "infinityModifier": {
+                    "$ref": "#/definitions/pgtype.InfinityModifier"
+                },
+                "int": {
+                    "$ref": "#/definitions/big.Int"
+                },
+                "naN": {
+                    "type": "boolean"
                 },
                 "valid": {
                     "type": "boolean"
@@ -1739,20 +1777,14 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
-                "is_cod": {
-                    "type": "boolean"
-                },
-                "payment_status": {
-                    "$ref": "#/definitions/sqlc.PaymentStatus"
-                },
-                "payment_type": {
-                    "$ref": "#/definitions/sqlc.PaymentType"
-                },
-                "shipping_id": {
-                    "$ref": "#/definitions/pgtype.Int8"
+                "refunded_at": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
                 },
                 "status": {
                     "$ref": "#/definitions/sqlc.OrderStatus"
+                },
+                "total_price": {
+                    "$ref": "#/definitions/pgtype.Numeric"
                 },
                 "updated_at": {
                     "type": "string"
@@ -1768,7 +1800,7 @@ const docTemplate = `{
         "sqlc.OrderStatus": {
             "type": "string",
             "enum": [
-                "wait_for_confirming",
+                "pending",
                 "confirmed",
                 "delivering",
                 "delivered",
@@ -1777,7 +1809,7 @@ const docTemplate = `{
                 "completed"
             ],
             "x-enum-varnames": [
-                "OrderStatusWaitForConfirming",
+                "OrderStatusPending",
                 "OrderStatusConfirmed",
                 "OrderStatusDelivering",
                 "OrderStatusDelivered",
@@ -1789,24 +1821,47 @@ const docTemplate = `{
         "sqlc.PaymentStatus": {
             "type": "string",
             "enum": [
-                "not_paid",
-                "paid"
+                "pending",
+                "success",
+                "failed"
             ],
             "x-enum-varnames": [
-                "PaymentStatusNotPaid",
-                "PaymentStatusPaid"
+                "PaymentStatusPending",
+                "PaymentStatusSuccess",
+                "PaymentStatusFailed"
             ]
         },
-        "sqlc.PaymentType": {
-            "type": "string",
-            "enum": [
-                "cash",
-                "transfer"
-            ],
-            "x-enum-varnames": [
-                "PaymentTypeCash",
-                "PaymentTypeTransfer"
-            ]
+        "sqlc.Product": {
+            "type": "object",
+            "properties": {
+                "archived": {
+                    "type": "boolean"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "$ref": "#/definitions/pgtype.Numeric"
+                },
+                "sku": {
+                    "type": "string"
+                },
+                "stock": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
         },
         "sqlc.UpdateUserRow": {
             "type": "object",
@@ -1852,6 +1907,12 @@ const docTemplate = `{
                 "city": {
                     "type": "string"
                 },
+                "created_at": {
+                    "type": "string"
+                },
+                "deleted_at": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
+                },
                 "district": {
                     "type": "string"
                 },
@@ -1867,6 +1928,9 @@ const docTemplate = `{
                 "phone": {
                     "type": "string"
                 },
+                "updated_at": {
+                    "type": "string"
+                },
                 "user_id": {
                     "type": "integer"
                 },
@@ -1879,11 +1943,13 @@ const docTemplate = `{
             "type": "string",
             "enum": [
                 "admin",
-                "user"
+                "user",
+                "moderator"
             ],
             "x-enum-varnames": [
                 "UserRoleAdmin",
-                "UserRoleUser"
+                "UserRoleUser",
+                "UserRoleModerator"
             ]
         }
     }
