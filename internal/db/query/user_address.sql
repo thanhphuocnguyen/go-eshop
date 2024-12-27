@@ -26,10 +26,10 @@ SELECT
 FROM
     user_addresses
 WHERE
-    id = $1 AND user_id = $2 AND is_deleted = false AND is_primary = COALESCE(sqlc.narg('is_primary'), is_primary)
+    id = $1 AND user_id = $2 AND is_deleted = false
 LIMIT 1;
 
--- name: ListAddresses :many
+-- name: GetAddresses :many
 SELECT
     *
 FROM
@@ -37,9 +37,7 @@ FROM
 WHERE
     user_id = $1 AND is_deleted = false
 ORDER BY
-    id
-LIMIT $2
-OFFSET $3;
+    is_primary DESC, id ASC;
 
 -- name: UpdateAddress :one
 UPDATE

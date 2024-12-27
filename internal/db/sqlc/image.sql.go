@@ -12,14 +12,14 @@ import (
 )
 
 const createImage = `-- name: CreateImage :one
-INSERT INTO images (product_id, variant_id, image_url, cloudinary_id) VALUES ($1, $2, $3, $4) RETURNING image_id, product_id, variant_id, image_url, cloudinary_id, is_primary, created_at, updated_at
+INSERT INTO images (product_id, variant_id, image_url, external_id) VALUES ($1, $2, $3, $4) RETURNING id, product_id, variant_id, image_url, external_id, is_primary, created_at, updated_at
 `
 
 type CreateImageParams struct {
-	ProductID    pgtype.Int8 `json:"product_id"`
-	VariantID    pgtype.Int8 `json:"variant_id"`
-	ImageUrl     string      `json:"image_url"`
-	CloudinaryID pgtype.Text `json:"cloudinary_id"`
+	ProductID  pgtype.Int8 `json:"product_id"`
+	VariantID  pgtype.Int8 `json:"variant_id"`
+	ImageUrl   string      `json:"image_url"`
+	ExternalID pgtype.Text `json:"external_id"`
 }
 
 func (q *Queries) CreateImage(ctx context.Context, arg CreateImageParams) (Image, error) {
@@ -27,15 +27,15 @@ func (q *Queries) CreateImage(ctx context.Context, arg CreateImageParams) (Image
 		arg.ProductID,
 		arg.VariantID,
 		arg.ImageUrl,
-		arg.CloudinaryID,
+		arg.ExternalID,
 	)
 	var i Image
 	err := row.Scan(
-		&i.ImageID,
+		&i.ID,
 		&i.ProductID,
 		&i.VariantID,
 		&i.ImageUrl,
-		&i.CloudinaryID,
+		&i.ExternalID,
 		&i.IsPrimary,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -44,27 +44,47 @@ func (q *Queries) CreateImage(ctx context.Context, arg CreateImageParams) (Image
 }
 
 const deleteImage = `-- name: DeleteImage :exec
-DELETE FROM images WHERE image_id = $1
+DELETE FROM images WHERE id = $1
 `
 
-func (q *Queries) DeleteImage(ctx context.Context, imageID int32) error {
-	_, err := q.db.Exec(ctx, deleteImage, imageID)
+func (q *Queries) DeleteImage(ctx context.Context, id int32) error {
+	_, err := q.db.Exec(ctx, deleteImage, id)
 	return err
 }
 
+const getImageByExternalID = `-- name: GetImageByExternalID :one
+SELECT id, product_id, variant_id, image_url, external_id, is_primary, created_at, updated_at FROM images WHERE external_id = $1 LIMIT 1
+`
+
+func (q *Queries) GetImageByExternalID(ctx context.Context, externalID pgtype.Text) (Image, error) {
+	row := q.db.QueryRow(ctx, getImageByExternalID, externalID)
+	var i Image
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.VariantID,
+		&i.ImageUrl,
+		&i.ExternalID,
+		&i.IsPrimary,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getImageByID = `-- name: GetImageByID :one
-SELECT image_id, product_id, variant_id, image_url, cloudinary_id, is_primary, created_at, updated_at FROM images WHERE image_id = $1 LIMIT 1
+SELECT id, product_id, variant_id, image_url, external_id, is_primary, created_at, updated_at FROM images WHERE id = $1 LIMIT 1
 `
 
-func (q *Queries) GetImageByID(ctx context.Context, imageID int32) (Image, error) {
-	row := q.db.QueryRow(ctx, getImageByID, imageID)
+func (q *Queries) GetImageByID(ctx context.Context, id int32) (Image, error) {
+	row := q.db.QueryRow(ctx, getImageByID, id)
 	var i Image
 	err := row.Scan(
-		&i.ImageID,
+		&i.ID,
 		&i.ProductID,
 		&i.VariantID,
 		&i.ImageUrl,
-		&i.CloudinaryID,
+		&i.ExternalID,
 		&i.IsPrimary,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -72,37 +92,12 @@ func (q *Queries) GetImageByID(ctx context.Context, imageID int32) (Image, error
 	return i, err
 }
 
-const getImagesByProductID = `-- name: GetImagesByProductID :one
-SELECT image_id, product_id, variant_id, image_url, cloudinary_id, is_primary, created_at, updated_at FROM images WHERE product_id = $1 AND image_id = $2
+const getImagesByProductID = `-- name: GetImagesByProductID :many
+SELECT id, product_id, variant_id, image_url, external_id, is_primary, created_at, updated_at FROM images WHERE product_id = $1
 `
 
-type GetImagesByProductIDParams struct {
-	ProductID pgtype.Int8 `json:"product_id"`
-	ImageID   int32       `json:"image_id"`
-}
-
-func (q *Queries) GetImagesByProductID(ctx context.Context, arg GetImagesByProductIDParams) (Image, error) {
-	row := q.db.QueryRow(ctx, getImagesByProductID, arg.ProductID, arg.ImageID)
-	var i Image
-	err := row.Scan(
-		&i.ImageID,
-		&i.ProductID,
-		&i.VariantID,
-		&i.ImageUrl,
-		&i.CloudinaryID,
-		&i.IsPrimary,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getImagesByVariantID = `-- name: GetImagesByVariantID :many
-SELECT image_id, product_id, variant_id, image_url, cloudinary_id, is_primary, created_at, updated_at FROM images WHERE variant_id = $1
-`
-
-func (q *Queries) GetImagesByVariantID(ctx context.Context, variantID pgtype.Int8) ([]Image, error) {
-	rows, err := q.db.Query(ctx, getImagesByVariantID, variantID)
+func (q *Queries) GetImagesByProductID(ctx context.Context, productID pgtype.Int8) ([]Image, error) {
+	rows, err := q.db.Query(ctx, getImagesByProductID, productID)
 	if err != nil {
 		return nil, err
 	}
@@ -111,11 +106,11 @@ func (q *Queries) GetImagesByVariantID(ctx context.Context, variantID pgtype.Int
 	for rows.Next() {
 		var i Image
 		if err := rows.Scan(
-			&i.ImageID,
+			&i.ID,
 			&i.ProductID,
 			&i.VariantID,
 			&i.ImageUrl,
-			&i.CloudinaryID,
+			&i.ExternalID,
 			&i.IsPrimary,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -128,4 +123,129 @@ func (q *Queries) GetImagesByVariantID(ctx context.Context, variantID pgtype.Int
 		return nil, err
 	}
 	return items, nil
+}
+
+const getImagesByVariantID = `-- name: GetImagesByVariantID :many
+SELECT id, product_id, variant_id, image_url, external_id, is_primary, created_at, updated_at FROM images WHERE variant_id = $1
+`
+
+func (q *Queries) GetImagesByVariantID(ctx context.Context, variantID pgtype.Int8) ([]Image, error) {
+	rows, err := q.db.Query(ctx, getImagesByVariantID, variantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Image
+	for rows.Next() {
+		var i Image
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProductID,
+			&i.VariantID,
+			&i.ImageUrl,
+			&i.ExternalID,
+			&i.IsPrimary,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPrimaryImageByProductID = `-- name: GetPrimaryImageByProductID :one
+SELECT id, product_id, variant_id, image_url, external_id, is_primary, created_at, updated_at FROM images WHERE product_id = $1 AND is_primary = TRUE LIMIT 1
+`
+
+func (q *Queries) GetPrimaryImageByProductID(ctx context.Context, productID pgtype.Int8) (Image, error) {
+	row := q.db.QueryRow(ctx, getPrimaryImageByProductID, productID)
+	var i Image
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.VariantID,
+		&i.ImageUrl,
+		&i.ExternalID,
+		&i.IsPrimary,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getPrimaryImageByVariantID = `-- name: GetPrimaryImageByVariantID :one
+SELECT id, product_id, variant_id, image_url, external_id, is_primary, created_at, updated_at FROM images WHERE variant_id = $1 AND is_primary = TRUE LIMIT 1
+`
+
+func (q *Queries) GetPrimaryImageByVariantID(ctx context.Context, variantID pgtype.Int8) (Image, error) {
+	row := q.db.QueryRow(ctx, getPrimaryImageByVariantID, variantID)
+	var i Image
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.VariantID,
+		&i.ImageUrl,
+		&i.ExternalID,
+		&i.IsPrimary,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const setPrimaryImage = `-- name: SetPrimaryImage :exec
+UPDATE images SET is_primary = TRUE WHERE id = $1
+`
+
+func (q *Queries) SetPrimaryImage(ctx context.Context, id int32) error {
+	_, err := q.db.Exec(ctx, setPrimaryImage, id)
+	return err
+}
+
+const unsetPrimaryImage = `-- name: UnsetPrimaryImage :exec
+UPDATE
+    images
+SET
+    is_primary = false
+WHERE
+    product_id = $1 AND is_primary = true
+`
+
+func (q *Queries) UnsetPrimaryImage(ctx context.Context, productID pgtype.Int8) error {
+	_, err := q.db.Exec(ctx, unsetPrimaryImage, productID)
+	return err
+}
+
+const updateImage = `-- name: UpdateImage :exec
+UPDATE images 
+SET 
+    product_id = COALESCE($2, product_id),
+    variant_id = COALESCE($3, variant_id), 
+    image_url = COALESCE($4, image_url), 
+    external_id = COALESCE($5, external_id) 
+WHERE id = $1
+`
+
+type UpdateImageParams struct {
+	ID         int32       `json:"id"`
+	ProductID  pgtype.Int8 `json:"product_id"`
+	VariantID  pgtype.Int8 `json:"variant_id"`
+	ImageUrl   pgtype.Text `json:"image_url"`
+	ExternalID pgtype.Text `json:"external_id"`
+}
+
+func (q *Queries) UpdateImage(ctx context.Context, arg UpdateImageParams) error {
+	_, err := q.db.Exec(ctx, updateImage,
+		arg.ID,
+		arg.ProductID,
+		arg.VariantID,
+		arg.ImageUrl,
+		arg.ExternalID,
+	)
+	return err
 }

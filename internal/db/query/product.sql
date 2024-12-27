@@ -29,7 +29,7 @@ WHERE
 -- name: GetProductDetail :many
 SELECT
     sqlc.embed(products),
-    img.image_id AS image_id,
+    img.id AS image_id,
     img.image_url AS image_url,
     img.is_primary AS image_is_primary
 FROM
@@ -44,7 +44,7 @@ ORDER BY
 -- name: ListProducts :many
 SELECT
     products.*,
-    img.image_id AS image_id,
+    img.id AS image_id,
     img.image_url AS image_url
 FROM
     products
@@ -54,10 +54,19 @@ WHERE
     name ILIKE COALESCE(sqlc.narg('name'), name) AND
     sku ILIKE COALESCE(sqlc.narg('sku'), sku)
 ORDER BY
-    id
+    products.id
 LIMIT $1
 OFFSET $2;
 
+-- name: CountProducts :one
+SELECT
+    COUNT(*)
+FROM
+    products
+WHERE
+    archived = COALESCE(sqlc.narg('archived'), archived) AND
+    name ILIKE COALESCE(sqlc.narg('name'), name) AND
+    sku ILIKE COALESCE(sqlc.narg('sku'), sku);
 
 -- name: UpdateProduct :one
 UPDATE
@@ -83,10 +92,10 @@ WHERE
 UPDATE
     products
 SET
-    archived = true
+    archived = true,
+    updated_at = NOW()
 WHERE
-    id = $1
-RETURNING *;
+    id = $1;
 
 -- name: UpdateProductStock :exec
 UPDATE

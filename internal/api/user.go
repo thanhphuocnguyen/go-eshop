@@ -98,13 +98,13 @@ func mapAddressToAddressResponse(address sqlc.UserAddress) addressResponse {
 func (sv *Server) createUser(c *gin.Context) {
 	var req createUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 
 	hashedPassword, err := auth.HashPassword(req.Password)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
@@ -120,7 +120,7 @@ func (sv *Server) createUser(c *gin.Context) {
 	}
 	user, err := sv.postgres.CreateUser(c, arg)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
@@ -139,30 +139,30 @@ func (sv *Server) createUser(c *gin.Context) {
 func (sv *Server) loginUser(c *gin.Context) {
 	var req loginUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 
 	user, err := sv.postgres.GetUserByUsername(c, req.Username)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
 	if err := auth.CheckPassword(req.Password, user.HashedPassword); err != nil {
-		c.JSON(http.StatusUnauthorized, errorResponse(err))
+		c.JSON(http.StatusUnauthorized, mapErrResp(err))
 		return
 	}
 
 	token, payload, err := sv.tokenGenerator.GenerateToken(user.ID, user.Username, user.Role, sv.config.AccessTokenDuration)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
 	refreshToken, rfPayload, err := sv.tokenGenerator.GenerateToken(user.ID, user.Username, user.Role, sv.config.RefreshTokenDuration)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
@@ -178,7 +178,7 @@ func (sv *Server) loginUser(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
@@ -204,18 +204,18 @@ func (sv *Server) loginUser(c *gin.Context) {
 func (sv *Server) updateUser(c *gin.Context) {
 	var req updateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 
 	user, err := sv.postgres.GetUserByID(c, 1)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, errorResponse(err))
+		c.JSON(http.StatusUnauthorized, mapErrResp(err))
 		return
 	}
 
 	if user.Role != sqlc.UserRoleAdmin && user.ID != req.UserID {
-		c.JSON(http.StatusUnauthorized, errorResponse(err))
+		c.JSON(http.StatusUnauthorized, mapErrResp(err))
 		return
 	}
 
@@ -238,7 +238,7 @@ func (sv *Server) updateUser(c *gin.Context) {
 	}
 	updatedUser, err := sv.postgres.UpdateUser(c, arg)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
@@ -256,27 +256,23 @@ func (sv *Server) updateUser(c *gin.Context) {
 func (sv *Server) getUser(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, errorResponse(fmt.Errorf("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, mapErrResp(fmt.Errorf("authorization payload is not provided")))
 		return
 	}
 
 	user, err := sv.postgres.GetUserByID(c, authPayload.UserID)
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
-			c.JSON(http.StatusNotFound, errorResponse(err))
+			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
-	userAddress, err := sv.postgres.ListAddresses(c, sqlc.ListAddressesParams{
-		UserID: user.ID,
-		Limit:  10,
-		Offset: 0,
-	})
+	userAddress, err := sv.postgres.GetAddresses(c, user.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 

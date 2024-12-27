@@ -374,14 +374,14 @@ type CategoryProduct struct {
 }
 
 type Image struct {
-	ImageID      int32            `json:"image_id"`
-	ProductID    pgtype.Int8      `json:"product_id"`
-	VariantID    pgtype.Int8      `json:"variant_id"`
-	ImageUrl     string           `json:"image_url"`
-	CloudinaryID pgtype.Text      `json:"cloudinary_id"`
-	IsPrimary    pgtype.Bool      `json:"is_primary"`
-	CreatedAt    pgtype.Timestamp `json:"created_at"`
-	UpdatedAt    pgtype.Timestamp `json:"updated_at"`
+	ID         int32            `json:"id"`
+	ProductID  pgtype.Int8      `json:"product_id"`
+	VariantID  pgtype.Int8      `json:"variant_id"`
+	ImageUrl   string           `json:"image_url"`
+	ExternalID pgtype.Text      `json:"external_id"`
+	IsPrimary  pgtype.Bool      `json:"is_primary"`
+	CreatedAt  pgtype.Timestamp `json:"created_at"`
+	UpdatedAt  pgtype.Timestamp `json:"updated_at"`
 }
 
 type Order struct {

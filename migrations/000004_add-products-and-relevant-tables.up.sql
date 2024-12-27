@@ -23,22 +23,6 @@ CREATE TABLE
     );
 
 CREATE TABLE
-    images (
-        image_id SERIAL PRIMARY KEY,
-        product_id bigint REFERENCES products (id) ON DELETE CASCADE,
-        variant_id bigint REFERENCES product_variants (id) ON DELETE CASCADE,
-        image_url TEXT NOT NULL, -- URL/path of the image
-        cloudinary_id TEXT, -- ID of the image in Cloudinary
-        is_primary BOOLEAN DEFAULT FALSE, -- Indicates the main image
-        created_at TIMESTAMP DEFAULT NOW (),
-        updated_at TIMESTAMP DEFAULT NOW (),
-        CHECK (
-            product_id IS NOT NULL
-            OR variant_id IS NOT NULL
-        ) -- Ensure at least one association
-    );
-
-CREATE TABLE
     attributes (
         attribute_id serial PRIMARY KEY,
         name VARCHAR(100) UNIQUE NOT NULL -- e.g., Size, Color

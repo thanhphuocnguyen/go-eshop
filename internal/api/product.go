@@ -66,13 +66,12 @@ type productListResponse struct {
 	CreatedAt   string  `json:"created_at"`
 }
 
-type removeProductImageRequest struct {
-	ID int32 `uri:"id" binding:"required,min=1"`
-}
-
 // ------------------------------ Mapper ------------------------------
 
 func mapToProductResponse(productRow []sqlc.GetProductDetailRow) productResponse {
+	if len(productRow) == 0 {
+		return productResponse{}
+	}
 	product := productRow[0].Product
 	price, _ := product.Price.Float64Value()
 	resp := productResponse{
@@ -135,14 +134,14 @@ func mapToListProductResponse(productRow sqlc.ListProductsRow) productListRespon
 func (sv *Server) createProduct(c *gin.Context) {
 	var product createProductRequest
 	if err := c.ShouldBindJSON(&product); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 
-	price, err := util.ParsePgNumeric(product.Price)
+	price, err := util.ParsePgTypeNumber(product.Price)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 
@@ -155,14 +154,14 @@ func (sv *Server) createProduct(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
-	c.JSON(http.StatusCreated, responseMapper(newProduct, nil, nil))
+	c.JSON(http.StatusCreated, mapDefaultResp(newProduct, nil, nil))
 }
 
-// getProduct godoc
+// getProductDetail godoc
 // @Summary Get a product detail by ID
 // @Schemes http
 // @Description get a product detail by ID
@@ -174,29 +173,35 @@ func (sv *Server) createProduct(c *gin.Context) {
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /products/{product_id} [get]
-func (sv *Server) getProduct(c *gin.Context) {
+func (sv *Server) getProductDetail(c *gin.Context) {
 	var params getProductParams
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 
 	productRow, err := sv.postgres.GetProductDetail(c, sqlc.GetProductDetailParams{
 		ID: params.ID,
 	})
+
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
-			c.JSON(http.StatusNotFound, errorResponse(err))
+			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
-	c.JSON(http.StatusOK, responseMapper(mapToProductResponse(productRow), nil, nil))
+	if len(productRow) == 0 {
+		c.JSON(http.StatusNotFound, mapErrResp(errors.New("product not found")))
+		return
+	}
+
+	c.JSON(http.StatusOK, mapDefaultResp(mapToProductResponse(productRow), nil, nil))
 }
 
-// listProducts godoc
+// getProducts godoc
 // @Summary Get list of products
 // @Schemes http
 // @Description get list of products
@@ -209,28 +214,40 @@ func (sv *Server) getProduct(c *gin.Context) {
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /products [get]
-func (sv *Server) listProducts(c *gin.Context) {
+func (sv *Server) getProducts(c *gin.Context) {
 	var queries listProductsParams
 	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
+	productsChan := make(chan []sqlc.ListProductsRow)
+	countChan := make(chan int64)
+	go func() {
+		products, err := sv.postgres.ListProducts(c, sqlc.ListProductsParams{
+			Limit:  queries.PageSize,
+			Offset: (queries.Page - 1) * queries.PageSize,
+		})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, mapErrResp(err))
+			return
+		}
+		productsChan <- products
+	}()
+	go func() {
+		count, err := sv.postgres.CountProducts(c, sqlc.CountProductsParams{})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, mapErrResp(err))
+			return
+		}
+		countChan <- count
+	}()
 
-	products, err := sv.postgres.ListProducts(c, sqlc.ListProductsParams{
-		Limit:  queries.PageSize,
-		Offset: (queries.Page - 1) * queries.PageSize,
-	})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
+	productResponses := make([]productListResponse, 0)
+	for _, product := range <-productsChan {
+		productResponses = append(productResponses, mapToListProductResponse(product))
 	}
 
-	productResponses := make([]productListResponse, len(products))
-	for i, product := range products {
-		productResponses[i] = mapToListProductResponse(product)
-	}
-
-	c.JSON(http.StatusOK, responseMapper(productResponses, nil, nil))
+	c.JSON(http.StatusOK, mapListResp(productResponses, <-countChan))
 }
 
 // updateProduct godoc
@@ -249,21 +266,21 @@ func (sv *Server) listProducts(c *gin.Context) {
 func (sv *Server) updateProduct(c *gin.Context) {
 	var params getProductParams
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 	var product updateProductRequest
 	if err := c.ShouldBindJSON(&product); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 	updateBody := sqlc.UpdateProductParams{
 		ID: params.ID,
 	}
 	if product.Price != nil {
-		price, err := util.ParsePgNumeric(*product.Price)
+		price, err := util.ParsePgTypeNumber(*product.Price)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, errorResponse(err))
+			c.JSON(http.StatusBadRequest, mapErrResp(err))
 			return
 		}
 		updateBody.Price = price
@@ -293,14 +310,14 @@ func (sv *Server) updateProduct(c *gin.Context) {
 	updated, err := sv.postgres.UpdateProduct(c, updateBody)
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
-			c.JSON(http.StatusNotFound, errorResponse(err))
+			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
-	c.JSON(http.StatusOK, responseMapper(updated, nil, nil))
+	c.JSON(http.StatusOK, mapDefaultResp(updated, nil, nil))
 }
 
 // removeProduct godoc
@@ -318,7 +335,7 @@ func (sv *Server) updateProduct(c *gin.Context) {
 func (sv *Server) removeProduct(c *gin.Context) {
 	var params getProductParams
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 
@@ -327,19 +344,19 @@ func (sv *Server) removeProduct(c *gin.Context) {
 	})
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
-			c.JSON(http.StatusNotFound, errorResponse(err))
+			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
 	err = sv.postgres.DeleteProduct(c, params.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
 	message := "product deleted"
-	c.JSON(http.StatusOK, responseMapper(nil, &message, nil))
+	c.JSON(http.StatusOK, mapDefaultResp(nil, &message, nil))
 }

@@ -90,22 +90,25 @@ func (sv *Server) initializeRouter() {
 
 		product := v1.Group("/product")
 		{
-			product.GET(":id", sv.getProduct)
-			product.GET("", sv.listProducts)
+			product.GET(":id", sv.getProductDetail)
+			product.GET("", sv.getProducts)
 
 			productAuthRoutes := product.Group("").Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sqlc.UserRoleAdmin))
 			productAuthRoutes.POST("", sv.createProduct)
 			productAuthRoutes.PUT(":id", sv.updateProduct)
 			productAuthRoutes.DELETE(":id", sv.removeProduct)
-			productAuthRoutes.POST(":id/upload-image", sv.uploadProductImage)
-			productAuthRoutes.DELETE(":id/remove-image", sv.removeProductImage)
+			productAuthRoutes.POST(":id/image", sv.uploadProductImage)
+			productAuthRoutes.GET(":id/image", sv.getProductImages)
+			productAuthRoutes.PUT(":id/image/:image-id", sv.uploadProductImage)
+			productAuthRoutes.PUT(":id/image/:image-id/primary", sv.setImagesPrimary)
+			productAuthRoutes.DELETE(":id/image/:image-id", sv.removeProductImage)
 		}
 
 		cart := v1.Group("/cart")
 		{
 			cart.Use(authMiddleware(sv.tokenGenerator))
 			cart.POST("", sv.createCart)
-			cart.GET("", sv.getCart)
+			cart.GET("", sv.getCartDetail)
 			cart.POST("checkout", sv.checkout)
 			cart.PUT("clear", sv.clearCart)
 
@@ -149,17 +152,34 @@ func (s *Server) Server(addr string) *http.Server {
 	}
 }
 
-func errorResponse(err error) gin.H {
-	return gin.H{"error": err.Error()}
+type errorResponse struct {
+	Error string `json:"error"`
 }
 
-func responseMapper(data interface{}, message *string, err *error) gin.H {
-	response := gin.H{"data": data}
-	if message != nil {
-		response["message"] = *message
-	}
+func mapErrResp(err error) errorResponse {
+	return errorResponse{Error: err.Error()}
+}
+
+type defaultResponse struct {
+	Data    interface{} `json:"data"`
+	Message *string     `json:"message,omitempty"`
+	Error   *string     `json:"error,omitempty"`
+}
+
+func mapDefaultResp(data interface{}, message *string, err *error) defaultResponse {
+	response := defaultResponse{Data: data, Message: message}
 	if err != nil {
-		response["error"] = (*err).Error()
+		errMsg := (*err).Error()
+		response.Error = &errMsg
 	}
 	return response
+}
+
+type listResponse[T any] struct {
+	Data  T     `json:"data"`
+	Total int64 `json:"total"`
+}
+
+func mapListResp(data interface{}, total int64) listResponse[interface{}] {
+	return listResponse[interface{}]{Data: data, Total: total}
 }

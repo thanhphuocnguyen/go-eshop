@@ -37,11 +37,6 @@ type UpdateAddressParams struct {
 	IsDefault *bool   `json:"is_default" binding:"omitempty"`
 }
 
-type GetAddressListQuery struct {
-	Page     int32 `form:"page" binding:"required,min=1"`
-	PageSize int32 `form:"page_size" binding:"required,min=1,max=100"`
-}
-
 // ------------------------------ API Models ------------------------------
 type AddressResponse struct {
 	ID        int64   `json:"id"`
@@ -82,15 +77,25 @@ func mapAddressResponse(address sqlc.UserAddress) AddressResponse {
 func (sv *Server) createAddress(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, errorResponse(fmt.Errorf("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, mapErrResp(fmt.Errorf("authorization payload is not provided")))
+		return
+	}
+	addresses, err := sv.postgres.GetAddresses(c, authPayload.UserID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
-	var req CreateAddressParams
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
+	if len(addresses) >= 10 {
+		c.JSON(http.StatusBadRequest, mapErrResp(fmt.Errorf("maximum number of addresses reached")))
 		return
 	}
+	var req CreateAddressParams
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		return
+	}
+
 	payload := sqlc.CreateAddressParams{
 		UserID:   authPayload.UserID,
 		Phone:    req.Phone,
@@ -114,16 +119,17 @@ func (sv *Server) createAddress(c *gin.Context) {
 			UserID:       authPayload.UserID,
 		})
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, errorResponse(fmt.Errorf("failed to set primary address: %w", err)))
+			c.JSON(http.StatusInternalServerError, mapErrResp(fmt.Errorf("failed to set primary address: %w", err)))
 			return
 		}
+		address.IsPrimary = true
 	}
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
-	c.JSON(http.StatusOK, responseMapper(mapAddressResponse(address), nil, nil))
+	c.JSON(http.StatusOK, mapDefaultResp(mapAddressResponse(address), nil, nil))
 }
 
 // getAddresses godoc
@@ -139,22 +145,13 @@ func (sv *Server) createAddress(c *gin.Context) {
 func (sv *Server) listAddresses(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, errorResponse(fmt.Errorf("authorization payload is not provided")))
-		return
-	}
-	var query GetAddressListQuery
-	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(fmt.Errorf("authorization payload is not provided")))
 		return
 	}
 
-	addresses, err := sv.postgres.ListAddresses(c, sqlc.ListAddressesParams{
-		UserID: authPayload.UserID,
-		Limit:  query.PageSize,
-		Offset: (query.Page - 1) * query.PageSize,
-	})
+	addresses, err := sv.postgres.GetAddresses(c, authPayload.UserID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 	addressesResponse := make([]AddressResponse, len(addresses))
@@ -162,7 +159,7 @@ func (sv *Server) listAddresses(c *gin.Context) {
 		addressesResponse[i] = mapAddressResponse(address)
 	}
 
-	c.JSON(http.StatusOK, responseMapper(addressesResponse, nil, nil))
+	c.JSON(http.StatusOK, mapDefaultResp(addressesResponse, nil, nil))
 }
 
 // updateAddress godoc
@@ -178,17 +175,17 @@ func (sv *Server) listAddresses(c *gin.Context) {
 func (sv *Server) updateAddress(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, errorResponse(fmt.Errorf("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, mapErrResp(fmt.Errorf("authorization payload is not provided")))
 		return
 	}
 	var input UpdateAddressParams
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 	var param GetAddressParams
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 
@@ -198,10 +195,10 @@ func (sv *Server) updateAddress(c *gin.Context) {
 	})
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
-			c.JSON(http.StatusNotFound, errorResponse(err))
+			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
@@ -234,7 +231,7 @@ func (sv *Server) updateAddress(c *gin.Context) {
 				UserID:       authPayload.UserID,
 			})
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, errorResponse(fmt.Errorf("failed to set primary address: %w", err)))
+				c.JSON(http.StatusInternalServerError, mapErrResp(fmt.Errorf("failed to set primary address: %w", err)))
 				return
 			}
 		}
@@ -242,10 +239,10 @@ func (sv *Server) updateAddress(c *gin.Context) {
 
 	address, err := sv.postgres.UpdateAddress(c, payload)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
-	c.JSON(http.StatusOK, responseMapper(mapAddressResponse(address), nil, nil))
+	c.JSON(http.StatusOK, mapDefaultResp(mapAddressResponse(address), nil, nil))
 }
 
 // removeAddress godoc
@@ -260,12 +257,12 @@ func (sv *Server) updateAddress(c *gin.Context) {
 func (sv *Server) removeAddress(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, errorResponse(fmt.Errorf("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, mapErrResp(fmt.Errorf("authorization payload is not provided")))
 		return
 	}
 	var param GetAddressParams
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 
@@ -276,15 +273,15 @@ func (sv *Server) removeAddress(c *gin.Context) {
 
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
-			c.JSON(http.StatusNotFound, errorResponse(err))
+			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
 	if address.IsDeleted {
-		c.JSON(http.StatusNotFound, errorResponse(fmt.Errorf("address has been removed")))
+		c.JSON(http.StatusNotFound, mapErrResp(fmt.Errorf("address has been removed")))
 		return
 	}
 
@@ -294,13 +291,13 @@ func (sv *Server) removeAddress(c *gin.Context) {
 	})
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
-			c.JSON(http.StatusNotFound, errorResponse(err))
+			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
-	c.JSON(http.StatusOK, responseMapper(struct {
+	c.JSON(http.StatusOK, mapDefaultResp(struct {
 		Success bool `json:"success"`
 	}{
 		Success: true,

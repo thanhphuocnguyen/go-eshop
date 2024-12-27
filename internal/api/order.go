@@ -57,12 +57,12 @@ type listOrderResponse struct {
 func (sv *Server) orderList(c *gin.Context) {
 	user, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, errorResponse(errors.New("user not found")))
+		c.JSON(http.StatusUnauthorized, mapErrResp(errors.New("user not found")))
 		return
 	}
 	var orderListQuery orderListQuery
 	if err := c.ShouldBindQuery(&orderListQuery); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 
@@ -73,7 +73,7 @@ func (sv *Server) orderList(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 	var orderResponses []orderResponse
@@ -107,18 +107,18 @@ func (sv *Server) orderList(c *gin.Context) {
 func (sv *Server) orderDetail(c *gin.Context) {
 	var params orderIDParams
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 
 	orderDetails, err := sv.postgres.GetOrderDetails(c, params.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
 	if len(orderDetails) == 0 {
-		c.JSON(http.StatusNotFound, errorResponse(errors.New("order not found")))
+		c.JSON(http.StatusNotFound, mapErrResp(errors.New("order not found")))
 		return
 	}
 	var orderDetailResponse orderDetailResponse
@@ -161,22 +161,22 @@ func (sv *Server) orderDetail(c *gin.Context) {
 func (sv *Server) cancelOrder(c *gin.Context) {
 	user, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, errorResponse(errors.New("user not found")))
+		c.JSON(http.StatusUnauthorized, mapErrResp(errors.New("user not found")))
 		return
 	}
 	var params orderIDParams
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 	order, err := sv.postgres.GetOrder(c, params.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
 	if order.UserID != user.UserID {
-		c.JSON(http.StatusUnauthorized, errorResponse(errors.New("user does not have permission")))
+		c.JSON(http.StatusUnauthorized, mapErrResp(errors.New("user does not have permission")))
 		return
 	}
 
@@ -189,7 +189,7 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 		},
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 	c.JSON(http.StatusOK, order)

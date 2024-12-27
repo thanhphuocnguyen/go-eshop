@@ -15,9 +15,11 @@ type CloudinaryUploadService struct {
 
 func NewCloudinaryUploadService(cfg config.Config) UploadService {
 	cld, err := cloudinary.NewFromURL(cfg.CloudinaryUrl)
+
 	if err != nil {
 		panic(err)
 	}
+
 	return &CloudinaryUploadService{
 		cld: cld,
 		cfg: cfg,

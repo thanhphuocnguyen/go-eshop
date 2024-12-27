@@ -98,18 +98,17 @@ SELECT
 FROM
     user_addresses
 WHERE
-    id = $1 AND user_id = $2 AND is_deleted = false AND is_primary = COALESCE($3, is_primary)
+    id = $1 AND user_id = $2 AND is_deleted = false
 LIMIT 1
 `
 
 type GetAddressParams struct {
-	ID        int64       `json:"id"`
-	UserID    int64       `json:"user_id"`
-	IsPrimary pgtype.Bool `json:"is_primary"`
+	ID     int64 `json:"id"`
+	UserID int64 `json:"user_id"`
 }
 
 func (q *Queries) GetAddress(ctx context.Context, arg GetAddressParams) (UserAddress, error) {
-	row := q.db.QueryRow(ctx, getAddress, arg.ID, arg.UserID, arg.IsPrimary)
+	row := q.db.QueryRow(ctx, getAddress, arg.ID, arg.UserID)
 	var i UserAddress
 	err := row.Scan(
 		&i.ID,
@@ -129,7 +128,7 @@ func (q *Queries) GetAddress(ctx context.Context, arg GetAddressParams) (UserAdd
 	return i, err
 }
 
-const listAddresses = `-- name: ListAddresses :many
+const getAddresses = `-- name: GetAddresses :many
 SELECT
     id, user_id, phone, address_1, address_2, ward, district, city, is_primary, is_deleted, created_at, updated_at, deleted_at
 FROM
@@ -137,19 +136,11 @@ FROM
 WHERE
     user_id = $1 AND is_deleted = false
 ORDER BY
-    id
-LIMIT $2
-OFFSET $3
+    is_primary DESC, id ASC
 `
 
-type ListAddressesParams struct {
-	UserID int64 `json:"user_id"`
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
-}
-
-func (q *Queries) ListAddresses(ctx context.Context, arg ListAddressesParams) ([]UserAddress, error) {
-	rows, err := q.db.Query(ctx, listAddresses, arg.UserID, arg.Limit, arg.Offset)
+func (q *Queries) GetAddresses(ctx context.Context, userID int64) ([]UserAddress, error) {
+	rows, err := q.db.Query(ctx, getAddresses, userID)
 	if err != nil {
 		return nil, err
 	}

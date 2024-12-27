@@ -13,6 +13,12 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/util"
 )
 
+// ------------------------------------------ Request and Response ------------------------------------------
+type getProductImageParams struct {
+	ID      int64 `uri:"product_id" binding:"required"`
+	ImageID int32 `uri:"image_id" binding:"required"`
+}
+
 // UploadProductImage godoc
 // @Summary Upload a product image by ID
 // @Schemes http
@@ -27,20 +33,9 @@ import (
 // @Failure 500 {object} gin.H
 // @Router /products/{product_id}/upload-image [post]
 func (sv *Server) uploadProductImage(c *gin.Context) {
-	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, errorResponse(errors.New("missing user payload in context")))
-		return
-	}
-	file, _ := c.FormFile("file")
-	if file == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "file is required"})
-		return
-	}
-
 	var param getProductParams
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 
@@ -48,16 +43,22 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 		ID: param.ID,
 	})
 
-	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
-			c.JSON(http.StatusNotFound, errorResponse(err))
-			return
-		}
-		c.JSON(http.StatusBadRequest, errorResponse(err))
+	file, _ := c.FormFile("file")
+	if file == nil {
+		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("missing file in request")))
 		return
 	}
 
-	fileName := util.GetImageName(file.Filename, authPayload.UserID, product.ID)
+	if err != nil {
+		if errors.Is(err, postgres.ErrorRecordNotFound) {
+			c.JSON(http.StatusNotFound, mapErrResp(err))
+			return
+		}
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		return
+	}
+
+	fileName := util.GetImageName(file.Filename)
 	filePath := imageAssetsDir + fileName
 	defer func() {
 		os.Remove(filePath)
@@ -65,13 +66,13 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 
 	err = c.SaveUploadedFile(file, util.GetImageURL(fileName))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
 	url, err := sv.uploadService.UploadFile(c, file, filePath)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
@@ -81,18 +82,94 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 			Valid: true,
 		},
 		ImageUrl: url,
-		CloudinaryID: pgtype.Text{
+		ExternalID: pgtype.Text{
 			String: fileName,
 			Valid:  true,
 		},
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		sv.uploadService.RemoveFile(c, fileName)
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
+	c.JSON(http.StatusOK, mapDefaultResp(img, nil, nil))
+}
+
+func (sv *Server) getProductImages(c *gin.Context) {
+	var param getProductParams
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 
-	c.JSON(http.StatusOK, responseMapper(img, nil, nil))
+	images, err := sv.postgres.GetImagesByProductID(c, pgtype.Int8{
+		Int64: param.ID,
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
+	c.JSON(http.StatusOK, mapDefaultResp(images, nil, nil))
+}
+
+// SetImagesPrimary godoc
+// @Summary Set a product image as primary by ID
+// @Schemes http
+// @Description set a product image as primary by ID
+// @Tags products
+// @Accept json
+// @Param product_id path int true "Product ID"
+// @Param image_id path int true "Image ID"
+func (sv *Server) setImagesPrimary(c *gin.Context) {
+	var param getProductParams
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		return
+	}
+
+	var params getProductImageParams
+	if err := c.ShouldBindUri(&params); err != nil {
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		return
+	}
+
+	product, err := sv.postgres.GetProduct(c, sqlc.GetProductParams{
+		ID: param.ID,
+	})
+	if err != nil {
+		if errors.Is(err, postgres.ErrorRecordNotFound) {
+			c.JSON(http.StatusNotFound, mapErrResp(err))
+			return
+		}
+	}
+
+	img, err := sv.postgres.GetImageByID(c, params.ImageID)
+	if err != nil {
+		if errors.Is(err, postgres.ErrorRecordNotFound) {
+			c.JSON(http.StatusNotFound, mapErrResp(err))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
+
+	if img.ProductID.Int64 != product.ID {
+		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("image not found")))
+		return
+	}
+
+	err = sv.postgres.SetPrimaryImageTx(c, postgres.SetPrimaryImageTxParams{
+		NewPrimaryID: img.ID,
+		ProductID:    product.ID,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, mapDefaultResp(nil, nil, nil))
 }
 
 // RemoveProductImage godoc
@@ -110,19 +187,19 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 func (sv *Server) removeProductImage(c *gin.Context) {
 	_, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, errorResponse(errors.New("missing user payload in context")))
+		c.JSON(http.StatusInternalServerError, mapErrResp(errors.New("missing user payload in context")))
 		return
 	}
 
 	var param getProductParams
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 
-	var req removeProductImageRequest
-	if err := c.ShouldBindUri(&req); err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse(err))
+	var params getProductImageParams
+	if err := c.ShouldBindUri(&params); err != nil {
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 
@@ -132,36 +209,36 @@ func (sv *Server) removeProductImage(c *gin.Context) {
 
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
-			c.JSON(http.StatusNotFound, errorResponse(err))
+			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
-		c.JSON(http.StatusBadRequest, errorResponse(err))
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 
-	img, err := sv.postgres.GetImagesByProductID(c, sqlc.GetImagesByProductIDParams{
-		ProductID: pgtype.Int8{
-			Int64: product.ID,
-			Valid: true,
-		},
-		ImageID: int32(req.ID),
-	})
+	img, err := sv.postgres.GetImageByID(c, params.ImageID)
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
-			c.JSON(http.StatusNotFound, errorResponse(err))
+			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, errorResponse(err))
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
-	if img.CloudinaryID.Valid {
-		err = sv.uploadService.RemoveFile(c, img.CloudinaryID.String)
+
+	if img.ProductID.Int64 != product.ID {
+		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("image not found")))
+		return
+	}
+
+	if img.ExternalID.Valid {
+		err = sv.uploadService.RemoveFile(c, img.ExternalID.String)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, errorResponse(err))
+			c.JSON(http.StatusInternalServerError, mapErrResp(err))
 			return
 		}
 	} else {
-		c.JSON(http.StatusInternalServerError, errorResponse(errors.New("image not found")))
+		c.JSON(http.StatusInternalServerError, mapErrResp(errors.New("image not found")))
 		return
 	}
 }

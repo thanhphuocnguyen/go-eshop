@@ -7,6 +7,9 @@ package sqlc
 
 import (
 	"context"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const clearCart = `-- name: ClearCart :exec
@@ -46,17 +49,41 @@ func (q *Queries) GetCartItem(ctx context.Context, id int32) (CartItem, error) {
 	return i, err
 }
 
+const getCartItemByProductID = `-- name: GetCartItemByProductID :one
+SELECT id, product_id, cart_id, quantity, created_at FROM cart_items WHERE product_id = $1
+`
+
+func (q *Queries) GetCartItemByProductID(ctx context.Context, productID int64) (CartItem, error) {
+	row := q.db.QueryRow(ctx, getCartItemByProductID, productID)
+	var i CartItem
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.CartID,
+		&i.Quantity,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getCartItems = `-- name: GetCartItems :many
-SELECT cart_items.id, cart_items.product_id, cart_items.cart_id, cart_items.quantity, cart_items.created_at, products.id, products.name, products.description, products.sku, products.stock, products.archived, products.price, products.updated_at, products.created_at, images.image_id, images.product_id, images.variant_id, images.image_url, images.cloudinary_id, images.is_primary, images.created_at, images.updated_at FROM cart_items
-JOIN products ON cart_items.product_id = products.id
-JOIN images ON products.id = images.product_id AND images.is_primary = true
+SELECT cart_items.id, cart_items.product_id, cart_items.cart_id, cart_items.quantity, cart_items.created_at, p.name AS product_name, p.price AS product_price, p.stock AS product_stock, img.image_url AS image_url
+FROM cart_items
+JOIN products AS p ON cart_items.product_id = p.id
+LEFT JOIN images as img ON p.id = img.product_id AND img.is_primary = true
 WHERE cart_id = $1
 `
 
 type GetCartItemsRow struct {
-	CartItem CartItem `json:"cart_item"`
-	Product  Product  `json:"product"`
-	Image    Image    `json:"image"`
+	ID           int32          `json:"id"`
+	ProductID    int64          `json:"product_id"`
+	CartID       int32          `json:"cart_id"`
+	Quantity     int16          `json:"quantity"`
+	CreatedAt    time.Time      `json:"created_at"`
+	ProductName  string         `json:"product_name"`
+	ProductPrice pgtype.Numeric `json:"product_price"`
+	ProductStock int32          `json:"product_stock"`
+	ImageUrl     pgtype.Text    `json:"image_url"`
 }
 
 func (q *Queries) GetCartItems(ctx context.Context, cartID int32) ([]GetCartItemsRow, error) {
@@ -69,28 +96,15 @@ func (q *Queries) GetCartItems(ctx context.Context, cartID int32) ([]GetCartItem
 	for rows.Next() {
 		var i GetCartItemsRow
 		if err := rows.Scan(
-			&i.CartItem.ID,
-			&i.CartItem.ProductID,
-			&i.CartItem.CartID,
-			&i.CartItem.Quantity,
-			&i.CartItem.CreatedAt,
-			&i.Product.ID,
-			&i.Product.Name,
-			&i.Product.Description,
-			&i.Product.Sku,
-			&i.Product.Stock,
-			&i.Product.Archived,
-			&i.Product.Price,
-			&i.Product.UpdatedAt,
-			&i.Product.CreatedAt,
-			&i.Image.ImageID,
-			&i.Image.ProductID,
-			&i.Image.VariantID,
-			&i.Image.ImageUrl,
-			&i.Image.CloudinaryID,
-			&i.Image.IsPrimary,
-			&i.Image.CreatedAt,
-			&i.Image.UpdatedAt,
+			&i.ID,
+			&i.ProductID,
+			&i.CartID,
+			&i.Quantity,
+			&i.CreatedAt,
+			&i.ProductName,
+			&i.ProductPrice,
+			&i.ProductStock,
+			&i.ImageUrl,
 		); err != nil {
 			return nil, err
 		}

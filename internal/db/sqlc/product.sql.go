@@ -16,15 +16,39 @@ const archiveProduct = `-- name: ArchiveProduct :exec
 UPDATE
     products
 SET
-    archived = true
+    archived = true,
+    updated_at = NOW()
 WHERE
     id = $1
-RETURNING id, name, description, sku, stock, archived, price, updated_at, created_at
 `
 
 func (q *Queries) ArchiveProduct(ctx context.Context, id int64) error {
 	_, err := q.db.Exec(ctx, archiveProduct, id)
 	return err
+}
+
+const countProducts = `-- name: CountProducts :one
+SELECT
+    COUNT(*)
+FROM
+    products
+WHERE
+    archived = COALESCE($1, archived) AND
+    name ILIKE COALESCE($2, name) AND
+    sku ILIKE COALESCE($3, sku)
+`
+
+type CountProductsParams struct {
+	Archived pgtype.Bool `json:"archived"`
+	Name     pgtype.Text `json:"name"`
+	Sku      pgtype.Text `json:"sku"`
+}
+
+func (q *Queries) CountProducts(ctx context.Context, arg CountProductsParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countProducts, arg.Archived, arg.Name, arg.Sku)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const createProduct = `-- name: CreateProduct :one
@@ -125,7 +149,7 @@ func (q *Queries) GetProduct(ctx context.Context, arg GetProductParams) (Product
 const getProductDetail = `-- name: GetProductDetail :many
 SELECT
     products.id, products.name, products.description, products.sku, products.stock, products.archived, products.price, products.updated_at, products.created_at,
-    img.image_id AS image_id,
+    img.id AS image_id,
     img.image_url AS image_url,
     img.is_primary AS image_is_primary
 FROM
@@ -186,7 +210,7 @@ func (q *Queries) GetProductDetail(ctx context.Context, arg GetProductDetailPara
 const listProducts = `-- name: ListProducts :many
 SELECT
     products.id, products.name, products.description, products.sku, products.stock, products.archived, products.price, products.updated_at, products.created_at,
-    img.image_id AS image_id,
+    img.id AS image_id,
     img.image_url AS image_url
 FROM
     products
@@ -196,7 +220,7 @@ WHERE
     name ILIKE COALESCE($4, name) AND
     sku ILIKE COALESCE($5, sku)
 ORDER BY
-    id
+    products.id
 LIMIT $1
 OFFSET $2
 `

@@ -8,10 +8,15 @@ SELECT COUNT(*) FROM cart_items WHERE cart_id = $1;
 -- name: GetCartItem :one
 SELECT * FROM cart_items WHERE id = $1;
 
+
+-- name: GetCartItemByProductID :one
+SELECT * FROM cart_items WHERE product_id = $1;
+
 -- name: GetCartItems :many
-SELECT sqlc.embed(cart_items), sqlc.embed(products), sqlc.embed(images) FROM cart_items
-JOIN products ON cart_items.product_id = products.id
-JOIN images ON products.id = images.product_id AND images.is_primary = true
+SELECT cart_items.*, p.name AS product_name, p.price AS product_price, p.stock AS product_stock, img.image_url AS image_url
+FROM cart_items
+JOIN products AS p ON cart_items.product_id = p.id
+LEFT JOIN images as img ON p.id = img.product_id AND img.is_primary = true
 WHERE cart_id = $1;
 
 -- name: ClearCart :exec
