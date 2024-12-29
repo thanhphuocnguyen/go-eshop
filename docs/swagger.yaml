@@ -1,5 +1,24 @@
 basePath: /api/v1
 definitions:
+  api.AddressResponse:
+    properties:
+      address_1:
+        type: string
+      address_2:
+        type: string
+      city:
+        type: string
+      district:
+        type: string
+      id:
+        type: integer
+      is_default:
+        type: boolean
+      phone:
+        type: string
+      ward:
+        type: string
+    type: object
   api.CreateAddressParams:
     properties:
       address_1:
@@ -23,6 +42,158 @@ definitions:
     - city
     - district
     - phone
+    type: object
+  api.GenericListResponse-api_productListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/api.productListResponse'
+        type: array
+      error:
+        type: string
+      message:
+        type: string
+      total:
+        type: integer
+    type: object
+  api.GenericResponse-api_AddressResponse:
+    properties:
+      data:
+        $ref: '#/definitions/api.AddressResponse'
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  api.GenericResponse-api_cartResponse:
+    properties:
+      data:
+        $ref: '#/definitions/api.cartResponse'
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  api.GenericResponse-api_loginResponse:
+    properties:
+      data:
+        $ref: '#/definitions/api.loginResponse'
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  api.GenericResponse-api_productResponse:
+    properties:
+      data:
+        $ref: '#/definitions/api.productResponse'
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  api.GenericResponse-api_userResponse:
+    properties:
+      data:
+        $ref: '#/definitions/api.userResponse'
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  api.GenericResponse-array_api_AddressResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/api.AddressResponse'
+        type: array
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  api.GenericResponse-array_sqlc_Image:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/sqlc.Image'
+        type: array
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  api.GenericResponse-bool:
+    properties:
+      data:
+        type: boolean
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  api.GenericResponse-postgres_CheckoutCartTxResult:
+    properties:
+      data:
+        $ref: '#/definitions/postgres.CheckoutCartTxResult'
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  api.GenericResponse-sqlc_Cart:
+    properties:
+      data:
+        $ref: '#/definitions/sqlc.Cart'
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  api.GenericResponse-sqlc_CartItem:
+    properties:
+      data:
+        $ref: '#/definitions/sqlc.CartItem'
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  api.GenericResponse-sqlc_CreateUserRow:
+    properties:
+      data:
+        $ref: '#/definitions/sqlc.CreateUserRow'
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  api.GenericResponse-sqlc_Order:
+    properties:
+      data:
+        $ref: '#/definitions/sqlc.Order'
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  api.GenericResponse-sqlc_Product:
+    properties:
+      data:
+        $ref: '#/definitions/sqlc.Product'
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  api.GenericResponse-sqlc_UpdateUserRow:
+    properties:
+      data:
+        $ref: '#/definitions/sqlc.UpdateUserRow'
+      error:
+        type: string
+      message:
+        type: string
     type: object
   api.UpdateAddressParams:
     properties:
@@ -68,8 +239,6 @@ definitions:
     type: object
   api.cartItemResponse:
     properties:
-      description:
-        type: string
       id:
         type: integer
       image_url:
@@ -95,6 +264,8 @@ definitions:
         type: string
       id:
         type: integer
+      total_price:
+        type: number
       updated_at:
         type: string
       user_id:
@@ -106,10 +277,13 @@ definitions:
         type: integer
       payment_method:
         enum:
-        - cod
         - credit_card
         - paypal
         - cod
+        - debit_card
+        - apple_pay
+        - wallet
+        - postpaid
         type: string
     required:
     - address_id
@@ -211,7 +385,7 @@ definitions:
         $ref: '#/definitions/sqlc.PaymentStatus'
       products:
         items:
-          $ref: '#/definitions/api.productResponse'
+          $ref: '#/definitions/api.productListResponse'
         type: array
       status:
         $ref: '#/definitions/sqlc.OrderStatus'
@@ -243,6 +417,27 @@ definitions:
         type: string
       is_primary:
         type: boolean
+    type: object
+  api.productListResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      image_url:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      sku:
+        type: string
+      stock:
+        type: integer
+      updated_at:
+        type: string
     type: object
   api.productResponse:
     properties:
@@ -333,6 +528,13 @@ definitions:
   gin.H:
     additionalProperties: {}
     type: object
+  pgtype.Bool:
+    properties:
+      bool:
+        type: boolean
+      valid:
+        type: boolean
+    type: object
   pgtype.InfinityModifier:
     enum:
     - 1
@@ -343,6 +545,13 @@ definitions:
     - Infinity
     - Finite
     - NegativeInfinity
+  pgtype.Int8:
+    properties:
+      int64:
+        type: integer
+      valid:
+        type: boolean
+    type: object
   pgtype.Numeric:
     properties:
       exp:
@@ -363,6 +572,16 @@ definitions:
       valid:
         type: boolean
     type: object
+  pgtype.Timestamp:
+    properties:
+      infinityModifier:
+        $ref: '#/definitions/pgtype.InfinityModifier'
+      time:
+        description: Time zone will be ignored when encoding to PostgreSQL.
+        type: string
+      valid:
+        type: boolean
+    type: object
   pgtype.Timestamptz:
     properties:
       infinityModifier:
@@ -371,6 +590,61 @@ definitions:
         type: string
       valid:
         type: boolean
+    type: object
+  postgres.CheckoutCartTxResult:
+    properties:
+      cancelled_at:
+        $ref: '#/definitions/pgtype.Timestamptz'
+      confirmed_at:
+        $ref: '#/definitions/pgtype.Timestamptz'
+      created_at:
+        type: string
+      delivered_at:
+        $ref: '#/definitions/pgtype.Timestamptz'
+      id:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/sqlc.OrderItem'
+        type: array
+      payment:
+        $ref: '#/definitions/sqlc.Payment'
+      refunded_at:
+        $ref: '#/definitions/pgtype.Timestamptz'
+      status:
+        $ref: '#/definitions/sqlc.OrderStatus'
+      total_price:
+        $ref: '#/definitions/pgtype.Numeric'
+      updated_at:
+        type: string
+      user_address_id:
+        type: integer
+      user_id:
+        type: integer
+    type: object
+  sqlc.Cart:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  sqlc.CartItem:
+    properties:
+      cart_id:
+        type: integer
+      created_at:
+        type: string
+      id:
+        type: integer
+      product_id:
+        type: integer
+      quantity:
+        type: integer
     type: object
   sqlc.CreateUserRow:
     properties:
@@ -391,6 +665,33 @@ definitions:
       verified_email:
         type: boolean
       verified_phone:
+        type: boolean
+    type: object
+  sqlc.Image:
+    properties:
+      created_at:
+        $ref: '#/definitions/pgtype.Timestamp'
+      external_id:
+        $ref: '#/definitions/pgtype.Text'
+      id:
+        type: integer
+      image_url:
+        type: string
+      is_primary:
+        $ref: '#/definitions/pgtype.Bool'
+      product_id:
+        $ref: '#/definitions/pgtype.Int8'
+      updated_at:
+        $ref: '#/definitions/pgtype.Timestamp'
+      variant_id:
+        $ref: '#/definitions/pgtype.Int8'
+    type: object
+  sqlc.NullPaymentGateway:
+    properties:
+      payment_gateway:
+        $ref: '#/definitions/sqlc.PaymentGateway'
+      valid:
+        description: Valid is true if PaymentGateway is not NULL
         type: boolean
     type: object
   sqlc.Order:
@@ -418,6 +719,21 @@ definitions:
       user_id:
         type: integer
     type: object
+  sqlc.OrderItem:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      order_id:
+        type: integer
+      price:
+        $ref: '#/definitions/pgtype.Numeric'
+      product_id:
+        type: integer
+      quantity:
+        type: integer
+    type: object
   sqlc.OrderStatus:
     enum:
     - pending
@@ -436,6 +752,79 @@ definitions:
     - OrderStatusCancelled
     - OrderStatusRefunded
     - OrderStatusCompleted
+  sqlc.Payment:
+    properties:
+      amount:
+        $ref: '#/definitions/pgtype.Numeric'
+      created_at:
+        $ref: '#/definitions/pgtype.Timestamp'
+      gateway:
+        $ref: '#/definitions/sqlc.NullPaymentGateway'
+      id:
+        type: integer
+      method:
+        $ref: '#/definitions/sqlc.PaymentMethod'
+      order_id:
+        type: integer
+      status:
+        $ref: '#/definitions/sqlc.PaymentStatus'
+      transaction_id:
+        $ref: '#/definitions/pgtype.Text'
+      updated_at:
+        $ref: '#/definitions/pgtype.Timestamp'
+    type: object
+  sqlc.PaymentGateway:
+    enum:
+    - stripe
+    - paypal
+    - razorpay
+    - visa
+    - mastercard
+    - amex
+    - apple_pay
+    - google_pay
+    - amazon_pay
+    - phone_pe
+    - paytm
+    - upi
+    - wallet
+    - cod
+    - postpaid
+    type: string
+    x-enum-varnames:
+    - PaymentGatewayStripe
+    - PaymentGatewayPaypal
+    - PaymentGatewayRazorpay
+    - PaymentGatewayVisa
+    - PaymentGatewayMastercard
+    - PaymentGatewayAmex
+    - PaymentGatewayApplePay
+    - PaymentGatewayGooglePay
+    - PaymentGatewayAmazonPay
+    - PaymentGatewayPhonePe
+    - PaymentGatewayPaytm
+    - PaymentGatewayUpi
+    - PaymentGatewayWallet
+    - PaymentGatewayCod
+    - PaymentGatewayPostpaid
+  sqlc.PaymentMethod:
+    enum:
+    - credit_card
+    - paypal
+    - cod
+    - debit_card
+    - apple_pay
+    - wallet
+    - postpaid
+    type: string
+    x-enum-varnames:
+    - PaymentMethodCreditCard
+    - PaymentMethodPaypal
+    - PaymentMethodCod
+    - PaymentMethodDebitCard
+    - PaymentMethodApplePay
+    - PaymentMethodWallet
+    - PaymentMethodPostpaid
   sqlc.PaymentStatus:
     enum:
     - pending
@@ -488,35 +877,6 @@ definitions:
       verified_phone:
         type: boolean
     type: object
-  sqlc.UserAddress:
-    properties:
-      address_1:
-        type: string
-      address_2:
-        $ref: '#/definitions/pgtype.Text'
-      city:
-        type: string
-      created_at:
-        type: string
-      deleted_at:
-        $ref: '#/definitions/pgtype.Timestamptz'
-      district:
-        type: string
-      id:
-        type: integer
-      is_deleted:
-        type: boolean
-      is_primary:
-        type: boolean
-      phone:
-        type: string
-      updated_at:
-        type: string
-      user_id:
-        type: integer
-      ward:
-        $ref: '#/definitions/pgtype.Text'
-    type: object
   sqlc.UserRole:
     enum:
     - admin
@@ -553,9 +913,7 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/sqlc.UserAddress'
-            type: array
+            $ref: '#/definitions/api.GenericResponse-array_api_AddressResponse'
       summary: Get list of addresses
       tags:
       - address
@@ -576,7 +934,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/sqlc.UserAddress'
+            $ref: '#/definitions/api.GenericResponse-api_AddressResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gin.H'
       summary: Create a new address
       tags:
       - address
@@ -596,6 +962,20 @@ paths:
       responses:
         "200":
           description: OK
+          schema:
+            $ref: '#/definitions/api.GenericResponse-bool'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gin.H'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
       summary: Remove an address
       tags:
       - address
@@ -621,7 +1001,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/sqlc.UserAddress'
+            $ref: '#/definitions/api.GenericResponse-api_AddressResponse'
       summary: Update an address
       tags:
       - address
@@ -636,7 +1016,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.cartResponse'
+            $ref: '#/definitions/api.GenericResponse-api_cartResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -654,7 +1034,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.cartResponse'
+            $ref: '#/definitions/api.GenericResponse-sqlc_Cart'
         "400":
           description: Bad Request
           schema:
@@ -684,7 +1064,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/sqlc.Order'
+            $ref: '#/definitions/api.GenericResponse-postgres_CheckoutCartTxResult'
         "400":
           description: Bad Request
           schema:
@@ -707,7 +1087,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.GenericResponse-bool'
         "400":
           description: Bad Request
           schema:
@@ -736,7 +1116,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.GenericResponse-bool'
         "400":
           description: Bad Request
           schema:
@@ -765,7 +1145,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.cartResponse'
+            $ref: '#/definitions/api.GenericResponse-sqlc_CartItem'
         "400":
           description: Bad Request
           schema:
@@ -794,7 +1174,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.cartResponse'
+            $ref: '#/definitions/api.GenericResponse-sqlc_CartItem'
         "400":
           description: Bad Request
           schema:
@@ -896,7 +1276,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/sqlc.Order'
+            $ref: '#/definitions/api.GenericResponse-sqlc_Order'
         "400":
           description: Bad Request
           schema:
@@ -1019,7 +1399,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/api.productResponse'
+              $ref: '#/definitions/api.GenericListResponse-api_productListResponse'
             type: array
         "404":
           description: Not Found
@@ -1049,7 +1429,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/sqlc.Product'
+            $ref: '#/definitions/api.GenericResponse-sqlc_Product'
         "400":
           description: Bad Request
           schema:
@@ -1078,7 +1458,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.GenericResponse-bool'
         "404":
           description: Not Found
           schema:
@@ -1106,7 +1486,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.productResponse'
+            $ref: '#/definitions/api.GenericResponse-api_productResponse'
         "404":
           description: Not Found
           schema:
@@ -1140,7 +1520,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.productResponse'
+            $ref: '#/definitions/api.GenericResponse-sqlc_Product'
         "404":
           description: Not Found
           schema:
@@ -1150,6 +1530,69 @@ paths:
           schema:
             $ref: '#/definitions/gin.H'
       summary: Update a product by ID
+      tags:
+      - products
+  /products/{product_id}/images:
+    get:
+      consumes:
+      - application/json
+      description: get list of product images by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.GenericResponse-array_sqlc_Image'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get list of product images by ID
+      tags:
+      - products
+  /products/{product_id}/images/{image_id}/primary:
+    put:
+      consumes:
+      - application/json
+      description: set a product image as primary by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: integer
+      - description: Image ID
+        in: path
+        name: image_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.GenericResponse-bool'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Set a product image as primary by ID
       tags:
       - products
   /products/{product_id}/remove-image:
@@ -1169,7 +1612,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.GenericResponse-bool'
         "404":
           description: Not Found
           schema:
@@ -1203,7 +1646,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.GenericResponse-array_sqlc_Image'
         "404":
           description: Not Found
           schema:
@@ -1226,7 +1669,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.userResponse'
+            $ref: '#/definitions/api.GenericResponse-api_userResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
       summary: Get user info
       tags:
       - users
@@ -1247,7 +1698,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/sqlc.CreateUserRow'
+            $ref: '#/definitions/api.GenericResponse-sqlc_CreateUserRow'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
       summary: Create a new user
       tags:
       - users
@@ -1269,7 +1728,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/sqlc.UpdateUserRow'
+            $ref: '#/definitions/api.GenericResponse-sqlc_UpdateUserRow'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
       summary: Update user info
       tags:
       - users
@@ -1291,7 +1762,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.loginResponse'
+            $ref: '#/definitions/api.GenericResponse-api_loginResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
       summary: Login to the system
       tags:
       - users

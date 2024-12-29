@@ -24,7 +24,7 @@ LIMIT 1;
 
 -- name: GetOrderDetails :many
 SELECT
-    sqlc.embed(orders), sqlc.embed(order_items), sqlc.embed(products), sqlc.embed(user_addresses)
+    sqlc.embed(orders), sqlc.embed(order_items), sqlc.embed(products), sqlc.embed(user_addresses), images.image_url
 FROM
     orders
 LEFT JOIN
@@ -33,6 +33,8 @@ LEFT JOIN
     products ON order_items.product_id = products.id
 LEFT JOIN
     user_addresses ON orders.user_address_id = user_addresses.id
+LEFT JOIN 
+    images ON products.id = images.product_id AND images.is_primary = true
 WHERE
     orders.id = $1;
 

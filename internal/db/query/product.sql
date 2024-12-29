@@ -24,7 +24,7 @@ FROM
     products
 WHERE
     id = $1 AND
-    archived = COALESCE(sqlc.narg('archived'), archived);
+    archived = COALESCE(sqlc.narg('archived'), FALSE);
 
 -- name: GetProductDetail :many
 SELECT
@@ -37,7 +37,7 @@ FROM
 LEFT JOIN images AS img ON products.id = img.product_id
 WHERE
     products.id = $1 AND
-    archived = COALESCE(sqlc.narg('archived'), archived)
+    archived = COALESCE(sqlc.narg('archived'), false)
 ORDER BY
     img.is_primary DESC;
 

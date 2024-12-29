@@ -9,7 +9,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/config"
 	"github.com/thanhphuocnguyen/go-eshop/internal/api"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/postgres"
-	"github.com/thanhphuocnguyen/go-eshop/internal/upload"
+	"github.com/thanhphuocnguyen/go-eshop/internal/uploadsrv"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 )
 
@@ -28,7 +28,7 @@ func APICmd(ctx context.Context, cfg config.Config) *cobra.Command {
 				Addr: cfg.RedisUrl,
 			}
 			taskDistributor := worker.NewRedisTaskDistributor(redisCfg)
-			uploadService := upload.NewCloudinaryUploadService(cfg)
+			uploadService := uploadsrv.NewCloudinaryUploadService(cfg)
 
 			api, err := api.NewAPI(cfg, pg, taskDistributor, uploadService)
 			if err != nil {

@@ -20,11 +20,11 @@ type orderIDParams struct {
 }
 
 type orderDetailResponse struct {
-	ID            int64              `json:"id"`
-	Total         float64            `json:"total"`
-	Status        sqlc.OrderStatus   `json:"status"`
-	PaymentStatus sqlc.PaymentStatus `json:"payment_status"`
-	Products      []productResponse  `json:"products"`
+	ID            int64                 `json:"id"`
+	Total         float64               `json:"total"`
+	Status        sqlc.OrderStatus      `json:"status"`
+	PaymentStatus sqlc.PaymentStatus    `json:"payment_status"`
+	Products      []productListResponse `json:"products"`
 }
 type orderResponse struct {
 	ID            int64              `json:"id"`
@@ -121,29 +121,29 @@ func (sv *Server) orderDetail(c *gin.Context) {
 		c.JSON(http.StatusNotFound, mapErrResp(errors.New("order not found")))
 		return
 	}
-	var orderDetailResponse orderDetailResponse
-	orderDetailResponse.ID = orderDetails[0].Order.ID
+	var orderDetail orderDetailResponse
+	orderDetail.ID = orderDetails[0].Order.ID
 
-	orderDetailResponse.Status = orderDetails[0].Order.Status
+	orderDetail.Status = orderDetails[0].Order.Status
 	var total float64
 	for _, order := range orderDetails {
 		price, _ := order.Product.Price.Float64Value()
 		product := order.Product
 		total += price.Float64 * float64(order.OrderItem.Quantity)
-		orderDetailResponse.Products = append(orderDetailResponse.Products, productResponse{
+		orderDetail.Products = append(orderDetail.Products, productListResponse{
 			ID:          product.ID,
 			Name:        product.Name,
 			Price:       price.Float64,
+			ImageUrl:    &order.ImageUrl.String,
 			Description: product.Description,
 			Sku:         product.Sku,
-			//TODO: ImageURL:    product.,
-			Stock:     product.Stock,
-			UpdatedAt: product.UpdatedAt.String(),
-			CreatedAt: product.CreatedAt.String(),
+			Stock:       product.Stock,
+			UpdatedAt:   product.UpdatedAt.String(),
+			CreatedAt:   product.CreatedAt.String(),
 		})
 	}
-	orderDetailResponse.Total = total
-	c.JSON(http.StatusOK, orderDetailResponse)
+	orderDetail.Total = total
+	c.JSON(http.StatusOK, GenericResponse[orderDetailResponse]{&orderDetail, nil, nil})
 }
 
 // @Summary Cancel order
@@ -153,7 +153,7 @@ func (sv *Server) orderDetail(c *gin.Context) {
 // @Produce json
 // @Param id path int true "Order ID"
 // @Security ApiKeyAuth
-// @Success 200 {object} sqlc.Order
+// @Success 200 {object} GenericResponse[sqlc.Order]
 // @Failure 400 {object} gin.H
 // @Failure 401 {object} gin.H
 // @Failure 500 {object} gin.H
@@ -192,7 +192,7 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
-	c.JSON(http.StatusOK, order)
+	c.JSON(http.StatusOK, GenericResponse[sqlc.Order]{&order, nil, nil})
 }
 
 // @Summary Change order status

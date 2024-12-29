@@ -46,10 +46,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/sqlc.UserAddress"
-                            }
+                            "$ref": "#/definitions/api.GenericResponse-array_api_AddressResponse"
                         }
                     }
                 }
@@ -81,7 +78,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/sqlc.UserAddress"
+                            "$ref": "#/definitions/api.GenericResponse-api_AddressResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -122,7 +131,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/sqlc.UserAddress"
+                            "$ref": "#/definitions/api.GenericResponse-api_AddressResponse"
                         }
                     }
                 }
@@ -150,7 +159,28 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.GenericResponse-bool"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
                     }
                 }
             }
@@ -172,7 +202,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.cartResponse"
+                            "$ref": "#/definitions/api.GenericResponse-api_cartResponse"
                         }
                     },
                     "500": {
@@ -199,7 +229,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.cartResponse"
+                            "$ref": "#/definitions/api.GenericResponse-sqlc_Cart"
                         }
                     },
                     "400": {
@@ -245,7 +275,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/sqlc.Order"
+                            "$ref": "#/definitions/api.GenericResponse-postgres_CheckoutCartTxResult"
                         }
                     },
                     "400": {
@@ -280,7 +310,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.GenericResponse-bool"
                         }
                     },
                     "400": {
@@ -326,7 +356,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.cartResponse"
+                            "$ref": "#/definitions/api.GenericResponse-sqlc_CartItem"
                         }
                     },
                     "400": {
@@ -370,7 +400,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.cartResponse"
+                            "$ref": "#/definitions/api.GenericResponse-sqlc_CartItem"
                         }
                     },
                     "400": {
@@ -412,7 +442,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.GenericResponse-bool"
                         }
                     },
                     "400": {
@@ -576,7 +606,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/sqlc.Order"
+                            "$ref": "#/definitions/api.GenericResponse-sqlc_Order"
                         }
                     },
                     "400": {
@@ -763,7 +793,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/api.productResponse"
+                                "$ref": "#/definitions/api.GenericListResponse-api_productListResponse"
                             }
                         }
                     },
@@ -808,7 +838,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/sqlc.Product"
+                            "$ref": "#/definitions/api.GenericResponse-sqlc_Product"
                         }
                     },
                     "400": {
@@ -852,7 +882,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.productResponse"
+                            "$ref": "#/definitions/api.GenericResponse-api_productResponse"
                         }
                     },
                     "404": {
@@ -903,7 +933,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.productResponse"
+                            "$ref": "#/definitions/api.GenericResponse-sqlc_Product"
                         }
                     },
                     "404": {
@@ -945,7 +975,102 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
+                            "$ref": "#/definitions/api.GenericResponse-bool"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
                             "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/products/{product_id}/images": {
+            "get": {
+                "description": "get list of product images by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Get list of product images by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "product_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.GenericResponse-array_sqlc_Image"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/products/{product_id}/images/{image_id}/primary": {
+            "put": {
+                "description": "set a product image as primary by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Set a product image as primary by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "product_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Image ID",
+                        "name": "image_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.GenericResponse-bool"
                         }
                     },
                     "404": {
@@ -989,7 +1114,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.GenericResponse-bool"
                         }
                     },
                     "404": {
@@ -1040,7 +1165,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.GenericResponse-array_sqlc_Image"
                         }
                     },
                     "404": {
@@ -1075,7 +1200,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.userResponse"
+                            "$ref": "#/definitions/api.GenericResponse-api_userResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -1107,7 +1244,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/sqlc.CreateUserRow"
+                            "$ref": "#/definitions/api.GenericResponse-sqlc_CreateUserRow"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -1141,7 +1290,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.loginResponse"
+                            "$ref": "#/definitions/api.GenericResponse-api_loginResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -1175,7 +1336,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/sqlc.UpdateUserRow"
+                            "$ref": "#/definitions/api.GenericResponse-sqlc_UpdateUserRow"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -1183,6 +1362,35 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "api.AddressResponse": {
+            "type": "object",
+            "properties": {
+                "address_1": {
+                    "type": "string"
+                },
+                "address_2": {
+                    "type": "string"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "district": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_default": {
+                    "type": "boolean"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "ward": {
+                    "type": "string"
+                }
+            }
+        },
         "api.CreateAddressParams": {
             "type": "object",
             "required": [
@@ -1213,6 +1421,242 @@ const docTemplate = `{
                     "minLength": 10
                 },
                 "ward": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.GenericListResponse-api_productListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.productListResponse"
+                    }
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "api.GenericResponse-api_AddressResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/api.AddressResponse"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.GenericResponse-api_cartResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/api.cartResponse"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.GenericResponse-api_loginResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/api.loginResponse"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.GenericResponse-api_productResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/api.productResponse"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.GenericResponse-api_userResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/api.userResponse"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.GenericResponse-array_api_AddressResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.AddressResponse"
+                    }
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.GenericResponse-array_sqlc_Image": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sqlc.Image"
+                    }
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.GenericResponse-bool": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "boolean"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.GenericResponse-postgres_CheckoutCartTxResult": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/postgres.CheckoutCartTxResult"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.GenericResponse-sqlc_Cart": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/sqlc.Cart"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.GenericResponse-sqlc_CartItem": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/sqlc.CartItem"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.GenericResponse-sqlc_CreateUserRow": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/sqlc.CreateUserRow"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.GenericResponse-sqlc_Order": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/sqlc.Order"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.GenericResponse-sqlc_Product": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/sqlc.Product"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.GenericResponse-sqlc_UpdateUserRow": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/sqlc.UpdateUserRow"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
                     "type": "string"
                 }
             }
@@ -1284,9 +1728,6 @@ const docTemplate = `{
         "api.cartItemResponse": {
             "type": "object",
             "properties": {
-                "description": {
-                    "type": "string"
-                },
                 "id": {
                     "type": "integer"
                 },
@@ -1325,6 +1766,9 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "total_price": {
+                    "type": "number"
+                },
                 "updated_at": {
                     "type": "string"
                 },
@@ -1346,10 +1790,13 @@ const docTemplate = `{
                 "payment_method": {
                     "type": "string",
                     "enum": [
-                        "cod",
                         "credit_card",
                         "paypal",
-                        "cod"
+                        "cod",
+                        "debit_card",
+                        "apple_pay",
+                        "wallet",
+                        "postpaid"
                     ]
                 }
             }
@@ -1487,7 +1934,7 @@ const docTemplate = `{
                 "products": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.productResponse"
+                        "$ref": "#/definitions/api.productListResponse"
                     }
                 },
                 "status": {
@@ -1535,6 +1982,38 @@ const docTemplate = `{
                 },
                 "is_primary": {
                     "type": "boolean"
+                }
+            }
+        },
+        "api.productListResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "sku": {
+                    "type": "string"
+                },
+                "stock": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
                 }
             }
         },
@@ -1669,6 +2148,17 @@ const docTemplate = `{
             "type": "object",
             "additionalProperties": {}
         },
+        "pgtype.Bool": {
+            "type": "object",
+            "properties": {
+                "bool": {
+                    "type": "boolean"
+                },
+                "valid": {
+                    "type": "boolean"
+                }
+            }
+        },
         "pgtype.InfinityModifier": {
             "type": "integer",
             "enum": [
@@ -1681,6 +2171,17 @@ const docTemplate = `{
                 "Finite",
                 "NegativeInfinity"
             ]
+        },
+        "pgtype.Int8": {
+            "type": "object",
+            "properties": {
+                "int64": {
+                    "type": "integer"
+                },
+                "valid": {
+                    "type": "boolean"
+                }
+            }
         },
         "pgtype.Numeric": {
             "type": "object",
@@ -1713,6 +2214,21 @@ const docTemplate = `{
                 }
             }
         },
+        "pgtype.Timestamp": {
+            "type": "object",
+            "properties": {
+                "infinityModifier": {
+                    "$ref": "#/definitions/pgtype.InfinityModifier"
+                },
+                "time": {
+                    "description": "Time zone will be ignored when encoding to PostgreSQL.",
+                    "type": "string"
+                },
+                "valid": {
+                    "type": "boolean"
+                }
+            }
+        },
         "pgtype.Timestamptz": {
             "type": "object",
             "properties": {
@@ -1724,6 +2240,90 @@ const docTemplate = `{
                 },
                 "valid": {
                     "type": "boolean"
+                }
+            }
+        },
+        "postgres.CheckoutCartTxResult": {
+            "type": "object",
+            "properties": {
+                "cancelled_at": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
+                },
+                "confirmed_at": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "delivered_at": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sqlc.OrderItem"
+                    }
+                },
+                "payment": {
+                    "$ref": "#/definitions/sqlc.Payment"
+                },
+                "refunded_at": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
+                },
+                "status": {
+                    "$ref": "#/definitions/sqlc.OrderStatus"
+                },
+                "total_price": {
+                    "$ref": "#/definitions/pgtype.Numeric"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_address_id": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "sqlc.Cart": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "sqlc.CartItem": {
+            "type": "object",
+            "properties": {
+                "cart_id": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "product_id": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "type": "integer"
                 }
             }
         },
@@ -1755,6 +2355,47 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "verified_phone": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "sqlc.Image": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "external_id": {
+                    "$ref": "#/definitions/pgtype.Text"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "is_primary": {
+                    "$ref": "#/definitions/pgtype.Bool"
+                },
+                "product_id": {
+                    "$ref": "#/definitions/pgtype.Int8"
+                },
+                "updated_at": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "variant_id": {
+                    "$ref": "#/definitions/pgtype.Int8"
+                }
+            }
+        },
+        "sqlc.NullPaymentGateway": {
+            "type": "object",
+            "properties": {
+                "payment_gateway": {
+                    "$ref": "#/definitions/sqlc.PaymentGateway"
+                },
+                "valid": {
+                    "description": "Valid is true if PaymentGateway is not NULL",
                     "type": "boolean"
                 }
             }
@@ -1797,6 +2438,29 @@ const docTemplate = `{
                 }
             }
         },
+        "sqlc.OrderItem": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "order_id": {
+                    "type": "integer"
+                },
+                "price": {
+                    "$ref": "#/definitions/pgtype.Numeric"
+                },
+                "product_id": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "type": "integer"
+                }
+            }
+        },
         "sqlc.OrderStatus": {
             "type": "string",
             "enum": [
@@ -1816,6 +2480,96 @@ const docTemplate = `{
                 "OrderStatusCancelled",
                 "OrderStatusRefunded",
                 "OrderStatusCompleted"
+            ]
+        },
+        "sqlc.Payment": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "$ref": "#/definitions/pgtype.Numeric"
+                },
+                "created_at": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                },
+                "gateway": {
+                    "$ref": "#/definitions/sqlc.NullPaymentGateway"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "method": {
+                    "$ref": "#/definitions/sqlc.PaymentMethod"
+                },
+                "order_id": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/sqlc.PaymentStatus"
+                },
+                "transaction_id": {
+                    "$ref": "#/definitions/pgtype.Text"
+                },
+                "updated_at": {
+                    "$ref": "#/definitions/pgtype.Timestamp"
+                }
+            }
+        },
+        "sqlc.PaymentGateway": {
+            "type": "string",
+            "enum": [
+                "stripe",
+                "paypal",
+                "razorpay",
+                "visa",
+                "mastercard",
+                "amex",
+                "apple_pay",
+                "google_pay",
+                "amazon_pay",
+                "phone_pe",
+                "paytm",
+                "upi",
+                "wallet",
+                "cod",
+                "postpaid"
+            ],
+            "x-enum-varnames": [
+                "PaymentGatewayStripe",
+                "PaymentGatewayPaypal",
+                "PaymentGatewayRazorpay",
+                "PaymentGatewayVisa",
+                "PaymentGatewayMastercard",
+                "PaymentGatewayAmex",
+                "PaymentGatewayApplePay",
+                "PaymentGatewayGooglePay",
+                "PaymentGatewayAmazonPay",
+                "PaymentGatewayPhonePe",
+                "PaymentGatewayPaytm",
+                "PaymentGatewayUpi",
+                "PaymentGatewayWallet",
+                "PaymentGatewayCod",
+                "PaymentGatewayPostpaid"
+            ]
+        },
+        "sqlc.PaymentMethod": {
+            "type": "string",
+            "enum": [
+                "credit_card",
+                "paypal",
+                "cod",
+                "debit_card",
+                "apple_pay",
+                "wallet",
+                "postpaid"
+            ],
+            "x-enum-varnames": [
+                "PaymentMethodCreditCard",
+                "PaymentMethodPaypal",
+                "PaymentMethodCod",
+                "PaymentMethodDebitCard",
+                "PaymentMethodApplePay",
+                "PaymentMethodWallet",
+                "PaymentMethodPostpaid"
             ]
         },
         "sqlc.PaymentStatus": {
@@ -1892,50 +2646,6 @@ const docTemplate = `{
                 },
                 "verified_phone": {
                     "type": "boolean"
-                }
-            }
-        },
-        "sqlc.UserAddress": {
-            "type": "object",
-            "properties": {
-                "address_1": {
-                    "type": "string"
-                },
-                "address_2": {
-                    "$ref": "#/definitions/pgtype.Text"
-                },
-                "city": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "deleted_at": {
-                    "$ref": "#/definitions/pgtype.Timestamptz"
-                },
-                "district": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "is_deleted": {
-                    "type": "boolean"
-                },
-                "is_primary": {
-                    "type": "boolean"
-                },
-                "phone": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "integer"
-                },
-                "ward": {
-                    "$ref": "#/definitions/pgtype.Text"
                 }
             }
         },

@@ -173,6 +173,37 @@ func (q *Queries) GetAddresses(ctx context.Context, userID int64) ([]UserAddress
 	return items, nil
 }
 
+const getPrimaryAddress = `-- name: GetPrimaryAddress :one
+SELECT
+    id, user_id, phone, address_1, address_2, ward, district, city, is_primary, is_deleted, created_at, updated_at, deleted_at
+FROM
+    user_addresses
+WHERE
+    user_id = $1 AND is_primary = true AND is_deleted = false
+LIMIT 1
+`
+
+func (q *Queries) GetPrimaryAddress(ctx context.Context, userID int64) (UserAddress, error) {
+	row := q.db.QueryRow(ctx, getPrimaryAddress, userID)
+	var i UserAddress
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Phone,
+		&i.Address1,
+		&i.Address2,
+		&i.Ward,
+		&i.District,
+		&i.City,
+		&i.IsPrimary,
+		&i.IsDeleted,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const resetPrimaryAddress = `-- name: ResetPrimaryAddress :exec
 UPDATE
     user_addresses

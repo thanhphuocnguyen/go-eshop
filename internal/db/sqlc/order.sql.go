@@ -140,7 +140,7 @@ func (q *Queries) GetOrder(ctx context.Context, id int64) (Order, error) {
 
 const getOrderDetails = `-- name: GetOrderDetails :many
 SELECT
-    orders.id, orders.user_id, orders.user_address_id, orders.total_price, orders.status, orders.confirmed_at, orders.delivered_at, orders.cancelled_at, orders.refunded_at, orders.updated_at, orders.created_at, order_items.id, order_items.product_id, order_items.order_id, order_items.quantity, order_items.price, order_items.created_at, products.id, products.name, products.description, products.sku, products.stock, products.archived, products.price, products.updated_at, products.created_at, user_addresses.id, user_addresses.user_id, user_addresses.phone, user_addresses.address_1, user_addresses.address_2, user_addresses.ward, user_addresses.district, user_addresses.city, user_addresses.is_primary, user_addresses.is_deleted, user_addresses.created_at, user_addresses.updated_at, user_addresses.deleted_at
+    orders.id, orders.user_id, orders.user_address_id, orders.total_price, orders.status, orders.confirmed_at, orders.delivered_at, orders.cancelled_at, orders.refunded_at, orders.updated_at, orders.created_at, order_items.id, order_items.product_id, order_items.order_id, order_items.quantity, order_items.price, order_items.created_at, products.id, products.name, products.description, products.sku, products.stock, products.archived, products.price, products.updated_at, products.created_at, user_addresses.id, user_addresses.user_id, user_addresses.phone, user_addresses.address_1, user_addresses.address_2, user_addresses.ward, user_addresses.district, user_addresses.city, user_addresses.is_primary, user_addresses.is_deleted, user_addresses.created_at, user_addresses.updated_at, user_addresses.deleted_at, images.image_url
 FROM
     orders
 LEFT JOIN
@@ -149,6 +149,8 @@ LEFT JOIN
     products ON order_items.product_id = products.id
 LEFT JOIN
     user_addresses ON orders.user_address_id = user_addresses.id
+LEFT JOIN 
+    images ON products.id = images.product_id AND images.is_primary = true
 WHERE
     orders.id = $1
 `
@@ -158,6 +160,7 @@ type GetOrderDetailsRow struct {
 	OrderItem   OrderItem   `json:"order_item"`
 	Product     Product     `json:"product"`
 	UserAddress UserAddress `json:"user_address"`
+	ImageUrl    pgtype.Text `json:"image_url"`
 }
 
 func (q *Queries) GetOrderDetails(ctx context.Context, id int64) ([]GetOrderDetailsRow, error) {
@@ -209,6 +212,7 @@ func (q *Queries) GetOrderDetails(ctx context.Context, id int64) ([]GetOrderDeta
 			&i.UserAddress.CreatedAt,
 			&i.UserAddress.UpdatedAt,
 			&i.UserAddress.DeletedAt,
+			&i.ImageUrl,
 		); err != nil {
 			return nil, err
 		}

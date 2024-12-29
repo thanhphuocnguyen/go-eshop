@@ -127,7 +127,7 @@ func mapToListProductResponse(productRow sqlc.ListProductsRow) productListRespon
 // @Accept json
 // @Param input body createProductRequest true "Product input"
 // @Produce json
-// @Success 200 {object} sqlc.Product
+// @Success 200 {object} GenericResponse[sqlc.Product]
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /products [post]
@@ -158,7 +158,7 @@ func (sv *Server) createProduct(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, mapDefaultResp(newProduct, nil, nil))
+	c.JSON(http.StatusCreated, GenericResponse[sqlc.Product]{&newProduct, nil, nil})
 }
 
 // getProductDetail godoc
@@ -169,7 +169,7 @@ func (sv *Server) createProduct(c *gin.Context) {
 // @Accept json
 // @Param product_id path int true "Product ID"
 // @Produce json
-// @Success 200 {object} productResponse
+// @Success 200 {object} GenericResponse[productResponse]
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /products/{product_id} [get]
@@ -197,8 +197,8 @@ func (sv *Server) getProductDetail(c *gin.Context) {
 		c.JSON(http.StatusNotFound, mapErrResp(errors.New("product not found")))
 		return
 	}
-
-	c.JSON(http.StatusOK, mapDefaultResp(mapToProductResponse(productRow), nil, nil))
+	productDetail := mapToProductResponse(productRow)
+	c.JSON(http.StatusOK, GenericResponse[productResponse]{&productDetail, nil, nil})
 }
 
 // getProducts godoc
@@ -210,7 +210,7 @@ func (sv *Server) getProductDetail(c *gin.Context) {
 // @Param page query int true "Page number"
 // @Param page_size query int true "Page size"
 // @Produce json
-// @Success 200 {array} productResponse
+// @Success 200 {array} GenericListResponse[productListResponse]
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /products [get]
@@ -246,8 +246,8 @@ func (sv *Server) getProducts(c *gin.Context) {
 	for _, product := range <-productsChan {
 		productResponses = append(productResponses, mapToListProductResponse(product))
 	}
-
-	c.JSON(http.StatusOK, mapListResp(productResponses, <-countChan))
+	productCnt := <-countChan
+	c.JSON(http.StatusOK, GenericListResponse[productListResponse]{&productResponses, &productCnt, nil, nil})
 }
 
 // updateProduct godoc
@@ -259,7 +259,7 @@ func (sv *Server) getProducts(c *gin.Context) {
 // @Param product_id path int true "Product ID"
 // @Param input body updateProductRequest true "Product input"
 // @Produce json
-// @Success 200 {object} productResponse
+// @Success 200 {object} GenericResponse[sqlc.Product]
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /products/{product_id} [put]
@@ -317,7 +317,7 @@ func (sv *Server) updateProduct(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, mapDefaultResp(updated, nil, nil))
+	c.JSON(http.StatusOK, GenericResponse[sqlc.Product]{&updated, nil, nil})
 }
 
 // removeProduct godoc
@@ -328,7 +328,7 @@ func (sv *Server) updateProduct(c *gin.Context) {
 // @Accept json
 // @Param product_id path int true "Product ID"
 // @Produce json
-// @Success 200 {object} gin.H
+// @Success 200 {object} GenericResponse[bool]
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /products/{product_id} [delete]
@@ -358,5 +358,6 @@ func (sv *Server) removeProduct(c *gin.Context) {
 	}
 
 	message := "product deleted"
-	c.JSON(http.StatusOK, mapDefaultResp(nil, &message, nil))
+	success := true
+	c.JSON(http.StatusOK, GenericResponse[bool]{&success, &message, nil})
 }

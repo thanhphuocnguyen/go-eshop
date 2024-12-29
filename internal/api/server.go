@@ -12,7 +12,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/postgres"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
-	"github.com/thanhphuocnguyen/go-eshop/internal/upload"
+	"github.com/thanhphuocnguyen/go-eshop/internal/uploadsrv"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 )
 
@@ -30,14 +30,10 @@ type Server struct {
 	router          *gin.Engine
 	taskDistributor worker.TaskDistributor
 	tokenGenerator  auth.TokenGenerator
-	uploadService   upload.UploadService
+	uploadService   uploadsrv.UploadService
 }
 
-const (
-	imageAssetsDir = "assets/images/"
-)
-
-func NewAPI(cfg config.Config, postgres postgres.Store, taskDistributor worker.TaskDistributor, uploadService upload.UploadService) (*Server, error) {
+func NewAPI(cfg config.Config, postgres postgres.Store, taskDistributor worker.TaskDistributor, uploadService uploadsrv.UploadService) (*Server, error) {
 	tokenGenerator := auth.NewPasetoTokenGenerator()
 	server := &Server{
 		tokenGenerator:  tokenGenerator,
@@ -99,9 +95,9 @@ func (sv *Server) initializeRouter() {
 			productAuthRoutes.DELETE(":id", sv.removeProduct)
 			productAuthRoutes.POST(":id/image", sv.uploadProductImage)
 			productAuthRoutes.GET(":id/image", sv.getProductImages)
-			productAuthRoutes.PUT(":id/image/:image-id", sv.uploadProductImage)
-			productAuthRoutes.PUT(":id/image/:image-id/primary", sv.setImagesPrimary)
-			productAuthRoutes.DELETE(":id/image/:image-id", sv.removeProductImage)
+			productAuthRoutes.PUT(":id/image/:image_id", sv.uploadProductImage)
+			productAuthRoutes.PUT(":id/image/:image_id/primary", sv.setImagesPrimary)
+			productAuthRoutes.DELETE(":id/image/:image_id", sv.removeProductImage)
 		}
 
 		cart := v1.Group("/cart")
@@ -160,26 +156,15 @@ func mapErrResp(err error) errorResponse {
 	return errorResponse{Error: err.Error()}
 }
 
-type defaultResponse struct {
-	Data    interface{} `json:"data"`
-	Message *string     `json:"message,omitempty"`
-	Error   *string     `json:"error,omitempty"`
+type GenericResponse[T any] struct {
+	Data    *T      `json:"data,omitempty"`
+	Message *string `json:"message,omitempty"`
+	Error   *string `json:"error,omitempty"`
 }
 
-func mapDefaultResp(data interface{}, message *string, err *error) defaultResponse {
-	response := defaultResponse{Data: data, Message: message}
-	if err != nil {
-		errMsg := (*err).Error()
-		response.Error = &errMsg
-	}
-	return response
-}
-
-type listResponse[T any] struct {
-	Data  T     `json:"data"`
-	Total int64 `json:"total"`
-}
-
-func mapListResp(data interface{}, total int64) listResponse[interface{}] {
-	return listResponse[interface{}]{Data: data, Total: total}
+type GenericListResponse[T any] struct {
+	Data    *[]T    `json:"data,omitempty"`
+	Total   *int64  `json:"total,omitempty"`
+	Message *string `json:"message,omitempty"`
+	Error   *string `json:"error,omitempty"`
 }

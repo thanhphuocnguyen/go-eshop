@@ -1,7 +1,8 @@
-package upload
+package uploadsrv
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
@@ -15,7 +16,6 @@ type CloudinaryUploadService struct {
 
 func NewCloudinaryUploadService(cfg config.Config) UploadService {
 	cld, err := cloudinary.NewFromURL(cfg.CloudinaryUrl)
-
 	if err != nil {
 		panic(err)
 	}
@@ -37,10 +37,18 @@ func (s *CloudinaryUploadService) UploadFile(ctx context.Context, file interface
 	return uploadResult.SecureURL, nil
 }
 
-func (s *CloudinaryUploadService) RemoveFile(ctx context.Context, filename string) error {
-	_, err := s.cld.Upload.Destroy(ctx, uploader.DestroyParams{PublicID: filename})
+func (s *CloudinaryUploadService) RemoveFile(ctx context.Context, publicID string) (string, error) {
+	publicIDWithPath := fmt.Sprintf("%s/%s", s.cfg.CloudinaryFolder, publicID)
+	invalidate := true
+	result, err := s.cld.Upload.Destroy(ctx, uploader.DestroyParams{PublicID: publicIDWithPath, Invalidate: &invalidate})
 	if err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	if result.Error.Message != "" {
+		return "", fmt.Errorf("failed to remove file: %s", result.Error.Message)
+	}
+	if result.Result != "ok" {
+		return "", fmt.Errorf("failed to remove file: %s", result.Result)
+	}
+	return result.Result, nil
 }

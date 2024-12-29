@@ -15,3 +15,7 @@ INSERT INTO sessions (
 -- name: GetSession :one
 SELECT * FROM sessions
 WHERE id = $1 LIMIT 1;
+
+-- name: GetSessionByRefreshToken :one
+SELECT * FROM sessions
+WHERE refresh_token = $1 LIMIT 1;

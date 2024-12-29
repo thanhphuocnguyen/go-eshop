@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
@@ -27,23 +28,28 @@ func (s *Postgres) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxParams)
 	err := s.execTx(ctx, func(q *sqlc.Queries) error {
 		var err error
 		// get cart details
-		_, err = s.GetCart(ctx, arg.UserID)
+		cart, err := s.GetCart(ctx, arg.UserID)
 		if err != nil {
 			log.Error().Err(err).Msg("GetCartDetail")
 			return err
 		}
 
-		cartItems, err := s.GetCartItems(ctx, arg.CartID)
+		cartItems, err := s.GetCartItems(ctx, cart.ID)
 		if err != nil {
 			log.Error().Err(err).Msg("GetCartItems")
 			return err
 		}
 		// create order items concurrently with goroutine and channel to handle error
 		result.Items = make([]sqlc.OrderItem, len(cartItems))
-		totalPrice := float64(0)
 
+		totalPrice := float64(0)
 		for i, item := range cartItems {
 			// create order orderItem for each cart orderItem
+			if item.ProductStock < int32(item.Quantity) {
+				log.Error().Msg("Product out of stock")
+				return fmt.Errorf("product out of stock")
+			}
+
 			_, err = s.UpdateProduct(ctx, sqlc.UpdateProductParams{
 				ID: item.ProductID,
 				Stock: pgtype.Int4{

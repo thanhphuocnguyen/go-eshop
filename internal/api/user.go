@@ -93,7 +93,9 @@ func mapAddressToAddressResponse(address sqlc.UserAddress) addressResponse {
 // @Accept  json
 // @Produce  json
 // @Param input body createUserRequest true "User info"
-// @Success 200 {object} sqlc.CreateUserRow
+// @Success 200 {object} GenericResponse[sqlc.CreateUserRow]
+// @Failure 400 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /users [post]
 func (sv *Server) createUser(c *gin.Context) {
 	var req createUserRequest
@@ -124,7 +126,7 @@ func (sv *Server) createUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, GenericResponse[sqlc.CreateUserRow]{&user, nil, nil})
 }
 
 // loginUser godoc
@@ -134,7 +136,9 @@ func (sv *Server) createUser(c *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @Param input body loginUserRequest true "User info"
-// @Success 200 {object} loginResponse
+// @Success 200 {object} GenericResponse[loginResponse]
+// @Failure 401 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /users/login [post]
 func (sv *Server) loginUser(c *gin.Context) {
 	var req loginUserRequest
@@ -181,15 +185,15 @@ func (sv *Server) loginUser(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
-
-	c.JSON(http.StatusOK, loginResponse{
+	loginResp := loginResponse{
 		SessionID:            session.ID,
 		TokenExpireAt:        payload.ExpiredAt,
 		Token:                token,
 		RefreshToken:         refreshToken,
 		RefreshTokenExpireAt: rfPayload.ExpiredAt,
 		User:                 mapToUserResponse(user),
-	})
+	}
+	c.JSON(http.StatusOK, GenericResponse[loginResponse]{&loginResp, nil, nil})
 }
 
 // updateUser godoc
@@ -199,7 +203,10 @@ func (sv *Server) loginUser(c *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @Param input body updateUserRequest true "User info"
-// @Success 200 {object} sqlc.UpdateUserRow
+// @Success 200 {object} GenericResponse[sqlc.UpdateUserRow]
+// @Failure 400 {object} gin.H
+// @Failure 401 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /users/{id} [patch]
 func (sv *Server) updateUser(c *gin.Context) {
 	var req updateUserRequest
@@ -242,7 +249,7 @@ func (sv *Server) updateUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updatedUser)
+	c.JSON(http.StatusOK, GenericResponse[sqlc.UpdateUserRow]{&updatedUser, nil, nil})
 }
 
 // getUser godoc
@@ -251,7 +258,9 @@ func (sv *Server) updateUser(c *gin.Context) {
 // @Tags users
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} userResponse
+// @Success 200 {object} GenericResponse[userResponse]
+// @Failure 404 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /users [get]
 func (sv *Server) getUser(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
@@ -283,5 +292,5 @@ func (sv *Server) getUser(c *gin.Context) {
 	userResp := mapToUserResponse(user)
 	userResp.Addresses = addressResp
 
-	c.JSON(http.StatusOK, userResp)
+	c.JSON(http.StatusOK, GenericResponse[userResponse]{&userResp, nil, nil})
 }

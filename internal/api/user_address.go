@@ -72,7 +72,9 @@ func mapAddressResponse(address sqlc.UserAddress) AddressResponse {
 // @Accept json
 // @Produce json
 // @Param input body CreateAddressParams true "Create Address"
-// @Success 200 {object} sqlc.UserAddress
+// @Success 200 {object} GenericResponse[AddressResponse]
+// @Failure 400 {object} gin.H
+// @Failure 401 {object} gin.H
 // @Router /address [post]
 func (sv *Server) createAddress(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
@@ -129,7 +131,9 @@ func (sv *Server) createAddress(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
-	c.JSON(http.StatusOK, mapDefaultResp(mapAddressResponse(address), nil, nil))
+
+	addressDetail := mapAddressResponse(address)
+	c.JSON(http.StatusOK, GenericResponse[AddressResponse]{&addressDetail, nil, nil})
 }
 
 // getAddresses godoc
@@ -140,7 +144,7 @@ func (sv *Server) createAddress(c *gin.Context) {
 // @Produce json
 // @Param page query int false "Page number"
 // @Param page_size query int false "Page size"
-// @Success 200 {object} []sqlc.UserAddress
+// @Success 200 {object} GenericResponse[[]AddressResponse]
 // @Router /address [get]
 func (sv *Server) listAddresses(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
@@ -159,7 +163,7 @@ func (sv *Server) listAddresses(c *gin.Context) {
 		addressesResponse[i] = mapAddressResponse(address)
 	}
 
-	c.JSON(http.StatusOK, mapDefaultResp(addressesResponse, nil, nil))
+	c.JSON(http.StatusOK, GenericResponse[[]AddressResponse]{&addressesResponse, nil, nil})
 }
 
 // updateAddress godoc
@@ -170,7 +174,7 @@ func (sv *Server) listAddresses(c *gin.Context) {
 // @Produce json
 // @Param id path int true "Address ID"
 // @Param input body UpdateAddressParams true "Update Address"
-// @Success 200 {object} sqlc.UserAddress
+// @Success 200 {object} GenericResponse[AddressResponse]
 // @Router /address/{id} [put]
 func (sv *Server) updateAddress(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
@@ -242,7 +246,8 @@ func (sv *Server) updateAddress(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
-	c.JSON(http.StatusOK, mapDefaultResp(mapAddressResponse(address), nil, nil))
+	addressDetail := mapAddressResponse(address)
+	c.JSON(http.StatusOK, GenericResponse[AddressResponse]{&addressDetail, nil, nil})
 }
 
 // removeAddress godoc
@@ -252,7 +257,10 @@ func (sv *Server) updateAddress(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Address ID"
-// @Success 200
+// @Success 200 {object} GenericResponse[bool]
+// @Failure 400 {object} gin.H
+// @Failure 401 {object} gin.H
+// @Failure 404 {object} gin.H
 // @Router /address/{id} [delete]
 func (sv *Server) removeAddress(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
@@ -297,9 +305,6 @@ func (sv *Server) removeAddress(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
-	c.JSON(http.StatusOK, mapDefaultResp(struct {
-		Success bool `json:"success"`
-	}{
-		Success: true,
-	}, nil, nil))
+	status := true
+	c.JSON(http.StatusOK, GenericResponse[bool]{&status, nil, nil})
 }

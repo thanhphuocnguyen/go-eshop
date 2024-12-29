@@ -87,7 +87,7 @@ func mapToCartResponse(cart sqlc.Cart, cartItems []sqlc.GetCartItemsRow) cartRes
 // @Tags carts
 // @Accept json
 // @Produce json
-// @Success 200 {object} cartResponse
+// @Success 200 {object} GenericResponse[sqlc.Cart]
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /carts [post]
@@ -118,7 +118,7 @@ func (sv *Server) createCart(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, mapDefaultResp(newCart, nil, nil))
+	c.JSON(http.StatusOK, GenericResponse[sqlc.Cart]{&newCart, nil, nil})
 }
 
 // getCartDetail godoc
@@ -128,7 +128,7 @@ func (sv *Server) createCart(c *gin.Context) {
 // @Tags carts
 // @Accept json
 // @Produce json
-// @Success 200 {object} cartResponse
+// @Success 200 {object} GenericResponse[cartResponse]
 // @Failure 500 {object} gin.H
 // @Router /carts [get]
 func (sv *Server) getCartDetail(c *gin.Context) {
@@ -147,7 +147,9 @@ func (sv *Server) getCartDetail(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
-	c.JSON(http.StatusOK, mapToCartResponse(cart, cartItems))
+	cartDetail := mapToCartResponse(cart, cartItems)
+
+	c.JSON(http.StatusOK, GenericResponse[cartResponse]{&cartDetail, nil, nil})
 }
 
 // addCartItem godoc
@@ -158,7 +160,7 @@ func (sv *Server) getCartDetail(c *gin.Context) {
 // @Accept json
 // @Param input body addProductToCartRequest true "Add product to cart input"
 // @Produce json
-// @Success 200 {object} cartResponse
+// @Success 200 {object} GenericResponse[sqlc.CartItem]
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /carts/products [post]
@@ -242,7 +244,7 @@ func (sv *Server) addCartItem(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, mapDefaultResp(cartItem, nil, nil))
+	c.JSON(http.StatusOK, GenericResponse[sqlc.CartItem]{&cartItem, nil, nil})
 }
 
 // removeCartItem godoc
@@ -253,7 +255,7 @@ func (sv *Server) addCartItem(c *gin.Context) {
 // @Accept json
 // @Param id path int true "Product ID"
 // @Produce json
-// @Success 200 {object} gin.H
+// @Success 200 {object} GenericResponse[bool]
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /carts/products [delete]
@@ -293,8 +295,9 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
-
-	c.JSON(http.StatusOK, mapDefaultResp("product removed", nil, nil))
+	success := true
+	message := "product removed"
+	c.JSON(http.StatusOK, GenericResponse[bool]{&success, &message, nil})
 }
 
 // checkout godoc
@@ -305,7 +308,7 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 // @Accept json
 // @Param input body checkoutRequest true "Update cart items input"
 // @Produce json
-// @Success 200 {object} sqlc.Order
+// @Success 200 {object} GenericResponse[postgres.CheckoutCartTxResult]
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /carts/checkout [post]
@@ -395,7 +398,7 @@ func (sv *Server) checkout(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, mapDefaultResp(order, nil, nil))
+	c.JSON(http.StatusOK, GenericResponse[postgres.CheckoutCartTxResult]{&order, nil, nil})
 }
 
 // updateCartItemQuantity godoc
@@ -406,7 +409,7 @@ func (sv *Server) checkout(c *gin.Context) {
 // @Accept json
 // @Param input body updateCartItemRequest true "Update cart items input"
 // @Produce json
-// @Success 200 {object} cartResponse
+// @Success 200 {object} GenericResponse[sqlc.CartItem]
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /carts/products [put]
@@ -484,7 +487,7 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, mapDefaultResp(cartItem, nil, nil))
+	c.JSON(http.StatusOK, GenericResponse[sqlc.CartItem]{&cartItem, nil, nil})
 }
 
 // clearCart godoc
@@ -494,7 +497,7 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 // @Tags carts
 // @Accept json
 // @Produce json
-// @Success 200 {object} gin.H
+// @Success 200 {object} GenericResponse[bool]
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /carts/clear [delete]
@@ -525,6 +528,7 @@ func (sv *Server) clearCart(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
-
-	c.JSON(http.StatusOK, "cart cleared")
+	msg := "cart cleared"
+	success := true
+	c.JSON(http.StatusOK, GenericResponse[bool]{&success, &msg, nil})
 }

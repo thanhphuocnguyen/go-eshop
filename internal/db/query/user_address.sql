@@ -77,3 +77,12 @@ SET
     is_primary = false
 WHERE
     user_id = $1 AND is_primary = true;
+
+-- name: GetPrimaryAddress :one
+SELECT
+    *
+FROM
+    user_addresses
+WHERE
+    user_id = $1 AND is_primary = true AND is_deleted = false
+LIMIT 1;

@@ -121,7 +121,7 @@ FROM
     products
 WHERE
     id = $1 AND
-    archived = COALESCE($2, archived)
+    archived = COALESCE($2, FALSE)
 `
 
 type GetProductParams struct {
@@ -157,7 +157,7 @@ FROM
 LEFT JOIN images AS img ON products.id = img.product_id
 WHERE
     products.id = $1 AND
-    archived = COALESCE($2, archived)
+    archived = COALESCE($2, false)
 ORDER BY
     img.is_primary DESC
 `
