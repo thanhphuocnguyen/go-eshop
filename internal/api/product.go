@@ -32,8 +32,10 @@ type getProductParams struct {
 }
 
 type listProductsParams struct {
-	Page     int32 `form:"page" binding:"required,min=1"`
-	PageSize int32 `form:"page_size" binding:"required,min=1,max=100"`
+	Page     int32   `form:"page" binding:"required,min=1"`
+	PageSize int32   `form:"page_size" binding:"required,min=5,max=20"`
+	Name     *string `form:"name" binding:"omitempty,min=3,max=100"`
+	Sku      *string `form:"sku" binding:"omitempty,alphanum"`
 }
 
 type productImage struct {
@@ -221,26 +223,43 @@ func (sv *Server) getProducts(c *gin.Context) {
 		return
 	}
 	productsChan := make(chan []sqlc.ListProductsRow)
+	errChan := make(chan error)
 	countChan := make(chan int64)
 	go func() {
-		products, err := sv.postgres.ListProducts(c, sqlc.ListProductsParams{
+		productsQueryParams := sqlc.ListProductsParams{
 			Limit:  queries.PageSize,
 			Offset: (queries.Page - 1) * queries.PageSize,
-		})
+		}
+		if queries.Name != nil {
+			productsQueryParams.Name = util.GetPgTypeText(*queries.Name)
+		}
+		if queries.Sku != nil {
+			productsQueryParams.Sku = util.GetPgTypeText(*queries.Sku)
+		}
+
+		products, err := sv.postgres.ListProducts(c, productsQueryParams)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, mapErrResp(err))
+			errChan <- err
 			return
 		}
 		productsChan <- products
 	}()
+
 	go func() {
 		count, err := sv.postgres.CountProducts(c, sqlc.CountProductsParams{})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, mapErrResp(err))
+			errChan <- err
 			return
 		}
 		countChan <- count
 	}()
+
+	for err := range errChan {
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
 
 	productResponses := make([]productListResponse, 0)
 	for _, product := range <-productsChan {

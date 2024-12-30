@@ -118,8 +118,8 @@ func (sv *Server) initializeRouter() {
 		{
 			order.GET("", sv.orderList)
 			order.GET(":id", sv.orderDetail)
-			order.PUT(":id/cancel", sv.cancelOrder)
 			adminOrder := order.Use(roleMiddleware(sqlc.UserRoleAdmin))
+			adminOrder.PUT(":id/cancel", sv.cancelOrder)
 			adminOrder.PUT(":id/change-status", sv.changeOrderStatus)
 			adminOrder.PUT(":id/change-payment-status", sv.changeOrderPaymentStatus)
 		}

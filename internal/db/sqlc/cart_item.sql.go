@@ -12,6 +12,33 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const addProductToCart = `-- name: AddProductToCart :one
+INSERT INTO cart_items 
+    (cart_id, product_id, quantity) 
+VALUES 
+    ($1, $2, $3) 
+RETURNING id, product_id, cart_id, quantity, created_at
+`
+
+type AddProductToCartParams struct {
+	CartID    int32 `json:"cart_id"`
+	ProductID int64 `json:"product_id"`
+	Quantity  int16 `json:"quantity"`
+}
+
+func (q *Queries) AddProductToCart(ctx context.Context, arg AddProductToCartParams) (CartItem, error) {
+	row := q.db.QueryRow(ctx, addProductToCart, arg.CartID, arg.ProductID, arg.Quantity)
+	var i CartItem
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.CartID,
+		&i.Quantity,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const clearCart = `-- name: ClearCart :exec
 DELETE FROM cart_items WHERE cart_id = $1
 `
@@ -62,6 +89,43 @@ func (q *Queries) GetCartItemByProductID(ctx context.Context, productID int64) (
 		&i.CartID,
 		&i.Quantity,
 		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getCartItemWithProduct = `-- name: GetCartItemWithProduct :one
+SELECT cart_items.id, cart_items.product_id, cart_items.cart_id, cart_items.quantity, cart_items.created_at, p.name AS product_name, p.price AS product_price, p.stock AS product_stock, img.image_url AS image_url
+FROM cart_items
+JOIN products AS p ON cart_items.product_id = p.id
+LEFT JOIN images as img ON p.id = img.product_id AND img.is_primary = true
+WHERE cart_items.id = $1
+`
+
+type GetCartItemWithProductRow struct {
+	ID           int32          `json:"id"`
+	ProductID    int64          `json:"product_id"`
+	CartID       int32          `json:"cart_id"`
+	Quantity     int16          `json:"quantity"`
+	CreatedAt    time.Time      `json:"created_at"`
+	ProductName  string         `json:"product_name"`
+	ProductPrice pgtype.Numeric `json:"product_price"`
+	ProductStock int32          `json:"product_stock"`
+	ImageUrl     pgtype.Text    `json:"image_url"`
+}
+
+func (q *Queries) GetCartItemWithProduct(ctx context.Context, id int32) (GetCartItemWithProductRow, error) {
+	row := q.db.QueryRow(ctx, getCartItemWithProduct, id)
+	var i GetCartItemWithProductRow
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.CartID,
+		&i.Quantity,
+		&i.CreatedAt,
+		&i.ProductName,
+		&i.ProductPrice,
+		&i.ProductStock,
+		&i.ImageUrl,
 	)
 	return i, err
 }

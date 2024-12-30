@@ -46,3 +46,14 @@ CREATE TABLE
 CREATE INDEX ON products (price);
 
 CREATE INDEX ON products (archived);
+
+CREATE INDEX ON product_variants (product_id);
+CREATE INDEX ON product_variants (sku);
+
+CREATE INDEX ON attributes (name);
+
+CREATE INDEX ON attribute_values (attribute_id);
+CREATE INDEX ON attribute_values (value);
+
+CREATE INDEX ON variant_attributes (variant_id);
+CREATE INDEX ON variant_attributes (value_id);

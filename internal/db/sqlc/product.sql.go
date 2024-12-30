@@ -207,6 +207,57 @@ func (q *Queries) GetProductDetail(ctx context.Context, arg GetProductDetailPara
 	return items, nil
 }
 
+const getProductWithImage = `-- name: GetProductWithImage :one
+SELECT
+    products.id, products.name, products.description, products.sku, products.stock, products.archived, products.price, products.updated_at, products.created_at,
+    img.id AS image_id,
+    img.image_url AS image_url
+FROM
+    products
+LEFT JOIN images AS img ON products.id = img.product_id AND img.is_primary = TRUE
+WHERE
+    products.id = $1 AND
+    archived = COALESCE($2, false)
+`
+
+type GetProductWithImageParams struct {
+	ID       int64       `json:"id"`
+	Archived pgtype.Bool `json:"archived"`
+}
+
+type GetProductWithImageRow struct {
+	ID          int64          `json:"id"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Sku         string         `json:"sku"`
+	Stock       int32          `json:"stock"`
+	Archived    bool           `json:"archived"`
+	Price       pgtype.Numeric `json:"price"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	CreatedAt   time.Time      `json:"created_at"`
+	ImageID     pgtype.Int4    `json:"image_id"`
+	ImageUrl    pgtype.Text    `json:"image_url"`
+}
+
+func (q *Queries) GetProductWithImage(ctx context.Context, arg GetProductWithImageParams) (GetProductWithImageRow, error) {
+	row := q.db.QueryRow(ctx, getProductWithImage, arg.ID, arg.Archived)
+	var i GetProductWithImageRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.Sku,
+		&i.Stock,
+		&i.Archived,
+		&i.Price,
+		&i.UpdatedAt,
+		&i.CreatedAt,
+		&i.ImageID,
+		&i.ImageUrl,
+	)
+	return i, err
+}
+
 const listProducts = `-- name: ListProducts :many
 SELECT
     products.id, products.name, products.description, products.sku, products.stock, products.archived, products.price, products.updated_at, products.created_at,

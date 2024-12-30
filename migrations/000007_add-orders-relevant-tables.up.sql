@@ -19,8 +19,7 @@ CREATE TABLE
         "product_id" bigint NOT NULL REFERENCES "products" ("id"),
         "order_id" bigint NOT NULL REFERENCES "orders" ("id") ON DELETE CASCADE,
         "quantity" int NOT NULL,
-        "price" DECIMAL(10, 2) NOT NULL,
-        "created_at" timestamptz NOT NULL DEFAULT now()
+        "price" DECIMAL(10, 2) NOT NULL
     );
 
 CREATE TABLE

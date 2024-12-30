@@ -27,13 +27,12 @@ type cartItemResponse struct {
 }
 
 type cartResponse struct {
-	ID           int32              `json:"id"`
-	CheckedOutAt time.Time          `json:"checked_out"`
-	UserID       int64              `json:"user_id"`
-	UpdatedAt    time.Time          `json:"updated_at"`
-	CreatedAt    time.Time          `json:"created_at"`
-	CartItems    []cartItemResponse `json:"cart_items"`
-	TotalPrice   float64            `json:"total_price"`
+	ID         int32              `json:"id"`
+	UserID     int64              `json:"user_id"`
+	UpdatedAt  time.Time          `json:"updated_at,omitempty"`
+	CreatedAt  time.Time          `json:"created_at"`
+	CartItems  []cartItemResponse `json:"cart_items,omitempty"`
+	TotalPrice float64            `json:"total_price"`
 }
 
 type addProductToCartRequest struct {
@@ -139,6 +138,10 @@ func (sv *Server) getCartDetail(c *gin.Context) {
 	}
 	cart, err := sv.postgres.GetCart(c, authPayload.UserID)
 	if err != nil {
+		if errors.Is(err, postgres.ErrorRecordNotFound) {
+			c.JSON(http.StatusNotFound, mapErrResp(errors.New("cart not found")))
+			return
+		}
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
@@ -160,7 +163,7 @@ func (sv *Server) getCartDetail(c *gin.Context) {
 // @Accept json
 // @Param input body addProductToCartRequest true "Add product to cart input"
 // @Produce json
-// @Success 200 {object} GenericResponse[sqlc.CartItem]
+// @Success 200 {object} GenericResponse[cartItemResponse]
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /carts/products [post]
@@ -177,19 +180,24 @@ func (sv *Server) addCartItem(c *gin.Context) {
 		return
 	}
 
-	product, err := sv.postgres.GetProduct(c, sqlc.GetProductParams{
+	product, err := sv.postgres.GetProductWithImage(c, sqlc.GetProductWithImageParams{
 		ID: req.ProductID,
 		Archived: pgtype.Bool{
 			Bool:  false,
 			Valid: true,
 		},
 	})
+
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(errors.New("product not found")))
 			return
 		}
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
+	if product.Archived {
+		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("product is archived")))
 		return
 	}
 
@@ -210,7 +218,6 @@ func (sv *Server) addCartItem(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, mapErrResp(err))
 			return
 		}
-
 	}
 
 	if cart.UserID != authPayload.UserID {
@@ -248,8 +255,17 @@ func (sv *Server) addCartItem(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
+	productPrice, _ := product.Price.Float64Value()
+	itemResp := cartItemResponse{
+		ID:        cartItem.ID,
+		ProductID: cartItem.ProductID,
+		Name:      product.Name,
+		ImageURL:  product.ImageUrl.String,
+		Quantity:  cartItem.Quantity,
+		Price:     productPrice.Float64,
+	}
 
-	c.JSON(http.StatusOK, GenericResponse[sqlc.CartItem]{&cartItem, nil, nil})
+	c.JSON(http.StatusOK, GenericResponse[cartItemResponse]{&itemResp, nil, nil})
 }
 
 // removeCartItem godoc
@@ -330,6 +346,16 @@ func (sv *Server) checkout(c *gin.Context) {
 		return
 	}
 
+	cart, err := sv.postgres.GetCart(c, authPayload.UserID)
+	if err != nil {
+		if errors.Is(err, postgres.ErrorRecordNotFound) {
+			c.JSON(http.StatusNotFound, mapErrResp(errors.New("cart not found")))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
+
 	addresses, err := sv.postgres.GetAddresses(c, authPayload.UserID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
@@ -356,16 +382,6 @@ func (sv *Server) checkout(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, mapErrResp(errors.New("address not found")))
 			return
 		}
-	}
-
-	cart, err := sv.postgres.GetCart(c, authPayload.UserID)
-	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
-			c.JSON(http.StatusNotFound, mapErrResp(errors.New("cart not found")))
-			return
-		}
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
-		return
 	}
 
 	itemCnt, err := sv.postgres.CountCartItem(c, cart.ID)
@@ -414,7 +430,7 @@ func (sv *Server) checkout(c *gin.Context) {
 // @Accept json
 // @Param input body updateCartItemRequest true "Update cart items input"
 // @Produce json
-// @Success 200 {object} GenericResponse[sqlc.CartItem]
+// @Success 200 {object} GenericResponse[cartItemResponse]
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /carts/products [put]
@@ -455,12 +471,13 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 		Quantity: req.Quantity,
 		ID:       param.ID,
 	})
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
-	cartItem, err := sv.postgres.GetCartItem(c, param.ID)
+	cartItem, err := sv.postgres.GetCartItemWithProduct(c, param.ID)
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(errors.New("cart item not found")))
@@ -491,8 +508,17 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
+	productPrice, _ := product.Price.Float64Value()
+	itemResp := cartItemResponse{
+		ID:        cartItem.ID,
+		ProductID: cartItem.ProductID,
+		Name:      product.Name,
+		ImageURL:  cartItem.ImageUrl.String,
+		Quantity:  req.Quantity,
+		Price:     productPrice.Float64,
+	}
 
-	c.JSON(http.StatusOK, GenericResponse[sqlc.CartItem]{&cartItem, nil, nil})
+	c.JSON(http.StatusOK, GenericResponse[cartItemResponse]{&itemResp, nil, nil})
 }
 
 // clearCart godoc
@@ -533,6 +559,7 @@ func (sv *Server) clearCart(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
+
 	msg := "cart cleared"
 	success := true
 	c.JSON(http.StatusOK, GenericResponse[bool]{&success, &msg, nil})

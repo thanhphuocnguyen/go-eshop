@@ -35,7 +35,6 @@ LIMIT 1;
 UPDATE
     payments
 SET
-    order_id = COALESCE(sqlc.narg(order_id), order_id),
     amount = COALESCE(sqlc.narg(amount), amount),
     method = COALESCE(sqlc.narg(method), method)
 WHERE

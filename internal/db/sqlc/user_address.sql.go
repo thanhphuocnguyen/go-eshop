@@ -11,6 +11,20 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countAddresses = `-- name: CountAddresses :one
+SELECT
+    COUNT(*)
+FROM
+    user_addresses
+`
+
+func (q *Queries) CountAddresses(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countAddresses)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createAddress = `-- name: CreateAddress :one
 INSERT INTO
     user_addresses (

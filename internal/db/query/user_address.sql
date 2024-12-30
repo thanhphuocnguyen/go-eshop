@@ -83,3 +83,9 @@ FROM
 WHERE
     user_id = $1 AND is_primary = true AND is_deleted = false
 LIMIT 1;
+
+-- name: CountAddresses :one
+SELECT
+    COUNT(*)
+FROM
+    user_addresses;

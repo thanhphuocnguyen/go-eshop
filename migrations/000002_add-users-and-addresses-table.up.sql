@@ -4,7 +4,7 @@ CREATE TABLE
         "role" user_role NOT NULL DEFAULT 'user',
         "username" varchar UNIQUE NOT NULL,
         "email" varchar UNIQUE NOT NULL,
-        "phone" varchar(12) NOT NULL,
+        "phone" varchar(20) NOT NULL CHECK (char_length(phone) >= 10 AND char_length(phone) <= 20),
         "fullname" varchar NOT NULL,
         "hashed_password" varchar NOT NULL,
         "verified_email" bool NOT NULL DEFAULT false,
@@ -18,7 +18,7 @@ CREATE TABLE
     "user_addresses" (
         "id" bigserial PRIMARY KEY,
         "user_id" bigint NOT NULL REFERENCES "users" ("id") ON DELETE CASCADE,
-        "phone" varchar(12) NOT NULL,
+        "phone" varchar(20) NOT NULL CHECK (char_length(phone) >= 10 AND char_length(phone) <= 20),
         "street" varchar NOT NULL,
         "ward" varchar(100),
         "district" varchar(100) NOT NULL,

@@ -105,3 +105,15 @@ SET
 WHERE
     id = $1
 RETURNING *;
+
+-- name: GetProductWithImage :one
+SELECT
+    products.*,
+    img.id AS image_id,
+    img.image_url AS image_url
+FROM
+    products
+LEFT JOIN images AS img ON products.id = img.product_id AND img.is_primary = TRUE
+WHERE
+    products.id = $1 AND
+    archived = COALESCE(sqlc.narg('archived'), false);

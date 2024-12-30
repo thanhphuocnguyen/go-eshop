@@ -78,3 +78,9 @@ DELETE FROM
     users
 WHERE
     id = $1;
+
+-- name: CountUsers :one
+SELECT
+    count(*)
+FROM
+    users;

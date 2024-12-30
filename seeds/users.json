@@ -1,5 +1,12 @@
 [
   {
+    "fullname": "Admin",
+    "username": "admin",
+    "email": "admin@eshop.com",
+    "password": "secret",
+    "phone": "0817970369"
+  },
+  {
     "fullname": "Gordon Huxton",
     "username": "ghuxton0",
     "email": "ghuxton0@slate.com",
@@ -67,6 +74,6 @@
     "username": "mskipp9",
     "email": "mskipp9@51.la",
     "password": "password",
-    "phone": "8085795402"
+    "phone": "6826826821"
   }
 ]

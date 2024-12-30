@@ -15,8 +15,11 @@ type Querier interface {
 	AddProductToCart(ctx context.Context, arg AddProductToCartParams) (CartItem, error)
 	ArchiveProduct(ctx context.Context, id int64) error
 	ClearCart(ctx context.Context, cartID int32) error
+	CountAddresses(ctx context.Context) (int64, error)
 	CountCartItem(ctx context.Context, cartID int32) (int64, error)
+	CountOrders(ctx context.Context, arg CountOrdersParams) (int64, error)
 	CountProducts(ctx context.Context, arg CountProductsParams) (int64, error)
+	CountUsers(ctx context.Context) (int64, error)
 	CreateAddress(ctx context.Context, arg CreateAddressParams) (UserAddress, error)
 	CreateCart(ctx context.Context, userID int64) (Cart, error)
 	CreateCollection(ctx context.Context, arg CreateCollectionParams) (Category, error)
@@ -38,6 +41,7 @@ type Querier interface {
 	GetCart(ctx context.Context, userID int64) (Cart, error)
 	GetCartItem(ctx context.Context, id int32) (CartItem, error)
 	GetCartItemByProductID(ctx context.Context, productID int64) (CartItem, error)
+	GetCartItemWithProduct(ctx context.Context, id int32) (GetCartItemWithProductRow, error)
 	GetCartItems(ctx context.Context, cartID int32) ([]GetCartItemsRow, error)
 	GetCollection(ctx context.Context, id int32) (Category, error)
 	GetImageByExternalID(ctx context.Context, externalID pgtype.Text) (Image, error)
@@ -53,6 +57,7 @@ type Querier interface {
 	GetPrimaryImageByVariantID(ctx context.Context, variantID pgtype.Int8) (Image, error)
 	GetProduct(ctx context.Context, arg GetProductParams) (Product, error)
 	GetProductDetail(ctx context.Context, arg GetProductDetailParams) ([]GetProductDetailRow, error)
+	GetProductWithImage(ctx context.Context, arg GetProductWithImageParams) (GetProductWithImageRow, error)
 	GetSession(ctx context.Context, id uuid.UUID) (Session, error)
 	GetSessionByRefreshToken(ctx context.Context, refreshToken string) (Session, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)

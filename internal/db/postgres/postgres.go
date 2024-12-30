@@ -17,6 +17,7 @@ type Store interface {
 	CheckoutCartTx(ctx context.Context, arg CheckoutCartTxParams) (CheckoutCartTxResult, error)
 	SetPrimaryAddressTx(ctx context.Context, arg SetPrimaryAddressTxParams) error
 	SetPrimaryImageTx(ctx context.Context, arg SetPrimaryImageTxParams) error
+	CancelOrderTx(ctx context.Context, params CancelOrderTxParams) (err error)
 	Close()
 }
 

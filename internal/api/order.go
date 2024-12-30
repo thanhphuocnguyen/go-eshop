@@ -3,9 +3,11 @@ package api
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
+	"github.com/thanhphuocnguyen/go-eshop/internal/db/postgres"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
 )
 
@@ -19,24 +21,32 @@ type orderIDParams struct {
 	ID int64 `uri:"id" binding:"required,min=1"`
 }
 
-type orderDetailResponse struct {
-	ID            int64                 `json:"id"`
-	Total         float64               `json:"total"`
-	Status        sqlc.OrderStatus      `json:"status"`
-	PaymentStatus sqlc.PaymentStatus    `json:"payment_status"`
-	Products      []productListResponse `json:"products"`
+type changeOrderStatusReq struct {
+	Status string `json:"status" binding:"required,oneof=pending confirmed delivering delivered completed"`
 }
-type orderResponse struct {
+
+type orderItemResp struct {
+	ID       int64   `json:"id"`
+	Name     string  `json:"name"`
+	ImageUrl *string `json:"image_url"`
+	Quantity int32   `json:"quantity"`
+}
+
+type orderDetailResponse struct {
+	ID            int64              `json:"id"`
+	Total         float64            `json:"total"`
+	Status        sqlc.OrderStatus   `json:"status"`
+	PaymentStatus sqlc.PaymentStatus `json:"payment_status"`
+	Products      []orderItemResp    `json:"products"`
+}
+type orderListResp struct {
 	ID            int64              `json:"id"`
 	Total         float64            `json:"total"`
 	TotalItems    int32              `json:"total_items"`
 	Status        sqlc.OrderStatus   `json:"status"`
 	PaymentStatus sqlc.PaymentStatus `json:"payment_status"`
-	CreatedAt     string             `json:"created_at"`
-	UpdatedAt     string             `json:"updated_at"`
-}
-type listOrderResponse struct {
-	Orders []orderResponse `json:"orders"`
+	CreatedAt     time.Time          `json:"created_at"`
+	UpdatedAt     time.Time          `json:"updated_at"`
 }
 
 //---------------------------------------------- API Handlers ----------------------------------------------
@@ -66,7 +76,7 @@ func (sv *Server) orderList(c *gin.Context) {
 		return
 	}
 
-	aggregatedOrders, err := sv.postgres.ListOrders(c, sqlc.ListOrdersParams{
+	listOrderRows, err := sv.postgres.ListOrders(c, sqlc.ListOrdersParams{
 		UserID: user.UserID,
 		Limit:  orderListQuery.PageSize,
 		Offset: (orderListQuery.Page - 1) * orderListQuery.PageSize,
@@ -76,20 +86,29 @@ func (sv *Server) orderList(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
-	var orderResponses []orderResponse
-	for _, aggregated := range aggregatedOrders {
-		order := aggregated.Order
-		orderResponses = append(orderResponses, orderResponse{
-			ID:         order.ID,
-			Total:      float64(aggregated.TotalPrice / 100),
-			TotalItems: int32(aggregated.TotalItems),
-			Status:     order.Status,
-			CreatedAt:  order.CreatedAt.String(),
-			UpdatedAt:  order.UpdatedAt.String(),
+
+	count, err := sv.postgres.CountOrders(c, sqlc.CountOrdersParams{UserID: user.UserID})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
+
+	var orderResponses []orderListResp
+	for _, aggregated := range listOrderRows {
+		total, _ := aggregated.TotalPrice.Float64Value()
+		orderResponses = append(orderResponses, orderListResp{
+			ID:            aggregated.ID,
+			Total:         total.Float64,
+			TotalItems:    int32(aggregated.TotalItems),
+			Status:        aggregated.Status,
+			PaymentStatus: aggregated.PaymentStatus.PaymentStatus,
+			CreatedAt:     aggregated.CreatedAt.UTC(),
+			UpdatedAt:     aggregated.UpdatedAt.UTC(),
 		})
 	}
 
-	c.JSON(http.StatusOK, listOrderResponse{orderResponses})
+	c.JSON(http.StatusOK, GenericListResponse[orderListResp]{&orderResponses, &count, nil, nil})
 }
 
 // @Summary Get order detail
@@ -111,39 +130,37 @@ func (sv *Server) orderDetail(c *gin.Context) {
 		return
 	}
 
-	orderDetails, err := sv.postgres.GetOrderDetails(c, params.ID)
+	getOrderDetailRows, err := sv.postgres.GetOrderDetails(c, params.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
-	if len(orderDetails) == 0 {
+	if len(getOrderDetailRows) == 0 {
 		c.JSON(http.StatusNotFound, mapErrResp(errors.New("order not found")))
 		return
 	}
-	var orderDetail orderDetailResponse
-	orderDetail.ID = orderDetails[0].Order.ID
 
-	orderDetail.Status = orderDetails[0].Order.Status
-	var total float64
-	for _, order := range orderDetails {
-		price, _ := order.Product.Price.Float64Value()
-		product := order.Product
-		total += price.Float64 * float64(order.OrderItem.Quantity)
-		orderDetail.Products = append(orderDetail.Products, productListResponse{
-			ID:          product.ID,
-			Name:        product.Name,
-			Price:       price.Float64,
-			ImageUrl:    &order.ImageUrl.String,
-			Description: product.Description,
-			Sku:         product.Sku,
-			Stock:       product.Stock,
-			UpdatedAt:   product.UpdatedAt.String(),
-			CreatedAt:   product.CreatedAt.String(),
+	orderDetailRow := getOrderDetailRows[0]
+	totalGet, _ := orderDetailRow.TotalPrice.Float64Value()
+	orderDetail := &orderDetailResponse{
+		ID:            orderDetailRow.ID,
+		Total:         totalGet.Float64,
+		Status:        orderDetailRow.Status,
+		PaymentStatus: orderDetailRow.PaymentStatus.PaymentStatus,
+		Products:      []orderItemResp{},
+	}
+
+	for _, item := range getOrderDetailRows {
+		orderDetail.Products = append(orderDetail.Products, orderItemResp{
+			ID:       item.ProductID.Int64,
+			Name:     item.ProductName.String,
+			ImageUrl: &item.ImageUrl.String,
+			Quantity: item.Quantity.Int32,
 		})
 	}
-	orderDetail.Total = total
-	c.JSON(http.StatusOK, GenericResponse[orderDetailResponse]{&orderDetail, nil, nil})
+
+	c.JSON(http.StatusOK, GenericResponse[orderDetailResponse]{orderDetail, nil, nil})
 }
 
 // @Summary Cancel order
@@ -181,13 +198,8 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 	}
 
 	// if order
-	order, err = sv.postgres.UpdateOrder(c, sqlc.UpdateOrderParams{
-		ID: params.ID,
-		Status: sqlc.NullOrderStatus{
-			OrderStatus: sqlc.OrderStatusCancelled,
-			Valid:       true,
-		},
-	})
+	err = sv.postgres.CancelOrderTx(c, postgres.CancelOrderTxParams{OrderID: params.ID})
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
@@ -209,7 +221,42 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /orders/{id}/status [put]
 func (sv *Server) changeOrderStatus(c *gin.Context) {
+	user, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, mapErrResp(errors.New("user not found")))
+		return
+	}
+	var params orderIDParams
+	if err := c.ShouldBindUri(&params); err != nil {
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		return
+	}
+	var req changeOrderStatusReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		return
+	}
+	order, err := sv.postgres.GetOrder(c, params.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
+	if order.UserID != user.UserID {
+		c.JSON(http.StatusUnauthorized, mapErrResp(errors.New("user does not have permission")))
+		return
+	}
+	rs, err := sv.postgres.UpdateOrder(c, sqlc.UpdateOrderParams{
+		Status: sqlc.NullOrderStatus{
+			OrderStatus: sqlc.OrderStatus(req.Status),
+		},
+	})
 
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, GenericResponse[sqlc.Order]{&rs, nil, nil})
 }
 
 // @Summary Change order payment status

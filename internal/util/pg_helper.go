@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -61,5 +62,13 @@ func GetPgTypeFloat8(value float64) pgtype.Float8 {
 	return pgtype.Float8{
 		Float64: value,
 		Valid:   true,
+	}
+}
+
+func GetPgNumericInt(value float64) pgtype.Numeric {
+	return pgtype.Numeric{
+		Int:   big.NewInt(int64(value * 100)),
+		Exp:   -2,
+		Valid: true,
 	}
 }

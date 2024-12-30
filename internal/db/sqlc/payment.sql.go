@@ -120,26 +120,19 @@ const updatePaymentTransaction = `-- name: UpdatePaymentTransaction :exec
 UPDATE
     payments
 SET
-    order_id = COALESCE($2, order_id),
-    amount = COALESCE($3, amount),
-    method = COALESCE($4, method)
+    amount = COALESCE($2, amount),
+    method = COALESCE($3, method)
 WHERE
     id = $1
 `
 
 type UpdatePaymentTransactionParams struct {
-	ID      int32             `json:"id"`
-	OrderID pgtype.Int8       `json:"order_id"`
-	Amount  pgtype.Numeric    `json:"amount"`
-	Method  NullPaymentMethod `json:"method"`
+	ID     int32             `json:"id"`
+	Amount pgtype.Numeric    `json:"amount"`
+	Method NullPaymentMethod `json:"method"`
 }
 
 func (q *Queries) UpdatePaymentTransaction(ctx context.Context, arg UpdatePaymentTransactionParams) error {
-	_, err := q.db.Exec(ctx, updatePaymentTransaction,
-		arg.ID,
-		arg.OrderID,
-		arg.Amount,
-		arg.Method,
-	)
+	_, err := q.db.Exec(ctx, updatePaymentTransaction, arg.ID, arg.Amount, arg.Method)
 	return err
 }

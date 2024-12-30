@@ -9,29 +9,6 @@ import (
 	"context"
 )
 
-const addProductToCart = `-- name: AddProductToCart :one
-INSERT INTO cart_items(cart_id, product_id, quantity) VALUES ($1, $2, $3) RETURNING id, product_id, cart_id, quantity, created_at
-`
-
-type AddProductToCartParams struct {
-	CartID    int32 `json:"cart_id"`
-	ProductID int64 `json:"product_id"`
-	Quantity  int16 `json:"quantity"`
-}
-
-func (q *Queries) AddProductToCart(ctx context.Context, arg AddProductToCartParams) (CartItem, error) {
-	row := q.db.QueryRow(ctx, addProductToCart, arg.CartID, arg.ProductID, arg.Quantity)
-	var i CartItem
-	err := row.Scan(
-		&i.ID,
-		&i.ProductID,
-		&i.CartID,
-		&i.Quantity,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
 const createCart = `-- name: CreateCart :one
 INSERT INTO 
     carts (user_id) 

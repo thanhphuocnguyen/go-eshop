@@ -404,7 +404,6 @@ type OrderItem struct {
 	OrderID   int64          `json:"order_id"`
 	Quantity  int32          `json:"quantity"`
 	Price     pgtype.Numeric `json:"price"`
-	CreatedAt time.Time      `json:"created_at"`
 }
 
 type Payment struct {

@@ -59,9 +59,10 @@ func ExecuteSeed(ctx context.Context) int {
 			}
 			defer func() { pg.Close() }()
 			if len(args) == 0 {
-				seedProducts(ctx, pg)
 				seedUsers(ctx, pg)
+				seedProducts(ctx, pg)
 				seedUserAddresses(ctx, pg)
+				return
 			}
 			switch args[0] {
 			case "products":
@@ -86,6 +87,15 @@ func ExecuteSeed(ctx context.Context) int {
 }
 
 func seedProducts(ctx context.Context, pg postgres.Store) {
+	countProducts, err := pg.CountProducts(ctx, sqlc.CountProductsParams{})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to count products")
+		return
+	}
+	if countProducts > 0 {
+		log.Info().Msg("products already seeded")
+		return
+	}
 	log.Info().Msg("seeding products")
 	productData, err := os.ReadFile("seeds/products.json")
 	if err != nil {
@@ -128,6 +138,21 @@ func seedProducts(ctx context.Context, pg postgres.Store) {
 }
 
 func seedUsers(ctx context.Context, pg postgres.Store) {
+	countUsers, err := pg.CountUsers(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to count users")
+		return
+	}
+
+	if countUsers > 0 {
+		log.Info().Msg("users already seeded")
+		return
+	}
+
+	if err != nil {
+		log.Error().Err(err).Msg("failed to count users")
+		return
+	}
 	log.Info().Msg("parsing user data")
 	userData, err := os.ReadFile("seeds/users.json")
 	if err != nil {
@@ -167,6 +192,16 @@ func seedUsers(ctx context.Context, pg postgres.Store) {
 }
 
 func seedUserAddresses(ctx context.Context, pg postgres.Store) {
+	countAddresses, err := pg.CountAddresses(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to count addresses")
+		return
+	}
+	if countAddresses > 0 {
+		log.Info().Msg("addresses already seeded")
+		return
+	}
+
 	log.Info().Msg("parsing addresses json")
 	addressData, err := os.ReadFile("seeds/addresses.json")
 	if err != nil {
