@@ -1,62 +1,72 @@
 [
   {
-    "full_name": "Gordon Huxton",
+    "fullname": "Gordon Huxton",
     "username": "ghuxton0",
     "email": "ghuxton0@slate.com",
+    "password": "password",
     "phone": "9617913218"
   },
   {
-    "full_name": "Hephzibah Deshon",
+    "fullname": "Hephzibah Deshon",
     "username": "hdeshon1",
     "email": "hdeshon1@indiegogo.com",
+    "password": "password",
     "phone": "9953483403"
   },
   {
-    "full_name": "Doralia Matisse",
+    "fullname": "Doralia Matisse",
     "username": "dmatisse2",
     "email": "dmatisse2@thetimes.co.uk",
+    "password": "password",
     "phone": "7752261329"
   },
   {
-    "full_name": "Rodie Stanbrooke",
+    "fullname": "Rodie Stanbrooke",
     "username": "rstanbrooke3",
     "email": "rstanbrooke3@taobao.com",
+    "password": "password",
     "phone": "3016343481"
   },
   {
-    "full_name": "Patricia Seccombe",
+    "fullname": "Patricia Seccombe",
     "username": "pseccombe4",
     "email": "pseccombe4@nasa.gov",
+    "password": "password",
     "phone": "5553183508"
   },
   {
-    "full_name": "Meagan Woofendell",
+    "fullname": "Meagan Woofendell",
     "username": "mwoofendell5",
     "email": "mwoofendell5@google.fr",
+    "password": "password",
     "phone": "1458857767"
   },
   {
-    "full_name": "Edita Browell",
+    "fullname": "Edita Browell",
     "username": "ebrowell6",
     "email": "ebrowell6@photobucket.com",
+    "password": "password",
     "phone": "1402756815"
   },
   {
-    "full_name": "Dex Lemery",
+    "fullname": "Dex Lemery",
     "username": "dlemery7",
     "email": "dlemery7@xrea.com",
+    "password": "password",
     "phone": "1837080009"
   },
   {
-    "full_name": "Susanna Brock",
+    "fullname": "Susanna Brock",
     "username": "sbrock8",
     "email": "sbrock8@etsy.com",
+    "password": "password",
     "phone": "7891505439"
   },
   {
-    "full_name": "Merrick Skipp",
+    "fullname": "Merrick Skipp",
     "username": "mskipp9",
     "email": "mskipp9@51.la",
+    "password": "password",
     "phone": "8085795402"
   }
 ]

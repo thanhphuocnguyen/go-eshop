@@ -3,8 +3,7 @@ INSERT INTO
     user_addresses (
         user_id,
         phone,
-        address_1,
-        address_2,
+        street,
         ward,
         district,
         city
@@ -16,8 +15,7 @@ VALUES
         $3,
         $4,
         $5,
-        $6,
-        $7
+        $6
     ) RETURNING *;
 
 -- name: GetAddress :one
@@ -44,8 +42,7 @@ UPDATE
     user_addresses
 SET
     phone = coalesce(sqlc.narg('phone'), phone),
-    address_1 = coalesce(sqlc.narg('address_1'), address_1),
-    address_2 = coalesce(sqlc.narg('address_2'), address_2),
+    street = coalesce(sqlc.narg('street'), street),
     ward = coalesce(sqlc.narg('ward'), ward),
     district = coalesce(sqlc.narg('district'), district),
     city = coalesce(sqlc.narg('city'), city),

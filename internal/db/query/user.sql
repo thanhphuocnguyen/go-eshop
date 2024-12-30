@@ -4,7 +4,7 @@ INSERT INTO
         email,
         username,
         phone,
-        full_name,
+        fullname,
         hashed_password,
         role
     )
@@ -17,7 +17,7 @@ VALUES
         $5,
         $6
     )
-RETURNING id, email, username, full_name, role, verified_email, verified_phone, created_at, updated_at;
+RETURNING id, email, username, fullname, role, verified_email, verified_phone, created_at, updated_at;
 
 -- name: GetUserByUsername :one
 SELECT
@@ -61,7 +61,7 @@ UPDATE
     users
 SET
     email = coalesce(sqlc.narg('email'), email),
-    full_name = coalesce(sqlc.narg('full_name'), full_name),
+    fullname = coalesce(sqlc.narg('fullname'), fullname),
     role = coalesce(sqlc.narg('role'), role),
     verified_email = coalesce(sqlc.narg('verified_email'), verified_email),
     verified_phone = coalesce(sqlc.narg('verified_phone'), verified_phone),
@@ -70,7 +70,7 @@ SET
     updated_at = sqlc.arg('updated_at')
 WHERE
     id = sqlc.arg('id')
-RETURNING id, email, username, full_name, role, verified_email, verified_phone, created_at, updated_at;
+RETURNING id, email, username, fullname, role, verified_email, verified_phone, created_at, updated_at;
 
 
 -- name: DeleteUser :exec

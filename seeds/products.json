@@ -4,1749 +4,1749 @@
     "description": "Vivamus rhoncus. Donec est. Nunc ullamcorper, velit in aliquet lobortis, nisi nibh lacinia orci, consectetuer",
     "price": 51.12,
     "stock": 7,
-    "alphanumeric": "CVBU466BD"
+    "sku": "CVBU466BD"
   },
   {
     "name": "vel",
     "description": "scelerisque, lorem ipsum sodales purus, in molestie tortor nibh sit amet orci. Ut sagittis lobortis",
     "price": 46.98,
     "stock": 74,
-    "alphanumeric": "MBSV420EK"
+    "sku": "MBSV420EK"
   },
   {
     "name": "consequat purus.",
     "description": "ac, feugiat non, lobortis quis, pede. Suspendisse dui. Fusce diam nunc, ullamcorper eu, euismod ac, fermentum",
     "price": 52.22,
     "stock": 8,
-    "alphanumeric": "UHZD357MJ"
+    "sku": "UHZD357MJ"
   },
   {
     "name": "euismod et, commodo at,",
     "description": "magna. Suspendisse tristique neque venenatis lacus. Etiam bibendum fermentum metus. Aenean sed",
     "price": 52.56,
     "stock": 85,
-    "alphanumeric": "PMPP304WG"
+    "sku": "PMPP304WG"
   },
   {
     "name": "Duis mi",
     "description": "molestie tortor nibh sit amet orci. Ut sagittis lobortis mauris. Suspendisse aliquet",
     "price": 48.27,
     "stock": 67,
-    "alphanumeric": "VPUQ200TK"
+    "sku": "VPUQ200TK"
   },
   {
     "name": "Proin velit. Sed malesuada augue ut",
     "description": "a, scelerisque sed, sapien. Nunc pulvinar arcu et pede. Nunc",
     "price": 50.64,
     "stock": 92,
-    "alphanumeric": "BZVL886PN"
+    "sku": "BZVL886PN"
   },
   {
     "name": "luctus felis purus ac",
     "description": "quis diam. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis",
     "price": 42.55,
     "stock": 84,
-    "alphanumeric": "BROS369RK"
+    "sku": "BROS369RK"
   },
   {
     "name": "ultrices. Duis volutpat",
     "description": "vitae, aliquet nec, imperdiet nec, leo. Morbi neque tellus, imperdiet non,",
     "price": 46.04,
     "stock": 40,
-    "alphanumeric": "NFCF774SX"
+    "sku": "NFCF774SX"
   },
   {
     "name": "Donec vitae erat",
     "description": "tellus. Suspendisse sed dolor. Fusce mi lorem, vehicula et, rutrum eu, ultrices sit amet, risus.",
     "price": 46.77,
     "stock": 8,
-    "alphanumeric": "XCQJ555IU"
+    "sku": "XCQJ555IU"
   },
   {
     "name": "Donec luctus aliquet odio. Etiam",
     "description": "leo elementum sem, vitae aliquam eros turpis non enim. Mauris quis turpis vitae",
     "price": 53.07,
     "stock": 11,
-    "alphanumeric": "PRVJ412YN"
+    "sku": "PRVJ412YN"
   },
   {
     "name": "sem egestas blandit.",
     "description": "mauris. Integer sem elit, pharetra ut, pharetra sed, hendrerit a, arcu.",
     "price": 45.81,
     "stock": 25,
-    "alphanumeric": "SEVY657CE"
+    "sku": "SEVY657CE"
   },
   {
     "name": "eu, eleifend",
     "description": "vitae, aliquet nec, imperdiet nec, leo. Morbi neque tellus, imperdiet non, vestibulum nec, euismod",
     "price": 53.55,
     "stock": 97,
-    "alphanumeric": "EGIV558AR"
+    "sku": "EGIV558AR"
   },
   {
     "name": "gravida non,",
     "description": "a, auctor non, feugiat nec, diam. Duis mi enim, condimentum eget, volutpat ornare, facilisis",
     "price": 49.78,
     "stock": 58,
-    "alphanumeric": "LKCJ242WX"
+    "sku": "LKCJ242WX"
   },
   {
     "name": "tristique senectus et",
     "description": "tristique pharetra. Quisque ac libero nec ligula consectetuer rhoncus. Nullam",
     "price": 50.72,
     "stock": 92,
-    "alphanumeric": "EIKH774WX"
+    "sku": "EIKH774WX"
   },
   {
     "name": "justo. Praesent luctus. Curabitur egestas",
     "description": "in consectetuer ipsum nunc id enim. Curabitur massa. Vestibulum accumsan neque et nunc. Quisque ornare tortor",
     "price": 54.8,
     "stock": 71,
-    "alphanumeric": "MSWC539TT"
+    "sku": "MSWC539TT"
   },
   {
     "name": "vitae nibh.",
     "description": "amet, risus. Donec nibh enim, gravida sit amet, dapibus id, blandit at, nisi.",
     "price": 49.27,
     "stock": 25,
-    "alphanumeric": "BDOE568VQ"
+    "sku": "BDOE568VQ"
   },
   {
     "name": "id, erat. Etiam vestibulum massa",
     "description": "auctor quis, tristique ac, eleifend vitae, erat. Vivamus nisi. Mauris nulla. Integer",
     "price": 53.9,
     "stock": 89,
-    "alphanumeric": "XUGB662TL"
+    "sku": "XUGB662TL"
   },
   {
     "name": "volutpat ornare, facilisis eget,",
     "description": "tortor. Nunc commodo auctor velit. Aliquam nisl. Nulla eu neque pellentesque massa lobortis ultrices. Vivamus",
     "price": 48.68,
     "stock": 14,
-    "alphanumeric": "CNRZ845OT"
+    "sku": "CNRZ845OT"
   },
   {
     "name": "vitae, posuere at,",
     "description": "ut aliquam iaculis, lacus pede sagittis augue, eu tempor erat neque non",
     "price": 51.72,
     "stock": 57,
-    "alphanumeric": "DQJF066JX"
+    "sku": "DQJF066JX"
   },
   {
     "name": "in sodales elit erat",
     "description": "Duis a mi fringilla mi lacinia mattis. Integer eu lacus. Quisque imperdiet, erat nonummy ultricies",
     "price": 48.94,
     "stock": 67,
-    "alphanumeric": "QMOJ479DE"
+    "sku": "QMOJ479DE"
   },
   {
     "name": "non, sollicitudin",
     "description": "Maecenas malesuada fringilla est. Mauris eu turpis. Nulla aliquet. Proin velit. Sed malesuada augue ut lacus. Nulla tincidunt, neque",
     "price": 51.73,
     "stock": 18,
-    "alphanumeric": "ODOS681VR"
+    "sku": "ODOS681VR"
   },
   {
     "name": "amet nulla.",
     "description": "vestibulum massa rutrum magna. Cras convallis convallis dolor. Quisque tincidunt pede ac urna. Ut tincidunt vehicula",
     "price": 48.96,
     "stock": 60,
-    "alphanumeric": "JXSC215BR"
+    "sku": "JXSC215BR"
   },
   {
     "name": "arcu ac orci. Ut",
     "description": "cursus vestibulum. Mauris magna. Duis dignissim tempor arcu. Vestibulum ut eros non",
     "price": 50.41,
     "stock": 10,
-    "alphanumeric": "CEDT026HD"
+    "sku": "CEDT026HD"
   },
   {
     "name": "auctor, nunc nulla",
     "description": "mi enim, condimentum eget, volutpat ornare, facilisis eget, ipsum. Donec sollicitudin adipiscing ligula.",
     "price": 48.62,
     "stock": 10,
-    "alphanumeric": "QPAY135GW"
+    "sku": "QPAY135GW"
   },
   {
     "name": "nonummy ut, molestie",
     "description": "Praesent eu nulla at sem molestie sodales. Mauris blandit enim consequat",
     "price": 47.68,
     "stock": 44,
-    "alphanumeric": "MVQE861UD"
+    "sku": "MVQE861UD"
   },
   {
     "name": "auctor velit. Aliquam nisl. Nulla eu",
     "description": "In at pede. Cras vulputate velit eu sem. Pellentesque ut ipsum ac mi eleifend egestas. Sed",
     "price": 49.0,
     "stock": 67,
-    "alphanumeric": "YGMM755KU"
+    "sku": "YGMM755KU"
   },
   {
     "name": "fames ac turpis egestas. Fusce",
     "description": "Vivamus rhoncus. Donec est. Nunc ullamcorper, velit in aliquet lobortis, nisi nibh lacinia",
     "price": 49.62,
     "stock": 24,
-    "alphanumeric": "JVUF334WI"
+    "sku": "JVUF334WI"
   },
   {
     "name": "Aenean gravida nunc sed pede.",
     "description": "primis in faucibus orci luctus et ultrices posuere cubilia Curae Phasellus ornare. Fusce mollis. Duis sit amet diam",
     "price": 47.6,
     "stock": 96,
-    "alphanumeric": "YSVJ600BW"
+    "sku": "YSVJ600BW"
   },
   {
     "name": "nibh enim, gravida",
     "description": "magna tellus faucibus leo, in lobortis tellus justo sit amet nulla. Donec non",
     "price": 46.89,
     "stock": 31,
-    "alphanumeric": "BOQX216XV"
+    "sku": "BOQX216XV"
   },
   {
     "name": "lorem",
     "description": "quis diam luctus lobortis. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos hymenaeos. Mauris",
     "price": 46.95,
     "stock": 25,
-    "alphanumeric": "ASQQ635RZ"
+    "sku": "ASQQ635RZ"
   },
   {
     "name": "nec quam.",
     "description": "placerat, augue. Sed molestie. Sed id risus quis diam luctus lobortis. Class aptent taciti sociosqu",
     "price": 46.87,
     "stock": 48,
-    "alphanumeric": "JBZJ877OJ"
+    "sku": "JBZJ877OJ"
   },
   {
     "name": "mi. Aliquam gravida mauris ut",
     "description": "lacinia. Sed congue, elit sed consequat auctor, nunc nulla vulputate dui, nec",
     "price": 49.2,
     "stock": 100,
-    "alphanumeric": "KRRQ763CC"
+    "sku": "KRRQ763CC"
   },
   {
     "name": "aliquet, sem",
     "description": "Donec egestas. Aliquam nec enim. Nunc ut erat. Sed nunc est, mollis non, cursus non, egestas a,",
     "price": 50.27,
     "stock": 66,
-    "alphanumeric": "AWGO683YN"
+    "sku": "AWGO683YN"
   },
   {
     "name": "velit justo nec ante. Maecenas",
     "description": "Cras dolor dolor, tempus non, lacinia at, iaculis quis, pede. Praesent eu dui. Cum",
     "price": 52.43,
     "stock": 6,
-    "alphanumeric": "QWLO736PC"
+    "sku": "QWLO736PC"
   },
   {
     "name": "ut, nulla. Cras eu tellus",
     "description": "eleifend. Cras sed leo. Cras vehicula aliquet libero. Integer in magna. Phasellus dolor elit, pellentesque",
     "price": 52.52,
     "stock": 62,
-    "alphanumeric": "RUCL731PI"
+    "sku": "RUCL731PI"
   },
   {
     "name": "Mauris",
     "description": "eget, ipsum. Donec sollicitudin adipiscing ligula. Aenean gravida nunc sed pede. Cum",
     "price": 47.2,
     "stock": 31,
-    "alphanumeric": "SKCY168HS"
+    "sku": "SKCY168HS"
   },
   {
     "name": "Cras convallis convallis",
     "description": "convallis, ante lectus convallis est, vitae sodales nisi magna sed dui. Fusce aliquam, enim nec tempus scelerisque, lorem",
     "price": 50.69,
     "stock": 99,
-    "alphanumeric": "GNXW660YP"
+    "sku": "GNXW660YP"
   },
   {
     "name": "lobortis",
     "description": "amet metus. Aliquam erat volutpat. Nulla facilisis. Suspendisse commodo tincidunt nibh. Phasellus nulla. Integer vulputate, risus a",
     "price": 52.48,
     "stock": 50,
-    "alphanumeric": "NLRY117FE"
+    "sku": "NLRY117FE"
   },
   {
     "name": "Quisque",
     "description": "varius orci, in consequat enim diam vel arcu. Curabitur ut odio vel est tempor bibendum. Donec",
     "price": 47.46,
     "stock": 73,
-    "alphanumeric": "JRAB781RM"
+    "sku": "JRAB781RM"
   },
   {
     "name": "orci sem",
     "description": "Nullam vitae diam. Proin dolor. Nulla semper tellus id nunc interdum feugiat. Sed nec metus facilisis lorem",
     "price": 52.35,
     "stock": 22,
-    "alphanumeric": "ZPMU790MK"
+    "sku": "ZPMU790MK"
   },
   {
     "name": "vitae nibh.",
     "description": "Aliquam erat volutpat. Nulla dignissim. Maecenas ornare egestas ligula. Nullam feugiat placerat",
     "price": 52.36,
     "stock": 13,
-    "alphanumeric": "HICE273AP"
+    "sku": "HICE273AP"
   },
   {
     "name": "arcu. Morbi sit",
     "description": "ante lectus convallis est, vitae sodales nisi magna sed dui. Fusce aliquam, enim nec tempus scelerisque, lorem ipsum",
     "price": 56.05,
     "stock": 70,
-    "alphanumeric": "JQRU313XX"
+    "sku": "JQRU313XX"
   },
   {
     "name": "justo faucibus lectus, a",
     "description": "mattis ornare, lectus ante dictum mi, ac mattis velit justo nec",
     "price": 54.49,
     "stock": 46,
-    "alphanumeric": "HKYQ174TX"
+    "sku": "HKYQ174TX"
   },
   {
     "name": "tincidunt tempus risus. Donec egestas.",
     "description": "massa. Quisque porttitor eros nec tellus. Nunc lectus pede, ultrices a, auctor non, feugiat nec, diam.",
     "price": 50.16,
     "stock": 89,
-    "alphanumeric": "RMJO612FR"
+    "sku": "RMJO612FR"
   },
   {
     "name": "eleifend",
     "description": "nec urna suscipit nonummy. Fusce fermentum fermentum arcu. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere",
     "price": 48.46,
     "stock": 74,
-    "alphanumeric": "CGNK755YS"
+    "sku": "CGNK755YS"
   },
   {
     "name": "mi tempor",
     "description": "in magna. Phasellus dolor elit, pellentesque a, facilisis non, bibendum sed, est. Nunc laoreet lectus quis",
     "price": 50.82,
     "stock": 92,
-    "alphanumeric": "YSDU702YM"
+    "sku": "YSDU702YM"
   },
   {
     "name": "gravida non, sollicitudin a, malesuada",
     "description": "orci, adipiscing non, luctus sit amet, faucibus ut, nulla. Cras eu tellus eu augue porttitor",
     "price": 47.42,
     "stock": 28,
-    "alphanumeric": "GORH402BQ"
+    "sku": "GORH402BQ"
   },
   {
     "name": "interdum ligula eu enim.",
     "description": "erat semper rutrum. Fusce dolor quam, elementum at, egestas a, scelerisque sed, sapien. Nunc pulvinar arcu et pede. Nunc",
     "price": 48.74,
     "stock": 12,
-    "alphanumeric": "STOZ607YN"
+    "sku": "STOZ607YN"
   },
   {
     "name": "lectus quis massa. Mauris vestibulum,",
     "description": "elit. Curabitur sed tortor. Integer aliquam adipiscing lacus. Ut nec urna et arcu imperdiet",
     "price": 52.5,
     "stock": 63,
-    "alphanumeric": "MVLT848HO"
+    "sku": "MVLT848HO"
   },
   {
     "name": "lorem, sit amet",
     "description": "et ultrices posuere cubilia Curae Donec tincidunt. Donec vitae erat vel pede blandit congue.",
     "price": 50.52,
     "stock": 64,
-    "alphanumeric": "RJSK518VG"
+    "sku": "RJSK518VG"
   },
   {
     "name": "dui quis",
     "description": "pede, malesuada vel, venenatis vel, faucibus id, libero. Donec consectetuer mauris id",
     "price": 47.27,
     "stock": 70,
-    "alphanumeric": "SQNP331SI"
+    "sku": "SQNP331SI"
   },
   {
     "name": "nulla. Donec non",
     "description": "malesuada vel, convallis in, cursus et, eros. Proin ultrices. Duis volutpat nunc sit",
     "price": 47.45,
     "stock": 49,
-    "alphanumeric": "GZPH565KL"
+    "sku": "GZPH565KL"
   },
   {
     "name": "egestas. Sed",
     "description": "aliquet, sem ut cursus luctus, ipsum leo elementum sem, vitae",
     "price": 46.4,
     "stock": 41,
-    "alphanumeric": "XUWE208GI"
+    "sku": "XUWE208GI"
   },
   {
     "name": "tristique pellentesque, tellus",
     "description": "nisl. Maecenas malesuada fringilla est. Mauris eu turpis. Nulla aliquet. Proin",
     "price": 46.6,
     "stock": 28,
-    "alphanumeric": "KCDF431CV"
+    "sku": "KCDF431CV"
   },
   {
     "name": "semper tellus id nunc",
     "description": "at risus. Nunc ac sem ut dolor dapibus gravida. Aliquam tincidunt, nunc ac mattis ornare, lectus ante dictum",
     "price": 52.79,
     "stock": 39,
-    "alphanumeric": "PLBJ412XL"
+    "sku": "PLBJ412XL"
   },
   {
     "name": "adipiscing elit.",
     "description": "lacus. Nulla tincidunt, neque vitae semper egestas, urna justo faucibus lectus, a sollicitudin orci sem",
     "price": 46.51,
     "stock": 33,
-    "alphanumeric": "MJCY329BB"
+    "sku": "MJCY329BB"
   },
   {
     "name": "et, eros. Proin",
     "description": "neque pellentesque massa lobortis ultrices. Vivamus rhoncus. Donec est. Nunc ullamcorper, velit in aliquet",
     "price": 48.06,
     "stock": 67,
-    "alphanumeric": "MKLY210NA"
+    "sku": "MKLY210NA"
   },
   {
     "name": "magnis dis",
     "description": "metus urna convallis erat, eget tincidunt dui augue eu tellus. Phasellus elit pede, malesuada vel, venenatis",
     "price": 52.66,
     "stock": 18,
-    "alphanumeric": "XSNV790BL"
+    "sku": "XSNV790BL"
   },
   {
     "name": "at arcu.",
     "description": "velit justo nec ante. Maecenas mi felis, adipiscing fringilla, porttitor vulputate, posuere vulputate, lacus. Cras",
     "price": 53.4,
     "stock": 75,
-    "alphanumeric": "NSUK788DN"
+    "sku": "NSUK788DN"
   },
   {
     "name": "tempor lorem, eget mollis lectus pede",
     "description": "Proin vel arcu eu odio tristique pharetra. Quisque ac libero nec ligula consectetuer rhoncus. Nullam velit dui, semper et,",
     "price": 47.73,
     "stock": 54,
-    "alphanumeric": "HYRJ461UB"
+    "sku": "HYRJ461UB"
   },
   {
     "name": "sem ut",
     "description": "Etiam vestibulum massa rutrum magna. Cras convallis convallis dolor. Quisque tincidunt pede ac urna. Ut tincidunt vehicula",
     "price": 46.06,
     "stock": 10,
-    "alphanumeric": "UCTW718EU"
+    "sku": "UCTW718EU"
   },
   {
     "name": "et magnis dis parturient montes, nascetur",
     "description": "elit. Curabitur sed tortor. Integer aliquam adipiscing lacus. Ut nec urna et arcu imperdiet ullamcorper. Duis at lacus. Quisque purus",
     "price": 51.7,
     "stock": 82,
-    "alphanumeric": "FADC754SO"
+    "sku": "FADC754SO"
   },
   {
     "name": "Donec nibh enim, gravida sit",
     "description": "a nunc. In at pede. Cras vulputate velit eu sem.",
     "price": 49.92,
     "stock": 65,
-    "alphanumeric": "OSXD980FG"
+    "sku": "OSXD980FG"
   },
   {
     "name": "vitae erat",
     "description": "Cras vulputate velit eu sem. Pellentesque ut ipsum ac mi eleifend egestas. Sed pharetra, felis",
     "price": 52.09,
     "stock": 28,
-    "alphanumeric": "VAHT361GV"
+    "sku": "VAHT361GV"
   },
   {
     "name": "tincidunt orci",
     "description": "In faucibus. Morbi vehicula. Pellentesque tincidunt tempus risus. Donec egestas. Duis ac arcu.",
     "price": 49.78,
     "stock": 42,
-    "alphanumeric": "LFXK855SW"
+    "sku": "LFXK855SW"
   },
   {
     "name": "sed tortor.",
     "description": "aliquam adipiscing lacus. Ut nec urna et arcu imperdiet ullamcorper. Duis at lacus. Quisque purus sapien, gravida",
     "price": 51.49,
     "stock": 54,
-    "alphanumeric": "CWUN364FI"
+    "sku": "CWUN364FI"
   },
   {
     "name": "tellus justo sit amet",
     "description": "arcu. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae Donec tincidunt. Donec vitae erat vel",
     "price": 50.82,
     "stock": 66,
-    "alphanumeric": "RPSH134GW"
+    "sku": "RPSH134GW"
   },
   {
     "name": "fringilla mi lacinia mattis. Integer",
     "description": "neque venenatis lacus. Etiam bibendum fermentum metus. Aenean sed pede nec ante blandit viverra. Donec tempus, lorem fringilla",
     "price": 53.15,
     "stock": 72,
-    "alphanumeric": "BQYD267BO"
+    "sku": "BQYD267BO"
   },
   {
     "name": "eget ipsum. Suspendisse sagittis. Nullam",
     "description": "parturient montes, nascetur ridiculus mus. Proin vel arcu eu odio tristique pharetra. Quisque ac libero nec ligula consectetuer",
     "price": 49.47,
     "stock": 96,
-    "alphanumeric": "QZPG619UV"
+    "sku": "QZPG619UV"
   },
   {
     "name": "vitae",
     "description": "Nulla interdum. Curabitur dictum. Phasellus in felis. Nulla tempor augue ac ipsum.",
     "price": 49.98,
     "stock": 77,
-    "alphanumeric": "JPCP956SM"
+    "sku": "JPCP956SM"
   },
   {
     "name": "aliquam adipiscing lacus. Ut nec urna",
     "description": "ullamcorper viverra. Maecenas iaculis aliquet diam. Sed diam lorem, auctor quis,",
     "price": 45.08,
     "stock": 79,
-    "alphanumeric": "UXSX696WR"
+    "sku": "UXSX696WR"
   },
   {
     "name": "et tristique pellentesque, tellus",
     "description": "dui. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Aenean eget magna.",
     "price": 48.91,
     "stock": 71,
-    "alphanumeric": "YQQY721HU"
+    "sku": "YQQY721HU"
   },
   {
     "name": "lacus vestibulum lorem,",
     "description": "nulla. Integer vulputate, risus a ultricies adipiscing, enim mi tempor lorem, eget mollis lectus pede et",
     "price": 50.75,
     "stock": 90,
-    "alphanumeric": "IEQC827VL"
+    "sku": "IEQC827VL"
   },
   {
     "name": "ac ipsum.",
     "description": "rhoncus. Nullam velit dui, semper et, lacinia vitae, sodales at, velit. Pellentesque ultricies dignissim lacus. Aliquam rutrum lorem ac",
     "price": 50.31,
     "stock": 47,
-    "alphanumeric": "QNKJ313ZO"
+    "sku": "QNKJ313ZO"
   },
   {
     "name": "vitae, aliquet nec, imperdiet",
     "description": "non lorem vitae odio sagittis semper. Nam tempor diam dictum sapien. Aenean massa. Integer vitae nibh. Donec est",
     "price": 53.19,
     "stock": 18,
-    "alphanumeric": "GLXQ874NU"
+    "sku": "GLXQ874NU"
   },
   {
     "name": "quis accumsan",
     "description": "eu sem. Pellentesque ut ipsum ac mi eleifend egestas. Sed pharetra, felis eget varius ultrices,",
     "price": 54.05,
     "stock": 57,
-    "alphanumeric": "SYQM296GV"
+    "sku": "SYQM296GV"
   },
   {
     "name": "tristique ac, eleifend vitae,",
     "description": "semper cursus. Integer mollis. Integer tincidunt aliquam arcu. Aliquam ultrices iaculis odio. Nam interdum enim",
     "price": 50.95,
     "stock": 16,
-    "alphanumeric": "MGTR577KD"
+    "sku": "MGTR577KD"
   },
   {
     "name": "risus. Duis a mi fringilla",
     "description": "magna. Cras convallis convallis dolor. Quisque tincidunt pede ac urna. Ut",
     "price": 48.16,
     "stock": 60,
-    "alphanumeric": "LSBF701EM"
+    "sku": "LSBF701EM"
   },
   {
     "name": "Nullam feugiat placerat",
     "description": "Duis sit amet diam eu dolor egestas rhoncus. Proin nisl sem, consequat",
     "price": 48.35,
     "stock": 57,
-    "alphanumeric": "DXVN521OC"
+    "sku": "DXVN521OC"
   },
   {
     "name": "morbi tristique senectus",
     "description": "Sed pharetra, felis eget varius ultrices, mauris ipsum porta elit, a feugiat tellus lorem eu",
     "price": 48.98,
     "stock": 43,
-    "alphanumeric": "ZKDT451NF"
+    "sku": "ZKDT451NF"
   },
   {
     "name": "adipiscing, enim mi tempor lorem,",
     "description": "ipsum leo elementum sem, vitae aliquam eros turpis non enim.",
     "price": 47.57,
     "stock": 6,
-    "alphanumeric": "WCIF712FK"
+    "sku": "WCIF712FK"
   },
   {
     "name": "nec luctus felis purus",
     "description": "iaculis aliquet diam. Sed diam lorem, auctor quis, tristique ac, eleifend",
     "price": 48.51,
     "stock": 52,
-    "alphanumeric": "MPGC226OM"
+    "sku": "MPGC226OM"
   },
   {
     "name": "Nulla tempor augue ac",
     "description": "mauris a nunc. In at pede. Cras vulputate velit eu sem. Pellentesque ut ipsum",
     "price": 49.79,
     "stock": 63,
-    "alphanumeric": "XVGY329GB"
+    "sku": "XVGY329GB"
   },
   {
     "name": "senectus et netus et malesuada fames",
     "description": "id ante dictum cursus. Nunc mauris elit, dictum eu, eleifend nec, malesuada ut, sem. Nulla interdum. Curabitur dictum.",
     "price": 46.02,
     "stock": 18,
-    "alphanumeric": "GAYT756IT"
+    "sku": "GAYT756IT"
   },
   {
     "name": "metus urna convallis erat, eget tincidunt",
     "description": "Duis gravida. Praesent eu nulla at sem molestie sodales. Mauris blandit enim consequat purus. Maecenas libero est, congue",
     "price": 48.25,
     "stock": 91,
-    "alphanumeric": "EDLX474DB"
+    "sku": "EDLX474DB"
   },
   {
     "name": "a, scelerisque sed,",
     "description": "diam eu dolor egestas rhoncus. Proin nisl sem, consequat nec, mollis vitae, posuere at, velit. Cras lorem lorem, luctus",
     "price": 50.14,
     "stock": 16,
-    "alphanumeric": "YOIG843FW"
+    "sku": "YOIG843FW"
   },
   {
     "name": "Sed eu nibh vulputate mauris",
     "description": "in felis. Nulla tempor augue ac ipsum. Phasellus vitae mauris sit",
     "price": 47.08,
     "stock": 17,
-    "alphanumeric": "EHOR162YQ"
+    "sku": "EHOR162YQ"
   },
   {
     "name": "sagittis felis. Donec",
     "description": "pellentesque eget, dictum placerat, augue. Sed molestie. Sed id risus quis diam luctus lobortis. Class aptent taciti sociosqu ad",
     "price": 51.65,
     "stock": 85,
-    "alphanumeric": "GOTE973VI"
+    "sku": "GOTE973VI"
   },
   {
     "name": "In",
     "description": "scelerisque scelerisque dui. Suspendisse ac metus vitae velit egestas lacinia.",
     "price": 49.06,
     "stock": 99,
-    "alphanumeric": "DJFR477HC"
+    "sku": "DJFR477HC"
   },
   {
     "name": "sagittis",
     "description": "diam eu dolor egestas rhoncus. Proin nisl sem, consequat nec, mollis",
     "price": 50.78,
     "stock": 40,
-    "alphanumeric": "FFIR688AU"
+    "sku": "FFIR688AU"
   },
   {
     "name": "Nunc lectus",
     "description": "arcu vel quam dignissim pharetra. Nam ac nulla. In tincidunt congue turpis. In condimentum. Donec at",
     "price": 46.16,
     "stock": 18,
-    "alphanumeric": "SFDO970OQ"
+    "sku": "SFDO970OQ"
   },
   {
     "name": "dis parturient montes,",
     "description": "at, iaculis quis, pede. Praesent eu dui. Cum sociis natoque penatibus et",
     "price": 49.22,
     "stock": 6,
-    "alphanumeric": "GMGF354EY"
+    "sku": "GMGF354EY"
   },
   {
     "name": "velit. Pellentesque ultricies dignissim",
     "description": "erat neque non quam. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac",
     "price": 49.31,
     "stock": 48,
-    "alphanumeric": "NUXZ621JM"
+    "sku": "NUXZ621JM"
   },
   {
     "name": "nec, imperdiet nec, leo. Morbi neque",
     "description": "lobortis quam a felis ullamcorper viverra. Maecenas iaculis aliquet diam. Sed diam lorem, auctor quis, tristique ac, eleifend",
     "price": 53.72,
     "stock": 87,
-    "alphanumeric": "GUPH249YC"
+    "sku": "GUPH249YC"
   },
   {
     "name": "ornare. In faucibus. Morbi vehicula. Pellentesque",
     "description": "viverra. Maecenas iaculis aliquet diam. Sed diam lorem, auctor quis, tristique ac, eleifend vitae, erat. Vivamus nisi. Mauris nulla. Integer",
     "price": 52.7,
     "stock": 59,
-    "alphanumeric": "SXEC615GU"
+    "sku": "SXEC615GU"
   },
   {
     "name": "Aliquam erat volutpat. Nulla dignissim. Maecenas",
     "description": "nibh. Phasellus nulla. Integer vulputate, risus a ultricies adipiscing, enim mi tempor lorem, eget",
     "price": 51.26,
     "stock": 91,
-    "alphanumeric": "SEMK014EH"
+    "sku": "SEMK014EH"
   },
   {
     "name": "habitant morbi tristique",
     "description": "eget ipsum. Suspendisse sagittis. Nullam vitae diam. Proin dolor. Nulla semper tellus id nunc interdum feugiat. Sed nec",
     "price": 50.15,
     "stock": 42,
-    "alphanumeric": "FRYU323LK"
+    "sku": "FRYU323LK"
   },
   {
     "name": "pede. Suspendisse dui.",
     "description": "Aenean sed pede nec ante blandit viverra. Donec tempus, lorem fringilla",
     "price": 51.35,
     "stock": 36,
-    "alphanumeric": "OQIL184NI"
+    "sku": "OQIL184NI"
   },
   {
     "name": "neque. Nullam ut nisi a odio",
     "description": "sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Proin",
     "price": 46.6,
     "stock": 68,
-    "alphanumeric": "NETA787SS"
+    "sku": "NETA787SS"
   },
   {
     "name": "est. Nunc laoreet lectus quis",
     "description": "aliquet, sem ut cursus luctus, ipsum leo elementum sem, vitae aliquam",
     "price": 49.73,
     "stock": 6,
-    "alphanumeric": "XINS357GS"
+    "sku": "XINS357GS"
   },
   {
     "name": "velit eget laoreet posuere, enim",
     "description": "libero mauris, aliquam eu, accumsan sed, facilisis vitae, orci. Phasellus dapibus quam quis diam. Pellentesque habitant morbi tristique",
     "price": 51.41,
     "stock": 97,
-    "alphanumeric": "WRFM073IL"
+    "sku": "WRFM073IL"
   },
   {
     "name": "sociis natoque penatibus",
     "description": "Sed molestie. Sed id risus quis diam luctus lobortis. Class",
     "price": 48.75,
     "stock": 86,
-    "alphanumeric": "NDOV920IY"
+    "sku": "NDOV920IY"
   },
   {
     "name": "felis orci, adipiscing",
     "description": "mollis vitae, posuere at, velit. Cras lorem lorem, luctus ut, pellentesque eget,",
     "price": 50.01,
     "stock": 50,
-    "alphanumeric": "KYXX252OX"
+    "sku": "KYXX252OX"
   },
   {
     "name": "justo nec",
     "description": "egestas. Sed pharetra, felis eget varius ultrices, mauris ipsum porta",
     "price": 49.74,
     "stock": 20,
-    "alphanumeric": "DFCL678XD"
+    "sku": "DFCL678XD"
   },
   {
     "name": "molestie",
     "description": "orci, in consequat enim diam vel arcu. Curabitur ut odio vel est tempor bibendum. Donec felis",
     "price": 50.09,
     "stock": 93,
-    "alphanumeric": "YWEA232SC"
+    "sku": "YWEA232SC"
   },
   {
     "name": "Mauris ut quam vel sapien",
     "description": "vitae, sodales at, velit. Pellentesque ultricies dignissim lacus. Aliquam rutrum lorem ac risus. Morbi metus. Vivamus euismod",
     "price": 48.81,
     "stock": 64,
-    "alphanumeric": "LJHE826FN"
+    "sku": "LJHE826FN"
   },
   {
     "name": "bibendum fermentum metus.",
     "description": "sem mollis dui, in sodales elit erat vitae risus. Duis a mi",
     "price": 43.88,
     "stock": 16,
-    "alphanumeric": "WFXY642PC"
+    "sku": "WFXY642PC"
   },
   {
     "name": "Nulla",
     "description": "Donec consectetuer mauris id sapien. Cras dolor dolor, tempus non, lacinia at, iaculis quis, pede. Praesent eu",
     "price": 50.42,
     "stock": 69,
-    "alphanumeric": "ZUCC196KE"
+    "sku": "ZUCC196KE"
   },
   {
     "name": "vitae, sodales at,",
     "description": "sem. Nulla interdum. Curabitur dictum. Phasellus in felis. Nulla tempor augue ac ipsum. Phasellus vitae mauris",
     "price": 51.08,
     "stock": 65,
-    "alphanumeric": "YTBF495OY"
+    "sku": "YTBF495OY"
   },
   {
     "name": "Curabitur sed tortor. Integer aliquam",
     "description": "auctor ullamcorper, nisl arcu iaculis enim, sit amet ornare lectus justo",
     "price": 50.16,
     "stock": 15,
-    "alphanumeric": "LDNM527BJ"
+    "sku": "LDNM527BJ"
   },
   {
     "name": "consequat, lectus sit amet",
     "description": "orci luctus et ultrices posuere cubilia Curae Donec tincidunt. Donec vitae erat vel pede blandit congue.",
     "price": 50.64,
     "stock": 79,
-    "alphanumeric": "GNCV707RH"
+    "sku": "GNCV707RH"
   },
   {
     "name": "purus. Duis elementum, dui",
     "description": "tincidunt, nunc ac mattis ornare, lectus ante dictum mi, ac",
     "price": 50.43,
     "stock": 33,
-    "alphanumeric": "EDBH422TJ"
+    "sku": "EDBH422TJ"
   },
   {
     "name": "Sed auctor",
     "description": "In faucibus. Morbi vehicula. Pellentesque tincidunt tempus risus. Donec egestas. Duis ac arcu. Nunc",
     "price": 48.32,
     "stock": 94,
-    "alphanumeric": "ZPOG384PF"
+    "sku": "ZPOG384PF"
   },
   {
     "name": "Nam",
     "description": "Sed molestie. Sed id risus quis diam luctus lobortis. Class aptent taciti",
     "price": 53.14,
     "stock": 7,
-    "alphanumeric": "HDNE567HT"
+    "sku": "HDNE567HT"
   },
   {
     "name": "elementum, dui quis accumsan",
     "description": "et magnis dis parturient montes, nascetur ridiculus mus. Proin vel arcu eu",
     "price": 45.35,
     "stock": 39,
-    "alphanumeric": "KJYN553MD"
+    "sku": "KJYN553MD"
   },
   {
     "name": "dapibus id, blandit",
     "description": "imperdiet, erat nonummy ultricies ornare, elit elit fermentum risus, at fringilla purus mauris a nunc. In at",
     "price": 51.81,
     "stock": 35,
-    "alphanumeric": "RUUC827DD"
+    "sku": "RUUC827DD"
   },
   {
     "name": "libero. Morbi accumsan laoreet",
     "description": "nec enim. Nunc ut erat. Sed nunc est, mollis non, cursus non, egestas a,",
     "price": 55.88,
     "stock": 65,
-    "alphanumeric": "GLQE818BY"
+    "sku": "GLQE818BY"
   },
   {
     "name": "aptent taciti sociosqu ad litora torquent",
     "description": "enim. Etiam imperdiet dictum magna. Ut tincidunt orci quis lectus. Nullam suscipit, est ac facilisis",
     "price": 47.18,
     "stock": 88,
-    "alphanumeric": "KFME244WR"
+    "sku": "KFME244WR"
   },
   {
     "name": "vitae sodales nisi magna sed dui.",
     "description": "erat. Sed nunc est, mollis non, cursus non, egestas a, dui. Cras",
     "price": 49.95,
     "stock": 60,
-    "alphanumeric": "FGNE427DK"
+    "sku": "FGNE427DK"
   },
   {
     "name": "fringilla cursus purus.",
     "description": "Aliquam auctor, velit eget laoreet posuere, enim nisl elementum purus, accumsan",
     "price": 52.55,
     "stock": 24,
-    "alphanumeric": "EQLN232RR"
+    "sku": "EQLN232RR"
   },
   {
     "name": "risus. In mi pede, nonummy",
     "description": "dui augue eu tellus. Phasellus elit pede, malesuada vel, venenatis vel, faucibus id, libero. Donec",
     "price": 51.57,
     "stock": 81,
-    "alphanumeric": "ERST143SM"
+    "sku": "ERST143SM"
   },
   {
     "name": "mattis. Cras eget nisi dictum augue",
     "description": "dapibus ligula. Aliquam erat volutpat. Nulla dignissim. Maecenas ornare egestas ligula. Nullam feugiat placerat velit. Quisque varius. Nam porttitor",
     "price": 49.82,
     "stock": 77,
-    "alphanumeric": "UDLG745MR"
+    "sku": "UDLG745MR"
   },
   {
     "name": "orci",
     "description": "imperdiet non, vestibulum nec, euismod in, dolor. Fusce feugiat. Lorem ipsum dolor sit amet,",
     "price": 50.69,
     "stock": 69,
-    "alphanumeric": "NBVU774UK"
+    "sku": "NBVU774UK"
   },
   {
     "name": "ultrices sit",
     "description": "Nullam lobortis quam a felis ullamcorper viverra. Maecenas iaculis aliquet diam. Sed diam lorem, auctor",
     "price": 52.65,
     "stock": 52,
-    "alphanumeric": "DWJG782ZS"
+    "sku": "DWJG782ZS"
   },
   {
     "name": "Nullam suscipit,",
     "description": "penatibus et magnis dis parturient montes, nascetur ridiculus mus. Proin vel arcu eu odio tristique pharetra. Quisque ac",
     "price": 49.17,
     "stock": 71,
-    "alphanumeric": "SJKU753XD"
+    "sku": "SJKU753XD"
   },
   {
     "name": "dapibus rutrum, justo. Praesent luctus.",
     "description": "ipsum dolor sit amet, consectetuer adipiscing elit. Aliquam auctor, velit eget laoreet posuere, enim nisl elementum",
     "price": 50.42,
     "stock": 95,
-    "alphanumeric": "LLAY785DG"
+    "sku": "LLAY785DG"
   },
   {
     "name": "magna. Sed eu",
     "description": "nec ligula consectetuer rhoncus. Nullam velit dui, semper et, lacinia vitae, sodales at, velit. Pellentesque ultricies dignissim lacus.",
     "price": 48.98,
     "stock": 38,
-    "alphanumeric": "MIDC719MW"
+    "sku": "MIDC719MW"
   },
   {
     "name": "pharetra. Quisque ac",
     "description": "ac, feugiat non, lobortis quis, pede. Suspendisse dui. Fusce diam nunc, ullamcorper eu, euismod ac, fermentum",
     "price": 49.09,
     "stock": 75,
-    "alphanumeric": "LNXY546NB"
+    "sku": "LNXY546NB"
   },
   {
     "name": "Aliquam adipiscing lobortis",
     "description": "Etiam ligula tortor, dictum eu, placerat eget, venenatis a, magna. Lorem ipsum dolor sit amet, consectetuer adipiscing elit.",
     "price": 52.33,
     "stock": 53,
-    "alphanumeric": "BTFR301DC"
+    "sku": "BTFR301DC"
   },
   {
     "name": "ultrices. Duis volutpat",
     "description": "lacus. Nulla tincidunt, neque vitae semper egestas, urna justo faucibus lectus, a sollicitudin orci sem eget massa.",
     "price": 51.21,
     "stock": 29,
-    "alphanumeric": "GKXG588LV"
+    "sku": "GKXG588LV"
   },
   {
     "name": "Donec fringilla.",
     "description": "nunc sed pede. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Proin vel arcu",
     "price": 51.1,
     "stock": 80,
-    "alphanumeric": "FMPV359VP"
+    "sku": "FMPV359VP"
   },
   {
     "name": "Sed neque. Sed eget lacus.",
     "description": "convallis erat, eget tincidunt dui augue eu tellus. Phasellus elit pede, malesuada vel, venenatis vel, faucibus id,",
     "price": 49.97,
     "stock": 91,
-    "alphanumeric": "ODUI528NM"
+    "sku": "ODUI528NM"
   },
   {
     "name": "odio. Etiam ligula",
     "description": "nibh. Phasellus nulla. Integer vulputate, risus a ultricies adipiscing, enim mi tempor lorem, eget mollis lectus pede",
     "price": 50.69,
     "stock": 81,
-    "alphanumeric": "FEJY068YQ"
+    "sku": "FEJY068YQ"
   },
   {
     "name": "ullamcorper",
     "description": "id, mollis nec, cursus a, enim. Suspendisse aliquet, sem ut cursus luctus,",
     "price": 51.1,
     "stock": 30,
-    "alphanumeric": "OJMO334FK"
+    "sku": "OJMO334FK"
   },
   {
     "name": "lorem tristique aliquet.",
     "description": "libero et tristique pellentesque, tellus sem mollis dui, in sodales elit erat vitae risus. Duis",
     "price": 53.74,
     "stock": 28,
-    "alphanumeric": "QSQS311HM"
+    "sku": "QSQS311HM"
   },
   {
     "name": "orci tincidunt adipiscing.",
     "description": "ullamcorper. Duis at lacus. Quisque purus sapien, gravida non, sollicitudin a,",
     "price": 52.26,
     "stock": 100,
-    "alphanumeric": "EOTL744RP"
+    "sku": "EOTL744RP"
   },
   {
     "name": "Lorem",
     "description": "Maecenas ornare egestas ligula. Nullam feugiat placerat velit. Quisque varius. Nam porttitor scelerisque",
     "price": 51.65,
     "stock": 98,
-    "alphanumeric": "EVAU529QL"
+    "sku": "EVAU529QL"
   },
   {
     "name": "mollis. Phasellus libero",
     "description": "Donec egestas. Duis ac arcu. Nunc mauris. Morbi non sapien molestie orci tincidunt adipiscing. Mauris molestie pharetra nibh.",
     "price": 50.45,
     "stock": 40,
-    "alphanumeric": "WDDL372YD"
+    "sku": "WDDL372YD"
   },
   {
     "name": "lectus sit amet",
     "description": "tristique senectus et netus et malesuada fames ac turpis egestas. Fusce aliquet magna a",
     "price": 50.43,
     "stock": 69,
-    "alphanumeric": "OQAZ469SV"
+    "sku": "OQAZ469SV"
   },
   {
     "name": "nonummy ut,",
     "description": "et netus et malesuada fames ac turpis egestas. Aliquam fringilla cursus purus. Nullam scelerisque",
     "price": 52.06,
     "stock": 98,
-    "alphanumeric": "EGOD546KM"
+    "sku": "EGOD546KM"
   },
   {
     "name": "Donec consectetuer mauris",
     "description": "auctor ullamcorper, nisl arcu iaculis enim, sit amet ornare lectus justo eu",
     "price": 46.91,
     "stock": 11,
-    "alphanumeric": "KTQV232ZQ"
+    "sku": "KTQV232ZQ"
   },
   {
     "name": "Duis volutpat",
     "description": "Mauris quis turpis vitae purus gravida sagittis. Duis gravida. Praesent eu nulla at sem molestie sodales.",
     "price": 48.83,
     "stock": 81,
-    "alphanumeric": "QCJJ261XL"
+    "sku": "QCJJ261XL"
   },
   {
     "name": "Donec tempor, est ac mattis",
     "description": "amet ultricies sem magna nec quam. Curabitur vel lectus. Cum sociis natoque penatibus",
     "price": 49.15,
     "stock": 81,
-    "alphanumeric": "CTPB774TI"
+    "sku": "CTPB774TI"
   },
   {
     "name": "metus. Aliquam erat volutpat.",
     "description": "mi felis, adipiscing fringilla, porttitor vulputate, posuere vulputate, lacus. Cras interdum. Nunc",
     "price": 48.93,
     "stock": 26,
-    "alphanumeric": "GSHL741NI"
+    "sku": "GSHL741NI"
   },
   {
     "name": "Nam interdum enim non",
     "description": "dignissim lacus. Aliquam rutrum lorem ac risus. Morbi metus. Vivamus euismod urna.",
     "price": 46.48,
     "stock": 91,
-    "alphanumeric": "REGC595NU"
+    "sku": "REGC595NU"
   },
   {
     "name": "Donec egestas.",
     "description": "mus. Aenean eget magna. Suspendisse tristique neque venenatis lacus. Etiam bibendum fermentum metus. Aenean sed pede",
     "price": 50.22,
     "stock": 57,
-    "alphanumeric": "UDBD631YK"
+    "sku": "UDBD631YK"
   },
   {
     "name": "a, enim. Suspendisse aliquet, sem",
     "description": "tempor augue ac ipsum. Phasellus vitae mauris sit amet lorem",
     "price": 51.39,
     "stock": 80,
-    "alphanumeric": "FCHC548NB"
+    "sku": "FCHC548NB"
   },
   {
     "name": "ligula elit, pretium et, rutrum",
     "description": "id, ante. Nunc mauris sapien, cursus in, hendrerit consectetuer, cursus",
     "price": 50.57,
     "stock": 29,
-    "alphanumeric": "IEJM416JX"
+    "sku": "IEJM416JX"
   },
   {
     "name": "et ultrices posuere cubilia Curae",
     "description": "nec enim. Nunc ut erat. Sed nunc est, mollis non, cursus non, egestas a, dui.",
     "price": 49.33,
     "stock": 61,
-    "alphanumeric": "BKMT507UU"
+    "sku": "BKMT507UU"
   },
   {
     "name": "nulla. Cras",
     "description": "amet massa. Quisque porttitor eros nec tellus. Nunc lectus pede, ultrices a, auctor non, feugiat nec, diam. Duis mi",
     "price": 51.78,
     "stock": 16,
-    "alphanumeric": "SIIT962UI"
+    "sku": "SIIT962UI"
   },
   {
     "name": "imperdiet",
     "description": "velit. Cras lorem lorem, luctus ut, pellentesque eget, dictum placerat, augue. Sed molestie. Sed id risus",
     "price": 47.22,
     "stock": 41,
-    "alphanumeric": "TQKQ874EH"
+    "sku": "TQKQ874EH"
   },
   {
     "name": "Donec",
     "description": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Curabitur sed tortor. Integer aliquam adipiscing lacus. Ut",
     "price": 50.79,
     "stock": 68,
-    "alphanumeric": "DVOZ958ZF"
+    "sku": "DVOZ958ZF"
   },
   {
     "name": "tellus sem",
     "description": "dolor. Fusce mi lorem, vehicula et, rutrum eu, ultrices sit amet, risus. Donec nibh",
     "price": 46.21,
     "stock": 86,
-    "alphanumeric": "WSFJ180WW"
+    "sku": "WSFJ180WW"
   },
   {
     "name": "dolor sit",
     "description": "penatibus et magnis dis parturient montes, nascetur ridiculus mus. Proin vel nisl. Quisque fringilla euismod enim. Etiam gravida molestie",
     "price": 53.42,
     "stock": 36,
-    "alphanumeric": "PKJQ585HT"
+    "sku": "PKJQ585HT"
   },
   {
     "name": "parturient montes, nascetur ridiculus",
     "description": "montes, nascetur ridiculus mus. Aenean eget magna. Suspendisse tristique neque venenatis lacus. Etiam bibendum",
     "price": 51.28,
     "stock": 31,
-    "alphanumeric": "DCYS511VX"
+    "sku": "DCYS511VX"
   },
   {
     "name": "aliquet, metus urna convallis",
     "description": "lorem semper auctor. Mauris vel turpis. Aliquam adipiscing lobortis risus. In mi pede, nonummy ut, molestie",
     "price": 51.72,
     "stock": 53,
-    "alphanumeric": "SCSD570OV"
+    "sku": "SCSD570OV"
   },
   {
     "name": "sagittis placerat. Cras dictum ultricies",
     "description": "ac orci. Ut semper pretium neque. Morbi quis urna. Nunc quis arcu vel quam dignissim pharetra. Nam ac",
     "price": 53.08,
     "stock": 38,
-    "alphanumeric": "OQKD211LF"
+    "sku": "OQKD211LF"
   },
   {
     "name": "placerat, orci",
     "description": "blandit congue. In scelerisque scelerisque dui. Suspendisse ac metus vitae velit egestas lacinia. Sed congue, elit sed consequat auctor,",
     "price": 48.94,
     "stock": 38,
-    "alphanumeric": "LXIJ839HU"
+    "sku": "LXIJ839HU"
   },
   {
     "name": "purus gravida sagittis. Duis gravida.",
     "description": "imperdiet non, vestibulum nec, euismod in, dolor. Fusce feugiat. Lorem ipsum",
     "price": 55.28,
     "stock": 89,
-    "alphanumeric": "ULHO849XX"
+    "sku": "ULHO849XX"
   },
   {
     "name": "elit, dictum",
     "description": "Nulla semper tellus id nunc interdum feugiat. Sed nec metus facilisis lorem",
     "price": 49.59,
     "stock": 59,
-    "alphanumeric": "ZPHD196WN"
+    "sku": "ZPHD196WN"
   },
   {
     "name": "aliquet, sem ut cursus luctus,",
     "description": "nisl arcu iaculis enim, sit amet ornare lectus justo eu arcu. Morbi sit amet massa. Quisque porttitor eros",
     "price": 52.64,
     "stock": 45,
-    "alphanumeric": "JSLK971GJ"
+    "sku": "JSLK971GJ"
   },
   {
     "name": "Aliquam",
     "description": "sem, vitae aliquam eros turpis non enim. Mauris quis turpis vitae purus gravida sagittis. Duis gravida. Praesent",
     "price": 48.21,
     "stock": 14,
-    "alphanumeric": "WXDF067HG"
+    "sku": "WXDF067HG"
   },
   {
     "name": "mi tempor lorem, eget mollis",
     "description": "sapien, gravida non, sollicitudin a, malesuada id, erat. Etiam vestibulum massa rutrum magna. Cras convallis",
     "price": 52.6,
     "stock": 76,
-    "alphanumeric": "TOSM516BP"
+    "sku": "TOSM516BP"
   },
   {
     "name": "lacus vestibulum",
     "description": "fringilla ornare placerat, orci lacus vestibulum lorem, sit amet ultricies sem magna nec quam. Curabitur",
     "price": 51.6,
     "stock": 60,
-    "alphanumeric": "BEGZ565GK"
+    "sku": "BEGZ565GK"
   },
   {
     "name": "orci, in",
     "description": "consequat enim diam vel arcu. Curabitur ut odio vel est tempor bibendum. Donec",
     "price": 50.87,
     "stock": 26,
-    "alphanumeric": "XEJB522LW"
+    "sku": "XEJB522LW"
   },
   {
     "name": "rutrum non,",
     "description": "rutrum lorem ac risus. Morbi metus. Vivamus euismod urna. Nullam lobortis quam a felis ullamcorper viverra. Maecenas",
     "price": 48.93,
     "stock": 74,
-    "alphanumeric": "FYSC656PE"
+    "sku": "FYSC656PE"
   },
   {
     "name": "imperdiet, erat nonummy ultricies ornare,",
     "description": "velit in aliquet lobortis, nisi nibh lacinia orci, consectetuer euismod est arcu ac orci. Ut semper",
     "price": 50.64,
     "stock": 84,
-    "alphanumeric": "NXTP967JC"
+    "sku": "NXTP967JC"
   },
   {
     "name": "id risus quis diam luctus",
     "description": "enim nec tempus scelerisque, lorem ipsum sodales purus, in molestie tortor nibh sit amet",
     "price": 46.57,
     "stock": 54,
-    "alphanumeric": "RHNF839PG"
+    "sku": "RHNF839PG"
   },
   {
     "name": "dictum cursus. Nunc mauris elit,",
     "description": "adipiscing elit. Aliquam auctor, velit eget laoreet posuere, enim nisl elementum purus, accumsan",
     "price": 51.1,
     "stock": 6,
-    "alphanumeric": "KLRT862WS"
+    "sku": "KLRT862WS"
   },
   {
     "name": "Suspendisse aliquet molestie",
     "description": "torquent per conubia nostra, per inceptos hymenaeos. Mauris ut quam vel sapien",
     "price": 50.91,
     "stock": 42,
-    "alphanumeric": "TCIY924GJ"
+    "sku": "TCIY924GJ"
   },
   {
     "name": "Nam tempor diam dictum sapien.",
     "description": "Duis cursus, diam at pretium aliquet, metus urna convallis erat, eget tincidunt dui augue eu tellus. Phasellus",
     "price": 50.03,
     "stock": 64,
-    "alphanumeric": "SKWS258YB"
+    "sku": "SKWS258YB"
   },
   {
     "name": "sed dictum",
     "description": "augue id ante dictum cursus. Nunc mauris elit, dictum eu, eleifend nec, malesuada ut, sem.",
     "price": 52.86,
     "stock": 80,
-    "alphanumeric": "CHXB321KT"
+    "sku": "CHXB321KT"
   },
   {
     "name": "lobortis augue scelerisque mollis.",
     "description": "Mauris magna. Duis dignissim tempor arcu. Vestibulum ut eros non enim commodo hendrerit. Donec porttitor tellus non",
     "price": 50.55,
     "stock": 95,
-    "alphanumeric": "RGSY499HQ"
+    "sku": "RGSY499HQ"
   },
   {
     "name": "Donec tincidunt. Donec vitae erat",
     "description": "vulputate, posuere vulputate, lacus. Cras interdum. Nunc sollicitudin commodo ipsum. Suspendisse non leo. Vivamus nibh dolor,",
     "price": 52.17,
     "stock": 91,
-    "alphanumeric": "ZAOV477YT"
+    "sku": "ZAOV477YT"
   },
   {
     "name": "fringilla, porttitor vulputate, posuere vulputate,",
     "description": "nunc. Quisque ornare tortor at risus. Nunc ac sem ut dolor dapibus",
     "price": 50.78,
     "stock": 9,
-    "alphanumeric": "IRHL516KW"
+    "sku": "IRHL516KW"
   },
   {
     "name": "egestas a, dui.",
     "description": "aliquet, sem ut cursus luctus, ipsum leo elementum sem, vitae aliquam eros turpis non",
     "price": 47.86,
     "stock": 54,
-    "alphanumeric": "ESIP121OE"
+    "sku": "ESIP121OE"
   },
   {
     "name": "dapibus ligula. Aliquam erat volutpat.",
     "description": "Mauris non dui nec urna suscipit nonummy. Fusce fermentum fermentum arcu.",
     "price": 53.17,
     "stock": 39,
-    "alphanumeric": "WFZT638DC"
+    "sku": "WFZT638DC"
   },
   {
     "name": "Phasellus dolor",
     "description": "at augue id ante dictum cursus. Nunc mauris elit, dictum eu, eleifend nec, malesuada ut, sem. Nulla interdum. Curabitur",
     "price": 47.69,
     "stock": 51,
-    "alphanumeric": "IPYH783TL"
+    "sku": "IPYH783TL"
   },
   {
     "name": "auctor velit. Aliquam nisl.",
     "description": "Quisque nonummy ipsum non arcu. Vivamus sit amet risus. Donec egestas. Aliquam nec enim. Nunc ut erat. Sed",
     "price": 49.01,
     "stock": 41,
-    "alphanumeric": "OELQ092BI"
+    "sku": "OELQ092BI"
   },
   {
     "name": "morbi tristique senectus",
     "description": "lacus. Cras interdum. Nunc sollicitudin commodo ipsum. Suspendisse non leo. Vivamus nibh dolor, nonummy ac,",
     "price": 49.88,
     "stock": 68,
-    "alphanumeric": "FQJY077ER"
+    "sku": "FQJY077ER"
   },
   {
     "name": "Nam interdum",
     "description": "adipiscing. Mauris molestie pharetra nibh. Aliquam ornare, libero at auctor ullamcorper, nisl arcu iaculis enim, sit amet ornare",
     "price": 48.78,
     "stock": 93,
-    "alphanumeric": "DYYR454AQ"
+    "sku": "DYYR454AQ"
   },
   {
     "name": "amet ornare lectus justo eu",
     "description": "tincidunt dui augue eu tellus. Phasellus elit pede, malesuada vel,",
     "price": 49.24,
     "stock": 11,
-    "alphanumeric": "KUKJ524ET"
+    "sku": "KUKJ524ET"
   },
   {
     "name": "vitae sodales nisi magna",
     "description": "purus. Maecenas libero est, congue a, aliquet vel, vulputate eu, odio. Phasellus at augue id ante dictum",
     "price": 51.72,
     "stock": 65,
-    "alphanumeric": "GXBE515ES"
+    "sku": "GXBE515ES"
   },
   {
     "name": "molestie sodales. Mauris blandit enim",
     "description": "Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos hymenaeos. Mauris",
     "price": 53.64,
     "stock": 48,
-    "alphanumeric": "ZNMH816XD"
+    "sku": "ZNMH816XD"
   },
   {
     "name": "lectus rutrum",
     "description": "velit. Pellentesque ultricies dignissim lacus. Aliquam rutrum lorem ac risus. Morbi metus. Vivamus",
     "price": 50.58,
     "stock": 19,
-    "alphanumeric": "EZBS188SB"
+    "sku": "EZBS188SB"
   },
   {
     "name": "blandit enim consequat purus.",
     "description": "commodo ipsum. Suspendisse non leo. Vivamus nibh dolor, nonummy ac, feugiat non, lobortis quis, pede. Suspendisse dui. Fusce diam",
     "price": 50.05,
     "stock": 36,
-    "alphanumeric": "ZROS672OQ"
+    "sku": "ZROS672OQ"
   },
   {
     "name": "nunc nulla vulputate dui, nec tempus",
     "description": "Aliquam tincidunt, nunc ac mattis ornare, lectus ante dictum mi, ac mattis velit justo nec ante.",
     "price": 53.46,
     "stock": 55,
-    "alphanumeric": "RKDU671TS"
+    "sku": "RKDU671TS"
   },
   {
     "name": "Aenean eget metus. In nec",
     "description": "quam. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Aliquam",
     "price": 46.71,
     "stock": 86,
-    "alphanumeric": "HCQS531VV"
+    "sku": "HCQS531VV"
   },
   {
     "name": "mi felis, adipiscing fringilla,",
     "description": "non sapien molestie orci tincidunt adipiscing. Mauris molestie pharetra nibh. Aliquam ornare, libero at auctor ullamcorper, nisl arcu",
     "price": 48.07,
     "stock": 55,
-    "alphanumeric": "MKMM458NM"
+    "sku": "MKMM458NM"
   },
   {
     "name": "est, mollis non, cursus",
     "description": "vehicula et, rutrum eu, ultrices sit amet, risus. Donec nibh enim, gravida",
     "price": 49.79,
     "stock": 20,
-    "alphanumeric": "UINR121ED"
+    "sku": "UINR121ED"
   },
   {
     "name": "Donec tincidunt. Donec vitae",
     "description": "malesuada fames ac turpis egestas. Aliquam fringilla cursus purus. Nullam scelerisque neque",
     "price": 54.21,
     "stock": 51,
-    "alphanumeric": "VEMN878IC"
+    "sku": "VEMN878IC"
   },
   {
     "name": "Integer in magna. Phasellus",
     "description": "In at pede. Cras vulputate velit eu sem. Pellentesque ut ipsum ac",
     "price": 50.82,
     "stock": 95,
-    "alphanumeric": "NLWO185VY"
+    "sku": "NLWO185VY"
   },
   {
     "name": "dapibus gravida. Aliquam tincidunt,",
     "description": "sed, facilisis vitae, orci. Phasellus dapibus quam quis diam. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac",
     "price": 51.86,
     "stock": 83,
-    "alphanumeric": "BKPP112VO"
+    "sku": "BKPP112VO"
   },
   {
     "name": "ante, iaculis",
     "description": "purus gravida sagittis. Duis gravida. Praesent eu nulla at sem molestie sodales.",
     "price": 47.67,
     "stock": 9,
-    "alphanumeric": "PGQR430PM"
+    "sku": "PGQR430PM"
   },
   {
     "name": "et magnis dis parturient",
     "description": "quis massa. Mauris vestibulum, neque sed dictum eleifend, nunc risus varius orci, in consequat enim",
     "price": 50.16,
     "stock": 69,
-    "alphanumeric": "ZQOS173AC"
+    "sku": "ZQOS173AC"
   },
   {
     "name": "neque non",
     "description": "Fusce aliquam, enim nec tempus scelerisque, lorem ipsum sodales purus, in molestie tortor nibh sit",
     "price": 50.8,
     "stock": 94,
-    "alphanumeric": "HBVL515UM"
+    "sku": "HBVL515UM"
   },
   {
     "name": "turpis. Nulla aliquet.",
     "description": "facilisi. Sed neque. Sed eget lacus. Mauris non dui nec urna suscipit nonummy.",
     "price": 50.83,
     "stock": 93,
-    "alphanumeric": "MVDH021ZO"
+    "sku": "MVDH021ZO"
   },
   {
     "name": "arcu. Sed et",
     "description": "malesuada fames ac turpis egestas. Aliquam fringilla cursus purus. Nullam scelerisque neque sed sem egestas blandit.",
     "price": 53.03,
     "stock": 15,
-    "alphanumeric": "EQTI369UH"
+    "sku": "EQTI369UH"
   },
   {
     "name": "blandit enim consequat purus. Maecenas libero",
     "description": "vulputate ullamcorper magna. Sed eu eros. Nam consequat dolor vitae dolor. Donec fringilla. Donec",
     "price": 45.38,
     "stock": 44,
-    "alphanumeric": "DJIO171TH"
+    "sku": "DJIO171TH"
   },
   {
     "name": "nostra, per inceptos hymenaeos. Mauris",
     "description": "bibendum fermentum metus. Aenean sed pede nec ante blandit viverra. Donec tempus, lorem fringilla ornare placerat, orci",
     "price": 48.4,
     "stock": 57,
-    "alphanumeric": "EEDT422JR"
+    "sku": "EEDT422JR"
   },
   {
     "name": "leo. Vivamus nibh",
     "description": "neque. Nullam nisl. Maecenas malesuada fringilla est. Mauris eu turpis. Nulla aliquet. Proin velit. Sed malesuada",
     "price": 48.33,
     "stock": 70,
-    "alphanumeric": "XBLU269WP"
+    "sku": "XBLU269WP"
   },
   {
     "name": "nunc.",
     "description": "sem, consequat nec, mollis vitae, posuere at, velit. Cras lorem lorem, luctus ut, pellentesque eget, dictum placerat, augue.",
     "price": 47.21,
     "stock": 14,
-    "alphanumeric": "XHBL986JM"
+    "sku": "XHBL986JM"
   },
   {
     "name": "penatibus et magnis dis",
     "description": "nunc id enim. Curabitur massa. Vestibulum accumsan neque et nunc. Quisque ornare tortor at",
     "price": 49.62,
     "stock": 41,
-    "alphanumeric": "HYKU425NL"
+    "sku": "HYKU425NL"
   },
   {
     "name": "nulla at sem molestie sodales. Mauris",
     "description": "tempor diam dictum sapien. Aenean massa. Integer vitae nibh. Donec est mauris, rhoncus",
     "price": 49.03,
     "stock": 26,
-    "alphanumeric": "DQBN428AY"
+    "sku": "DQBN428AY"
   },
   {
     "name": "tellus. Nunc lectus",
     "description": "Fusce aliquet magna a neque. Nullam ut nisi a odio semper cursus. Integer",
     "price": 48.89,
     "stock": 11,
-    "alphanumeric": "QTYH280OJ"
+    "sku": "QTYH280OJ"
   },
   {
     "name": "ac",
     "description": "sodales. Mauris blandit enim consequat purus. Maecenas libero est, congue a, aliquet vel, vulputate eu, odio. Phasellus at",
     "price": 49.65,
     "stock": 10,
-    "alphanumeric": "CMGK360JI"
+    "sku": "CMGK360JI"
   },
   {
     "name": "dictum ultricies ligula.",
     "description": "Aliquam erat volutpat. Nulla dignissim. Maecenas ornare egestas ligula. Nullam feugiat placerat",
     "price": 50.89,
     "stock": 45,
-    "alphanumeric": "QJTR278KR"
+    "sku": "QJTR278KR"
   },
   {
     "name": "eu augue",
     "description": "lorem, sit amet ultricies sem magna nec quam. Curabitur vel lectus. Cum",
     "price": 45.76,
     "stock": 40,
-    "alphanumeric": "WYEU468RW"
+    "sku": "WYEU468RW"
   },
   {
     "name": "Nulla facilisis. Suspendisse",
     "description": "urna suscipit nonummy. Fusce fermentum fermentum arcu. Vestibulum ante ipsum primis in faucibus orci",
     "price": 56.18,
     "stock": 19,
-    "alphanumeric": "XQQR821NX"
+    "sku": "XQQR821NX"
   },
   {
     "name": "rutrum lorem ac",
     "description": "neque. In ornare sagittis felis. Donec tempor, est ac mattis semper, dui lectus rutrum urna, nec luctus felis",
     "price": 48.79,
     "stock": 73,
-    "alphanumeric": "DPKD736LB"
+    "sku": "DPKD736LB"
   },
   {
     "name": "volutpat",
     "description": "non, sollicitudin a, malesuada id, erat. Etiam vestibulum massa rutrum magna. Cras convallis",
     "price": 50.29,
     "stock": 51,
-    "alphanumeric": "HGSC167XD"
+    "sku": "HGSC167XD"
   },
   {
     "name": "Sed",
     "description": "Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Proin vel arcu eu odio",
     "price": 50.1,
     "stock": 70,
-    "alphanumeric": "MTOY301KU"
+    "sku": "MTOY301KU"
   },
   {
     "name": "volutpat. Nulla facilisis.",
     "description": "mi lorem, vehicula et, rutrum eu, ultrices sit amet, risus. Donec nibh enim, gravida sit amet,",
     "price": 49.9,
     "stock": 86,
-    "alphanumeric": "JLOT794JR"
+    "sku": "JLOT794JR"
   },
   {
     "name": "massa. Quisque porttitor eros",
     "description": "in felis. Nulla tempor augue ac ipsum. Phasellus vitae mauris sit amet lorem",
     "price": 44.97,
     "stock": 53,
-    "alphanumeric": "KNFD936DO"
+    "sku": "KNFD936DO"
   },
   {
     "name": "nunc sed pede. Cum",
     "description": "Vivamus rhoncus. Donec est. Nunc ullamcorper, velit in aliquet lobortis, nisi nibh lacinia orci, consectetuer euismod",
     "price": 53.11,
     "stock": 78,
-    "alphanumeric": "PBYB226PX"
+    "sku": "PBYB226PX"
   },
   {
     "name": "purus, accumsan interdum",
     "description": "mi eleifend egestas. Sed pharetra, felis eget varius ultrices, mauris ipsum porta elit, a feugiat tellus lorem eu metus.",
     "price": 53.15,
     "stock": 19,
-    "alphanumeric": "UVBH175DJ"
+    "sku": "UVBH175DJ"
   },
   {
     "name": "Donec sollicitudin adipiscing ligula.",
     "description": "et netus et malesuada fames ac turpis egestas. Aliquam fringilla cursus purus. Nullam scelerisque neque",
     "price": 52.09,
     "stock": 83,
-    "alphanumeric": "FBQM261KI"
+    "sku": "FBQM261KI"
   },
   {
     "name": "Maecenas",
     "description": "sit amet, consectetuer adipiscing elit. Etiam laoreet, libero et tristique pellentesque, tellus sem mollis dui, in",
     "price": 48.51,
     "stock": 35,
-    "alphanumeric": "QGRF296OA"
+    "sku": "QGRF296OA"
   },
   {
     "name": "Duis cursus,",
     "description": "ridiculus mus. Donec dignissim magna a tortor. Nunc commodo auctor velit. Aliquam nisl. Nulla eu neque pellentesque massa lobortis ultrices.",
     "price": 49.25,
     "stock": 41,
-    "alphanumeric": "WGFJ112ZU"
+    "sku": "WGFJ112ZU"
   },
   {
     "name": "pharetra,",
     "description": "libero nec ligula consectetuer rhoncus. Nullam velit dui, semper et, lacinia vitae, sodales at, velit. Pellentesque ultricies",
     "price": 49.23,
     "stock": 27,
-    "alphanumeric": "NOWI249KL"
+    "sku": "NOWI249KL"
   },
   {
     "name": "Aliquam ultrices",
     "description": "malesuada vel, venenatis vel, faucibus id, libero. Donec consectetuer mauris id sapien. Cras dolor dolor, tempus non, lacinia",
     "price": 47.85,
     "stock": 59,
-    "alphanumeric": "QMQF431XD"
+    "sku": "QMQF431XD"
   },
   {
     "name": "mauris, aliquam eu, accumsan sed,",
     "description": "mollis. Integer tincidunt aliquam arcu. Aliquam ultrices iaculis odio. Nam interdum enim",
     "price": 51.01,
     "stock": 78,
-    "alphanumeric": "HXWR638DA"
+    "sku": "HXWR638DA"
   },
   {
     "name": "odio. Nam interdum",
     "description": "eu tempor erat neque non quam. Pellentesque habitant morbi tristique",
     "price": 51.35,
     "stock": 40,
-    "alphanumeric": "AJXP883MV"
+    "sku": "AJXP883MV"
   },
   {
     "name": "lectus ante dictum mi, ac mattis",
     "description": "enim. Curabitur massa. Vestibulum accumsan neque et nunc. Quisque ornare tortor at risus. Nunc ac sem ut",
     "price": 52.43,
     "stock": 74,
-    "alphanumeric": "LDFZ543EK"
+    "sku": "LDFZ543EK"
   },
   {
     "name": "ultrices posuere",
     "description": "dignissim. Maecenas ornare egestas ligula. Nullam feugiat placerat velit. Quisque varius. Nam",
     "price": 49.67,
     "stock": 60,
-    "alphanumeric": "FRLS818WK"
+    "sku": "FRLS818WK"
   },
   {
     "name": "ullamcorper magna. Sed eu eros.",
     "description": "vel sapien imperdiet ornare. In faucibus. Morbi vehicula. Pellentesque tincidunt tempus risus. Donec egestas. Duis ac arcu. Nunc mauris. Morbi",
     "price": 53.29,
     "stock": 49,
-    "alphanumeric": "QFWW139CR"
+    "sku": "QFWW139CR"
   },
   {
     "name": "mollis",
     "description": "metus facilisis lorem tristique aliquet. Phasellus fermentum convallis ligula. Donec",
     "price": 50.14,
     "stock": 19,
-    "alphanumeric": "NUAX827EG"
+    "sku": "NUAX827EG"
   },
   {
     "name": "Lorem ipsum",
     "description": "egestas lacinia. Sed congue, elit sed consequat auctor, nunc nulla vulputate dui, nec",
     "price": 50.55,
     "stock": 34,
-    "alphanumeric": "DOKM841CN"
+    "sku": "DOKM841CN"
   },
   {
     "name": "nostra,",
     "description": "vulputate ullamcorper magna. Sed eu eros. Nam consequat dolor vitae dolor. Donec fringilla. Donec feugiat metus sit amet",
     "price": 53.01,
     "stock": 62,
-    "alphanumeric": "AGHG290CZ"
+    "sku": "AGHG290CZ"
   },
   {
     "name": "Nam porttitor",
     "description": "sit amet, consectetuer adipiscing elit. Aliquam auctor, velit eget laoreet posuere, enim nisl elementum",
     "price": 46.85,
     "stock": 80,
-    "alphanumeric": "HHXK392SY"
+    "sku": "HHXK392SY"
   },
   {
     "name": "sed, sapien.",
     "description": "tellus eu augue porttitor interdum. Sed auctor odio a purus. Duis elementum,",
     "price": 49.56,
     "stock": 11,
-    "alphanumeric": "JCKF084SM"
+    "sku": "JCKF084SM"
   },
   {
     "name": "fringilla. Donec feugiat",
     "description": "elit. Etiam laoreet, libero et tristique pellentesque, tellus sem mollis dui, in sodales elit erat vitae risus.",
     "price": 51.17,
     "stock": 95,
-    "alphanumeric": "DOOF466AL"
+    "sku": "DOOF466AL"
   },
   {
     "name": "sapien. Cras",
     "description": "augue eu tellus. Phasellus elit pede, malesuada vel, venenatis vel, faucibus id, libero. Donec consectetuer mauris id",
     "price": 47.13,
     "stock": 27,
-    "alphanumeric": "HISJ755DG"
+    "sku": "HISJ755DG"
   },
   {
     "name": "eget nisi dictum augue malesuada",
     "description": "a nunc. In at pede. Cras vulputate velit eu sem. Pellentesque ut ipsum ac mi eleifend egestas. Sed pharetra,",
     "price": 51.83,
     "stock": 23,
-    "alphanumeric": "KEUG373UM"
+    "sku": "KEUG373UM"
   },
   {
     "name": "vulputate, nisi sem semper",
     "description": "fermentum metus. Aenean sed pede nec ante blandit viverra. Donec tempus, lorem",
     "price": 47.3,
     "stock": 12,
-    "alphanumeric": "BQNI961EL"
+    "sku": "BQNI961EL"
   },
   {
     "name": "Aliquam nec enim. Nunc",
     "description": "velit eu sem. Pellentesque ut ipsum ac mi eleifend egestas. Sed pharetra,",
     "price": 50.71,
     "stock": 34,
-    "alphanumeric": "PYFT881RP"
+    "sku": "PYFT881RP"
   },
   {
     "name": "Praesent eu dui. Cum sociis",
     "description": "nunc, ullamcorper eu, euismod ac, fermentum vel, mauris. Integer sem elit, pharetra ut, pharetra sed,",
     "price": 54.35,
     "stock": 77,
-    "alphanumeric": "ERJX441HC"
+    "sku": "ERJX441HC"
   },
   {
     "name": "sed consequat auctor, nunc nulla",
     "description": "Vivamus nisi. Mauris nulla. Integer urna. Vivamus molestie dapibus ligula.",
     "price": 49.49,
     "stock": 38,
-    "alphanumeric": "EGYH808OW"
+    "sku": "EGYH808OW"
   },
   {
     "name": "libero est, congue a,",
     "description": "in consequat enim diam vel arcu. Curabitur ut odio vel est tempor bibendum. Donec felis orci,",
     "price": 49.08,
     "stock": 86,
-    "alphanumeric": "PXWB422QM"
+    "sku": "PXWB422QM"
   },
   {
     "name": "auctor, nunc nulla",
     "description": "convallis in, cursus et, eros. Proin ultrices. Duis volutpat nunc sit amet metus. Aliquam erat volutpat. Nulla",
     "price": 52.3,
     "stock": 86,
-    "alphanumeric": "QJPS411YM"
+    "sku": "QJPS411YM"
   },
   {
     "name": "Cras eget",
     "description": "blandit mattis. Cras eget nisi dictum augue malesuada malesuada. Integer id magna et ipsum cursus vestibulum. Mauris magna.",
     "price": 48.35,
     "stock": 50,
-    "alphanumeric": "YSSB642JS"
+    "sku": "YSSB642JS"
   },
   {
     "name": "tincidunt tempus risus. Donec",
     "description": "lectus rutrum urna, nec luctus felis purus ac tellus. Suspendisse sed dolor. Fusce mi lorem, vehicula et, rutrum eu,",
     "price": 48.44,
     "stock": 100,
-    "alphanumeric": "QEUM557NN"
+    "sku": "QEUM557NN"
   },
   {
     "name": "enim. Curabitur massa. Vestibulum accumsan",
     "description": "eu augue porttitor interdum. Sed auctor odio a purus. Duis elementum, dui quis accumsan convallis, ante lectus convallis est,",
     "price": 51.44,
     "stock": 20,
-    "alphanumeric": "JVMW622DU"
+    "sku": "JVMW622DU"
   },
   {
     "name": "id, libero. Donec consectetuer",
     "description": "at risus. Nunc ac sem ut dolor dapibus gravida. Aliquam tincidunt, nunc ac mattis ornare,",
     "price": 53.45,
     "stock": 55,
-    "alphanumeric": "NFXX456PL"
+    "sku": "NFXX456PL"
   },
   {
     "name": "non ante bibendum",
     "description": "Etiam gravida molestie arcu. Sed eu nibh vulputate mauris sagittis placerat. Cras dictum ultricies ligula. Nullam enim. Sed nulla ante,",
     "price": 48.48,
     "stock": 77,
-    "alphanumeric": "XGWT035WW"
+    "sku": "XGWT035WW"
   },
   {
     "name": "tempor, est ac",
     "description": "magnis dis parturient montes, nascetur ridiculus mus. Proin vel nisl. Quisque fringilla euismod",
     "price": 51.23,
     "stock": 99,
-    "alphanumeric": "SLML378HJ"
+    "sku": "SLML378HJ"
   },
   {
     "name": "leo. Morbi neque",
     "description": "dolor elit, pellentesque a, facilisis non, bibendum sed, est. Nunc laoreet lectus quis massa. Mauris",
     "price": 48.23,
     "stock": 81,
-    "alphanumeric": "OOTL334PX"
+    "sku": "OOTL334PX"
   },
   {
     "name": "tempus scelerisque,",
     "description": "vel, faucibus id, libero. Donec consectetuer mauris id sapien. Cras dolor dolor,",
     "price": 48.95,
     "stock": 79,
-    "alphanumeric": "JNUB237AP"
+    "sku": "JNUB237AP"
   },
   {
     "name": "Proin mi.",
     "description": "scelerisque neque. Nullam nisl. Maecenas malesuada fringilla est. Mauris eu turpis. Nulla aliquet. Proin",
     "price": 53.02,
     "stock": 38,
-    "alphanumeric": "KUPK355NY"
+    "sku": "KUPK355NY"
   },
   {
     "name": "diam luctus",
     "description": "semper tellus id nunc interdum feugiat. Sed nec metus facilisis lorem tristique aliquet.",
     "price": 49.36,
     "stock": 27,
-    "alphanumeric": "FCRS675NL"
+    "sku": "FCRS675NL"
   }
 ]

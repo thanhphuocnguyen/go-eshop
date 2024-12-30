@@ -18,13 +18,12 @@ type GetAddressParams struct {
 }
 
 type CreateAddressParams struct {
-	Phone     string  `json:"phone" binding:"required,min=10,max=15"`
-	Address1  string  `json:"address_1" binding:"required"`
-	Address2  *string `json:"address_2,omitempty" binding:"omitempty"`
-	Ward      string  `json:"ward,omitempty" binding:"omitempty"`
-	District  string  `json:"district" binding:"required"`
-	City      string  `json:"city" binding:"required"`
-	IsDefault bool    `json:"is_default,omitempty" binding:"omitempty"`
+	Phone     string `json:"phone" binding:"required,min=10,max=15"`
+	Street    string `json:"street" binding:"required"`
+	Ward      string `json:"ward,omitempty" binding:"omitempty"`
+	District  string `json:"district" binding:"required"`
+	City      string `json:"city" binding:"required"`
+	IsDefault bool   `json:"is_default,omitempty" binding:"omitempty"`
 }
 
 type UpdateAddressParams struct {
@@ -54,8 +53,7 @@ func mapAddressResponse(address sqlc.UserAddress) AddressResponse {
 	return AddressResponse{
 		ID:        address.ID,
 		Phone:     address.Phone,
-		Address1:  address.Address1,
-		Address2:  &address.Address2.String,
+		Address1:  address.Street,
 		Ward:      &address.Ward.String,
 		District:  address.District,
 		City:      address.City,
@@ -101,14 +99,11 @@ func (sv *Server) createAddress(c *gin.Context) {
 	payload := sqlc.CreateAddressParams{
 		UserID:   authPayload.UserID,
 		Phone:    req.Phone,
-		Address1: req.Address1,
+		Street:   req.Street,
 		City:     req.City,
 		District: req.District,
 	}
 
-	if req.Address2 != nil {
-		payload.Address2 = util.GetPgTypeText(*req.Address2)
-	}
 	if req.Ward != "" {
 		payload.Ward = util.GetPgTypeText(req.Ward)
 	}
@@ -210,24 +205,27 @@ func (sv *Server) updateAddress(c *gin.Context) {
 		ID:     param.ID,
 		UserID: authPayload.UserID,
 	}
+
 	if input.Phone != nil {
 		payload.Phone = util.GetPgTypeText(*input.Phone)
 	}
+
 	if input.City != nil {
 		payload.City = util.GetPgTypeText(*input.City)
 	}
+
 	if input.Address1 != nil {
-		payload.Address1 = util.GetPgTypeText(*input.Address1)
+		payload.Street = util.GetPgTypeText(*input.Address1)
 	}
-	if input.Address2 != nil {
-		payload.Address2 = util.GetPgTypeText(*input.Address2)
-	}
+
 	if input.Ward != nil {
 		payload.Ward = util.GetPgTypeText(*input.Ward)
 	}
+
 	if input.District != nil {
 		payload.District = util.GetPgTypeText(*input.District)
 	}
+
 	if input.IsDefault != nil {
 		if *input.IsDefault {
 			err := sv.postgres.SetPrimaryAddressTx(c, postgres.SetPrimaryAddressTxParams{

@@ -18,14 +18,14 @@ import (
 type createUserRequest struct {
 	Username string `json:"username" binding:"required,min=3,max=32,alphanum,lowercase"`
 	Password string `json:"password" binding:"required,min=6,max=32,alphanum"`
-	FullName string `json:"full_name" binding:"required,min=3,max=32"`
+	FullName string `json:"fullname" binding:"required,min=3,max=32"`
 	Phone    string `json:"phone" binding:"required,min=10,max=15"`
 	Email    string `json:"email" binding:"required,email,max=255,min=6"`
 }
 
 type userResponse struct {
 	Email             string            `json:"email"`
-	FullName          string            `json:"full_name"`
+	FullName          string            `json:"fullname"`
 	Username          string            `json:"username"`
 	CreatedAt         string            `json:"created_at"`
 	UpdatedAt         string            `json:"updated_at"`
@@ -47,7 +47,7 @@ type loginUserRequest struct {
 
 type updateUserRequest struct {
 	UserID   int64         `json:"user_id" binding:"required,min=1"`
-	FullName *string       `json:"full_name,omitempty" binding:"omitempty,min=3,max=32,alphanum"`
+	FullName *string       `json:"fullname,omitempty" binding:"omitempty,min=3,max=32,alphanum"`
 	Email    string        `json:"email" binding:"email,max=255,min=6"`
 	Role     sqlc.UserRole `json:"role"`
 }
@@ -65,7 +65,7 @@ type loginResponse struct {
 func mapToUserResponse(user sqlc.User) userResponse {
 	return userResponse{
 		Email:             user.Email,
-		FullName:          user.FullName,
+		FullName:          user.Fullname,
 		Username:          user.Username,
 		CreatedAt:         user.CreatedAt.String(),
 		UpdatedAt:         user.UpdatedAt.String(),
@@ -75,8 +75,7 @@ func mapToUserResponse(user sqlc.User) userResponse {
 
 func mapAddressToAddressResponse(address sqlc.UserAddress) addressResponse {
 	return addressResponse{
-		Address:  address.Address1,
-		Address2: address.Address2.String,
+		Address:  address.Street,
 		City:     address.City,
 		District: address.District,
 		Ward:     address.Ward.String,
@@ -104,6 +103,17 @@ func (sv *Server) createUser(c *gin.Context) {
 		return
 	}
 
+	_, err := sv.postgres.GetUserByUsername(c, req.Username)
+	if err != nil && !errors.Is(err, postgres.ErrorRecordNotFound) {
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
+
+	if err == nil {
+		c.JSON(http.StatusBadRequest, mapErrResp(fmt.Errorf("username %s is already taken", req.Username)))
+		return
+	}
+
 	hashedPassword, err := auth.HashPassword(req.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
@@ -113,7 +123,7 @@ func (sv *Server) createUser(c *gin.Context) {
 	arg := sqlc.CreateUserParams{
 		Username:       req.Username,
 		HashedPassword: hashedPassword,
-		FullName:       req.FullName,
+		Fullname:       req.FullName,
 		Email:          req.Email,
 		Phone:          req.Phone,
 	}
@@ -235,7 +245,7 @@ func (sv *Server) updateUser(c *gin.Context) {
 	}
 
 	if req.FullName != nil {
-		arg.FullName = util.GetPgTypeText(*req.FullName)
+		arg.Fullname = util.GetPgTypeText(*req.FullName)
 	}
 
 	if user.Role == sqlc.UserRoleAdmin {

@@ -652,7 +652,7 @@ definitions:
         type: string
       email:
         type: string
-      full_name:
+      fullname:
         type: string
       id:
         type: integer
@@ -862,7 +862,7 @@ definitions:
         type: string
       email:
         type: string
-      full_name:
+      fullname:
         type: string
       id:
         type: integer

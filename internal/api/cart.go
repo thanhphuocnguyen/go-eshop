@@ -201,11 +201,16 @@ func (sv *Server) addCartItem(c *gin.Context) {
 	cart, err := sv.postgres.GetCart(c, authPayload.UserID)
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
-			c.JSON(http.StatusNotFound, mapErrResp(errors.New("cart not found")))
+			cart, err = sv.postgres.CreateCart(c, authPayload.UserID)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, mapErrResp(err))
+				return
+			}
+		} else {
+			c.JSON(http.StatusInternalServerError, mapErrResp(err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
-		return
+
 	}
 
 	if cart.UserID != authPayload.UserID {

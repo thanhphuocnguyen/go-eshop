@@ -458,7 +458,7 @@ type User struct {
 	Username          string    `json:"username"`
 	Email             string    `json:"email"`
 	Phone             string    `json:"phone"`
-	FullName          string    `json:"full_name"`
+	Fullname          string    `json:"fullname"`
 	HashedPassword    string    `json:"hashed_password"`
 	VerifiedEmail     bool      `json:"verified_email"`
 	VerifiedPhone     bool      `json:"verified_phone"`
@@ -471,8 +471,7 @@ type UserAddress struct {
 	ID        int64              `json:"id"`
 	UserID    int64              `json:"user_id"`
 	Phone     string             `json:"phone"`
-	Address1  string             `json:"address_1"`
-	Address2  pgtype.Text        `json:"address_2"`
+	Street    string             `json:"street"`
 	Ward      pgtype.Text        `json:"ward"`
 	District  string             `json:"district"`
 	City      string             `json:"city"`

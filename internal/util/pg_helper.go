@@ -35,3 +35,31 @@ func GetPgTypeTimestamp(value time.Time) pgtype.Timestamptz {
 		Valid: true,
 	}
 }
+
+func GetPgTypeInt4(value int32) pgtype.Int4 {
+	return pgtype.Int4{
+		Int32: value,
+		Valid: true,
+	}
+}
+
+func GetPgTypeInt8(value int64) pgtype.Int8 {
+	return pgtype.Int8{
+		Int64: value,
+		Valid: true,
+	}
+}
+
+func GetPgTypeFloat4(value float32) pgtype.Float4 {
+	return pgtype.Float4{
+		Float32: value,
+		Valid:   true,
+	}
+}
+
+func GetPgTypeFloat8(value float64) pgtype.Float8 {
+	return pgtype.Float8{
+		Float64: value,
+		Valid:   true,
+	}
+}

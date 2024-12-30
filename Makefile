@@ -25,10 +25,10 @@ sqlc:
 	sqlc generate
 build:
 	@echo "Building application..."
-	go build ./cmd/eshop
+	go build ./cmd/web
 run:
 	@echo "Running application..."
-	go run ./cmd/eshop --profile api
+	go run ./cmd/web --profile api
 run-docker:
 	@echo "Running docker..."
 	docker-compose up -d
