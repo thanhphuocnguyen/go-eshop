@@ -7,3 +7,5 @@ cpu.pprof
 mem.pprof
 block.pprof
 assets
+/seed
+/migrate
