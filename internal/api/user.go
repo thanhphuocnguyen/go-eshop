@@ -60,6 +60,11 @@ type loginResponse struct {
 	User                 userResponse `json:"user"`
 }
 
+type renewAccessTokenResp struct {
+	AccessToken          string        `json:"access_token"`
+	AccessTokenExpiresAt time.Duration `json:"access_token_expires_at"`
+}
+
 // ------------------------------ Mappers ------------------------------
 
 func mapToUserResponse(user sqlc.User) userResponse {
@@ -204,6 +209,73 @@ func (sv *Server) loginUser(c *gin.Context) {
 		User:                 mapToUserResponse(user),
 	}
 	c.JSON(http.StatusOK, GenericResponse[loginResponse]{&loginResp, nil, nil})
+}
+
+// refreshToken godoc
+// @Summary Refresh token
+// @Description Refresh token
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} renewAccessTokenResp
+// @Failure 401 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /users/refresh-token [post]
+func (sv *Server) refreshToken(c *gin.Context) {
+	refreshToken := c.GetHeader("Authorization")
+	if refreshToken == "" {
+		c.JSON(http.StatusUnauthorized, mapErrResp(fmt.Errorf("refresh token is required")))
+		return
+	}
+	refreshTokenPayload, err := sv.tokenGenerator.VerifyToken(refreshToken)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, mapErrResp(err))
+		return
+	}
+
+	session, err := sv.postgres.GetSession(c, refreshTokenPayload.ID)
+	if err != nil {
+		if errors.Is(err, postgres.ErrorRecordNotFound) {
+			c.JSON(http.StatusUnauthorized, mapErrResp(err))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
+
+	if session.UserID != refreshTokenPayload.UserID {
+		err := errors.New("refresh token is not valid")
+		c.JSON(http.StatusUnauthorized, mapErrResp(err))
+		return
+	}
+
+	if session.RefreshToken != refreshToken {
+		err := errors.New("refresh token is not valid")
+		c.JSON(http.StatusUnauthorized, mapErrResp(err))
+		return
+	}
+
+	if session.IsBlocked {
+		err := errors.New("session is blocked")
+		c.JSON(http.StatusUnauthorized, mapErrResp(err))
+		return
+	}
+
+	if time.Now().After(session.ExpiredAt) {
+		err := errors.New("refresh token was expired")
+		c.JSON(http.StatusUnauthorized, mapErrResp(err))
+		return
+	}
+	accessToken, _, err := sv.tokenGenerator.GenerateToken(session.UserID, refreshTokenPayload.Username, refreshTokenPayload.Role, sv.config.AccessTokenDuration)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, &renewAccessTokenResp{
+		AccessToken:          accessToken,
+		AccessTokenExpiresAt: sv.config.AccessTokenDuration,
+	})
 }
 
 // updateUser godoc

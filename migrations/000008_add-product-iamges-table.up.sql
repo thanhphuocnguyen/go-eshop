@@ -15,4 +15,5 @@ CREATE TABLE
     );
 
 CREATE INDEX ON images (product_id);
+
 CREATE INDEX ON images (variant_id);

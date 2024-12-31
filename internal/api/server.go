@@ -70,7 +70,7 @@ func (sv *Server) initializeRouter() {
 		{
 			user.POST("register", sv.createUser)
 			user.POST("login", sv.loginUser)
-			//TODO: user.POST("refresh-token", sv.refreshToken)
+			user.POST("refresh-token", sv.refreshToken)
 			userAuthRoutes := user.Group("").Use(authMiddleware(sv.tokenGenerator))
 			userAuthRoutes.GET("", sv.getUser)
 			userAuthRoutes.PATCH("", sv.updateUser)
