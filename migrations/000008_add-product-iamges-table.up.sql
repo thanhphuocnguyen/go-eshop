@@ -1,8 +1,8 @@
 CREATE TABLE
     images (
-        id SERIAL PRIMARY KEY,
-        product_id bigint REFERENCES products (id) ON DELETE CASCADE,
-        variant_id bigint REFERENCES product_variants (id) ON DELETE CASCADE,
+        image_id SERIAL PRIMARY KEY,
+        product_id bigint REFERENCES products (product_id) ON DELETE CASCADE,
+        variant_id bigint REFERENCES product_variants (variant_id) ON DELETE CASCADE,
         image_url TEXT NOT NULL, -- URL/path of the image
         external_id TEXT, -- ID of the image on cloudinary or other services
         is_primary BOOLEAN DEFAULT FALSE, -- Indicates the main image

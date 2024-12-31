@@ -45,7 +45,7 @@ VALUES
         $5,
         $6
     )
-RETURNING id, email, username, fullname, role, verified_email, verified_phone, created_at, updated_at
+RETURNING user_id, email, username, fullname, role, verified_email, verified_phone, created_at, updated_at
 `
 
 type CreateUserParams struct {
@@ -58,7 +58,7 @@ type CreateUserParams struct {
 }
 
 type CreateUserRow struct {
-	ID            int64     `json:"id"`
+	UserID        int64     `json:"user_id"`
 	Email         string    `json:"email"`
 	Username      string    `json:"username"`
 	Fullname      string    `json:"fullname"`
@@ -80,7 +80,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 	)
 	var i CreateUserRow
 	err := row.Scan(
-		&i.ID,
+		&i.UserID,
 		&i.Email,
 		&i.Username,
 		&i.Fullname,
@@ -97,17 +97,17 @@ const deleteUser = `-- name: DeleteUser :exec
 DELETE FROM
     users
 WHERE
-    id = $1
+    user_id = $1
 `
 
-func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
-	_, err := q.db.Exec(ctx, deleteUser, id)
+func (q *Queries) DeleteUser(ctx context.Context, userID int64) error {
+	_, err := q.db.Exec(ctx, deleteUser, userID)
 	return err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT
-    id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at
+    user_id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at
 FROM
     users
 WHERE
@@ -119,7 +119,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	row := q.db.QueryRow(ctx, getUserByEmail, email)
 	var i User
 	err := row.Scan(
-		&i.ID,
+		&i.UserID,
 		&i.Role,
 		&i.Username,
 		&i.Email,
@@ -137,19 +137,19 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 
 const getUserByID = `-- name: GetUserByID :one
 SELECT
-    id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at
+    user_id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at
 FROM
     users
 WHERE
-    id = $1
+    user_id = $1
 LIMIT 1
 `
 
-func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
-	row := q.db.QueryRow(ctx, getUserByID, id)
+func (q *Queries) GetUserByID(ctx context.Context, userID int64) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByID, userID)
 	var i User
 	err := row.Scan(
-		&i.ID,
+		&i.UserID,
 		&i.Role,
 		&i.Username,
 		&i.Email,
@@ -167,7 +167,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
 
 const getUserByUsername = `-- name: GetUserByUsername :one
 SELECT
-    id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at
+    user_id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at
 FROM
     users
 WHERE
@@ -179,7 +179,7 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 	row := q.db.QueryRow(ctx, getUserByUsername, username)
 	var i User
 	err := row.Scan(
-		&i.ID,
+		&i.UserID,
 		&i.Role,
 		&i.Username,
 		&i.Email,
@@ -197,11 +197,11 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 
 const listUsers = `-- name: ListUsers :many
 SELECT
-    id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at
+    user_id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at
 FROM
     users
 ORDER BY
-    id
+    user_id
 LIMIT $1
 OFFSET $2
 `
@@ -221,7 +221,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 	for rows.Next() {
 		var i User
 		if err := rows.Scan(
-			&i.ID,
+			&i.UserID,
 			&i.Role,
 			&i.Username,
 			&i.Email,
@@ -257,8 +257,8 @@ SET
     password_changed_at = coalesce($7, password_changed_at),
     updated_at = $8
 WHERE
-    id = $9
-RETURNING id, email, username, fullname, role, verified_email, verified_phone, created_at, updated_at
+    user_id = $9
+RETURNING user_id, email, username, fullname, role, verified_email, verified_phone, created_at, updated_at
 `
 
 type UpdateUserParams struct {
@@ -274,7 +274,7 @@ type UpdateUserParams struct {
 }
 
 type UpdateUserRow struct {
-	ID            int64     `json:"id"`
+	UserID        int64     `json:"user_id"`
 	Email         string    `json:"email"`
 	Username      string    `json:"username"`
 	Fullname      string    `json:"fullname"`
@@ -299,7 +299,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateU
 	)
 	var i UpdateUserRow
 	err := row.Scan(
-		&i.ID,
+		&i.UserID,
 		&i.Email,
 		&i.Username,
 		&i.Fullname,

@@ -75,7 +75,7 @@ func (s *Postgres) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxParams)
 		for i, item := range cartItems {
 			orderItem, err := s.CreateOrderItem(ctx, sqlc.CreateOrderItemParams{
 				ProductID: item.ProductID,
-				OrderID:   result.Order.ID,
+				OrderID:   result.Order.OrderID,
 				Quantity:  int32(item.Quantity),
 				Price:     item.ProductPrice,
 			})
@@ -87,7 +87,7 @@ func (s *Postgres) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxParams)
 
 			// update product stock
 			_, err = s.UpdateProduct(ctx, sqlc.UpdateProductParams{
-				ID: item.ProductID,
+				ProductID: item.ProductID,
 				Stock: pgtype.Int4{
 					Int32: item.ProductStock - int32(item.Quantity),
 					Valid: true,
@@ -101,7 +101,7 @@ func (s *Postgres) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxParams)
 
 		// create payment transaction
 		paymentRow, err := s.CreatePaymentTransaction(ctx, sqlc.CreatePaymentTransactionParams{
-			OrderID: result.Order.ID,
+			OrderID: result.Order.OrderID,
 			Amount:  util.GetPgNumericInt(totalPrice),
 			Method:  arg.PaymentMethod,
 		})

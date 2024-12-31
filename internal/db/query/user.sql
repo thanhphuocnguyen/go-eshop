@@ -17,7 +17,7 @@ VALUES
         $5,
         $6
     )
-RETURNING id, email, username, fullname, role, verified_email, verified_phone, created_at, updated_at;
+RETURNING user_id, email, username, fullname, role, verified_email, verified_phone, created_at, updated_at;
 
 -- name: GetUserByUsername :one
 SELECT
@@ -43,7 +43,7 @@ SELECT
 FROM
     users
 WHERE
-    id = $1
+    user_id = $1
 LIMIT 1;
 
 -- name: ListUsers :many
@@ -52,7 +52,7 @@ SELECT
 FROM
     users
 ORDER BY
-    id
+    user_id
 LIMIT $1
 OFFSET $2;
 
@@ -69,15 +69,15 @@ SET
     password_changed_at = coalesce(sqlc.narg('password_changed_at'), password_changed_at),
     updated_at = sqlc.arg('updated_at')
 WHERE
-    id = sqlc.arg('id')
-RETURNING id, email, username, fullname, role, verified_email, verified_phone, created_at, updated_at;
+    user_id = sqlc.arg('id')
+RETURNING user_id, email, username, fullname, role, verified_email, verified_phone, created_at, updated_at;
 
 
 -- name: DeleteUser :exec
 DELETE FROM
     users
 WHERE
-    id = $1;
+    user_id = $1;
 
 -- name: CountUsers :one
 SELECT

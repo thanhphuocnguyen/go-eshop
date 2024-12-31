@@ -2,7 +2,7 @@
 INSERT INTO images (product_id, variant_id, image_url, external_id) VALUES ($1, $2, $3, $4) RETURNING *;
 
 -- name: GetImageByID :one
-SELECT * FROM images WHERE id = $1 LIMIT 1;
+SELECT * FROM images WHERE image_id = $1 LIMIT 1;
 
 -- name: GetImageByExternalID :one
 SELECT * FROM images WHERE external_id = $1 LIMIT 1;
@@ -26,10 +26,10 @@ SET
     variant_id = COALESCE(sqlc.narg(variant_id), variant_id), 
     image_url = COALESCE(sqlc.narg(image_url), image_url), 
     external_id = COALESCE(sqlc.narg(external_id), external_id) 
-WHERE id = $1;
+WHERE image_id = $1;
 
 -- name: SetPrimaryImage :exec
-UPDATE images SET is_primary = TRUE WHERE id = $1;
+UPDATE images SET is_primary = TRUE WHERE image_id = $1;
 
 -- name: UnsetPrimaryImage :exec
 UPDATE
@@ -40,4 +40,4 @@ WHERE
     product_id = $1 AND is_primary = true;
 
 -- name: DeleteImage :exec
-DELETE FROM images WHERE id = $1;
+DELETE FROM images WHERE image_id = $1;

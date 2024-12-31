@@ -173,13 +173,13 @@ func (sv *Server) loginUser(c *gin.Context) {
 		return
 	}
 
-	token, payload, err := sv.tokenGenerator.GenerateToken(user.ID, user.Username, user.Role, sv.config.AccessTokenDuration)
+	token, payload, err := sv.tokenGenerator.GenerateToken(user.UserID, user.Username, user.Role, sv.config.AccessTokenDuration)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
-	refreshToken, rfPayload, err := sv.tokenGenerator.GenerateToken(user.ID, user.Username, user.Role, sv.config.RefreshTokenDuration)
+	refreshToken, rfPayload, err := sv.tokenGenerator.GenerateToken(user.UserID, user.Username, user.Role, sv.config.RefreshTokenDuration)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
@@ -187,8 +187,8 @@ func (sv *Server) loginUser(c *gin.Context) {
 
 	sessionID := uuid.New()
 	session, err := sv.postgres.CreateSession(c, sqlc.CreateSessionParams{
-		ID:           sessionID,
-		UserID:       user.ID,
+		SessionID:    sessionID,
+		UserID:       user.UserID,
 		RefreshToken: refreshToken,
 		UserAgent:    c.GetHeader("User-Agent"),
 		ClientIp:     c.ClientIP(),
@@ -201,7 +201,7 @@ func (sv *Server) loginUser(c *gin.Context) {
 		return
 	}
 	loginResp := loginResponse{
-		SessionID:            session.ID,
+		SessionID:            session.SessionID,
 		TokenExpireAt:        payload.ExpiredAt,
 		Token:                token,
 		RefreshToken:         refreshToken,
@@ -303,7 +303,7 @@ func (sv *Server) updateUser(c *gin.Context) {
 		return
 	}
 
-	if user.Role != sqlc.UserRoleAdmin && user.ID != req.UserID {
+	if user.Role != sqlc.UserRoleAdmin && user.UserID != req.UserID {
 		c.JSON(http.StatusUnauthorized, mapErrResp(err))
 		return
 	}
@@ -361,7 +361,7 @@ func (sv *Server) getUser(c *gin.Context) {
 		return
 	}
 
-	userAddress, err := sv.postgres.GetAddresses(c, user.ID)
+	userAddress, err := sv.postgres.GetAddresses(c, user.UserID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return

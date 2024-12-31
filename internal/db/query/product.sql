@@ -23,20 +23,20 @@ SELECT
 FROM
     products
 WHERE
-    id = $1 AND
+    product_id = $1 AND
     archived = COALESCE(sqlc.narg('archived'), FALSE);
 
 -- name: GetProductDetail :many
 SELECT
     sqlc.embed(products),
-    img.id AS image_id,
+    img.image_id AS image_id,
     img.image_url AS image_url,
     img.is_primary AS image_is_primary
 FROM
     products
-LEFT JOIN images AS img ON products.id = img.product_id
+LEFT JOIN images AS img ON products.product_id = img.product_id
 WHERE
-    products.id = $1 AND
+    products.product_id = $1 AND
     archived = COALESCE(sqlc.narg('archived'), false)
 ORDER BY
     img.is_primary DESC;
@@ -44,17 +44,17 @@ ORDER BY
 -- name: ListProducts :many
 SELECT
     products.*,
-    img.id AS image_id,
+    img.image_id AS image_id,
     img.image_url AS image_url
 FROM
     products
-LEFT JOIN images AS img ON products.id = img.product_id AND img.is_primary = TRUE
+LEFT JOIN images AS img ON products.product_id = img.product_id AND img.is_primary = TRUE
 WHERE
     archived = COALESCE(sqlc.narg('archived'), archived) AND
     name ILIKE COALESCE(sqlc.narg('name'), name) AND
     sku ILIKE COALESCE(sqlc.narg('sku'), sku)
 ORDER BY
-    products.id
+    products.product_id
 LIMIT $1
 OFFSET $2;
 
@@ -79,14 +79,14 @@ SET
     price = coalesce(sqlc.narg('price'), price),
     updated_at = NOW()
 WHERE
-    id = sqlc.arg('id')
+    product_id = sqlc.arg('product_id')
 RETURNING *;
 
 -- name: DeleteProduct :exec
 DELETE FROM
     products
 WHERE
-    id = $1;
+    product_id = $1;
 
 -- name: ArchiveProduct :exec
 UPDATE
@@ -95,7 +95,7 @@ SET
     archived = true,
     updated_at = NOW()
 WHERE
-    id = $1;
+    product_id = $1;
 
 -- name: UpdateProductStock :exec
 UPDATE
@@ -103,17 +103,17 @@ UPDATE
 SET
     stock = stock + $2
 WHERE
-    id = $1
+    product_id = $1
 RETURNING *;
 
 -- name: GetProductWithImage :one
 SELECT
     products.*,
-    img.id AS image_id,
+    img.image_id AS image_id,
     img.image_url AS image_url
 FROM
     products
-LEFT JOIN images AS img ON products.id = img.product_id AND img.is_primary = TRUE
+LEFT JOIN images AS img ON products.product_id = img.product_id AND img.is_primary = TRUE
 WHERE
-    products.id = $1 AND
+    products.product_id = $1 AND
     archived = COALESCE(sqlc.narg('archived'), false);

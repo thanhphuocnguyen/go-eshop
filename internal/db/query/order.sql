@@ -19,14 +19,14 @@ SELECT
 FROM
     orders
 WHERE
-    id = $1
+    order_id = $1
 LIMIT 1;
 
 -- name: GetOrderDetails :many
 SELECT
     orders.*, 
-    order_items.quantity, order_items.price as item_price, order_items.id as order_item_id,
-    products.name as product_name, products.id as product_id,
+    order_items.quantity, order_items.price as item_price, order_items.order_item_id as order_item_id,
+    products.name as product_name, products.product_id as product_id,
     user_addresses.street, user_addresses.ward, user_addresses.district, user_addresses.city, 
     images.image_url,
     payments.status as payment_status
@@ -35,19 +35,19 @@ FROM
 LEFT JOIN
     payments ON orders.id = payments.order_id
 LEFT JOIN
-    order_items ON order_items.order_id = orders.id
+    order_items ON order_items.order_id = orders.order_id
 LEFT JOIN
-    products ON order_items.product_id = products.id
+    products ON order_items.product_id = products.product_id
 LEFT JOIN 
     images ON products.id = images.product_id AND images.is_primary = true
 LEFT JOIN
-    user_addresses ON orders.user_address_id = user_addresses.id
+    user_addresses ON orders.user_address_id = user_addresses.user_address_id
 WHERE
-    orders.id = $1;
+    orders.order_id = $1;
 
 -- name: ListOrders :many
 SELECT
-    orders.*, payments.status as payment_status, COUNT(order_items.id) as total_items
+    orders.*, payments.status as payment_status, COUNT(order_items.order_item_id) as total_items
 FROM
     orders
 LEFT JOIN payments ON orders.id = payments.order_id
@@ -57,7 +57,7 @@ WHERE
     orders.status = COALESCE(sqlc.narg('status'), orders.status) AND
     orders.created_at >= COALESCE(sqlc.narg('start_date'), orders.created_at) AND
     orders.created_at <= COALESCE(sqlc.narg('end_date'), orders.created_at)
-GROUP BY orders.id, payments.status
+GROUP BY orders.order_id, payments.status
 ORDER BY
     orders.created_at DESC
 LIMIT $1
@@ -74,14 +74,14 @@ SET
     user_address_id = coalesce(sqlc.narg('user_address_id'), user_address_id),
     updated_at = now()
 WHERE
-    id = sqlc.arg('id')
+    order_id = sqlc.arg('order_id')
 RETURNING *;
 
 -- name: DeleteOrder :exec
 DELETE FROM
     orders
 WHERE
-    id = $1;
+    order_id = $1;
 
 -- name: CreateOrderItem :one
 INSERT INTO
@@ -108,7 +108,7 @@ FROM
 WHERE
     order_id = $1
 ORDER BY
-    id
+    order_item_id
 LIMIT $2
 OFFSET $3;
 

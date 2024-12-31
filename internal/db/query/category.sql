@@ -6,5 +6,5 @@ RETURNING *;
 -- name: GetCollection :one
 SELECT *
 FROM categories
-WHERE id = $1
+WHERE category_id = $1
 LIMIT 1;

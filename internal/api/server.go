@@ -12,7 +12,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/postgres"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
-	"github.com/thanhphuocnguyen/go-eshop/internal/uploadsrv"
+	"github.com/thanhphuocnguyen/go-eshop/internal/upload"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 )
 
@@ -30,10 +30,15 @@ type Server struct {
 	router          *gin.Engine
 	taskDistributor worker.TaskDistributor
 	tokenGenerator  auth.TokenGenerator
-	uploadService   uploadsrv.UploadService
+	uploadService   upload.UploadService
 }
 
-func NewAPI(cfg config.Config, postgres postgres.Store, taskDistributor worker.TaskDistributor, uploadService uploadsrv.UploadService) (*Server, error) {
+func NewAPI(
+	cfg config.Config,
+	postgres postgres.Store,
+	taskDistributor worker.TaskDistributor,
+	uploadService upload.UploadService,
+) (*Server, error) {
 	tokenGenerator := auth.NewPasetoTokenGenerator()
 	server := &Server{
 		tokenGenerator:  tokenGenerator,
@@ -121,7 +126,6 @@ func (sv *Server) initializeRouter() {
 			adminOrder := order.Use(roleMiddleware(sqlc.UserRoleAdmin))
 			adminOrder.PUT(":id/cancel", sv.cancelOrder)
 			adminOrder.PUT(":id/change-status", sv.changeOrderStatus)
-			adminOrder.PUT(":id/change-payment-status", sv.changeOrderPaymentStatus)
 		}
 
 		collection := v1.Group("/collection")
@@ -134,6 +138,11 @@ func (sv *Server) initializeRouter() {
 			collectionAuthRoutes.DELETE(":id", sv.removeCollection)
 			collectionAuthRoutes.POST(":id/product", sv.addProductToCollection)
 			collectionAuthRoutes.DELETE(":id/product", sv.deleteProductFromCollection)
+		}
+
+		payment := v1.Group("/payment").Use(authMiddleware(sv.tokenGenerator))
+		{
+			payment.POST("", sv.makePayment)
 		}
 	}
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))

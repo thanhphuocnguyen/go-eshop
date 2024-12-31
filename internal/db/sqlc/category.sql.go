@@ -14,7 +14,7 @@ import (
 const createCollection = `-- name: CreateCollection :one
 INSERT INTO categories (name, sort_order, image_url, published)
 VALUES ($1, $2, $3, $4)
-RETURNING id, name, sort_order, image_url, published, created_at, updated_at
+RETURNING category_id, name, sort_order, image_url, published, created_at, updated_at
 `
 
 type CreateCollectionParams struct {
@@ -33,7 +33,7 @@ func (q *Queries) CreateCollection(ctx context.Context, arg CreateCollectionPara
 	)
 	var i Category
 	err := row.Scan(
-		&i.ID,
+		&i.CategoryID,
 		&i.Name,
 		&i.SortOrder,
 		&i.ImageUrl,
@@ -45,17 +45,17 @@ func (q *Queries) CreateCollection(ctx context.Context, arg CreateCollectionPara
 }
 
 const getCollection = `-- name: GetCollection :one
-SELECT id, name, sort_order, image_url, published, created_at, updated_at
+SELECT category_id, name, sort_order, image_url, published, created_at, updated_at
 FROM categories
-WHERE id = $1
+WHERE category_id = $1
 LIMIT 1
 `
 
-func (q *Queries) GetCollection(ctx context.Context, id int32) (Category, error) {
-	row := q.db.QueryRow(ctx, getCollection, id)
+func (q *Queries) GetCollection(ctx context.Context, categoryID int32) (Category, error) {
+	row := q.db.QueryRow(ctx, getCollection, categoryID)
 	var i Category
 	err := row.Scan(
-		&i.ID,
+		&i.CategoryID,
 		&i.Name,
 		&i.SortOrder,
 		&i.ImageUrl,

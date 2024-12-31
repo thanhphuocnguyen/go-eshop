@@ -39,7 +39,7 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 	}
 
 	productDetailRows, err := sv.postgres.GetProductDetail(c, sqlc.GetProductDetailParams{
-		ID: param.ID,
+		ProductID: param.ID,
 	})
 
 	if err != nil {
@@ -66,7 +66,7 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 
 	img, err := sv.postgres.CreateImage(c, sqlc.CreateImageParams{
 		ProductID: pgtype.Int8{
-			Int64: productDetailRows[0].Product.ID,
+			Int64: productDetailRows[0].Product.ProductID,
 			Valid: true,
 		},
 		ImageUrl: url,
@@ -78,8 +78,8 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 
 	if !productDetailRows[0].ImageUrl.Valid {
 		err := sv.postgres.SetPrimaryImageTx(c, postgres.SetPrimaryImageTxParams{
-			NewPrimaryID: img.ID,
-			ProductID:    productDetailRows[0].Product.ID,
+			NewPrimaryID: img.ImageID,
+			ProductID:    productDetailRows[0].Product.ProductID,
 		})
 		if err == nil {
 			img.IsPrimary = pgtype.Bool{
@@ -150,7 +150,7 @@ func (sv *Server) setImagesPrimary(c *gin.Context) {
 	}
 
 	product, err := sv.postgres.GetProduct(c, sqlc.GetProductParams{
-		ID: params.ID,
+		ProductID: params.ID,
 	})
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
@@ -169,14 +169,14 @@ func (sv *Server) setImagesPrimary(c *gin.Context) {
 		return
 	}
 
-	if img.ProductID.Int64 != product.ID {
+	if img.ProductID.Int64 != product.ProductID {
 		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("image not found")))
 		return
 	}
 
 	err = sv.postgres.SetPrimaryImageTx(c, postgres.SetPrimaryImageTxParams{
-		NewPrimaryID: img.ID,
-		ProductID:    product.ID,
+		NewPrimaryID: img.ImageID,
+		ProductID:    product.ProductID,
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
@@ -219,7 +219,7 @@ func (sv *Server) removeProductImage(c *gin.Context) {
 	}
 
 	product, err := sv.postgres.GetProduct(c, sqlc.GetProductParams{
-		ID: param.ID,
+		ProductID: param.ID,
 	})
 
 	if err != nil {
@@ -241,7 +241,7 @@ func (sv *Server) removeProductImage(c *gin.Context) {
 		return
 	}
 
-	if img.ProductID.Int64 != product.ID {
+	if img.ProductID.Int64 != product.ProductID {
 		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("image not found")))
 		return
 	}
@@ -254,7 +254,7 @@ func (sv *Server) removeProductImage(c *gin.Context) {
 			return
 		}
 	}
-	err = sv.postgres.DeleteImage(c, img.ID)
+	err = sv.postgres.DeleteImage(c, img.ImageID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return

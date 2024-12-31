@@ -1,8 +1,8 @@
 CREATE TABLE
     "orders" (
-        "id" bigserial PRIMARY KEY,
-        "user_id" bigint NOT NULL REFERENCES "users" ("id"),
-        "user_address_id" bigint NOT NULL REFERENCES "user_addresses" ("id"),
+        "order_id" bigserial PRIMARY KEY,
+        "user_id" bigint NOT NULL REFERENCES "users" ("user_id"),
+        "user_address_id" bigint NOT NULL REFERENCES "user_addresses" ("user_address_id"),
         "total_price" DECIMAL(10, 2) NOT NULL,
         "status" order_status NOT NULL DEFAULT 'pending',
         "confirmed_at" timestamptz,
@@ -15,9 +15,9 @@ CREATE TABLE
 
 CREATE TABLE
     "order_items" (
-        "id" bigserial PRIMARY KEY,
-        "product_id" bigint NOT NULL REFERENCES "products" ("id"),
-        "order_id" bigint NOT NULL REFERENCES "orders" ("id") ON DELETE CASCADE,
+        "order_item_id" bigserial PRIMARY KEY,
+        "product_id" bigint NOT NULL REFERENCES "products" ("product_id"),
+        "order_id" bigint NOT NULL REFERENCES "orders" ("order_id") ON DELETE CASCADE,
         "quantity" int NOT NULL,
         "price" DECIMAL(10, 2) NOT NULL
     );

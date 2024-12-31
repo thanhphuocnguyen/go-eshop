@@ -56,7 +56,7 @@ VALUES
         $2,
         $3
     )
-RETURNING id, user_id, user_address_id, total_price, status, confirmed_at, delivered_at, cancelled_at, refunded_at, updated_at, created_at
+RETURNING order_id, user_id, user_address_id, total_price, status, confirmed_at, delivered_at, cancelled_at, refunded_at, updated_at, created_at
 `
 
 type CreateOrderParams struct {
@@ -69,7 +69,7 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 	row := q.db.QueryRow(ctx, createOrder, arg.UserID, arg.UserAddressID, arg.TotalPrice)
 	var i Order
 	err := row.Scan(
-		&i.ID,
+		&i.OrderID,
 		&i.UserID,
 		&i.UserAddressID,
 		&i.TotalPrice,
@@ -99,7 +99,7 @@ VALUES
         $3,
         $4
     )
-RETURNING id, product_id, order_id, quantity, price
+RETURNING order_item_id, product_id, order_id, quantity, price
 `
 
 type CreateOrderItemParams struct {
@@ -118,7 +118,7 @@ func (q *Queries) CreateOrderItem(ctx context.Context, arg CreateOrderItemParams
 	)
 	var i OrderItem
 	err := row.Scan(
-		&i.ID,
+		&i.OrderItemID,
 		&i.ProductID,
 		&i.OrderID,
 		&i.Quantity,
@@ -131,29 +131,29 @@ const deleteOrder = `-- name: DeleteOrder :exec
 DELETE FROM
     orders
 WHERE
-    id = $1
+    order_id = $1
 `
 
-func (q *Queries) DeleteOrder(ctx context.Context, id int64) error {
-	_, err := q.db.Exec(ctx, deleteOrder, id)
+func (q *Queries) DeleteOrder(ctx context.Context, orderID int64) error {
+	_, err := q.db.Exec(ctx, deleteOrder, orderID)
 	return err
 }
 
 const getOrder = `-- name: GetOrder :one
 SELECT
-    id, user_id, user_address_id, total_price, status, confirmed_at, delivered_at, cancelled_at, refunded_at, updated_at, created_at
+    order_id, user_id, user_address_id, total_price, status, confirmed_at, delivered_at, cancelled_at, refunded_at, updated_at, created_at
 FROM
     orders
 WHERE
-    id = $1
+    order_id = $1
 LIMIT 1
 `
 
-func (q *Queries) GetOrder(ctx context.Context, id int64) (Order, error) {
-	row := q.db.QueryRow(ctx, getOrder, id)
+func (q *Queries) GetOrder(ctx context.Context, orderID int64) (Order, error) {
+	row := q.db.QueryRow(ctx, getOrder, orderID)
 	var i Order
 	err := row.Scan(
-		&i.ID,
+		&i.OrderID,
 		&i.UserID,
 		&i.UserAddressID,
 		&i.TotalPrice,
@@ -170,9 +170,9 @@ func (q *Queries) GetOrder(ctx context.Context, id int64) (Order, error) {
 
 const getOrderDetails = `-- name: GetOrderDetails :many
 SELECT
-    orders.id, orders.user_id, orders.user_address_id, orders.total_price, orders.status, orders.confirmed_at, orders.delivered_at, orders.cancelled_at, orders.refunded_at, orders.updated_at, orders.created_at, 
-    order_items.quantity, order_items.price as item_price, order_items.id as order_item_id,
-    products.name as product_name, products.id as product_id,
+    orders.order_id, orders.user_id, orders.user_address_id, orders.total_price, orders.status, orders.confirmed_at, orders.delivered_at, orders.cancelled_at, orders.refunded_at, orders.updated_at, orders.created_at, 
+    order_items.quantity, order_items.price as item_price, order_items.order_item_id as order_item_id,
+    products.name as product_name, products.product_id as product_id,
     user_addresses.street, user_addresses.ward, user_addresses.district, user_addresses.city, 
     images.image_url,
     payments.status as payment_status
@@ -181,19 +181,19 @@ FROM
 LEFT JOIN
     payments ON orders.id = payments.order_id
 LEFT JOIN
-    order_items ON order_items.order_id = orders.id
+    order_items ON order_items.order_id = orders.order_id
 LEFT JOIN
-    products ON order_items.product_id = products.id
+    products ON order_items.product_id = products.product_id
 LEFT JOIN 
     images ON products.id = images.product_id AND images.is_primary = true
 LEFT JOIN
-    user_addresses ON orders.user_address_id = user_addresses.id
+    user_addresses ON orders.user_address_id = user_addresses.user_address_id
 WHERE
-    orders.id = $1
+    orders.order_id = $1
 `
 
 type GetOrderDetailsRow struct {
-	ID            int64              `json:"id"`
+	OrderID       int64              `json:"order_id"`
 	UserID        int64              `json:"user_id"`
 	UserAddressID int64              `json:"user_address_id"`
 	TotalPrice    pgtype.Numeric     `json:"total_price"`
@@ -217,8 +217,8 @@ type GetOrderDetailsRow struct {
 	PaymentStatus NullPaymentStatus  `json:"payment_status"`
 }
 
-func (q *Queries) GetOrderDetails(ctx context.Context, id int64) ([]GetOrderDetailsRow, error) {
-	rows, err := q.db.Query(ctx, getOrderDetails, id)
+func (q *Queries) GetOrderDetails(ctx context.Context, orderID int64) ([]GetOrderDetailsRow, error) {
+	rows, err := q.db.Query(ctx, getOrderDetails, orderID)
 	if err != nil {
 		return nil, err
 	}
@@ -227,7 +227,7 @@ func (q *Queries) GetOrderDetails(ctx context.Context, id int64) ([]GetOrderDeta
 	for rows.Next() {
 		var i GetOrderDetailsRow
 		if err := rows.Scan(
-			&i.ID,
+			&i.OrderID,
 			&i.UserID,
 			&i.UserAddressID,
 			&i.TotalPrice,
@@ -262,13 +262,13 @@ func (q *Queries) GetOrderDetails(ctx context.Context, id int64) ([]GetOrderDeta
 
 const listOrderItems = `-- name: ListOrderItems :many
 SELECT
-    id, product_id, order_id, quantity, price
+    order_item_id, product_id, order_id, quantity, price
 FROM
     order_items
 WHERE
     order_id = $1
 ORDER BY
-    id
+    order_item_id
 LIMIT $2
 OFFSET $3
 `
@@ -289,7 +289,7 @@ func (q *Queries) ListOrderItems(ctx context.Context, arg ListOrderItemsParams) 
 	for rows.Next() {
 		var i OrderItem
 		if err := rows.Scan(
-			&i.ID,
+			&i.OrderItemID,
 			&i.ProductID,
 			&i.OrderID,
 			&i.Quantity,
@@ -307,7 +307,7 @@ func (q *Queries) ListOrderItems(ctx context.Context, arg ListOrderItemsParams) 
 
 const listOrders = `-- name: ListOrders :many
 SELECT
-    orders.id, orders.user_id, orders.user_address_id, orders.total_price, orders.status, orders.confirmed_at, orders.delivered_at, orders.cancelled_at, orders.refunded_at, orders.updated_at, orders.created_at, payments.status as payment_status, COUNT(order_items.id) as total_items
+    orders.order_id, orders.user_id, orders.user_address_id, orders.total_price, orders.status, orders.confirmed_at, orders.delivered_at, orders.cancelled_at, orders.refunded_at, orders.updated_at, orders.created_at, payments.status as payment_status, COUNT(order_items.order_item_id) as total_items
 FROM
     orders
 LEFT JOIN payments ON orders.id = payments.order_id
@@ -317,7 +317,7 @@ WHERE
     orders.status = COALESCE($4, orders.status) AND
     orders.created_at >= COALESCE($5, orders.created_at) AND
     orders.created_at <= COALESCE($6, orders.created_at)
-GROUP BY orders.id, payments.status
+GROUP BY orders.order_id, payments.status
 ORDER BY
     orders.created_at DESC
 LIMIT $1
@@ -334,7 +334,7 @@ type ListOrdersParams struct {
 }
 
 type ListOrdersRow struct {
-	ID            int64              `json:"id"`
+	OrderID       int64              `json:"order_id"`
 	UserID        int64              `json:"user_id"`
 	UserAddressID int64              `json:"user_address_id"`
 	TotalPrice    pgtype.Numeric     `json:"total_price"`
@@ -366,7 +366,7 @@ func (q *Queries) ListOrders(ctx context.Context, arg ListOrdersParams) ([]ListO
 	for rows.Next() {
 		var i ListOrdersRow
 		if err := rows.Scan(
-			&i.ID,
+			&i.OrderID,
 			&i.UserID,
 			&i.UserAddressID,
 			&i.TotalPrice,
@@ -401,8 +401,8 @@ SET
     user_address_id = coalesce($5, user_address_id),
     updated_at = now()
 WHERE
-    id = $6
-RETURNING id, user_id, user_address_id, total_price, status, confirmed_at, delivered_at, cancelled_at, refunded_at, updated_at, created_at
+    order_id = $6
+RETURNING order_id, user_id, user_address_id, total_price, status, confirmed_at, delivered_at, cancelled_at, refunded_at, updated_at, created_at
 `
 
 type UpdateOrderParams struct {
@@ -411,7 +411,7 @@ type UpdateOrderParams struct {
 	CancelledAt   pgtype.Timestamptz `json:"cancelled_at"`
 	DeliveredAt   pgtype.Timestamptz `json:"delivered_at"`
 	UserAddressID pgtype.Int8        `json:"user_address_id"`
-	ID            int64              `json:"id"`
+	OrderID       int64              `json:"order_id"`
 }
 
 func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order, error) {
@@ -421,11 +421,11 @@ func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order
 		arg.CancelledAt,
 		arg.DeliveredAt,
 		arg.UserAddressID,
-		arg.ID,
+		arg.OrderID,
 	)
 	var i Order
 	err := row.Scan(
-		&i.ID,
+		&i.OrderID,
 		&i.UserID,
 		&i.UserAddressID,
 		&i.TotalPrice,

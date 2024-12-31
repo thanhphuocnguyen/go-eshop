@@ -43,7 +43,7 @@ VALUES
         $4,
         $5,
         $6
-    ) RETURNING id, user_id, phone, street, ward, district, city, is_primary, is_deleted, created_at, updated_at, deleted_at
+    ) RETURNING user_address_id, user_id, phone, street, ward, district, city, is_primary, is_deleted, created_at, updated_at, deleted_at
 `
 
 type CreateAddressParams struct {
@@ -66,7 +66,7 @@ func (q *Queries) CreateAddress(ctx context.Context, arg CreateAddressParams) (U
 	)
 	var i UserAddress
 	err := row.Scan(
-		&i.ID,
+		&i.UserAddressID,
 		&i.UserID,
 		&i.Phone,
 		&i.Street,
@@ -88,39 +88,39 @@ UPDATE
 SET
     is_deleted = true
 WHERE
-    id = $1 AND user_id = $2
+    user_address_id = $1 AND user_id = $2
 `
 
 type DeleteAddressParams struct {
-	ID     int64 `json:"id"`
-	UserID int64 `json:"user_id"`
+	UserAddressID int64 `json:"user_address_id"`
+	UserID        int64 `json:"user_id"`
 }
 
 func (q *Queries) DeleteAddress(ctx context.Context, arg DeleteAddressParams) error {
-	_, err := q.db.Exec(ctx, deleteAddress, arg.ID, arg.UserID)
+	_, err := q.db.Exec(ctx, deleteAddress, arg.UserAddressID, arg.UserID)
 	return err
 }
 
 const getAddress = `-- name: GetAddress :one
 SELECT
-    id, user_id, phone, street, ward, district, city, is_primary, is_deleted, created_at, updated_at, deleted_at
+    user_address_id, user_id, phone, street, ward, district, city, is_primary, is_deleted, created_at, updated_at, deleted_at
 FROM
     user_addresses
 WHERE
-    id = $1 AND user_id = $2 AND is_deleted = false
+    user_address_id = $1 AND user_id = $2 AND is_deleted = false
 LIMIT 1
 `
 
 type GetAddressParams struct {
-	ID     int64 `json:"id"`
-	UserID int64 `json:"user_id"`
+	UserAddressID int64 `json:"user_address_id"`
+	UserID        int64 `json:"user_id"`
 }
 
 func (q *Queries) GetAddress(ctx context.Context, arg GetAddressParams) (UserAddress, error) {
-	row := q.db.QueryRow(ctx, getAddress, arg.ID, arg.UserID)
+	row := q.db.QueryRow(ctx, getAddress, arg.UserAddressID, arg.UserID)
 	var i UserAddress
 	err := row.Scan(
-		&i.ID,
+		&i.UserAddressID,
 		&i.UserID,
 		&i.Phone,
 		&i.Street,
@@ -138,13 +138,13 @@ func (q *Queries) GetAddress(ctx context.Context, arg GetAddressParams) (UserAdd
 
 const getAddresses = `-- name: GetAddresses :many
 SELECT
-    id, user_id, phone, street, ward, district, city, is_primary, is_deleted, created_at, updated_at, deleted_at
+    user_address_id, user_id, phone, street, ward, district, city, is_primary, is_deleted, created_at, updated_at, deleted_at
 FROM
     user_addresses
 WHERE
     user_id = $1 AND is_deleted = false
 ORDER BY
-    is_primary DESC, id ASC
+    is_primary DESC, user_address_id ASC
 `
 
 func (q *Queries) GetAddresses(ctx context.Context, userID int64) ([]UserAddress, error) {
@@ -157,7 +157,7 @@ func (q *Queries) GetAddresses(ctx context.Context, userID int64) ([]UserAddress
 	for rows.Next() {
 		var i UserAddress
 		if err := rows.Scan(
-			&i.ID,
+			&i.UserAddressID,
 			&i.UserID,
 			&i.Phone,
 			&i.Street,
@@ -182,7 +182,7 @@ func (q *Queries) GetAddresses(ctx context.Context, userID int64) ([]UserAddress
 
 const getPrimaryAddress = `-- name: GetPrimaryAddress :one
 SELECT
-    id, user_id, phone, street, ward, district, city, is_primary, is_deleted, created_at, updated_at, deleted_at
+    user_address_id, user_id, phone, street, ward, district, city, is_primary, is_deleted, created_at, updated_at, deleted_at
 FROM
     user_addresses
 WHERE
@@ -194,7 +194,7 @@ func (q *Queries) GetPrimaryAddress(ctx context.Context, userID int64) (UserAddr
 	row := q.db.QueryRow(ctx, getPrimaryAddress, userID)
 	var i UserAddress
 	err := row.Scan(
-		&i.ID,
+		&i.UserAddressID,
 		&i.UserID,
 		&i.Phone,
 		&i.Street,
@@ -230,17 +230,17 @@ UPDATE
 SET
     is_primary = $1
 WHERE
-    user_id = $2 AND id = $3 AND is_deleted = false
+    user_id = $2 AND user_address_id = $3 AND is_deleted = false
 `
 
 type SetPrimaryAddressParams struct {
-	IsPrimary bool  `json:"is_primary"`
-	UserID    int64 `json:"user_id"`
-	ID        int64 `json:"id"`
+	IsPrimary     bool  `json:"is_primary"`
+	UserID        int64 `json:"user_id"`
+	UserAddressID int64 `json:"user_address_id"`
 }
 
 func (q *Queries) SetPrimaryAddress(ctx context.Context, arg SetPrimaryAddressParams) error {
-	_, err := q.db.Exec(ctx, setPrimaryAddress, arg.IsPrimary, arg.UserID, arg.ID)
+	_, err := q.db.Exec(ctx, setPrimaryAddress, arg.IsPrimary, arg.UserID, arg.UserAddressID)
 	return err
 }
 
@@ -255,19 +255,19 @@ SET
     city = coalesce($5, city),
     is_primary = coalesce($6, is_primary)
 WHERE
-    id = $7 AND user_id = $8 AND is_deleted = false
-RETURNING id, user_id, phone, street, ward, district, city, is_primary, is_deleted, created_at, updated_at, deleted_at
+    user_address_id = $7 AND user_id = $8 AND is_deleted = false
+RETURNING user_address_id, user_id, phone, street, ward, district, city, is_primary, is_deleted, created_at, updated_at, deleted_at
 `
 
 type UpdateAddressParams struct {
-	Phone     pgtype.Text `json:"phone"`
-	Street    pgtype.Text `json:"street"`
-	Ward      pgtype.Text `json:"ward"`
-	District  pgtype.Text `json:"district"`
-	City      pgtype.Text `json:"city"`
-	IsPrimary pgtype.Bool `json:"is_primary"`
-	ID        int64       `json:"id"`
-	UserID    int64       `json:"user_id"`
+	Phone         pgtype.Text `json:"phone"`
+	Street        pgtype.Text `json:"street"`
+	Ward          pgtype.Text `json:"ward"`
+	District      pgtype.Text `json:"district"`
+	City          pgtype.Text `json:"city"`
+	IsPrimary     pgtype.Bool `json:"is_primary"`
+	UserAddressID int64       `json:"user_address_id"`
+	UserID        int64       `json:"user_id"`
 }
 
 func (q *Queries) UpdateAddress(ctx context.Context, arg UpdateAddressParams) (UserAddress, error) {
@@ -278,12 +278,12 @@ func (q *Queries) UpdateAddress(ctx context.Context, arg UpdateAddressParams) (U
 		arg.District,
 		arg.City,
 		arg.IsPrimary,
-		arg.ID,
+		arg.UserAddressID,
 		arg.UserID,
 	)
 	var i UserAddress
 	err := row.Scan(
-		&i.ID,
+		&i.UserAddressID,
 		&i.UserID,
 		&i.Phone,
 		&i.Street,

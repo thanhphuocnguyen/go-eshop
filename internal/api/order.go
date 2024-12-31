@@ -98,7 +98,7 @@ func (sv *Server) orderList(c *gin.Context) {
 	for _, aggregated := range listOrderRows {
 		total, _ := aggregated.TotalPrice.Float64Value()
 		orderResponses = append(orderResponses, orderListResp{
-			ID:            aggregated.ID,
+			ID:            aggregated.OrderID,
 			Total:         total.Float64,
 			TotalItems:    int32(aggregated.TotalItems),
 			Status:        aggregated.Status,
@@ -118,7 +118,7 @@ func (sv *Server) orderList(c *gin.Context) {
 // @Produce json
 // @Param id path int true "Order ID"
 // @Security ApiKeyAuth
-// @Success 200 {object} orderDetailResponse
+// @Success 200 {object} GenericResponse[orderDetailResponse]
 // @Failure 400 {object} gin.H
 // @Failure 401 {object} gin.H
 // @Failure 500 {object} gin.H
@@ -144,7 +144,7 @@ func (sv *Server) orderDetail(c *gin.Context) {
 	orderDetailRow := getOrderDetailRows[0]
 	totalGet, _ := orderDetailRow.TotalPrice.Float64Value()
 	orderDetail := &orderDetailResponse{
-		ID:            orderDetailRow.ID,
+		ID:            orderDetailRow.OrderID,
 		Total:         totalGet.Float64,
 		Status:        orderDetailRow.Status,
 		PaymentStatus: orderDetailRow.PaymentStatus.PaymentStatus,
@@ -215,7 +215,7 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 // @Param id path int true "Order ID"
 // @Param status body string true "Status"
 // @Security ApiKeyAuth
-// @Success 200 {object} sqlc.Order
+// @Success 200 {object} GenericResponse[sqlc.Order]
 // @Failure 400 {object} gin.H
 // @Failure 401 {object} gin.H
 // @Failure 500 {object} gin.H
@@ -257,21 +257,4 @@ func (sv *Server) changeOrderStatus(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, GenericResponse[sqlc.Order]{&rs, nil, nil})
-}
-
-// @Summary Change order payment status
-// @Description Change order payment status by order ID
-// @Tags orders
-// @Accept json
-// @Produce json
-// @Param id path int true "Order ID"
-// @Param status body string true "Payment Status"
-// @Security ApiKeyAuth
-// @Success 200 {object} sqlc.Order
-// @Failure 400 {object} gin.H
-// @Failure 401 {object} gin.H
-// @Failure 500 {object} gin.H
-// @Router /orders/{id}/payment [put]
-func (sv *Server) changeOrderPaymentStatus(c *gin.Context) {
-
 }

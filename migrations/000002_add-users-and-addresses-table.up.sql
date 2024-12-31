@@ -1,6 +1,6 @@
 CREATE TABLE
     "users" (
-        "id" bigserial PRIMARY KEY,
+        "user_id" bigserial PRIMARY KEY,
         "role" user_role NOT NULL DEFAULT 'user',
         "username" varchar UNIQUE NOT NULL,
         "email" varchar UNIQUE NOT NULL,
@@ -19,8 +19,8 @@ CREATE TABLE
 
 CREATE TABLE
     "user_addresses" (
-        "id" bigserial PRIMARY KEY,
-        "user_id" bigint NOT NULL REFERENCES "users" ("id") ON DELETE CASCADE,
+        "user_address_id" bigserial PRIMARY KEY,
+        "user_id" bigint NOT NULL REFERENCES "users" ("user_id") ON DELETE CASCADE,
         "phone" varchar(20) NOT NULL CHECK (
             char_length(phone) >= 10
             AND char_length(phone) <= 20

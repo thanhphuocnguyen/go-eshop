@@ -58,7 +58,7 @@ func mapToCartResponse(cart sqlc.Cart, cartItems []sqlc.GetCartItemsRow) cartRes
 		price, _ := item.ProductPrice.Float64Value()
 		totalPrice += price.Float64 * float64(item.Quantity)
 		products[i] = cartItemResponse{
-			ID:        item.ID,
+			ID:        item.CartItemID,
 			ProductID: item.ProductID,
 			Name:      item.ProductName,
 			ImageURL:  item.ImageUrl.String,
@@ -68,7 +68,7 @@ func mapToCartResponse(cart sqlc.Cart, cartItems []sqlc.GetCartItemsRow) cartRes
 	}
 
 	return cartResponse{
-		ID:         cart.ID,
+		ID:         cart.CartID,
 		UserID:     cart.UserID,
 		UpdatedAt:  cart.UpdatedAt,
 		CreatedAt:  cart.CreatedAt,
@@ -111,7 +111,7 @@ func (sv *Server) createCart(c *gin.Context) {
 		return
 	}
 
-	newCart, err := sv.postgres.CreateCart(c, user.ID)
+	newCart, err := sv.postgres.CreateCart(c, user.UserID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
@@ -145,7 +145,7 @@ func (sv *Server) getCartDetail(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
-	cartItems, err := sv.postgres.GetCartItems(c, cart.ID)
+	cartItems, err := sv.postgres.GetCartItems(c, cart.CartID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
@@ -181,7 +181,7 @@ func (sv *Server) addCartItem(c *gin.Context) {
 	}
 
 	product, err := sv.postgres.GetProductWithImage(c, sqlc.GetProductWithImageParams{
-		ID: req.ProductID,
+		ProductID: req.ProductID,
 		Archived: pgtype.Bool{
 			Bool:  false,
 			Valid: true,
@@ -230,7 +230,7 @@ func (sv *Server) addCartItem(c *gin.Context) {
 	if err != nil && errors.Is(err, postgres.ErrorRecordNotFound) {
 		cartItem, err = sv.postgres.AddProductToCart(c, sqlc.AddProductToCartParams{
 			ProductID: req.ProductID,
-			CartID:    cart.ID,
+			CartID:    cart.CartID,
 			Quantity:  req.Quantity,
 		})
 	} else if err == nil {
@@ -239,8 +239,8 @@ func (sv *Server) addCartItem(c *gin.Context) {
 			return
 		}
 		err = sv.postgres.UpdateCartItemQuantity(c, sqlc.UpdateCartItemQuantityParams{
-			Quantity: cartItem.Quantity + req.Quantity,
-			ID:       cartItem.ID,
+			Quantity:   cartItem.Quantity + req.Quantity,
+			CartItemID: cartItem.CartItemID,
 		})
 	}
 
@@ -249,7 +249,7 @@ func (sv *Server) addCartItem(c *gin.Context) {
 		return
 	}
 
-	err = sv.postgres.UpdateCart(c, cart.ID)
+	err = sv.postgres.UpdateCart(c, cart.CartID)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
@@ -257,7 +257,7 @@ func (sv *Server) addCartItem(c *gin.Context) {
 	}
 	productPrice, _ := product.Price.Float64Value()
 	itemResp := cartItemResponse{
-		ID:        cartItem.ID,
+		ID:        cartItem.CartItemID,
 		ProductID: cartItem.ProductID,
 		Name:      product.Name,
 		ImageURL:  product.ImageUrl.String,
@@ -309,8 +309,8 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 	}
 
 	err = sv.postgres.RemoveProductFromCart(c, sqlc.RemoveProductFromCartParams{
-		CartID: cart.ID,
-		ID:     param.ID,
+		CartID:     cart.CartID,
+		CartItemID: param.ID,
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
@@ -366,14 +366,14 @@ func (sv *Server) checkout(c *gin.Context) {
 		return
 	}
 
-	primaryAddressID := int64(addresses[0].ID)
+	primaryAddressID := int64(addresses[0].UserAddressID)
 	if req.AddressID == nil {
 		isAddressExist := false
 		for _, address := range addresses {
 			if address.IsPrimary {
-				primaryAddressID = address.ID
+				primaryAddressID = address.UserAddressID
 			}
-			if address.ID == *req.AddressID {
+			if address.UserAddressID == *req.AddressID {
 				isAddressExist = true
 				break
 			}
@@ -384,7 +384,7 @@ func (sv *Server) checkout(c *gin.Context) {
 		}
 	}
 
-	itemCnt, err := sv.postgres.CountCartItem(c, cart.ID)
+	itemCnt, err := sv.postgres.CountCartItem(c, cart.CartID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
@@ -402,7 +402,7 @@ func (sv *Server) checkout(c *gin.Context) {
 
 	params := postgres.CheckoutCartTxParams{
 		UserID:        authPayload.UserID,
-		CartID:        cart.ID,
+		CartID:        cart.CartID,
 		PaymentMethod: sqlc.PaymentMethod(req.PaymentMethod),
 	}
 
@@ -468,8 +468,8 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 	}
 
 	err = sv.postgres.UpdateCartItemQuantity(c, sqlc.UpdateCartItemQuantityParams{
-		Quantity: req.Quantity,
-		ID:       param.ID,
+		Quantity:   req.Quantity,
+		CartItemID: param.ID,
 	})
 
 	if err != nil {
@@ -488,7 +488,7 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 	}
 
 	product, err := sv.postgres.GetProduct(c, sqlc.GetProductParams{
-		ID: cartItem.ProductID,
+		ProductID: cartItem.ProductID,
 	})
 
 	if err != nil {
@@ -510,7 +510,7 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 	}
 	productPrice, _ := product.Price.Float64Value()
 	itemResp := cartItemResponse{
-		ID:        cartItem.ID,
+		ID:        cartItem.CartID,
 		ProductID: cartItem.ProductID,
 		Name:      product.Name,
 		ImageURL:  cartItem.ImageUrl.String,
@@ -554,7 +554,7 @@ func (sv *Server) clearCart(c *gin.Context) {
 		return
 	}
 
-	err = sv.postgres.ClearCart(c, cart.ID)
+	err = sv.postgres.ClearCart(c, cart.CartID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return

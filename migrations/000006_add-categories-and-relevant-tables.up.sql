@@ -1,6 +1,6 @@
 CREATE TABLE
     "categories" (
-        "id" serial PRIMARY KEY,
+        "category_id" serial PRIMARY KEY,
         "name" varchar UNIQUE NOT NULL,
         "sort_order" smallint NOT NULL UNIQUE CHECK (
             "sort_order" >= 0
@@ -14,7 +14,7 @@ CREATE TABLE
 
 CREATE TABLE
     "category_products" (
-        "category_id" int NOT NULL REFERENCES "categories" ("id") ON DELETE CASCADE,
-        "product_id" bigint NOT NULL REFERENCES "products" ("id") ON DELETE CASCADE,
+        "category_id" int NOT NULL REFERENCES "categories" ("category_id") ON DELETE CASCADE,
+        "product_id" bigint NOT NULL REFERENCES "products" ("product_id") ON DELETE CASCADE,
         PRIMARY KEY ("category_id", "product_id")
     );

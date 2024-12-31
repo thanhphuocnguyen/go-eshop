@@ -14,7 +14,7 @@ type CancelOrderTxParams struct {
 func (pg *Postgres) CancelOrderTx(ctx context.Context, params CancelOrderTxParams) (err error) {
 	pg.execTx(ctx, func(q *sqlc.Queries) error {
 		_, err := q.UpdateOrder(ctx, sqlc.UpdateOrderParams{
-			ID: params.OrderID,
+			OrderID: params.OrderID,
 			Status: sqlc.NullOrderStatus{
 				OrderStatus: sqlc.OrderStatusCancelled,
 				Valid:       true,
@@ -35,8 +35,8 @@ func (pg *Postgres) CancelOrderTx(ctx context.Context, params CancelOrderTxParam
 		}
 		for _, item := range orderItems {
 			err = q.UpdateProductStock(ctx, sqlc.UpdateProductStockParams{
-				Stock: item.Quantity,
-				ID:    item.ProductID,
+				Stock:     item.Quantity,
+				ProductID: item.ProductID,
 			})
 			if err != nil {
 				log.Error().Err(err).Msg("UpdateProductStock")

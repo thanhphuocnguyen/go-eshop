@@ -51,7 +51,7 @@ type AddressResponse struct {
 // ------------------------------ Mapper ------------------------------
 func mapAddressResponse(address sqlc.UserAddress) AddressResponse {
 	return AddressResponse{
-		ID:        address.ID,
+		ID:        address.UserAddressID,
 		Phone:     address.Phone,
 		Address1:  address.Street,
 		Ward:      &address.Ward.String,
@@ -112,7 +112,7 @@ func (sv *Server) createAddress(c *gin.Context) {
 
 	if req.IsDefault {
 		err := sv.postgres.SetPrimaryAddressTx(c, postgres.SetPrimaryAddressTxParams{
-			NewPrimaryID: address.ID,
+			NewPrimaryID: address.UserAddressID,
 			UserID:       authPayload.UserID,
 		})
 		if err != nil {
@@ -189,8 +189,8 @@ func (sv *Server) updateAddress(c *gin.Context) {
 	}
 
 	_, err := sv.postgres.GetAddress(c, sqlc.GetAddressParams{
-		ID:     param.ID,
-		UserID: authPayload.UserID,
+		UserAddressID: param.ID,
+		UserID:        authPayload.UserID,
 	})
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {
@@ -202,8 +202,8 @@ func (sv *Server) updateAddress(c *gin.Context) {
 	}
 
 	payload := sqlc.UpdateAddressParams{
-		ID:     param.ID,
-		UserID: authPayload.UserID,
+		UserAddressID: param.ID,
+		UserID:        authPayload.UserID,
 	}
 
 	if input.Phone != nil {
@@ -273,8 +273,8 @@ func (sv *Server) removeAddress(c *gin.Context) {
 	}
 
 	address, err := sv.postgres.GetAddress(c, sqlc.GetAddressParams{
-		ID:     param.ID,
-		UserID: authPayload.UserID,
+		UserAddressID: param.ID,
+		UserID:        authPayload.UserID,
 	})
 
 	if err != nil {
@@ -292,8 +292,8 @@ func (sv *Server) removeAddress(c *gin.Context) {
 	}
 
 	err = sv.postgres.DeleteAddress(c, sqlc.DeleteAddressParams{
-		ID:     param.ID,
-		UserID: authPayload.UserID,
+		UserAddressID: param.ID,
+		UserID:        authPayload.UserID,
 	})
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {

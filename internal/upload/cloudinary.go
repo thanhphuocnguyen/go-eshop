@@ -1,4 +1,4 @@
-package uploadsrv
+package upload
 
 import (
 	"context"

@@ -77,7 +77,7 @@ func mapToProductResponse(productRow []sqlc.GetProductDetailRow) productResponse
 	product := productRow[0].Product
 	price, _ := product.Price.Float64Value()
 	resp := productResponse{
-		ID:          product.ID,
+		ID:          product.ProductID,
 		Name:        product.Name,
 		Description: product.Description,
 		Sku:         product.Sku,
@@ -103,7 +103,7 @@ func mapToProductResponse(productRow []sqlc.GetProductDetailRow) productResponse
 func mapToListProductResponse(productRow sqlc.ListProductsRow) productListResponse {
 	price, _ := productRow.Price.Float64Value()
 	product := productListResponse{
-		ID:          productRow.ID,
+		ID:          productRow.ProductID,
 		Name:        productRow.Name,
 		Description: productRow.Description,
 		Sku:         productRow.Sku,
@@ -183,7 +183,7 @@ func (sv *Server) getProductDetail(c *gin.Context) {
 	}
 
 	productRow, err := sv.postgres.GetProductDetail(c, sqlc.GetProductDetailParams{
-		ID: params.ID,
+		ProductID: params.ID,
 	})
 
 	if err != nil {
@@ -294,7 +294,7 @@ func (sv *Server) updateProduct(c *gin.Context) {
 		return
 	}
 	updateBody := sqlc.UpdateProductParams{
-		ID: params.ID,
+		ProductID: params.ID,
 	}
 	if product.Price != nil {
 		price, err := util.ParsePgTypeNumber(*product.Price)
@@ -359,7 +359,7 @@ func (sv *Server) removeProduct(c *gin.Context) {
 	}
 
 	_, err := sv.postgres.GetProduct(c, sqlc.GetProductParams{
-		ID: params.ID,
+		ProductID: params.ID,
 	})
 	if err != nil {
 		if errors.Is(err, postgres.ErrorRecordNotFound) {

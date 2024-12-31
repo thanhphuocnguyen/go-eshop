@@ -22,9 +22,9 @@ func (s *Postgres) SetPrimaryAddressTx(ctx context.Context, arg SetPrimaryAddres
 		}
 
 		err = s.SetPrimaryAddress(ctx, sqlc.SetPrimaryAddressParams{
-			IsPrimary: true,
-			UserID:    arg.UserID,
-			ID:        arg.NewPrimaryID,
+			IsPrimary:     true,
+			UserID:        arg.UserID,
+			UserAddressID: arg.NewPrimaryID,
 		})
 
 		if err != nil {

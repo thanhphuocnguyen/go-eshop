@@ -14,14 +14,14 @@ INSERT INTO
     carts (user_id) 
 VALUES 
     ($1) 
-RETURNING id, user_id, updated_at, created_at
+RETURNING cart_id, user_id, updated_at, created_at
 `
 
 func (q *Queries) CreateCart(ctx context.Context, userID int64) (Cart, error) {
 	row := q.db.QueryRow(ctx, createCart, userID)
 	var i Cart
 	err := row.Scan(
-		&i.ID,
+		&i.CartID,
 		&i.UserID,
 		&i.UpdatedAt,
 		&i.CreatedAt,
@@ -30,14 +30,14 @@ func (q *Queries) CreateCart(ctx context.Context, userID int64) (Cart, error) {
 }
 
 const getCart = `-- name: GetCart :one
-SELECT id, user_id, updated_at, created_at FROM carts WHERE user_id = $1 LIMIT 1
+SELECT cart_id, user_id, updated_at, created_at FROM carts WHERE user_id = $1 LIMIT 1
 `
 
 func (q *Queries) GetCart(ctx context.Context, userID int64) (Cart, error) {
 	row := q.db.QueryRow(ctx, getCart, userID)
 	var i Cart
 	err := row.Scan(
-		&i.ID,
+		&i.CartID,
 		&i.UserID,
 		&i.UpdatedAt,
 		&i.CreatedAt,
@@ -46,24 +46,24 @@ func (q *Queries) GetCart(ctx context.Context, userID int64) (Cart, error) {
 }
 
 const removeProductFromCart = `-- name: RemoveProductFromCart :exec
-DELETE FROM cart_items WHERE cart_id = $1 AND id = $2
+DELETE FROM cart_items WHERE cart_id = $1 AND cart_item_id = $2
 `
 
 type RemoveProductFromCartParams struct {
-	CartID int32 `json:"cart_id"`
-	ID     int32 `json:"id"`
+	CartID     int32 `json:"cart_id"`
+	CartItemID int32 `json:"cart_item_id"`
 }
 
 func (q *Queries) RemoveProductFromCart(ctx context.Context, arg RemoveProductFromCartParams) error {
-	_, err := q.db.Exec(ctx, removeProductFromCart, arg.CartID, arg.ID)
+	_, err := q.db.Exec(ctx, removeProductFromCart, arg.CartID, arg.CartItemID)
 	return err
 }
 
 const updateCart = `-- name: UpdateCart :exec
-UPDATE carts SET updated_at = NOW() WHERE id = $1 RETURNING id, user_id, updated_at, created_at
+UPDATE carts SET updated_at = NOW() WHERE cart_id = $1 RETURNING cart_id, user_id, updated_at, created_at
 `
 
-func (q *Queries) UpdateCart(ctx context.Context, id int32) error {
-	_, err := q.db.Exec(ctx, updateCart, id)
+func (q *Queries) UpdateCart(ctx context.Context, cartID int32) error {
+	_, err := q.db.Exec(ctx, updateCart, cartID)
 	return err
 }

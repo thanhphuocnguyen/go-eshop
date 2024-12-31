@@ -17,6 +17,7 @@ type Config struct {
 	Env                  string        `mapstructure:"ENV"`
 	CloudinaryUrl        string        `mapstructure:"CLOUDINARY_URL"`
 	CloudinaryFolder     string        `mapstructure:"CLOUDINARY_FOLDER"`
+	StripeSecretKey      string        `mapstructure:"STRIPE_SECRET_KEY"`
 }
 
 func LoadConfig(path string) (cfg Config, err error) {

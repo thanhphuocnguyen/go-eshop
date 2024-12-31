@@ -1,7 +1,7 @@
 CREATE TABLE
     "sessions" (
-        "id" uuid PRIMARY KEY,
-        "user_id" bigint NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+        "session_id" uuid PRIMARY KEY,
+        "user_id" bigint NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
         "refresh_token" varchar NOT NULL,
         "user_agent" varchar NOT NULL,
         "client_ip" varchar NOT NULL,

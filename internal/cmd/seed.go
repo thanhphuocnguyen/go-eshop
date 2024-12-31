@@ -92,10 +92,12 @@ func seedProducts(ctx context.Context, pg postgres.Store) {
 		log.Error().Err(err).Msg("failed to count products")
 		return
 	}
+
 	if countProducts > 0 {
 		log.Info().Msg("products already seeded")
 		return
 	}
+
 	log.Info().Msg("seeding products")
 	productData, err := os.ReadFile("seeds/products.json")
 	if err != nil {
@@ -112,8 +114,10 @@ func seedProducts(ctx context.Context, pg postgres.Store) {
 	}
 
 	log.Info().Msgf("product count: %d", len(products))
+
 	var wg sync.WaitGroup
 	defer wg.Wait()
+
 	for _, product := range products {
 		wg.Add(1)
 		go func(product Product) {
@@ -135,6 +139,7 @@ func seedProducts(ctx context.Context, pg postgres.Store) {
 			}
 		}(product)
 	}
+	log.Info().Msg("products created")
 }
 
 func seedUsers(ctx context.Context, pg postgres.Store) {
@@ -149,25 +154,25 @@ func seedUsers(ctx context.Context, pg postgres.Store) {
 		return
 	}
 
-	if err != nil {
-		log.Error().Err(err).Msg("failed to count users")
-		return
-	}
 	log.Info().Msg("parsing user data")
 	userData, err := os.ReadFile("seeds/users.json")
 	if err != nil {
 		return
 	}
+
 	var users []User
 	log.Info().Msg("parsing user from data")
 	err = json.Unmarshal(userData, &users)
 	if err != nil {
 		return
 	}
+
 	log.Info().Msg("creating users")
 	log.Info().Msgf("user count: %d", len(users))
+
 	var wg sync.WaitGroup
 	defer wg.Wait()
+
 	for _, user := range users {
 		wg.Add(1)
 		go func() {
@@ -189,6 +194,7 @@ func seedUsers(ctx context.Context, pg postgres.Store) {
 			}
 		}()
 	}
+	log.Info().Msg("users created")
 }
 
 func seedUserAddresses(ctx context.Context, pg postgres.Store) {
@@ -197,6 +203,7 @@ func seedUserAddresses(ctx context.Context, pg postgres.Store) {
 		log.Error().Err(err).Msg("failed to count addresses")
 		return
 	}
+
 	if countAddresses > 0 {
 		log.Info().Msg("addresses already seeded")
 		return
@@ -207,12 +214,14 @@ func seedUserAddresses(ctx context.Context, pg postgres.Store) {
 	if err != nil {
 		return
 	}
+
 	var addresses []Address
 	log.Info().Msg("parsing addresses from data")
 	err = json.Unmarshal(addressData, &addresses)
 	if err != nil {
 		return
 	}
+
 	log.Info().Msg("creating addresses")
 	log.Info().Msgf("addresses count: %d", len(addresses))
 	var wg sync.WaitGroup
@@ -234,4 +243,5 @@ func seedUserAddresses(ctx context.Context, pg postgres.Store) {
 			}
 		}()
 	}
+	log.Info().Msg("addresses created")
 }

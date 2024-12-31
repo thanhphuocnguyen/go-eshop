@@ -338,34 +338,34 @@ type Attribute struct {
 }
 
 type AttributeValue struct {
-	ID          int32  `json:"id"`
-	AttributeID int32  `json:"attribute_id"`
-	Value       string `json:"value"`
+	AttributeValueID int32  `json:"attribute_value_id"`
+	AttributeID      int32  `json:"attribute_id"`
+	Value            string `json:"value"`
 }
 
 type Cart struct {
-	ID        int32     `json:"id"`
+	CartID    int32     `json:"cart_id"`
 	UserID    int64     `json:"user_id"`
 	UpdatedAt time.Time `json:"updated_at"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
 type CartItem struct {
-	ID        int32     `json:"id"`
-	ProductID int64     `json:"product_id"`
-	CartID    int32     `json:"cart_id"`
-	Quantity  int16     `json:"quantity"`
-	CreatedAt time.Time `json:"created_at"`
+	CartItemID int32     `json:"cart_item_id"`
+	ProductID  int64     `json:"product_id"`
+	CartID     int32     `json:"cart_id"`
+	Quantity   int16     `json:"quantity"`
+	CreatedAt  time.Time `json:"created_at"`
 }
 
 type Category struct {
-	ID        int32       `json:"id"`
-	Name      string      `json:"name"`
-	SortOrder int16       `json:"sort_order"`
-	ImageUrl  pgtype.Text `json:"image_url"`
-	Published bool        `json:"published"`
-	CreatedAt time.Time   `json:"created_at"`
-	UpdatedAt time.Time   `json:"updated_at"`
+	CategoryID int32       `json:"category_id"`
+	Name       string      `json:"name"`
+	SortOrder  int16       `json:"sort_order"`
+	ImageUrl   pgtype.Text `json:"image_url"`
+	Published  bool        `json:"published"`
+	CreatedAt  time.Time   `json:"created_at"`
+	UpdatedAt  time.Time   `json:"updated_at"`
 }
 
 type CategoryProduct struct {
@@ -374,7 +374,7 @@ type CategoryProduct struct {
 }
 
 type Image struct {
-	ID         int32            `json:"id"`
+	ImageID    int32            `json:"image_id"`
 	ProductID  pgtype.Int8      `json:"product_id"`
 	VariantID  pgtype.Int8      `json:"variant_id"`
 	ImageUrl   string           `json:"image_url"`
@@ -385,7 +385,7 @@ type Image struct {
 }
 
 type Order struct {
-	ID            int64              `json:"id"`
+	OrderID       int64              `json:"order_id"`
 	UserID        int64              `json:"user_id"`
 	UserAddressID int64              `json:"user_address_id"`
 	TotalPrice    pgtype.Numeric     `json:"total_price"`
@@ -399,11 +399,11 @@ type Order struct {
 }
 
 type OrderItem struct {
-	ID        int64          `json:"id"`
-	ProductID int64          `json:"product_id"`
-	OrderID   int64          `json:"order_id"`
-	Quantity  int32          `json:"quantity"`
-	Price     pgtype.Numeric `json:"price"`
+	OrderItemID int64          `json:"order_item_id"`
+	ProductID   int64          `json:"product_id"`
+	OrderID     int64          `json:"order_id"`
+	Quantity    int32          `json:"quantity"`
+	Price       pgtype.Numeric `json:"price"`
 }
 
 type Payment struct {
@@ -419,7 +419,7 @@ type Payment struct {
 }
 
 type Product struct {
-	ID          int64          `json:"id"`
+	ProductID   int64          `json:"product_id"`
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
 	Sku         string         `json:"sku"`
@@ -431,17 +431,17 @@ type Product struct {
 }
 
 type ProductVariant struct {
-	ID        int64            `json:"id"`
-	ProductID int64            `json:"product_id"`
-	Sku       string           `json:"sku"`
-	Price     pgtype.Numeric   `json:"price"`
-	Stock     pgtype.Int8      `json:"stock"`
-	CreatedAt pgtype.Timestamp `json:"created_at"`
-	UpdatedAt pgtype.Timestamp `json:"updated_at"`
+	ProductVariantID int64            `json:"product_variant_id"`
+	ProductID        int64            `json:"product_id"`
+	Sku              string           `json:"sku"`
+	Price            pgtype.Numeric   `json:"price"`
+	Stock            pgtype.Int8      `json:"stock"`
+	CreatedAt        pgtype.Timestamp `json:"created_at"`
+	UpdatedAt        pgtype.Timestamp `json:"updated_at"`
 }
 
 type Session struct {
-	ID           uuid.UUID `json:"id"`
+	SessionID    uuid.UUID `json:"session_id"`
 	UserID       int64     `json:"user_id"`
 	RefreshToken string    `json:"refresh_token"`
 	UserAgent    string    `json:"user_agent"`
@@ -452,7 +452,7 @@ type Session struct {
 }
 
 type User struct {
-	ID                int64     `json:"id"`
+	UserID            int64     `json:"user_id"`
 	Role              UserRole  `json:"role"`
 	Username          string    `json:"username"`
 	Email             string    `json:"email"`
@@ -467,22 +467,33 @@ type User struct {
 }
 
 type UserAddress struct {
-	ID        int64              `json:"id"`
-	UserID    int64              `json:"user_id"`
-	Phone     string             `json:"phone"`
-	Street    string             `json:"street"`
-	Ward      pgtype.Text        `json:"ward"`
-	District  string             `json:"district"`
-	City      string             `json:"city"`
-	IsPrimary bool               `json:"is_primary"`
-	IsDeleted bool               `json:"is_deleted"`
-	CreatedAt time.Time          `json:"created_at"`
-	UpdatedAt time.Time          `json:"updated_at"`
-	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
+	UserAddressID int64              `json:"user_address_id"`
+	UserID        int64              `json:"user_id"`
+	Phone         string             `json:"phone"`
+	Street        string             `json:"street"`
+	Ward          pgtype.Text        `json:"ward"`
+	District      string             `json:"district"`
+	City          string             `json:"city"`
+	IsPrimary     bool               `json:"is_primary"`
+	IsDeleted     bool               `json:"is_deleted"`
+	CreatedAt     time.Time          `json:"created_at"`
+	UpdatedAt     time.Time          `json:"updated_at"`
+	DeletedAt     pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type UserPaymentInfo struct {
+	PaymentMethodID int32            `json:"payment_method_id"`
+	UserID          pgtype.Int8      `json:"user_id"`
+	CardNumber      string           `json:"card_number"`
+	CardholderName  string           `json:"cardholder_name"`
+	ExpirationDate  pgtype.Date      `json:"expiration_date"`
+	BillingAddress  string           `json:"billing_address"`
+	IsDefault       pgtype.Bool      `json:"is_default"`
+	CreatedAt       pgtype.Timestamp `json:"created_at"`
 }
 
 type VariantAttribute struct {
-	ID        int32 `json:"id"`
-	VariantID int32 `json:"variant_id"`
-	ValueID   int32 `json:"value_id"`
+	VariantAttributeID int32 `json:"variant_attribute_id"`
+	VariantID          int32 `json:"variant_id"`
+	ValueID            int32 `json:"value_id"`
 }
