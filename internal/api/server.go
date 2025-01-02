@@ -10,10 +10,9 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/config"
 	docs "github.com/thanhphuocnguyen/go-eshop/docs"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/postgres"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
-	"github.com/thanhphuocnguyen/go-eshop/internal/upload"
+	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/upload"
 )
 
 // gin-swagger middleware
@@ -26,7 +25,7 @@ import (
 // @host      localhost:4000
 type Server struct {
 	config          config.Config
-	postgres        postgres.Store
+	repo            repository.Repository
 	router          *gin.Engine
 	taskDistributor worker.TaskDistributor
 	tokenGenerator  auth.TokenGenerator
@@ -35,14 +34,14 @@ type Server struct {
 
 func NewAPI(
 	cfg config.Config,
-	postgres postgres.Store,
+	repo repository.Repository,
 	taskDistributor worker.TaskDistributor,
 	uploadService upload.UploadService,
 ) (*Server, error) {
 	tokenGenerator := auth.NewPasetoTokenGenerator()
 	server := &Server{
 		tokenGenerator:  tokenGenerator,
-		postgres:        postgres,
+		repo:            repo,
 		config:          cfg,
 		taskDistributor: taskDistributor,
 		uploadService:   uploadService,
@@ -94,7 +93,7 @@ func (sv *Server) initializeRouter() {
 			product.GET(":id", sv.getProductDetail)
 			product.GET("", sv.getProducts)
 
-			productAuthRoutes := product.Group("").Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sqlc.UserRoleAdmin))
+			productAuthRoutes := product.Group("").Use(authMiddleware(sv.tokenGenerator), roleMiddleware(repository.UserRoleAdmin))
 			productAuthRoutes.POST("", sv.createProduct)
 			productAuthRoutes.PUT(":id", sv.updateProduct)
 			productAuthRoutes.DELETE(":id", sv.removeProduct)
@@ -123,15 +122,15 @@ func (sv *Server) initializeRouter() {
 		{
 			order.GET("", sv.orderList)
 			order.GET(":id", sv.orderDetail)
-			adminOrder := order.Use(roleMiddleware(sqlc.UserRoleAdmin))
+			adminOrder := order.Use(roleMiddleware(repository.UserRoleAdmin))
 			adminOrder.PUT(":id/cancel", sv.cancelOrder)
 			adminOrder.PUT(":id/change-status", sv.changeOrderStatus)
 		}
 
 		collection := v1.Group("/collection")
 		{
-			collection.GET("", sv.listCollections)
-			collectionAuthRoutes := collection.Group("").Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sqlc.UserRoleAdmin))
+			collection.GET("", sv.getCollections)
+			collectionAuthRoutes := collection.Group("").Use(authMiddleware(sv.tokenGenerator), roleMiddleware(repository.UserRoleAdmin))
 			collectionAuthRoutes.POST("", sv.createCollection)
 			collectionAuthRoutes.GET(":id", sv.getCollectionByID)
 			collectionAuthRoutes.PUT(":id", sv.updateCollection)
@@ -139,12 +138,14 @@ func (sv *Server) initializeRouter() {
 			collectionAuthRoutes.POST(":id/product", sv.addProductToCollection)
 			collectionAuthRoutes.DELETE(":id/product", sv.deleteProductFromCollection)
 		}
-
-		payment := v1.Group("/payment").Use(authMiddleware(sv.tokenGenerator))
-		{
-			payment.POST("", sv.makePayment)
-		}
 	}
+
+	// webhooks
+	webhook := v1.Group("/webhook/v1")
+	{
+		webhook.POST("stripe", sv.stripeWebhook)
+	}
+
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
 	sv.router = router

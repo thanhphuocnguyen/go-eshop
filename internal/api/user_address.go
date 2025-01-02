@@ -7,8 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/postgres"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
+	repository "github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/util"
 )
 
@@ -38,26 +37,26 @@ type UpdateAddressParams struct {
 
 // ------------------------------ API Models ------------------------------
 type AddressResponse struct {
-	ID        int64   `json:"id"`
-	Phone     string  `json:"phone"`
-	Address1  string  `json:"address_1"`
-	Address2  *string `json:"address_2,omitempty"`
-	Ward      *string `json:"ward"`
-	District  string  `json:"district"`
-	City      string  `json:"city"`
-	IsDefault bool    `json:"is_default"`
+	ID       int64   `json:"id"`
+	Phone    string  `json:"phone"`
+	Address1 string  `json:"address_1"`
+	Address2 *string `json:"address_2,omitempty"`
+	Ward     *string `json:"ward"`
+	District string  `json:"district"`
+	City     string  `json:"city"`
+	Default  bool    `json:"default"`
 }
 
 // ------------------------------ Mapper ------------------------------
-func mapAddressResponse(address sqlc.UserAddress) AddressResponse {
+func mapAddressResponse(address repository.UserAddress) AddressResponse {
 	return AddressResponse{
-		ID:        address.UserAddressID,
-		Phone:     address.Phone,
-		Address1:  address.Street,
-		Ward:      &address.Ward.String,
-		District:  address.District,
-		City:      address.City,
-		IsDefault: address.IsPrimary,
+		ID:       address.UserAddressID,
+		Phone:    address.Phone,
+		Address1: address.Street,
+		Ward:     &address.Ward.String,
+		District: address.District,
+		City:     address.City,
+		Default:  address.Default,
 	}
 }
 
@@ -80,7 +79,7 @@ func (sv *Server) createAddress(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(fmt.Errorf("authorization payload is not provided")))
 		return
 	}
-	addresses, err := sv.postgres.GetAddresses(c, authPayload.UserID)
+	addresses, err := sv.repo.GetAddresses(c, authPayload.UserID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
@@ -96,7 +95,7 @@ func (sv *Server) createAddress(c *gin.Context) {
 		return
 	}
 
-	payload := sqlc.CreateAddressParams{
+	payload := repository.CreateAddressParams{
 		UserID:   authPayload.UserID,
 		Phone:    req.Phone,
 		Street:   req.Street,
@@ -108,10 +107,10 @@ func (sv *Server) createAddress(c *gin.Context) {
 		payload.Ward = util.GetPgTypeText(req.Ward)
 	}
 
-	address, err := sv.postgres.CreateAddress(c, payload)
+	address, err := sv.repo.CreateAddress(c, payload)
 
 	if req.IsDefault {
-		err := sv.postgres.SetPrimaryAddressTx(c, postgres.SetPrimaryAddressTxParams{
+		err := sv.repo.SetPrimaryAddressTx(c, repository.SetPrimaryAddressTxParams{
 			NewPrimaryID: address.UserAddressID,
 			UserID:       authPayload.UserID,
 		})
@@ -119,7 +118,7 @@ func (sv *Server) createAddress(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, mapErrResp(fmt.Errorf("failed to set primary address: %w", err)))
 			return
 		}
-		address.IsPrimary = true
+		address.Default = true
 	}
 
 	if err != nil {
@@ -148,7 +147,7 @@ func (sv *Server) listAddresses(c *gin.Context) {
 		return
 	}
 
-	addresses, err := sv.postgres.GetAddresses(c, authPayload.UserID)
+	addresses, err := sv.repo.GetAddresses(c, authPayload.UserID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
@@ -188,12 +187,12 @@ func (sv *Server) updateAddress(c *gin.Context) {
 		return
 	}
 
-	_, err := sv.postgres.GetAddress(c, sqlc.GetAddressParams{
+	_, err := sv.repo.GetAddress(c, repository.GetAddressParams{
 		UserAddressID: param.ID,
 		UserID:        authPayload.UserID,
 	})
 	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
@@ -201,7 +200,7 @@ func (sv *Server) updateAddress(c *gin.Context) {
 		return
 	}
 
-	payload := sqlc.UpdateAddressParams{
+	payload := repository.UpdateAddressParams{
 		UserAddressID: param.ID,
 		UserID:        authPayload.UserID,
 	}
@@ -228,7 +227,7 @@ func (sv *Server) updateAddress(c *gin.Context) {
 
 	if input.IsDefault != nil {
 		if *input.IsDefault {
-			err := sv.postgres.SetPrimaryAddressTx(c, postgres.SetPrimaryAddressTxParams{
+			err := sv.repo.SetPrimaryAddressTx(c, repository.SetPrimaryAddressTxParams{
 				NewPrimaryID: param.ID,
 				UserID:       authPayload.UserID,
 			})
@@ -239,7 +238,7 @@ func (sv *Server) updateAddress(c *gin.Context) {
 		}
 	}
 
-	address, err := sv.postgres.UpdateAddress(c, payload)
+	address, err := sv.repo.UpdateAddress(c, payload)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
@@ -272,13 +271,13 @@ func (sv *Server) removeAddress(c *gin.Context) {
 		return
 	}
 
-	address, err := sv.postgres.GetAddress(c, sqlc.GetAddressParams{
+	address, err := sv.repo.GetAddress(c, repository.GetAddressParams{
 		UserAddressID: param.ID,
 		UserID:        authPayload.UserID,
 	})
 
 	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
@@ -286,17 +285,17 @@ func (sv *Server) removeAddress(c *gin.Context) {
 		return
 	}
 
-	if address.IsDeleted {
+	if address.Deleted {
 		c.JSON(http.StatusNotFound, mapErrResp(fmt.Errorf("address has been removed")))
 		return
 	}
 
-	err = sv.postgres.DeleteAddress(c, sqlc.DeleteAddressParams{
+	err = sv.repo.DeleteAddress(c, repository.DeleteAddressParams{
 		UserAddressID: param.ID,
 		UserID:        authPayload.UserID,
 	})
 	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}

@@ -3,13 +3,15 @@ INSERT INTO
     payments (
         order_id,
         amount,
-        method
+        payment_method,
+        payment_gateway
     )
 VALUES
     (
         $1,
         $2,
-        $3
+        $3,
+        $4
     )
 RETURNING *;
 
@@ -19,7 +21,7 @@ SELECT
 FROM
     payments
 WHERE
-    id = $1
+    payment_id = $1
 LIMIT 1;
 
 -- name: GetPaymentTransactionByOrderID :one
@@ -36,12 +38,12 @@ UPDATE
     payments
 SET
     amount = COALESCE(sqlc.narg(amount), amount),
-    method = COALESCE(sqlc.narg(method), method)
+    payment_method = COALESCE(sqlc.narg(payment_method), payment_method)
 WHERE
-    id = $1;
+    payment_id = $1;
 
 -- name: DeletePaymentTransaction :exec
 DELETE FROM
     payments
 WHERE
-    id = $1;
+    payment_id = $1;

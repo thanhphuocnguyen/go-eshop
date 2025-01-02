@@ -18,42 +18,72 @@ func ExecuteMigrate(ctx context.Context) int {
 	var migrateCmd = &cobra.Command{
 		Use:   "migrate",
 		Short: "Run database migrations",
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+	}
+
+	var upCmd = &cobra.Command{
+		Use:   "up",
+		Short: "Apply all up migrations",
+		RunE: func(cmd *cobra.Command, args []string) error {
 			m, err := migrate.New(cfg.MigrationPath, cfg.DbUrl)
 			if err != nil {
 				return fmt.Errorf("cannot create migration: %w", err)
 			}
-
-			if len(args) == 0 {
-				log.Info().Msg("starting migration")
-				err = m.Up()
-				log.Info().Msg("migration finished")
-				return
-			}
-			switch args[0] {
-			case "up":
-				log.Info().Msg("starting migration")
-				err = m.Up()
-				log.Info().Msg("migration finished")
-			case "down":
-				log.Info().Msg("starting migration")
-				err = m.Down()
-				log.Info().Msg("migration finished")
-			case "redo":
-				log.Info().Msg("starting redo migration")
-				err = m.Steps(-1)
-				log.Info().Msg("migration finished")
-			case "status":
-				status, dirty, sErr := m.Version()
-				if sErr != nil {
-					err = sErr
-					return
-				}
-				fmt.Println(status, dirty)
-			}
-			return
+			log.Info().Msg("starting migration")
+			err = m.Up()
+			log.Info().Msg("migration finished")
+			return err
 		},
 	}
+
+	var downCmd = &cobra.Command{
+		Use:   "down",
+		Short: "Apply all down migrations",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			m, err := migrate.New(cfg.MigrationPath, cfg.DbUrl)
+			if err != nil {
+				return fmt.Errorf("cannot create migration: %w", err)
+			}
+			log.Info().Msg("starting migration")
+			err = m.Down()
+			log.Info().Msg("migration finished")
+			return err
+		},
+	}
+
+	var redoCmd = &cobra.Command{
+		Use:   "redo",
+		Short: "Redo the last migration",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			m, err := migrate.New(cfg.MigrationPath, cfg.DbUrl)
+			if err != nil {
+				return fmt.Errorf("cannot create migration: %w", err)
+			}
+			log.Info().Msg("starting redo migration")
+			err = m.Steps(-1)
+			log.Info().Msg("migration finished")
+			return err
+		},
+	}
+
+	var statusCmd = &cobra.Command{
+		Use:   "status",
+		Short: "Print the current migration status",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			m, err := migrate.New(cfg.MigrationPath, cfg.DbUrl)
+			if err != nil {
+				return fmt.Errorf("cannot create migration: %w", err)
+			}
+			status, dirty, sErr := m.Version()
+			if sErr != nil {
+				return sErr
+			}
+			fmt.Println(status, dirty)
+			return nil
+		},
+	}
+
+	migrateCmd.AddCommand(upCmd, downCmd, redoCmd, statusCmd)
+
 	if err := migrateCmd.Execute(); err != nil {
 		log.Error().Err(err).Msg("failed to execute migrate command")
 		return 1

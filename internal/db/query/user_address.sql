@@ -33,9 +33,9 @@ SELECT
 FROM
     user_addresses
 WHERE
-    user_id = $1 AND is_deleted = false
+    user_id = $1 AND deleted = false
 ORDER BY
-    is_primary DESC, user_address_id ASC;
+    "default" DESC, user_address_id ASC;
 
 -- name: UpdateAddress :one
 UPDATE
@@ -46,16 +46,17 @@ SET
     ward = coalesce(sqlc.narg('ward'), ward),
     district = coalesce(sqlc.narg('district'), district),
     city = coalesce(sqlc.narg('city'), city),
-    is_primary = coalesce(sqlc.narg('is_primary'), is_primary)
+    "default" = coalesce(sqlc.narg('default'), "default")
 WHERE
-    user_address_id = sqlc.arg('user_address_id') AND user_id = sqlc.arg('user_id') AND is_deleted = false
+    user_address_id = sqlc.arg('user_address_id') AND user_id = sqlc.arg('user_id') AND deleted = false
 RETURNING *;
 
 -- name: DeleteAddress :exec
 UPDATE
     user_addresses
 SET
-    is_deleted = true
+    deleted = true,
+    updated_at = now()
 WHERE
     user_address_id = $1 AND user_id = $2;
 
@@ -63,17 +64,17 @@ WHERE
 UPDATE
     user_addresses
 SET
-    is_primary = $1
+    "default" = $1
 WHERE
-    user_id = $2 AND user_address_id = $3 AND is_deleted = false;
+    user_id = $2 AND user_address_id = $3 AND deleted = false;
 
 -- name: ResetPrimaryAddress :exec
 UPDATE
     user_addresses
 SET
-    is_primary = false
+    "default" = false
 WHERE
-    user_id = $1 AND is_primary = true;
+    user_id = $1 AND "default" = true;
 
 -- name: GetPrimaryAddress :one
 SELECT
@@ -81,7 +82,7 @@ SELECT
 FROM
     user_addresses
 WHERE
-    user_id = $1 AND is_primary = true AND is_deleted = false
+    user_id = $1 AND "default" = true AND deleted = false
 LIMIT 1;
 
 -- name: CountAddresses :one

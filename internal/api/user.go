@@ -10,8 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/postgres"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
+	repository "github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/util"
 )
 
@@ -46,10 +45,10 @@ type loginUserRequest struct {
 }
 
 type updateUserRequest struct {
-	UserID   int64         `json:"user_id" binding:"required,min=1"`
-	FullName *string       `json:"fullname,omitempty" binding:"omitempty,min=3,max=32,alphanum"`
-	Email    string        `json:"email" binding:"email,max=255,min=6"`
-	Role     sqlc.UserRole `json:"role"`
+	UserID   int64               `json:"user_id" binding:"required,min=1"`
+	FullName *string             `json:"fullname,omitempty" binding:"omitempty,min=3,max=32,alphanum"`
+	Email    string              `json:"email" binding:"email,max=255,min=6"`
+	Role     repository.UserRole `json:"role"`
 }
 type loginResponse struct {
 	SessionID            uuid.UUID    `json:"session_id"`
@@ -67,7 +66,7 @@ type renewAccessTokenResp struct {
 
 // ------------------------------ Mappers ------------------------------
 
-func mapToUserResponse(user sqlc.User) userResponse {
+func mapToUserResponse(user repository.User) userResponse {
 	return userResponse{
 		Email:             user.Email,
 		FullName:          user.Fullname,
@@ -78,7 +77,7 @@ func mapToUserResponse(user sqlc.User) userResponse {
 	}
 }
 
-func mapAddressToAddressResponse(address sqlc.UserAddress) addressResponse {
+func mapAddressToAddressResponse(address repository.UserAddress) addressResponse {
 	return addressResponse{
 		Address:  address.Street,
 		City:     address.City,
@@ -97,7 +96,7 @@ func mapAddressToAddressResponse(address sqlc.UserAddress) addressResponse {
 // @Accept  json
 // @Produce  json
 // @Param input body createUserRequest true "User info"
-// @Success 200 {object} GenericResponse[sqlc.CreateUserRow]
+// @Success 200 {object} GenericResponse[repository.CreateUserRow]
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /users [post]
@@ -108,8 +107,8 @@ func (sv *Server) createUser(c *gin.Context) {
 		return
 	}
 
-	_, err := sv.postgres.GetUserByUsername(c, req.Username)
-	if err != nil && !errors.Is(err, postgres.ErrorRecordNotFound) {
+	_, err := sv.repo.GetUserByUsername(c, req.Username)
+	if err != nil && !errors.Is(err, repository.ErrorRecordNotFound) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
@@ -125,7 +124,7 @@ func (sv *Server) createUser(c *gin.Context) {
 		return
 	}
 
-	arg := sqlc.CreateUserParams{
+	arg := repository.CreateUserParams{
 		Username:       req.Username,
 		HashedPassword: hashedPassword,
 		Fullname:       req.FullName,
@@ -133,15 +132,15 @@ func (sv *Server) createUser(c *gin.Context) {
 		Phone:          req.Phone,
 	}
 	if req.Username == "admin" {
-		arg.Role = sqlc.UserRoleAdmin
+		arg.Role = repository.UserRoleAdmin
 	}
-	user, err := sv.postgres.CreateUser(c, arg)
+	user, err := sv.repo.CreateUser(c, arg)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
-	c.JSON(http.StatusOK, GenericResponse[sqlc.CreateUserRow]{&user, nil, nil})
+	c.JSON(http.StatusOK, GenericResponse[repository.CreateUserRow]{&user, nil, nil})
 }
 
 // loginUser godoc
@@ -162,7 +161,7 @@ func (sv *Server) loginUser(c *gin.Context) {
 		return
 	}
 
-	user, err := sv.postgres.GetUserByUsername(c, req.Username)
+	user, err := sv.repo.GetUserByUsername(c, req.Username)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
@@ -186,13 +185,13 @@ func (sv *Server) loginUser(c *gin.Context) {
 	}
 
 	sessionID := uuid.New()
-	session, err := sv.postgres.CreateSession(c, sqlc.CreateSessionParams{
+	session, err := sv.repo.CreateSession(c, repository.CreateSessionParams{
 		SessionID:    sessionID,
 		UserID:       user.UserID,
 		RefreshToken: refreshToken,
 		UserAgent:    c.GetHeader("User-Agent"),
 		ClientIp:     c.ClientIP(),
-		IsBlocked:    false,
+		Blocked:      false,
 		ExpiredAt:    time.Now().Add(sv.config.RefreshTokenDuration),
 	})
 
@@ -233,9 +232,9 @@ func (sv *Server) refreshToken(c *gin.Context) {
 		return
 	}
 
-	session, err := sv.postgres.GetSession(c, refreshTokenPayload.ID)
+	session, err := sv.repo.GetSession(c, refreshTokenPayload.ID)
 	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrorRecordNotFound) {
 			c.JSON(http.StatusUnauthorized, mapErrResp(err))
 			return
 		}
@@ -255,7 +254,7 @@ func (sv *Server) refreshToken(c *gin.Context) {
 		return
 	}
 
-	if session.IsBlocked {
+	if session.Blocked {
 		err := errors.New("session is blocked")
 		c.JSON(http.StatusUnauthorized, mapErrResp(err))
 		return
@@ -285,7 +284,7 @@ func (sv *Server) refreshToken(c *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @Param input body updateUserRequest true "User info"
-// @Success 200 {object} GenericResponse[sqlc.UpdateUserRow]
+// @Success 200 {object} GenericResponse[repository.UpdateUserRow]
 // @Failure 400 {object} gin.H
 // @Failure 401 {object} gin.H
 // @Failure 500 {object} gin.H
@@ -297,18 +296,18 @@ func (sv *Server) updateUser(c *gin.Context) {
 		return
 	}
 
-	user, err := sv.postgres.GetUserByID(c, 1)
+	user, err := sv.repo.GetUserByID(c, 1)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, mapErrResp(err))
 		return
 	}
 
-	if user.Role != sqlc.UserRoleAdmin && user.UserID != req.UserID {
+	if user.Role != repository.UserRoleAdmin && user.UserID != req.UserID {
 		c.JSON(http.StatusUnauthorized, mapErrResp(err))
 		return
 	}
 
-	arg := sqlc.UpdateUserParams{
+	arg := repository.UpdateUserParams{
 		ID: req.UserID,
 		Email: pgtype.Text{
 			String: req.Email,
@@ -320,18 +319,18 @@ func (sv *Server) updateUser(c *gin.Context) {
 		arg.Fullname = util.GetPgTypeText(*req.FullName)
 	}
 
-	if user.Role == sqlc.UserRoleAdmin {
-		arg.Role = sqlc.NullUserRole{
+	if user.Role == repository.UserRoleAdmin {
+		arg.Role = repository.NullUserRole{
 			UserRole: req.Role,
 		}
 	}
-	updatedUser, err := sv.postgres.UpdateUser(c, arg)
+	updatedUser, err := sv.repo.UpdateUser(c, arg)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
-	c.JSON(http.StatusOK, GenericResponse[sqlc.UpdateUserRow]{&updatedUser, nil, nil})
+	c.JSON(http.StatusOK, GenericResponse[repository.UpdateUserRow]{&updatedUser, nil, nil})
 }
 
 // getUser godoc
@@ -351,9 +350,9 @@ func (sv *Server) getUser(c *gin.Context) {
 		return
 	}
 
-	user, err := sv.postgres.GetUserByID(c, authPayload.UserID)
+	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
 	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
@@ -361,7 +360,7 @@ func (sv *Server) getUser(c *gin.Context) {
 		return
 	}
 
-	userAddress, err := sv.postgres.GetAddresses(c, user.UserID)
+	userAddress, err := sv.repo.GetAddresses(c, user.UserID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return

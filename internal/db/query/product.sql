@@ -31,7 +31,7 @@ SELECT
     sqlc.embed(products),
     img.image_id AS image_id,
     img.image_url AS image_url,
-    img.is_primary AS image_is_primary
+    img.primary AS image_primary
 FROM
     products
 LEFT JOIN images AS img ON products.product_id = img.product_id
@@ -39,7 +39,7 @@ WHERE
     products.product_id = $1 AND
     archived = COALESCE(sqlc.narg('archived'), false)
 ORDER BY
-    img.is_primary DESC;
+    img.primary DESC;
 
 -- name: ListProducts :many
 SELECT
@@ -48,7 +48,7 @@ SELECT
     img.image_url AS image_url
 FROM
     products
-LEFT JOIN images AS img ON products.product_id = img.product_id AND img.is_primary = TRUE
+LEFT JOIN images AS img ON products.product_id = img.product_id AND img.primary = TRUE
 WHERE
     archived = COALESCE(sqlc.narg('archived'), archived) AND
     name ILIKE COALESCE(sqlc.narg('name'), name) AND
@@ -113,7 +113,7 @@ SELECT
     img.image_url AS image_url
 FROM
     products
-LEFT JOIN images AS img ON products.product_id = img.product_id AND img.is_primary = TRUE
+LEFT JOIN images AS img ON products.product_id = img.product_id AND img.primary = TRUE
 WHERE
     products.product_id = $1 AND
     archived = COALESCE(sqlc.narg('archived'), false);

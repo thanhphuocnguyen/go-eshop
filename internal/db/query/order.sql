@@ -29,7 +29,7 @@ SELECT
     products.name as product_name, products.product_id as product_id,
     user_addresses.street, user_addresses.ward, user_addresses.district, user_addresses.city, 
     images.image_url,
-    payments.status as payment_status
+    payments.status as payment_status, payments.payment_id as payment_id, payments.amount as payment_amount, payments.payment_method as payment_method, payments.payment_gateway as payment_gateway
 FROM
     orders
 LEFT JOIN

@@ -7,7 +7,7 @@ import (
 	"aidanwoods.dev/go-paseto"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
+	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 )
 
 type PasetoTokenGenerator struct {
@@ -22,7 +22,7 @@ func NewPasetoTokenGenerator() TokenGenerator {
 	}
 }
 
-func (g *PasetoTokenGenerator) GenerateToken(userID int64, username string, userRole sqlc.UserRole, duration time.Duration) (string, Payload, error) {
+func (g *PasetoTokenGenerator) GenerateToken(userID int64, username string, userRole repository.UserRole, duration time.Duration) (string, Payload, error) {
 	payload := Payload{
 		ID:        uuid.New(),
 		Username:  username,
@@ -106,7 +106,7 @@ func getPayloadFromParsedData(t *paseto.Token) (*Payload, error) {
 		ID:        idUUID,
 		Username:  username,
 		UserID:    userId,
-		Role:      sqlc.UserRole(role),
+		Role:      repository.UserRole(role),
 		IssuedAt:  issuedAt,
 		ExpiredAt: expiredAt,
 	}, nil

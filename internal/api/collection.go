@@ -18,10 +18,6 @@ func (sv *Server) updateCollection(c *gin.Context) {
 
 }
 
-func (sv *Server) listCollections(c *gin.Context) {
-
-}
-
 func (sv *Server) addProductToCollection(c *gin.Context) {
 
 }

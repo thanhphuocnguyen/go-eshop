@@ -8,9 +8,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/rs/zerolog/log"
+	"github.com/stripe/stripe-go/v81"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/postgres"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
+	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	"github.com/thanhphuocnguyen/go-eshop/internal/util"
 )
 
 type updateCartItemRequest struct {
@@ -45,13 +47,13 @@ type getCartItemParam struct {
 }
 
 type checkoutRequest struct {
-	PaymentMethod string `json:"payment_method" binding:"required,oneof=credit_card paypal cod debit_card apple_pay wallet postpaid"`
-	AddressID     *int64 `json:"address_id" binding:"omitempty,required"`
+	PaymentGateway *string `json:"payment_gateway" binding:"required,oneof=stripe paypal visa mastercard apple_pay google_pay postpaid momo zalo_pay vn_pay"`
+	AddressID      *int64  `json:"address_id" binding:"omitempty,required"`
 }
 
 // ------------------------------ Mappers ------------------------------
 
-func mapToCartResponse(cart sqlc.Cart, cartItems []sqlc.GetCartItemsRow) cartResponse {
+func mapToCartResponse(cart repository.Cart, cartItems []repository.GetCartItemsRow) cartResponse {
 	var totalPrice float64
 	products := make([]cartItemResponse, len(cartItems))
 	for i, item := range cartItems {
@@ -86,7 +88,7 @@ func mapToCartResponse(cart sqlc.Cart, cartItems []sqlc.GetCartItemsRow) cartRes
 // @Tags carts
 // @Accept json
 // @Produce json
-// @Success 200 {object} GenericResponse[sqlc.Cart]
+// @Success 200 {object} GenericResponse[repository.Cart]
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /carts [post]
@@ -96,28 +98,28 @@ func (sv *Server) createCart(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("user not found")))
 		return
 	}
-	user, err := sv.postgres.GetUserByID(c, authPayload.UserID)
+	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
 	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(errors.New("user not found")))
 			return
 		}
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
-	_, err = sv.postgres.GetCart(c, authPayload.UserID)
+	_, err = sv.repo.GetCart(c, authPayload.UserID)
 	if err == nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("cart already existed")))
 		return
 	}
 
-	newCart, err := sv.postgres.CreateCart(c, user.UserID)
+	newCart, err := sv.repo.CreateCart(c, user.UserID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
-	c.JSON(http.StatusOK, GenericResponse[sqlc.Cart]{&newCart, nil, nil})
+	c.JSON(http.StatusOK, GenericResponse[repository.Cart]{&newCart, nil, nil})
 }
 
 // getCartDetail godoc
@@ -136,16 +138,16 @@ func (sv *Server) getCartDetail(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "user not found"})
 		return
 	}
-	cart, err := sv.postgres.GetCart(c, authPayload.UserID)
+	cart, err := sv.repo.GetCart(c, authPayload.UserID)
 	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(errors.New("cart not found")))
 			return
 		}
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
-	cartItems, err := sv.postgres.GetCartItems(c, cart.CartID)
+	cartItems, err := sv.repo.GetCartItems(c, cart.CartID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
@@ -180,7 +182,7 @@ func (sv *Server) addCartItem(c *gin.Context) {
 		return
 	}
 
-	product, err := sv.postgres.GetProductWithImage(c, sqlc.GetProductWithImageParams{
+	product, err := sv.repo.GetProductWithImage(c, repository.GetProductWithImageParams{
 		ProductID: req.ProductID,
 		Archived: pgtype.Bool{
 			Bool:  false,
@@ -189,7 +191,7 @@ func (sv *Server) addCartItem(c *gin.Context) {
 	})
 
 	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(errors.New("product not found")))
 			return
 		}
@@ -206,10 +208,10 @@ func (sv *Server) addCartItem(c *gin.Context) {
 		return
 	}
 
-	cart, err := sv.postgres.GetCart(c, authPayload.UserID)
+	cart, err := sv.repo.GetCart(c, authPayload.UserID)
 	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
-			cart, err = sv.postgres.CreateCart(c, authPayload.UserID)
+		if errors.Is(err, repository.ErrorRecordNotFound) {
+			cart, err = sv.repo.CreateCart(c, authPayload.UserID)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, mapErrResp(err))
 				return
@@ -226,9 +228,9 @@ func (sv *Server) addCartItem(c *gin.Context) {
 	}
 
 	// check if the product is already in the cart
-	cartItem, err := sv.postgres.GetCartItemByProductID(c, req.ProductID)
-	if err != nil && errors.Is(err, postgres.ErrorRecordNotFound) {
-		cartItem, err = sv.postgres.AddProductToCart(c, sqlc.AddProductToCartParams{
+	cartItem, err := sv.repo.GetCartItemByProductID(c, req.ProductID)
+	if err != nil && errors.Is(err, repository.ErrorRecordNotFound) {
+		cartItem, err = sv.repo.AddProductToCart(c, repository.AddProductToCartParams{
 			ProductID: req.ProductID,
 			CartID:    cart.CartID,
 			Quantity:  req.Quantity,
@@ -238,7 +240,7 @@ func (sv *Server) addCartItem(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, mapErrResp(errors.New("insufficient stock")))
 			return
 		}
-		err = sv.postgres.UpdateCartItemQuantity(c, sqlc.UpdateCartItemQuantityParams{
+		err = sv.repo.UpdateCartItemQuantity(c, repository.UpdateCartItemQuantityParams{
 			Quantity:   cartItem.Quantity + req.Quantity,
 			CartItemID: cartItem.CartItemID,
 		})
@@ -249,7 +251,7 @@ func (sv *Server) addCartItem(c *gin.Context) {
 		return
 	}
 
-	err = sv.postgres.UpdateCart(c, cart.CartID)
+	err = sv.repo.UpdateCart(c, cart.CartID)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
@@ -293,9 +295,9 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 		return
 	}
 
-	cart, err := sv.postgres.GetCart(c, authPayload.UserID)
+	cart, err := sv.repo.GetCart(c, authPayload.UserID)
 	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(errors.New("cart not found")))
 			return
 		}
@@ -308,7 +310,7 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 		return
 	}
 
-	err = sv.postgres.RemoveProductFromCart(c, sqlc.RemoveProductFromCartParams{
+	err = sv.repo.RemoveProductFromCart(c, repository.RemoveProductFromCartParams{
 		CartID:     cart.CartID,
 		CartItemID: param.ID,
 	})
@@ -329,7 +331,7 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 // @Accept json
 // @Param input body checkoutRequest true "Update cart items input"
 // @Produce json
-// @Success 200 {object} GenericResponse[postgres.CheckoutCartTxResult]
+// @Success 200 {object} GenericResponse[repository.CheckoutCartTxResult]
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /carts/checkout [post]
@@ -346,9 +348,9 @@ func (sv *Server) checkout(c *gin.Context) {
 		return
 	}
 
-	cart, err := sv.postgres.GetCart(c, authPayload.UserID)
+	cart, err := sv.repo.GetCart(c, authPayload.UserID)
 	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(errors.New("cart not found")))
 			return
 		}
@@ -356,7 +358,7 @@ func (sv *Server) checkout(c *gin.Context) {
 		return
 	}
 
-	addresses, err := sv.postgres.GetAddresses(c, authPayload.UserID)
+	addresses, err := sv.repo.GetAddresses(c, authPayload.UserID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
@@ -370,7 +372,7 @@ func (sv *Server) checkout(c *gin.Context) {
 	if req.AddressID == nil {
 		isAddressExist := false
 		for _, address := range addresses {
-			if address.IsPrimary {
+			if address.Default {
 				primaryAddressID = address.UserAddressID
 			}
 			if address.UserAddressID == *req.AddressID {
@@ -384,13 +386,13 @@ func (sv *Server) checkout(c *gin.Context) {
 		}
 	}
 
-	itemCnt, err := sv.postgres.CountCartItem(c, cart.CartID)
+	cartItems, err := sv.repo.GetCartItems(c, cart.CartID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
-	if itemCnt == 0 {
+	if len(cartItems) == 0 {
 		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("cart is empty")))
 		return
 	}
@@ -400,10 +402,27 @@ func (sv *Server) checkout(c *gin.Context) {
 		return
 	}
 
-	params := postgres.CheckoutCartTxParams{
+	paymentMethod := repository.PaymentMethodCod
+	if req.PaymentGateway != nil {
+		switch *req.PaymentGateway {
+		case "stripe":
+			stripe.Key = sv.config.StripeSecretKey
+			paymentMethod = repository.PaymentMethodCard
+		default:
+			c.JSON(http.StatusBadRequest, mapErrResp(errors.New("currently we only support stripe")))
+			return
+		}
+	}
+
+	params := repository.CheckoutCartTxParams{
 		UserID:        authPayload.UserID,
 		CartID:        cart.CartID,
-		PaymentMethod: sqlc.PaymentMethod(req.PaymentMethod),
+		CartItems:     cartItems,
+		PaymentMethod: repository.PaymentMethod(paymentMethod),
+	}
+
+	if req.PaymentGateway != nil {
+		params.PaymentGateway = repository.PaymentGateway(*req.PaymentGateway)
 	}
 
 	if req.AddressID != nil {
@@ -412,14 +431,54 @@ func (sv *Server) checkout(c *gin.Context) {
 		params.AddressID = primaryAddressID
 	}
 
-	order, err := sv.postgres.CheckoutCartTx(c, params)
-
+	checkoutResult, err := sv.repo.CheckoutCartTx(c, params)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
-	c.JSON(http.StatusOK, GenericResponse[postgres.CheckoutCartTxResult]{&order, nil, nil})
+	paymentRow, err := sv.repo.CreatePaymentTransaction(c, repository.CreatePaymentTransactionParams{
+		OrderID:       checkoutResult.OrderID,
+		Amount:        checkoutResult.TotalPrice,
+		PaymentMethod: paymentMethod,
+		PaymentGateway: repository.NullPaymentGateway{
+			PaymentGateway: repository.PaymentGateway(*req.PaymentGateway),
+			Valid:          true,
+		},
+	})
+
+	if err != nil {
+		log.Error().Err(err).Msg("CreatePaymentTransaction")
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+	}
+
+	productResp := make([]orderItemResp, len(checkoutResult.Items))
+	for i, item := range checkoutResult.Items {
+		productResp[i] = orderItemResp{
+			ID:       item.ProductID,
+			Name:     item.ProductName,
+			ImageUrl: item.ImageUrl,
+			Quantity: item.Quantity,
+		}
+	}
+
+	resp := orderDetailResponse{
+		ID:       checkoutResult.OrderID,
+		Total:    util.PgNumericToFloat64(checkoutResult.TotalPrice),
+		Status:   checkoutResult.Status,
+		Products: productResp,
+	}
+	paymentInfo := paymentInfo{
+		ID:             paymentRow.PaymentID,
+		PaymentAmount:  util.PgNumericToFloat64(paymentRow.Amount),
+		PaymentMethod:  string(paymentMethod),
+		PaymentStatus:  string(repository.PaymentStatusPending),
+		PaymentGateWay: req.PaymentGateway,
+	}
+
+	resp.PaymentInfo = paymentInfo
+
+	c.JSON(http.StatusOK, GenericResponse[orderDetailResponse]{&resp, nil, nil})
 }
 
 // updateCartItemQuantity godoc
@@ -452,9 +511,9 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 		return
 	}
 
-	cart, err := sv.postgres.GetCart(c, authPayload.UserID)
+	cart, err := sv.repo.GetCart(c, authPayload.UserID)
 	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(errors.New("cart not found")))
 			return
 		}
@@ -467,7 +526,7 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 		return
 	}
 
-	err = sv.postgres.UpdateCartItemQuantity(c, sqlc.UpdateCartItemQuantityParams{
+	err = sv.repo.UpdateCartItemQuantity(c, repository.UpdateCartItemQuantityParams{
 		Quantity:   req.Quantity,
 		CartItemID: param.ID,
 	})
@@ -477,9 +536,9 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 		return
 	}
 
-	cartItem, err := sv.postgres.GetCartItemWithProduct(c, param.ID)
+	cartItem, err := sv.repo.GetCartItemWithProduct(c, param.ID)
 	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(errors.New("cart item not found")))
 			return
 		}
@@ -487,12 +546,12 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 		return
 	}
 
-	product, err := sv.postgres.GetProduct(c, sqlc.GetProductParams{
+	product, err := sv.repo.GetProduct(c, repository.GetProductParams{
 		ProductID: cartItem.ProductID,
 	})
 
 	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(errors.New("product not found")))
 			return
 		}
@@ -539,9 +598,9 @@ func (sv *Server) clearCart(c *gin.Context) {
 		return
 	}
 
-	cart, err := sv.postgres.GetCart(c, authPayload.UserID)
+	cart, err := sv.repo.GetCart(c, authPayload.UserID)
 	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(errors.New("cart not found")))
 			return
 		}
@@ -554,7 +613,7 @@ func (sv *Server) clearCart(c *gin.Context) {
 		return
 	}
 
-	err = sv.postgres.ClearCart(c, cart.CartID)
+	err = sv.repo.ClearCart(c, cart.CartID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return

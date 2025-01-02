@@ -13,31 +13,24 @@ CREATE TYPE "order_status" AS ENUM (
 CREATE TYPE "payment_status" AS ENUM ('pending', 'success', 'failed');
 
 CREATE TYPE "payment_method" AS ENUM (
-  'credit_card',
-  'paypal',
+  'card',
   'cod',
-  'debit_card',
-  'apple_pay',
   'wallet',
-  'postpaid'
+  'postpaid',
+  'bank_transfer'
 );
 
 CREATE TYPE "payment_gateway" AS ENUM (
   'stripe',
   'paypal',
-  'razorpay',
   'visa',
   'mastercard',
-  'amex',
   'apple_pay',
   'google_pay',
-  'amazon_pay',
-  'phone_pe',
-  'paytm',
-  'upi',
-  'wallet',
-  'cod',
-  'postpaid'
+  'postpaid',
+  'momo',
+  'zalo_pay',
+  'vn_pay'
 );
 
 CREATE TYPE "cart_status" AS ENUM ('active', 'checked_out');

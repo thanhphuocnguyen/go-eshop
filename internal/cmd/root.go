@@ -12,10 +12,15 @@ import (
 
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/thanhphuocnguyen/go-eshop/config"
+	"github.com/thanhphuocnguyen/go-eshop/internal/api"
+	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/upload"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -69,11 +74,90 @@ func Execute(ctx context.Context) int {
 	rootCmd.PersistentFlags().StringVarP(&cfg.HttpAddr, "http-addr", "a", cfg.HttpAddr, "HTTP address")
 	rootCmd.PersistentFlags().BoolVarP(&profile, "profile", "p", false, "enable profiling")
 
-	rootCmd.AddCommand(APICmd(ctx, cfg))
-	rootCmd.AddCommand(WorkerCmd(ctx, cfg))
+	rootCmd.AddCommand(apiCmd(ctx, cfg))
+	rootCmd.AddCommand(workerCmd(ctx, cfg))
 
 	if err = rootCmd.Execute(); err != nil {
 		return 1
 	}
 	return 0
+}
+
+func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "api",
+		Args:  cobra.ExactArgs(0),
+		Short: "Run Gin Gonic API server",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			pg, err := repository.GetPostgresInstance(ctx, cfg)
+			if err != nil {
+				return err
+			}
+			log.Info().Msg("Postgres instance created")
+			redisCfg := asynq.RedisClientOpt{
+				Addr: cfg.RedisUrl,
+			}
+			taskDistributor := worker.NewRedisTaskDistributor(redisCfg)
+			uploadService := upload.NewCloudinaryUploadService(cfg)
+
+			api, err := api.NewAPI(cfg, pg, taskDistributor, uploadService)
+			if err != nil {
+				return err
+			}
+			server := api.Server(cfg.HttpAddr)
+
+			go func() {
+				log.Info().Msgf("api server started at :%s", cfg.HttpAddr)
+				_ = server.ListenAndServe()
+			}()
+
+			<-ctx.Done()
+
+			_ = server.Shutdown(ctx)
+			log.Info().Msg("API server shutdown")
+			_ = taskDistributor.Shutdown()
+			log.Info().Msg("Task distributor shutdown")
+			pg.Close()
+			log.Info().Msg("Postgres instance closed")
+			return nil
+		},
+	}
+
+	return cmd
+}
+
+func workerCmd(ctx context.Context, cfg config.Config) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "worker",
+		Args:  cobra.ExactArgs(0),
+		Short: "Run the asynq worker to process tasks",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			pgDB, err := repository.GetPostgresInstance(ctx, cfg)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to connect to postgres")
+				return err
+			}
+			redisCfg := asynq.RedisClientOpt{
+				Addr: cfg.RedisUrl,
+			}
+			distributor := worker.NewRedisTaskProcessor(
+				redisCfg,
+				pgDB,
+			)
+
+			err = distributor.Start()
+			if err != nil {
+				log.Error().Err(err).Msg("failed to start task processor")
+				return err
+			}
+
+			log.Info().Msg("task processor started")
+			<-ctx.Done()
+			log.Info().Msg("shutting down task processor")
+			distributor.Shutdown()
+
+			return nil
+		},
+	}
+	return cmd
 }

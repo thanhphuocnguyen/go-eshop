@@ -29,13 +29,12 @@ CREATE TABLE
         "ward" varchar(100),
         "district" varchar(100) NOT NULL,
         "city" varchar(100) NOT NULL,
-        "is_primary" bool NOT NULL DEFAULT false,
-        "is_deleted" bool NOT NULL DEFAULT false,
+        "default" BOOLEAN NOT NULL DEFAULT false,
+        "deleted" BOOLEAN NOT NULL DEFAULT false,
         "created_at" timestamptz NOT NULL DEFAULT now (),
-        "updated_at" timestamptz NOT NULL DEFAULT now (),
-        "deleted_at" timestamptz
+        "updated_at" timestamptz NOT NULL DEFAULT now ()
     );
 
-CREATE INDEX ON "user_addresses" ("user_id", "is_primary");
+CREATE INDEX ON "user_addresses" ("user_id", "default");
 
 CREATE INDEX "idx_user_addresses_user_id" ON "user_addresses" ("user_id");

@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
+	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 )
 
 const (
@@ -42,7 +42,7 @@ func authMiddleware(tokenGenerator auth.TokenGenerator) gin.HandlerFunc {
 	}
 }
 
-func roleMiddleware(roles ...sqlc.UserRole) gin.HandlerFunc {
+func roleMiddleware(roles ...repository.UserRole) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		payload, ok := ctx.MustGet(authorizationPayload).(*auth.Payload)
 		if !ok {

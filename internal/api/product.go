@@ -6,8 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/postgres"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
+	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/util"
 )
 
@@ -70,7 +69,7 @@ type productListResponse struct {
 
 // ------------------------------ Mapper ------------------------------
 
-func mapToProductResponse(productRow []sqlc.GetProductDetailRow) productResponse {
+func mapToProductResponse(productRow []repository.GetProductDetailRow) productResponse {
 	if len(productRow) == 0 {
 		return productResponse{}
 	}
@@ -91,7 +90,7 @@ func mapToProductResponse(productRow []sqlc.GetProductDetailRow) productResponse
 		if img.ImageID.Valid {
 			resp.Images = append(resp.Images, productImage{
 				ID:        img.ImageID.Int32,
-				IsPrimary: img.ImageIsPrimary.Bool,
+				IsPrimary: img.ImagePrimary.Bool,
 				ImageUrl:  img.ImageUrl.String,
 			})
 
@@ -100,7 +99,7 @@ func mapToProductResponse(productRow []sqlc.GetProductDetailRow) productResponse
 
 	return resp
 }
-func mapToListProductResponse(productRow sqlc.ListProductsRow) productListResponse {
+func mapToListProductResponse(productRow repository.ListProductsRow) productListResponse {
 	price, _ := productRow.Price.Float64Value()
 	product := productListResponse{
 		ID:          productRow.ProductID,
@@ -129,7 +128,7 @@ func mapToListProductResponse(productRow sqlc.ListProductsRow) productListRespon
 // @Accept json
 // @Param input body createProductRequest true "Product input"
 // @Produce json
-// @Success 200 {object} GenericResponse[sqlc.Product]
+// @Success 200 {object} GenericResponse[repository.Product]
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /products [post]
@@ -147,7 +146,7 @@ func (sv *Server) createProduct(c *gin.Context) {
 		return
 	}
 
-	newProduct, err := sv.postgres.CreateProduct(c, sqlc.CreateProductParams{
+	newProduct, err := sv.repo.CreateProduct(c, repository.CreateProductParams{
 		Name:        product.Name,
 		Description: product.Description,
 		Sku:         product.Sku,
@@ -160,7 +159,7 @@ func (sv *Server) createProduct(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, GenericResponse[sqlc.Product]{&newProduct, nil, nil})
+	c.JSON(http.StatusCreated, GenericResponse[repository.Product]{&newProduct, nil, nil})
 }
 
 // getProductDetail godoc
@@ -182,12 +181,12 @@ func (sv *Server) getProductDetail(c *gin.Context) {
 		return
 	}
 
-	productRow, err := sv.postgres.GetProductDetail(c, sqlc.GetProductDetailParams{
+	productRow, err := sv.repo.GetProductDetail(c, repository.GetProductDetailParams{
 		ProductID: params.ID,
 	})
 
 	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
@@ -222,11 +221,11 @@ func (sv *Server) getProducts(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
-	productsChan := make(chan []sqlc.ListProductsRow)
+	productsChan := make(chan []repository.ListProductsRow)
 	errChan := make(chan error)
 	countChan := make(chan int64)
 	go func() {
-		productsQueryParams := sqlc.ListProductsParams{
+		productsQueryParams := repository.ListProductsParams{
 			Limit:  queries.PageSize,
 			Offset: (queries.Page - 1) * queries.PageSize,
 		}
@@ -237,7 +236,7 @@ func (sv *Server) getProducts(c *gin.Context) {
 			productsQueryParams.Sku = util.GetPgTypeText(*queries.Sku)
 		}
 
-		products, err := sv.postgres.ListProducts(c, productsQueryParams)
+		products, err := sv.repo.ListProducts(c, productsQueryParams)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, mapErrResp(err))
 			errChan <- err
@@ -247,7 +246,7 @@ func (sv *Server) getProducts(c *gin.Context) {
 	}()
 
 	go func() {
-		count, err := sv.postgres.CountProducts(c, sqlc.CountProductsParams{})
+		count, err := sv.repo.CountProducts(c, repository.CountProductsParams{})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, mapErrResp(err))
 			errChan <- err
@@ -278,7 +277,7 @@ func (sv *Server) getProducts(c *gin.Context) {
 // @Param product_id path int true "Product ID"
 // @Param input body updateProductRequest true "Product input"
 // @Produce json
-// @Success 200 {object} GenericResponse[sqlc.Product]
+// @Success 200 {object} GenericResponse[repository.Product]
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /products/{product_id} [put]
@@ -293,7 +292,7 @@ func (sv *Server) updateProduct(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
-	updateBody := sqlc.UpdateProductParams{
+	updateBody := repository.UpdateProductParams{
 		ProductID: params.ID,
 	}
 	if product.Price != nil {
@@ -326,9 +325,9 @@ func (sv *Server) updateProduct(c *gin.Context) {
 		}
 	}
 
-	updated, err := sv.postgres.UpdateProduct(c, updateBody)
+	updated, err := sv.repo.UpdateProduct(c, updateBody)
 	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
@@ -336,7 +335,7 @@ func (sv *Server) updateProduct(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, GenericResponse[sqlc.Product]{&updated, nil, nil})
+	c.JSON(http.StatusOK, GenericResponse[repository.Product]{&updated, nil, nil})
 }
 
 // removeProduct godoc
@@ -358,11 +357,11 @@ func (sv *Server) removeProduct(c *gin.Context) {
 		return
 	}
 
-	_, err := sv.postgres.GetProduct(c, sqlc.GetProductParams{
+	_, err := sv.repo.GetProduct(c, repository.GetProductParams{
 		ProductID: params.ID,
 	})
 	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
@@ -370,7 +369,7 @@ func (sv *Server) removeProduct(c *gin.Context) {
 		return
 	}
 
-	err = sv.postgres.DeleteProduct(c, params.ID)
+	err = sv.repo.DeleteProduct(c, params.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return

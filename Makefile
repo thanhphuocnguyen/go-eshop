@@ -23,6 +23,12 @@ serve:
 sqlc:
 	@echo "Generating sqlc..."
 	sqlc generate
+build-migrate:
+	@echo "Building migration..."
+	go build ./cmd/migrate
+build-seed:
+	@echo "Building seed..."
+	go build ./cmd/seed
 build:
 	@echo "Building application..."
 	go build ./cmd/web
@@ -35,4 +41,4 @@ run-docker:
 gen-swagger:
 	@echo "Generating swagger..."
 	swag init -d internal/api -g server.go --parseInternal --parseDependency
-.PHONY: create-migration migrate-up serve sqlc build run run-docker gen-swagger migrate-up-1 migrate-down migrate-down-1 migrate-drop
+.PHONY: create-migration migrate-up serve sqlc build run run-docker gen-swagger migrate-up-1 migrate-down migrate-down-1 migrate-drop build-migrate build-seed

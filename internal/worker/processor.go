@@ -5,7 +5,7 @@ import (
 
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/postgres"
+	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 )
 
 const (
@@ -20,10 +20,10 @@ type TaskProcessor interface {
 }
 type RedisTaskProcessor struct {
 	server *asynq.Server
-	pg     postgres.Store
+	repo   repository.Repository
 }
 
-func NewRedisTaskProcessor(redisOtp asynq.RedisClientOpt, postgres postgres.Store) TaskProcessor {
+func NewRedisTaskProcessor(redisOtp asynq.RedisClientOpt, postgres repository.Repository) TaskProcessor {
 	server := asynq.NewServer(redisOtp, asynq.Config{
 		Concurrency: 10,
 		Queues: map[string]int{

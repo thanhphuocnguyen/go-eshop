@@ -8,6 +8,11 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const (
+	Exp = -2
+	Mul = 100
+)
+
 func GetPgTypeText(value string) pgtype.Text {
 	return pgtype.Text{
 		String: value,
@@ -67,8 +72,12 @@ func GetPgTypeFloat8(value float64) pgtype.Float8 {
 
 func GetPgNumericInt(value float64) pgtype.Numeric {
 	return pgtype.Numeric{
-		Int:   big.NewInt(int64(value * 100)),
-		Exp:   -2,
+		Int:   big.NewInt(int64(value * Mul)),
+		Exp:   Exp,
 		Valid: true,
 	}
+}
+
+func PgNumericToFloat64(value pgtype.Numeric) float64 {
+	return float64(value.Int.Int64()) / float64(value.Exp)
 }

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
+	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 )
 
 var (
@@ -14,10 +14,10 @@ var (
 )
 
 type Payload struct {
-	ID        uuid.UUID     `json:"id"`
-	Username  string        `json:"username"`
-	Role      sqlc.UserRole `json:"role"`
-	UserID    int64         `json:"user_id"`
-	IssuedAt  time.Time     `json:"issued_at"`
-	ExpiredAt time.Time     `json:"expired_at"`
+	ID        uuid.UUID           `json:"id"`
+	Username  string              `json:"username"`
+	Role      repository.UserRole `json:"role"`
+	UserID    int64               `json:"user_id"`
+	IssuedAt  time.Time           `json:"issued_at"`
+	ExpiredAt time.Time           `json:"expired_at"`
 }

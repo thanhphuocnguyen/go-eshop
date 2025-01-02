@@ -7,8 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/postgres"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/sqlc"
+	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/util"
 )
 
@@ -27,7 +26,7 @@ type getProductImageParams struct {
 // @Param product_id path int true "Product ID"
 // @Param file formData file true "Image file"
 // @Produce json
-// @Success 200 {object} GenericResponse[[]sqlc.Image]
+// @Success 200 {object} GenericResponse[[]repository.Image]
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /products/{product_id}/upload-image [post]
@@ -38,7 +37,7 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 		return
 	}
 
-	productDetailRows, err := sv.postgres.GetProductDetail(c, sqlc.GetProductDetailParams{
+	productDetailRows, err := sv.repo.GetProductDetail(c, repository.GetProductDetailParams{
 		ProductID: param.ID,
 	})
 
@@ -64,7 +63,7 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 		return
 	}
 
-	img, err := sv.postgres.CreateImage(c, sqlc.CreateImageParams{
+	img, err := sv.repo.CreateImage(c, repository.CreateImageParams{
 		ProductID: pgtype.Int8{
 			Int64: productDetailRows[0].Product.ProductID,
 			Valid: true,
@@ -77,12 +76,12 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 	})
 
 	if !productDetailRows[0].ImageUrl.Valid {
-		err := sv.postgres.SetPrimaryImageTx(c, postgres.SetPrimaryImageTxParams{
+		err := sv.repo.SetPrimaryImageTx(c, repository.SetPrimaryImageTxParams{
 			NewPrimaryID: img.ImageID,
 			ProductID:    productDetailRows[0].Product.ProductID,
 		})
 		if err == nil {
-			img.IsPrimary = pgtype.Bool{
+			img.Primary = pgtype.Bool{
 				Bool:  true,
 				Valid: true,
 			}
@@ -95,7 +94,7 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, GenericResponse[sqlc.Image]{&img, nil, nil})
+	c.JSON(http.StatusOK, GenericResponse[repository.Image]{&img, nil, nil})
 }
 
 // GetProductImages godoc
@@ -106,7 +105,7 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 // @Accept json
 // @Param product_id path int true "Product ID"
 // @Produce json
-// @Success 200 {object} GenericResponse[[]sqlc.Image]
+// @Success 200 {object} GenericResponse[[]repository.Image]
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /products/{product_id}/images [get]
@@ -117,7 +116,7 @@ func (sv *Server) getProductImages(c *gin.Context) {
 		return
 	}
 
-	images, err := sv.postgres.GetImagesByProductID(c, pgtype.Int8{
+	images, err := sv.repo.GetImagesByProductID(c, pgtype.Int8{
 		Int64: param.ID,
 	})
 
@@ -125,7 +124,7 @@ func (sv *Server) getProductImages(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
-	c.JSON(http.StatusOK, GenericResponse[[]sqlc.Image]{&images, nil, nil})
+	c.JSON(http.StatusOK, GenericResponse[[]repository.Image]{&images, nil, nil})
 }
 
 // SetImagesPrimary godoc
@@ -149,19 +148,19 @@ func (sv *Server) setImagesPrimary(c *gin.Context) {
 		return
 	}
 
-	product, err := sv.postgres.GetProduct(c, sqlc.GetProductParams{
+	product, err := sv.repo.GetProduct(c, repository.GetProductParams{
 		ProductID: params.ID,
 	})
 	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
 	}
 
-	img, err := sv.postgres.GetImageByID(c, params.ImageID)
+	img, err := sv.repo.GetImageByID(c, params.ImageID)
 	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
@@ -174,7 +173,7 @@ func (sv *Server) setImagesPrimary(c *gin.Context) {
 		return
 	}
 
-	err = sv.postgres.SetPrimaryImageTx(c, postgres.SetPrimaryImageTxParams{
+	err = sv.repo.SetPrimaryImageTx(c, repository.SetPrimaryImageTxParams{
 		NewPrimaryID: img.ImageID,
 		ProductID:    product.ProductID,
 	})
@@ -218,12 +217,12 @@ func (sv *Server) removeProductImage(c *gin.Context) {
 		return
 	}
 
-	product, err := sv.postgres.GetProduct(c, sqlc.GetProductParams{
+	product, err := sv.repo.GetProduct(c, repository.GetProductParams{
 		ProductID: param.ID,
 	})
 
 	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
@@ -231,9 +230,9 @@ func (sv *Server) removeProductImage(c *gin.Context) {
 		return
 	}
 
-	img, err := sv.postgres.GetImageByID(c, params.ImageID)
+	img, err := sv.repo.GetImageByID(c, params.ImageID)
 	if err != nil {
-		if errors.Is(err, postgres.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
@@ -254,7 +253,7 @@ func (sv *Server) removeProductImage(c *gin.Context) {
 			return
 		}
 	}
-	err = sv.postgres.DeleteImage(c, img.ImageID)
+	err = sv.repo.DeleteImage(c, img.ImageID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
