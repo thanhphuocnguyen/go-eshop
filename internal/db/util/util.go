@@ -6,11 +6,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
-)
-
-const (
-	Exp = -2
-	Mul = 100
+	"github.com/thanhphuocnguyen/go-eshop/internal/constant"
 )
 
 func GetPgTypeText(value string) pgtype.Text {
@@ -72,12 +68,8 @@ func GetPgTypeFloat8(value float64) pgtype.Float8 {
 
 func GetPgNumericInt(value float64) pgtype.Numeric {
 	return pgtype.Numeric{
-		Int:   big.NewInt(int64(value * Mul)),
-		Exp:   Exp,
+		Int:   big.NewInt(int64(value * constant.MUL)),
+		Exp:   constant.EXP,
 		Valid: true,
 	}
-}
-
-func PgNumericToFloat64(value pgtype.Numeric) float64 {
-	return float64(value.Int.Int64()) / float64(value.Exp)
 }

@@ -47,9 +47,10 @@ func roleMiddleware(roles ...repository.UserRole) gin.HandlerFunc {
 		payload, ok := ctx.MustGet(authorizationPayload).(*auth.Payload)
 		if !ok {
 			log.Error().Msg("Role middleware: cannot get authorization payload")
-			ctx.AbortWithStatusJSON(http.StatusForbidden, mapErrResp(fmt.Errorf("authorization payload is not provided")))
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, mapErrResp(fmt.Errorf("authorization payload is not provided")))
 			return
 		}
+		log.Info().Str("role", string(payload.Role)).Msg("Role middleware")
 
 		for _, r := range roles {
 			if r == payload.Role {
@@ -57,6 +58,6 @@ func roleMiddleware(roles ...repository.UserRole) gin.HandlerFunc {
 				return
 			}
 		}
-		ctx.AbortWithStatusJSON(http.StatusUnauthorized, mapErrResp(fmt.Errorf("user does not have permission")))
+		ctx.AbortWithStatusJSON(http.StatusForbidden, mapErrResp(fmt.Errorf("user does not have permission")))
 	}
 }

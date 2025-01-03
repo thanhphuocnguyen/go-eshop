@@ -14,6 +14,7 @@ import (
 const createPaymentTransaction = `-- name: CreatePaymentTransaction :one
 INSERT INTO
     payments (
+        payment_id,
         order_id,
         amount,
         payment_method,
@@ -24,12 +25,14 @@ VALUES
         $1,
         $2,
         $3,
-        $4
+        $4,
+        $5
     )
-RETURNING payment_id, order_id, amount, payment_method, status, payment_gateway, transaction_id, created_at, updated_at
+RETURNING payment_id, order_id, amount, payment_method, status, payment_gateway, refund_id, created_at, updated_at
 `
 
 type CreatePaymentTransactionParams struct {
+	PaymentID      string             `json:"payment_id"`
 	OrderID        int64              `json:"order_id"`
 	Amount         pgtype.Numeric     `json:"amount"`
 	PaymentMethod  PaymentMethod      `json:"payment_method"`
@@ -38,6 +41,7 @@ type CreatePaymentTransactionParams struct {
 
 func (q *Queries) CreatePaymentTransaction(ctx context.Context, arg CreatePaymentTransactionParams) (Payment, error) {
 	row := q.db.QueryRow(ctx, createPaymentTransaction,
+		arg.PaymentID,
 		arg.OrderID,
 		arg.Amount,
 		arg.PaymentMethod,
@@ -51,7 +55,7 @@ func (q *Queries) CreatePaymentTransaction(ctx context.Context, arg CreatePaymen
 		&i.PaymentMethod,
 		&i.Status,
 		&i.PaymentGateway,
-		&i.TransactionID,
+		&i.RefundID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -65,14 +69,14 @@ WHERE
     payment_id = $1
 `
 
-func (q *Queries) DeletePaymentTransaction(ctx context.Context, paymentID int32) error {
+func (q *Queries) DeletePaymentTransaction(ctx context.Context, paymentID string) error {
 	_, err := q.db.Exec(ctx, deletePaymentTransaction, paymentID)
 	return err
 }
 
 const getPaymentTransactionByID = `-- name: GetPaymentTransactionByID :one
 SELECT
-    payment_id, order_id, amount, payment_method, status, payment_gateway, transaction_id, created_at, updated_at
+    payment_id, order_id, amount, payment_method, status, payment_gateway, refund_id, created_at, updated_at
 FROM
     payments
 WHERE
@@ -80,7 +84,7 @@ WHERE
 LIMIT 1
 `
 
-func (q *Queries) GetPaymentTransactionByID(ctx context.Context, paymentID int32) (Payment, error) {
+func (q *Queries) GetPaymentTransactionByID(ctx context.Context, paymentID string) (Payment, error) {
 	row := q.db.QueryRow(ctx, getPaymentTransactionByID, paymentID)
 	var i Payment
 	err := row.Scan(
@@ -90,7 +94,7 @@ func (q *Queries) GetPaymentTransactionByID(ctx context.Context, paymentID int32
 		&i.PaymentMethod,
 		&i.Status,
 		&i.PaymentGateway,
-		&i.TransactionID,
+		&i.RefundID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -99,7 +103,7 @@ func (q *Queries) GetPaymentTransactionByID(ctx context.Context, paymentID int32
 
 const getPaymentTransactionByOrderID = `-- name: GetPaymentTransactionByOrderID :one
 SELECT
-    payment_id, order_id, amount, payment_method, status, payment_gateway, transaction_id, created_at, updated_at
+    payment_id, order_id, amount, payment_method, status, payment_gateway, refund_id, created_at, updated_at
 FROM
     payments
 WHERE
@@ -117,7 +121,7 @@ func (q *Queries) GetPaymentTransactionByOrderID(ctx context.Context, orderID in
 		&i.PaymentMethod,
 		&i.Status,
 		&i.PaymentGateway,
-		&i.TransactionID,
+		&i.RefundID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -129,18 +133,28 @@ UPDATE
     payments
 SET
     amount = COALESCE($2, amount),
-    payment_method = COALESCE($3, payment_method)
+    payment_method = COALESCE($3, payment_method),
+    refund_id = COALESCE($4, refund_id),
+    status = COALESCE($5, status)
 WHERE
     payment_id = $1
 `
 
 type UpdatePaymentTransactionParams struct {
-	PaymentID     int32             `json:"payment_id"`
+	PaymentID     string            `json:"payment_id"`
 	Amount        pgtype.Numeric    `json:"amount"`
 	PaymentMethod NullPaymentMethod `json:"payment_method"`
+	RefundID      pgtype.Text       `json:"refund_id"`
+	Status        NullPaymentStatus `json:"status"`
 }
 
 func (q *Queries) UpdatePaymentTransaction(ctx context.Context, arg UpdatePaymentTransactionParams) error {
-	_, err := q.db.Exec(ctx, updatePaymentTransaction, arg.PaymentID, arg.Amount, arg.PaymentMethod)
+	_, err := q.db.Exec(ctx, updatePaymentTransaction,
+		arg.PaymentID,
+		arg.Amount,
+		arg.PaymentMethod,
+		arg.RefundID,
+		arg.Status,
+	)
 	return err
 }

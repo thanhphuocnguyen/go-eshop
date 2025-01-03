@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	repository "github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/util"
+	"github.com/thanhphuocnguyen/go-eshop/internal/db/util"
 )
 
 type createUserRequest struct {
@@ -23,13 +23,14 @@ type createUserRequest struct {
 }
 
 type userResponse struct {
-	Email             string            `json:"email"`
-	FullName          string            `json:"fullname"`
-	Username          string            `json:"username"`
-	CreatedAt         string            `json:"created_at"`
-	UpdatedAt         string            `json:"updated_at"`
-	PasswordChangedAt string            `json:"password_changed_at"`
-	Addresses         []addressResponse `json:"addresses"`
+	Email             string              `json:"email"`
+	FullName          string              `json:"fullname"`
+	Username          string              `json:"username"`
+	CreatedAt         string              `json:"created_at"`
+	Role              repository.UserRole `json:"role"`
+	UpdatedAt         string              `json:"updated_at"`
+	PasswordChangedAt string              `json:"password_changed_at"`
+	Addresses         []addressResponse   `json:"addresses"`
 }
 type addressResponse struct {
 	Address  string `json:"address"`
@@ -42,6 +43,11 @@ type addressResponse struct {
 type loginUserRequest struct {
 	Username string `json:"username" binding:"required,min=3,max=32,alphanum"`
 	Password string `json:"password" binding:"required,min=6,max=32,alphanum"`
+}
+
+type listUserParams struct {
+	Page     int `form:"page" binding:"required,min=1"`
+	PageSize int `form:"page_size" binding:"required,min=1,max=100"`
 }
 
 type updateUserRequest struct {
@@ -70,6 +76,7 @@ func mapToUserResponse(user repository.User) userResponse {
 	return userResponse{
 		Email:             user.Email,
 		FullName:          user.Fullname,
+		Role:              user.Role,
 		Username:          user.Username,
 		CreatedAt:         user.CreatedAt.String(),
 		UpdatedAt:         user.UpdatedAt.String(),
@@ -374,4 +381,60 @@ func (sv *Server) getUser(c *gin.Context) {
 	userResp.Addresses = addressResp
 
 	c.JSON(http.StatusOK, GenericResponse[userResponse]{&userResp, nil, nil})
+}
+
+// listUsers godoc
+// @Summary List users
+// @Description List users
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Param limit query int false "Limit"
+// @Param offset query int false "Offset"
+// @Success 200 {object} GenericResponse[[]userResponse]
+// @Failure 500 {object} gin.H
+// @Router /users/list [get]
+func (sv *Server) listUsers(c *gin.Context) {
+	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, mapErrResp(fmt.Errorf("authorization payload is not provided")))
+		return
+	}
+
+	if authPayload.Role != repository.UserRoleAdmin {
+		c.JSON(http.StatusUnauthorized, mapErrResp(fmt.Errorf("user does not have permission")))
+		return
+	}
+	var queries listUserParams
+	if err := c.ShouldBindUri(&queries); err != nil {
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		return
+	}
+
+	users, err := sv.repo.ListUsers(c, repository.ListUsersParams{
+		Limit:  int32(queries.PageSize),
+		Offset: int32((queries.Page - 1) * queries.PageSize),
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
+
+	userResp := make([]userResponse, 0)
+	for _, user := range users {
+		userAddress, err := sv.repo.GetAddresses(c, user.UserID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, mapErrResp(err))
+			return
+		}
+
+		addressResp := make([]addressResponse, 0)
+		for _, address := range userAddress {
+			addressResp = append(addressResp, mapAddressToAddressResponse(address))
+		}
+		userResp = append(userResp, mapToUserResponse(user))
+		userResp[len(userResp)-1].Addresses = addressResp
+	}
+
+	c.JSON(http.StatusOK, GenericResponse[[]userResponse]{&userResp, nil, nil})
 }

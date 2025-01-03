@@ -18,5 +18,6 @@ var InterruptSignals = []os.Signal{
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), InterruptSignals...)
 	defer stop()
-	cmd.Execute(ctx)
+	ret := cmd.Execute(ctx)
+	os.Exit(ret)
 }

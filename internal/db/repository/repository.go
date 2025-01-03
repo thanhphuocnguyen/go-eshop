@@ -13,7 +13,7 @@ import (
 
 type Repository interface {
 	Querier
-	CheckoutCartTx(ctx context.Context, arg CheckoutCartTxParams) (CheckoutCartTxResult, error)
+	CreateOrderTx(ctx context.Context, arg CreateOrderTxParams) (int64, error)
 	SetPrimaryAddressTx(ctx context.Context, arg SetPrimaryAddressTxParams) error
 	SetPrimaryImageTx(ctx context.Context, arg SetPrimaryImageTxParams) error
 	CancelOrderTx(ctx context.Context, params CancelOrderTxParams) error
@@ -34,18 +34,18 @@ type pgRepo struct {
 }
 
 var once sync.Once
-var pg *pgRepo
+var repoInstance *pgRepo
 
 func GetPostgresInstance(ctx context.Context, cfg config.Config) (Repository, error) {
 	var err error
 	once.Do(func() {
-		pg, err = initializePostgres(ctx, cfg)
+		repoInstance, err = initializePostgres(ctx, cfg)
 	})
-	return pg, err
+	return repoInstance, err
 }
 
 func initializePostgres(ctx context.Context, cfg config.Config) (*pgRepo, error) {
-	pg = &pgRepo{
+	repoInstance = &pgRepo{
 		connAttempts: _defaultConnAttempts,
 		maxPoolSize:  cfg.MaxPoolSize,
 		connTimeOut:  _defaultConnTimeout,
@@ -56,28 +56,32 @@ func initializePostgres(ctx context.Context, cfg config.Config) (*pgRepo, error)
 		return nil, fmt.Errorf("failed to parse postgres config: %w", err)
 	}
 
-	poolConfig.MaxConns = int32(pg.maxPoolSize)
+	poolConfig.MaxConns = int32(repoInstance.maxPoolSize)
 
-	for pg.connAttempts > 0 {
-		pg.DbPool, err = pgxpool.NewWithConfig(ctx, poolConfig)
+	for repoInstance.connAttempts > 0 {
+		repoInstance.DbPool, err = pgxpool.NewWithConfig(ctx, poolConfig)
 		if err == nil {
 			break
 		}
-		pg.connAttempts--
-		time.Sleep(pg.connTimeOut)
+		repoInstance.connAttempts--
+		time.Sleep(repoInstance.connTimeOut)
 	}
+	err = repoInstance.DbPool.Ping(ctx)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to postgres: %w", err)
 	}
+	repoInstance.Queries = New(repoInstance.DbPool)
 
-	return pg, nil
+	return repoInstance, nil
 }
 
-func (pg *pgRepo) Close() {
-	if pg.DbPool != nil {
-		pg.DbPool.Close()
+func (repoConn *pgRepo) Close() {
+	if repoConn.DbPool != nil {
+		repoConn.DbPool.Close()
+		repoConn.DbPool = nil
 	}
+	repoInstance = nil
 }
 
 func (store *pgRepo) execTx(ctx context.Context, fn func(*Queries) error) error {

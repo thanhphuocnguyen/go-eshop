@@ -96,8 +96,8 @@ func (q *Queries) GetCartItemByProductID(ctx context.Context, productID int64) (
 const getCartItemWithProduct = `-- name: GetCartItemWithProduct :one
 SELECT cart_items.cart_item_id, cart_items.product_id, cart_items.cart_id, cart_items.quantity, cart_items.created_at, p.name AS product_name, p.price AS product_price, p.stock AS product_stock, img.image_url AS image_url
 FROM cart_items
-JOIN products AS p ON cart_items.product_id = p.id
-LEFT JOIN images as img ON p.id = img.product_id AND img.is_primary = true
+JOIN products AS p ON cart_items.product_id = p.product_id
+LEFT JOIN images as img ON p.product_id = img.product_id AND img.primary = true
 WHERE cart_items.cart_item_id = $1
 `
 
@@ -133,8 +133,8 @@ func (q *Queries) GetCartItemWithProduct(ctx context.Context, cartItemID int32) 
 const getCartItems = `-- name: GetCartItems :many
 SELECT cart_items.cart_item_id, cart_items.product_id, cart_items.cart_id, cart_items.quantity, cart_items.created_at, p.name AS product_name, p.price AS product_price, p.stock AS product_stock, img.image_url AS image_url
 FROM cart_items
-JOIN products AS p ON cart_items.product_id = p.id
-LEFT JOIN images as img ON p.id = img.product_id AND img.is_primary = true
+JOIN products AS p ON cart_items.product_id = p.product_id
+LEFT JOIN images as img ON p.product_id = img.product_id AND img.primary = true
 WHERE cart_id = $1
 `
 

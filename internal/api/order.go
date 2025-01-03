@@ -8,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/util"
 )
 
 // ---------------------------------------------- API Models ----------------------------------------------
@@ -32,7 +31,7 @@ type orderItemResp struct {
 	Quantity int32   `json:"quantity"`
 }
 type paymentInfo struct {
-	ID             int32   `json:"id"`
+	ID             string  `json:"id"`
 	PaymentAmount  float64 `json:"payment_amount"`
 	PaymentGateWay *string `json:"payment_gateway"`
 	PaymentMethod  string  `json:"payment_method"`
@@ -149,11 +148,11 @@ func (sv *Server) orderDetail(c *gin.Context) {
 	}
 
 	orderDetailRow := getOrderDetailRows[0]
-	totalGet := util.PgNumericToFloat64(orderDetailRow.TotalPrice)
-
+	totalGet, _ := orderDetailRow.TotalPrice.Float64Value()
+	paymentAmount, _ := orderDetailRow.PaymentAmount.Float64Value()
 	paymentInfo := paymentInfo{
-		ID:            int32(orderDetailRow.PaymentID.Int32),
-		PaymentAmount: util.PgNumericToFloat64(orderDetailRow.PaymentAmount),
+		ID:            orderDetailRow.PaymentID.String,
+		PaymentAmount: paymentAmount.Float64,
 		PaymentMethod: string(orderDetailRow.PaymentMethod.PaymentMethod),
 		PaymentStatus: string(orderDetailRow.PaymentStatus.PaymentStatus),
 	}
@@ -163,7 +162,7 @@ func (sv *Server) orderDetail(c *gin.Context) {
 
 	orderDetail := &orderDetailResponse{
 		ID:          orderDetailRow.OrderID,
-		Total:       totalGet,
+		Total:       totalGet.Float64,
 		Status:      orderDetailRow.Status,
 		PaymentInfo: paymentInfo,
 		Products:    []orderItemResp{},

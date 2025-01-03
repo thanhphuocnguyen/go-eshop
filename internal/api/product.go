@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/util"
+	"github.com/thanhphuocnguyen/go-eshop/internal/db/util"
 )
 
 type createProductRequest struct {
@@ -198,6 +198,7 @@ func (sv *Server) getProductDetail(c *gin.Context) {
 		c.JSON(http.StatusNotFound, mapErrResp(errors.New("product not found")))
 		return
 	}
+
 	productDetail := mapToProductResponse(productRow)
 	c.JSON(http.StatusOK, GenericResponse[productResponse]{&productDetail, nil, nil})
 }
@@ -221,50 +222,34 @@ func (sv *Server) getProducts(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
-	productsChan := make(chan []repository.ListProductsRow)
-	errChan := make(chan error)
-	countChan := make(chan int64)
-	go func() {
-		productsQueryParams := repository.ListProductsParams{
-			Limit:  queries.PageSize,
-			Offset: (queries.Page - 1) * queries.PageSize,
-		}
-		if queries.Name != nil {
-			productsQueryParams.Name = util.GetPgTypeText(*queries.Name)
-		}
-		if queries.Sku != nil {
-			productsQueryParams.Sku = util.GetPgTypeText(*queries.Sku)
-		}
+	productsQueryParams := repository.ListProductsParams{
+		Limit:  queries.PageSize,
+		Offset: (queries.Page - 1) * queries.PageSize,
+	}
+	if queries.Name != nil {
+		productsQueryParams.Name = util.GetPgTypeText(*queries.Name)
+	}
+	if queries.Sku != nil {
+		productsQueryParams.Sku = util.GetPgTypeText(*queries.Sku)
+	}
 
-		products, err := sv.repo.ListProducts(c, productsQueryParams)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, mapErrResp(err))
-			errChan <- err
-			return
-		}
-		productsChan <- products
-	}()
+	products, err := sv.repo.ListProducts(c, productsQueryParams)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
 
-	go func() {
-		count, err := sv.repo.CountProducts(c, repository.CountProductsParams{})
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, mapErrResp(err))
-			errChan <- err
-			return
-		}
-		countChan <- count
-	}()
-
-	for err := range errChan {
+	productCnt, err := sv.repo.CountProducts(c, repository.CountProductsParams{})
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
 	productResponses := make([]productListResponse, 0)
-	for _, product := range <-productsChan {
+	for _, product := range products {
 		productResponses = append(productResponses, mapToListProductResponse(product))
 	}
-	productCnt := <-countChan
+
 	c.JSON(http.StatusOK, GenericListResponse[productListResponse]{&productResponses, &productCnt, nil, nil})
 }
 

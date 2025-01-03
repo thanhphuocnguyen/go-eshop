@@ -1,12 +1,12 @@
 CREATE TABLE
     payments (
-        payment_id SERIAL PRIMARY KEY,
+        payment_id VARCHAR PRIMARY KEY,
         order_id BIGINT NOT NULL REFERENCES orders (order_id) ON DELETE CASCADE,
         amount DECIMAL(10, 2) NOT NULL,
         payment_method payment_method NOT NULL, -- e.g., card, bank_transfer
         status payment_status NOT NULL DEFAULT 'pending', -- Pending, Success, Failed
         payment_gateway payment_gateway, -- e.g., Stripe, PayPal
-        transaction_id VARCHAR, -- From the payment gateway, e.g., Stripe
+        refund_id VARCHAR, -- From the payment gateway, e.g., Stripe
         created_at TIMESTAMPTZ DEFAULT now (),
         updated_at TIMESTAMPTZ DEFAULT now ()
     );

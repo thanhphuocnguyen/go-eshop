@@ -12,6 +12,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/upload"
 )
 
@@ -26,10 +27,11 @@ import (
 type Server struct {
 	config          config.Config
 	repo            repository.Repository
-	router          *gin.Engine
 	taskDistributor worker.TaskDistributor
 	tokenGenerator  auth.TokenGenerator
 	uploadService   upload.UploadService
+	router          *gin.Engine
+	paymentCtx      *payment.PaymentContext
 }
 
 func NewAPI(
@@ -37,6 +39,7 @@ func NewAPI(
 	repo repository.Repository,
 	taskDistributor worker.TaskDistributor,
 	uploadService upload.UploadService,
+	paymentCtx *payment.PaymentContext,
 ) (*Server, error) {
 	tokenGenerator := auth.NewPasetoTokenGenerator()
 	server := &Server{
@@ -45,6 +48,7 @@ func NewAPI(
 		config:          cfg,
 		taskDistributor: taskDistributor,
 		uploadService:   uploadService,
+		paymentCtx:      paymentCtx,
 	}
 	server.initializeRouter()
 	return server, nil
@@ -56,11 +60,12 @@ func (sv *Server) initializeRouter() {
 		gin.SetMode(gin.ReleaseMode)
 		router.Use(gin.Recovery())
 	}
+
 	cors := cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowCredentials: true,
 	})
+
 	router.Use(cors)
 
 	router.MaxMultipartMemory = 8 << 20 // 8 MiB
@@ -78,6 +83,8 @@ func (sv *Server) initializeRouter() {
 			userAuthRoutes := user.Group("").Use(authMiddleware(sv.tokenGenerator))
 			userAuthRoutes.GET("", sv.getUser)
 			userAuthRoutes.PATCH("", sv.updateUser)
+			userModeratorRoutes := user.Group("").Use(authMiddleware(sv.tokenGenerator), roleMiddleware(repository.UserRoleAdmin, repository.UserRoleModerator))
+			userModeratorRoutes.GET("list", sv.listUsers)
 		}
 
 		userAddress := v1.Group("/address").Use(authMiddleware(sv.tokenGenerator))
@@ -125,6 +132,12 @@ func (sv *Server) initializeRouter() {
 			adminOrder := order.Use(roleMiddleware(repository.UserRoleAdmin))
 			adminOrder.PUT(":id/cancel", sv.cancelOrder)
 			adminOrder.PUT(":id/change-status", sv.changeOrderStatus)
+		}
+
+		payment := v1.Group("/payment").Use(authMiddleware(sv.tokenGenerator))
+		{
+			payment.POST("initiate", sv.initiatePayment)
+			payment.GET(":order_id", sv.getPayment)
 		}
 
 		collection := v1.Group("/collection")

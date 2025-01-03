@@ -159,7 +159,7 @@ func (q *Queries) GetImagesByVariantID(ctx context.Context, variantID pgtype.Int
 }
 
 const getPrimaryImageByProductID = `-- name: GetPrimaryImageByProductID :one
-SELECT image_id, product_id, variant_id, image_url, external_id, "primary", created_at, updated_at FROM images WHERE product_id = $1 AND is_primary = TRUE LIMIT 1
+SELECT image_id, product_id, variant_id, image_url, external_id, "primary", created_at, updated_at FROM images WHERE product_id = $1 AND "primary" = TRUE LIMIT 1
 `
 
 func (q *Queries) GetPrimaryImageByProductID(ctx context.Context, productID pgtype.Int8) (Image, error) {
@@ -179,7 +179,7 @@ func (q *Queries) GetPrimaryImageByProductID(ctx context.Context, productID pgty
 }
 
 const getPrimaryImageByVariantID = `-- name: GetPrimaryImageByVariantID :one
-SELECT image_id, product_id, variant_id, image_url, external_id, "primary", created_at, updated_at FROM images WHERE variant_id = $1 AND is_primary = TRUE LIMIT 1
+SELECT image_id, product_id, variant_id, image_url, external_id, "primary", created_at, updated_at FROM images WHERE variant_id = $1 AND "primary" = TRUE LIMIT 1
 `
 
 func (q *Queries) GetPrimaryImageByVariantID(ctx context.Context, variantID pgtype.Int8) (Image, error) {
@@ -199,7 +199,7 @@ func (q *Queries) GetPrimaryImageByVariantID(ctx context.Context, variantID pgty
 }
 
 const setPrimaryImage = `-- name: SetPrimaryImage :exec
-UPDATE images SET is_primary = TRUE WHERE image_id = $1
+UPDATE images SET "primary" = TRUE WHERE image_id = $1
 `
 
 func (q *Queries) SetPrimaryImage(ctx context.Context, imageID int32) error {
@@ -211,9 +211,9 @@ const unsetPrimaryImage = `-- name: UnsetPrimaryImage :exec
 UPDATE
     images
 SET
-    is_primary = false
+    "primary" = false
 WHERE
-    product_id = $1 AND is_primary = true
+    product_id = $1 AND "primary" = true
 `
 
 func (q *Queries) UnsetPrimaryImage(ctx context.Context, productID pgtype.Int8) error {

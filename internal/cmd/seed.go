@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 	"sync"
 
@@ -12,7 +11,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/config"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/util"
+	"github.com/thanhphuocnguyen/go-eshop/internal/db/util"
 )
 
 type Product struct {
@@ -45,121 +44,48 @@ func ExecuteSeed(ctx context.Context) int {
 		Use:   "seed",
 		Short: "Seed data to database",
 		Long:  "Seed data to database from seed files",
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("Please specify a subcommand")
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, err := config.LoadConfig(".")
+			if err != nil {
+				log.Fatal().Err(err).Msg("failed to load config")
+				return err
+			}
+			pg, err := repository.GetPostgresInstance(ctx, cfg)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to get postgres instance")
+				return err
+			}
+			defer pg.Close()
+			if len(args) == 0 {
+				seedProducts(ctx, pg)
+				seedUsers(ctx, pg)
+				seedUserAddresses(ctx, pg)
+				return nil
+			}
+			switch args[0] {
+			case "products":
+				seedProducts(ctx, pg)
+			case "users":
+				seedUsers(ctx, pg)
+			case "addresses":
+				seedUserAddresses(ctx, pg)
+			default:
+				log.Error().Msg("invalid seed command")
+			}
+			return nil
 		},
 	}
-
-	rootCmd.AddCommand(newSeedProductsCmd(ctx))
-	rootCmd.AddCommand(newSeedUsersCmd(ctx))
-	rootCmd.AddCommand(newSeedAddressesCmd(ctx))
-	rootCmd.AddCommand(newSeedAllCmd(ctx)) // Add the new command here
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Error().Err(err).Msg("failed to execute seed command")
 		return 1
 	}
+
 	return 0
 }
 
-func newSeedProductsCmd(ctx context.Context) *cobra.Command {
-	return &cobra.Command{
-		Use:   "products",
-		Short: "Seed products to database",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.LoadConfig(".")
-			if err != nil {
-				log.Fatal().Err(err).Msg("failed to load config")
-				return err
-			}
-			pg, err := repository.GetPostgresInstance(ctx, cfg)
-			if err != nil {
-				log.Error().Err(err).Msg("failed to get postgres instance")
-				return err
-			}
-			defer pg.Close()
-			seedProducts(ctx, pg)
-			log.Info().Msg("seeding products completed")
-			return nil
-		},
-	}
-}
-
-func newSeedUsersCmd(ctx context.Context) *cobra.Command {
-	return &cobra.Command{
-		Use:   "users",
-		Short: "Seed users to database",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.LoadConfig(".")
-			if err != nil {
-				log.Fatal().Err(err).Msg("failed to load config")
-				return err
-			}
-			pg, err := repository.GetPostgresInstance(ctx, cfg)
-			if err != nil {
-				log.Error().Err(err).Msg("failed to get postgres instance")
-				return err
-			}
-			defer pg.Close()
-			seedUsers(ctx, pg)
-			log.Info().Msg("seeding users completed")
-			return nil
-		},
-	}
-}
-
-func newSeedAddressesCmd(ctx context.Context) *cobra.Command {
-	return &cobra.Command{
-		Use:   "addresses",
-		Short: "Seed addresses to database",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.LoadConfig(".")
-			if err != nil {
-				log.Fatal().Err(err).Msg("failed to load config")
-				return err
-			}
-			pg, err := repository.GetPostgresInstance(ctx, cfg)
-			if err != nil {
-				log.Error().Err(err).Msg("failed to get postgres instance")
-				return err
-			}
-			defer pg.Close()
-			seedUserAddresses(ctx, pg)
-			log.Info().Msg("seeding addresses completed")
-			return nil
-		},
-	}
-}
-
-func newSeedAllCmd(ctx context.Context) *cobra.Command {
-	return &cobra.Command{
-		Use:   "all",
-		Short: "Seed all data to database",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.LoadConfig(".")
-			if err != nil {
-				log.Fatal().Err(err).Msg("failed to load config")
-				return err
-			}
-			pg, err := repository.GetPostgresInstance(ctx, cfg)
-			if err != nil {
-				log.Error().Err(err).Msg("failed to get postgres instance")
-				return err
-			}
-			defer pg.Close()
-
-			seedProducts(ctx, pg)
-			seedUsers(ctx, pg)
-			seedUserAddresses(ctx, pg)
-
-			log.Info().Msg("seeding all data completed")
-			return nil
-		},
-	}
-}
-
-func seedProducts(ctx context.Context, pg repository.Repository) {
-	countProducts, err := pg.CountProducts(ctx, repository.CountProductsParams{})
+func seedProducts(ctx context.Context, repo repository.Repository) {
+	countProducts, err := repo.CountProducts(ctx, repository.CountProductsParams{})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to count products")
 		return
@@ -199,7 +125,7 @@ func seedProducts(ctx context.Context, pg repository.Repository) {
 				log.Error().Err(err).Msgf("failed to parse price for product: %s", product.Name)
 				return
 			}
-			_, err = pg.CreateProduct(ctx, repository.CreateProductParams{
+			_, err = repo.CreateProduct(ctx, repository.CreateProductParams{
 				Name:        product.Name,
 				Description: product.Description,
 				Sku:         product.Sku,
@@ -253,14 +179,18 @@ func seedUsers(ctx context.Context, pg repository.Repository) {
 			if err != nil {
 				return
 			}
-			_, err = pg.CreateUser(ctx, repository.CreateUserParams{
+			params := repository.CreateUserParams{
 				Email:          user.Email,
 				Username:       user.Username,
 				Phone:          user.Phone,
 				HashedPassword: hashed,
 				Fullname:       user.FullName,
 				Role:           repository.UserRoleUser,
-			})
+			}
+			if user.Username == "admin" {
+				params.Role = repository.UserRoleAdmin
+			}
+			_, err = pg.CreateUser(ctx, params)
 			if err != nil {
 				log.Error().Err(err).Msgf("failed to create user: %s", user.Email)
 			}

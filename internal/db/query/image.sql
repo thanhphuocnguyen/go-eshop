@@ -14,10 +14,10 @@ SELECT * FROM images WHERE product_id = $1;
 SELECT * FROM images WHERE variant_id = $1;
 
 -- name: GetPrimaryImageByProductID :one
-SELECT * FROM images WHERE product_id = $1 AND is_primary = TRUE LIMIT 1;
+SELECT * FROM images WHERE product_id = $1 AND "primary" = TRUE LIMIT 1;
 
 -- name: GetPrimaryImageByVariantID :one
-SELECT * FROM images WHERE variant_id = $1 AND is_primary = TRUE LIMIT 1;
+SELECT * FROM images WHERE variant_id = $1 AND "primary" = TRUE LIMIT 1;
 
 -- name: UpdateImage :exec
 UPDATE images 
@@ -29,15 +29,15 @@ SET
 WHERE image_id = $1;
 
 -- name: SetPrimaryImage :exec
-UPDATE images SET is_primary = TRUE WHERE image_id = $1;
+UPDATE images SET "primary" = TRUE WHERE image_id = $1;
 
 -- name: UnsetPrimaryImage :exec
 UPDATE
     images
 SET
-    is_primary = false
+    "primary" = false
 WHERE
-    product_id = $1 AND is_primary = true;
+    product_id = $1 AND "primary" = true;
 
 -- name: DeleteImage :exec
 DELETE FROM images WHERE image_id = $1;

@@ -10,7 +10,7 @@ CREATE TYPE "order_status" AS ENUM (
   'completed'
 );
 
-CREATE TYPE "payment_status" AS ENUM ('pending', 'success', 'failed');
+CREATE TYPE "payment_status" AS ENUM ('pending', 'success', 'failed', 'cancelled', 'refunded', 'processing');
 
 CREATE TYPE "payment_method" AS ENUM (
   'card',

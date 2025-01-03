@@ -20,6 +20,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/api"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/upload"
 )
 
@@ -46,12 +47,13 @@ func Execute(ctx context.Context) int {
 			if !profile {
 				return nil
 			}
+
 			f, pErr := os.Create(("cpu.pprof"))
 			if pErr != nil {
 				return pErr
 			}
-
 			_ = pprof.StartCPUProfile(f)
+
 			return nil
 		},
 		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
@@ -59,10 +61,12 @@ func Execute(ctx context.Context) int {
 				return nil
 			}
 			pprof.StopCPUProfile()
+
 			f, pErr := os.Create(("mem.pprof"))
 			if pErr != nil {
 				return pErr
 			}
+
 			defer f.Close()
 
 			runtime.GC()
@@ -78,6 +82,7 @@ func Execute(ctx context.Context) int {
 	rootCmd.AddCommand(workerCmd(ctx, cfg))
 
 	if err = rootCmd.Execute(); err != nil {
+		log.Error().Err(err).Msg("failed to execute command")
 		return 1
 	}
 	return 0
@@ -89,7 +94,7 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 		Args:  cobra.ExactArgs(0),
 		Short: "Run Gin Gonic API server",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			pg, err := repository.GetPostgresInstance(ctx, cfg)
+			repo, err := repository.GetPostgresInstance(ctx, cfg)
 			if err != nil {
 				return err
 			}
@@ -99,8 +104,9 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 			}
 			taskDistributor := worker.NewRedisTaskDistributor(redisCfg)
 			uploadService := upload.NewCloudinaryUploadService(cfg)
+			paymentCtx := &payment.PaymentContext{}
 
-			api, err := api.NewAPI(cfg, pg, taskDistributor, uploadService)
+			api, err := api.NewAPI(cfg, repo, taskDistributor, uploadService, paymentCtx)
 			if err != nil {
 				return err
 			}
@@ -117,7 +123,7 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 			log.Info().Msg("API server shutdown")
 			_ = taskDistributor.Shutdown()
 			log.Info().Msg("Task distributor shutdown")
-			pg.Close()
+			repo.Close()
 			log.Info().Msg("Postgres instance closed")
 			return nil
 		},

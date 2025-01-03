@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"os"
 
 	"github.com/thanhphuocnguyen/go-eshop/internal/cmd"
 )
 
 func main() {
-	ctx := context.Background()
-	cmd.ExecuteSeed(ctx)
+	ret := cmd.ExecuteSeed(context.Background())
+	os.Exit(ret)
+
 }

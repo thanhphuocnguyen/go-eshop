@@ -17,8 +17,8 @@ SELECT * FROM cart_items WHERE cart_item_id = $1;
 -- name: GetCartItemWithProduct :one
 SELECT cart_items.*, p.name AS product_name, p.price AS product_price, p.stock AS product_stock, img.image_url AS image_url
 FROM cart_items
-JOIN products AS p ON cart_items.product_id = p.id
-LEFT JOIN images as img ON p.id = img.product_id AND img.is_primary = true
+JOIN products AS p ON cart_items.product_id = p.product_id
+LEFT JOIN images as img ON p.product_id = img.product_id AND img.primary = true
 WHERE cart_items.cart_item_id = $1;
 
 -- name: GetCartItemByProductID :one
@@ -27,8 +27,8 @@ SELECT * FROM cart_items WHERE product_id = $1;
 -- name: GetCartItems :many
 SELECT cart_items.*, p.name AS product_name, p.price AS product_price, p.stock AS product_stock, img.image_url AS image_url
 FROM cart_items
-JOIN products AS p ON cart_items.product_id = p.id
-LEFT JOIN images as img ON p.id = img.product_id AND img.is_primary = true
+JOIN products AS p ON cart_items.product_id = p.product_id
+LEFT JOIN images as img ON p.product_id = img.product_id AND img.primary = true
 WHERE cart_id = $1;
 
 -- name: ClearCart :exec

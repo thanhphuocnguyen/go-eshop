@@ -39,7 +39,7 @@ LEFT JOIN
 LEFT JOIN
     products ON order_items.product_id = products.product_id
 LEFT JOIN 
-    images ON products.id = images.product_id AND images.is_primary = true
+    images ON products.id = images.product_id AND images.primary = true
 LEFT JOIN
     user_addresses ON orders.user_address_id = user_addresses.user_address_id
 WHERE

@@ -242,9 +242,12 @@ func (ns NullPaymentMethod) Value() (driver.Value, error) {
 type PaymentStatus string
 
 const (
-	PaymentStatusPending PaymentStatus = "pending"
-	PaymentStatusSuccess PaymentStatus = "success"
-	PaymentStatusFailed  PaymentStatus = "failed"
+	PaymentStatusPending    PaymentStatus = "pending"
+	PaymentStatusSuccess    PaymentStatus = "success"
+	PaymentStatusFailed     PaymentStatus = "failed"
+	PaymentStatusCancelled  PaymentStatus = "cancelled"
+	PaymentStatusRefunded   PaymentStatus = "refunded"
+	PaymentStatusProcessing PaymentStatus = "processing"
 )
 
 func (e *PaymentStatus) Scan(src interface{}) error {
@@ -400,13 +403,13 @@ type OrderItem struct {
 }
 
 type Payment struct {
-	PaymentID      int32              `json:"payment_id"`
+	PaymentID      string             `json:"payment_id"`
 	OrderID        int64              `json:"order_id"`
 	Amount         pgtype.Numeric     `json:"amount"`
 	PaymentMethod  PaymentMethod      `json:"payment_method"`
 	Status         PaymentStatus      `json:"status"`
 	PaymentGateway NullPaymentGateway `json:"payment_gateway"`
-	TransactionID  pgtype.Text        `json:"transaction_id"`
+	RefundID       pgtype.Text        `json:"refund_id"`
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
 }

@@ -1,6 +1,7 @@
 -- name: CreatePaymentTransaction :one
 INSERT INTO
     payments (
+        payment_id,
         order_id,
         amount,
         payment_method,
@@ -11,7 +12,8 @@ VALUES
         $1,
         $2,
         $3,
-        $4
+        $4,
+        $5
     )
 RETURNING *;
 
@@ -38,7 +40,9 @@ UPDATE
     payments
 SET
     amount = COALESCE(sqlc.narg(amount), amount),
-    payment_method = COALESCE(sqlc.narg(payment_method), payment_method)
+    payment_method = COALESCE(sqlc.narg(payment_method), payment_method),
+    refund_id = COALESCE(sqlc.narg(refund_id), refund_id),
+    status = COALESCE(sqlc.narg(status), status)
 WHERE
     payment_id = $1;
 

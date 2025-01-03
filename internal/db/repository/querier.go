@@ -33,7 +33,7 @@ type Querier interface {
 	DeleteAddress(ctx context.Context, arg DeleteAddressParams) error
 	DeleteImage(ctx context.Context, imageID int32) error
 	DeleteOrder(ctx context.Context, orderID int64) error
-	DeletePaymentTransaction(ctx context.Context, paymentID int32) error
+	DeletePaymentTransaction(ctx context.Context, paymentID string) error
 	DeleteProduct(ctx context.Context, productID int64) error
 	DeleteUser(ctx context.Context, userID int64) error
 	GetAddress(ctx context.Context, arg GetAddressParams) (UserAddress, error)
@@ -50,7 +50,7 @@ type Querier interface {
 	GetImagesByVariantID(ctx context.Context, variantID pgtype.Int8) ([]Image, error)
 	GetOrder(ctx context.Context, orderID int64) (Order, error)
 	GetOrderDetails(ctx context.Context, orderID int64) ([]GetOrderDetailsRow, error)
-	GetPaymentTransactionByID(ctx context.Context, paymentID int32) (Payment, error)
+	GetPaymentTransactionByID(ctx context.Context, paymentID string) (Payment, error)
 	GetPaymentTransactionByOrderID(ctx context.Context, orderID int64) (Payment, error)
 	GetPrimaryAddress(ctx context.Context, userID int64) (UserAddress, error)
 	GetPrimaryImageByProductID(ctx context.Context, productID pgtype.Int8) (Image, error)

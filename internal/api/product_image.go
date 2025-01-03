@@ -8,7 +8,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/util"
 )
 
 // ------------------------------------------ Request and Response ------------------------------------------
@@ -56,7 +55,7 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 		return
 	}
 	// file name is public id
-	fileName := util.GetImageName(file.Filename)
+	fileName := GetImageName(file.Filename)
 	url, err := sv.uploadService.UploadFile(c, file, fileName)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
