@@ -13,6 +13,7 @@ import (
 
 type Querier interface {
 	AddProductToCart(ctx context.Context, arg AddProductToCartParams) (CartItem, error)
+	AddProductToCollection(ctx context.Context, arg AddProductToCollectionParams) (CategoryProduct, error)
 	ArchiveProduct(ctx context.Context, productID int64) error
 	ClearCart(ctx context.Context, cartID int32) error
 	CountAddresses(ctx context.Context) (int64, error)
@@ -43,7 +44,9 @@ type Querier interface {
 	GetCartItemByProductID(ctx context.Context, productID int64) (CartItem, error)
 	GetCartItemWithProduct(ctx context.Context, cartItemID int32) (GetCartItemWithProductRow, error)
 	GetCartItems(ctx context.Context, cartID int32) ([]GetCartItemsRow, error)
-	GetCollection(ctx context.Context, categoryID int32) (Category, error)
+	GetCollection(ctx context.Context, categoryID int32) (GetCollectionRow, error)
+	GetCollectionByName(ctx context.Context, name string) (Category, error)
+	GetCollectionProducts(ctx context.Context, categoryID int32) ([]Product, error)
 	GetImageByExternalID(ctx context.Context, externalID pgtype.Text) (Image, error)
 	GetImageByID(ctx context.Context, imageID int32) (Image, error)
 	GetImagesByProductID(ctx context.Context, productID pgtype.Int8) ([]Image, error)
@@ -68,6 +71,7 @@ type Querier interface {
 	ListProducts(ctx context.Context, arg ListProductsParams) ([]ListProductsRow, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	RemoveProductFromCart(ctx context.Context, arg RemoveProductFromCartParams) error
+	RemoveProductFromCollection(ctx context.Context, arg RemoveProductFromCollectionParams) (CategoryProduct, error)
 	ResetPrimaryAddress(ctx context.Context, userID int64) error
 	SetPrimaryAddress(ctx context.Context, arg SetPrimaryAddressParams) error
 	SetPrimaryImage(ctx context.Context, imageID int32) error

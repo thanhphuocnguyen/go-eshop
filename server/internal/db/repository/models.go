@@ -367,6 +367,7 @@ type Category struct {
 type CategoryProduct struct {
 	CategoryID int32 `json:"category_id"`
 	ProductID  int64 `json:"product_id"`
+	SortOrder  int16 `json:"sort_order"`
 }
 
 type Image struct {

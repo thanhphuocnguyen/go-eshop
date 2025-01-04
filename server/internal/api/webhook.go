@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -22,11 +23,18 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	log.Info().Msgf("Received event of type: %v", evt)
+
 	payment, err := server.repo.GetPaymentTransactionByID(c, paymentIntent.ID)
 	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
 	updateTransactionStatus := repository.UpdatePaymentTransactionParams{
 		PaymentID: payment.PaymentID,
 	}

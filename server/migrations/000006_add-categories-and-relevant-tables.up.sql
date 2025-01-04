@@ -16,5 +16,9 @@ CREATE TABLE
     "category_products" (
         "category_id" int NOT NULL REFERENCES "categories" ("category_id") ON DELETE CASCADE,
         "product_id" bigint NOT NULL REFERENCES "products" ("product_id") ON DELETE CASCADE,
+        "sort_order" smallint NOT NULL UNIQUE CHECK (
+            "sort_order" >= 0
+            AND "sort_order" <= 32767
+        ),
         PRIMARY KEY ("category_id", "product_id")
     );

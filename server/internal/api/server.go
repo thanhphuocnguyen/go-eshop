@@ -167,7 +167,7 @@ func (sv *Server) initializeRouter() {
 	}
 
 	// webhooks
-	webhook := v1.Group("/webhook/v1")
+	webhook := router.Group("/webhook/v1")
 	{
 		webhook.POST("stripe", sv.stripeWebhook)
 	}
