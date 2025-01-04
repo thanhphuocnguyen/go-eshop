@@ -6,7 +6,8 @@ INSERT INTO
         street,
         ward,
         district,
-        city
+        city,
+        "default"
     )
 VALUES
     (
@@ -15,7 +16,8 @@ VALUES
         $3,
         $4,
         $5,
-        $6
+        $6,
+        $7
     ) RETURNING *;
 
 -- name: GetAddress :one
@@ -24,8 +26,19 @@ SELECT
 FROM
     user_addresses
 WHERE
-    user_address_id = $1 AND user_id = $2 AND is_deleted = false
+    user_address_id = $1 AND user_id = $2 AND deleted = FALSE
 LIMIT 1;
+
+
+-- name: GetDefaultAddress :one
+SELECT
+    *
+FROM
+    user_addresses
+WHERE
+    user_id = $1 AND deleted = FALSE AND "default" = TRUE
+LIMIT 1;
+
 
 -- name: GetAddresses :many
 SELECT
@@ -33,7 +46,7 @@ SELECT
 FROM
     user_addresses
 WHERE
-    user_id = $1 AND deleted = false
+    user_id = $1 AND deleted = FALSE
 ORDER BY
     "default" DESC, user_address_id ASC;
 
@@ -48,14 +61,14 @@ SET
     city = coalesce(sqlc.narg('city'), city),
     "default" = coalesce(sqlc.narg('default'), "default")
 WHERE
-    user_address_id = sqlc.arg('user_address_id') AND user_id = sqlc.arg('user_id') AND deleted = false
+    user_address_id = sqlc.arg('user_address_id') AND user_id = sqlc.arg('user_id') AND deleted = FALSE
 RETURNING *;
 
 -- name: DeleteAddress :exec
 UPDATE
     user_addresses
 SET
-    deleted = true,
+    deleted = TRUE,
     updated_at = now()
 WHERE
     user_address_id = $1 AND user_id = $2;
@@ -66,24 +79,15 @@ UPDATE
 SET
     "default" = $1
 WHERE
-    user_id = $2 AND user_address_id = $3 AND deleted = false;
+    user_id = $2 AND user_address_id = $3 AND deleted = FALSE;
 
 -- name: ResetPrimaryAddress :exec
 UPDATE
     user_addresses
 SET
-    "default" = false
+    "default" = FALSE
 WHERE
-    user_id = $1 AND "default" = true;
-
--- name: GetPrimaryAddress :one
-SELECT
-    *
-FROM
-    user_addresses
-WHERE
-    user_id = $1 AND "default" = true AND deleted = false
-LIMIT 1;
+    user_id = $1 AND "default" = TRUE;
 
 -- name: CountAddresses :one
 SELECT

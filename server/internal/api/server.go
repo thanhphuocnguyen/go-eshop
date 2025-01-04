@@ -138,10 +138,10 @@ func (sv *Server) initializeRouter() {
 		{
 			order.GET("", sv.orderList)
 			order.GET(":id", sv.orderDetail)
-			adminOrder := order.Use(roleMiddleware(sv.repo, repository.UserRoleAdmin))
+			adminOrder := order.Use(roleMiddleware(sv.repo, repository.UserRoleAdmin, repository.UserRoleModerator))
 			adminOrder.PUT(":id/cancel", sv.cancelOrder)
 			adminOrder.PUT(":id/refund", sv.refundOrder)
-			adminOrder.PUT(":id/change-status", sv.changeOrderStatus)
+			adminOrder.PUT(":id/status", sv.changeOrderStatus)
 		}
 
 		payment := v1.Group("/payment").Use(authMiddleware(sv.tokenGenerator))

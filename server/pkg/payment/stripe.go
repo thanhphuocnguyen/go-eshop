@@ -1,6 +1,7 @@
 package payment
 
 import (
+	"github.com/rs/zerolog/log"
 	"github.com/stripe/stripe-go/v81"
 	"github.com/stripe/stripe-go/v81/paymentintent"
 	"github.com/stripe/stripe-go/v81/refund"
@@ -12,6 +13,7 @@ type stripePayment struct {
 
 // InitiatePayment implements PaymentStrategy.
 func (s *stripePayment) InitiatePayment(amount float64, email string) (string, error) {
+	log.Info().Msg("InitiatePayment")
 	params := &stripe.PaymentIntentParams{
 		Amount:   stripe.Int64(int64(amount * constant.MUL)),
 		Currency: stripe.String(string(stripe.CurrencyUSD)),
@@ -36,9 +38,10 @@ func (s *stripePayment) ProcessPayment(transactionID string) (string, error) {
 }
 
 // RefundPayment implements PaymentStrategy.
-func (s *stripePayment) RefundPayment(transactionID string, reason string) (string, error) {
+func (s *stripePayment) RefundPayment(transactionID string, amount int64, reason RefundReason) (string, error) {
 	rs, err := refund.New(&stripe.RefundParams{
 		PaymentIntent: stripe.String(transactionID),
+		Amount:        stripe.Int64(amount),
 		Reason:        stripe.String("requested_by_customer"),
 	})
 	return rs.ID, err
@@ -63,8 +66,6 @@ func NewStripePayment(secretKey string) (PaymentStrategy, error) {
 	if secretKey == "" {
 		return nil, ErrEmptySecretKey
 	}
-	if stripe.Key == "" {
-		stripe.Key = secretKey
-	}
+	stripe.Key = secretKey
 	return &stripePayment{}, nil
 }

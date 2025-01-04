@@ -187,7 +187,7 @@ FROM categories c
 JOIN category_products cp ON c.category_id = cp.category_id
 JOIN products p ON category_products.product_id = p.product_id AND p.published = TRUE
 LEFT JOIN images ON p.product_id = images.product_id AND images.primary = TRUE
-WHERE categories.id = ANY($1::int[]) AND published = TRUE
+WHERE categories.category_id = ANY($1::int[]) AND published = TRUE
 ORDER BY c.sort_order, cp.sort_order
 `
 

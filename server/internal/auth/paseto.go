@@ -34,7 +34,7 @@ func (g *PasetoTokenGenerator) GenerateToken(userID int64, username, email strin
 	token := paseto.NewToken()
 	token.SetString("username", payload.Username)
 	token.SetString("id", payload.ID.String())
-	token.SetString("role", string(payload.Email))
+	token.SetString("email", string(payload.Email))
 	token.SetString("user_id", strconv.Itoa(int(payload.UserID)))
 	token.SetExpiration(payload.ExpiredAt)
 	token.SetNotBefore(payload.IssuedAt)

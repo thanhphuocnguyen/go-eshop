@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	paymentService "github.com/thanhphuocnguyen/go-eshop/pkg/payment"
 )
 
 type PaymentRequest struct {
@@ -63,7 +64,13 @@ func (sv *Server) getPayment(c *gin.Context) {
 	}
 	var details interface{}
 	if payment.PaymentGateway.Valid {
-		sv.paymentCtx.SetStrategy(sv.paymentCtx.GetPaymentGatewayInstanceFromName(payment.PaymentGateway.PaymentGateway, sv.config))
+		stripeInstance, err := paymentService.NewStripePayment(sv.config.StripeSecretKey)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, mapErrResp(err))
+			return
+		}
+		sv.paymentCtx.SetStrategy(stripeInstance)
+
 		details, err = sv.paymentCtx.GetPaymentObject(payment.PaymentID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, mapErrResp(err))

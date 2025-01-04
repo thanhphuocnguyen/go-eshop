@@ -3,7 +3,9 @@ package repository
 import (
 	"context"
 	"errors"
+	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
 )
 
@@ -52,6 +54,10 @@ func (pg *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (er
 			Status: NullOrderStatus{
 				OrderStatus: OrderStatusCancelled,
 				Valid:       true,
+			},
+			CancelledAt: pgtype.Timestamptz{
+				Time:  time.Now(),
+				Valid: true,
 			},
 		})
 

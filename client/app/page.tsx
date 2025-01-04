@@ -1,6 +1,8 @@
-import { Elements, PaymentElement } from '@stripe/react-stripe-js';
+'use client';
+import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import Image from 'next/image';
+import CheckoutForm from './components/checkoutform';
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
@@ -8,16 +10,14 @@ const stripePromise = loadStripe(
 export default function Home() {
   const options = {
     // passing the client secret obtained from the server
-    clientSecret: '{{CLIENT_SECRET}}',
+    clientSecret:
+      'pi_3QdZ7ZIdmCE9mMUw0So7rjPR_secret_8UqU676f7PvTOkc2AkZ1QV9JX',
   };
   return (
     <div className='grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]'>
       <main className='flex flex-col gap-8 row-start-2 items-center sm:items-start'>
         <Elements stripe={stripePromise} options={options}>
-          <form>
-            <PaymentElement />
-            <button>Submit</button>
-          </form>
+          <CheckoutForm />
         </Elements>
       </main>
       <footer className='row-start-3 flex gap-6 flex-wrap items-center justify-center'>

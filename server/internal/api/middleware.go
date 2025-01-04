@@ -50,6 +50,7 @@ func roleMiddleware(repo repository.Repository, roles ...repository.UserRole) gi
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, mapErrResp(fmt.Errorf("authorization payload is not provided")))
 			return
 		}
+
 		user, err := repo.GetUserByID(ctx, payload.UserID)
 		if err != nil {
 			log.Error().Err(err).Msg("Role middleware: cannot get user")

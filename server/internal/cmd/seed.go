@@ -225,18 +225,22 @@ func seedUserAddresses(ctx context.Context, pg repository.Repository) {
 	log.Info().Msgf("addresses count: %d", len(addresses))
 	var wg sync.WaitGroup
 	defer wg.Wait()
-	for _, user := range addresses {
+	for i, user := range addresses {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			_, err = pg.CreateAddress(ctx, repository.CreateAddressParams{
+			addParam := repository.CreateAddressParams{
 				UserID:   user.UserID,
 				Phone:    user.Phone,
 				Street:   user.Street,
 				Ward:     util.GetPgTypeText(user.Ward),
 				District: user.District,
 				City:     user.City,
-			})
+			}
+			if i == 0 {
+				addParam.Default = true
+			}
+			_, err = pg.CreateAddress(ctx, addParam)
 			if err != nil {
 				log.Error().Err(err).Msgf("failed to create address: %s", user.Street)
 			}

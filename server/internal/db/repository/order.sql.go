@@ -143,7 +143,7 @@ const getOrder = `-- name: GetOrder :one
 SELECT
     order_id, user_id, user_address_id, total_price, status, confirmed_at, delivered_at, cancelled_at, refunded_at, updated_at, created_at
 FROM
-    orders
+    orders ord
 WHERE
     order_id = $1
 LIMIT 1
@@ -170,26 +170,26 @@ func (q *Queries) GetOrder(ctx context.Context, orderID int64) (Order, error) {
 
 const getOrderDetails = `-- name: GetOrderDetails :many
 SELECT
-    orders.order_id, orders.user_id, orders.user_address_id, orders.total_price, orders.status, orders.confirmed_at, orders.delivered_at, orders.cancelled_at, orders.refunded_at, orders.updated_at, orders.created_at, 
-    order_items.quantity, order_items.price as item_price, order_items.order_item_id as order_item_id,
-    products.name as product_name, products.product_id as product_id,
-    user_addresses.street, user_addresses.ward, user_addresses.district, user_addresses.city, 
+    ord.order_id, ord.user_id, ord.user_address_id, ord.total_price, ord.status, ord.confirmed_at, ord.delivered_at, ord.cancelled_at, ord.refunded_at, ord.updated_at, ord.created_at, 
+    oit.quantity, oit.price as item_price, oit.order_item_id as order_item_id,
+    p.name as product_name, p.product_id as product_id,
+    u_addr.street, u_addr.ward, u_addr.district, u_addr.city, 
     images.image_url,
-    payments.status as payment_status, payments.payment_id as payment_id, payments.amount as payment_amount, payments.payment_method as payment_method, payments.payment_gateway as payment_gateway
+    pm.status as payment_status, pm.payment_id as payment_id, pm.amount as payment_amount, pm.payment_method as payment_method, pm.payment_gateway as payment_gateway, pm.refund_id as refund_id
 FROM
-    orders
+    orders ord
 LEFT JOIN
-    payments ON orders.id = payments.order_id
+    payments pm ON ord.order_id = pm.order_id
 LEFT JOIN
-    order_items ON order_items.order_id = orders.order_id
+    order_items oit ON oit.order_id = ord.order_id
 LEFT JOIN
-    products ON order_items.product_id = products.product_id
+    products p ON oit.product_id = p.product_id
 LEFT JOIN 
-    images ON products.id = images.product_id AND images.primary = true
+    images ON p.product_id = images.product_id AND images.primary = true
 LEFT JOIN
-    user_addresses ON orders.user_address_id = user_addresses.user_address_id
+    user_addresses u_addr ON ord.user_address_id = u_addr.user_address_id
 WHERE
-    orders.order_id = $1
+    ord.order_id = $1
 `
 
 type GetOrderDetailsRow struct {
@@ -219,6 +219,7 @@ type GetOrderDetailsRow struct {
 	PaymentAmount  pgtype.Numeric     `json:"payment_amount"`
 	PaymentMethod  NullPaymentMethod  `json:"payment_method"`
 	PaymentGateway NullPaymentGateway `json:"payment_gateway"`
+	RefundID       pgtype.Text        `json:"refund_id"`
 }
 
 func (q *Queries) GetOrderDetails(ctx context.Context, orderID int64) ([]GetOrderDetailsRow, error) {
@@ -257,6 +258,7 @@ func (q *Queries) GetOrderDetails(ctx context.Context, orderID int64) ([]GetOrde
 			&i.PaymentAmount,
 			&i.PaymentMethod,
 			&i.PaymentGateway,
+			&i.RefundID,
 		); err != nil {
 			return nil, err
 		}
@@ -315,19 +317,19 @@ func (q *Queries) ListOrderItems(ctx context.Context, arg ListOrderItemsParams) 
 
 const listOrders = `-- name: ListOrders :many
 SELECT
-    orders.order_id, orders.user_id, orders.user_address_id, orders.total_price, orders.status, orders.confirmed_at, orders.delivered_at, orders.cancelled_at, orders.refunded_at, orders.updated_at, orders.created_at, payments.status as payment_status, COUNT(order_items.order_item_id) as total_items
+    ord.order_id, ord.user_id, ord.user_address_id, ord.total_price, ord.status, ord.confirmed_at, ord.delivered_at, ord.cancelled_at, ord.refunded_at, ord.updated_at, ord.created_at, pm.status as payment_status, COUNT(oit.order_item_id) as total_items
 FROM
-    orders
-LEFT JOIN payments ON orders.id = payments.order_id
-LEFT JOIN order_items ON orders.id = order_items.order_id
+    orders ord
+LEFT JOIN payments pm ON ord.order_id = pm.order_id
+LEFT JOIN order_items oit ON ord.order_id = oit.order_id
 WHERE
     user_id = COALESCE($3, user_id) AND
-    orders.status = COALESCE($4, orders.status) AND
-    orders.created_at >= COALESCE($5, orders.created_at) AND
-    orders.created_at <= COALESCE($6, orders.created_at)
-GROUP BY orders.order_id, payments.status
+    ord.status = COALESCE($4, ord.status) AND
+    ord.created_at >= COALESCE($5, ord.created_at) AND
+    ord.created_at <= COALESCE($6, ord.created_at)
+GROUP BY ord.order_id, pm.status
 ORDER BY
-    orders.created_at DESC
+    ord.created_at DESC
 LIMIT $1
 OFFSET $2
 `
@@ -335,7 +337,7 @@ OFFSET $2
 type ListOrdersParams struct {
 	Limit     int32              `json:"limit"`
 	Offset    int32              `json:"offset"`
-	UserID    int64              `json:"user_id"`
+	UserID    pgtype.Int8        `json:"user_id"`
 	Status    NullOrderStatus    `json:"status"`
 	StartDate pgtype.Timestamptz `json:"start_date"`
 	EndDate   pgtype.Timestamptz `json:"end_date"`

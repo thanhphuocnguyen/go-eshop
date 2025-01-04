@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
-	"github.com/stripe/stripe-go/v81"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
@@ -379,36 +378,33 @@ func (sv *Server) checkout(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
+	var addressID int64
 
-	addresses, err := sv.repo.GetAddresses(c, authPayload.UserID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
-		return
-	}
-
-	if len(addresses) == 0 {
-		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("no address found")))
-		return
-	}
-
-	addressID := int64(addresses[0].UserAddressID)
 	if req.AddressID == nil {
-		isAddressExist := false
-		for _, address := range addresses {
-			if address.Default {
-				addressID = address.UserAddressID
+		defaultAddress, err := sv.repo.GetDefaultAddress(c, user.UserID)
+		if err != nil {
+			if errors.Is(err, repository.ErrRecordNotFound) {
+				c.JSON(http.StatusNotFound, mapErrResp(errors.New("default address not found")))
+				return
 			}
-			if address.UserAddressID == *req.AddressID {
-				isAddressExist = true
-				break
-			}
-		}
-		if !isAddressExist {
-			c.JSON(http.StatusBadRequest, mapErrResp(errors.New("address not found")))
+			c.JSON(http.StatusInternalServerError, mapErrResp(err))
 			return
 		}
+		addressID = defaultAddress.UserAddressID
 	} else {
-		addressID = *req.AddressID
+		address, err := sv.repo.GetAddress(c, repository.GetAddressParams{
+			UserAddressID: *req.AddressID,
+			UserID:        user.UserID,
+		})
+		if err != nil {
+			if errors.Is(err, repository.ErrRecordNotFound) {
+				c.JSON(http.StatusNotFound, mapErrResp(errors.New("address not found")))
+				return
+			}
+			c.JSON(http.StatusInternalServerError, mapErrResp(err))
+			return
+		}
+		addressID = address.UserAddressID
 	}
 
 	if cart.UserID != authPayload.UserID {
@@ -441,23 +437,18 @@ func (sv *Server) checkout(c *gin.Context) {
 		totalPrice += price.Float64 * float64(item.Quantity)
 	}
 
-	log.Info().Msgf("Total price: %f", totalPrice)
-
 	paymentMethod := repository.PaymentMethodCod
 	if req.PaymentGateway != nil {
 		paymentGateway := repository.PaymentGateway(*req.PaymentGateway)
 		switch paymentGateway {
-
 		case repository.PaymentGatewayStripe:
+			paymentMethod = repository.PaymentMethodCard
 			stripeInstance, err := payment.NewStripePayment(sv.config.StripeSecretKey)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, mapErrResp(err))
 				return
 			}
-			stripe.Key = sv.config.StripeSecretKey
-			paymentMethod = repository.PaymentMethodCard
-			stripePayment := stripeInstance
-			sv.paymentCtx.SetStrategy(stripePayment)
+			sv.paymentCtx.SetStrategy(stripeInstance)
 		default:
 			c.JSON(http.StatusBadRequest, mapErrResp(errors.New("currently we only support stripe")))
 			return

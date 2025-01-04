@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
 )
 
 type RefundOrderTxArgs struct {
 	OrderID                  int64
-	RefundPaymentFromGateway func(paymentID string, gateway PaymentGateway) error
+	RefundPaymentFromGateway func(paymentID string, gateway PaymentGateway) (string, error)
 }
 
 func (pg *pgRepo) RefundOrderTx(ctx context.Context, args RefundOrderTxArgs) (err error) {
@@ -28,18 +29,25 @@ func (pg *pgRepo) RefundOrderTx(ctx context.Context, args RefundOrderTxArgs) (er
 
 			// refund payment from gateway if it's not refunded yet
 			if args.RefundPaymentFromGateway != nil {
-				err = args.RefundPaymentFromGateway(payment.PaymentID, payment.PaymentGateway.PaymentGateway)
+				refundID, err := args.RefundPaymentFromGateway(payment.PaymentID, payment.PaymentGateway.PaymentGateway)
 				if err != nil {
 					log.Error().Err(err).Msg("RefundPaymentFromGateway")
 					return err
 				}
-				err := q.UpdatePaymentTransaction(ctx, UpdatePaymentTransactionParams{
+				updateParams := UpdatePaymentTransactionParams{
 					PaymentID: payment.PaymentID,
 					Status: NullPaymentStatus{
 						PaymentStatus: PaymentStatusRefunded,
 						Valid:         true,
 					},
-				})
+				}
+				if refundID != "" {
+					updateParams.RefundID = pgtype.Text{
+						String: refundID,
+						Valid:  true,
+					}
+				}
+				err = q.UpdatePaymentTransaction(ctx, updateParams)
 				if err != nil {
 					log.Error().Err(err).Msg("UpdatePaymentTransaction")
 					return err

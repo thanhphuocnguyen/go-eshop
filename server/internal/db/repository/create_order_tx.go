@@ -27,10 +27,20 @@ func (s *pgRepo) CreateOrderTx(ctx context.Context, arg CreateOrderTxParams) (in
 			UserAddressID: arg.AddressID,
 			TotalPrice:    util.GetPgNumericFromFloat(arg.TotalPrice),
 		})
+
 		result = order.OrderID
 		if err != nil {
 			log.Error().Err(err).Msg("CreateOrder")
 			return err
+		}
+
+		for _, createOrderItemParam := range arg.CreateOrderItemParams {
+			createOrderItemParam.OrderID = order.OrderID
+			_, err = q.CreateOrderItem(ctx, createOrderItemParam)
+			if err != nil {
+				log.Error().Err(err).Msg("CreateOrderItem")
+				return err
+			}
 		}
 
 		// create payment transaction
