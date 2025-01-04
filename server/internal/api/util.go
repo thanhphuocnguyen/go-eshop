@@ -7,9 +7,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/thanhphuocnguyen/go-eshop/config"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
 )
 
 func GetImageName(originFileName string) string {
@@ -30,17 +27,4 @@ func GetLimitOffset(c *gin.Context) (limit, offset int) {
 		offset = 0
 	}
 	return
-}
-
-func GetPaymentGatewayInstanceFromName(name repository.PaymentGateway, cfg config.Config) payment.PaymentStrategy {
-	switch name {
-	case repository.PaymentGatewayStripe:
-		instance, err := payment.NewStripePayment(cfg.StripeSecretKey)
-		if err != nil {
-			return nil
-		}
-		return instance
-	default:
-		return nil
-	}
 }

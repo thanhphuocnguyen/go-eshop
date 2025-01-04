@@ -13,8 +13,12 @@ type PaymentRequest struct {
 	CartID  int64  `json:"cart_id" binding:"required,min=1"`
 	Gateway string `json:"gateway" binding:"required"`
 }
-type GetPaymentParam struct {
+type GetPaymentByOrderIDParam struct {
 	OrderID int64 `uri:"order_id" binding:"required"`
+}
+
+type GetPaymentParam struct {
+	PaymentID string `uri:"payment_id" binding:"required"`
 }
 
 type PaymentResponse struct {
@@ -34,7 +38,7 @@ func (sv *Server) getPayment(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, mapErrResp(fmt.Errorf("authorization payload is not provided")))
 		return
 	}
-	var param GetPaymentParam
+	var param GetPaymentByOrderIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
@@ -42,7 +46,7 @@ func (sv *Server) getPayment(c *gin.Context) {
 
 	order, err := sv.repo.GetOrder(c, param.OrderID)
 	if err != nil {
-		if err == repository.ErrorRecordNotFound {
+		if err == repository.ErrRecordNotFound {
 			c.JSON(http.StatusNotFound, mapErrResp(err))
 		}
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
@@ -59,7 +63,7 @@ func (sv *Server) getPayment(c *gin.Context) {
 	}
 	var details interface{}
 	if payment.PaymentGateway.Valid {
-		sv.paymentCtx.SetStrategy(GetPaymentGatewayInstanceFromName(payment.PaymentGateway.PaymentGateway, sv.config))
+		sv.paymentCtx.SetStrategy(sv.paymentCtx.GetPaymentGatewayInstanceFromName(payment.PaymentGateway.PaymentGateway, sv.config))
 		details, err = sv.paymentCtx.GetPaymentObject(payment.PaymentID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, mapErrResp(err))

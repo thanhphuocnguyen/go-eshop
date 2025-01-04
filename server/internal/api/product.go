@@ -186,7 +186,7 @@ func (sv *Server) getProductDetail(c *gin.Context) {
 	})
 
 	if err != nil {
-		if errors.Is(err, repository.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
@@ -312,7 +312,7 @@ func (sv *Server) updateProduct(c *gin.Context) {
 
 	updated, err := sv.repo.UpdateProduct(c, updateBody)
 	if err != nil {
-		if errors.Is(err, repository.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
@@ -346,7 +346,7 @@ func (sv *Server) removeProduct(c *gin.Context) {
 		ProductID: params.ID,
 	})
 	if err != nil {
-		if errors.Is(err, repository.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}

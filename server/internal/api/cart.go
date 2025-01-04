@@ -109,7 +109,7 @@ func (sv *Server) createCart(c *gin.Context) {
 	}
 	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
 	if err != nil {
-		if errors.Is(err, repository.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(errors.New("user not found")))
 			return
 		}
@@ -149,7 +149,7 @@ func (sv *Server) getCartDetail(c *gin.Context) {
 	}
 	cart, err := sv.repo.GetCart(c, authPayload.UserID)
 	if err != nil {
-		if errors.Is(err, repository.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(errors.New("cart not found")))
 			return
 		}
@@ -200,7 +200,7 @@ func (sv *Server) addCartItem(c *gin.Context) {
 	})
 
 	if err != nil {
-		if errors.Is(err, repository.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(errors.New("product not found")))
 			return
 		}
@@ -220,7 +220,7 @@ func (sv *Server) addCartItem(c *gin.Context) {
 
 	cart, err := sv.repo.GetCart(c, authPayload.UserID)
 	if err != nil {
-		if errors.Is(err, repository.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			cart, err = sv.repo.CreateCart(c, authPayload.UserID)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, mapErrResp(err))
@@ -239,7 +239,7 @@ func (sv *Server) addCartItem(c *gin.Context) {
 
 	// check if the product is already in the cart
 	cartItem, err := sv.repo.GetCartItemByProductID(c, req.ProductID)
-	if err != nil && errors.Is(err, repository.ErrorRecordNotFound) {
+	if err != nil && errors.Is(err, repository.ErrRecordNotFound) {
 		cartItem, err = sv.repo.AddProductToCart(c, repository.AddProductToCartParams{
 			ProductID: req.ProductID,
 			CartID:    cart.CartID,
@@ -308,7 +308,7 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 
 	cart, err := sv.repo.GetCart(c, authPayload.UserID)
 	if err != nil {
-		if errors.Is(err, repository.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(errors.New("cart not found")))
 			return
 		}
@@ -343,7 +343,7 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 // @Accept json
 // @Param input body checkoutRequest true "Update cart items input"
 // @Produce json
-// @Success 200 {object} GenericResponse[repository.CheckoutCartTxResult]
+// @Success 200 {object} GenericResponse[checkoutResponse]
 // @Failure 400 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Router /cart/checkout [post]
@@ -356,7 +356,7 @@ func (sv *Server) checkout(c *gin.Context) {
 
 	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
 	if err != nil {
-		if errors.Is(err, repository.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(errors.New("user not found")))
 			return
 		}
@@ -372,7 +372,7 @@ func (sv *Server) checkout(c *gin.Context) {
 
 	cart, err := sv.repo.GetCart(c, authPayload.UserID)
 	if err != nil {
-		if errors.Is(err, repository.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(errors.New("cart not found")))
 			return
 		}
@@ -532,7 +532,7 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 
 	cart, err := sv.repo.GetCart(c, authPayload.UserID)
 	if err != nil {
-		if errors.Is(err, repository.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(errors.New("cart not found")))
 			return
 		}
@@ -557,7 +557,7 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 
 	cartItem, err := sv.repo.GetCartItemWithProduct(c, param.ID)
 	if err != nil {
-		if errors.Is(err, repository.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(errors.New("cart item not found")))
 			return
 		}
@@ -570,7 +570,7 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 	})
 
 	if err != nil {
-		if errors.Is(err, repository.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(errors.New("product not found")))
 			return
 		}
@@ -620,7 +620,7 @@ func (sv *Server) clearCart(c *gin.Context) {
 
 	cart, err := sv.repo.GetCart(c, authPayload.UserID)
 	if err != nil {
-		if errors.Is(err, repository.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(errors.New("cart not found")))
 			return
 		}

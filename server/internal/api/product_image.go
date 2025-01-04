@@ -151,7 +151,7 @@ func (sv *Server) setImagesPrimary(c *gin.Context) {
 		ProductID: params.ID,
 	})
 	if err != nil {
-		if errors.Is(err, repository.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
@@ -159,7 +159,7 @@ func (sv *Server) setImagesPrimary(c *gin.Context) {
 
 	img, err := sv.repo.GetImageByID(c, params.ImageID)
 	if err != nil {
-		if errors.Is(err, repository.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
@@ -221,7 +221,7 @@ func (sv *Server) removeProductImage(c *gin.Context) {
 	})
 
 	if err != nil {
-		if errors.Is(err, repository.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
@@ -231,7 +231,7 @@ func (sv *Server) removeProductImage(c *gin.Context) {
 
 	img, err := sv.repo.GetImageByID(c, params.ImageID)
 	if err != nil {
-		if errors.Is(err, repository.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}

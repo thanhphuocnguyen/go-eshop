@@ -83,7 +83,13 @@ func (sv *Server) initializeRouter() {
 			userAuthRoutes := user.Group("").Use(authMiddleware(sv.tokenGenerator))
 			userAuthRoutes.GET("", sv.getUser)
 			userAuthRoutes.PATCH("", sv.updateUser)
-			userModeratorRoutes := user.Group("").Use(authMiddleware(sv.tokenGenerator), roleMiddleware(repository.UserRoleAdmin, repository.UserRoleModerator))
+			userModeratorRoutes := user.Group("").Use(
+				authMiddleware(sv.tokenGenerator),
+				roleMiddleware(
+					sv.repo,
+					repository.UserRoleAdmin,
+					repository.UserRoleModerator),
+			)
 			userModeratorRoutes.GET("list", sv.listUsers)
 		}
 
@@ -100,7 +106,10 @@ func (sv *Server) initializeRouter() {
 			product.GET(":id", sv.getProductDetail)
 			product.GET("", sv.getProducts)
 
-			productAuthRoutes := product.Group("").Use(authMiddleware(sv.tokenGenerator), roleMiddleware(repository.UserRoleAdmin))
+			productAuthRoutes := product.Group("").Use(
+				authMiddleware(sv.tokenGenerator),
+				roleMiddleware(sv.repo, repository.UserRoleAdmin),
+			)
 			productAuthRoutes.POST("", sv.createProduct)
 			productAuthRoutes.PUT(":id", sv.updateProduct)
 			productAuthRoutes.DELETE(":id", sv.removeProduct)
@@ -129,8 +138,9 @@ func (sv *Server) initializeRouter() {
 		{
 			order.GET("", sv.orderList)
 			order.GET(":id", sv.orderDetail)
-			adminOrder := order.Use(roleMiddleware(repository.UserRoleAdmin))
+			adminOrder := order.Use(roleMiddleware(sv.repo, repository.UserRoleAdmin))
 			adminOrder.PUT(":id/cancel", sv.cancelOrder)
+			adminOrder.PUT(":id/refund", sv.refundOrder)
 			adminOrder.PUT(":id/change-status", sv.changeOrderStatus)
 		}
 
@@ -143,7 +153,10 @@ func (sv *Server) initializeRouter() {
 		collection := v1.Group("/collection")
 		{
 			collection.GET("", sv.getCollections)
-			collectionAuthRoutes := collection.Group("").Use(authMiddleware(sv.tokenGenerator), roleMiddleware(repository.UserRoleAdmin))
+			collectionAuthRoutes := collection.Group("").Use(
+				authMiddleware(sv.tokenGenerator),
+				roleMiddleware(sv.repo, repository.UserRoleAdmin),
+			)
 			collectionAuthRoutes.POST("", sv.createCollection)
 			collectionAuthRoutes.GET(":id", sv.getCollectionByID)
 			collectionAuthRoutes.PUT(":id", sv.updateCollection)

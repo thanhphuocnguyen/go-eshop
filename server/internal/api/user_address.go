@@ -192,7 +192,7 @@ func (sv *Server) updateAddress(c *gin.Context) {
 		UserID:        authPayload.UserID,
 	})
 	if err != nil {
-		if errors.Is(err, repository.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
@@ -277,7 +277,7 @@ func (sv *Server) removeAddress(c *gin.Context) {
 	})
 
 	if err != nil {
-		if errors.Is(err, repository.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
@@ -295,7 +295,7 @@ func (sv *Server) removeAddress(c *gin.Context) {
 		UserID:        authPayload.UserID,
 	})
 	if err != nil {
-		if errors.Is(err, repository.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}

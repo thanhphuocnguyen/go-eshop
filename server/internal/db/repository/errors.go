@@ -14,11 +14,11 @@ const (
 	DeadLock            = "40P01"
 )
 
-var ErrorRecordNotFound = pgx.ErrNoRows
-var ErrorForeignKeyViolation = &pgconn.PgError{Code: ForeignKeyViolation}
-var ErrorUniqueViolation = &pgconn.PgError{Code: UniqueViolation}
-var ErrorTimeout = &pgconn.PgError{Code: Timeout}
-var ErrorDeadlockDetected = &pgconn.PgError{Code: DeadLock}
+var ErrRecordNotFound = pgx.ErrNoRows
+var ErrForeignKeyViolation = &pgconn.PgError{Code: ForeignKeyViolation}
+var ErrUniqueViolation = &pgconn.PgError{Code: UniqueViolation}
+var ErrTimeout = &pgconn.PgError{Code: Timeout}
+var ErrDeadlockDetected = &pgconn.PgError{Code: DeadLock}
 
 func ErrorCode(err error) string {
 	var pgErr *pgconn.PgError

@@ -16,7 +16,8 @@ type Repository interface {
 	CreateOrderTx(ctx context.Context, arg CreateOrderTxParams) (int64, error)
 	SetPrimaryAddressTx(ctx context.Context, arg SetPrimaryAddressTxParams) error
 	SetPrimaryImageTx(ctx context.Context, arg SetPrimaryImageTxParams) error
-	CancelOrderTx(ctx context.Context, params CancelOrderTxParams) error
+	CancelOrderTx(ctx context.Context, params CancelOrderTxArgs) error
+	RefundOrderTx(ctx context.Context, params RefundOrderTxArgs) error
 	Close()
 }
 

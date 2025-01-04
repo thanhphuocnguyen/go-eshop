@@ -1,13 +1,18 @@
 package payment
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/thanhphuocnguyen/go-eshop/config"
+	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+)
 
 type PaymentStrategy interface {
 	InitiatePayment(amount float64, email string) (string, error)
 	ProcessPayment(transactionID string) (string, error)
 	GetPaymentObject(transactionID string) (interface{}, error)
-	RefundPayment(transactionID string) (string, error)
-	CancelPayment(transactionID string, reason string) (string, error)
+	RefundPayment(transactionID, reason string) (string, error)
+	CancelPayment(transactionID, reason string) (string, error)
 }
 
 var (
@@ -19,41 +24,47 @@ type PaymentContext struct {
 	strategy PaymentStrategy
 }
 
-func (p *PaymentContext) SetStrategy(strategy PaymentStrategy) {
+func (p *PaymentContext) SetStrategy(strategy PaymentStrategy) error {
+	if p.strategy == nil {
+		return ErrPaymentStrategyNotSet
+	}
 	p.strategy = strategy
+	return nil
 }
 
 func (p *PaymentContext) InitiatePayment(amount float64, email string) (string, error) {
-	if p.strategy == nil {
-		return "", ErrPaymentStrategyNotSet
-	}
+
 	return p.strategy.InitiatePayment(amount, email)
 }
 
 func (p *PaymentContext) ProcessPayment(transactionID string) (string, error) {
-	if p.strategy == nil {
-		return "", ErrPaymentStrategyNotSet
-	}
+
 	return p.strategy.ProcessPayment(transactionID)
 }
 
-func (p *PaymentContext) RefundPayment(transactionID string) (string, error) {
-	if p.strategy == nil {
-		return "", ErrPaymentStrategyNotSet
-	}
-	return p.strategy.RefundPayment(transactionID)
+func (p *PaymentContext) RefundPayment(transactionID string, reason string) (string, error) {
+
+	return p.strategy.RefundPayment(transactionID, reason)
 }
 
 func (p *PaymentContext) CancelPayment(transactionID string, reason string) (string, error) {
-	if p.strategy == nil {
-		return "", ErrPaymentStrategyNotSet
-	}
+
 	return p.strategy.CancelPayment(transactionID, reason)
 }
 
 func (p *PaymentContext) GetPaymentObject(transactionID string) (interface{}, error) {
-	if p.strategy == nil {
-		return nil, ErrPaymentStrategyNotSet
-	}
 	return p.strategy.GetPaymentObject(transactionID)
+}
+
+func (p *PaymentContext) GetPaymentGatewayInstanceFromName(name repository.PaymentGateway, cfg config.Config) PaymentStrategy {
+	switch name {
+	case repository.PaymentGatewayStripe:
+		instance, err := NewStripePayment(cfg.StripeSecretKey)
+		if err != nil {
+			return nil
+		}
+		return instance
+	default:
+		return nil
+	}
 }

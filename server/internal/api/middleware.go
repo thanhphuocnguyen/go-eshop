@@ -42,7 +42,7 @@ func authMiddleware(tokenGenerator auth.TokenGenerator) gin.HandlerFunc {
 	}
 }
 
-func roleMiddleware(roles ...repository.UserRole) gin.HandlerFunc {
+func roleMiddleware(repo repository.Repository, roles ...repository.UserRole) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		payload, ok := ctx.MustGet(authorizationPayload).(*auth.Payload)
 		if !ok {
@@ -50,10 +50,15 @@ func roleMiddleware(roles ...repository.UserRole) gin.HandlerFunc {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, mapErrResp(fmt.Errorf("authorization payload is not provided")))
 			return
 		}
-		log.Info().Str("role", string(payload.Role)).Msg("Role middleware")
+		user, err := repo.GetUserByID(ctx, payload.UserID)
+		if err != nil {
+			log.Error().Err(err).Msg("Role middleware: cannot get user")
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, mapErrResp(fmt.Errorf("user not found")))
+			return
+		}
 
 		for _, r := range roles {
-			if r == payload.Role {
+			if r == user.Role {
 				ctx.Next()
 				return
 			}

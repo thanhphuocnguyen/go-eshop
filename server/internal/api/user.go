@@ -115,7 +115,7 @@ func (sv *Server) createUser(c *gin.Context) {
 	}
 
 	_, err := sv.repo.GetUserByUsername(c, req.Username)
-	if err != nil && !errors.Is(err, repository.ErrorRecordNotFound) {
+	if err != nil && !errors.Is(err, repository.ErrRecordNotFound) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
@@ -170,22 +170,28 @@ func (sv *Server) loginUser(c *gin.Context) {
 
 	user, err := sv.repo.GetUserByUsername(c, req.Username)
 	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			c.JSON(http.StatusUnauthorized, mapErrResp(err))
+			return
+		}
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
+
+	// TODO: check if user has confirmed email or phone number
 
 	if err := auth.CheckPassword(req.Password, user.HashedPassword); err != nil {
 		c.JSON(http.StatusUnauthorized, mapErrResp(err))
 		return
 	}
 
-	token, payload, err := sv.tokenGenerator.GenerateToken(user.UserID, user.Username, user.Role, sv.config.AccessTokenDuration)
+	token, payload, err := sv.tokenGenerator.GenerateToken(user.UserID, user.Username, user.Email, sv.config.AccessTokenDuration)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 
-	refreshToken, rfPayload, err := sv.tokenGenerator.GenerateToken(user.UserID, user.Username, user.Role, sv.config.RefreshTokenDuration)
+	refreshToken, rfPayload, err := sv.tokenGenerator.GenerateToken(user.UserID, user.Username, user.Email, sv.config.RefreshTokenDuration)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
@@ -241,7 +247,7 @@ func (sv *Server) refreshToken(c *gin.Context) {
 
 	session, err := sv.repo.GetSession(c, refreshTokenPayload.ID)
 	if err != nil {
-		if errors.Is(err, repository.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusUnauthorized, mapErrResp(err))
 			return
 		}
@@ -272,7 +278,7 @@ func (sv *Server) refreshToken(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, mapErrResp(err))
 		return
 	}
-	accessToken, _, err := sv.tokenGenerator.GenerateToken(session.UserID, refreshTokenPayload.Username, refreshTokenPayload.Role, sv.config.AccessTokenDuration)
+	accessToken, _, err := sv.tokenGenerator.GenerateToken(session.UserID, refreshTokenPayload.Username, refreshTokenPayload.Email, sv.config.AccessTokenDuration)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
@@ -359,7 +365,7 @@ func (sv *Server) getUser(c *gin.Context) {
 
 	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
 	if err != nil {
-		if errors.Is(err, repository.ErrorRecordNotFound) {
+		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(err))
 			return
 		}
@@ -400,11 +406,17 @@ func (sv *Server) listUsers(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(fmt.Errorf("authorization payload is not provided")))
 		return
 	}
+	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
 
-	if authPayload.Role != repository.UserRoleAdmin {
+	if user.Role != repository.UserRoleAdmin {
 		c.JSON(http.StatusUnauthorized, mapErrResp(fmt.Errorf("user does not have permission")))
 		return
 	}
+
 	var queries listUserParams
 	if err := c.ShouldBindUri(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))

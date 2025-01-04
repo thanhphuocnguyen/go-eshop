@@ -7,7 +7,6 @@ import (
 	"aidanwoods.dev/go-paseto"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 )
 
 type PasetoTokenGenerator struct {
@@ -22,11 +21,11 @@ func NewPasetoTokenGenerator() TokenGenerator {
 	}
 }
 
-func (g *PasetoTokenGenerator) GenerateToken(userID int64, username string, userRole repository.UserRole, duration time.Duration) (string, Payload, error) {
+func (g *PasetoTokenGenerator) GenerateToken(userID int64, username, email string, duration time.Duration) (string, Payload, error) {
 	payload := Payload{
 		ID:        uuid.New(),
 		Username:  username,
-		Role:      userRole,
+		Email:     email,
 		UserID:    userID,
 		IssuedAt:  time.Now(),
 		ExpiredAt: time.Now().Add(duration),
@@ -35,7 +34,7 @@ func (g *PasetoTokenGenerator) GenerateToken(userID int64, username string, user
 	token := paseto.NewToken()
 	token.SetString("username", payload.Username)
 	token.SetString("id", payload.ID.String())
-	token.SetString("role", string(payload.Role))
+	token.SetString("role", string(payload.Email))
 	token.SetString("user_id", strconv.Itoa(int(payload.UserID)))
 	token.SetExpiration(payload.ExpiredAt)
 	token.SetNotBefore(payload.IssuedAt)
@@ -87,7 +86,7 @@ func getPayloadFromParsedData(t *paseto.Token) (*Payload, error) {
 		return nil, err
 	}
 
-	role, err := t.GetString("role")
+	email, err := t.GetString("email")
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +105,7 @@ func getPayloadFromParsedData(t *paseto.Token) (*Payload, error) {
 		ID:        idUUID,
 		Username:  username,
 		UserID:    userId,
-		Role:      repository.UserRole(role),
+		Email:     email,
 		IssuedAt:  issuedAt,
 		ExpiredAt: expiredAt,
 	}, nil

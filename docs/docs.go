@@ -185,7 +185,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/carts": {
+        "/cart": {
             "get": {
                 "description": "get cart details by user ID",
                 "consumes": [
@@ -195,7 +195,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "carts"
+                    "cart"
                 ],
                 "summary": "Get cart details by user ID",
                 "responses": {
@@ -208,7 +208,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.errorResponse"
                         }
                     }
                 }
@@ -229,25 +229,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.GenericResponse-sqlc_Cart"
+                            "$ref": "#/definitions/api.GenericResponse-repository_Cart"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.errorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.errorResponse"
                         }
                     }
                 }
             }
         },
-        "/carts/checkout": {
+        "/cart/checkout": {
             "post": {
                 "description": "update product items in the cart",
                 "consumes": [
@@ -275,26 +275,26 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.GenericResponse-postgres_CheckoutCartTxResult"
+                            "$ref": "#/definitions/api.GenericResponse-api_checkoutResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.errorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.errorResponse"
                         }
                     }
                 }
             }
         },
-        "/carts/clear": {
-            "delete": {
+        "/cart/clear": {
+            "put": {
                 "description": "clear the cart",
                 "consumes": [
                     "application/json"
@@ -316,63 +316,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.errorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.errorResponse"
                         }
                     }
                 }
             }
         },
-        "/carts/products": {
-            "put": {
-                "description": "update product items in the cart",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "carts"
-                ],
-                "summary": "Update product items in the cart",
-                "parameters": [
-                    {
-                        "description": "Update cart items input",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.updateCartItemRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.GenericResponse-sqlc_CartItem"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/gin.H"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/gin.H"
-                        }
-                    }
-                }
-            },
+        "/cart/item": {
             "post": {
                 "description": "add a product to the cart",
                 "consumes": [
@@ -400,23 +356,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.GenericResponse-sqlc_CartItem"
+                            "$ref": "#/definitions/api.GenericResponse-api_cartItemResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.errorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.errorResponse"
                         }
                     }
                 }
-            },
+            }
+        },
+        "/cart/item/{id}": {
             "delete": {
                 "description": "remove a product from the cart",
                 "consumes": [
@@ -448,13 +406,59 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.errorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/cart/item/{id}/quantity": {
+            "put": {
+                "description": "update product items in the cart",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "carts"
+                ],
+                "summary": "Update product items in the cart",
+                "parameters": [
+                    {
+                        "description": "Update cart items input",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.updateCartItemRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.GenericResponse-api_cartItemResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
                         }
                     }
                 }
@@ -496,7 +500,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.listOrderResponse"
+                            "$ref": "#/definitions/api.orderListResp"
                         }
                     },
                     "400": {
@@ -551,7 +555,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.orderDetailResponse"
+                            "$ref": "#/definitions/api.GenericResponse-api_orderDetailResponse"
                         }
                     },
                     "400": {
@@ -606,7 +610,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.GenericResponse-sqlc_Order"
+                            "$ref": "#/definitions/api.GenericResponse-repository_Order"
                         }
                     },
                     "400": {
@@ -630,14 +634,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/orders/{id}/payment": {
+        "/orders/{id}/refund": {
             "put": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Change order payment status by order ID",
+                "description": "Refund order by order ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -647,7 +651,7 @@ const docTemplate = `{
                 "tags": [
                     "orders"
                 ],
-                "summary": "Change order payment status",
+                "summary": "Refund order",
                 "parameters": [
                     {
                         "type": "integer",
@@ -655,22 +659,13 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
-                    },
-                    {
-                        "description": "Payment Status",
-                        "name": "status",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/sqlc.Order"
+                            "$ref": "#/definitions/api.GenericResponse-repository_Order"
                         }
                     },
                     "400": {
@@ -734,7 +729,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/sqlc.Order"
+                            "$ref": "#/definitions/api.GenericResponse-repository_Order"
                         }
                     },
                     "400": {
@@ -838,7 +833,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.GenericResponse-sqlc_Product"
+                            "$ref": "#/definitions/api.GenericResponse-repository_Product"
                         }
                     },
                     "400": {
@@ -933,7 +928,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.GenericResponse-sqlc_Product"
+                            "$ref": "#/definitions/api.GenericResponse-repository_Product"
                         }
                     },
                     "404": {
@@ -1019,7 +1014,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.GenericResponse-array_sqlc_Image"
+                            "$ref": "#/definitions/api.GenericResponse-array_repository_Image"
                         }
                     },
                     "404": {
@@ -1165,7 +1160,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.GenericResponse-array_sqlc_Image"
+                            "$ref": "#/definitions/api.GenericResponse-array_repository_Image"
                         }
                     },
                     "404": {
@@ -1244,13 +1239,56 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.GenericResponse-sqlc_CreateUserRow"
+                            "$ref": "#/definitions/api.GenericResponse-repository_CreateUserRow"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/list": {
+            "get": {
+                "description": "List users",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "List users",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.GenericResponse-array_api_userResponse"
                         }
                     },
                     "500": {
@@ -1308,6 +1346,41 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/refresh-token": {
+            "post": {
+                "description": "Refresh token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Refresh token",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.renewAccessTokenResp"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
         "/users/{id}": {
             "patch": {
                 "description": "Update user info",
@@ -1336,7 +1409,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.GenericResponse-sqlc_UpdateUserRow"
+                            "$ref": "#/definitions/api.GenericResponse-repository_UpdateUserRow"
                         }
                     },
                     "400": {
@@ -1374,14 +1447,14 @@ const docTemplate = `{
                 "city": {
                     "type": "string"
                 },
+                "default": {
+                    "type": "boolean"
+                },
                 "district": {
                     "type": "string"
                 },
                 "id": {
                     "type": "integer"
-                },
-                "is_default": {
-                    "type": "boolean"
                 },
                 "phone": {
                     "type": "string"
@@ -1394,18 +1467,12 @@ const docTemplate = `{
         "api.CreateAddressParams": {
             "type": "object",
             "required": [
-                "address_1",
                 "city",
                 "district",
-                "phone"
+                "phone",
+                "street"
             ],
             "properties": {
-                "address_1": {
-                    "type": "string"
-                },
-                "address_2": {
-                    "type": "string"
-                },
                 "city": {
                     "type": "string"
                 },
@@ -1419,6 +1486,9 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 15,
                     "minLength": 10
+                },
+                "street": {
+                    "type": "string"
                 },
                 "ward": {
                     "type": "string"
@@ -1459,6 +1529,20 @@ const docTemplate = `{
                 }
             }
         },
+        "api.GenericResponse-api_cartItemResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/api.cartItemResponse"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "api.GenericResponse-api_cartResponse": {
             "type": "object",
             "properties": {
@@ -1473,11 +1557,39 @@ const docTemplate = `{
                 }
             }
         },
+        "api.GenericResponse-api_checkoutResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/api.checkoutResponse"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "api.GenericResponse-api_loginResponse": {
             "type": "object",
             "properties": {
                 "data": {
                     "$ref": "#/definitions/api.loginResponse"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.GenericResponse-api_orderDetailResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/api.orderDetailResponse"
                 },
                 "error": {
                     "type": "string"
@@ -1532,13 +1644,30 @@ const docTemplate = `{
                 }
             }
         },
-        "api.GenericResponse-array_sqlc_Image": {
+        "api.GenericResponse-array_api_userResponse": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/sqlc.Image"
+                        "$ref": "#/definitions/api.userResponse"
+                    }
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.GenericResponse-array_repository_Image": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/repository.Image"
                     }
                 },
                 "error": {
@@ -1563,11 +1692,11 @@ const docTemplate = `{
                 }
             }
         },
-        "api.GenericResponse-postgres_CheckoutCartTxResult": {
+        "api.GenericResponse-repository_Cart": {
             "type": "object",
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/postgres.CheckoutCartTxResult"
+                    "$ref": "#/definitions/repository.Cart"
                 },
                 "error": {
                     "type": "string"
@@ -1577,11 +1706,11 @@ const docTemplate = `{
                 }
             }
         },
-        "api.GenericResponse-sqlc_Cart": {
+        "api.GenericResponse-repository_CreateUserRow": {
             "type": "object",
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/sqlc.Cart"
+                    "$ref": "#/definitions/repository.CreateUserRow"
                 },
                 "error": {
                     "type": "string"
@@ -1591,11 +1720,11 @@ const docTemplate = `{
                 }
             }
         },
-        "api.GenericResponse-sqlc_CartItem": {
+        "api.GenericResponse-repository_Order": {
             "type": "object",
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/sqlc.CartItem"
+                    "$ref": "#/definitions/repository.Order"
                 },
                 "error": {
                     "type": "string"
@@ -1605,11 +1734,11 @@ const docTemplate = `{
                 }
             }
         },
-        "api.GenericResponse-sqlc_CreateUserRow": {
+        "api.GenericResponse-repository_Product": {
             "type": "object",
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/sqlc.CreateUserRow"
+                    "$ref": "#/definitions/repository.Product"
                 },
                 "error": {
                     "type": "string"
@@ -1619,39 +1748,11 @@ const docTemplate = `{
                 }
             }
         },
-        "api.GenericResponse-sqlc_Order": {
+        "api.GenericResponse-repository_UpdateUserRow": {
             "type": "object",
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/sqlc.Order"
-                },
-                "error": {
-                    "type": "string"
-                },
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
-        "api.GenericResponse-sqlc_Product": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/sqlc.Product"
-                },
-                "error": {
-                    "type": "string"
-                },
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
-        "api.GenericResponse-sqlc_UpdateUserRow": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/sqlc.UpdateUserRow"
+                    "$ref": "#/definitions/repository.UpdateUserRow"
                 },
                 "error": {
                     "type": "string"
@@ -1757,9 +1858,6 @@ const docTemplate = `{
                         "$ref": "#/definitions/api.cartItemResponse"
                     }
                 },
-                "checked_out": {
-                    "type": "string"
-                },
                 "created_at": {
                     "type": "string"
                 },
@@ -1781,23 +1879,37 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "address_id",
-                "payment_method"
+                "payment_gateway"
             ],
             "properties": {
                 "address_id": {
                     "type": "integer"
                 },
-                "payment_method": {
+                "payment_gateway": {
                     "type": "string",
                     "enum": [
-                        "credit_card",
+                        "stripe",
                         "paypal",
-                        "cod",
-                        "debit_card",
+                        "visa",
+                        "mastercard",
                         "apple_pay",
-                        "wallet",
-                        "postpaid"
+                        "google_pay",
+                        "postpaid",
+                        "momo",
+                        "zalo_pay",
+                        "vn_pay"
                     ]
+                }
+            }
+        },
+        "api.checkoutResponse": {
+            "type": "object",
+            "properties": {
+                "order_id": {
+                    "type": "integer"
+                },
+                "payment_id": {
+                    "type": "string"
                 }
             }
         },
@@ -1836,7 +1948,7 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "email",
-                "full_name",
+                "fullname",
                 "password",
                 "phone",
                 "username"
@@ -1847,7 +1959,7 @@ const docTemplate = `{
                     "maxLength": 255,
                     "minLength": 6
                 },
-                "full_name": {
+                "fullname": {
                     "type": "string",
                     "maxLength": 32,
                     "minLength": 3
@@ -1869,14 +1981,11 @@ const docTemplate = `{
                 }
             }
         },
-        "api.listOrderResponse": {
+        "api.errorResponse": {
             "type": "object",
             "properties": {
-                "orders": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/api.orderResponse"
-                    }
+                "error": {
+                    "type": "string"
                 }
             }
         },
@@ -1928,24 +2037,41 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
-                "payment_status": {
-                    "$ref": "#/definitions/sqlc.PaymentStatus"
+                "payment_info": {
+                    "$ref": "#/definitions/api.paymentInfo"
                 },
                 "products": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.productListResponse"
+                        "$ref": "#/definitions/api.orderItemResp"
                     }
                 },
                 "status": {
-                    "$ref": "#/definitions/sqlc.OrderStatus"
+                    "$ref": "#/definitions/repository.OrderStatus"
                 },
                 "total": {
                     "type": "number"
                 }
             }
         },
-        "api.orderResponse": {
+        "api.orderItemResp": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "quantity": {
+                    "type": "integer"
+                }
+            }
+        },
+        "api.orderListResp": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -1955,10 +2081,10 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "payment_status": {
-                    "$ref": "#/definitions/sqlc.PaymentStatus"
+                    "$ref": "#/definitions/repository.PaymentStatus"
                 },
                 "status": {
-                    "$ref": "#/definitions/sqlc.OrderStatus"
+                    "$ref": "#/definitions/repository.OrderStatus"
                 },
                 "total": {
                     "type": "number"
@@ -1967,6 +2093,26 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.paymentInfo": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "payment_amount": {
+                    "type": "number"
+                },
+                "payment_gateway": {
+                    "type": "string"
+                },
+                "payment_method": {
+                    "type": "string"
+                },
+                "payment_status": {
                     "type": "string"
                 }
             }
@@ -2052,6 +2198,17 @@ const docTemplate = `{
                 }
             }
         },
+        "api.renewAccessTokenResp": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "access_token_expires_at": {
+                    "$ref": "#/definitions/time.Duration"
+                }
+            }
+        },
         "api.updateCartItemRequest": {
             "type": "object",
             "required": [
@@ -2098,13 +2255,13 @@ const docTemplate = `{
                     "maxLength": 255,
                     "minLength": 6
                 },
-                "full_name": {
+                "fullname": {
                     "type": "string",
                     "maxLength": 32,
                     "minLength": 3
                 },
                 "role": {
-                    "$ref": "#/definitions/sqlc.UserRole"
+                    "$ref": "#/definitions/repository.UserRole"
                 },
                 "user_id": {
                     "type": "integer",
@@ -2127,11 +2284,14 @@ const docTemplate = `{
                 "email": {
                     "type": "string"
                 },
-                "full_name": {
+                "fullname": {
                     "type": "string"
                 },
                 "password_changed_at": {
                     "type": "string"
+                },
+                "role": {
+                    "$ref": "#/definitions/repository.UserRole"
                 },
                 "updated_at": {
                     "type": "string"
@@ -2243,71 +2403,7 @@ const docTemplate = `{
                 }
             }
         },
-        "postgres.CheckoutCartTxResult": {
-            "type": "object",
-            "properties": {
-                "cancelled_at": {
-                    "$ref": "#/definitions/pgtype.Timestamptz"
-                },
-                "confirmed_at": {
-                    "$ref": "#/definitions/pgtype.Timestamptz"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "delivered_at": {
-                    "$ref": "#/definitions/pgtype.Timestamptz"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/sqlc.OrderItem"
-                    }
-                },
-                "payment": {
-                    "$ref": "#/definitions/sqlc.Payment"
-                },
-                "refunded_at": {
-                    "$ref": "#/definitions/pgtype.Timestamptz"
-                },
-                "status": {
-                    "$ref": "#/definitions/sqlc.OrderStatus"
-                },
-                "total_price": {
-                    "$ref": "#/definitions/pgtype.Numeric"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "user_address_id": {
-                    "type": "integer"
-                },
-                "user_id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "sqlc.Cart": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "sqlc.CartItem": {
+        "repository.Cart": {
             "type": "object",
             "properties": {
                 "cart_id": {
@@ -2316,18 +2412,15 @@ const docTemplate = `{
                 "created_at": {
                     "type": "string"
                 },
-                "id": {
-                    "type": "integer"
+                "updated_at": {
+                    "type": "string"
                 },
-                "product_id": {
-                    "type": "integer"
-                },
-                "quantity": {
+                "user_id": {
                     "type": "integer"
                 }
             }
         },
-        "sqlc.CreateUserRow": {
+        "repository.CreateUserRow": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -2339,14 +2432,14 @@ const docTemplate = `{
                 "fullname": {
                     "type": "string"
                 },
-                "id": {
-                    "type": "integer"
-                },
                 "role": {
-                    "$ref": "#/definitions/sqlc.UserRole"
+                    "$ref": "#/definitions/repository.UserRole"
                 },
                 "updated_at": {
                     "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
                 },
                 "username": {
                     "type": "string"
@@ -2359,7 +2452,7 @@ const docTemplate = `{
                 }
             }
         },
-        "sqlc.Image": {
+        "repository.Image": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -2368,13 +2461,13 @@ const docTemplate = `{
                 "external_id": {
                     "$ref": "#/definitions/pgtype.Text"
                 },
-                "id": {
+                "image_id": {
                     "type": "integer"
                 },
                 "image_url": {
                     "type": "string"
                 },
-                "is_primary": {
+                "primary": {
                     "$ref": "#/definitions/pgtype.Bool"
                 },
                 "product_id": {
@@ -2388,19 +2481,7 @@ const docTemplate = `{
                 }
             }
         },
-        "sqlc.NullPaymentGateway": {
-            "type": "object",
-            "properties": {
-                "payment_gateway": {
-                    "$ref": "#/definitions/sqlc.PaymentGateway"
-                },
-                "valid": {
-                    "description": "Valid is true if PaymentGateway is not NULL",
-                    "type": "boolean"
-                }
-            }
-        },
-        "sqlc.Order": {
+        "repository.Order": {
             "type": "object",
             "properties": {
                 "cancelled_at": {
@@ -2415,14 +2496,14 @@ const docTemplate = `{
                 "delivered_at": {
                     "$ref": "#/definitions/pgtype.Timestamptz"
                 },
-                "id": {
+                "order_id": {
                     "type": "integer"
                 },
                 "refunded_at": {
                     "$ref": "#/definitions/pgtype.Timestamptz"
                 },
                 "status": {
-                    "$ref": "#/definitions/sqlc.OrderStatus"
+                    "$ref": "#/definitions/repository.OrderStatus"
                 },
                 "total_price": {
                     "$ref": "#/definitions/pgtype.Numeric"
@@ -2438,30 +2519,7 @@ const docTemplate = `{
                 }
             }
         },
-        "sqlc.OrderItem": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "order_id": {
-                    "type": "integer"
-                },
-                "price": {
-                    "$ref": "#/definitions/pgtype.Numeric"
-                },
-                "product_id": {
-                    "type": "integer"
-                },
-                "quantity": {
-                    "type": "integer"
-                }
-            }
-        },
-        "sqlc.OrderStatus": {
+        "repository.OrderStatus": {
             "type": "string",
             "enum": [
                 "pending",
@@ -2482,110 +2540,26 @@ const docTemplate = `{
                 "OrderStatusCompleted"
             ]
         },
-        "sqlc.Payment": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "$ref": "#/definitions/pgtype.Numeric"
-                },
-                "created_at": {
-                    "$ref": "#/definitions/pgtype.Timestamp"
-                },
-                "gateway": {
-                    "$ref": "#/definitions/sqlc.NullPaymentGateway"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "method": {
-                    "$ref": "#/definitions/sqlc.PaymentMethod"
-                },
-                "order_id": {
-                    "type": "integer"
-                },
-                "status": {
-                    "$ref": "#/definitions/sqlc.PaymentStatus"
-                },
-                "transaction_id": {
-                    "$ref": "#/definitions/pgtype.Text"
-                },
-                "updated_at": {
-                    "$ref": "#/definitions/pgtype.Timestamp"
-                }
-            }
-        },
-        "sqlc.PaymentGateway": {
-            "type": "string",
-            "enum": [
-                "stripe",
-                "paypal",
-                "razorpay",
-                "visa",
-                "mastercard",
-                "amex",
-                "apple_pay",
-                "google_pay",
-                "amazon_pay",
-                "phone_pe",
-                "paytm",
-                "upi",
-                "wallet",
-                "cod",
-                "postpaid"
-            ],
-            "x-enum-varnames": [
-                "PaymentGatewayStripe",
-                "PaymentGatewayPaypal",
-                "PaymentGatewayRazorpay",
-                "PaymentGatewayVisa",
-                "PaymentGatewayMastercard",
-                "PaymentGatewayAmex",
-                "PaymentGatewayApplePay",
-                "PaymentGatewayGooglePay",
-                "PaymentGatewayAmazonPay",
-                "PaymentGatewayPhonePe",
-                "PaymentGatewayPaytm",
-                "PaymentGatewayUpi",
-                "PaymentGatewayWallet",
-                "PaymentGatewayCod",
-                "PaymentGatewayPostpaid"
-            ]
-        },
-        "sqlc.PaymentMethod": {
-            "type": "string",
-            "enum": [
-                "credit_card",
-                "paypal",
-                "cod",
-                "debit_card",
-                "apple_pay",
-                "wallet",
-                "postpaid"
-            ],
-            "x-enum-varnames": [
-                "PaymentMethodCreditCard",
-                "PaymentMethodPaypal",
-                "PaymentMethodCod",
-                "PaymentMethodDebitCard",
-                "PaymentMethodApplePay",
-                "PaymentMethodWallet",
-                "PaymentMethodPostpaid"
-            ]
-        },
-        "sqlc.PaymentStatus": {
+        "repository.PaymentStatus": {
             "type": "string",
             "enum": [
                 "pending",
                 "success",
-                "failed"
+                "failed",
+                "cancelled",
+                "refunded",
+                "processing"
             ],
             "x-enum-varnames": [
                 "PaymentStatusPending",
                 "PaymentStatusSuccess",
-                "PaymentStatusFailed"
+                "PaymentStatusFailed",
+                "PaymentStatusCancelled",
+                "PaymentStatusRefunded",
+                "PaymentStatusProcessing"
             ]
         },
-        "sqlc.Product": {
+        "repository.Product": {
             "type": "object",
             "properties": {
                 "archived": {
@@ -2597,14 +2571,14 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
-                "id": {
-                    "type": "integer"
-                },
                 "name": {
                     "type": "string"
                 },
                 "price": {
                     "$ref": "#/definitions/pgtype.Numeric"
+                },
+                "product_id": {
+                    "type": "integer"
                 },
                 "sku": {
                     "type": "string"
@@ -2617,7 +2591,7 @@ const docTemplate = `{
                 }
             }
         },
-        "sqlc.UpdateUserRow": {
+        "repository.UpdateUserRow": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -2629,14 +2603,14 @@ const docTemplate = `{
                 "fullname": {
                     "type": "string"
                 },
-                "id": {
-                    "type": "integer"
-                },
                 "role": {
-                    "$ref": "#/definitions/sqlc.UserRole"
+                    "$ref": "#/definitions/repository.UserRole"
                 },
                 "updated_at": {
                     "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
                 },
                 "username": {
                     "type": "string"
@@ -2649,7 +2623,7 @@ const docTemplate = `{
                 }
             }
         },
-        "sqlc.UserRole": {
+        "repository.UserRole": {
             "type": "string",
             "enum": [
                 "admin",
@@ -2660,6 +2634,29 @@ const docTemplate = `{
                 "UserRoleAdmin",
                 "UserRoleUser",
                 "UserRoleModerator"
+            ]
+        },
+        "time.Duration": {
+            "type": "integer",
+            "enum": [
+                -9223372036854775808,
+                9223372036854775807,
+                1,
+                1000,
+                1000000,
+                1000000000,
+                60000000000,
+                3600000000000
+            ],
+            "x-enum-varnames": [
+                "minDuration",
+                "maxDuration",
+                "Nanosecond",
+                "Microsecond",
+                "Millisecond",
+                "Second",
+                "Minute",
+                "Hour"
             ]
         }
     }

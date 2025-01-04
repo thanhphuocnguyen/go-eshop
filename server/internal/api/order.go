@@ -65,10 +65,10 @@ type orderListResp struct {
 // @Param limit query int false "Limit"
 // @Param offset query int false "Offset"
 // @Security ApiKeyAuth
-// @Success 200 {object} listOrderResponse
-// @Failure 400 {object} gin.H
-// @Failure 401 {object} gin.H
-// @Failure 500 {object} gin.H
+// @Success 200 {object} orderListResp
+// @Failure 400 {object} errorResponse
+// @Failure 401 {object} errorResponse
+// @Failure 500 {object} errorResponse
 // @Router /orders [get]
 func (sv *Server) orderList(c *gin.Context) {
 	user, ok := c.MustGet(authorizationPayload).(*auth.Payload)
@@ -125,9 +125,9 @@ func (sv *Server) orderList(c *gin.Context) {
 // @Param id path int true "Order ID"
 // @Security ApiKeyAuth
 // @Success 200 {object} GenericResponse[orderDetailResponse]
-// @Failure 400 {object} gin.H
-// @Failure 401 {object} gin.H
-// @Failure 500 {object} gin.H
+// @Failure 400 {object} errorResponse
+// @Failure 401 {object} errorResponse
+// @Failure 500 {object} errorResponse
 // @Router /orders/{id} [get]
 func (sv *Server) orderDetail(c *gin.Context) {
 	var params orderIDParams
@@ -188,14 +188,22 @@ func (sv *Server) orderDetail(c *gin.Context) {
 // @Param id path int true "Order ID"
 // @Security ApiKeyAuth
 // @Success 200 {object} GenericResponse[repository.Order]
-// @Failure 400 {object} gin.H
-// @Failure 401 {object} gin.H
-// @Failure 500 {object} gin.H
+// @Failure 400 {object} errorResponse
+// @Failure 401 {object} errorResponse
+// @Failure 500 {object} errorResponse
 // @Router /orders/{id}/cancel [put]
 func (sv *Server) cancelOrder(c *gin.Context) {
-	user, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	tokenPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, mapErrResp(errors.New("user not found")))
+		return
+	}
+	user, err := sv.repo.GetUserByID(c, tokenPayload.UserID)
+	if err != nil {
+		if err == repository.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, mapErrResp(err))
+		}
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
 	var params orderIDParams
@@ -213,9 +221,31 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, mapErrResp(errors.New("user does not have permission")))
 		return
 	}
+	// if order status is not pending or user is not admin
+	if order.Status != repository.OrderStatusPending || user.Role != repository.UserRoleAdmin {
+		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("order cannot be canceled")))
+		return
+	}
 
 	// if order
-	err = sv.repo.CancelOrderTx(c, repository.CancelOrderTxParams{OrderID: params.ID})
+	err = sv.repo.CancelOrderTx(c, repository.CancelOrderTxArgs{
+		OrderID: params.ID,
+		CancelPaymentFromGateway: func(paymentID string, gateway repository.PaymentGateway) error {
+			switch gateway {
+			case repository.PaymentGatewayStripe:
+				stripeGateway := sv.paymentCtx.GetPaymentGatewayInstanceFromName(repository.PaymentGatewayStripe, sv.config)
+
+				err := sv.paymentCtx.SetStrategy(stripeGateway)
+				if err != nil {
+					return err
+				}
+				_, err = sv.paymentCtx.CancelPayment(paymentID, "order canceled")
+				return err
+			default:
+				return nil
+			}
+		},
+	})
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
@@ -233,9 +263,9 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 // @Param status body string true "Status"
 // @Security ApiKeyAuth
 // @Success 200 {object} GenericResponse[repository.Order]
-// @Failure 400 {object} gin.H
-// @Failure 401 {object} gin.H
-// @Failure 500 {object} gin.H
+// @Failure 400 {object} errorResponse
+// @Failure 401 {object} errorResponse
+// @Failure 500 {object} errorResponse
 // @Router /orders/{id}/status [put]
 func (sv *Server) changeOrderStatus(c *gin.Context) {
 	user, ok := c.MustGet(authorizationPayload).(*auth.Payload)
@@ -274,4 +304,71 @@ func (sv *Server) changeOrderStatus(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, GenericResponse[repository.Order]{&rs, nil, nil})
+}
+
+// @Summary Refund order
+// @Description Refund order by order ID
+// @Tags orders
+// @Accept json
+// @Produce json
+// @Param id path int true "Order ID"
+// @Security ApiKeyAuth
+// @Success 200 {object} GenericResponse[repository.Order]
+// @Failure 400 {object} errorResponse
+// @Failure 401 {object} errorResponse
+// @Failure 500 {object} errorResponse
+// @Router /orders/{id}/refund [put]
+func (sv *Server) refundOrder(c *gin.Context) {
+	user, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, mapErrResp(errors.New("user not found")))
+		return
+	}
+	var params orderIDParams
+	if err := c.ShouldBindUri(&params); err != nil {
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		return
+	}
+	order, err := sv.repo.GetOrder(c, params.ID)
+	if err != nil {
+		if err == repository.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, mapErrResp(err))
+		}
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
+	if order.UserID != user.UserID {
+		c.JSON(http.StatusForbidden, mapErrResp(errors.New("user does not have permission")))
+		return
+	}
+
+	if order.Status != repository.OrderStatusDelivered {
+		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("order that has not delivered yet cannot be refunded")))
+		return
+	}
+
+	err = sv.repo.RefundOrderTx(c, repository.RefundOrderTxArgs{
+		OrderID: params.ID,
+		RefundPaymentFromGateway: func(paymentID string, gateway repository.PaymentGateway) error {
+			switch gateway {
+			case repository.PaymentGatewayStripe:
+				stripeGateway := sv.paymentCtx.GetPaymentGatewayInstanceFromName(repository.PaymentGatewayStripe, sv.config)
+
+				err := sv.paymentCtx.SetStrategy(stripeGateway)
+				if err != nil {
+					return err
+				}
+				_, err = sv.paymentCtx.RefundPayment(paymentID, "order refunded")
+				return err
+			default:
+				return nil
+			}
+		},
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
+	c.JSON(http.StatusOK, GenericResponse[repository.Order]{&order, nil, nil})
 }
