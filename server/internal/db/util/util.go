@@ -1,7 +1,6 @@
 package util
 
 import (
-	"fmt"
 	"math/big"
 	"time"
 
@@ -15,15 +14,6 @@ func GetPgTypeText(value string) pgtype.Text {
 		Valid:  true,
 	}
 }
-
-func ParsePgTypeNumber(value float64) (pgtype.Numeric, error) {
-	price := pgtype.Numeric{}
-	if err := price.Scan(fmt.Sprintf("%.2f", value)); err != nil {
-		return price, err
-	}
-	return price, nil
-}
-
 func GetPgTypeBool(value bool) pgtype.Bool {
 	return pgtype.Bool{
 		Bool:  value,
@@ -38,6 +28,12 @@ func GetPgTypeTimestamp(value time.Time) pgtype.Timestamptz {
 	}
 }
 
+func GetPgTypeInt2(value int16) pgtype.Int2 {
+	return pgtype.Int2{
+		Int16: value,
+		Valid: true,
+	}
+}
 func GetPgTypeInt4(value int32) pgtype.Int4 {
 	return pgtype.Int4{
 		Int32: value,
@@ -66,7 +62,7 @@ func GetPgTypeFloat8(value float64) pgtype.Float8 {
 	}
 }
 
-func GetPgNumericInt(value float64) pgtype.Numeric {
+func GetPgNumericFromFloat(value float64) pgtype.Numeric {
 	return pgtype.Numeric{
 		Int:   big.NewInt(int64(value * constant.MUL)),
 		Exp:   constant.EXP,

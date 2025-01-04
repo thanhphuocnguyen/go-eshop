@@ -58,7 +58,8 @@ INSERT INTO
         description,
         sku,
         stock,
-        price
+        price,
+        discount
     )
 VALUES
     (
@@ -66,9 +67,10 @@ VALUES
         $2,
         $3,
         $4,
-        $5
+        $5,
+        $6
     )
-RETURNING product_id, name, description, sku, stock, archived, price, updated_at, created_at
+RETURNING product_id, name, description, sku, stock, discount, archived, price, updated_at, created_at
 `
 
 type CreateProductParams struct {
@@ -77,6 +79,7 @@ type CreateProductParams struct {
 	Sku         string         `json:"sku"`
 	Stock       int32          `json:"stock"`
 	Price       pgtype.Numeric `json:"price"`
+	Discount    int32          `json:"discount"`
 }
 
 func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error) {
@@ -86,6 +89,7 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		arg.Sku,
 		arg.Stock,
 		arg.Price,
+		arg.Discount,
 	)
 	var i Product
 	err := row.Scan(
@@ -94,6 +98,7 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		&i.Description,
 		&i.Sku,
 		&i.Stock,
+		&i.Discount,
 		&i.Archived,
 		&i.Price,
 		&i.UpdatedAt,
@@ -116,7 +121,7 @@ func (q *Queries) DeleteProduct(ctx context.Context, productID int64) error {
 
 const getProduct = `-- name: GetProduct :one
 SELECT
-    product_id, name, description, sku, stock, archived, price, updated_at, created_at
+    product_id, name, description, sku, stock, discount, archived, price, updated_at, created_at
 FROM
     products
 WHERE
@@ -138,6 +143,7 @@ func (q *Queries) GetProduct(ctx context.Context, arg GetProductParams) (Product
 		&i.Description,
 		&i.Sku,
 		&i.Stock,
+		&i.Discount,
 		&i.Archived,
 		&i.Price,
 		&i.UpdatedAt,
@@ -148,7 +154,7 @@ func (q *Queries) GetProduct(ctx context.Context, arg GetProductParams) (Product
 
 const getProductDetail = `-- name: GetProductDetail :many
 SELECT
-    products.product_id, products.name, products.description, products.sku, products.stock, products.archived, products.price, products.updated_at, products.created_at,
+    products.product_id, products.name, products.description, products.sku, products.stock, products.discount, products.archived, products.price, products.updated_at, products.created_at,
     img.image_id AS image_id,
     img.image_url AS image_url,
     img.primary AS image_primary
@@ -189,6 +195,7 @@ func (q *Queries) GetProductDetail(ctx context.Context, arg GetProductDetailPara
 			&i.Product.Description,
 			&i.Product.Sku,
 			&i.Product.Stock,
+			&i.Product.Discount,
 			&i.Product.Archived,
 			&i.Product.Price,
 			&i.Product.UpdatedAt,
@@ -209,7 +216,7 @@ func (q *Queries) GetProductDetail(ctx context.Context, arg GetProductDetailPara
 
 const getProductWithImage = `-- name: GetProductWithImage :one
 SELECT
-    products.product_id, products.name, products.description, products.sku, products.stock, products.archived, products.price, products.updated_at, products.created_at,
+    products.product_id, products.name, products.description, products.sku, products.stock, products.discount, products.archived, products.price, products.updated_at, products.created_at,
     img.image_id AS image_id,
     img.image_url AS image_url
 FROM
@@ -231,6 +238,7 @@ type GetProductWithImageRow struct {
 	Description string         `json:"description"`
 	Sku         string         `json:"sku"`
 	Stock       int32          `json:"stock"`
+	Discount    int32          `json:"discount"`
 	Archived    bool           `json:"archived"`
 	Price       pgtype.Numeric `json:"price"`
 	UpdatedAt   time.Time      `json:"updated_at"`
@@ -248,6 +256,7 @@ func (q *Queries) GetProductWithImage(ctx context.Context, arg GetProductWithIma
 		&i.Description,
 		&i.Sku,
 		&i.Stock,
+		&i.Discount,
 		&i.Archived,
 		&i.Price,
 		&i.UpdatedAt,
@@ -260,7 +269,7 @@ func (q *Queries) GetProductWithImage(ctx context.Context, arg GetProductWithIma
 
 const listProducts = `-- name: ListProducts :many
 SELECT
-    products.product_id, products.name, products.description, products.sku, products.stock, products.archived, products.price, products.updated_at, products.created_at,
+    products.product_id, products.name, products.description, products.sku, products.stock, products.discount, products.archived, products.price, products.updated_at, products.created_at,
     img.image_id AS image_id,
     img.image_url AS image_url
 FROM
@@ -290,6 +299,7 @@ type ListProductsRow struct {
 	Description string         `json:"description"`
 	Sku         string         `json:"sku"`
 	Stock       int32          `json:"stock"`
+	Discount    int32          `json:"discount"`
 	Archived    bool           `json:"archived"`
 	Price       pgtype.Numeric `json:"price"`
 	UpdatedAt   time.Time      `json:"updated_at"`
@@ -319,6 +329,7 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]L
 			&i.Description,
 			&i.Sku,
 			&i.Stock,
+			&i.Discount,
 			&i.Archived,
 			&i.Price,
 			&i.UpdatedAt,
@@ -348,7 +359,7 @@ SET
     updated_at = NOW()
 WHERE
     product_id = $6
-RETURNING product_id, name, description, sku, stock, archived, price, updated_at, created_at
+RETURNING product_id, name, description, sku, stock, discount, archived, price, updated_at, created_at
 `
 
 type UpdateProductParams struct {
@@ -376,6 +387,7 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		&i.Description,
 		&i.Sku,
 		&i.Stock,
+		&i.Discount,
 		&i.Archived,
 		&i.Price,
 		&i.UpdatedAt,
@@ -391,7 +403,7 @@ SET
     stock = stock + $2
 WHERE
     product_id = $1
-RETURNING product_id, name, description, sku, stock, archived, price, updated_at, created_at
+RETURNING product_id, name, description, sku, stock, discount, archived, price, updated_at, created_at
 `
 
 type UpdateProductStockParams struct {

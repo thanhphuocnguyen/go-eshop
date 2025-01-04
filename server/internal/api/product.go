@@ -16,6 +16,7 @@ type createProductRequest struct {
 	Sku         string  `json:"sku" binding:"required,alphanum"`
 	Stock       int32   `json:"stock" binding:"required,gt=0"`
 	Price       float64 `json:"price" binding:"required,gt=0,lt=10000"`
+	Discount    *int32  `json:"discount" binding:"omitempty,gt=0,lt=10000"`
 }
 
 type updateProductRequest struct {
@@ -43,7 +44,7 @@ type productImage struct {
 	ImageUrl  string `json:"image_url"`
 }
 
-type productResponse struct {
+type productDetailsResponse struct {
 	ID          int64          `json:"id"`
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
@@ -60,31 +61,29 @@ type productListResponse struct {
 	Name        string  `json:"name"`
 	Description string  `json:"description"`
 	Sku         string  `json:"sku"`
-	ImageUrl    *string `json:"image_url"`
-	Stock       int32   `json:"stock"`
-	Price       float64 `json:"price"`
-	UpdatedAt   string  `json:"updated_at"`
-	CreatedAt   string  `json:"created_at"`
+	ImageUrl    *string `json:"image_url,omitempty"`
+	Stock       int32   `json:"stock,omitempty"`
+	Price       float64 `json:"price,omitempty"`
+	CreatedAt   string  `json:"created_at,omitempty"`
 }
 
 // ------------------------------ Mapper ------------------------------
 
-func mapToProductResponse(productRow []repository.GetProductDetailRow) productResponse {
+func mapToProductResponse(productRow []repository.GetProductDetailRow) productDetailsResponse {
 	if len(productRow) == 0 {
-		return productResponse{}
+		return productDetailsResponse{}
 	}
 	product := productRow[0].Product
 	price, _ := product.Price.Float64Value()
-	resp := productResponse{
+	resp := productDetailsResponse{
 		ID:          product.ProductID,
 		Name:        product.Name,
 		Description: product.Description,
 		Sku:         product.Sku,
 		Stock:       product.Stock,
 		Price:       price.Float64,
-
-		UpdatedAt: product.UpdatedAt.String(),
-		CreatedAt: product.CreatedAt.String(),
+		UpdatedAt:   product.UpdatedAt.String(),
+		CreatedAt:   product.CreatedAt.String(),
 	}
 	for _, img := range productRow {
 		if img.ImageID.Valid {
@@ -108,7 +107,6 @@ func mapToListProductResponse(productRow repository.ListProductsRow) productList
 		Sku:         productRow.Sku,
 		Stock:       productRow.Stock,
 		Price:       price.Float64,
-		UpdatedAt:   productRow.UpdatedAt.String(),
 		CreatedAt:   productRow.CreatedAt.String(),
 	}
 	if productRow.ImageUrl.Valid {
@@ -133,26 +131,25 @@ func mapToListProductResponse(productRow repository.ListProductsRow) productList
 // @Failure 500 {object} gin.H
 // @Router /products [post]
 func (sv *Server) createProduct(c *gin.Context) {
-	var product createProductRequest
-	if err := c.ShouldBindJSON(&product); err != nil {
+	var req createProductRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 
-	price, err := util.ParsePgTypeNumber(product.Price)
-
-	if err != nil {
-		c.JSON(http.StatusBadRequest, mapErrResp(err))
-		return
-	}
-
-	newProduct, err := sv.repo.CreateProduct(c, repository.CreateProductParams{
-		Name:        product.Name,
-		Description: product.Description,
-		Sku:         product.Sku,
-		Stock:       product.Stock,
+	price := util.GetPgNumericFromFloat(req.Price)
+	createParams := repository.CreateProductParams{
+		Name:        req.Name,
+		Description: req.Description,
+		Sku:         req.Sku,
+		Stock:       req.Stock,
 		Price:       price,
-	})
+	}
+	if req.Discount != nil {
+		createParams.Discount = *req.Discount
+	}
+
+	newProduct, err := sv.repo.CreateProduct(c, createParams)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
@@ -170,7 +167,7 @@ func (sv *Server) createProduct(c *gin.Context) {
 // @Accept json
 // @Param product_id path int true "Product ID"
 // @Produce json
-// @Success 200 {object} GenericResponse[productResponse]
+// @Success 200 {object} GenericResponse[productListResponse]
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /products/{product_id} [get]
@@ -200,7 +197,7 @@ func (sv *Server) getProductDetail(c *gin.Context) {
 	}
 
 	productDetail := mapToProductResponse(productRow)
-	c.JSON(http.StatusOK, GenericResponse[productResponse]{&productDetail, nil, nil})
+	c.JSON(http.StatusOK, GenericResponse[productDetailsResponse]{&productDetail, nil, nil})
 }
 
 // getProducts godoc
@@ -281,11 +278,7 @@ func (sv *Server) updateProduct(c *gin.Context) {
 		ProductID: params.ID,
 	}
 	if product.Price != nil {
-		price, err := util.ParsePgTypeNumber(*product.Price)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, mapErrResp(err))
-			return
-		}
+		price := util.GetPgNumericFromFloat(*product.Price)
 		updateBody.Price = price
 	}
 

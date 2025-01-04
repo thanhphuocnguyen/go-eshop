@@ -25,7 +25,7 @@ func (s *pgRepo) CreateOrderTx(ctx context.Context, arg CreateOrderTxParams) (in
 		order, err := s.CreateOrder(ctx, CreateOrderParams{
 			UserID:        arg.UserID,
 			UserAddressID: arg.AddressID,
-			TotalPrice:    util.GetPgNumericInt(arg.TotalPrice),
+			TotalPrice:    util.GetPgNumericFromFloat(arg.TotalPrice),
 		})
 		result = order.OrderID
 		if err != nil {
@@ -37,7 +37,7 @@ func (s *pgRepo) CreateOrderTx(ctx context.Context, arg CreateOrderTxParams) (in
 		_, err = q.CreatePaymentTransaction(ctx, CreatePaymentTransactionParams{
 			PaymentID:     arg.PaymentID,
 			OrderID:       order.OrderID,
-			Amount:        util.GetPgNumericInt(arg.TotalPrice),
+			Amount:        util.GetPgNumericFromFloat(arg.TotalPrice),
 			PaymentMethod: arg.PaymentMethod,
 			PaymentGateway: NullPaymentGateway{
 				PaymentGateway: arg.PaymentGateway,

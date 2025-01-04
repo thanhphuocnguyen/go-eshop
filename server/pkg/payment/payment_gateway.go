@@ -33,7 +33,6 @@ func (p *PaymentContext) SetStrategy(strategy PaymentStrategy) error {
 }
 
 func (p *PaymentContext) InitiatePayment(amount float64, email string) (string, error) {
-
 	return p.strategy.InitiatePayment(amount, email)
 }
 
@@ -43,12 +42,10 @@ func (p *PaymentContext) ProcessPayment(transactionID string) (string, error) {
 }
 
 func (p *PaymentContext) RefundPayment(transactionID string, reason string) (string, error) {
-
 	return p.strategy.RefundPayment(transactionID, reason)
 }
 
 func (p *PaymentContext) CancelPayment(transactionID string, reason string) (string, error) {
-
 	return p.strategy.CancelPayment(transactionID, reason)
 }
 

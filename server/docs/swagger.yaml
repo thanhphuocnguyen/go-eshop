@@ -108,10 +108,10 @@ definitions:
       message:
         type: string
     type: object
-  api.GenericResponse-api_productResponse:
+  api.GenericResponse-api_productListResponse:
     properties:
       data:
-        $ref: '#/definitions/api.productResponse'
+        $ref: '#/definitions/api.productListResponse'
       error:
         type: string
       message:
@@ -172,6 +172,15 @@ definitions:
     properties:
       data:
         $ref: '#/definitions/repository.Cart'
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  api.GenericResponse-repository_Category:
+    properties:
+      data:
+        $ref: '#/definitions/repository.Category'
       error:
         type: string
       message:
@@ -315,12 +324,38 @@ definitions:
       payment_id:
         type: string
     type: object
+  api.collectionRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      published:
+        type: boolean
+      sort_order:
+        type: integer
+    type: object
+  api.collectionResp:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      products:
+        items:
+          $ref: '#/definitions/api.productListResponse'
+        type: array
+    type: object
   api.createProductRequest:
     properties:
       description:
         maxLength: 1000
         minLength: 10
         type: string
+      discount:
+        type: integer
       name:
         maxLength: 100
         minLength: 3
@@ -457,15 +492,6 @@ definitions:
       payment_status:
         type: string
     type: object
-  api.productImage:
-    properties:
-      id:
-        type: integer
-      image_url:
-        type: string
-      is_primary:
-        type: boolean
-    type: object
   api.productListResponse:
     properties:
       created_at:
@@ -484,31 +510,6 @@ definitions:
         type: string
       stock:
         type: integer
-      updated_at:
-        type: string
-    type: object
-  api.productResponse:
-    properties:
-      created_at:
-        type: string
-      description:
-        type: string
-      id:
-        type: integer
-      images:
-        items:
-          $ref: '#/definitions/api.productImage'
-        type: array
-      name:
-        type: string
-      price:
-        type: number
-      sku:
-        type: string
-      stock:
-        type: integer
-      updated_at:
-        type: string
     type: object
   api.renewAccessTokenResp:
     properties:
@@ -659,6 +660,25 @@ definitions:
       user_id:
         type: integer
     type: object
+  repository.Category:
+    properties:
+      category_id:
+        type: integer
+      created_at:
+        type: string
+      description:
+        $ref: '#/definitions/pgtype.Text'
+      image_url:
+        $ref: '#/definitions/pgtype.Text'
+      name:
+        type: string
+      published:
+        type: boolean
+      sort_order:
+        type: integer
+      updated_at:
+        type: string
+    type: object
   repository.CreateUserRow:
     properties:
       created_at:
@@ -766,6 +786,8 @@ definitions:
         type: string
       description:
         type: string
+      discount:
+        type: integer
       name:
         type: string
       price:
@@ -1131,6 +1153,122 @@ paths:
       summary: Update product items in the cart
       tags:
       - carts
+  /collections:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of collections
+      operationId: get-collections
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/api.collectionResp'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+      summary: Get a list of collections
+    post:
+      consumes:
+      - application/json
+      description: Create a new collection
+      operationId: create-collection
+      parameters:
+      - description: Collection request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.collectionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/api.GenericResponse-repository_Category'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+      summary: Create a new collection
+  /collections/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a collection
+      operationId: delete-collection
+      parameters:
+      - description: Collection ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/api.GenericResponse-repository_Category'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+      summary: Delete a collection
+    get:
+      consumes:
+      - application/json
+      description: Get a collection by ID
+      operationId: get-collection-by-id
+      parameters:
+      - description: Collection ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.collectionResp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+      summary: Get a collection by ID
   /orders:
     get:
       consumes:
@@ -1425,7 +1563,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-api_productResponse'
+            $ref: '#/definitions/api.GenericResponse-api_productListResponse'
         "404":
           description: Not Found
           schema:

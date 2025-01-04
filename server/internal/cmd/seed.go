@@ -120,11 +120,8 @@ func seedProducts(ctx context.Context, repo repository.Repository) {
 		wg.Add(1)
 		go func(product Product) {
 			defer wg.Done()
-			price, err := util.ParsePgTypeNumber(product.Price)
-			if err != nil {
-				log.Error().Err(err).Msgf("failed to parse price for product: %s", product.Name)
-				return
-			}
+			price := util.GetPgNumericFromFloat(product.Price)
+
 			_, err = repo.CreateProduct(ctx, repository.CreateProductParams{
 				Name:        product.Name,
 				Description: product.Description,

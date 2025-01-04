@@ -153,12 +153,13 @@ func (sv *Server) initializeRouter() {
 		collection := v1.Group("/collection")
 		{
 			collection.GET("", sv.getCollections)
+			collection.GET(":id", sv.getCollectionByID)
+
 			collectionAuthRoutes := collection.Group("").Use(
 				authMiddleware(sv.tokenGenerator),
 				roleMiddleware(sv.repo, repository.UserRoleAdmin),
 			)
 			collectionAuthRoutes.POST("", sv.createCollection)
-			collectionAuthRoutes.GET(":id", sv.getCollectionByID)
 			collectionAuthRoutes.PUT(":id", sv.updateCollection)
 			collectionAuthRoutes.DELETE(":id", sv.removeCollection)
 			collectionAuthRoutes.POST(":id/product", sv.addProductToCollection)

@@ -5,6 +5,7 @@ CREATE TABLE
         description text NOT NULL,
         sku varchar NOT NULL,
         stock int NOT NULL,
+        discount int NOT NULL DEFAULT 0 CHECK (discount >= 0 AND discount <= 100),
         archived bool NOT NULL DEFAULT FALSE,
         price DECIMAL(10, 2) NOT NULL,
         updated_at timestamptz NOT NULL DEFAULT now (),
@@ -17,6 +18,7 @@ CREATE TABLE
         product_id bigint NOT NULL REFERENCES products (product_id) ON DELETE CASCADE,
         sku VARCHAR(100) UNIQUE NOT NULL, -- Unique stock-keeping unit
         price DECIMAL(10, 2) NOT NULL, -- Override price for the variant
+        discount INT DEFAULT 0 CHECK (discount >= 0 AND discount <= 100), -- Override discount for the variant
         stock bigint DEFAULT 0, -- Inventory for this variant
         created_at TIMESTAMP DEFAULT now (),
         updated_at TIMESTAMP DEFAULT now ()

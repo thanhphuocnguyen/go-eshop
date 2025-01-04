@@ -2,14 +2,15 @@ CREATE TABLE
     "categories" (
         "category_id" serial PRIMARY KEY,
         "name" varchar UNIQUE NOT NULL,
+        "description" text,
         "sort_order" smallint NOT NULL UNIQUE CHECK (
             "sort_order" >= 0
             AND "sort_order" <= 32767
         ),
         "image_url" varchar,
         "published" bool NOT NULL DEFAULT true,
-        "created_at" timestamptz NOT NULL DEFAULT (now ()),
-        "updated_at" timestamptz NOT NULL DEFAULT (now ())
+        "created_at" timestamptz NOT NULL DEFAULT now(),
+        "updated_at" timestamptz NOT NULL DEFAULT now()
     );
 
 CREATE TABLE

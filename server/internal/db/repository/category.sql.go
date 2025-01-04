@@ -7,26 +7,29 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createCollection = `-- name: CreateCollection :one
-INSERT INTO categories (name, sort_order, image_url, published)
-VALUES ($1, $2, $3, $4)
-RETURNING category_id, name, sort_order, image_url, published, created_at, updated_at
+INSERT INTO categories (name, description, sort_order, image_url, published)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING category_id, name, description, sort_order, image_url, published, created_at, updated_at
 `
 
 type CreateCollectionParams struct {
-	Name      string      `json:"name"`
-	SortOrder int16       `json:"sort_order"`
-	ImageUrl  pgtype.Text `json:"image_url"`
-	Published bool        `json:"published"`
+	Name        string      `json:"name"`
+	Description pgtype.Text `json:"description"`
+	SortOrder   int16       `json:"sort_order"`
+	ImageUrl    pgtype.Text `json:"image_url"`
+	Published   bool        `json:"published"`
 }
 
 func (q *Queries) CreateCollection(ctx context.Context, arg CreateCollectionParams) (Category, error) {
 	row := q.db.QueryRow(ctx, createCollection,
 		arg.Name,
+		arg.Description,
 		arg.SortOrder,
 		arg.ImageUrl,
 		arg.Published,
@@ -35,6 +38,7 @@ func (q *Queries) CreateCollection(ctx context.Context, arg CreateCollectionPara
 	err := row.Scan(
 		&i.CategoryID,
 		&i.Name,
+		&i.Description,
 		&i.SortOrder,
 		&i.ImageUrl,
 		&i.Published,
@@ -44,71 +48,245 @@ func (q *Queries) CreateCollection(ctx context.Context, arg CreateCollectionPara
 	return i, err
 }
 
-const getCollection = `-- name: GetCollection :one
-SELECT categories.category_id, categories.name, categories.sort_order, categories.image_url, categories.published, categories.created_at, categories.updated_at, images.image_id, images.product_id, images.variant_id, images.image_url, images.external_id, images."primary", images.created_at, images.updated_at, products.product_id, products.name, products.description, products.sku, products.stock, products.archived, products.price, products.updated_at, products.created_at, category_products.category_id, category_products.product_id, category_products.sort_order
-FROM categories
-JOIN category_products ON categories.category_id = category
-JOIN products ON category_products.product_id = products.product_id
-JOIN images ON products.product_id = images.product_id AND images.primary = TRUE
+const getCollection = `-- name: GetCollection :many
+SELECT 
+    c.category_id, c.name, c.description, c.sort_order, c.image_url, c.published, c.created_at, c.updated_at, 
+    p.name, p.description, p.price, p.discount, 
+    cp.product_id, 
+    i.image_id, i.image_url
+FROM categories c
+JOIN category_products cp ON cp.category_id = c.category_id
+JOIN products p ON cp.product_id = p.product_id AND p.published = TRUE
+LEFT JOIN images i ON p.product_id = i.product_id AND i.primary = TRUE
 WHERE categories.category_id = $1
-LIMIT 1
 `
 
 type GetCollectionRow struct {
-	Category        Category        `json:"category"`
-	Image           Image           `json:"image"`
-	Product         Product         `json:"product"`
-	CategoryProduct CategoryProduct `json:"category_product"`
+	CategoryID    int32          `json:"category_id"`
+	Name          string         `json:"name"`
+	Description   pgtype.Text    `json:"description"`
+	SortOrder     int16          `json:"sort_order"`
+	ImageUrl      pgtype.Text    `json:"image_url"`
+	Published     bool           `json:"published"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+	Name_2        string         `json:"name_2"`
+	Description_2 string         `json:"description_2"`
+	Price         pgtype.Numeric `json:"price"`
+	Discount      int32          `json:"discount"`
+	ProductID     int64          `json:"product_id"`
+	ImageID       pgtype.Int4    `json:"image_id"`
+	ImageUrl_2    pgtype.Text    `json:"image_url_2"`
 }
 
-func (q *Queries) GetCollection(ctx context.Context, categoryID int32) (GetCollectionRow, error) {
-	row := q.db.QueryRow(ctx, getCollection, categoryID)
-	var i GetCollectionRow
+func (q *Queries) GetCollection(ctx context.Context, categoryID int32) ([]GetCollectionRow, error) {
+	rows, err := q.db.Query(ctx, getCollection, categoryID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetCollectionRow
+	for rows.Next() {
+		var i GetCollectionRow
+		if err := rows.Scan(
+			&i.CategoryID,
+			&i.Name,
+			&i.Description,
+			&i.SortOrder,
+			&i.ImageUrl,
+			&i.Published,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Name_2,
+			&i.Description_2,
+			&i.Price,
+			&i.Discount,
+			&i.ProductID,
+			&i.ImageID,
+			&i.ImageUrl_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getCollectionByName = `-- name: GetCollectionByName :one
+SELECT c.category_id, c.name, c.description, c.sort_order, image_url, published, c.created_at, c.updated_at, cp.category_id, cp.product_id, cp.sort_order, p.product_id, p.name, p.description, sku, stock, discount, archived, price, p.updated_at, p.created_at
+FROM categories c
+JOIN category_products cp ON c.category_id = cp.category_id
+JOIN products p ON cp.product_id = p.product_id AND p.published = TRUE
+WHERE c.name = $1 AND c.published = TRUE
+LIMIT 1
+`
+
+type GetCollectionByNameRow struct {
+	CategoryID    int32          `json:"category_id"`
+	Name          string         `json:"name"`
+	Description   pgtype.Text    `json:"description"`
+	SortOrder     int16          `json:"sort_order"`
+	ImageUrl      pgtype.Text    `json:"image_url"`
+	Published     bool           `json:"published"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+	CategoryID_2  int32          `json:"category_id_2"`
+	ProductID     int64          `json:"product_id"`
+	SortOrder_2   int16          `json:"sort_order_2"`
+	ProductID_2   int64          `json:"product_id_2"`
+	Name_2        string         `json:"name_2"`
+	Description_2 string         `json:"description_2"`
+	Sku           string         `json:"sku"`
+	Stock         int32          `json:"stock"`
+	Discount      int32          `json:"discount"`
+	Archived      bool           `json:"archived"`
+	Price         pgtype.Numeric `json:"price"`
+	UpdatedAt_2   time.Time      `json:"updated_at_2"`
+	CreatedAt_2   time.Time      `json:"created_at_2"`
+}
+
+func (q *Queries) GetCollectionByName(ctx context.Context, name string) (GetCollectionByNameRow, error) {
+	row := q.db.QueryRow(ctx, getCollectionByName, name)
+	var i GetCollectionByNameRow
 	err := row.Scan(
-		&i.Category.CategoryID,
-		&i.Category.Name,
-		&i.Category.SortOrder,
-		&i.Category.ImageUrl,
-		&i.Category.Published,
-		&i.Category.CreatedAt,
-		&i.Category.UpdatedAt,
-		&i.Image.ImageID,
-		&i.Image.ProductID,
-		&i.Image.VariantID,
-		&i.Image.ImageUrl,
-		&i.Image.ExternalID,
-		&i.Image.Primary,
-		&i.Image.CreatedAt,
-		&i.Image.UpdatedAt,
-		&i.Product.ProductID,
-		&i.Product.Name,
-		&i.Product.Description,
-		&i.Product.Sku,
-		&i.Product.Stock,
-		&i.Product.Archived,
-		&i.Product.Price,
-		&i.Product.UpdatedAt,
-		&i.Product.CreatedAt,
-		&i.CategoryProduct.CategoryID,
-		&i.CategoryProduct.ProductID,
-		&i.CategoryProduct.SortOrder,
+		&i.CategoryID,
+		&i.Name,
+		&i.Description,
+		&i.SortOrder,
+		&i.ImageUrl,
+		&i.Published,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CategoryID_2,
+		&i.ProductID,
+		&i.SortOrder_2,
+		&i.ProductID_2,
+		&i.Name_2,
+		&i.Description_2,
+		&i.Sku,
+		&i.Stock,
+		&i.Discount,
+		&i.Archived,
+		&i.Price,
+		&i.UpdatedAt_2,
+		&i.CreatedAt_2,
 	)
 	return i, err
 }
 
-const getCollectionByName = `-- name: GetCollectionByName :one
-SELECT category_id, name, sort_order, image_url, published, created_at, updated_at
-FROM categories
-WHERE name = $1
-LIMIT 1
+const getCollections = `-- name: GetCollections :many
+SELECT 
+    c.category_id, c.name, c.description, c.sort_order, c.image_url, c.published,
+    p.name, p.description, p.price, p.discount, 
+    cp.product_id, 
+    images.image_id, images.image_url
+FROM categories c
+JOIN category_products cp ON c.category_id = cp.category_id
+JOIN products p ON category_products.product_id = p.product_id AND p.published = TRUE
+LEFT JOIN images ON p.product_id = images.product_id AND images.primary = TRUE
+WHERE categories.id = ANY($1::int[]) AND published = TRUE
+ORDER BY c.sort_order, cp.sort_order
 `
 
-func (q *Queries) GetCollectionByName(ctx context.Context, name string) (Category, error) {
-	row := q.db.QueryRow(ctx, getCollectionByName, name)
+type GetCollectionsRow struct {
+	CategoryID    int32          `json:"category_id"`
+	Name          string         `json:"name"`
+	Description   pgtype.Text    `json:"description"`
+	SortOrder     int16          `json:"sort_order"`
+	ImageUrl      pgtype.Text    `json:"image_url"`
+	Published     bool           `json:"published"`
+	Name_2        string         `json:"name_2"`
+	Description_2 string         `json:"description_2"`
+	Price         pgtype.Numeric `json:"price"`
+	Discount      int32          `json:"discount"`
+	ProductID     int64          `json:"product_id"`
+	ImageID       pgtype.Int4    `json:"image_id"`
+	ImageUrl_2    pgtype.Text    `json:"image_url_2"`
+}
+
+func (q *Queries) GetCollections(ctx context.Context, categoryIds []int32) ([]GetCollectionsRow, error) {
+	rows, err := q.db.Query(ctx, getCollections, categoryIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetCollectionsRow
+	for rows.Next() {
+		var i GetCollectionsRow
+		if err := rows.Scan(
+			&i.CategoryID,
+			&i.Name,
+			&i.Description,
+			&i.SortOrder,
+			&i.ImageUrl,
+			&i.Published,
+			&i.Name_2,
+			&i.Description_2,
+			&i.Price,
+			&i.Discount,
+			&i.ProductID,
+			&i.ImageID,
+			&i.ImageUrl_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const removeCollection = `-- name: RemoveCollection :exec
+DELETE FROM categories
+WHERE category_id = $1
+`
+
+func (q *Queries) RemoveCollection(ctx context.Context, categoryID int32) error {
+	_, err := q.db.Exec(ctx, removeCollection, categoryID)
+	return err
+}
+
+const updateCollection = `-- name: UpdateCollection :one
+UPDATE categories
+SET 
+    name = COALESCE($2, name), 
+    description = COALESCE($3, description), 
+    sort_order = COALESCE($4, sort_order), 
+    image_url = COALESCE($5, image_url), 
+    published = COALESCE($6, published),
+    updated_at = now()
+WHERE category_id = $1
+RETURNING category_id, name, description, sort_order, image_url, published, created_at, updated_at
+`
+
+type UpdateCollectionParams struct {
+	CategoryID  int32       `json:"category_id"`
+	Name        pgtype.Text `json:"name"`
+	Description pgtype.Text `json:"description"`
+	SortOrder   pgtype.Int2 `json:"sort_order"`
+	ImageUrl    pgtype.Text `json:"image_url"`
+	Published   pgtype.Bool `json:"published"`
+}
+
+func (q *Queries) UpdateCollection(ctx context.Context, arg UpdateCollectionParams) (Category, error) {
+	row := q.db.QueryRow(ctx, updateCollection,
+		arg.CategoryID,
+		arg.Name,
+		arg.Description,
+		arg.SortOrder,
+		arg.ImageUrl,
+		arg.Published,
+	)
 	var i Category
 	err := row.Scan(
 		&i.CategoryID,
 		&i.Name,
+		&i.Description,
 		&i.SortOrder,
 		&i.ImageUrl,
 		&i.Published,

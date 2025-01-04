@@ -5,7 +5,8 @@ INSERT INTO
         description,
         sku,
         stock,
-        price
+        price,
+        discount
     )
 VALUES
     (
@@ -13,7 +14,8 @@ VALUES
         $2,
         $3,
         $4,
-        $5
+        $5,
+        $6
     )
 RETURNING *;
 

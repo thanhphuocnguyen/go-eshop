@@ -44,9 +44,11 @@ type Querier interface {
 	GetCartItemByProductID(ctx context.Context, productID int64) (CartItem, error)
 	GetCartItemWithProduct(ctx context.Context, cartItemID int32) (GetCartItemWithProductRow, error)
 	GetCartItems(ctx context.Context, cartID int32) ([]GetCartItemsRow, error)
-	GetCollection(ctx context.Context, categoryID int32) (GetCollectionRow, error)
-	GetCollectionByName(ctx context.Context, name string) (Category, error)
+	GetCollection(ctx context.Context, categoryID int32) ([]GetCollectionRow, error)
+	GetCollectionByName(ctx context.Context, name string) (GetCollectionByNameRow, error)
+	GetCollectionProduct(ctx context.Context, arg GetCollectionProductParams) (Product, error)
 	GetCollectionProducts(ctx context.Context, categoryID int32) ([]Product, error)
+	GetCollections(ctx context.Context, categoryIds []int32) ([]GetCollectionsRow, error)
 	GetImageByExternalID(ctx context.Context, externalID pgtype.Text) (Image, error)
 	GetImageByID(ctx context.Context, imageID int32) (Image, error)
 	GetImagesByProductID(ctx context.Context, productID pgtype.Int8) ([]Image, error)
@@ -70,8 +72,9 @@ type Querier interface {
 	ListOrders(ctx context.Context, arg ListOrdersParams) ([]ListOrdersRow, error)
 	ListProducts(ctx context.Context, arg ListProductsParams) ([]ListProductsRow, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
+	RemoveCollection(ctx context.Context, categoryID int32) error
 	RemoveProductFromCart(ctx context.Context, arg RemoveProductFromCartParams) error
-	RemoveProductFromCollection(ctx context.Context, arg RemoveProductFromCollectionParams) (CategoryProduct, error)
+	RemoveProductFromCollection(ctx context.Context, arg RemoveProductFromCollectionParams) error
 	ResetPrimaryAddress(ctx context.Context, userID int64) error
 	SetPrimaryAddress(ctx context.Context, arg SetPrimaryAddressParams) error
 	SetPrimaryImage(ctx context.Context, imageID int32) error
@@ -79,6 +82,7 @@ type Querier interface {
 	UpdateAddress(ctx context.Context, arg UpdateAddressParams) (UserAddress, error)
 	UpdateCart(ctx context.Context, cartID int32) error
 	UpdateCartItemQuantity(ctx context.Context, arg UpdateCartItemQuantityParams) error
+	UpdateCollection(ctx context.Context, arg UpdateCollectionParams) (Category, error)
 	UpdateImage(ctx context.Context, arg UpdateImageParams) error
 	UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order, error)
 	UpdatePaymentTransaction(ctx context.Context, arg UpdatePaymentTransactionParams) error

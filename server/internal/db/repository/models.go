@@ -355,13 +355,14 @@ type CartItem struct {
 }
 
 type Category struct {
-	CategoryID int32       `json:"category_id"`
-	Name       string      `json:"name"`
-	SortOrder  int16       `json:"sort_order"`
-	ImageUrl   pgtype.Text `json:"image_url"`
-	Published  bool        `json:"published"`
-	CreatedAt  time.Time   `json:"created_at"`
-	UpdatedAt  time.Time   `json:"updated_at"`
+	CategoryID  int32       `json:"category_id"`
+	Name        string      `json:"name"`
+	Description pgtype.Text `json:"description"`
+	SortOrder   int16       `json:"sort_order"`
+	ImageUrl    pgtype.Text `json:"image_url"`
+	Published   bool        `json:"published"`
+	CreatedAt   time.Time   `json:"created_at"`
+	UpdatedAt   time.Time   `json:"updated_at"`
 }
 
 type CategoryProduct struct {
@@ -421,6 +422,7 @@ type Product struct {
 	Description string         `json:"description"`
 	Sku         string         `json:"sku"`
 	Stock       int32          `json:"stock"`
+	Discount    int32          `json:"discount"`
 	Archived    bool           `json:"archived"`
 	Price       pgtype.Numeric `json:"price"`
 	UpdatedAt   time.Time      `json:"updated_at"`
@@ -432,6 +434,7 @@ type ProductVariant struct {
 	ProductID int64            `json:"product_id"`
 	Sku       string           `json:"sku"`
 	Price     pgtype.Numeric   `json:"price"`
+	Discount  pgtype.Int4      `json:"discount"`
 	Stock     pgtype.Int8      `json:"stock"`
 	CreatedAt pgtype.Timestamp `json:"created_at"`
 	UpdatedAt pgtype.Timestamp `json:"updated_at"`
