@@ -47,9 +47,9 @@ func (s *stripePayment) RefundPayment(transactionID string, amount int64, reason
 	return rs.ID, err
 }
 
-func (s *stripePayment) CancelPayment(transactionID string, reason string) (string, error) {
+func (s *stripePayment) CancelPayment(transactionID string, reason CancelReason) (string, error) {
 	rs, err := paymentintent.Cancel(transactionID, &stripe.PaymentIntentCancelParams{
-		CancellationReason: stripe.String(reason),
+		CancellationReason: stripe.String(string(reason)),
 	})
 	if err != nil {
 		return "", err

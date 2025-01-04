@@ -62,6 +62,9 @@ type orderListResp struct {
 type refundOrderRequest struct {
 	Reason string `json:"reason" binding:"required,oneof=defective damaged fraudulent requested_by_customer"`
 }
+type cancelOrderRequest struct {
+	Reason string `json:"reason" binding:"required,oneof=duplicate fraudulent requested_by_customer abandoned"`
+}
 
 //---------------------------------------------- API Handlers ----------------------------------------------
 
@@ -232,6 +235,11 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
+	var req cancelOrderRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		return
+	}
 	order, err := sv.repo.GetOrder(c, params.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
@@ -243,9 +251,22 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("order cannot be canceled")))
 		return
 	}
+	var reason payment.CancelReason
+	switch req.Reason {
+	case "duplicate":
+		reason = payment.CancelReasonDuplicate
+	case "fraudulent":
+		reason = payment.CancelReasonFraudulent
+	case "abandoned":
+		reason = payment.CancelReasonAbandoned
+	case "requested_by_customer":
+		reason = payment.CancelReasonRequestedByCustomer
+	default:
+		reason = payment.CancelReasonRequestedByCustomer
+	}
 
 	// if order
-	err = sv.repo.CancelOrderTx(c, repository.CancelOrderTxArgs{
+	order, err = sv.repo.CancelOrderTx(c, repository.CancelOrderTxArgs{
 		OrderID: params.ID,
 		CancelPaymentFromGateway: func(paymentID string, gateway repository.PaymentGateway) error {
 			switch gateway {
@@ -256,7 +277,7 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 					return err
 				}
 				sv.paymentCtx.SetStrategy(stripeInstance)
-				_, err = sv.paymentCtx.CancelPayment(paymentID, "order canceled")
+				_, err = sv.paymentCtx.CancelPayment(paymentID, reason)
 				return err
 			default:
 				return nil
@@ -268,6 +289,7 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
+
 	c.JSON(http.StatusOK, GenericResponse[repository.Order]{&order, nil, nil})
 }
 
@@ -304,6 +326,11 @@ func (sv *Server) changeOrderStatus(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
+	if order.Status == repository.OrderStatusCompleted || order.Status == repository.OrderStatusCancelled || order.Status == repository.OrderStatusRefunded {
+		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("order cannot be changed status")))
+		return
+	}
+
 	status := repository.OrderStatus(req.Status)
 
 	updateParams := repository.UpdateOrderParams{

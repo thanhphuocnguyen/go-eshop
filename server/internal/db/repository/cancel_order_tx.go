@@ -14,7 +14,7 @@ type CancelOrderTxArgs struct {
 	CancelPaymentFromGateway func(paymentID string, gateway PaymentGateway) error
 }
 
-func (pg *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (err error) {
+func (pg *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (order Order, err error) {
 	pg.execTx(ctx, func(q *Queries) error {
 		// cancel payment
 		payment, err := q.GetPaymentTransactionByOrderID(ctx, args.OrderID)
@@ -49,7 +49,7 @@ func (pg *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (er
 		}
 
 		// cancel order
-		_, err = q.UpdateOrder(ctx, UpdateOrderParams{
+		order, err = q.UpdateOrder(ctx, UpdateOrderParams{
 			OrderID: args.OrderID,
 			Status: NullOrderStatus{
 				OrderStatus: OrderStatusCancelled,
@@ -88,5 +88,5 @@ func (pg *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (er
 		return nil
 	})
 
-	return err
+	return order, err
 }
