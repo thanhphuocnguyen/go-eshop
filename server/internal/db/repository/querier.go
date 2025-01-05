@@ -18,6 +18,7 @@ type Querier interface {
 	ClearCart(ctx context.Context, cartID int32) error
 	CountAddresses(ctx context.Context) (int64, error)
 	CountCartItem(ctx context.Context, cartID int32) (int64, error)
+	CountCollections(ctx context.Context, categoryID pgtype.Int4) (int64, error)
 	CountOrders(ctx context.Context, arg CountOrdersParams) (int64, error)
 	CountProducts(ctx context.Context, arg CountProductsParams) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
@@ -76,6 +77,10 @@ type Querier interface {
 	RemoveProductFromCart(ctx context.Context, arg RemoveProductFromCartParams) error
 	RemoveProductFromCollection(ctx context.Context, arg RemoveProductFromCollectionParams) error
 	ResetPrimaryAddress(ctx context.Context, userID int64) error
+	SeedAddresses(ctx context.Context, arg []SeedAddressesParams) (int64, error)
+	SeedCollections(ctx context.Context, arg []SeedCollectionsParams) (int64, error)
+	SeedProducts(ctx context.Context, arg []SeedProductsParams) (int64, error)
+	SeedUsers(ctx context.Context, arg []SeedUsersParams) (int64, error)
 	SetPrimaryAddress(ctx context.Context, arg SetPrimaryAddressParams) error
 	SetPrimaryImage(ctx context.Context, imageID int32) error
 	UnsetPrimaryImage(ctx context.Context, productID pgtype.Int8) error

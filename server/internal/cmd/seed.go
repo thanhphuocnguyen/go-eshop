@@ -6,6 +6,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/thanhphuocnguyen/go-eshop/config"
@@ -20,6 +21,13 @@ type Product struct {
 	Price       float64 `json:"price"`
 	Stock       int32   `json:"stock"`
 	Sku         string  `json:"sku"`
+}
+
+type Collection struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	SortOrder   int    `json:"sort_order"`
+	Published   bool   `json:"published"`
 }
 
 type User struct {
@@ -57,20 +65,35 @@ func ExecuteSeed(ctx context.Context) int {
 			}
 			defer pg.Close()
 			if len(args) == 0 {
-				seedProducts(ctx, pg)
-				seedUsers(ctx, pg)
-				seedUserAddresses(ctx, pg)
-				return nil
-			}
-			switch args[0] {
-			case "products":
-				seedProducts(ctx, pg)
-			case "users":
-				seedUsers(ctx, pg)
-			case "addresses":
-				seedUserAddresses(ctx, pg)
-			default:
-				log.Error().Msg("invalid seed command")
+				var waitGroup sync.WaitGroup
+				defer waitGroup.Wait()
+				waitGroup.Add(3)
+				go func() {
+					defer waitGroup.Done()
+					seedProducts(ctx, pg)
+				}()
+				go func() {
+					defer waitGroup.Done()
+					seedUsers(ctx, pg)
+					seedUserAddresses(ctx, pg)
+				}()
+				go func() {
+					defer waitGroup.Done()
+					seedCollections(ctx, pg)
+				}()
+			} else {
+				switch args[0] {
+				case "products":
+					seedProducts(ctx, pg)
+				case "users":
+					seedUsers(ctx, pg)
+				case "addresses":
+					seedUserAddresses(ctx, pg)
+				case "collections":
+					seedCollections(ctx, pg)
+				default:
+					log.Error().Msg("invalid seed command")
+				}
 			}
 			return nil
 		},
@@ -112,29 +135,69 @@ func seedProducts(ctx context.Context, repo repository.Repository) {
 	}
 
 	log.Info().Msgf("product count: %d", len(products))
-
-	var wg sync.WaitGroup
-	defer wg.Wait()
-
-	for _, product := range products {
-		wg.Add(1)
-		go func(product Product) {
-			defer wg.Done()
-			price := util.GetPgNumericFromFloat(product.Price)
-
-			_, err = repo.CreateProduct(ctx, repository.CreateProductParams{
-				Name:        product.Name,
-				Description: product.Description,
-				Sku:         product.Sku,
-				Stock:       product.Stock,
-				Price:       price,
-			})
-			if err != nil {
-				log.Error().Err(err).Msgf("failed to create product: %s", product.Name)
-			}
-		}(product)
+	params := make([]repository.SeedProductsParams, len(products))
+	for i, product := range products {
+		price := util.GetPgNumericFromFloat(product.Price)
+		params[i] = repository.SeedProductsParams{
+			Name:        product.Name,
+			Description: product.Description,
+			Sku:         product.Sku,
+			Stock:       product.Stock,
+			Price:       price,
+		}
+	}
+	_, err = repo.SeedProducts(ctx, params)
+	if err != nil {
+		log.Error().Err(err).Msgf("failed to create product: %v", err)
 	}
 	log.Info().Msg("products created")
+}
+
+func seedCollections(ctx context.Context, repo repository.Repository) {
+	countCollections, err := repo.CountCollections(ctx, pgtype.Int4{})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to count collections")
+		return
+	}
+
+	if countCollections > 0 {
+		log.Info().Msg("collections already seeded")
+		return
+	}
+
+	log.Info().Msg("seeding collections")
+	collectionData, err := os.ReadFile("seeds/collections.json")
+	if err != nil {
+		log.Error().Err(err).Msg("failed to read collection data")
+		return
+	}
+
+	var collections []Collection
+	log.Info().Msg("parsing collection data")
+	err = json.Unmarshal(collectionData, &collections)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to parse collection data")
+		return
+	}
+
+	log.Info().Msgf("collection count: %d", len(collections))
+	params := make([]repository.SeedCollectionsParams, len(collections))
+	for i, collection := range collections {
+		params[i] = repository.SeedCollectionsParams{
+			Name: collection.Name,
+			Description: pgtype.Text{
+				String: collection.Description,
+				Valid:  true,
+			},
+			SortOrder: int16(collection.SortOrder),
+			Published: collection.Published,
+		}
+	}
+	_, err = repo.SeedCollections(ctx, params)
+	if err != nil {
+		log.Error().Err(err).Msgf("failed to create collection: %v", err)
+	}
+	log.Info().Msg("collections created")
 }
 
 func seedUsers(ctx context.Context, pg repository.Repository) {
@@ -164,34 +227,26 @@ func seedUsers(ctx context.Context, pg repository.Repository) {
 
 	log.Info().Msg("creating users")
 	log.Info().Msgf("user count: %d", len(users))
+	params := make([]repository.SeedUsersParams, len(users))
+	for i, user := range users {
+		hashed, _ := auth.HashPassword(user.Password)
 
-	var wg sync.WaitGroup
-	defer wg.Wait()
+		params[i] = repository.SeedUsersParams{
+			Email:          user.Email,
+			Username:       user.Username,
+			Phone:          user.Phone,
+			HashedPassword: hashed,
+			Fullname:       user.FullName,
+			Role:           repository.UserRoleUser,
+		}
+		if params[i].Username == "admin" {
+			params[i].Role = repository.UserRoleAdmin
+		}
 
-	for _, user := range users {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			hashed, err := auth.HashPassword(user.Password)
-			if err != nil {
-				return
-			}
-			params := repository.CreateUserParams{
-				Email:          user.Email,
-				Username:       user.Username,
-				Phone:          user.Phone,
-				HashedPassword: hashed,
-				Fullname:       user.FullName,
-				Role:           repository.UserRoleUser,
-			}
-			if user.Username == "admin" {
-				params.Role = repository.UserRoleAdmin
-			}
-			_, err = pg.CreateUser(ctx, params)
-			if err != nil {
-				log.Error().Err(err).Msgf("failed to create user: %s", user.Email)
-			}
-		}()
+	}
+	_, err = pg.SeedUsers(ctx, params)
+	if err != nil {
+		log.Error().Err(err).Msgf("failed to create user: %v", err)
 	}
 	log.Info().Msg("users created")
 }
@@ -223,28 +278,21 @@ func seedUserAddresses(ctx context.Context, pg repository.Repository) {
 
 	log.Info().Msg("creating addresses")
 	log.Info().Msgf("addresses count: %d", len(addresses))
-	var wg sync.WaitGroup
-	defer wg.Wait()
+	params := make([]repository.SeedAddressesParams, len(addresses))
 	for i, user := range addresses {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			addParam := repository.CreateAddressParams{
-				UserID:   user.UserID,
-				Phone:    user.Phone,
-				Street:   user.Street,
-				Ward:     util.GetPgTypeText(user.Ward),
-				District: user.District,
-				City:     user.City,
-			}
-			if i == 0 {
-				addParam.Default = true
-			}
-			_, err = pg.CreateAddress(ctx, addParam)
-			if err != nil {
-				log.Error().Err(err).Msgf("failed to create address: %s", user.Street)
-			}
-		}()
+		params[i] = repository.SeedAddressesParams{
+			UserID:   user.UserID,
+			Phone:    user.Phone,
+			Street:   user.Street,
+			Ward:     util.GetPgTypeText(user.Ward),
+			District: user.District,
+			City:     user.City,
+		}
+	}
+	_, err = pg.SeedAddresses(ctx, params)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to seed addresses")
+		return
 	}
 	log.Info().Msg("addresses created")
 }

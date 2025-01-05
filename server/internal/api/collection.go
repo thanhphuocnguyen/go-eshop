@@ -239,6 +239,18 @@ func (sv *Server) addProductToCollection(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	cnt, err := sv.repo.CountCollections(c, util.GetPgTypeInt4(colID.ID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if cnt >= 250 {
+		c.JSON(http.StatusConflict, mapErrResp(fmt.Errorf("collection with ID %d already has 250 products", colID.ID)))
+		return
+	}
+
 	_, err = sv.repo.GetCollectionProduct(c, repository.GetCollectionProductParams{
 		CategoryID: colID.ID,
 		ProductID:  req.ProductID,
@@ -253,7 +265,6 @@ func (sv *Server) addProductToCollection(c *gin.Context) {
 		ProductID:  req.ProductID,
 		SortOrder:  0},
 	)
-
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

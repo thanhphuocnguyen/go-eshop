@@ -84,3 +84,23 @@ SELECT
     count(*)
 FROM
     users;
+
+-- name: SeedUsers :copyfrom
+INSERT INTO
+    users (
+        email,
+        username,
+        phone,
+        fullname,
+        hashed_password,
+        role
+    )
+VALUES
+    (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6
+    );

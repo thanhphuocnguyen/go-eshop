@@ -246,11 +246,17 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 		return
 	}
 
+	if order.UserID != tokenPayload.UserID && user.Role != repository.UserRoleAdmin {
+		c.JSON(http.StatusForbidden, mapErrResp(errors.New("forbidden")))
+		return
+	}
+
 	// if order status is not pending or user is not admin
 	if order.Status != repository.OrderStatusPending || user.Role != repository.UserRoleAdmin {
 		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("order cannot be canceled")))
 		return
 	}
+
 	var reason payment.CancelReason
 	switch req.Reason {
 	case "duplicate":

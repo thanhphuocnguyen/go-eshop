@@ -1,6 +1,6 @@
 -- name: CreateCollection :one
-INSERT INTO categories (name, description, sort_order, image_url, published)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO categories (name, description, sort_order, published)
+VALUES ($1, $2, $3, $4)
 RETURNING *;
 
 -- name: GetCollection :many
@@ -25,7 +25,7 @@ LIMIT 1;
 
 -- name: GetCollections :many
 SELECT 
-    c.category_id, c.name, c.description, c.sort_order, c.image_url, c.published,
+    c.category_id, c.name, c.description, c.sort_order, c.published,
     p.name, p.description, p.price, p.discount, 
     cp.product_id, 
     images.image_id, images.image_url
@@ -42,7 +42,6 @@ SET
     name = COALESCE(sqlc.narg('name'), name), 
     description = COALESCE(sqlc.narg('description'), description), 
     sort_order = COALESCE(sqlc.narg('sort_order'), sort_order), 
-    image_url = COALESCE(sqlc.narg('image_url'), image_url), 
     published = COALESCE(sqlc.narg('published'), published),
     updated_at = now()
 WHERE category_id = $1
@@ -52,3 +51,11 @@ RETURNING *;
 -- name: RemoveCollection :exec
 DELETE FROM categories
 WHERE category_id = $1;
+
+-- name: CountCollections :one
+SELECT count(*)
+FROM categories
+WHERE category_id = COALESCE(sqlc.narg('category_id'), category_id);
+
+-- name: SeedCollections :copyfrom
+INSERT INTO categories (name, description, sort_order, published) VALUES ($1, $2, $3, $4);

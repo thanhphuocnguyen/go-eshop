@@ -359,7 +359,6 @@ type Category struct {
 	Name        string      `json:"name"`
 	Description pgtype.Text `json:"description"`
 	SortOrder   int16       `json:"sort_order"`
-	ImageUrl    pgtype.Text `json:"image_url"`
 	Published   bool        `json:"published"`
 	CreatedAt   time.Time   `json:"created_at"`
 	UpdatedAt   time.Time   `json:"updated_at"`

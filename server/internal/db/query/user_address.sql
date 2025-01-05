@@ -94,3 +94,25 @@ SELECT
     COUNT(*)
 FROM
     user_addresses;
+
+-- name: SeedAddresses :copyfrom
+INSERT INTO
+    user_addresses (
+        user_id,
+        phone,
+        street,
+        ward,
+        district,
+        city,
+        "default"
+    )
+VALUES
+    (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7
+    );

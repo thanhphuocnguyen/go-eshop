@@ -244,6 +244,15 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 	return items, nil
 }
 
+type SeedUsersParams struct {
+	Email          string   `json:"email"`
+	Username       string   `json:"username"`
+	Phone          string   `json:"phone"`
+	Fullname       string   `json:"fullname"`
+	HashedPassword string   `json:"hashed_password"`
+	Role           UserRole `json:"role"`
+}
+
 const updateUser = `-- name: UpdateUser :one
 UPDATE
     users

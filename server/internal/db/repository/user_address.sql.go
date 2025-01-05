@@ -225,6 +225,16 @@ func (q *Queries) ResetPrimaryAddress(ctx context.Context, userID int64) error {
 	return err
 }
 
+type SeedAddressesParams struct {
+	UserID   int64       `json:"user_id"`
+	Phone    string      `json:"phone"`
+	Street   string      `json:"street"`
+	Ward     pgtype.Text `json:"ward"`
+	District string      `json:"district"`
+	City     string      `json:"city"`
+	Default  bool        `json:"default"`
+}
+
 const setPrimaryAddress = `-- name: SetPrimaryAddress :exec
 UPDATE
     user_addresses

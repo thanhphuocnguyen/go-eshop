@@ -7,7 +7,6 @@ CREATE TABLE
             "sort_order" >= 0
             AND "sort_order" <= 32767
         ),
-        "image_url" varchar,
         "published" bool NOT NULL DEFAULT true,
         "created_at" timestamptz NOT NULL DEFAULT now(),
         "updated_at" timestamptz NOT NULL DEFAULT now()

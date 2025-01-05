@@ -1,0 +1,92 @@
+[
+	{
+		"name": "GalaxyBeam",
+		"description": "felis. Nulla tempor augue ac ipsum. Phasellus vitae mauris sit amet lorem",
+		"sort_order": 1,
+		"published": false
+	},
+	{
+		"name": "EcoSprout",
+		"description": "erat vel pede blandit congue. In scelerisque scelerisque dui. Suspendisse",
+		"sort_order": 2,
+		"published": false
+	},
+	{
+		"name": "AquaFusion",
+		"description": "consectetuer rhoncus. Nullam velit dui, semper et, lacinia vitae, sodales at, velit.",
+		"sort_order": 3,
+		"published": false
+	},
+	{
+		"name": "SwiftCharge",
+		"description": "dolor dolor, tempus non, lacinia",
+		"sort_order": 4,
+		"published": true
+	},
+	{
+		"name": "PureAura",
+		"description": "sagittis. Duis gravida. Praesent eu",
+		"sort_order": 5,
+		"published": false
+	},
+	{
+		"name": "OmniGadget",
+		"description": "consequat enim diam vel arcu. Curabitur ut odio vel",
+		"sort_order": 6,
+		"published": false
+	},
+	{
+		"name": "PowerBloom",
+		"description": "augue. Sed molestie. Sed id risus quis diam",
+		"sort_order": 7,
+		"published": false
+	},
+	{
+		"name": "LuxeCraft",
+		"description": "aliquet, sem ut cursus luctus, ipsum leo elementum sem, vitae aliquam",
+		"sort_order": 8,
+		"published": true
+	},
+	{
+		"name": "SonicBreeze",
+		"description": "bibendum fermentum metus. Aenean sed pede nec ante blandit viverra. Donec tempus, lorem fringilla",
+		"sort_order": 9,
+		"published": false
+	},
+	{
+		"name": "SmartHaven",
+		"description": "orci. Ut semper pretium neque. Morbi quis urna. Nunc quis arcu vel",
+		"sort_order": 10,
+		"published": true
+	},
+	{
+		"name": "VitalEdge",
+		"description": "sed pede. Cum sociis natoque penatibus et magnis dis parturient montes,",
+		"sort_order": 11,
+		"published": true
+	},
+	{
+		"name": "NovaLite",
+		"description": "Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus",
+		"sort_order": 12,
+		"published": false
+	},
+	{
+		"name": "SolarWave",
+		"description": "magna. Nam ligula elit, pretium et, rutrum",
+		"sort_order": 13,
+		"published": false
+	},
+	{
+		"name": "GlidePro",
+		"description": "consectetuer euismod est arcu ac orci. Ut semper pretium neque. Morbi quis",
+		"sort_order": 14,
+		"published": true
+	},
+	{
+		"name": "TurboMist",
+		"description": "Pellentesque tincidunt tempus risus. Donec egestas. Duis ac arcu. Nunc mauris. Morbi non sapien molestie",
+		"sort_order": 15,
+		"published": true
+	}
+]

@@ -12,17 +12,29 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countCollections = `-- name: CountCollections :one
+SELECT count(*)
+FROM categories
+WHERE category_id = COALESCE($1, category_id)
+`
+
+func (q *Queries) CountCollections(ctx context.Context, categoryID pgtype.Int4) (int64, error) {
+	row := q.db.QueryRow(ctx, countCollections, categoryID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createCollection = `-- name: CreateCollection :one
-INSERT INTO categories (name, description, sort_order, image_url, published)
-VALUES ($1, $2, $3, $4, $5)
-RETURNING category_id, name, description, sort_order, image_url, published, created_at, updated_at
+INSERT INTO categories (name, description, sort_order, published)
+VALUES ($1, $2, $3, $4)
+RETURNING category_id, name, description, sort_order, published, created_at, updated_at
 `
 
 type CreateCollectionParams struct {
 	Name        string      `json:"name"`
 	Description pgtype.Text `json:"description"`
 	SortOrder   int16       `json:"sort_order"`
-	ImageUrl    pgtype.Text `json:"image_url"`
 	Published   bool        `json:"published"`
 }
 
@@ -31,7 +43,6 @@ func (q *Queries) CreateCollection(ctx context.Context, arg CreateCollectionPara
 		arg.Name,
 		arg.Description,
 		arg.SortOrder,
-		arg.ImageUrl,
 		arg.Published,
 	)
 	var i Category
@@ -40,7 +51,6 @@ func (q *Queries) CreateCollection(ctx context.Context, arg CreateCollectionPara
 		&i.Name,
 		&i.Description,
 		&i.SortOrder,
-		&i.ImageUrl,
 		&i.Published,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -50,7 +60,7 @@ func (q *Queries) CreateCollection(ctx context.Context, arg CreateCollectionPara
 
 const getCollection = `-- name: GetCollection :many
 SELECT 
-    c.category_id, c.name, c.description, c.sort_order, c.image_url, c.published, c.created_at, c.updated_at, 
+    c.category_id, c.name, c.description, c.sort_order, c.published, c.created_at, c.updated_at, 
     p.name, p.description, p.price, p.discount, 
     cp.product_id, 
     i.image_id, i.image_url
@@ -66,7 +76,6 @@ type GetCollectionRow struct {
 	Name          string         `json:"name"`
 	Description   pgtype.Text    `json:"description"`
 	SortOrder     int16          `json:"sort_order"`
-	ImageUrl      pgtype.Text    `json:"image_url"`
 	Published     bool           `json:"published"`
 	CreatedAt     time.Time      `json:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at"`
@@ -76,7 +85,7 @@ type GetCollectionRow struct {
 	Discount      int32          `json:"discount"`
 	ProductID     int64          `json:"product_id"`
 	ImageID       pgtype.Int4    `json:"image_id"`
-	ImageUrl_2    pgtype.Text    `json:"image_url_2"`
+	ImageUrl      pgtype.Text    `json:"image_url"`
 }
 
 func (q *Queries) GetCollection(ctx context.Context, categoryID int32) ([]GetCollectionRow, error) {
@@ -93,7 +102,6 @@ func (q *Queries) GetCollection(ctx context.Context, categoryID int32) ([]GetCol
 			&i.Name,
 			&i.Description,
 			&i.SortOrder,
-			&i.ImageUrl,
 			&i.Published,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -103,7 +111,7 @@ func (q *Queries) GetCollection(ctx context.Context, categoryID int32) ([]GetCol
 			&i.Discount,
 			&i.ProductID,
 			&i.ImageID,
-			&i.ImageUrl_2,
+			&i.ImageUrl,
 		); err != nil {
 			return nil, err
 		}
@@ -116,7 +124,7 @@ func (q *Queries) GetCollection(ctx context.Context, categoryID int32) ([]GetCol
 }
 
 const getCollectionByName = `-- name: GetCollectionByName :one
-SELECT c.category_id, c.name, c.description, c.sort_order, image_url, published, c.created_at, c.updated_at, cp.category_id, cp.product_id, cp.sort_order, p.product_id, p.name, p.description, sku, stock, discount, archived, price, p.updated_at, p.created_at
+SELECT c.category_id, c.name, c.description, c.sort_order, published, c.created_at, c.updated_at, cp.category_id, cp.product_id, cp.sort_order, p.product_id, p.name, p.description, sku, stock, discount, archived, price, p.updated_at, p.created_at
 FROM categories c
 JOIN category_products cp ON c.category_id = cp.category_id
 JOIN products p ON cp.product_id = p.product_id AND p.published = TRUE
@@ -129,7 +137,6 @@ type GetCollectionByNameRow struct {
 	Name          string         `json:"name"`
 	Description   pgtype.Text    `json:"description"`
 	SortOrder     int16          `json:"sort_order"`
-	ImageUrl      pgtype.Text    `json:"image_url"`
 	Published     bool           `json:"published"`
 	CreatedAt     time.Time      `json:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at"`
@@ -156,7 +163,6 @@ func (q *Queries) GetCollectionByName(ctx context.Context, name string) (GetColl
 		&i.Name,
 		&i.Description,
 		&i.SortOrder,
-		&i.ImageUrl,
 		&i.Published,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -179,7 +185,7 @@ func (q *Queries) GetCollectionByName(ctx context.Context, name string) (GetColl
 
 const getCollections = `-- name: GetCollections :many
 SELECT 
-    c.category_id, c.name, c.description, c.sort_order, c.image_url, c.published,
+    c.category_id, c.name, c.description, c.sort_order, c.published,
     p.name, p.description, p.price, p.discount, 
     cp.product_id, 
     images.image_id, images.image_url
@@ -196,7 +202,6 @@ type GetCollectionsRow struct {
 	Name          string         `json:"name"`
 	Description   pgtype.Text    `json:"description"`
 	SortOrder     int16          `json:"sort_order"`
-	ImageUrl      pgtype.Text    `json:"image_url"`
 	Published     bool           `json:"published"`
 	Name_2        string         `json:"name_2"`
 	Description_2 string         `json:"description_2"`
@@ -204,7 +209,7 @@ type GetCollectionsRow struct {
 	Discount      int32          `json:"discount"`
 	ProductID     int64          `json:"product_id"`
 	ImageID       pgtype.Int4    `json:"image_id"`
-	ImageUrl_2    pgtype.Text    `json:"image_url_2"`
+	ImageUrl      pgtype.Text    `json:"image_url"`
 }
 
 func (q *Queries) GetCollections(ctx context.Context, categoryIds []int32) ([]GetCollectionsRow, error) {
@@ -221,7 +226,6 @@ func (q *Queries) GetCollections(ctx context.Context, categoryIds []int32) ([]Ge
 			&i.Name,
 			&i.Description,
 			&i.SortOrder,
-			&i.ImageUrl,
 			&i.Published,
 			&i.Name_2,
 			&i.Description_2,
@@ -229,7 +233,7 @@ func (q *Queries) GetCollections(ctx context.Context, categoryIds []int32) ([]Ge
 			&i.Discount,
 			&i.ProductID,
 			&i.ImageID,
-			&i.ImageUrl_2,
+			&i.ImageUrl,
 		); err != nil {
 			return nil, err
 		}
@@ -251,17 +255,23 @@ func (q *Queries) RemoveCollection(ctx context.Context, categoryID int32) error 
 	return err
 }
 
+type SeedCollectionsParams struct {
+	Name        string      `json:"name"`
+	Description pgtype.Text `json:"description"`
+	SortOrder   int16       `json:"sort_order"`
+	Published   bool        `json:"published"`
+}
+
 const updateCollection = `-- name: UpdateCollection :one
 UPDATE categories
 SET 
     name = COALESCE($2, name), 
     description = COALESCE($3, description), 
     sort_order = COALESCE($4, sort_order), 
-    image_url = COALESCE($5, image_url), 
-    published = COALESCE($6, published),
+    published = COALESCE($5, published),
     updated_at = now()
 WHERE category_id = $1
-RETURNING category_id, name, description, sort_order, image_url, published, created_at, updated_at
+RETURNING category_id, name, description, sort_order, published, created_at, updated_at
 `
 
 type UpdateCollectionParams struct {
@@ -269,7 +279,6 @@ type UpdateCollectionParams struct {
 	Name        pgtype.Text `json:"name"`
 	Description pgtype.Text `json:"description"`
 	SortOrder   pgtype.Int2 `json:"sort_order"`
-	ImageUrl    pgtype.Text `json:"image_url"`
 	Published   pgtype.Bool `json:"published"`
 }
 
@@ -279,7 +288,6 @@ func (q *Queries) UpdateCollection(ctx context.Context, arg UpdateCollectionPara
 		arg.Name,
 		arg.Description,
 		arg.SortOrder,
-		arg.ImageUrl,
 		arg.Published,
 	)
 	var i Category
@@ -288,7 +296,6 @@ func (q *Queries) UpdateCollection(ctx context.Context, arg UpdateCollectionPara
 		&i.Name,
 		&i.Description,
 		&i.SortOrder,
-		&i.ImageUrl,
 		&i.Published,
 		&i.CreatedAt,
 		&i.UpdatedAt,

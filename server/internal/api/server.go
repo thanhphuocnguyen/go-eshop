@@ -96,7 +96,7 @@ func (sv *Server) initializeRouter() {
 		userAddress := v1.Group("/address").Use(authMiddleware(sv.tokenGenerator))
 		{
 			userAddress.POST("", sv.createAddress)
-			userAddress.GET("", sv.listAddresses)
+			userAddress.GET("list", sv.listAddresses)
 			userAddress.PATCH(":id", sv.updateAddress)
 			userAddress.DELETE(":id", sv.removeAddress)
 		}
@@ -104,7 +104,7 @@ func (sv *Server) initializeRouter() {
 		product := v1.Group("/product")
 		{
 			product.GET(":id", sv.getProductDetail)
-			product.GET("", sv.getProducts)
+			product.GET("list", sv.getProducts)
 
 			productAuthRoutes := product.Group("").Use(
 				authMiddleware(sv.tokenGenerator),
@@ -136,10 +136,11 @@ func (sv *Server) initializeRouter() {
 
 		order := v1.Group("/order").Use(authMiddleware(sv.tokenGenerator))
 		{
-			order.GET("", sv.orderList)
+			order.GET("list", sv.orderList)
 			order.GET(":id", sv.orderDetail)
+			order.PUT(":id/cancel", sv.cancelOrder)
+
 			adminOrder := order.Use(roleMiddleware(sv.repo, repository.UserRoleAdmin, repository.UserRoleModerator))
-			adminOrder.PUT(":id/cancel", sv.cancelOrder)
 			adminOrder.PUT(":id/refund", sv.refundOrder)
 			adminOrder.PUT(":id/status", sv.changeOrderStatus)
 		}
@@ -148,11 +149,12 @@ func (sv *Server) initializeRouter() {
 		{
 			payment.POST("initiate", sv.initiatePayment)
 			payment.GET(":order_id", sv.getPayment)
+			payment.PUT(":order_id", sv.changePaymentStatus)
 		}
 
 		collection := v1.Group("/collection")
 		{
-			collection.GET("", sv.getCollections)
+			collection.GET("list", sv.getCollections)
 			collection.GET(":id", sv.getCollectionByID)
 
 			collectionAuthRoutes := collection.Group("").Use(

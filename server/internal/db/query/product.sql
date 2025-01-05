@@ -119,3 +119,23 @@ LEFT JOIN images AS img ON products.product_id = img.product_id AND img.primary 
 WHERE
     products.product_id = $1 AND
     archived = COALESCE(sqlc.narg('archived'), false);
+
+-- name: SeedProducts :copyfrom
+INSERT INTO
+    products (
+        name,
+        description,
+        sku,
+        stock,
+        price,
+        discount
+    )
+VALUES
+    (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6
+    );

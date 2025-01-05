@@ -347,6 +347,15 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]L
 	return items, nil
 }
 
+type SeedProductsParams struct {
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Sku         string         `json:"sku"`
+	Stock       int32          `json:"stock"`
+	Price       pgtype.Numeric `json:"price"`
+	Discount    int32          `json:"discount"`
+}
+
 const updateProduct = `-- name: UpdateProduct :one
 UPDATE
     products
