@@ -37,6 +37,10 @@ type ChangePaymentStatusReq struct {
 	Status repository.PaymentStatus `json:"status" binding:"required"`
 }
 
+func (sv *Server) getStripeConfig(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"public_key": sv.config.StripePublishableKey})
+}
+
 // @Summary Initiate payment
 // @Description Initiate payment
 // @Tags payment

@@ -8,10 +8,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	repository "github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/util"
+	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 )
 
 type createUserRequest struct {
@@ -27,6 +29,8 @@ type userResponse struct {
 	FullName          string              `json:"fullname"`
 	Username          string              `json:"username"`
 	CreatedAt         string              `json:"created_at"`
+	VerifiedEmail     bool                `json:"verified_email"`
+	VerifiedPhone     bool                `json:"verified_phone"`
 	Role              repository.UserRole `json:"role"`
 	UpdatedAt         string              `json:"updated_at"`
 	PasswordChangedAt string              `json:"password_changed_at"`
@@ -70,6 +74,11 @@ type renewAccessTokenResp struct {
 	AccessTokenExpiresAt time.Duration `json:"access_token_expires_at"`
 }
 
+type verifyEmailQuery struct {
+	ID         int32  `form:"id" binding:"required,min=1"`
+	VerifyCode string `form:"verify_code" binding:"required,min=1"`
+}
+
 // ------------------------------ Mappers ------------------------------
 
 func mapToUserResponse(user repository.User) userResponse {
@@ -78,6 +87,8 @@ func mapToUserResponse(user repository.User) userResponse {
 		FullName:          user.Fullname,
 		Role:              user.Role,
 		Username:          user.Username,
+		VerifiedEmail:     user.VerifiedEmail,
+		VerifiedPhone:     user.VerifiedPhone,
 		CreatedAt:         user.CreatedAt.String(),
 		UpdatedAt:         user.UpdatedAt.String(),
 		PasswordChangedAt: user.PasswordChangedAt.String(),
@@ -137,6 +148,7 @@ func (sv *Server) createUser(c *gin.Context) {
 		Fullname:       req.FullName,
 		Email:          req.Email,
 		Phone:          req.Phone,
+		Role:           repository.UserRoleUser,
 	}
 	if req.Username == "admin" {
 		arg.Role = repository.UserRoleAdmin
@@ -147,7 +159,23 @@ func (sv *Server) createUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, GenericResponse[repository.CreateUserRow]{&user, nil, nil})
+	err = sv.taskDistributor.SendVerifyEmail(
+		c,
+		&worker.PayloadVerifyEmail{
+			UserID: user.UserID,
+		},
+		asynq.MaxRetry(3),
+		asynq.ProcessIn(5*time.Second),
+		asynq.Queue(worker.QueueCritical),
+	)
+	message := "Please verify your email address to activate your account"
+	errMsg := ""
+	if err != nil {
+		message = "Failed to send email verification"
+		errMsg = err.Error()
+	}
+
+	c.JSON(http.StatusOK, GenericResponse[repository.CreateUserRow]{&user, &message, &errMsg})
 }
 
 // loginUser godoc
@@ -449,4 +477,73 @@ func (sv *Server) listUsers(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, GenericResponse[[]userResponse]{&userResp, nil, nil})
+}
+
+func (sv *Server) sendVerifyEmail(c *gin.Context) {
+	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, mapErrResp(fmt.Errorf("authorization payload is not provided")))
+		return
+	}
+
+	err := sv.taskDistributor.SendVerifyEmail(
+		c,
+		&worker.PayloadVerifyEmail{
+			UserID: authPayload.UserID,
+		},
+		asynq.MaxRetry(3),
+		asynq.ProcessIn(5*time.Second),
+		asynq.Queue(worker.QueueCritical),
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, GenericResponse[interface{}]{nil, nil, nil})
+}
+
+func (sv *Server) verifyEmail(c *gin.Context) {
+	var query verifyEmailQuery
+	if err := c.ShouldBindQuery(&query); err != nil {
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		return
+	}
+	verifyEmail, err := sv.repo.GetVerifyEmailByID(c, query.ID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, mapErrResp(fmt.Errorf("not found")))
+		return
+	}
+
+	if verifyEmail.ExpiredAt.Before(time.Now()) {
+		c.JSON(http.StatusNotFound, mapErrResp(fmt.Errorf("expired")))
+		return
+	}
+
+	if verifyEmail.VerifyCode != query.VerifyCode {
+		c.JSON(http.StatusNotFound, mapErrResp(fmt.Errorf("not found")))
+		return
+	}
+	_, err = sv.repo.UpdateVerifyEmail(c, repository.UpdateVerifyEmailParams{
+		ID:         verifyEmail.ID,
+		VerifyCode: query.VerifyCode,
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
+
+	_, err = sv.repo.UpdateUser(c, repository.UpdateUserParams{
+		ID: verifyEmail.UserID,
+		VerifiedEmail: pgtype.Bool{
+			Bool:  true,
+			Valid: true,
+		},
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
+
 }

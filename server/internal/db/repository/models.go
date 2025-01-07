@@ -496,3 +496,13 @@ type VariantAttribute struct {
 	VariantID          int32 `json:"variant_id"`
 	ValueID            int32 `json:"value_id"`
 }
+
+type VerifyEmail struct {
+	ID         int32     `json:"id"`
+	UserID     int64     `json:"user_id"`
+	Email      string    `json:"email"`
+	VerifyCode string    `json:"verify_code"`
+	IsUsed     bool      `json:"is_used"`
+	CreatedAt  time.Time `json:"created_at"`
+	ExpiredAt  time.Time `json:"expired_at"`
+}

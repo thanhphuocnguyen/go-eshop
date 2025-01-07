@@ -8,6 +8,7 @@ import (
 
 type TaskDistributor interface {
 	SendOrderCreatedEmailTask(ctx context.Context, payload *PayloadSendOrderCreatedEmailTask, options ...asynq.Option) error
+	SendVerifyEmail(ctx context.Context, payload *PayloadVerifyEmail, options ...asynq.Option) error
 	Shutdown() error
 }
 

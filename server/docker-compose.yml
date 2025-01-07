@@ -43,6 +43,16 @@ services:
       DB_URL: postgres://postgres:postgres@postgres:5432/eshop?sslmode=disable
     networks:
       - eshop-network
+  mailhog:
+    build:
+        context: .
+        dockerfile: Dockerfile-mailhog
+    container_name: eshop-mailhog
+    ports:
+      - 1025:1025
+      - 8025:8025
+    networks:
+      - eshop-network
 networks:
   eshop-network:
     driver: bridge

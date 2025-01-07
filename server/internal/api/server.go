@@ -75,6 +75,8 @@ func (sv *Server) initializeRouter() {
 
 	v1 := router.Group("/api/v1")
 	{
+		//TODO: v1.GET("health", sv.healthCheck)
+		v1.GET("verify-email", sv.verifyEmail)
 		user := v1.Group("/user")
 		{
 			user.POST("register", sv.createUser)
@@ -82,6 +84,7 @@ func (sv *Server) initializeRouter() {
 			user.POST("refresh-token", sv.refreshToken)
 			userAuthRoutes := user.Group("").Use(authMiddleware(sv.tokenGenerator))
 			userAuthRoutes.GET("", sv.getUser)
+			userAuthRoutes.POST("send-verify-email", sv.sendVerifyEmail)
 			userAuthRoutes.PATCH("", sv.updateUser)
 			userModeratorRoutes := user.Group("").Use(
 				authMiddleware(sv.tokenGenerator),
@@ -147,6 +150,7 @@ func (sv *Server) initializeRouter() {
 
 		payment := v1.Group("/payment").Use(authMiddleware(sv.tokenGenerator))
 		{
+			payment.GET("stripe-config", sv.getStripeConfig)
 			payment.POST("initiate", sv.initiatePayment)
 			payment.GET(":order_id", sv.getPayment)
 			payment.PUT(":order_id", sv.changePaymentStatus)

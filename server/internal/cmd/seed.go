@@ -212,7 +212,7 @@ func seedUsers(ctx context.Context, pg repository.Repository) {
 		return
 	}
 
-	log.Info().Msg("parsing user data")
+	log.Info().Str("from file: ", "users.json").Msg("parsing user data")
 	userData, err := os.ReadFile("seeds/users.json")
 	if err != nil {
 		return
@@ -225,8 +225,7 @@ func seedUsers(ctx context.Context, pg repository.Repository) {
 		return
 	}
 
-	log.Info().Msg("creating users")
-	log.Info().Msgf("user count: %d", len(users))
+	log.Info().Int("with user count: ", len(users)).Msg("creating users")
 	params := make([]repository.SeedUsersParams, len(users))
 	for i, user := range users {
 		hashed, _ := auth.HashPassword(user.Password)

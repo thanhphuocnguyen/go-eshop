@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm Your Email</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: #4CAF50;
+            color: #ffffff;
+            text-align: center;
+            padding: 20px;
+            font-size: 24px;
+        }
+
+        .content {
+            padding: 20px;
+            color: #333333;
+            line-height: 1.6;
+        }
+
+        .content p {
+            margin: 0 0 15px;
+        }
+
+        .confirm-btn {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+
+        .confirm-btn:hover {
+            background-color: #45a049;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 15px;
+            background-color: #f1f1f1;
+            font-size: 12px;
+            color: #777777;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="email-container">
+        <div class="header">
+            Confirm Your Email
+        </div>
+        <div class="content">
+            <p>Hi [%userName%],</p>
+            <p>Thank you for signing up! Please confirm your email address by clicking the button below:</p>
+            <p>
+                <a href="[%verifyLink%]" class="confirm-btn">Confirm Email</a>
+            </p>
+            <p>If you didn’t sign up for this account, you can safely ignore this email.</p>
+            <p>Thank you,</p>
+            <p>E-shop Team</p>
+        </div>
+        <div class="footer">
+            &copy; 2025 E-shop. All rights reserved.
+        </div>
+    </div>
+</body>
+
+</html>

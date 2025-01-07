@@ -32,6 +32,7 @@ type Querier interface {
 	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
 	CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
+	CreateVerifyEmail(ctx context.Context, arg CreateVerifyEmailParams) (VerifyEmail, error)
 	DeleteAddress(ctx context.Context, arg DeleteAddressParams) error
 	DeleteImage(ctx context.Context, imageID int32) error
 	DeleteOrder(ctx context.Context, orderID int64) error
@@ -69,6 +70,8 @@ type Querier interface {
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, userID int64) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
+	GetVerifyEmail(ctx context.Context, arg GetVerifyEmailParams) (VerifyEmail, error)
+	GetVerifyEmailByID(ctx context.Context, id int32) (VerifyEmail, error)
 	ListOrderItems(ctx context.Context, arg ListOrderItemsParams) ([]OrderItem, error)
 	ListOrders(ctx context.Context, arg ListOrdersParams) ([]ListOrdersRow, error)
 	ListProducts(ctx context.Context, arg ListProductsParams) ([]ListProductsRow, error)
@@ -94,6 +97,7 @@ type Querier interface {
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
 	UpdateProductStock(ctx context.Context, arg UpdateProductStockParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateUserRow, error)
+	UpdateVerifyEmail(ctx context.Context, arg UpdateVerifyEmailParams) (VerifyEmail, error)
 }
 
 var _ Querier = (*Queries)(nil)

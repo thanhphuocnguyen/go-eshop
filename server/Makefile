@@ -30,6 +30,9 @@ build-server:
 serve-server:
 	@echo "Running application..."
 	go run ./cmd/web --profile api
+serve-worker:
+	@echo "Running application..."
+	go run ./cmd/web --profile worker
 gen-sqlc:
 	@echo "Generating sqlc..."
 	sqlc generate
@@ -38,4 +41,4 @@ gen-swagger:
 	swag init -d internal/api -g server.go --parseInternal --parseDependency
 
 .PHONY: create-migration migrate-up migrate-up-1 migrate-down migrate-down-1 migrate-drop 
-	build-migrate build-server serve-server gen-sqlc gen-swagger build-seed
+	build-migrate build-server serve-server gen-sqlc gen-swagger build-seed serve-worker

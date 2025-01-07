@@ -22,6 +22,6 @@ DROP TABLE IF EXISTS attribute_values;
 
 DROP TABLE IF EXISTS attributes;
 
-DROP TABLE IF EXISTS product_variants;
+DROP TABLE IF EXISTS product_variants CASCADE;
 
-DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS products CASCADE;

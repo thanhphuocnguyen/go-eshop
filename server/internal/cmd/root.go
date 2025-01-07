@@ -20,6 +20,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/api"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/mailer"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/upload"
 )
@@ -113,7 +114,7 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 			server := api.Server(cfg.HttpAddr)
 
 			go func() {
-				log.Info().Msgf("api server started at :%s", cfg.HttpAddr)
+				log.Info().Str("addr", cfg.HttpAddr).Msg("API server started")
 				_ = server.ListenAndServe()
 			}()
 
@@ -143,13 +144,12 @@ func workerCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 				log.Error().Err(err).Msg("failed to connect to postgres")
 				return err
 			}
+			mailer := mailer.NewEmailSender(cfg.SmtpUsername, cfg.SmtpPassword, cfg.Env)
 			redisCfg := asynq.RedisClientOpt{
 				Addr: cfg.RedisUrl,
 			}
-			distributor := worker.NewRedisTaskProcessor(
-				redisCfg,
-				pgDB,
-			)
+
+			distributor := worker.NewRedisTaskProcessor(redisCfg, pgDB, mailer, cfg)
 
 			err = distributor.Start()
 			if err != nil {

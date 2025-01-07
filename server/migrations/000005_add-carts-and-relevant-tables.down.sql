@@ -1,5 +1,5 @@
-DROP TABLE IF EXISTS "cart_items";
+DROP TABLE IF EXISTS "cart_items" CASCADE;
 
-DROP TABLE IF EXISTS "carts";
+DROP TABLE IF EXISTS "carts" CASCADE;
 
 DROP INDEX IF EXISTS unique_user_cart;

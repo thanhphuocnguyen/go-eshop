@@ -5,7 +5,9 @@ import (
 
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
+	"github.com/thanhphuocnguyen/go-eshop/config"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/mailer"
 )
 
 const (
@@ -19,11 +21,13 @@ type TaskProcessor interface {
 	Shutdown()
 }
 type RedisTaskProcessor struct {
-	server *asynq.Server
-	repo   repository.Repository
+	asynqServer *asynq.Server
+	repo        repository.Repository
+	mailer      mailer.EmailSender
+	cfg         config.Config
 }
 
-func NewRedisTaskProcessor(redisOtp asynq.RedisClientOpt, postgres repository.Repository) TaskProcessor {
+func NewRedisTaskProcessor(redisOtp asynq.RedisClientOpt, postgres repository.Repository, mailer mailer.EmailSender, cfg config.Config) TaskProcessor {
 	server := asynq.NewServer(redisOtp, asynq.Config{
 		Concurrency: 10,
 		Queues: map[string]int{
@@ -43,17 +47,18 @@ func NewRedisTaskProcessor(redisOtp asynq.RedisClientOpt, postgres repository.Re
 				Msg("error processing task")
 		}),
 	})
-	return &RedisTaskProcessor{server, postgres}
+	return &RedisTaskProcessor{server, postgres, mailer, cfg}
 }
 
 func (p *RedisTaskProcessor) Start() error {
 	mux := asynq.NewServeMux()
 	// register task handlers
 	mux.HandleFunc(OrderCreatedEmailTaskType, p.ProcessSendOrderCreatedEmail)
+	mux.HandleFunc(VerifyEmailTaskType, p.ProcessSendVerifyEmail)
 
-	return p.server.Start(mux)
+	return p.asynqServer.Start(mux)
 }
 
 func (p *RedisTaskProcessor) Shutdown() {
-	p.server.Shutdown()
+	p.asynqServer.Shutdown()
 }
