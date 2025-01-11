@@ -29,7 +29,8 @@ SELECT
     p.name as product_name, p.product_id as product_id,
     u_addr.street, u_addr.ward, u_addr.district, u_addr.city, 
     images.image_url,
-    pm.status as payment_status, pm.payment_id as payment_id, pm.amount as payment_amount, pm.payment_method as payment_method, pm.payment_gateway as payment_gateway, pm.refund_id as refund_id
+    pm.status as payment_status, pm.payment_id as payment_id, pm.amount as payment_amount, pm.payment_method as payment_method, pm.payment_gateway as payment_gateway, pm.refund_id as refund_id,
+    pv.variant_id
 FROM
     orders ord
 LEFT JOIN
@@ -38,6 +39,8 @@ LEFT JOIN
     order_items oit ON oit.order_id = ord.order_id
 LEFT JOIN
     products p ON oit.product_id = p.product_id
+LEFT JOIN 
+    product_variants AS pv ON oit.variant_id = p.variant_id
 LEFT JOIN 
     images ON p.product_id = images.product_id AND images.primary = true
 LEFT JOIN
@@ -87,6 +90,7 @@ WHERE
 INSERT INTO
     order_items (
         product_id,
+        variant_id,
         order_id,
         quantity,
         price
@@ -96,7 +100,8 @@ VALUES
         $1,
         $2,
         $3,
-        $4
+        $4,
+        $5
     )
 RETURNING *;
 

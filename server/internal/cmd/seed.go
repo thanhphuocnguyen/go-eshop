@@ -47,6 +47,11 @@ type Address struct {
 	UserID   int64  `json:"user_id"`
 }
 
+type Attribute struct {
+	Name   string   `json:"name"`
+	Values []string `json:"values"`
+}
+
 func ExecuteSeed(ctx context.Context) int {
 	var rootCmd = &cobra.Command{
 		Use:   "seed",
@@ -81,6 +86,10 @@ func ExecuteSeed(ctx context.Context) int {
 					defer waitGroup.Done()
 					seedCollections(ctx, pg)
 				}()
+				go func() {
+					defer waitGroup.Done()
+					seedAttributes(ctx, pg)
+				}()
 			} else {
 				switch args[0] {
 				case "products":
@@ -91,6 +100,8 @@ func ExecuteSeed(ctx context.Context) int {
 					seedUserAddresses(ctx, pg)
 				case "collections":
 					seedCollections(ctx, pg)
+				case "attributes":
+					seedAttributes(ctx, pg)
 				default:
 					log.Error().Msg("invalid seed command")
 				}
@@ -134,21 +145,21 @@ func seedProducts(ctx context.Context, repo repository.Repository) {
 		return
 	}
 
-	log.Info().Msgf("product count: %d", len(products))
+	log.Info().Int("product count: %d", len(products))
 	params := make([]repository.SeedProductsParams, len(products))
 	for i, product := range products {
 		price := util.GetPgNumericFromFloat(product.Price)
 		params[i] = repository.SeedProductsParams{
 			Name:        product.Name,
 			Description: product.Description,
-			Sku:         product.Sku,
+			Sku:         util.GetPgTypeText(product.Sku),
 			Stock:       product.Stock,
 			Price:       price,
 		}
 	}
 	_, err = repo.SeedProducts(ctx, params)
 	if err != nil {
-		log.Error().Err(err).Msgf("failed to create product: %v", err)
+		log.Error().Err(err).Msg("failed to create products")
 	}
 	log.Info().Msg("products created")
 }
@@ -250,8 +261,61 @@ func seedUsers(ctx context.Context, pg repository.Repository) {
 	log.Info().Msg("users created")
 }
 
-func seedUserAddresses(ctx context.Context, pg repository.Repository) {
-	countAddresses, err := pg.CountAddresses(ctx)
+func seedAttributes(ctx context.Context, repo repository.Repository) {
+	countAttributes, err := repo.CountAttributes(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to count attributes")
+		return
+	}
+
+	if countAttributes > 0 {
+		log.Info().Msg("attributes already seeded")
+		return
+	}
+
+	log.Info().Msg("parsing attributes json")
+	attributeData, err := os.ReadFile("seeds/attributes.json")
+	if err != nil {
+		return
+	}
+
+	var attributes []Attribute
+	log.Info().Msg("parsing attributes from data")
+	err = json.Unmarshal(attributeData, &attributes)
+	if err != nil {
+		return
+	}
+
+	log.Info().Msg("creating attributes")
+	log.Info().Int("attributes count: %d", len(attributes))
+	for _, attribute := range attributes {
+		attributeCreated, err := repo.CreateAttribute(ctx, attribute.Name)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to create attribute")
+			return
+		}
+
+		attributeValues := make([]repository.SeedAttributeValuesParams, len(attribute.Values))
+
+		log.Info().Int("attribute values count: %d", len(attribute.Values))
+		for i, value := range attribute.Values {
+			attributeValues[i] = repository.SeedAttributeValuesParams{
+				AttributeID:    attributeCreated.AttributeID,
+				AttributeValue: value,
+			}
+		}
+		_, err = repo.SeedAttributeValues(ctx, attributeValues)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to seed addresses")
+			return
+		}
+	}
+
+	log.Info().Msg("attributes and values created")
+}
+
+func seedUserAddresses(ctx context.Context, repo repository.Repository) {
+	countAddresses, err := repo.CountAddresses(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to count addresses")
 		return
@@ -276,19 +340,19 @@ func seedUserAddresses(ctx context.Context, pg repository.Repository) {
 	}
 
 	log.Info().Msg("creating addresses")
-	log.Info().Msgf("addresses count: %d", len(addresses))
+	log.Info().Int("addresses count: %d", len(addresses))
 	params := make([]repository.SeedAddressesParams, len(addresses))
-	for i, user := range addresses {
+	for i, address := range addresses {
 		params[i] = repository.SeedAddressesParams{
-			UserID:   user.UserID,
-			Phone:    user.Phone,
-			Street:   user.Street,
-			Ward:     util.GetPgTypeText(user.Ward),
-			District: user.District,
-			City:     user.City,
+			UserID:   address.UserID,
+			Phone:    address.Phone,
+			Street:   address.Street,
+			Ward:     util.GetPgTypeText(address.Ward),
+			District: address.District,
+			City:     address.City,
 		}
 	}
-	_, err = pg.SeedAddresses(ctx, params)
+	_, err = repo.SeedAddresses(ctx, params)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to seed addresses")
 		return

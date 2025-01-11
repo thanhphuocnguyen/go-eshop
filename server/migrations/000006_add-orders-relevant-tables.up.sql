@@ -17,9 +17,17 @@ CREATE TABLE
     "order_items" (
         "order_item_id" bigserial PRIMARY KEY,
         "product_id" bigint NOT NULL REFERENCES "products" ("product_id"),
+        "variant_id" bigint REFERENCES "product_variants" ("variant_id"),
         "order_id" bigint NOT NULL REFERENCES "orders" ("order_id") ON DELETE CASCADE,
         "quantity" int NOT NULL,
-        "price" DECIMAL(10, 2) NOT NULL
+        "price" DECIMAL(10, 2) NOT NULL,
+        "created_at" timestamptz NOT NULL DEFAULT now (),
+        CHECK ("quantity" > 0),
+        CHECK ("price" > 0),
+        CHECK (
+            "product_id" IS NOT NULL
+            OR "variant_id" IS NOT NULL
+        )
     );
 
 CREATE INDEX ON "orders" ("status");

@@ -35,6 +35,31 @@ CREATE TABLE
         "updated_at" timestamptz NOT NULL DEFAULT now ()
     );
 
+CREATE TABLE
+    verify_emails (
+        id SERIAL PRIMARY KEY,
+        user_id BIGINT NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
+        email VARCHAR(255) NOT NULL,
+        verify_code VARCHAR(255) NOT NULL,
+        is_used BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at timestamptz NOT NULL DEFAULT (now ()),
+        expired_at timestamptz NOT NULL DEFAULT (now () + interval '1 day')
+    );
+
+CREATE TABLE
+    "sessions" (
+        "session_id" uuid PRIMARY KEY,
+        "user_id" bigint NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
+        "refresh_token" varchar NOT NULL,
+        "user_agent" varchar NOT NULL,
+        "client_ip" varchar NOT NULL,
+        "blocked" boolean NOT NULL DEFAULT false,
+        "expired_at" timestamptz NOT NULL,
+        "created_at" timestamptz NOT NULL DEFAULT now ()
+    );
+
+CREATE INDEX ON "sessions" ("user_id");
+
 CREATE INDEX ON "user_addresses" ("user_id", "default");
 
 CREATE INDEX "idx_user_addresses_user_id" ON "user_addresses" ("user_id");

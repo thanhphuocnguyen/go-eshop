@@ -14,24 +14,31 @@ import (
 
 const addProductToCart = `-- name: AddProductToCart :one
 INSERT INTO cart_items 
-    (cart_id, product_id, quantity) 
+    (cart_id, product_id, variant_id, quantity) 
 VALUES 
-    ($1, $2, $3) 
-RETURNING cart_item_id, product_id, cart_id, quantity, created_at
+    ($1, $2, $3, $4) 
+RETURNING cart_item_id, product_id, variant_id, cart_id, quantity, created_at
 `
 
 type AddProductToCartParams struct {
-	CartID    int32 `json:"cart_id"`
-	ProductID int64 `json:"product_id"`
-	Quantity  int16 `json:"quantity"`
+	CartID    int32       `json:"cart_id"`
+	ProductID int64       `json:"product_id"`
+	VariantID pgtype.Int8 `json:"variant_id"`
+	Quantity  int16       `json:"quantity"`
 }
 
 func (q *Queries) AddProductToCart(ctx context.Context, arg AddProductToCartParams) (CartItem, error) {
-	row := q.db.QueryRow(ctx, addProductToCart, arg.CartID, arg.ProductID, arg.Quantity)
+	row := q.db.QueryRow(ctx, addProductToCart,
+		arg.CartID,
+		arg.ProductID,
+		arg.VariantID,
+		arg.Quantity,
+	)
 	var i CartItem
 	err := row.Scan(
 		&i.CartItemID,
 		&i.ProductID,
+		&i.VariantID,
 		&i.CartID,
 		&i.Quantity,
 		&i.CreatedAt,
@@ -60,7 +67,7 @@ func (q *Queries) CountCartItem(ctx context.Context, cartID int32) (int64, error
 }
 
 const getCartItem = `-- name: GetCartItem :one
-SELECT cart_item_id, product_id, cart_id, quantity, created_at FROM cart_items WHERE cart_item_id = $1
+SELECT cart_item_id, product_id, variant_id, cart_id, quantity, created_at FROM cart_items WHERE cart_item_id = $1
 `
 
 func (q *Queries) GetCartItem(ctx context.Context, cartItemID int32) (CartItem, error) {
@@ -69,6 +76,7 @@ func (q *Queries) GetCartItem(ctx context.Context, cartItemID int32) (CartItem, 
 	err := row.Scan(
 		&i.CartItemID,
 		&i.ProductID,
+		&i.VariantID,
 		&i.CartID,
 		&i.Quantity,
 		&i.CreatedAt,
@@ -77,7 +85,7 @@ func (q *Queries) GetCartItem(ctx context.Context, cartItemID int32) (CartItem, 
 }
 
 const getCartItemByProductID = `-- name: GetCartItemByProductID :one
-SELECT cart_item_id, product_id, cart_id, quantity, created_at FROM cart_items WHERE product_id = $1
+SELECT cart_item_id, product_id, variant_id, cart_id, quantity, created_at FROM cart_items WHERE product_id = $1
 `
 
 func (q *Queries) GetCartItemByProductID(ctx context.Context, productID int64) (CartItem, error) {
@@ -86,6 +94,7 @@ func (q *Queries) GetCartItemByProductID(ctx context.Context, productID int64) (
 	err := row.Scan(
 		&i.CartItemID,
 		&i.ProductID,
+		&i.VariantID,
 		&i.CartID,
 		&i.Quantity,
 		&i.CreatedAt,
@@ -94,9 +103,13 @@ func (q *Queries) GetCartItemByProductID(ctx context.Context, productID int64) (
 }
 
 const getCartItemWithProduct = `-- name: GetCartItemWithProduct :one
-SELECT cart_items.cart_item_id, cart_items.product_id, cart_items.cart_id, cart_items.quantity, cart_items.created_at, p.name AS product_name, p.price AS product_price, p.stock AS product_stock, img.image_url AS image_url
+SELECT cart_items.cart_item_id, cart_items.product_id, cart_items.variant_id, cart_items.cart_id, cart_items.quantity, cart_items.created_at, p.name AS product_name, 
+    p.price AS product_price, p.stock AS product_stock,
+    pv.variant_price, pv.variant_stock,
+    img.image_url
 FROM cart_items
 JOIN products AS p ON cart_items.product_id = p.product_id
+JOIN product_variants AS pv ON cart_items.variant_id = p.variant_id
 LEFT JOIN images as img ON p.product_id = img.product_id AND img.primary = true
 WHERE cart_items.cart_item_id = $1
 `
@@ -104,12 +117,15 @@ WHERE cart_items.cart_item_id = $1
 type GetCartItemWithProductRow struct {
 	CartItemID   int32          `json:"cart_item_id"`
 	ProductID    int64          `json:"product_id"`
+	VariantID    pgtype.Int8    `json:"variant_id"`
 	CartID       int32          `json:"cart_id"`
 	Quantity     int16          `json:"quantity"`
 	CreatedAt    time.Time      `json:"created_at"`
 	ProductName  string         `json:"product_name"`
 	ProductPrice pgtype.Numeric `json:"product_price"`
 	ProductStock int32          `json:"product_stock"`
+	VariantPrice pgtype.Numeric `json:"variant_price"`
+	VariantStock int32          `json:"variant_stock"`
 	ImageUrl     pgtype.Text    `json:"image_url"`
 }
 
@@ -119,19 +135,22 @@ func (q *Queries) GetCartItemWithProduct(ctx context.Context, cartItemID int32) 
 	err := row.Scan(
 		&i.CartItemID,
 		&i.ProductID,
+		&i.VariantID,
 		&i.CartID,
 		&i.Quantity,
 		&i.CreatedAt,
 		&i.ProductName,
 		&i.ProductPrice,
 		&i.ProductStock,
+		&i.VariantPrice,
+		&i.VariantStock,
 		&i.ImageUrl,
 	)
 	return i, err
 }
 
 const getCartItems = `-- name: GetCartItems :many
-SELECT cart_items.cart_item_id, cart_items.product_id, cart_items.cart_id, cart_items.quantity, cart_items.created_at, p.name AS product_name, p.price AS product_price, p.stock AS product_stock, img.image_url AS image_url
+SELECT cart_items.cart_item_id, cart_items.product_id, cart_items.variant_id, cart_items.cart_id, cart_items.quantity, cart_items.created_at, p.name AS product_name, p.price AS product_price, p.stock AS product_stock, img.image_url AS image_url
 FROM cart_items
 JOIN products AS p ON cart_items.product_id = p.product_id
 LEFT JOIN images as img ON p.product_id = img.product_id AND img.primary = true
@@ -141,6 +160,7 @@ WHERE cart_id = $1
 type GetCartItemsRow struct {
 	CartItemID   int32          `json:"cart_item_id"`
 	ProductID    int64          `json:"product_id"`
+	VariantID    pgtype.Int8    `json:"variant_id"`
 	CartID       int32          `json:"cart_id"`
 	Quantity     int16          `json:"quantity"`
 	CreatedAt    time.Time      `json:"created_at"`
@@ -162,6 +182,7 @@ func (q *Queries) GetCartItems(ctx context.Context, cartID int32) ([]GetCartItem
 		if err := rows.Scan(
 			&i.CartItemID,
 			&i.ProductID,
+			&i.VariantID,
 			&i.CartID,
 			&i.Quantity,
 			&i.CreatedAt,
@@ -181,7 +202,7 @@ func (q *Queries) GetCartItems(ctx context.Context, cartID int32) ([]GetCartItem
 }
 
 const updateCartItemQuantity = `-- name: UpdateCartItemQuantity :exec
-UPDATE cart_items SET quantity = $1 WHERE cart_item_id = $2 RETURNING cart_item_id, product_id, cart_id, quantity, created_at
+UPDATE cart_items SET quantity = $1 WHERE cart_item_id = $2 RETURNING cart_item_id, product_id, variant_id, cart_id, quantity, created_at
 `
 
 type UpdateCartItemQuantityParams struct {

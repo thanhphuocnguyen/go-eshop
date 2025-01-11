@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Color",
+    "values": ["Red", "Blue", "Green", "Black", "White"]
+  },
+  {
+    "name": "Size",
+    "values": ["Small", "Medium", "Large", "Extra Large"]
+  },
+  {
+    "name": "Material",
+    "values": ["Cotton", "Polyester", "Wool", "Silk"]
+  },
+  {
+    "name": "Brand",
+    "values": ["Brand A", "Brand B", "Brand C", "Brand D"]
+  },
+  {
+    "name": "Warranty",
+    "values": ["6 Months", "1 Year", "2 Years"]
+  }
+]

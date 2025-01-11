@@ -329,14 +329,14 @@ func (ns NullUserRole) Value() (driver.Value, error) {
 }
 
 type Attribute struct {
-	AttributeID int32  `json:"attribute_id"`
-	Name        string `json:"name"`
+	AttributeID   int32  `json:"attribute_id"`
+	AttributeName string `json:"attribute_name"`
 }
 
 type AttributeValue struct {
 	AttributeValueID int32  `json:"attribute_value_id"`
 	AttributeID      int32  `json:"attribute_id"`
-	Value            string `json:"value"`
+	AttributeValue   string `json:"attribute_value"`
 }
 
 type Cart struct {
@@ -347,11 +347,12 @@ type Cart struct {
 }
 
 type CartItem struct {
-	CartItemID int32     `json:"cart_item_id"`
-	ProductID  int64     `json:"product_id"`
-	CartID     int32     `json:"cart_id"`
-	Quantity   int16     `json:"quantity"`
-	CreatedAt  time.Time `json:"created_at"`
+	CartItemID int32       `json:"cart_item_id"`
+	ProductID  int64       `json:"product_id"`
+	VariantID  pgtype.Int8 `json:"variant_id"`
+	CartID     int32       `json:"cart_id"`
+	Quantity   int16       `json:"quantity"`
+	CreatedAt  time.Time   `json:"created_at"`
 }
 
 type Category struct {
@@ -398,9 +399,11 @@ type Order struct {
 type OrderItem struct {
 	OrderItemID int64          `json:"order_item_id"`
 	ProductID   int64          `json:"product_id"`
+	VariantID   pgtype.Int8    `json:"variant_id"`
 	OrderID     int64          `json:"order_id"`
 	Quantity    int32          `json:"quantity"`
 	Price       pgtype.Numeric `json:"price"`
+	CreatedAt   time.Time      `json:"created_at"`
 }
 
 type Payment struct {
@@ -419,7 +422,7 @@ type Product struct {
 	ProductID   int64          `json:"product_id"`
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
-	Sku         string         `json:"sku"`
+	Sku         pgtype.Text    `json:"sku"`
 	Stock       int32          `json:"stock"`
 	Discount    int32          `json:"discount"`
 	Archived    bool           `json:"archived"`
@@ -429,14 +432,14 @@ type Product struct {
 }
 
 type ProductVariant struct {
-	VariantID int64            `json:"variant_id"`
-	ProductID int64            `json:"product_id"`
-	Sku       string           `json:"sku"`
-	Price     pgtype.Numeric   `json:"price"`
-	Discount  pgtype.Int4      `json:"discount"`
-	Stock     pgtype.Int8      `json:"stock"`
-	CreatedAt pgtype.Timestamp `json:"created_at"`
-	UpdatedAt pgtype.Timestamp `json:"updated_at"`
+	VariantID    int64          `json:"variant_id"`
+	ProductID    int64          `json:"product_id"`
+	VariantName  string         `json:"variant_name"`
+	VariantSku   pgtype.Text    `json:"variant_sku"`
+	VariantPrice pgtype.Numeric `json:"variant_price"`
+	VariantStock int32          `json:"variant_stock"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
 }
 
 type Session struct {
@@ -492,9 +495,9 @@ type UserPaymentInfo struct {
 }
 
 type VariantAttribute struct {
-	VariantAttributeID int32 `json:"variant_attribute_id"`
-	VariantID          int32 `json:"variant_id"`
-	ValueID            int32 `json:"value_id"`
+	VariantAttributeID int32       `json:"variant_attribute_id"`
+	VariantID          pgtype.Int8 `json:"variant_id"`
+	AttributeValueID   int32       `json:"attribute_value_id"`
 }
 
 type VerifyEmail struct {

@@ -31,12 +31,18 @@ WHERE
 -- name: GetProductDetail :many
 SELECT
     sqlc.embed(products),
-    img.image_id AS image_id,
-    img.image_url AS image_url,
-    img.primary AS image_primary
+    img.image_id AS image_id, img.image_url AS image_url, img.primary AS image_primary,
+    pv.variant_id AS variant_id, pv.variant_name, pv.variant_sku, pv.variant_price, pv.variant_stock,
+    a.attribute_id AS attribute_id, a.attribute_name,
+    va.variant_attribute_id AS variant_attribute_id, va.attribute_value_id AS attribute_value_id,
+    av.attribute_value_id AS attribute_value_id, av.attribute_value
 FROM
     products
 LEFT JOIN images AS img ON products.product_id = img.product_id
+LEFT JOIN product_variants AS pv ON products.product_id = pv.product_id
+LEFT JOIN variant_attributes AS va ON pv.variant_id = va.variant_id
+LEFT JOIN attribute_values AS av ON va.attribute_value_id = av.attribute_value_id
+LEFT JOIN attributes AS a ON av.attribute_id = a.attribute_id
 WHERE
     products.product_id = $1 AND
     archived = COALESCE(sqlc.narg('archived'), false)
@@ -45,20 +51,23 @@ ORDER BY
 
 -- name: ListProducts :many
 SELECT
-    products.*,
-    img.image_id AS image_id,
-    img.image_url AS image_url
+    p.*,
+    img.image_id AS image_id, img.image_url AS image_url,
+    COUNT(pv.variant_id) AS variant_count
 FROM
-    products
-LEFT JOIN images AS img ON products.product_id = img.product_id AND img.primary = TRUE
+    products as p
+LEFT JOIN images AS img ON p.product_id = img.product_id AND img.primary = TRUE
+LEFT JOIN product_variants AS pv ON p.product_id = pv.product_id
 WHERE
     archived = COALESCE(sqlc.narg('archived'), archived) AND
     name ILIKE COALESCE(sqlc.narg('name'), name) AND
     sku ILIKE COALESCE(sqlc.narg('sku'), sku)
 ORDER BY
-    products.product_id
-LIMIT $1
-OFFSET $2;
+    p.product_id
+LIMIT 
+    $1
+OFFSET
+    $2;
 
 -- name: CountProducts :one
 SELECT
@@ -116,9 +125,11 @@ SELECT
 FROM
     products
 LEFT JOIN images AS img ON products.product_id = img.product_id AND img.primary = TRUE
+LEFT JOIN product_variants AS pv ON products.product_id = pv.product_id
 WHERE
     products.product_id = $1 AND
-    archived = COALESCE(sqlc.narg('archived'), false);
+    archived = COALESCE(sqlc.narg('archived'), false) AND
+    pv.variant_id = COALESCE(sqlc.narg('variant_id'), pv.variant_id);
 
 -- name: SeedProducts :copyfrom
 INSERT INTO

@@ -146,7 +146,7 @@ type GetCollectionByNameRow struct {
 	ProductID_2   int64          `json:"product_id_2"`
 	Name_2        string         `json:"name_2"`
 	Description_2 string         `json:"description_2"`
-	Sku           string         `json:"sku"`
+	Sku           pgtype.Text    `json:"sku"`
 	Stock         int32          `json:"stock"`
 	Discount      int32          `json:"discount"`
 	Archived      bool           `json:"archived"`

@@ -9,6 +9,39 @@ import (
 	"context"
 )
 
+// iteratorForAddVariantAttributes implements pgx.CopyFromSource.
+type iteratorForAddVariantAttributes struct {
+	rows                 []AddVariantAttributesParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForAddVariantAttributes) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForAddVariantAttributes) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].VariantID,
+		r.rows[0].AttributeValueID,
+	}, nil
+}
+
+func (r iteratorForAddVariantAttributes) Err() error {
+	return nil
+}
+
+func (q *Queries) AddVariantAttributes(ctx context.Context, arg []AddVariantAttributesParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"variant_attributes"}, []string{"variant_id", "attribute_value_id"}, &iteratorForAddVariantAttributes{rows: arg})
+}
+
 // iteratorForSeedAddresses implements pgx.CopyFromSource.
 type iteratorForSeedAddresses struct {
 	rows                 []SeedAddressesParams
@@ -45,6 +78,71 @@ func (r iteratorForSeedAddresses) Err() error {
 
 func (q *Queries) SeedAddresses(ctx context.Context, arg []SeedAddressesParams) (int64, error) {
 	return q.db.CopyFrom(ctx, []string{"user_addresses"}, []string{"user_id", "phone", "street", "ward", "district", "city", "default"}, &iteratorForSeedAddresses{rows: arg})
+}
+
+// iteratorForSeedAttributeValues implements pgx.CopyFromSource.
+type iteratorForSeedAttributeValues struct {
+	rows                 []SeedAttributeValuesParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForSeedAttributeValues) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForSeedAttributeValues) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].AttributeID,
+		r.rows[0].AttributeValue,
+	}, nil
+}
+
+func (r iteratorForSeedAttributeValues) Err() error {
+	return nil
+}
+
+func (q *Queries) SeedAttributeValues(ctx context.Context, arg []SeedAttributeValuesParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"attribute_values"}, []string{"attribute_id", "attribute_value"}, &iteratorForSeedAttributeValues{rows: arg})
+}
+
+// iteratorForSeedAttributes implements pgx.CopyFromSource.
+type iteratorForSeedAttributes struct {
+	rows                 []string
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForSeedAttributes) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForSeedAttributes) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0],
+	}, nil
+}
+
+func (r iteratorForSeedAttributes) Err() error {
+	return nil
+}
+
+func (q *Queries) SeedAttributes(ctx context.Context, attributeName []string) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"attributes"}, []string{"attribute_name"}, &iteratorForSeedAttributes{rows: attributeName})
 }
 
 // iteratorForSeedCollections implements pgx.CopyFromSource.

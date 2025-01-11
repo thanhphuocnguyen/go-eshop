@@ -104,7 +104,7 @@ func (sv *Server) initializeRouter() {
 			userAddress.DELETE(":id", sv.removeAddress)
 		}
 
-		product := v1.Group("/product")
+		product := v1.Group("product")
 		{
 			product.GET(":id", sv.getProductDetail)
 			product.GET("list", sv.getProducts)
@@ -122,6 +122,22 @@ func (sv *Server) initializeRouter() {
 			productAuthRoutes.PUT(":id/image/:image_id/primary", sv.setImagesPrimary)
 			productAuthRoutes.DELETE(":id/image/:image_id", sv.removeProductImage)
 		}
+
+		variant := v1.Group("variant").
+			Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin, repository.UserRoleModerator))
+		{
+			variant.POST("", sv.createVariant)
+			variant.GET(":variant_id", sv.getVariant)
+			variant.GET("list", sv.getVariants)
+			variant.PUT(":variant_id", sv.updateVariant)
+			variant.DELETE(":variant_id", sv.deleteVariant)
+		}
+		// TODO: implement attribute routes
+		// attribute := v1.Group("/attribute")
+		// {
+		// 	attribute.GET("list", sv.getAttributes)
+		// 	attribute.GET(":id", sv.getAttributeByID)
+		// }
 
 		cart := v1.Group("/cart")
 		{

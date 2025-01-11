@@ -18,6 +18,8 @@ type Repository interface {
 	SetPrimaryImageTx(ctx context.Context, arg SetPrimaryImageTxParams) error
 	CancelOrderTx(ctx context.Context, params CancelOrderTxArgs) (Order, error)
 	RefundOrderTx(ctx context.Context, params RefundOrderTxArgs) error
+	QueryRaw(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error)
+	CreateVariantTx(ctx context.Context, arg CreateVariantTxParam) (CreateVariantTxResult, error)
 	Close()
 }
 
@@ -100,4 +102,7 @@ func (store *pgRepo) execTx(ctx context.Context, fn func(*Queries) error) error 
 	}
 
 	return tx.Commit(ctx)
+}
+func (store *pgRepo) QueryRaw(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error) {
+	return store.DbPool.Query(ctx, query, args...)
 }

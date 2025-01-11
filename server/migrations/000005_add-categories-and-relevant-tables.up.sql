@@ -8,8 +8,8 @@ CREATE TABLE
             AND "sort_order" <= 32767
         ),
         "published" bool NOT NULL DEFAULT true,
-        "created_at" timestamptz NOT NULL DEFAULT now(),
-        "updated_at" timestamptz NOT NULL DEFAULT now()
+        "created_at" timestamptz NOT NULL DEFAULT now (),
+        "updated_at" timestamptz NOT NULL DEFAULT now ()
     );
 
 CREATE TABLE

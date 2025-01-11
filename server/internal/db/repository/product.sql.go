@@ -76,7 +76,7 @@ RETURNING product_id, name, description, sku, stock, discount, archived, price, 
 type CreateProductParams struct {
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
-	Sku         string         `json:"sku"`
+	Sku         pgtype.Text    `json:"sku"`
 	Stock       int32          `json:"stock"`
 	Price       pgtype.Numeric `json:"price"`
 	Discount    int32          `json:"discount"`
@@ -155,12 +155,18 @@ func (q *Queries) GetProduct(ctx context.Context, arg GetProductParams) (Product
 const getProductDetail = `-- name: GetProductDetail :many
 SELECT
     products.product_id, products.name, products.description, products.sku, products.stock, products.discount, products.archived, products.price, products.updated_at, products.created_at,
-    img.image_id AS image_id,
-    img.image_url AS image_url,
-    img.primary AS image_primary
+    img.image_id AS image_id, img.image_url AS image_url, img.primary AS image_primary,
+    pv.variant_id AS variant_id, pv.variant_name, pv.variant_sku, pv.variant_price, pv.variant_stock,
+    a.attribute_id AS attribute_id, a.attribute_name,
+    va.variant_attribute_id AS variant_attribute_id, va.attribute_value_id AS attribute_value_id,
+    av.attribute_value_id AS attribute_value_id, av.attribute_value
 FROM
     products
 LEFT JOIN images AS img ON products.product_id = img.product_id
+LEFT JOIN product_variants AS pv ON products.product_id = pv.product_id
+LEFT JOIN variant_attributes AS va ON pv.variant_id = va.variant_id
+LEFT JOIN attribute_values AS av ON va.attribute_value_id = av.attribute_value_id
+LEFT JOIN attributes AS a ON av.attribute_id = a.attribute_id
 WHERE
     products.product_id = $1 AND
     archived = COALESCE($2, false)
@@ -174,10 +180,21 @@ type GetProductDetailParams struct {
 }
 
 type GetProductDetailRow struct {
-	Product      Product     `json:"product"`
-	ImageID      pgtype.Int4 `json:"image_id"`
-	ImageUrl     pgtype.Text `json:"image_url"`
-	ImagePrimary pgtype.Bool `json:"image_primary"`
+	Product            Product        `json:"product"`
+	ImageID            pgtype.Int4    `json:"image_id"`
+	ImageUrl           pgtype.Text    `json:"image_url"`
+	ImagePrimary       pgtype.Bool    `json:"image_primary"`
+	VariantID          pgtype.Int8    `json:"variant_id"`
+	VariantName        pgtype.Text    `json:"variant_name"`
+	VariantSku         pgtype.Text    `json:"variant_sku"`
+	VariantPrice       pgtype.Numeric `json:"variant_price"`
+	VariantStock       pgtype.Int4    `json:"variant_stock"`
+	AttributeID        pgtype.Int4    `json:"attribute_id"`
+	AttributeName      pgtype.Text    `json:"attribute_name"`
+	VariantAttributeID pgtype.Int4    `json:"variant_attribute_id"`
+	AttributeValueID   pgtype.Int4    `json:"attribute_value_id"`
+	AttributeValueID_2 pgtype.Int4    `json:"attribute_value_id_2"`
+	AttributeValue     pgtype.Text    `json:"attribute_value"`
 }
 
 func (q *Queries) GetProductDetail(ctx context.Context, arg GetProductDetailParams) ([]GetProductDetailRow, error) {
@@ -203,6 +220,17 @@ func (q *Queries) GetProductDetail(ctx context.Context, arg GetProductDetailPara
 			&i.ImageID,
 			&i.ImageUrl,
 			&i.ImagePrimary,
+			&i.VariantID,
+			&i.VariantName,
+			&i.VariantSku,
+			&i.VariantPrice,
+			&i.VariantStock,
+			&i.AttributeID,
+			&i.AttributeName,
+			&i.VariantAttributeID,
+			&i.AttributeValueID,
+			&i.AttributeValueID_2,
+			&i.AttributeValue,
 		); err != nil {
 			return nil, err
 		}
@@ -222,21 +250,24 @@ SELECT
 FROM
     products
 LEFT JOIN images AS img ON products.product_id = img.product_id AND img.primary = TRUE
+LEFT JOIN product_variants AS pv ON products.product_id = pv.product_id
 WHERE
     products.product_id = $1 AND
-    archived = COALESCE($2, false)
+    archived = COALESCE($2, false) AND
+    pv.variant_id = COALESCE($3, pv.variant_id)
 `
 
 type GetProductWithImageParams struct {
 	ProductID int64       `json:"product_id"`
 	Archived  pgtype.Bool `json:"archived"`
+	VariantID pgtype.Int8 `json:"variant_id"`
 }
 
 type GetProductWithImageRow struct {
 	ProductID   int64          `json:"product_id"`
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
-	Sku         string         `json:"sku"`
+	Sku         pgtype.Text    `json:"sku"`
 	Stock       int32          `json:"stock"`
 	Discount    int32          `json:"discount"`
 	Archived    bool           `json:"archived"`
@@ -248,7 +279,7 @@ type GetProductWithImageRow struct {
 }
 
 func (q *Queries) GetProductWithImage(ctx context.Context, arg GetProductWithImageParams) (GetProductWithImageRow, error) {
-	row := q.db.QueryRow(ctx, getProductWithImage, arg.ProductID, arg.Archived)
+	row := q.db.QueryRow(ctx, getProductWithImage, arg.ProductID, arg.Archived, arg.VariantID)
 	var i GetProductWithImageRow
 	err := row.Scan(
 		&i.ProductID,
@@ -269,20 +300,23 @@ func (q *Queries) GetProductWithImage(ctx context.Context, arg GetProductWithIma
 
 const listProducts = `-- name: ListProducts :many
 SELECT
-    products.product_id, products.name, products.description, products.sku, products.stock, products.discount, products.archived, products.price, products.updated_at, products.created_at,
-    img.image_id AS image_id,
-    img.image_url AS image_url
+    p.product_id, p.name, p.description, p.sku, p.stock, p.discount, p.archived, p.price, p.updated_at, p.created_at,
+    img.image_id AS image_id, img.image_url AS image_url,
+    COUNT(pv.variant_id) AS variant_count
 FROM
-    products
-LEFT JOIN images AS img ON products.product_id = img.product_id AND img.primary = TRUE
+    products as p
+LEFT JOIN images AS img ON p.product_id = img.product_id AND img.primary = TRUE
+LEFT JOIN product_variants AS pv ON p.product_id = pv.product_id
 WHERE
     archived = COALESCE($3, archived) AND
     name ILIKE COALESCE($4, name) AND
     sku ILIKE COALESCE($5, sku)
 ORDER BY
-    products.product_id
-LIMIT $1
-OFFSET $2
+    p.product_id
+LIMIT 
+    $1
+OFFSET
+    $2
 `
 
 type ListProductsParams struct {
@@ -294,18 +328,19 @@ type ListProductsParams struct {
 }
 
 type ListProductsRow struct {
-	ProductID   int64          `json:"product_id"`
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	Sku         string         `json:"sku"`
-	Stock       int32          `json:"stock"`
-	Discount    int32          `json:"discount"`
-	Archived    bool           `json:"archived"`
-	Price       pgtype.Numeric `json:"price"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-	CreatedAt   time.Time      `json:"created_at"`
-	ImageID     pgtype.Int4    `json:"image_id"`
-	ImageUrl    pgtype.Text    `json:"image_url"`
+	ProductID    int64          `json:"product_id"`
+	Name         string         `json:"name"`
+	Description  string         `json:"description"`
+	Sku          pgtype.Text    `json:"sku"`
+	Stock        int32          `json:"stock"`
+	Discount     int32          `json:"discount"`
+	Archived     bool           `json:"archived"`
+	Price        pgtype.Numeric `json:"price"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+	CreatedAt    time.Time      `json:"created_at"`
+	ImageID      pgtype.Int4    `json:"image_id"`
+	ImageUrl     pgtype.Text    `json:"image_url"`
+	VariantCount int64          `json:"variant_count"`
 }
 
 func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]ListProductsRow, error) {
@@ -336,6 +371,7 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]L
 			&i.CreatedAt,
 			&i.ImageID,
 			&i.ImageUrl,
+			&i.VariantCount,
 		); err != nil {
 			return nil, err
 		}
@@ -350,7 +386,7 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]L
 type SeedProductsParams struct {
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
-	Sku         string         `json:"sku"`
+	Sku         pgtype.Text    `json:"sku"`
 	Stock       int32          `json:"stock"`
 	Price       pgtype.Numeric `json:"price"`
 	Discount    int32          `json:"discount"`
