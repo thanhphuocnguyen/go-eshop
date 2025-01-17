@@ -30,7 +30,7 @@ type getProductImageParams struct {
 // @Failure 500 {object} gin.H
 // @Router /products/{product_id}/upload-image [post]
 func (sv *Server) uploadProductImage(c *gin.Context) {
-	var param getProductParams
+	var param productParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
@@ -109,7 +109,7 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /products/{product_id}/images [get]
 func (sv *Server) getProductImages(c *gin.Context) {
-	var param getProductParams
+	var param productParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
@@ -147,7 +147,7 @@ func (sv *Server) setImagesPrimary(c *gin.Context) {
 		return
 	}
 
-	product, err := sv.repo.GetProduct(c, repository.GetProductParams{
+	product, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{
 		ProductID: params.ID,
 	})
 	if err != nil {
@@ -204,7 +204,7 @@ func (sv *Server) removeProductImage(c *gin.Context) {
 		return
 	}
 
-	var param getProductParams
+	var param productParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
@@ -216,7 +216,7 @@ func (sv *Server) removeProductImage(c *gin.Context) {
 		return
 	}
 
-	product, err := sv.repo.GetProduct(c, repository.GetProductParams{
+	product, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{
 		ProductID: param.ID,
 	})
 

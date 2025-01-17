@@ -18,3 +18,7 @@ func RandomString(n int) string {
 	}
 	return string(b)
 }
+
+func GenerateSKU() string {
+	return RandomString(10)
+}

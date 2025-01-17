@@ -47,9 +47,13 @@ type Address struct {
 	UserID   int64  `json:"user_id"`
 }
 
+type AttributeValue struct {
+	Value string  `json:"value"`
+	Color *string `json:"color,omitempty"`
+}
 type Attribute struct {
-	Name   string   `json:"name"`
-	Values []string `json:"values"`
+	Name   string           `json:"name"`
+	Values []AttributeValue `json:"values"`
 }
 
 func ExecuteSeed(ctx context.Context) int {
@@ -72,7 +76,7 @@ func ExecuteSeed(ctx context.Context) int {
 			if len(args) == 0 {
 				var waitGroup sync.WaitGroup
 				defer waitGroup.Wait()
-				waitGroup.Add(3)
+				waitGroup.Add(4)
 				go func() {
 					defer waitGroup.Done()
 					seedProducts(ctx, pg)
@@ -146,10 +150,10 @@ func seedProducts(ctx context.Context, repo repository.Repository) {
 	}
 
 	log.Info().Int("product count: %d", len(products))
-	params := make([]repository.SeedProductsParams, len(products))
+	params := make([]repository.AddBulkProductsParams, len(products))
 	for i, product := range products {
 		price := util.GetPgNumericFromFloat(product.Price)
-		params[i] = repository.SeedProductsParams{
+		params[i] = repository.AddBulkProductsParams{
 			Name:        product.Name,
 			Description: product.Description,
 			Sku:         util.GetPgTypeText(product.Sku),
@@ -157,7 +161,7 @@ func seedProducts(ctx context.Context, repo repository.Repository) {
 			Price:       price,
 		}
 	}
-	_, err = repo.SeedProducts(ctx, params)
+	_, err = repo.AddBulkProducts(ctx, params)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create products")
 	}
@@ -230,7 +234,7 @@ func seedUsers(ctx context.Context, pg repository.Repository) {
 	}
 
 	var users []User
-	log.Info().Msg("parsing user from data")
+	log.Info().Msg("parsing users from data")
 	err = json.Unmarshal(userData, &users)
 	if err != nil {
 		return
@@ -240,7 +244,6 @@ func seedUsers(ctx context.Context, pg repository.Repository) {
 	params := make([]repository.SeedUsersParams, len(users))
 	for i, user := range users {
 		hashed, _ := auth.HashPassword(user.Password)
-
 		params[i] = repository.SeedUsersParams{
 			Email:          user.Email,
 			Username:       user.Username,
@@ -249,14 +252,15 @@ func seedUsers(ctx context.Context, pg repository.Repository) {
 			Fullname:       user.FullName,
 			Role:           repository.UserRoleUser,
 		}
+
 		if params[i].Username == "admin" {
 			params[i].Role = repository.UserRoleAdmin
 		}
-
 	}
+
 	_, err = pg.SeedUsers(ctx, params)
 	if err != nil {
-		log.Error().Err(err).Msgf("failed to create user: %v", err)
+		log.Error().Err(err).Msg("failed to create users")
 	}
 	log.Info().Msg("users created")
 }
@@ -276,6 +280,7 @@ func seedAttributes(ctx context.Context, repo repository.Repository) {
 	log.Info().Msg("parsing attributes json")
 	attributeData, err := os.ReadFile("seeds/attributes.json")
 	if err != nil {
+		log.Error().Err(err).Msg("failed to read attribute data")
 		return
 	}
 
@@ -283,6 +288,7 @@ func seedAttributes(ctx context.Context, repo repository.Repository) {
 	log.Info().Msg("parsing attributes from data")
 	err = json.Unmarshal(attributeData, &attributes)
 	if err != nil {
+		log.Error().Err(err).Msg("failed to parse attribute data")
 		return
 	}
 
@@ -295,16 +301,19 @@ func seedAttributes(ctx context.Context, repo repository.Repository) {
 			return
 		}
 
-		attributeValues := make([]repository.SeedAttributeValuesParams, len(attribute.Values))
+		attributeValues := make([]repository.CreateBulkAttributeValuesParams, len(attribute.Values))
 
 		log.Info().Int("attribute values count: %d", len(attribute.Values))
 		for i, value := range attribute.Values {
-			attributeValues[i] = repository.SeedAttributeValuesParams{
+			attributeValues[i] = repository.CreateBulkAttributeValuesParams{
 				AttributeID:    attributeCreated.AttributeID,
-				AttributeValue: value,
+				AttributeValue: value.Value,
+			}
+			if value.Color != nil {
+				attributeValues[i].Color = util.GetPgTypeText(*value.Color)
 			}
 		}
-		_, err = repo.SeedAttributeValues(ctx, attributeValues)
+		_, err = repo.CreateBulkAttributeValues(ctx, attributeValues)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to seed addresses")
 			return

@@ -334,9 +334,10 @@ type Attribute struct {
 }
 
 type AttributeValue struct {
-	AttributeValueID int32  `json:"attribute_value_id"`
-	AttributeID      int32  `json:"attribute_id"`
-	AttributeValue   string `json:"attribute_value"`
+	AttributeValueID int32       `json:"attribute_value_id"`
+	AttributeID      int32       `json:"attribute_id"`
+	AttributeValue   string      `json:"attribute_value"`
+	Color            pgtype.Text `json:"color"`
 }
 
 type Cart struct {
@@ -495,9 +496,9 @@ type UserPaymentInfo struct {
 }
 
 type VariantAttribute struct {
-	VariantAttributeID int32       `json:"variant_attribute_id"`
-	VariantID          pgtype.Int8 `json:"variant_id"`
-	AttributeValueID   int32       `json:"attribute_value_id"`
+	VariantAttributeID int32 `json:"variant_attribute_id"`
+	VariantID          int64 `json:"variant_id"`
+	AttributeValueID   int32 `json:"attribute_value_id"`
 }
 
 type VerifyEmail struct {

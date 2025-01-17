@@ -12,9 +12,9 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type AddVariantAttributesParams struct {
-	VariantID        pgtype.Int8 `json:"variant_id"`
-	AttributeValueID int32       `json:"attribute_value_id"`
+type CreateBulkVariantAttributeParams struct {
+	VariantID        int64 `json:"variant_id"`
+	AttributeValueID int32 `json:"attribute_value_id"`
 }
 
 const createVariant = `-- name: CreateVariant :one
@@ -60,6 +60,7 @@ func (q *Queries) CreateVariant(ctx context.Context, arg CreateVariantParams) (P
 }
 
 const createVariantAttribute = `-- name: CreateVariantAttribute :one
+
 INSERT INTO variant_attributes (
     variant_id,
     attribute_value_id
@@ -69,10 +70,11 @@ INSERT INTO variant_attributes (
 `
 
 type CreateVariantAttributeParams struct {
-	VariantID        pgtype.Int8 `json:"variant_id"`
-	AttributeValueID int32       `json:"attribute_value_id"`
+	VariantID        int64 `json:"variant_id"`
+	AttributeValueID int32 `json:"attribute_value_id"`
 }
 
+// -- Variant Attributes ----
 func (q *Queries) CreateVariantAttribute(ctx context.Context, arg CreateVariantAttributeParams) (VariantAttribute, error) {
 	row := q.db.QueryRow(ctx, createVariantAttribute, arg.VariantID, arg.AttributeValueID)
 	var i VariantAttribute
@@ -96,11 +98,16 @@ const deleteVariantAttribute = `-- name: DeleteVariantAttribute :exec
 DELETE FROM
     variant_attributes
 WHERE
-    variant_attribute_id = $1
+    attribute_value_id = $1 AND variant_id = $2
 `
 
-func (q *Queries) DeleteVariantAttribute(ctx context.Context, variantAttributeID int32) error {
-	_, err := q.db.Exec(ctx, deleteVariantAttribute, variantAttributeID)
+type DeleteVariantAttributeParams struct {
+	AttributeValueID int32 `json:"attribute_value_id"`
+	VariantID        int64 `json:"variant_id"`
+}
+
+func (q *Queries) DeleteVariantAttribute(ctx context.Context, arg DeleteVariantAttributeParams) error {
+	_, err := q.db.Exec(ctx, deleteVariantAttribute, arg.AttributeValueID, arg.VariantID)
 	return err
 }
 
@@ -119,6 +126,37 @@ func (q *Queries) GetVariantAttributeByID(ctx context.Context, variantAttributeI
 	var i VariantAttribute
 	err := row.Scan(&i.VariantAttributeID, &i.VariantID, &i.AttributeValueID)
 	return i, err
+}
+
+const getVariantAttributes = `-- name: GetVariantAttributes :many
+SELECT
+    variant_attribute_id, variant_id, attribute_value_id
+FROM
+    variant_attributes
+WHERE
+    variant_id = $1
+ORDER BY
+    variant_attribute_id
+`
+
+func (q *Queries) GetVariantAttributes(ctx context.Context, variantID int64) ([]VariantAttribute, error) {
+	rows, err := q.db.Query(ctx, getVariantAttributes, variantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []VariantAttribute
+	for rows.Next() {
+		var i VariantAttribute
+		if err := rows.Scan(&i.VariantAttributeID, &i.VariantID, &i.AttributeValueID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getVariantByID = `-- name: GetVariantByID :one
@@ -147,14 +185,82 @@ func (q *Queries) GetVariantByID(ctx context.Context, variantID int64) (ProductV
 	return i, err
 }
 
+const getVariantByProductID = `-- name: GetVariantByProductID :many
+SELECT
+    pv.variant_id, pv.product_id, pv.variant_name, pv.variant_sku, pv.variant_price, pv.variant_stock, pv.created_at, pv.updated_at,
+    a.attribute_name, a.attribute_id,
+    av.attribute_value_id, av.attribute_value, av.color,
+    va.variant_attribute_id
+FROM
+    product_variants pv
+JOIN
+    variant_attributes va ON pv.variant_id = va.variant_id
+JOIN
+    attribute_values av ON va.attribute_value_id = av.attribute_value_id
+JOIN
+    attributes a ON av.attribute_id = a.attribute_id
+WHERE
+    pv.product_id = $1
+`
+
+type GetVariantByProductIDRow struct {
+	VariantID          int64          `json:"variant_id"`
+	ProductID          int64          `json:"product_id"`
+	VariantName        string         `json:"variant_name"`
+	VariantSku         pgtype.Text    `json:"variant_sku"`
+	VariantPrice       pgtype.Numeric `json:"variant_price"`
+	VariantStock       int32          `json:"variant_stock"`
+	CreatedAt          time.Time      `json:"created_at"`
+	UpdatedAt          time.Time      `json:"updated_at"`
+	AttributeName      string         `json:"attribute_name"`
+	AttributeID        int32          `json:"attribute_id"`
+	AttributeValueID   int32          `json:"attribute_value_id"`
+	AttributeValue     string         `json:"attribute_value"`
+	Color              pgtype.Text    `json:"color"`
+	VariantAttributeID int32          `json:"variant_attribute_id"`
+}
+
+func (q *Queries) GetVariantByProductID(ctx context.Context, productID int64) ([]GetVariantByProductIDRow, error) {
+	rows, err := q.db.Query(ctx, getVariantByProductID, productID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetVariantByProductIDRow
+	for rows.Next() {
+		var i GetVariantByProductIDRow
+		if err := rows.Scan(
+			&i.VariantID,
+			&i.ProductID,
+			&i.VariantName,
+			&i.VariantSku,
+			&i.VariantPrice,
+			&i.VariantStock,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.AttributeName,
+			&i.AttributeID,
+			&i.AttributeValueID,
+			&i.AttributeValue,
+			&i.Color,
+			&i.VariantAttributeID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getVariantDetails = `-- name: GetVariantDetails :many
 SELECT
     pv.variant_id, pv.product_id, pv.variant_name, pv.variant_sku, pv.variant_price, pv.variant_stock, pv.created_at, pv.updated_at,
-    a.attribute_name,
-    av.attribute_value,
-    va.variant_attribute_id,
-    av.attribute_value_id,
-    a.attribute_id
+    a.attribute_name, a.attribute_id,
+    av.attribute_value_id, av.attribute_value, av.color,
+    va.variant_attribute_id
 FROM
     product_variants pv
 JOIN
@@ -177,10 +283,11 @@ type GetVariantDetailsRow struct {
 	CreatedAt          time.Time      `json:"created_at"`
 	UpdatedAt          time.Time      `json:"updated_at"`
 	AttributeName      string         `json:"attribute_name"`
-	AttributeValue     string         `json:"attribute_value"`
-	VariantAttributeID int32          `json:"variant_attribute_id"`
-	AttributeValueID   int32          `json:"attribute_value_id"`
 	AttributeID        int32          `json:"attribute_id"`
+	AttributeValueID   int32          `json:"attribute_value_id"`
+	AttributeValue     string         `json:"attribute_value"`
+	Color              pgtype.Text    `json:"color"`
+	VariantAttributeID int32          `json:"variant_attribute_id"`
 }
 
 func (q *Queries) GetVariantDetails(ctx context.Context, variantID int64) ([]GetVariantDetailsRow, error) {
@@ -202,79 +309,11 @@ func (q *Queries) GetVariantDetails(ctx context.Context, variantID int64) ([]Get
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.AttributeName,
-			&i.AttributeValue,
-			&i.VariantAttributeID,
-			&i.AttributeValueID,
 			&i.AttributeID,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listVariants = `-- name: ListVariants :many
-SELECT
-    p.product_id, p.name, p.description, p.sku, p.stock, p.discount, p.archived, p.price, p.updated_at, p.created_at,
-    pv.variant_sku, pv.variant_price, pv.variant_stock
-FROM
-    product_variants pv
-JOIN
-    products p ON pv.product_id = p.product_id
-ORDER BY
-    pv.variant_id
-LIMIT $1
-OFFSET $2
-`
-
-type ListVariantsParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
-}
-
-type ListVariantsRow struct {
-	ProductID    int64          `json:"product_id"`
-	Name         string         `json:"name"`
-	Description  string         `json:"description"`
-	Sku          pgtype.Text    `json:"sku"`
-	Stock        int32          `json:"stock"`
-	Discount     int32          `json:"discount"`
-	Archived     bool           `json:"archived"`
-	Price        pgtype.Numeric `json:"price"`
-	UpdatedAt    time.Time      `json:"updated_at"`
-	CreatedAt    time.Time      `json:"created_at"`
-	VariantSku   pgtype.Text    `json:"variant_sku"`
-	VariantPrice pgtype.Numeric `json:"variant_price"`
-	VariantStock int32          `json:"variant_stock"`
-}
-
-func (q *Queries) ListVariants(ctx context.Context, arg ListVariantsParams) ([]ListVariantsRow, error) {
-	rows, err := q.db.Query(ctx, listVariants, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListVariantsRow
-	for rows.Next() {
-		var i ListVariantsRow
-		if err := rows.Scan(
-			&i.ProductID,
-			&i.Name,
-			&i.Description,
-			&i.Sku,
-			&i.Stock,
-			&i.Discount,
-			&i.Archived,
-			&i.Price,
-			&i.UpdatedAt,
-			&i.CreatedAt,
-			&i.VariantSku,
-			&i.VariantPrice,
-			&i.VariantStock,
+			&i.AttributeValueID,
+			&i.AttributeValue,
+			&i.Color,
+			&i.VariantAttributeID,
 		); err != nil {
 			return nil, err
 		}
@@ -293,7 +332,8 @@ SET
     variant_name = COALESCE($2, variant_name),
     variant_sku = COALESCE($3, variant_sku),
     variant_price = COALESCE($4, variant_price),
-    variant_stock = COALESCE($5, variant_stock)
+    variant_stock = COALESCE($5, variant_stock),
+    updated_at = NOW()
 WHERE
     variant_id = $1
 RETURNING variant_id, product_id, variant_name, variant_sku, variant_price, variant_stock, created_at, updated_at
@@ -334,16 +374,17 @@ UPDATE
     variant_attributes
 SET
     variant_id = $2,
-    attribute_value_id = $3
+    attribute_value_id = $3,
+    updated_at = NOW()
 WHERE
     variant_attribute_id = $1
 RETURNING variant_attribute_id, variant_id, attribute_value_id
 `
 
 type UpdateVariantAttributeParams struct {
-	VariantAttributeID int32       `json:"variant_attribute_id"`
-	VariantID          pgtype.Int8 `json:"variant_id"`
-	AttributeValueID   int32       `json:"attribute_value_id"`
+	VariantAttributeID int32 `json:"variant_attribute_id"`
+	VariantID          int64 `json:"variant_id"`
+	AttributeValueID   int32 `json:"attribute_value_id"`
 }
 
 func (q *Queries) UpdateVariantAttribute(ctx context.Context, arg UpdateVariantAttributeParams) (VariantAttribute, error) {

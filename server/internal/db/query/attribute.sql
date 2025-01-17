@@ -5,25 +5,8 @@ INSERT INTO attributes (
     $1
 ) RETURNING *;
 
--- name: CreateAttributeValue :one
-INSERT INTO attribute_values (
-    attribute_id,
-    attribute_value
-) VALUES (
-    $1, $2
-) RETURNING *;
-
--- name: DeleteAttribute :exec
-DELETE FROM
-    attributes
-WHERE
-    attribute_id = $1;
-
--- name: DeleteAttributeValue :exec
-DELETE FROM
-    attribute_values
-WHERE
-    attribute_value_id = $1;
+-- name: AddBulkAttributes :copyfrom
+INSERT INTO attributes (attribute_name) VALUES ($1);
 
 -- name: GetAttributeByID :one
 SELECT
@@ -31,51 +14,47 @@ SELECT
 FROM
     attributes
 WHERE
-    attribute_id = $1
-LIMIT 1;
+    attribute_id = $1;
 
--- name: GetAttributeValueByID :one
-SELECT
-    *
-FROM
-    attribute_values
-WHERE
-    attribute_value_id = $1
-LIMIT 1;
-
--- name: ListAttributes :many
+-- name: GetAttributeDetailsByID :many
 SELECT
     *
 FROM
     attributes
+JOIN
+    attribute_values ON attributes.attribute_id = attribute_values.attribute_id
+WHERE
+    attributes.attribute_id = $1
 ORDER BY
-    attribute_id
-LIMIT $1
-OFFSET $2;
+    attributes.attribute_id;
 
--- name: ListAttributeValues :many
+-- name: GetAttributes :many
 SELECT
     *
 FROM
-    attribute_values
-WHERE
-    attribute_id = $1
+    attributes
+JOIN
+    attribute_values ON attributes.attribute_id = attribute_values.attribute_id
 ORDER BY
-    attribute_value_id
-LIMIT $2
-OFFSET $3;
+    attributes.attribute_id;
 
--- name: ListVariantAttributes :many
+-- name: GetAttributeByName :one
 SELECT
     *
 FROM
-    variant_attributes
+    attributes
 WHERE
-    variant_id = $1
-ORDER BY
-    variant_attribute_id
-LIMIT $2
-OFFSET $3;
+    attribute_name = $1
+LIMIT 1;
+
+-- name: CountAttributes :one
+SELECT COUNT(*) FROM attributes;
+
+-- name: DeleteAttribute :exec
+DELETE FROM
+    attributes
+WHERE
+    attribute_id = $1;
 
 -- name: UpdateAttribute :one
 UPDATE
@@ -86,24 +65,27 @@ WHERE
     attribute_id = $1
 RETURNING *;
 
--- name: UpdateAttributeValue :one
-UPDATE
-    attribute_values
-SET
-    attribute_id = $2,
-    attribute_value = $3
-WHERE
-    attribute_value_id = $1
-RETURNING *;
+------ Attribute Values ------
 
+-- name: CreateAttributeValue :one
+INSERT INTO attribute_values (
+    attribute_id,
+    attribute_value,
+    color
+) VALUES (
+    $1, $2, $3
+) RETURNING *;
 
--- name: GetAttributeByName :one
+-- name: CreateBulkAttributeValues :copyfrom
+INSERT INTO attribute_values (attribute_id, attribute_value, color) VALUES ($1, $2, $3);
+
+-- name: GetAttributeValueByID :one
 SELECT
     *
 FROM
-    attributes
+    attribute_values
 WHERE
-    attribute_name = $1
+    attribute_value_id = $1 AND attribute_id = $2
 LIMIT 1;
 
 -- name: GetAttributeValueByValue :one
@@ -115,11 +97,31 @@ WHERE
     attribute_value = $1
 LIMIT 1;
 
--- name: SeedAttributes :copyfrom
-INSERT INTO attributes (attribute_name) VALUES ($1);
+-- name: GetAttributeValues :many
+SELECT
+    *
+FROM
+    attribute_values
+WHERE
+    attribute_id = $1
+ORDER BY
+    attribute_value_id
+LIMIT $2
+OFFSET $3;
 
--- name: SeedAttributeValues :copyfrom
-INSERT INTO attribute_values (attribute_id, attribute_value) VALUES ($1, $2);
+-- name: UpdateAttributeValue :one
+UPDATE
+    attribute_values
+SET
+    attribute_id = $2,
+    attribute_value = $3,
+    color = COALESCE($4, color)
+WHERE
+    attribute_value_id = $1
+RETURNING *;
 
--- name: CountAttributes :one
-SELECT COUNT(*) FROM attributes;
+-- name: DeleteAttributeValue :exec
+DELETE FROM
+    attribute_values
+WHERE
+    attribute_value_id = $1;

@@ -1,22 +1,125 @@
 [
   {
     "name": "Color",
-    "values": ["Red", "Blue", "Green", "Black", "White"]
+    "values": [
+      {
+        "value": "Red",
+        "color": "#FF0000"
+      },
+      {
+        "value": "Blue",
+        "color": "#0000FF"
+      },
+      {
+        "value": "Green",
+        "color": "#00FF00"
+      },
+      {
+        "value": "Black",
+        "color": "#000000"
+      },
+      {
+        "value": "White",
+        "color": "#FFFFFF"
+      },
+      {
+        "value": "Natural Titanium",
+        "color": "#C2BCB2"
+      },
+      {
+        "value": "Desert Titanium",
+        "color": "#BFA48F"
+      },
+      {
+        "value": "Black Titanium",
+        "color": "#3C3C3D"
+      },
+      {
+        "value": "White Titanium",
+        "color": "#F2F1ED"
+      }
+    ]
   },
   {
     "name": "Size",
-    "values": ["Small", "Medium", "Large", "Extra Large"]
+    "values": [
+      {
+        "value": "Small"
+      },
+      {
+        "value": "Medium"
+      },
+      {
+        "value": "Large"
+      },
+      {
+        "value": "Extra Large"
+      }
+    ]
   },
   {
     "name": "Material",
-    "values": ["Cotton", "Polyester", "Wool", "Silk"]
+    "values": [
+      {
+        "value": "Cotton"
+      },
+      {
+        "value": "Polyester"
+      },
+      {
+        "value": "Wool"
+      },
+      {
+        "value": "Silk"
+      }
+    ]
   },
   {
     "name": "Brand",
-    "values": ["Brand A", "Brand B", "Brand C", "Brand D"]
+    "values": [
+      {
+        "value": "Brand A"
+      },
+      {
+        "value": "Brand B"
+      },
+      {
+        "value": "Brand C"
+      },
+      {
+        "value": "Brand D"
+      }
+    ]
   },
   {
     "name": "Warranty",
-    "values": ["6 Months", "1 Year", "2 Years"]
+    "values": [
+      {
+        "value": "6 Months"
+      },
+      {
+        "value": "1 Year"
+      },
+      {
+        "value": "2 Years"
+      }
+    ]
+  },
+  {
+    "name": "Storage",
+    "values": [
+      {
+        "value": "256GB"
+      },
+      {
+        "value": "512GB"
+      },
+      {
+        "value": "1TB"
+      },
+      {
+        "value": "128GB"
+      }
+    ]
   }
 ]

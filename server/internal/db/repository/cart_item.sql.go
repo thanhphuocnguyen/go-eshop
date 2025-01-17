@@ -85,11 +85,22 @@ func (q *Queries) GetCartItem(ctx context.Context, cartItemID int32) (CartItem, 
 }
 
 const getCartItemByProductID = `-- name: GetCartItemByProductID :one
-SELECT cart_item_id, product_id, variant_id, cart_id, quantity, created_at FROM cart_items WHERE product_id = $1
+SELECT cart_item_id, product_id, variant_id, cart_id, quantity, created_at 
+FROM 
+    cart_items 
+WHERE 
+    product_id = $1
+    AND variant_id = COALESCE($2, variant_id) 
+LIMIT 1
 `
 
-func (q *Queries) GetCartItemByProductID(ctx context.Context, productID int64) (CartItem, error) {
-	row := q.db.QueryRow(ctx, getCartItemByProductID, productID)
+type GetCartItemByProductIDParams struct {
+	ProductID int64       `json:"product_id"`
+	VariantID pgtype.Int8 `json:"variant_id"`
+}
+
+func (q *Queries) GetCartItemByProductID(ctx context.Context, arg GetCartItemByProductIDParams) (CartItem, error) {
+	row := q.db.QueryRow(ctx, getCartItemByProductID, arg.ProductID, arg.VariantID)
 	var i CartItem
 	err := row.Scan(
 		&i.CartItemID,
@@ -103,30 +114,36 @@ func (q *Queries) GetCartItemByProductID(ctx context.Context, productID int64) (
 }
 
 const getCartItemWithProduct = `-- name: GetCartItemWithProduct :one
-SELECT cart_items.cart_item_id, cart_items.product_id, cart_items.variant_id, cart_items.cart_id, cart_items.quantity, cart_items.created_at, p.name AS product_name, 
-    p.price AS product_price, p.stock AS product_stock,
-    pv.variant_price, pv.variant_stock,
+SELECT cart_items.cart_item_id, cart_items.product_id, cart_items.variant_id, cart_items.cart_id, cart_items.quantity, cart_items.created_at, 
+    p.name AS product_name, p.price AS product_price, p.stock AS product_stock,
+    pv.variant_price, pv.variant_stock, pv.variant_name,
+    av.attribute_value, av.color,
     img.image_url
 FROM cart_items
 JOIN products AS p ON cart_items.product_id = p.product_id
 JOIN product_variants AS pv ON cart_items.variant_id = p.variant_id
+JOIN variant_attributes AS va ON pv.variant_id = va.variant_id
+JOIN attribute_values AS av ON va.attribute_value_id = av.attribute_value_id
 LEFT JOIN images as img ON p.product_id = img.product_id AND img.primary = true
 WHERE cart_items.cart_item_id = $1
 `
 
 type GetCartItemWithProductRow struct {
-	CartItemID   int32          `json:"cart_item_id"`
-	ProductID    int64          `json:"product_id"`
-	VariantID    pgtype.Int8    `json:"variant_id"`
-	CartID       int32          `json:"cart_id"`
-	Quantity     int16          `json:"quantity"`
-	CreatedAt    time.Time      `json:"created_at"`
-	ProductName  string         `json:"product_name"`
-	ProductPrice pgtype.Numeric `json:"product_price"`
-	ProductStock int32          `json:"product_stock"`
-	VariantPrice pgtype.Numeric `json:"variant_price"`
-	VariantStock int32          `json:"variant_stock"`
-	ImageUrl     pgtype.Text    `json:"image_url"`
+	CartItemID     int32          `json:"cart_item_id"`
+	ProductID      int64          `json:"product_id"`
+	VariantID      pgtype.Int8    `json:"variant_id"`
+	CartID         int32          `json:"cart_id"`
+	Quantity       int16          `json:"quantity"`
+	CreatedAt      time.Time      `json:"created_at"`
+	ProductName    string         `json:"product_name"`
+	ProductPrice   pgtype.Numeric `json:"product_price"`
+	ProductStock   int32          `json:"product_stock"`
+	VariantPrice   pgtype.Numeric `json:"variant_price"`
+	VariantStock   int32          `json:"variant_stock"`
+	VariantName    string         `json:"variant_name"`
+	AttributeValue string         `json:"attribute_value"`
+	Color          pgtype.Text    `json:"color"`
+	ImageUrl       pgtype.Text    `json:"image_url"`
 }
 
 func (q *Queries) GetCartItemWithProduct(ctx context.Context, cartItemID int32) (GetCartItemWithProductRow, error) {
@@ -144,30 +161,48 @@ func (q *Queries) GetCartItemWithProduct(ctx context.Context, cartItemID int32) 
 		&i.ProductStock,
 		&i.VariantPrice,
 		&i.VariantStock,
+		&i.VariantName,
+		&i.AttributeValue,
+		&i.Color,
 		&i.ImageUrl,
 	)
 	return i, err
 }
 
 const getCartItems = `-- name: GetCartItems :many
-SELECT cart_items.cart_item_id, cart_items.product_id, cart_items.variant_id, cart_items.cart_id, cart_items.quantity, cart_items.created_at, p.name AS product_name, p.price AS product_price, p.stock AS product_stock, img.image_url AS image_url
+SELECT cart_items.cart_item_id, cart_items.product_id, cart_items.variant_id, cart_items.cart_id, cart_items.quantity, cart_items.created_at, 
+    p.name AS product_name, p.price AS product_price, p.stock AS product_stock, 
+    img.image_url AS image_url,
+    pv.variant_price, pv.variant_stock, pv.variant_name,
+    av.attribute_value, av.color,
+    a.attribute_name
 FROM cart_items
 JOIN products AS p ON cart_items.product_id = p.product_id
+LEFT JOIN product_variants AS pv ON cart_items.variant_id = pv.variant_id
+LEFT JOIN variant_attributes AS va ON pv.variant_id = va.variant_id
+LEFT JOIN attribute_values AS av ON va.attribute_value_id = av.attribute_value_id
+LEFT JOIN attributes AS a ON av.attribute_id = a.attribute_id
 LEFT JOIN images as img ON p.product_id = img.product_id AND img.primary = true
 WHERE cart_id = $1
 `
 
 type GetCartItemsRow struct {
-	CartItemID   int32          `json:"cart_item_id"`
-	ProductID    int64          `json:"product_id"`
-	VariantID    pgtype.Int8    `json:"variant_id"`
-	CartID       int32          `json:"cart_id"`
-	Quantity     int16          `json:"quantity"`
-	CreatedAt    time.Time      `json:"created_at"`
-	ProductName  string         `json:"product_name"`
-	ProductPrice pgtype.Numeric `json:"product_price"`
-	ProductStock int32          `json:"product_stock"`
-	ImageUrl     pgtype.Text    `json:"image_url"`
+	CartItemID     int32          `json:"cart_item_id"`
+	ProductID      int64          `json:"product_id"`
+	VariantID      pgtype.Int8    `json:"variant_id"`
+	CartID         int32          `json:"cart_id"`
+	Quantity       int16          `json:"quantity"`
+	CreatedAt      time.Time      `json:"created_at"`
+	ProductName    string         `json:"product_name"`
+	ProductPrice   pgtype.Numeric `json:"product_price"`
+	ProductStock   int32          `json:"product_stock"`
+	ImageUrl       pgtype.Text    `json:"image_url"`
+	VariantPrice   pgtype.Numeric `json:"variant_price"`
+	VariantStock   pgtype.Int4    `json:"variant_stock"`
+	VariantName    pgtype.Text    `json:"variant_name"`
+	AttributeValue pgtype.Text    `json:"attribute_value"`
+	Color          pgtype.Text    `json:"color"`
+	AttributeName  pgtype.Text    `json:"attribute_name"`
 }
 
 func (q *Queries) GetCartItems(ctx context.Context, cartID int32) ([]GetCartItemsRow, error) {
@@ -190,6 +225,12 @@ func (q *Queries) GetCartItems(ctx context.Context, cartID int32) ([]GetCartItem
 			&i.ProductPrice,
 			&i.ProductStock,
 			&i.ImageUrl,
+			&i.VariantPrice,
+			&i.VariantStock,
+			&i.VariantName,
+			&i.AttributeValue,
+			&i.Color,
+			&i.AttributeName,
 		); err != nil {
 			return nil, err
 		}

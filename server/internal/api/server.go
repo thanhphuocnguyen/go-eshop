@@ -106,38 +106,47 @@ func (sv *Server) initializeRouter() {
 
 		product := v1.Group("product")
 		{
-			product.GET(":id", sv.getProductDetail)
 			product.GET("list", sv.getProducts)
+			product.GET(":id", sv.getProductDetail)
 
-			productAuthRoutes := product.Group("").Use(
-				authMiddleware(sv.tokenGenerator),
-				roleMiddleware(sv.repo, repository.UserRoleAdmin),
-			)
-			productAuthRoutes.POST("", sv.createProduct)
-			productAuthRoutes.PUT(":id", sv.updateProduct)
-			productAuthRoutes.DELETE(":id", sv.removeProduct)
-			productAuthRoutes.POST(":id/image", sv.uploadProductImage)
-			productAuthRoutes.GET(":id/image", sv.getProductImages)
-			productAuthRoutes.PUT(":id/image/:image_id", sv.uploadProductImage)
-			productAuthRoutes.PUT(":id/image/:image_id/primary", sv.setImagesPrimary)
-			productAuthRoutes.DELETE(":id/image/:image_id", sv.removeProductImage)
+			productAdmin := product.Group("").
+				Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin))
+			{
+				productAdmin.POST("", sv.createProduct)
+				productAdmin.PUT(":id", sv.updateProduct)
+				productAdmin.DELETE(":id", sv.removeProduct)
+
+				// product images
+				productAdmin.POST(":id/image", sv.uploadProductImage)
+				productAdmin.GET(":id/image", sv.getProductImages)
+				productAdmin.PUT(":id/image/:image_id", sv.uploadProductImage)
+				productAdmin.PUT(":id/image/:image_id/primary", sv.setImagesPrimary)
+				productAdmin.DELETE(":id/image/:image_id", sv.removeProductImage)
+			}
+
+			variant := product.Group(":id/variant").
+				Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin, repository.UserRoleModerator))
+			{
+				variant.POST("", sv.createVariant)
+				variant.GET("list", sv.getVariants)
+				variant.GET(":variant_id", sv.getVariant)
+				variant.PUT(":variant_id", sv.updateVariant)
+				variant.DELETE(":variant_id", sv.deleteVariant)
+			}
 		}
 
-		variant := v1.Group("variant").
-			Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin, repository.UserRoleModerator))
+		attribute := v1.Group("attribute").
+			Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin))
 		{
-			variant.POST("", sv.createVariant)
-			variant.GET(":variant_id", sv.getVariant)
-			variant.GET("list", sv.getVariants)
-			variant.PUT(":variant_id", sv.updateVariant)
-			variant.DELETE(":variant_id", sv.deleteVariant)
+			attribute.GET("list", sv.getAttributes)
+			attribute.GET(":id", sv.getAttributeByID)
+			attribute.PUT(":id", sv.updateAttribute)
+			attribute.DELETE(":id", sv.deleteAttribute)
+			attribute.POST("", sv.createAttribute)
+			attribute.POST("values", sv.createAttributeValues)
+			attribute.PUT(":id/value/:value_id", sv.updateAttributeValue)
+			attribute.DELETE(":id/value/:value_id", sv.deleteAttributeValue)
 		}
-		// TODO: implement attribute routes
-		// attribute := v1.Group("/attribute")
-		// {
-		// 	attribute.GET("list", sv.getAttributes)
-		// 	attribute.GET(":id", sv.getAttributeByID)
-		// }
 
 		cart := v1.Group("/cart")
 		{
@@ -185,7 +194,8 @@ func (sv *Server) initializeRouter() {
 			collectionAuthRoutes.PUT(":id", sv.updateCollection)
 			collectionAuthRoutes.DELETE(":id", sv.removeCollection)
 			collectionAuthRoutes.POST(":id/product", sv.addProductToCollection)
-			collectionAuthRoutes.DELETE(":id/product", sv.deleteProductFromCollection)
+			collectionAuthRoutes.PUT(":id/product/sort_order", sv.updateProductSortOrder)
+			collectionAuthRoutes.DELETE(":id/product/:product_id", sv.deleteProductFromCollection)
 		}
 	}
 
@@ -222,8 +232,13 @@ type GenericResponse[T any] struct {
 }
 
 type GenericListResponse[T any] struct {
-	Data    *[]T    `json:"data,omitempty"`
-	Total   *int64  `json:"total,omitempty"`
+	Data    []T     `json:"data,omitempty"`
+	Total   int64   `json:"total,omitempty"`
 	Message *string `json:"message,omitempty"`
 	Error   *string `json:"error,omitempty"`
+}
+
+type QueryParams struct {
+	Page     int32 `form:"page" binding:"required,min=1"`
+	PageSize int32 `form:"page_size" binding:"required,min=1,max=100"`
 }

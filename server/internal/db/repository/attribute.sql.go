@@ -38,24 +38,39 @@ func (q *Queries) CreateAttribute(ctx context.Context, attributeName string) (At
 }
 
 const createAttributeValue = `-- name: CreateAttributeValue :one
+
 INSERT INTO attribute_values (
     attribute_id,
-    attribute_value
+    attribute_value,
+    color
 ) VALUES (
-    $1, $2
-) RETURNING attribute_value_id, attribute_id, attribute_value
+    $1, $2, $3
+) RETURNING attribute_value_id, attribute_id, attribute_value, color
 `
 
 type CreateAttributeValueParams struct {
-	AttributeID    int32  `json:"attribute_id"`
-	AttributeValue string `json:"attribute_value"`
+	AttributeID    int32       `json:"attribute_id"`
+	AttributeValue string      `json:"attribute_value"`
+	Color          pgtype.Text `json:"color"`
 }
 
+// ---- Attribute Values ------
 func (q *Queries) CreateAttributeValue(ctx context.Context, arg CreateAttributeValueParams) (AttributeValue, error) {
-	row := q.db.QueryRow(ctx, createAttributeValue, arg.AttributeID, arg.AttributeValue)
+	row := q.db.QueryRow(ctx, createAttributeValue, arg.AttributeID, arg.AttributeValue, arg.Color)
 	var i AttributeValue
-	err := row.Scan(&i.AttributeValueID, &i.AttributeID, &i.AttributeValue)
+	err := row.Scan(
+		&i.AttributeValueID,
+		&i.AttributeID,
+		&i.AttributeValue,
+		&i.Color,
+	)
 	return i, err
+}
+
+type CreateBulkAttributeValuesParams struct {
+	AttributeID    int32       `json:"attribute_id"`
+	AttributeValue string      `json:"attribute_value"`
+	Color          pgtype.Text `json:"color"`
 }
 
 const deleteAttribute = `-- name: DeleteAttribute :exec
@@ -89,7 +104,6 @@ FROM
     attributes
 WHERE
     attribute_id = $1
-LIMIT 1
 `
 
 func (q *Queries) GetAttributeByID(ctx context.Context, attributeID int32) (Attribute, error) {
@@ -116,26 +130,85 @@ func (q *Queries) GetAttributeByName(ctx context.Context, attributeName string) 
 	return i, err
 }
 
+const getAttributeDetailsByID = `-- name: GetAttributeDetailsByID :many
+SELECT
+    attributes.attribute_id, attribute_name, attribute_value_id, attribute_values.attribute_id, attribute_value, color
+FROM
+    attributes
+JOIN
+    attribute_values ON attributes.attribute_id = attribute_values.attribute_id
+WHERE
+    attributes.attribute_id = $1
+ORDER BY
+    attributes.attribute_id
+`
+
+type GetAttributeDetailsByIDRow struct {
+	AttributeID      int32       `json:"attribute_id"`
+	AttributeName    string      `json:"attribute_name"`
+	AttributeValueID int32       `json:"attribute_value_id"`
+	AttributeID_2    int32       `json:"attribute_id_2"`
+	AttributeValue   string      `json:"attribute_value"`
+	Color            pgtype.Text `json:"color"`
+}
+
+func (q *Queries) GetAttributeDetailsByID(ctx context.Context, attributeID int32) ([]GetAttributeDetailsByIDRow, error) {
+	rows, err := q.db.Query(ctx, getAttributeDetailsByID, attributeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAttributeDetailsByIDRow
+	for rows.Next() {
+		var i GetAttributeDetailsByIDRow
+		if err := rows.Scan(
+			&i.AttributeID,
+			&i.AttributeName,
+			&i.AttributeValueID,
+			&i.AttributeID_2,
+			&i.AttributeValue,
+			&i.Color,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAttributeValueByID = `-- name: GetAttributeValueByID :one
 SELECT
-    attribute_value_id, attribute_id, attribute_value
+    attribute_value_id, attribute_id, attribute_value, color
 FROM
     attribute_values
 WHERE
-    attribute_value_id = $1
+    attribute_value_id = $1 AND attribute_id = $2
 LIMIT 1
 `
 
-func (q *Queries) GetAttributeValueByID(ctx context.Context, attributeValueID int32) (AttributeValue, error) {
-	row := q.db.QueryRow(ctx, getAttributeValueByID, attributeValueID)
+type GetAttributeValueByIDParams struct {
+	AttributeValueID int32 `json:"attribute_value_id"`
+	AttributeID      int32 `json:"attribute_id"`
+}
+
+func (q *Queries) GetAttributeValueByID(ctx context.Context, arg GetAttributeValueByIDParams) (AttributeValue, error) {
+	row := q.db.QueryRow(ctx, getAttributeValueByID, arg.AttributeValueID, arg.AttributeID)
 	var i AttributeValue
-	err := row.Scan(&i.AttributeValueID, &i.AttributeID, &i.AttributeValue)
+	err := row.Scan(
+		&i.AttributeValueID,
+		&i.AttributeID,
+		&i.AttributeValue,
+		&i.Color,
+	)
 	return i, err
 }
 
 const getAttributeValueByValue = `-- name: GetAttributeValueByValue :one
 SELECT
-    attribute_value_id, attribute_id, attribute_value
+    attribute_value_id, attribute_id, attribute_value, color
 FROM
     attribute_values
 WHERE
@@ -146,13 +219,18 @@ LIMIT 1
 func (q *Queries) GetAttributeValueByValue(ctx context.Context, attributeValue string) (AttributeValue, error) {
 	row := q.db.QueryRow(ctx, getAttributeValueByValue, attributeValue)
 	var i AttributeValue
-	err := row.Scan(&i.AttributeValueID, &i.AttributeID, &i.AttributeValue)
+	err := row.Scan(
+		&i.AttributeValueID,
+		&i.AttributeID,
+		&i.AttributeValue,
+		&i.Color,
+	)
 	return i, err
 }
 
-const listAttributeValues = `-- name: ListAttributeValues :many
+const getAttributeValues = `-- name: GetAttributeValues :many
 SELECT
-    attribute_value_id, attribute_id, attribute_value
+    attribute_value_id, attribute_id, attribute_value, color
 FROM
     attribute_values
 WHERE
@@ -163,14 +241,14 @@ LIMIT $2
 OFFSET $3
 `
 
-type ListAttributeValuesParams struct {
+type GetAttributeValuesParams struct {
 	AttributeID int32 `json:"attribute_id"`
 	Limit       int32 `json:"limit"`
 	Offset      int32 `json:"offset"`
 }
 
-func (q *Queries) ListAttributeValues(ctx context.Context, arg ListAttributeValuesParams) ([]AttributeValue, error) {
-	rows, err := q.db.Query(ctx, listAttributeValues, arg.AttributeID, arg.Limit, arg.Offset)
+func (q *Queries) GetAttributeValues(ctx context.Context, arg GetAttributeValuesParams) ([]AttributeValue, error) {
+	rows, err := q.db.Query(ctx, getAttributeValues, arg.AttributeID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +256,12 @@ func (q *Queries) ListAttributeValues(ctx context.Context, arg ListAttributeValu
 	var items []AttributeValue
 	for rows.Next() {
 		var i AttributeValue
-		if err := rows.Scan(&i.AttributeValueID, &i.AttributeID, &i.AttributeValue); err != nil {
+		if err := rows.Scan(
+			&i.AttributeValueID,
+			&i.AttributeID,
+			&i.AttributeValue,
+			&i.Color,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -189,32 +272,43 @@ func (q *Queries) ListAttributeValues(ctx context.Context, arg ListAttributeValu
 	return items, nil
 }
 
-const listAttributes = `-- name: ListAttributes :many
+const getAttributes = `-- name: GetAttributes :many
 SELECT
-    attribute_id, attribute_name
+    attributes.attribute_id, attribute_name, attribute_value_id, attribute_values.attribute_id, attribute_value, color
 FROM
     attributes
+JOIN
+    attribute_values ON attributes.attribute_id = attribute_values.attribute_id
 ORDER BY
-    attribute_id
-LIMIT $1
-OFFSET $2
+    attributes.attribute_id
 `
 
-type ListAttributesParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+type GetAttributesRow struct {
+	AttributeID      int32       `json:"attribute_id"`
+	AttributeName    string      `json:"attribute_name"`
+	AttributeValueID int32       `json:"attribute_value_id"`
+	AttributeID_2    int32       `json:"attribute_id_2"`
+	AttributeValue   string      `json:"attribute_value"`
+	Color            pgtype.Text `json:"color"`
 }
 
-func (q *Queries) ListAttributes(ctx context.Context, arg ListAttributesParams) ([]Attribute, error) {
-	rows, err := q.db.Query(ctx, listAttributes, arg.Limit, arg.Offset)
+func (q *Queries) GetAttributes(ctx context.Context) ([]GetAttributesRow, error) {
+	rows, err := q.db.Query(ctx, getAttributes)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Attribute
+	var items []GetAttributesRow
 	for rows.Next() {
-		var i Attribute
-		if err := rows.Scan(&i.AttributeID, &i.AttributeName); err != nil {
+		var i GetAttributesRow
+		if err := rows.Scan(
+			&i.AttributeID,
+			&i.AttributeName,
+			&i.AttributeValueID,
+			&i.AttributeID_2,
+			&i.AttributeValue,
+			&i.Color,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -223,50 +317,6 @@ func (q *Queries) ListAttributes(ctx context.Context, arg ListAttributesParams) 
 		return nil, err
 	}
 	return items, nil
-}
-
-const listVariantAttributes = `-- name: ListVariantAttributes :many
-SELECT
-    variant_attribute_id, variant_id, attribute_value_id
-FROM
-    variant_attributes
-WHERE
-    variant_id = $1
-ORDER BY
-    variant_attribute_id
-LIMIT $2
-OFFSET $3
-`
-
-type ListVariantAttributesParams struct {
-	VariantID pgtype.Int8 `json:"variant_id"`
-	Limit     int32       `json:"limit"`
-	Offset    int32       `json:"offset"`
-}
-
-func (q *Queries) ListVariantAttributes(ctx context.Context, arg ListVariantAttributesParams) ([]VariantAttribute, error) {
-	rows, err := q.db.Query(ctx, listVariantAttributes, arg.VariantID, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []VariantAttribute
-	for rows.Next() {
-		var i VariantAttribute
-		if err := rows.Scan(&i.VariantAttributeID, &i.VariantID, &i.AttributeValueID); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-type SeedAttributeValuesParams struct {
-	AttributeID    int32  `json:"attribute_id"`
-	AttributeValue string `json:"attribute_value"`
 }
 
 const updateAttribute = `-- name: UpdateAttribute :one
@@ -296,21 +346,33 @@ UPDATE
     attribute_values
 SET
     attribute_id = $2,
-    attribute_value = $3
+    attribute_value = $3,
+    color = COALESCE($4, color)
 WHERE
     attribute_value_id = $1
-RETURNING attribute_value_id, attribute_id, attribute_value
+RETURNING attribute_value_id, attribute_id, attribute_value, color
 `
 
 type UpdateAttributeValueParams struct {
-	AttributeValueID int32  `json:"attribute_value_id"`
-	AttributeID      int32  `json:"attribute_id"`
-	AttributeValue   string `json:"attribute_value"`
+	AttributeValueID int32       `json:"attribute_value_id"`
+	AttributeID      int32       `json:"attribute_id"`
+	AttributeValue   string      `json:"attribute_value"`
+	Color            pgtype.Text `json:"color"`
 }
 
 func (q *Queries) UpdateAttributeValue(ctx context.Context, arg UpdateAttributeValueParams) (AttributeValue, error) {
-	row := q.db.QueryRow(ctx, updateAttributeValue, arg.AttributeValueID, arg.AttributeID, arg.AttributeValue)
+	row := q.db.QueryRow(ctx, updateAttributeValue,
+		arg.AttributeValueID,
+		arg.AttributeID,
+		arg.AttributeValue,
+		arg.Color,
+	)
 	var i AttributeValue
-	err := row.Scan(&i.AttributeValueID, &i.AttributeID, &i.AttributeValue)
+	err := row.Scan(
+		&i.AttributeValueID,
+		&i.AttributeID,
+		&i.AttributeValue,
+		&i.Color,
+	)
 	return i, err
 }

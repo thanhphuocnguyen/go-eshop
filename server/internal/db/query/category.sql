@@ -1,6 +1,10 @@
 -- name: CreateCollection :one
-INSERT INTO categories (name, description, sort_order, published)
-VALUES ($1, $2, $3, $4)
+INSERT INTO categories (name, description, sort_order)
+VALUES (
+    $1,
+    $2,
+    COALESCE(sqlc.narg('sort_order'), COALESCE((SELECT MAX(sort_order) + 1 FROM categories), 1))
+)
 RETURNING *;
 
 -- name: GetCollection :many
@@ -25,16 +29,19 @@ LIMIT 1;
 
 -- name: GetCollections :many
 SELECT 
-    c.category_id, c.name, c.description, c.sort_order, c.published,
-    p.name, p.description, p.price, p.discount, 
-    cp.product_id, 
-    images.image_id, images.image_url
-FROM categories c
-JOIN category_products cp ON c.category_id = cp.category_id
-JOIN products p ON category_products.product_id = p.product_id AND p.published = TRUE
-LEFT JOIN images ON p.product_id = images.product_id AND images.primary = TRUE
-WHERE categories.category_id = ANY(sqlc.arg('category_ids')::int[]) AND published = TRUE
-ORDER BY c.sort_order, cp.sort_order;
+    *
+FROM categories
+WHERE 
+    published = TRUE
+ORDER BY sort_order;
+-- name: GetCollectionsInIDs :many
+SELECT 
+    *
+FROM categories
+WHERE 
+    category_id = ANY(sqlc.arg(id_list)::int[])
+    AND published = TRUE
+ORDER BY sort_order;
 
 -- name: UpdateCollection :one
 UPDATE categories
@@ -59,3 +66,7 @@ WHERE category_id = COALESCE(sqlc.narg('category_id'), category_id);
 
 -- name: SeedCollections :copyfrom
 INSERT INTO categories (name, description, sort_order, published) VALUES ($1, $2, $3, $4);
+
+-- name: GetCollectionMaxSortOrder :one
+SELECT COALESCE(MAX(sort_order), 0)::smallint AS max_sort_order
+FROM category_products;

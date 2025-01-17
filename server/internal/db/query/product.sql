@@ -19,14 +19,27 @@ VALUES
     )
 RETURNING *;
 
--- name: GetProduct :one
+-- name: GetProductByID :one
+SELECT
+    products.*,
+    COUNT(pv.variant_id) AS variant_count
+FROM
+    products
+LEFT JOIN product_variants AS pv ON products.product_id = pv.product_id
+WHERE
+    products.product_id = $1 AND
+    archived = COALESCE(sqlc.narg('archived'), false);
+-- name: GetProductWithVariantByID :one
 SELECT
     *
 FROM
     products
+JOIN
+    product_variants pv ON products.product_id = pv.product_id
 WHERE
-    product_id = $1 AND
-    archived = COALESCE(sqlc.narg('archived'), FALSE);
+    products.product_id = $1 AND
+    archived = COALESCE(sqlc.narg('archived'), false) AND
+    pv.variant_id = COALESCE(sqlc.narg('variant_id'), pv.variant_id);
 
 -- name: GetProductDetail :many
 SELECT
@@ -49,7 +62,7 @@ WHERE
 ORDER BY
     img.primary DESC;
 
--- name: ListProducts :many
+-- name: GetProducts :many
 SELECT
     p.*,
     img.image_id AS image_id, img.image_url AS image_url,
@@ -62,12 +75,28 @@ WHERE
     archived = COALESCE(sqlc.narg('archived'), archived) AND
     name ILIKE COALESCE(sqlc.narg('name'), name) AND
     sku ILIKE COALESCE(sqlc.narg('sku'), sku)
+GROUP BY
+    p.product_id, img.image_id
 ORDER BY
     p.product_id
 LIMIT 
     $1
 OFFSET
     $2;
+
+-- name: GetProductWithImage :one
+SELECT
+    products.*,
+    img.image_id AS image_id,
+    img.image_url AS image_url
+FROM
+    products
+LEFT JOIN images AS img ON products.product_id = img.product_id AND img.primary = TRUE
+LEFT JOIN product_variants AS pv ON products.product_id = pv.product_id
+WHERE
+    products.product_id = $1 AND
+    archived = COALESCE(sqlc.narg('archived'), false) AND
+    pv.variant_id = COALESCE(sqlc.narg('variant_id'), pv.variant_id);
 
 -- name: CountProducts :one
 SELECT
@@ -88,6 +117,7 @@ SET
     sku = coalesce(sqlc.narg('sku'), sku),
     stock = coalesce(sqlc.narg('stock'), stock),
     price = coalesce(sqlc.narg('price'), price),
+    discount = coalesce(sqlc.narg('discount'), discount),
     updated_at = NOW()
 WHERE
     product_id = sqlc.arg('product_id')
@@ -117,21 +147,7 @@ WHERE
     product_id = $1
 RETURNING *;
 
--- name: GetProductWithImage :one
-SELECT
-    products.*,
-    img.image_id AS image_id,
-    img.image_url AS image_url
-FROM
-    products
-LEFT JOIN images AS img ON products.product_id = img.product_id AND img.primary = TRUE
-LEFT JOIN product_variants AS pv ON products.product_id = pv.product_id
-WHERE
-    products.product_id = $1 AND
-    archived = COALESCE(sqlc.narg('archived'), false) AND
-    pv.variant_id = COALESCE(sqlc.narg('variant_id'), pv.variant_id);
-
--- name: SeedProducts :copyfrom
+-- name: AddBulkProducts :copyfrom
 INSERT INTO
     products (
         name,

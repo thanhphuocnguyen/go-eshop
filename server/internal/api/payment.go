@@ -49,11 +49,11 @@ func (sv *Server) getStripeConfig(c *gin.Context) {
 // @Param request body PaymentRequest true "Payment request"
 // @Security BearerAuth
 // @Success 200 {object} PaymentResponse
-// @Failure 400 {object} ErrorResponse
-// @Failure 401 {object} ErrorResponse
-// @Failure 403 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
+// @Failure 400 {object} errorResponse
+// @Failure 401 {object} errorResponse
+// @Failure 403 {object} errorResponse
+// @Failure 404 {object} errorResponse
+// @Failure 500 {object} errorResponse
 // @Router /payment [post]
 func (sv *Server) initiatePayment(c *gin.Context) {
 	var param GetPaymentByOrderIDParam
@@ -112,11 +112,11 @@ func (sv *Server) initiatePayment(c *gin.Context) {
 // @Param order_id path int true "Order ID"
 // @Security BearerAuth
 // @Success 200 {object} PaymentResponse
-// @Failure 400 {object} ErrorResponse
-// @Failure 401 {object} ErrorResponse
-// @Failure 403 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
+// @Failure 400 {object} errorResponse
+// @Failure 401 {object} errorResponse
+// @Failure 403 {object} errorResponse
+// @Failure 404 {object} errorResponse
+// @Failure 500 {object} errorResponse
 // @Router /payment/{order_id} [get]
 func (sv *Server) getPayment(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
@@ -180,11 +180,11 @@ func (sv *Server) getPayment(c *gin.Context) {
 // @Param payment_id path string true "Payment ID"
 // @Security BearerAuth
 // @Success 200 {object} PaymentResponse
-// @Failure 400 {object} ErrorResponse
-// @Failure 401 {object} ErrorResponse
-// @Failure 403 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
+// @Failure 400 {object} errorResponse
+// @Failure 401 {object} errorResponse
+// @Failure 403 {object} errorResponse
+// @Failure 404 {object} errorResponse
+// @Failure 500 {object} errorResponse
 // @Router /payment/{payment_id} [get]
 func (sv *Server) changePaymentStatus(c *gin.Context) {
 	var param GetPaymentParam

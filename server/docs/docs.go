@@ -185,6 +185,209 @@ const docTemplate = `{
                 }
             }
         },
+        "/attributes": {
+            "get": {
+                "description": "Get all attributes",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "attributes"
+                ],
+                "summary": "Get all attributes",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.GenericListResponse-api_Attribute"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create an attribute",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "attributes"
+                ],
+                "summary": "Create an attribute",
+                "parameters": [
+                    {
+                        "description": "Attribute name",
+                        "name": "params",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.CreateAttributeParams"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/api.GenericResponse-api_Attribute"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/attributes/{attribute_id}/values": {
+            "post": {
+                "description": "Create attribute values",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "attributes"
+                ],
+                "summary": "Create attribute values",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Attribute ID",
+                        "name": "attribute_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Attribute values",
+                        "name": "values",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.CreateAttributeValueParams"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/api.GenericResponse-int64"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/attributes/{id}": {
+            "get": {
+                "description": "Get an attribute",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "attributes"
+                ],
+                "summary": "Get an attribute",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Attribute ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.GenericResponse-api_Attribute"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete an attribute",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "attributes"
+                ],
+                "summary": "Delete an attribute",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Attribute ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/cart": {
             "get": {
                 "description": "get cart details by user ID",
@@ -638,6 +841,111 @@ const docTemplate = `{
                 }
             }
         },
+        "/collections/{id}/product": {
+            "delete": {
+                "description": "Delete a product from a collection",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Delete a product from a collection",
+                "operationId": "delete-product-from-collection",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Collection ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Product ID",
+                        "name": "product_id",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.collectionProductRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/collections/{id}/product/sort-order": {
+            "put": {
+                "description": "Update the sort order of a product in a collection",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Update the sort order of a product in a collection",
+                "operationId": "update-product-sort-order",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Collection ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Product ID",
+                        "name": "product_id",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.collectionProductRequest"
+                        }
+                    },
+                    {
+                        "description": "Sort order",
+                        "name": "sort_order",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/orders": {
             "get": {
                 "security": [
@@ -914,6 +1222,209 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/payment": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Initiate payment",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payment"
+                ],
+                "summary": "Initiate payment",
+                "parameters": [
+                    {
+                        "description": "Payment request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.PaymentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaymentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/payment/{order_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get payment transaction by order ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payment"
+                ],
+                "summary": "Get payment transaction by order ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Order ID",
+                        "name": "order_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaymentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/payment/{payment_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Change payment status",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payment"
+                ],
+                "summary": "Change payment status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Payment ID",
+                        "name": "payment_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.PaymentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/api.errorResponse"
                         }
@@ -1606,6 +2117,158 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/variant/{variant_id}": {
+            "get": {
+                "description": "Get a variant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "variant"
+                ],
+                "summary": "Get a variant",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Variant ID",
+                        "name": "variant_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.variantResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update a variant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "variant"
+                ],
+                "summary": "Update a variant",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Variant ID",
+                        "name": "variant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update Variant Request",
+                        "name": "updateVariantRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.updateVariantRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/repository.ProductVariant"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a variant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "variant"
+                ],
+                "summary": "Delete a variant",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Variant ID",
+                        "name": "variant_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1634,6 +2297,37 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "ward": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.Attribute": {
+            "type": "object",
+            "properties": {
+                "attribute_values": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.AttributeValue"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.AttributeValue": {
+            "type": "object",
+            "properties": {
+                "color": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "value": {
                     "type": "string"
                 }
             }
@@ -1669,6 +2363,55 @@ const docTemplate = `{
                 }
             }
         },
+        "api.CreateAttributeParams": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.CreateAttributeValueParams": {
+            "type": "object",
+            "required": [
+                "attribute_id",
+                "values"
+            ],
+            "properties": {
+                "attribute_id": {
+                    "type": "integer"
+                },
+                "values": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.Value"
+                    }
+                }
+            }
+        },
+        "api.GenericListResponse-api_Attribute": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.Attribute"
+                    }
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
         "api.GenericListResponse-api_productListResponse": {
             "type": "object",
             "properties": {
@@ -1694,6 +2437,20 @@ const docTemplate = `{
             "properties": {
                 "data": {
                     "$ref": "#/definitions/api.AddressResponse"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.GenericResponse-api_Attribute": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/api.Attribute"
                 },
                 "error": {
                     "type": "string"
@@ -1866,6 +2623,20 @@ const docTemplate = `{
                 }
             }
         },
+        "api.GenericResponse-int64": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "integer"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "api.GenericResponse-repository_Cart": {
             "type": "object",
             "properties": {
@@ -1950,6 +2721,37 @@ const docTemplate = `{
                 }
             }
         },
+        "api.PaymentRequest": {
+            "type": "object",
+            "required": [
+                "cart_id",
+                "gateway"
+            ],
+            "properties": {
+                "cart_id": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "gateway": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.PaymentResponse": {
+            "type": "object",
+            "properties": {
+                "details": {},
+                "gateway": {
+                    "$ref": "#/definitions/repository.PaymentGateway"
+                },
+                "status": {
+                    "$ref": "#/definitions/repository.PaymentStatus"
+                },
+                "transaction_id": {
+                    "type": "string"
+                }
+            }
+        },
         "api.UpdateAddressParams": {
             "type": "object",
             "properties": {
@@ -1976,6 +2778,20 @@ const docTemplate = `{
                 }
             }
         },
+        "api.Value": {
+            "type": "object",
+            "required": [
+                "value"
+            ],
+            "properties": {
+                "color": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
         "api.addProductToCartRequest": {
             "type": "object",
             "required": [
@@ -1984,9 +2800,13 @@ const docTemplate = `{
             ],
             "properties": {
                 "product_id": {
-                    "type": "integer"
+                    "type": "integer",
+                    "minimum": 1
                 },
                 "quantity": {
+                    "type": "integer"
+                },
+                "variant_id": {
                     "type": "integer"
                 }
             }
@@ -2034,6 +2854,15 @@ const docTemplate = `{
                 },
                 "quantity": {
                     "type": "integer"
+                },
+                "variant_id": {
+                    "type": "integer"
+                },
+                "variants": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.variantModel"
+                    }
                 }
             }
         },
@@ -2101,6 +2930,14 @@ const docTemplate = `{
                 }
             }
         },
+        "api.collectionProductRequest": {
+            "type": "object",
+            "properties": {
+                "sort_order": {
+                    "type": "integer"
+                }
+            }
+        },
         "api.collectionRequest": {
             "type": "object",
             "properties": {
@@ -2144,17 +2981,20 @@ const docTemplate = `{
                 "description",
                 "name",
                 "price",
-                "sku",
                 "stock"
             ],
             "properties": {
+                "category_id": {
+                    "type": "integer"
+                },
                 "description": {
                     "type": "string",
                     "maxLength": 1000,
                     "minLength": 10
                 },
                 "discount": {
-                    "type": "integer"
+                    "type": "integer",
+                    "minimum": 0
                 },
                 "name": {
                     "type": "string",
@@ -2165,10 +3005,17 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "sku": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 100
                 },
                 "stock": {
                     "type": "integer"
+                },
+                "variants": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.variantRequest"
+                    }
                 }
             }
         },
@@ -2342,6 +3189,9 @@ const docTemplate = `{
                 },
                 "payment_status": {
                     "type": "string"
+                },
+                "refund_id": {
+                    "type": "string"
                 }
             }
         },
@@ -2370,6 +3220,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "stock": {
+                    "type": "integer"
+                },
+                "variant_count": {
                     "type": "integer"
                 }
             }
@@ -2413,7 +3266,8 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "sku": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 100
                 },
                 "stock": {
                     "type": "integer"
@@ -2442,6 +3296,29 @@ const docTemplate = `{
                 "user_id": {
                     "type": "integer",
                     "minimum": 1
+                }
+            }
+        },
+        "api.updateVariantRequest": {
+            "type": "object",
+            "properties": {
+                "attributes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "sku": {
+                    "type": "string"
+                },
+                "stock": {
+                    "type": "integer"
                 }
             }
         },
@@ -2474,6 +3351,93 @@ const docTemplate = `{
                 },
                 "username": {
                     "type": "string"
+                },
+                "verified_email": {
+                    "type": "boolean"
+                },
+                "verified_phone": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "api.variantModel": {
+            "type": "object",
+            "properties": {
+                "attributes": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                }
+            }
+        },
+        "api.variantRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "attributes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "sku": {
+                    "type": "string"
+                },
+                "stock": {
+                    "type": "integer"
+                }
+            }
+        },
+        "api.variantResponse": {
+            "type": "object",
+            "properties": {
+                "attributes": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "product_id": {
+                    "type": "integer"
+                },
+                "sku": {
+                    "type": "string"
+                },
+                "stock": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "variant_id": {
+                    "type": "integer"
                 }
             }
         },
@@ -2606,9 +3570,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "description": {
-                    "$ref": "#/definitions/pgtype.Text"
-                },
-                "image_url": {
                     "$ref": "#/definitions/pgtype.Text"
                 },
                 "name": {
@@ -2745,6 +3706,33 @@ const docTemplate = `{
                 "OrderStatusCompleted"
             ]
         },
+        "repository.PaymentGateway": {
+            "type": "string",
+            "enum": [
+                "stripe",
+                "paypal",
+                "visa",
+                "mastercard",
+                "apple_pay",
+                "google_pay",
+                "postpaid",
+                "momo",
+                "zalo_pay",
+                "vn_pay"
+            ],
+            "x-enum-varnames": [
+                "PaymentGatewayStripe",
+                "PaymentGatewayPaypal",
+                "PaymentGatewayVisa",
+                "PaymentGatewayMastercard",
+                "PaymentGatewayApplePay",
+                "PaymentGatewayGooglePay",
+                "PaymentGatewayPostpaid",
+                "PaymentGatewayMomo",
+                "PaymentGatewayZaloPay",
+                "PaymentGatewayVnPay"
+            ]
+        },
         "repository.PaymentStatus": {
             "type": "string",
             "enum": [
@@ -2789,13 +3777,42 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "sku": {
-                    "type": "string"
+                    "$ref": "#/definitions/pgtype.Text"
                 },
                 "stock": {
                     "type": "integer"
                 },
                 "updated_at": {
                     "type": "string"
+                }
+            }
+        },
+        "repository.ProductVariant": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "product_id": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "variant_id": {
+                    "type": "integer"
+                },
+                "variant_name": {
+                    "type": "string"
+                },
+                "variant_price": {
+                    "$ref": "#/definitions/pgtype.Numeric"
+                },
+                "variant_sku": {
+                    "$ref": "#/definitions/pgtype.Text"
+                },
+                "variant_stock": {
+                    "type": "integer"
                 }
             }
         },

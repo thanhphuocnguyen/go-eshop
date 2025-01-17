@@ -135,7 +135,7 @@ func (sv *Server) orderList(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusOK, GenericListResponse[orderListResp]{&orderResponses, &count, nil, nil})
+	c.JSON(http.StatusOK, GenericListResponse[orderListResp]{orderResponses, count, nil, nil})
 }
 
 // @Summary Get order detail
