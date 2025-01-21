@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
 )
 
 type RefundOrderTxArgs struct {
-	OrderID                  int64
+	OrderID                  uuid.UUID
 	RefundPaymentFromGateway func(paymentID string, gateway PaymentGateway) (string, error)
 }
 

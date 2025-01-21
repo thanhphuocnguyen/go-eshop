@@ -18,20 +18,24 @@ import (
 type updateCartItemRequest struct {
 	Quantity int16 `json:"quantity" binding:"required,gt=0"`
 }
-
+type cartItemAttributeModel struct {
+	ID     int32    `json:"id"`
+	Name   string   `json:"name"`
+	Values []string `json:"values"`
+}
 type cartItemResponse struct {
-	ID        int32                 `json:"id"`
-	ProductID int64                 `json:"product_id"`
-	VariantID *int64                `json:"variant_id,omitempty"`
-	Name      string                `json:"name"`
-	ImageURL  string                `json:"image_url"`
-	Quantity  int16                 `json:"quantity"`
-	Price     float64               `json:"price"`
-	Variants  []productVariantModel `json:"variants,omitempty"`
+	ID         int32                    `json:"id"`
+	ProductID  int64                    `json:"product_id"`
+	VariantID  int64                    `json:"variant_id,omitempty"`
+	Quantity   int32                    `json:"quantity"`
+	Name       string                   `json:"name"`
+	Price      float64                  `json:"price,omitempty"`
+	ImageURL   *string                  `json:"image_url,omitempty"`
+	Attributes []cartItemAttributeModel `json:"attributes,omitempty"`
 }
 
 type cartResponse struct {
-	ID         int32              `json:"id"`
+	ID         uuid.UUID          `json:"id"`
 	UserID     int64              `json:"user_id"`
 	UpdatedAt  time.Time          `json:"updated_at,omitempty"`
 	CreatedAt  time.Time          `json:"created_at"`
@@ -40,9 +44,9 @@ type cartResponse struct {
 }
 
 type addProductToCartRequest struct {
-	ProductID int64  `json:"product_id" binding:"required,min=1"`
-	VariantID *int64 `json:"variant_id,omitempty"`
-	Quantity  int16  `json:"quantity" binding:"required"`
+	ProductID int64 `json:"product_id" binding:"required,min=1"`
+	VariantID int64 `json:"variant_id,omitempty"`
+	Quantity  int16 `json:"quantity" binding:"required"`
 }
 
 type getCartItemParam struct {
@@ -55,8 +59,8 @@ type checkoutRequest struct {
 }
 
 type checkoutResponse struct {
-	OrderID   int64  `json:"order_id"`
-	PaymentID string `json:"payment_id"`
+	OrderID   uuid.UUID `json:"order_id"`
+	PaymentID string    `json:"payment_id"`
 }
 
 // ------------------------------ Mappers ------------------------------
@@ -66,49 +70,34 @@ func mapToCartResponse(cart repository.Cart, cartItems []repository.GetCartItems
 	products := make([]cartItemResponse, 0)
 	for i, item := range cartItems {
 		if len(products) == 0 || products[i-1].ProductID != item.ProductID {
-			priceParsed, _ := item.ProductPrice.Float64Value()
+			priceParsed, _ := item.Price.Float64Value()
 			totalPrice += priceParsed.Float64 * float64(item.Quantity)
 			product := cartItemResponse{
-				ID:        item.CartItemID,
-				ProductID: item.ProductID,
-				Name:      item.ProductName,
-				ImageURL:  item.ImageUrl.String,
-				Quantity:  item.Quantity,
-				Price:     priceParsed.Float64,
-				Variants:  make([]productVariantModel, 0),
+				ID:         item.CartItemID,
+				ProductID:  item.ProductID,
+				Name:       item.ProductName,
+				VariantID:  item.VariantID,
+				Quantity:   item.StockQuantity,
+				Attributes: make([]cartItemAttributeModel, 0),
 			}
-			if item.VariantID.Valid {
-				product.VariantID = &item.VariantID.Int64
-				variantPrice, _ := item.VariantPrice.Float64Value()
-				variant := productVariantModel{
-					ID:         item.VariantID.Int64,
-					Name:       item.VariantName.String,
-					Price:      variantPrice.Float64,
-					Attributes: map[string]string{},
-				}
-				variant.Attributes[item.AttributeName.String] = item.AttributeValue.String
-				product.Variants = append(product.Variants, variant)
+			if item.ImageUrl.Valid {
+				product.ImageURL = &item.ImageUrl.String
 			}
+			product.Attributes = append(product.Attributes, cartItemAttributeModel{
+				ID:     item.VariantAttributeID,
+				Name:   item.AttributeName,
+				Values: []string{item.AttributeValue},
+			})
 			products = append(products, product)
 		} else {
-			products[i-1].Quantity += item.Quantity
-			priceParsed, _ := item.ProductPrice.Float64Value()
+			priceParsed, _ := item.Price.Float64Value()
 			totalPrice += priceParsed.Float64 * float64(item.Quantity)
-			if item.VariantID.Valid {
-				if len(products[i-1].Variants) == 0 || products[i-1].Variants[0].ID != item.VariantID.Int64 {
-					variantPrice, _ := item.VariantPrice.Float64Value()
-					variant := productVariantModel{
-						ID:         item.VariantID.Int64,
-						Name:       item.VariantName.String,
-						Price:      variantPrice.Float64,
-						Attributes: map[string]string{},
-					}
-					variant.Attributes[item.AttributeName.String] = item.AttributeValue.String
-					products[i-1].Variants = append(products[i-1].Variants, variant)
-				} else {
-					products[i-1].Variants[0].Attributes[item.AttributeName.String] = item.AttributeValue.String
-				}
-			}
+			products[i-1].Quantity += item.StockQuantity
+			products[i-1].Attributes = append(products[i-1].Attributes, cartItemAttributeModel{
+				ID:     item.VariantAttributeID,
+				Name:   item.AttributeName,
+				Values: []string{item.AttributeValue},
+			})
 		}
 	}
 
@@ -244,9 +233,9 @@ func (sv *Server) addCartItem(c *gin.Context) {
 		c.JSON(http.StatusForbidden, mapErrResp(errors.New("cart does not belong to the user")))
 		return
 	}
-	product, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{
-		ProductID: req.ProductID,
-	})
+
+	product, err := sv.repo.GetVariantByID(c, req.VariantID)
+
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(errors.New("product not found")))
@@ -256,20 +245,45 @@ func (sv *Server) addCartItem(c *gin.Context) {
 		return
 	}
 
-	if product.VariantCount > 0 && req.VariantID == nil {
-		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("variant is required")))
+	if product.StockQuantity < int32(req.Quantity) {
+		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("insufficient stock")))
 		return
 	}
 
-	var cartItem *cartItemResponse
-	if req.VariantID != nil {
-		cartItem = sv.addProductVariantToCart(c, cart, product, req)
+	cartItem, err := sv.repo.GetCartItemByProductID(c, repository.GetCartItemByProductIDParams{
+		ProductID: req.ProductID,
+		VariantID: util.GetPgTypeInt8(req.VariantID),
+	})
+
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			cartItem, err = sv.repo.AddProductToCart(c, repository.AddProductToCartParams{
+				ProductID: req.ProductID,
+				CartID:    cart.CartID,
+				Quantity:  req.Quantity,
+				VariantID: req.VariantID,
+			})
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, mapErrResp(err))
+				return
+			}
+		} else {
+			c.JSON(http.StatusInternalServerError, mapErrResp(err))
+			return
+		}
 	} else {
-		cartItem = sv.addProductToCart(c, cart, product, req)
-	}
-
-	if cartItem == nil {
-		return
+		if int32(cartItem.Quantity+req.Quantity) > product.StockQuantity {
+			c.JSON(http.StatusBadRequest, mapErrResp(errors.New("insufficient stock")))
+			return
+		}
+		err = sv.repo.UpdateCartItemQuantity(c, repository.UpdateCartItemQuantityParams{
+			Quantity:   cartItem.Quantity + req.Quantity,
+			CartItemID: cartItem.CartItemID,
+		})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, mapErrResp(err))
+			return
+		}
 	}
 
 	err = sv.repo.UpdateCart(c, cart.CartID)
@@ -279,18 +293,9 @@ func (sv *Server) addCartItem(c *gin.Context) {
 		return
 	}
 
-	itemResp := cartItemResponse{
-		ID:        cartItem.ID,
-		ProductID: cartItem.ProductID,
-		Name:      cartItem.Name,
-		Quantity:  cartItem.Quantity,
-		Price:     cartItem.Price,
-	}
-	if cartItem.VariantID != nil {
-		itemResp.VariantID = cartItem.VariantID
-	}
+	createdID := cartItem.CartItemID
 
-	c.JSON(http.StatusOK, GenericResponse[cartItemResponse]{&itemResp, nil, nil})
+	c.JSON(http.StatusOK, GenericResponse[int32]{&createdID, nil, nil})
 }
 
 // removeCartItem godoc
@@ -437,16 +442,12 @@ func (sv *Server) checkout(c *gin.Context) {
 	createOrderItemParams := make([]repository.CreateOrderItemParams, len(cartItems))
 	totalPrice := float64(0)
 	for i, item := range cartItems {
-		if item.ProductStock < int32(item.Quantity) {
-			log.Error().Msg("Product out of stock")
-			return
-		}
-		price, _ := item.ProductPrice.Float64Value()
+		price, _ := item.Price.Float64Value()
 		createOrderItemParams[i] = repository.CreateOrderItemParams{
 			ProductID: item.ProductID,
 			VariantID: item.VariantID,
 			Quantity:  int32(item.Quantity),
-			Price:     item.ProductPrice,
+			Price:     item.Price,
 		}
 		totalPrice += price.Float64 * float64(item.Quantity)
 	}
@@ -570,9 +571,7 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 		return
 	}
 
-	product, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{
-		ProductID: cartItem.ProductID,
-	})
+	product, err := sv.repo.GetVariantByID(c, cartItem.VariantID)
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
@@ -582,11 +581,6 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 	}
 
-	if product.Stock < int32(req.Quantity) {
-		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("insufficient stock")))
-		return
-	}
-
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
@@ -594,15 +588,15 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 
 	productPrice, _ := product.Price.Float64Value()
 	itemResp := cartItemResponse{
-		ID:        cartItem.CartID,
-		Name:      product.Name,
-		ImageURL:  cartItem.ImageUrl.String,
-		Quantity:  req.Quantity,
+		ID:        cartItem.CartItemID,
+		Name:      product.ProductName,
+		Quantity:  int32(req.Quantity),
 		ProductID: cartItem.ProductID,
 		Price:     productPrice.Float64,
+		VariantID: cartItem.VariantID,
 	}
-	if cartItem.VariantID.Valid {
-		itemResp.VariantID = &cartItem.VariantID.Int64
+	if cartItem.ImageUrl.Valid {
+		itemResp.ImageURL = &cartItem.ImageUrl.String
 	}
 
 	c.JSON(http.StatusOK, GenericResponse[cartItemResponse]{&itemResp, nil, nil})
@@ -650,127 +644,4 @@ func (sv *Server) clearCart(c *gin.Context) {
 	msg := "cart cleared"
 	success := true
 	c.JSON(http.StatusOK, GenericResponse[bool]{&success, &msg, nil})
-}
-
-func (sv *Server) addProductVariantToCart(
-	c *gin.Context,
-	cart repository.Cart,
-	product repository.GetProductByIDRow,
-	req addProductToCartRequest,
-) (cartItem *cartItemResponse) {
-	variant, err := sv.repo.GetVariantByID(c, *req.VariantID)
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, mapErrResp(errors.New("product not found")))
-			return
-		}
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
-		return
-	}
-	if variant.VariantStock < int32(req.Quantity) {
-		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("insufficient stock")))
-		return
-	}
-
-	existedItem, err := sv.repo.GetCartItemByProductID(c, repository.GetCartItemByProductIDParams{
-		ProductID: req.ProductID,
-		VariantID: util.GetPgTypeInt8(*req.VariantID),
-	})
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			existedItem, err = sv.repo.AddProductToCart(c, repository.AddProductToCartParams{
-				ProductID: req.ProductID,
-				CartID:    cart.CartID,
-				Quantity:  req.Quantity,
-				VariantID: util.GetPgTypeInt8(*req.VariantID),
-			})
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, mapErrResp(err))
-				return
-			}
-		} else {
-			c.JSON(http.StatusInternalServerError, mapErrResp(err))
-			return
-		}
-	} else {
-		if int32(existedItem.Quantity+req.Quantity) > variant.VariantStock {
-			c.JSON(http.StatusBadRequest, mapErrResp(errors.New("insufficient stock")))
-			return
-		}
-		err = sv.repo.UpdateCartItemQuantity(c, repository.UpdateCartItemQuantityParams{
-			Quantity:   existedItem.Quantity + req.Quantity,
-			CartItemID: existedItem.CartItemID,
-		})
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, mapErrResp(err))
-			return
-		}
-	}
-
-	price, _ := product.Price.Float64Value()
-	cartItem = &cartItemResponse{
-		ID:        existedItem.CartItemID,
-		ProductID: existedItem.ProductID,
-		Name:      product.Name,
-		Quantity:  existedItem.Quantity,
-		Price:     price.Float64,
-		VariantID: &existedItem.VariantID.Int64,
-	}
-	return
-}
-
-func (sv *Server) addProductToCart(
-	c *gin.Context,
-	cart repository.Cart,
-	product repository.GetProductByIDRow,
-	req addProductToCartRequest,
-) (cartItem *cartItemResponse) {
-	if product.Stock < int32(req.Quantity) {
-		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("insufficient stock")))
-		return
-	}
-
-	existedCartItem, err := sv.repo.GetCartItemByProductID(c, repository.GetCartItemByProductIDParams{
-		ProductID: req.ProductID,
-	})
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			existedCartItem, err = sv.repo.AddProductToCart(c, repository.AddProductToCartParams{
-				ProductID: req.ProductID,
-				CartID:    cart.CartID,
-				Quantity:  req.Quantity,
-			})
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, mapErrResp(err))
-				return
-			}
-		} else {
-			c.JSON(http.StatusInternalServerError, mapErrResp(err))
-			return
-		}
-	} else {
-		if int32(existedCartItem.Quantity+req.Quantity) > product.Stock {
-			c.JSON(http.StatusBadRequest, mapErrResp(errors.New("insufficient stock")))
-			return
-		}
-		err = sv.repo.UpdateCartItemQuantity(c, repository.UpdateCartItemQuantityParams{
-			Quantity:   existedCartItem.Quantity + req.Quantity,
-			CartItemID: existedCartItem.CartItemID,
-		})
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, mapErrResp(err))
-			return
-		}
-	}
-
-	price, _ := product.Price.Float64Value()
-	cartItem = &cartItemResponse{
-		ID:        existedCartItem.CartItemID,
-		ProductID: existedCartItem.ProductID,
-		Name:      product.Name,
-		Quantity:  existedCartItem.Quantity,
-		Price:     price.Float64,
-	}
-
-	return
 }

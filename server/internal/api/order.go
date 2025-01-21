@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
@@ -20,7 +21,7 @@ type orderListQuery struct {
 }
 
 type orderIDParams struct {
-	ID int64 `uri:"id" binding:"required,min=1"`
+	ID uuid.UUID `uri:"id" binding:"required,min=1"`
 }
 
 type changeOrderStatusReq struct {
@@ -43,14 +44,14 @@ type paymentInfo struct {
 }
 
 type orderDetailResponse struct {
-	ID          int64                  `json:"id"`
+	ID          uuid.UUID              `json:"id"`
 	Total       float64                `json:"total"`
 	Status      repository.OrderStatus `json:"status"`
 	PaymentInfo paymentInfo            `json:"payment_info"`
 	Products    []orderItemResp        `json:"products"`
 }
 type orderListResp struct {
-	ID            int64                    `json:"id"`
+	ID            uuid.UUID                `json:"id"`
 	Total         float64                  `json:"total"`
 	TotalItems    int32                    `json:"total_items"`
 	Status        repository.OrderStatus   `json:"status"`
@@ -135,7 +136,7 @@ func (sv *Server) orderList(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusOK, GenericListResponse[orderListResp]{orderResponses, count, nil, nil})
+	c.JSON(http.StatusOK, GenericListResponse[orderListResp]{&orderResponses, count, nil, nil})
 }
 
 // @Summary Get order detail

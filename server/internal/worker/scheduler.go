@@ -5,7 +5,7 @@ import (
 
 	"github.com/hibiken/asynq"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/log"
+	logger "github.com/thanhphuocnguyen/go-eshop/pkg/log"
 )
 
 type RedisTaskScheduler struct {
@@ -38,7 +38,7 @@ func NewRedisTaskScheduler(redisOtp asynq.RedisClientOpt, postgres repository.Re
 		redisOtp,
 		&asynq.SchedulerOpts{
 			Location: loc,
-			Logger:   log.NewLogger(nil),
+			Logger:   logger.NewLogger(nil),
 		},
 	)
 

@@ -5,26 +5,36 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/util"
 )
 
 // ----------------------------------------------------------------------------- STRUCTS ----------------------------------------------------------------------------- //
+type variantAttributeReq struct {
+	AttributeID int32  `json:"attribute_id" binding:"required"`
+	VariantID   int64  `json:"variant_id" binding:"omitempty"`
+	Value       string `json:"value" binding:"required,gt=0,lt=255"`
+}
 type variantRequest struct {
-	Name       string  `json:"name" binding:"required,gt=0,lt=255"`
-	Price      float64 `json:"price" binding:"required,gt=0,lt=1000000"`
-	Stock      int32   `json:"stock" binding:"required,gt=0,lt=1000000"`
-	Sku        *string `json:"sku,omitempty" binding:"omitempty"`
-	Attributes []int32 `json:"attributes,omitempty" binding:"omitempty"`
+	Name       string                `json:"name" binding:"required,gt=0,lt=255"`
+	Price      float64               `json:"price" binding:"required,gt=0,lt=1000000"`
+	Stock      int32                 `json:"stock" binding:"required,gt=0,lt=1000000"`
+	Sku        *string               `json:"sku,omitempty" binding:"omitempty"`
+	Discount   *int32                `json:"discount" binding:"omitempty,gte=0,lt=10000"`
+	Attributes []variantAttributeReq `json:"attributes,omitempty" binding:"omitempty"`
+}
+
+type updateAttributeRequest struct {
+	ID    int32  `json:"id" binding:"required"`
+	Value string `json:"value" binding:"required,gt=0,lt=255"`
 }
 
 type updateVariantRequest struct {
-	Name       *string  `json:"name,omitempty" binding:"omitempty,gt=0,lt=255"`
-	Sku        *string  `json:"sku,omitempty" binding:"omitempty"`
-	Price      *float64 `json:"price,omitempty" binding:"omitempty,gt=0,lt=1000000"`
-	Stock      *int32   `json:"stock,omitempty" binding:"omitempty,gt=0,lt=1000000"`
-	Attributes []int32  `json:"attributes,omitempty" binding:"omitempty"`
+	Name       *string                  `json:"name,omitempty" binding:"omitempty,gt=0,lt=255"`
+	Sku        *string                  `json:"sku,omitempty" binding:"omitempty"`
+	Price      *float64                 `json:"price,omitempty" binding:"omitempty,gt=0,lt=1000000"`
+	Stock      *int32                   `json:"stock,omitempty" binding:"omitempty,gt=0,lt=1000000"`
+	Attributes []updateAttributeRequest `json:"attributes,omitempty" binding:"omitempty"`
 }
 
 type variantParams struct {
@@ -33,15 +43,14 @@ type variantParams struct {
 }
 
 type variantResponse struct {
-	VariantID  int64            `json:"variant_id"`
-	ProductID  int64            `json:"product_id"`
-	Name       string           `json:"name"`
-	SKU        *string          `json:"sku,omitempty"`
-	Price      float64          `json:"price"`
-	Stock      int32            `json:"stock"`
-	Attributes []AttributeValue `json:"attributes,omitempty"`
-	CreatedAt  string           `json:"created_at"`
-	UpdatedAt  string           `json:"updated_at"`
+	VariantID  int64    `json:"variant_id"`
+	ProductID  int64    `json:"product_id"`
+	Price      float64  `json:"price"`
+	Stock      int32    `json:"stock"`
+	Attributes []string `json:"attributes,omitempty"`
+	CreatedAt  string   `json:"created_at"`
+	UpdatedAt  string   `json:"updated_at"`
+	Sku        *string  `json:"sku,omitempty"`
 }
 
 // -------------------------------------------------------------------- API HANDLERS --------------------------------------------------------------------- //
@@ -86,13 +95,22 @@ func (sv *Server) createVariant(c *gin.Context) {
 		return
 	}
 
+	createAttributeParams := make([]repository.CreateVariantAttributeParams, len(req.Attributes))
+	for i, attr := range req.Attributes {
+		createAttributeParams[i] = repository.CreateVariantAttributeParams{
+			AttributeID: attr.AttributeID,
+			VariantID:   attr.VariantID,
+			Value:       attr.Value,
+		}
+	}
+
 	createVariantParam := repository.CreateVariantTxParam{
 		ProductID:    product.ProductID,
 		VariantName:  req.Name,
 		VariantPrice: req.Price,
 		VariantStock: req.Stock,
 		VariantSku:   req.Sku,
-		Attributes:   req.Attributes,
+		Attributes:   createAttributeParams,
 	}
 
 	variant, err := sv.repo.CreateVariantTx(c, createVariantParam)
@@ -148,61 +166,29 @@ func (sv *Server) updateVariant(c *gin.Context) {
 		VariantID: variant.VariantID,
 	}
 
-	if req.Name != nil {
-		updateParams.VariantName = util.GetPgTypeText(*req.Name)
-	}
 	if req.Sku != nil {
-		updateParams.VariantSku = util.GetPgTypeText(*req.Sku)
+		updateParams.Sku = util.GetPgTypeText(*req.Sku)
 	}
 	if req.Price != nil {
-		updateParams.VariantPrice = util.GetPgNumericFromFloat(*req.Price)
+		updateParams.Price = util.GetPgNumericFromFloat(*req.Price)
 	}
 	if req.Stock != nil {
-		updateParams.VariantStock = util.GetPgTypeInt4(*req.Stock)
+		updateParams.StockQuantity = util.GetPgTypeInt4(*req.Stock)
+	}
+	resp := variantResponse{
+		Attributes: make([]string, 0),
 	}
 	if len(req.Attributes) > 0 {
-		attributes, err := sv.repo.GetVariantAttributes(c, variant.VariantID)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, mapErrResp(err))
-			return
-		}
-		existingAttributes := make(map[int32]bool)
-		newAttributes := make([]int32, 0)
-		for _, attr := range attributes {
-			existingAttributes[attr.AttributeValueID] = false
-		}
 		for _, attr := range req.Attributes {
-			if _, ok := existingAttributes[attr]; ok {
-				existingAttributes[attr] = true
-			} else {
-				newAttributes = append(newAttributes, attr)
-			}
-		}
-
-		log.Info().Interface("existingAttributes", existingAttributes).Msg("existingAttributes")
-		for attr, exists := range existingAttributes {
-			if !exists {
-				log.Info().Int32("attr", attr).Int32("variantID", int32(variant.VariantID)).Msg("deleting")
-				err = sv.repo.DeleteVariantAttribute(c, repository.DeleteVariantAttributeParams{
-					AttributeValueID: attr,
-					VariantID:        variant.VariantID,
-				})
-				if err != nil {
-					c.JSON(http.StatusInternalServerError, mapErrResp(err))
-					return
-				}
-			}
-		}
-
-		for _, attr := range newAttributes {
-			_, err := sv.repo.CreateVariantAttribute(c, repository.CreateVariantAttributeParams{
-				VariantID:        variant.VariantID,
-				AttributeValueID: attr,
+			attributeUpdated, err := sv.repo.UpdateVariantAttribute(c, repository.UpdateVariantAttributeParams{
+				VariantAttributeID: attr.ID,
+				Value:              util.GetPgTypeText(attr.Value),
 			})
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, mapErrResp(err))
 				return
 			}
+			resp.Attributes = append(resp.Attributes, attributeUpdated.Value)
 		}
 	}
 
@@ -211,8 +197,15 @@ func (sv *Server) updateVariant(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
+	resp.VariantID = updated.VariantID
+	resp.ProductID = updated.ProductID
+	price, _ := updated.Price.Float64Value()
+	resp.Price = price.Float64
+	resp.Stock = updated.StockQuantity
+	resp.CreatedAt = updated.CreatedAt.String()
+	resp.UpdatedAt = updated.UpdatedAt.String()
 
-	c.JSON(http.StatusOK, GenericResponse[repository.ProductVariant]{&updated, nil, nil})
+	c.JSON(http.StatusOK, GenericResponse[variantResponse]{&resp, nil, nil})
 }
 
 // godoc
@@ -283,30 +276,22 @@ func (sv *Server) getVariant(c *gin.Context) {
 	}
 
 	variant := variantRows[0]
-	price, _ := variant.VariantPrice.Float64Value()
+	price, _ := variant.Price.Float64Value()
 	resp := variantResponse{
 		VariantID:  variant.VariantID,
 		ProductID:  variant.ProductID,
-		Name:       variant.VariantName,
 		Price:      price.Float64,
-		Stock:      variant.VariantStock,
-		Attributes: make([]AttributeValue, 0),
+		Stock:      variant.StockQuantity,
+		Attributes: make([]string, 0),
 		CreatedAt:  variant.CreatedAt.String(),
 		UpdatedAt:  variant.UpdatedAt.String(),
 	}
-	if variant.VariantSku.Valid {
-		resp.SKU = &variant.VariantSku.String
+	if variant.Sku.Valid {
+		resp.Sku = &variant.Sku.String
 	}
 	for _, attr := range variantRows {
-		value := AttributeValue{
-			ID:    attr.AttributeValueID,
-			Value: attr.AttributeValue,
-		}
-		if attr.Color.Valid {
-			color := attr.Color.String
-			value.Color = &color
-		}
-		resp.Attributes = append(resp.Attributes, value)
+
+		resp.Attributes = append(resp.Attributes, attr.AttributeName)
 	}
 
 	c.JSON(http.StatusOK, GenericResponse[variantResponse]{&resp, nil, nil})
@@ -332,38 +317,25 @@ func (sv *Server) getVariants(c *gin.Context) {
 	variantResponses := make([]variantResponse, 0)
 	for _, variant := range variants {
 		if len(variantResponses) == 0 || variantResponses[len(variantResponses)-1].VariantID != variant.VariantID {
-			price, _ := variant.VariantPrice.Float64Value()
+			price, _ := variant.Price.Float64Value()
 			resp := variantResponse{
 				VariantID:  variant.VariantID,
 				ProductID:  variant.ProductID,
-				Name:       variant.VariantName,
 				Price:      price.Float64,
-				Stock:      variant.VariantStock,
-				Attributes: make([]AttributeValue, 0),
+				Stock:      variant.StockQuantity,
+				Attributes: make([]string, 0),
 				CreatedAt:  variant.CreatedAt.String(),
 				UpdatedAt:  variant.UpdatedAt.String(),
 			}
-			if variant.VariantSku.Valid {
-				resp.SKU = &variant.VariantSku.String
+			if variant.Sku.Valid {
+				resp.Sku = &variant.Sku.String
 			}
 			variantResponses = append(variantResponses, resp)
 		} else {
 			latest := &variantResponses[len(variantResponses)-1]
-			if variant.Color.Valid {
-				color := variant.Color.String
-				latest.Attributes = append(latest.Attributes, AttributeValue{
-					ID:    variant.AttributeValueID,
-					Value: variant.AttributeValue,
-					Color: &color,
-				})
-			} else {
-				latest.Attributes = append(latest.Attributes, AttributeValue{
-					ID:    variant.AttributeValueID,
-					Value: variant.AttributeValue,
-				})
-			}
+			latest.Attributes = append(latest.Attributes, variant.AttributeName)
 		}
 	}
 
-	c.JSON(http.StatusOK, GenericListResponse[variantResponse]{variantResponses, int64(len(variantResponses)), nil, nil})
+	c.JSON(http.StatusOK, GenericListResponse[variantResponse]{&variantResponses, int64(len(variantResponses)), nil, nil})
 }

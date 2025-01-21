@@ -29,10 +29,10 @@ build-server:
 	go build ./cmd/web
 serve-server:
 	@echo "Running application..."
-	go run ./cmd/web --profile api
+	go run ./cmd/web api
 serve-worker:
-	@echo "Running application..."
-	go run ./cmd/web --profile worker
+	@echo "Running worker..."
+	go run ./cmd/web worker
 gen-sqlc:
 	@echo "Generating sqlc..."
 	sqlc generate

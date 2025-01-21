@@ -103,7 +103,9 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 			redisCfg := asynq.RedisClientOpt{
 				Addr: cfg.RedisUrl,
 			}
+
 			taskDistributor := worker.NewRedisTaskDistributor(redisCfg)
+
 			uploadService := upload.NewCloudinaryUploadService(cfg)
 			paymentCtx := &payment.PaymentContext{}
 

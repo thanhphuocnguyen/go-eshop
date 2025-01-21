@@ -31,6 +31,7 @@ services:
   web:
     build: .
     container_name: eshop-web
+    command: ["./web", "api"]
     ports:
       - "4000:4000"
     depends_on:
@@ -39,7 +40,21 @@ services:
       redis:
           condition: service_healthy
     environment:
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: redis:6379
+      DB_URL: postgres://postgres:postgres@postgres:5432/eshop?sslmode=disable
+    networks:
+      - eshop-network
+  worker:
+    build: .
+    container_name: eshop-worker
+    command: ["./web", "worker"]
+    depends_on:
+      postgres:
+          condition: service_healthy
+      redis:
+          condition: service_healthy
+    environment:
+      REDIS_URL: redis:6379
       DB_URL: postgres://postgres:postgres@postgres:5432/eshop?sslmode=disable
     networks:
       - eshop-network

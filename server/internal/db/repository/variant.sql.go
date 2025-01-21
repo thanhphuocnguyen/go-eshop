@@ -12,73 +12,45 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type CreateBulkVariantAttributeParams struct {
-	VariantID        int64 `json:"variant_id"`
-	AttributeValueID int32 `json:"attribute_value_id"`
-}
-
 const createVariant = `-- name: CreateVariant :one
 INSERT INTO product_variants (
     product_id,
-    variant_name,
-    variant_sku,
-    variant_price,
-    variant_stock
+    sku,
+    price,
+    stock_quantity,
+    discount
 ) VALUES (
     $1, $2, $3, $4, $5
-) RETURNING variant_id, product_id, variant_name, variant_sku, variant_price, variant_stock, created_at, updated_at
+) RETURNING variant_id, product_id, price, discount, stock_quantity, sku, created_at, updated_at
 `
 
 type CreateVariantParams struct {
-	ProductID    int64          `json:"product_id"`
-	VariantName  string         `json:"variant_name"`
-	VariantSku   pgtype.Text    `json:"variant_sku"`
-	VariantPrice pgtype.Numeric `json:"variant_price"`
-	VariantStock int32          `json:"variant_stock"`
+	ProductID     int64          `json:"product_id"`
+	Sku           pgtype.Text    `json:"sku"`
+	Price         pgtype.Numeric `json:"price"`
+	StockQuantity int32          `json:"stock_quantity"`
+	Discount      int32          `json:"discount"`
 }
 
 func (q *Queries) CreateVariant(ctx context.Context, arg CreateVariantParams) (ProductVariant, error) {
 	row := q.db.QueryRow(ctx, createVariant,
 		arg.ProductID,
-		arg.VariantName,
-		arg.VariantSku,
-		arg.VariantPrice,
-		arg.VariantStock,
+		arg.Sku,
+		arg.Price,
+		arg.StockQuantity,
+		arg.Discount,
 	)
 	var i ProductVariant
 	err := row.Scan(
 		&i.VariantID,
 		&i.ProductID,
-		&i.VariantName,
-		&i.VariantSku,
-		&i.VariantPrice,
-		&i.VariantStock,
+		&i.Price,
+		&i.Discount,
+		&i.StockQuantity,
+		&i.Sku,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
-	return i, err
-}
-
-const createVariantAttribute = `-- name: CreateVariantAttribute :one
-
-INSERT INTO variant_attributes (
-    variant_id,
-    attribute_value_id
-) VALUES (
-    $1, $2
-) RETURNING variant_attribute_id, variant_id, attribute_value_id
-`
-
-type CreateVariantAttributeParams struct {
-	VariantID        int64 `json:"variant_id"`
-	AttributeValueID int32 `json:"attribute_value_id"`
-}
-
-// -- Variant Attributes ----
-func (q *Queries) CreateVariantAttribute(ctx context.Context, arg CreateVariantAttributeParams) (VariantAttribute, error) {
-	row := q.db.QueryRow(ctx, createVariantAttribute, arg.VariantID, arg.AttributeValueID)
-	var i VariantAttribute
-	err := row.Scan(&i.VariantAttributeID, &i.VariantID, &i.AttributeValueID)
 	return i, err
 }
 
@@ -94,109 +66,59 @@ func (q *Queries) DeleteVariant(ctx context.Context, variantID int64) error {
 	return err
 }
 
-const deleteVariantAttribute = `-- name: DeleteVariantAttribute :exec
-DELETE FROM
-    variant_attributes
-WHERE
-    attribute_value_id = $1 AND variant_id = $2
-`
-
-type DeleteVariantAttributeParams struct {
-	AttributeValueID int32 `json:"attribute_value_id"`
-	VariantID        int64 `json:"variant_id"`
-}
-
-func (q *Queries) DeleteVariantAttribute(ctx context.Context, arg DeleteVariantAttributeParams) error {
-	_, err := q.db.Exec(ctx, deleteVariantAttribute, arg.AttributeValueID, arg.VariantID)
-	return err
-}
-
-const getVariantAttributeByID = `-- name: GetVariantAttributeByID :one
-SELECT
-    variant_attribute_id, variant_id, attribute_value_id
-FROM
-    variant_attributes
-WHERE
-    variant_attribute_id = $1
-LIMIT 1
-`
-
-func (q *Queries) GetVariantAttributeByID(ctx context.Context, variantAttributeID int32) (VariantAttribute, error) {
-	row := q.db.QueryRow(ctx, getVariantAttributeByID, variantAttributeID)
-	var i VariantAttribute
-	err := row.Scan(&i.VariantAttributeID, &i.VariantID, &i.AttributeValueID)
-	return i, err
-}
-
-const getVariantAttributes = `-- name: GetVariantAttributes :many
-SELECT
-    variant_attribute_id, variant_id, attribute_value_id
-FROM
-    variant_attributes
-WHERE
-    variant_id = $1
-ORDER BY
-    variant_attribute_id
-`
-
-func (q *Queries) GetVariantAttributes(ctx context.Context, variantID int64) ([]VariantAttribute, error) {
-	rows, err := q.db.Query(ctx, getVariantAttributes, variantID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []VariantAttribute
-	for rows.Next() {
-		var i VariantAttribute
-		if err := rows.Scan(&i.VariantAttributeID, &i.VariantID, &i.AttributeValueID); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getVariantByID = `-- name: GetVariantByID :one
 SELECT
-    variant_id, product_id, variant_name, variant_sku, variant_price, variant_stock, created_at, updated_at
+    pv.variant_id, pv.product_id, pv.price, pv.discount, pv.stock_quantity, pv.sku, pv.created_at, pv.updated_at,
+    p.name as product_name, p.product_id
 FROM
     product_variants pv
+JOIN
+    products p ON pv.product_id = p.product_id
 WHERE
     pv.variant_id = $1
 LIMIT 1
 `
 
-func (q *Queries) GetVariantByID(ctx context.Context, variantID int64) (ProductVariant, error) {
+type GetVariantByIDRow struct {
+	VariantID     int64          `json:"variant_id"`
+	ProductID     int64          `json:"product_id"`
+	Price         pgtype.Numeric `json:"price"`
+	Discount      int32          `json:"discount"`
+	StockQuantity int32          `json:"stock_quantity"`
+	Sku           pgtype.Text    `json:"sku"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+	ProductName   string         `json:"product_name"`
+	ProductID_2   int64          `json:"product_id_2"`
+}
+
+func (q *Queries) GetVariantByID(ctx context.Context, variantID int64) (GetVariantByIDRow, error) {
 	row := q.db.QueryRow(ctx, getVariantByID, variantID)
-	var i ProductVariant
+	var i GetVariantByIDRow
 	err := row.Scan(
 		&i.VariantID,
 		&i.ProductID,
-		&i.VariantName,
-		&i.VariantSku,
-		&i.VariantPrice,
-		&i.VariantStock,
+		&i.Price,
+		&i.Discount,
+		&i.StockQuantity,
+		&i.Sku,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ProductName,
+		&i.ProductID_2,
 	)
 	return i, err
 }
 
 const getVariantByProductID = `-- name: GetVariantByProductID :many
 SELECT
-    pv.variant_id, pv.product_id, pv.variant_name, pv.variant_sku, pv.variant_price, pv.variant_stock, pv.created_at, pv.updated_at,
-    a.attribute_name, a.attribute_id,
-    av.attribute_value_id, av.attribute_value, av.color,
+    pv.variant_id, pv.product_id, pv.price, pv.discount, pv.stock_quantity, pv.sku, pv.created_at, pv.updated_at,
+    a.name as attribute_name, a.attribute_id,
     va.variant_attribute_id
 FROM
     product_variants pv
 JOIN
     variant_attributes va ON pv.variant_id = va.variant_id
-JOIN
-    attribute_values av ON va.attribute_value_id = av.attribute_value_id
 JOIN
     attributes a ON av.attribute_id = a.attribute_id
 WHERE
@@ -206,17 +128,14 @@ WHERE
 type GetVariantByProductIDRow struct {
 	VariantID          int64          `json:"variant_id"`
 	ProductID          int64          `json:"product_id"`
-	VariantName        string         `json:"variant_name"`
-	VariantSku         pgtype.Text    `json:"variant_sku"`
-	VariantPrice       pgtype.Numeric `json:"variant_price"`
-	VariantStock       int32          `json:"variant_stock"`
+	Price              pgtype.Numeric `json:"price"`
+	Discount           int32          `json:"discount"`
+	StockQuantity      int32          `json:"stock_quantity"`
+	Sku                pgtype.Text    `json:"sku"`
 	CreatedAt          time.Time      `json:"created_at"`
 	UpdatedAt          time.Time      `json:"updated_at"`
 	AttributeName      string         `json:"attribute_name"`
 	AttributeID        int32          `json:"attribute_id"`
-	AttributeValueID   int32          `json:"attribute_value_id"`
-	AttributeValue     string         `json:"attribute_value"`
-	Color              pgtype.Text    `json:"color"`
 	VariantAttributeID int32          `json:"variant_attribute_id"`
 }
 
@@ -232,17 +151,14 @@ func (q *Queries) GetVariantByProductID(ctx context.Context, productID int64) ([
 		if err := rows.Scan(
 			&i.VariantID,
 			&i.ProductID,
-			&i.VariantName,
-			&i.VariantSku,
-			&i.VariantPrice,
-			&i.VariantStock,
+			&i.Price,
+			&i.Discount,
+			&i.StockQuantity,
+			&i.Sku,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.AttributeName,
 			&i.AttributeID,
-			&i.AttributeValueID,
-			&i.AttributeValue,
-			&i.Color,
 			&i.VariantAttributeID,
 		); err != nil {
 			return nil, err
@@ -257,16 +173,13 @@ func (q *Queries) GetVariantByProductID(ctx context.Context, productID int64) ([
 
 const getVariantDetails = `-- name: GetVariantDetails :many
 SELECT
-    pv.variant_id, pv.product_id, pv.variant_name, pv.variant_sku, pv.variant_price, pv.variant_stock, pv.created_at, pv.updated_at,
-    a.attribute_name, a.attribute_id,
-    av.attribute_value_id, av.attribute_value, av.color,
+    pv.variant_id, pv.product_id, pv.price, pv.discount, pv.stock_quantity, pv.sku, pv.created_at, pv.updated_at,
+    a.name as attribute_name, a.attribute_id,
     va.variant_attribute_id
 FROM
     product_variants pv
 JOIN
     variant_attributes va ON pv.variant_id = va.variant_id
-JOIN
-    attribute_values av ON va.attribute_value_id = av.attribute_value_id
 JOIN
     attributes a ON av.attribute_id = a.attribute_id
 WHERE
@@ -276,17 +189,14 @@ WHERE
 type GetVariantDetailsRow struct {
 	VariantID          int64          `json:"variant_id"`
 	ProductID          int64          `json:"product_id"`
-	VariantName        string         `json:"variant_name"`
-	VariantSku         pgtype.Text    `json:"variant_sku"`
-	VariantPrice       pgtype.Numeric `json:"variant_price"`
-	VariantStock       int32          `json:"variant_stock"`
+	Price              pgtype.Numeric `json:"price"`
+	Discount           int32          `json:"discount"`
+	StockQuantity      int32          `json:"stock_quantity"`
+	Sku                pgtype.Text    `json:"sku"`
 	CreatedAt          time.Time      `json:"created_at"`
 	UpdatedAt          time.Time      `json:"updated_at"`
 	AttributeName      string         `json:"attribute_name"`
 	AttributeID        int32          `json:"attribute_id"`
-	AttributeValueID   int32          `json:"attribute_value_id"`
-	AttributeValue     string         `json:"attribute_value"`
-	Color              pgtype.Text    `json:"color"`
 	VariantAttributeID int32          `json:"variant_attribute_id"`
 }
 
@@ -302,17 +212,14 @@ func (q *Queries) GetVariantDetails(ctx context.Context, variantID int64) ([]Get
 		if err := rows.Scan(
 			&i.VariantID,
 			&i.ProductID,
-			&i.VariantName,
-			&i.VariantSku,
-			&i.VariantPrice,
-			&i.VariantStock,
+			&i.Price,
+			&i.Discount,
+			&i.StockQuantity,
+			&i.Sku,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.AttributeName,
 			&i.AttributeID,
-			&i.AttributeValueID,
-			&i.AttributeValue,
-			&i.Color,
 			&i.VariantAttributeID,
 		); err != nil {
 			return nil, err
@@ -329,67 +236,39 @@ const updateVariant = `-- name: UpdateVariant :one
 UPDATE
     product_variants
 SET
-    variant_name = COALESCE($2, variant_name),
-    variant_sku = COALESCE($3, variant_sku),
-    variant_price = COALESCE($4, variant_price),
-    variant_stock = COALESCE($5, variant_stock),
+    sku = COALESCE($2, sku),
+    price = COALESCE($3, price),
+    stock_quantity = COALESCE($4, stock_quantity),
     updated_at = NOW()
 WHERE
     variant_id = $1
-RETURNING variant_id, product_id, variant_name, variant_sku, variant_price, variant_stock, created_at, updated_at
+RETURNING variant_id, product_id, price, discount, stock_quantity, sku, created_at, updated_at
 `
 
 type UpdateVariantParams struct {
-	VariantID    int64          `json:"variant_id"`
-	VariantName  pgtype.Text    `json:"variant_name"`
-	VariantSku   pgtype.Text    `json:"variant_sku"`
-	VariantPrice pgtype.Numeric `json:"variant_price"`
-	VariantStock pgtype.Int4    `json:"variant_stock"`
+	VariantID     int64          `json:"variant_id"`
+	Sku           pgtype.Text    `json:"sku"`
+	Price         pgtype.Numeric `json:"price"`
+	StockQuantity pgtype.Int4    `json:"stock_quantity"`
 }
 
 func (q *Queries) UpdateVariant(ctx context.Context, arg UpdateVariantParams) (ProductVariant, error) {
 	row := q.db.QueryRow(ctx, updateVariant,
 		arg.VariantID,
-		arg.VariantName,
-		arg.VariantSku,
-		arg.VariantPrice,
-		arg.VariantStock,
+		arg.Sku,
+		arg.Price,
+		arg.StockQuantity,
 	)
 	var i ProductVariant
 	err := row.Scan(
 		&i.VariantID,
 		&i.ProductID,
-		&i.VariantName,
-		&i.VariantSku,
-		&i.VariantPrice,
-		&i.VariantStock,
+		&i.Price,
+		&i.Discount,
+		&i.StockQuantity,
+		&i.Sku,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
-	return i, err
-}
-
-const updateVariantAttribute = `-- name: UpdateVariantAttribute :one
-UPDATE
-    variant_attributes
-SET
-    variant_id = $2,
-    attribute_value_id = $3,
-    updated_at = NOW()
-WHERE
-    variant_attribute_id = $1
-RETURNING variant_attribute_id, variant_id, attribute_value_id
-`
-
-type UpdateVariantAttributeParams struct {
-	VariantAttributeID int32 `json:"variant_attribute_id"`
-	VariantID          int64 `json:"variant_id"`
-	AttributeValueID   int32 `json:"attribute_value_id"`
-}
-
-func (q *Queries) UpdateVariantAttribute(ctx context.Context, arg UpdateVariantAttributeParams) (VariantAttribute, error) {
-	row := q.db.QueryRow(ctx, updateVariantAttribute, arg.VariantAttributeID, arg.VariantID, arg.AttributeValueID)
-	var i VariantAttribute
-	err := row.Scan(&i.VariantAttributeID, &i.VariantID, &i.AttributeValueID)
 	return i, err
 }

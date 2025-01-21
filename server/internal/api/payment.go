@@ -19,7 +19,7 @@ type PaymentRequest struct {
 	Gateway string `json:"gateway" binding:"required"`
 }
 type GetPaymentByOrderIDParam struct {
-	OrderID int64 `uri:"order_id" binding:"required"`
+	OrderID uuid.UUID `uri:"order_id" binding:"required,uuid"`
 }
 
 type GetPaymentParam struct {

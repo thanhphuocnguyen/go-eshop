@@ -30,6 +30,13 @@ definitions:
       name:
         type: string
     type: object
+  api.AttributeRequest:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
   api.AttributeValue:
     properties:
       color:
@@ -61,20 +68,13 @@ definitions:
     - phone
     - street
     type: object
-  api.CreateAttributeParams:
-    properties:
-      name:
-        type: string
-    required:
-    - name
-    type: object
   api.CreateAttributeValueParams:
     properties:
       attribute_id:
         type: integer
       values:
         items:
-          $ref: '#/definitions/api.Value'
+          $ref: '#/definitions/api.AttributeValue'
         type: array
     required:
     - attribute_id
@@ -93,11 +93,11 @@ definitions:
       total:
         type: integer
     type: object
-  api.GenericListResponse-api_productListResponse:
+  api.GenericListResponse-api_productListModel:
     properties:
       data:
         items:
-          $ref: '#/definitions/api.productListResponse'
+          $ref: '#/definitions/api.productListModel'
         type: array
       error:
         type: string
@@ -119,6 +119,15 @@ definitions:
     properties:
       data:
         $ref: '#/definitions/api.Attribute'
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  api.GenericResponse-api_AttributeValue:
+    properties:
+      data:
+        $ref: '#/definitions/api.AttributeValue'
       error:
         type: string
       message:
@@ -169,10 +178,10 @@ definitions:
       message:
         type: string
     type: object
-  api.GenericResponse-api_productListResponse:
+  api.GenericResponse-api_productListModel:
     properties:
       data:
-        $ref: '#/definitions/api.productListResponse'
+        $ref: '#/definitions/api.productListModel'
       error:
         type: string
       message:
@@ -330,15 +339,6 @@ definitions:
       ward:
         type: string
     type: object
-  api.Value:
-    properties:
-      color:
-        type: string
-      value:
-        type: string
-    required:
-    - value
-    type: object
   api.addProductToCartRequest:
     properties:
       product_id:
@@ -385,7 +385,7 @@ definitions:
         type: integer
       variants:
         items:
-          $ref: '#/definitions/api.variantModel'
+          $ref: '#/definitions/api.productVariantModel'
         type: array
     type: object
   api.cartResponse:
@@ -459,7 +459,7 @@ definitions:
         type: string
       products:
         items:
-          $ref: '#/definitions/api.productListResponse'
+          $ref: '#/definitions/api.productListModel'
         type: array
     type: object
   api.createProductRequest:
@@ -615,7 +615,7 @@ definitions:
       refund_id:
         type: string
     type: object
-  api.productListResponse:
+  api.productListModel:
     properties:
       created_at:
         type: string
@@ -636,6 +636,19 @@ definitions:
       variant_count:
         type: integer
     type: object
+  api.productVariantModel:
+    properties:
+      attributes:
+        additionalProperties:
+          type: string
+        type: object
+      id:
+        type: integer
+      name:
+        type: string
+      price:
+        type: number
+    type: object
   api.renewAccessTokenResp:
     properties:
       access_token:
@@ -652,10 +665,16 @@ definitions:
     type: object
   api.updateProductRequest:
     properties:
+      category_id:
+        type: integer
       description:
         maxLength: 1000
         minLength: 10
         type: string
+      discount:
+        maximum: 100
+        minimum: 0
+        type: integer
       name:
         maxLength: 100
         minLength: 3
@@ -667,6 +686,10 @@ definitions:
         type: string
       stock:
         type: integer
+      variants:
+        items:
+          $ref: '#/definitions/repository.UpdateVariantTxParams'
+        type: array
     type: object
   api.updateUserRequest:
     properties:
@@ -726,19 +749,6 @@ definitions:
       verified_phone:
         type: boolean
     type: object
-  api.variantModel:
-    properties:
-      attributes:
-        additionalProperties:
-          type: string
-        type: object
-      id:
-        type: integer
-      name:
-        type: string
-      price:
-        type: number
-    type: object
   api.variantRequest:
     properties:
       attributes:
@@ -755,13 +765,15 @@ definitions:
         type: integer
     required:
     - name
+    - price
+    - stock
     type: object
   api.variantResponse:
     properties:
       attributes:
-        additionalProperties:
-          type: string
-        type: object
+        items:
+          $ref: '#/definitions/api.AttributeValue'
+        type: array
       created_at:
         type: string
       name:
@@ -1061,6 +1073,30 @@ definitions:
       verified_phone:
         type: boolean
     type: object
+  repository.UpdateVariantTxParams:
+    properties:
+      attributes:
+        items:
+          type: integer
+        type: array
+      name:
+        minLength: 1
+        type: string
+      price:
+        minimum: 0
+        type: number
+      sku:
+        minLength: 1
+        type: string
+      stock:
+        minimum: 0
+        type: integer
+      variant_id:
+        minimum: 1
+        type: integer
+    required:
+    - variant_id
+    type: object
   repository.UserRole:
     enum:
     - admin
@@ -1238,7 +1274,7 @@ paths:
         name: params
         required: true
         schema:
-          $ref: '#/definitions/api.CreateAttributeParams'
+          $ref: '#/definitions/api.AttributeRequest'
       produces:
       - application/json
       responses:
@@ -1292,6 +1328,79 @@ paths:
       summary: Create attribute values
       tags:
       - attributes
+  /attributes/{attribute_id}/values/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove attribute value
+      parameters:
+      - description: Attribute ID
+        in: path
+        name: attribute_id
+        required: true
+        type: integer
+      - description: Attribute value ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/api.GenericResponse-bool'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+      summary: Remove attribute value
+      tags:
+      - attributes
+    put:
+      consumes:
+      - application/json
+      description: Update attribute value
+      parameters:
+      - description: Attribute ID
+        in: path
+        name: attribute_id
+        required: true
+        type: integer
+      - description: Attribute value ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Attribute value
+        in: body
+        name: value
+        required: true
+        schema:
+          $ref: '#/definitions/api.AttributeValue'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.GenericResponse-api_AttributeValue'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+      summary: Update attribute value
+      tags:
+      - attributes
   /attributes/{id}:
     delete:
       consumes:
@@ -1341,6 +1450,40 @@ paths:
           schema:
             $ref: '#/definitions/api.errorResponse'
       summary: Get an attribute
+      tags:
+      - attributes
+    put:
+      consumes:
+      - application/json
+      description: Update an attribute
+      parameters:
+      - description: Attribute ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Attribute name
+        in: body
+        name: params
+        required: true
+        schema:
+          $ref: '#/definitions/api.AttributeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.GenericResponse-api_Attribute'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+      summary: Update an attribute
       tags:
       - attributes
   /cart:
@@ -2049,7 +2192,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/api.GenericListResponse-api_productListResponse'
+              $ref: '#/definitions/api.GenericListResponse-api_productListModel'
             type: array
         "404":
           description: Not Found
@@ -2136,7 +2279,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-api_productListResponse'
+            $ref: '#/definitions/api.GenericResponse-api_productListModel'
         "404":
           description: Not Found
           schema:
@@ -2475,6 +2618,45 @@ paths:
       summary: Refresh token
       tags:
       - users
+  /variant/{product_id}:
+    post:
+      consumes:
+      - application/json
+      description: Create a variant
+      parameters:
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: integer
+      - description: Create Variant Request
+        in: body
+        name: variantRequest
+        required: true
+        schema:
+          $ref: '#/definitions/api.variantRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/repository.ProductVariant'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+      summary: Create a variant
+      tags:
+      - variant
   /variant/{variant_id}:
     delete:
       consumes:

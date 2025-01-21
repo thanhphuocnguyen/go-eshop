@@ -99,7 +99,8 @@ func (sv *Server) getCollections(c *gin.Context) {
 
 	total := make(chan int64, 1)
 	colRows := make(chan []repository.Category, 1)
-
+	defer close(total)
+	defer close(colRows)
 	errGroup.Go(func() error {
 		rows, err := sv.repo.GetCollections(ctx)
 		if err != nil {
@@ -130,8 +131,9 @@ func (sv *Server) getCollections(c *gin.Context) {
 		c.JSON(http.StatusNotFound, mapErrResp(fmt.Errorf("no collections found")))
 		return
 	}
+	resp := <-colRows
 
-	c.JSON(http.StatusOK, GenericListResponse[repository.Category]{<-colRows, <-total, nil, nil})
+	c.JSON(http.StatusOK, GenericListResponse[repository.Category]{&resp, <-total, nil, nil})
 }
 
 // getCollectionByID retrieves a collection by its ID.
@@ -170,13 +172,16 @@ func (sv *Server) getCollectionByID(c *gin.Context) {
 		Products:    []productListModel{},
 	}
 	for _, p := range colRows {
-		price, _ := p.Price.Float64Value()
+		priceFrom, _ := p.PriceFrom.Float64Value()
+		priceTo, _ := p.PriceTo.Float64Value()
 		colResp.Products = append(colResp.Products, productListModel{
-			ID:          p.ProductID,
-			Name:        p.Name,
-			Price:       price.Float64,
-			Description: p.Description.String,
-			ImageUrl:    &p.ImageUrl.String,
+			ID:           p.ProductID,
+			Name:         p.Name,
+			PriceFrom:    priceFrom.Float64,
+			VariantCount: p.VariantCount,
+			PriceTo:      priceTo.Float64,
+			Description:  p.Description.String,
+			ImageUrl:     &p.ImageUrl.String,
 		})
 	}
 	c.JSON(http.StatusOK, GenericResponse[collectionResp]{&colResp, nil, nil})

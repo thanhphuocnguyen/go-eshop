@@ -2,20 +2,12 @@
 INSERT INTO
     products (
         name,
-        description,
-        sku,
-        stock,
-        price,
-        discount
+        description
     )
 VALUES
     (
         $1,
-        $2,
-        $3,
-        $4,
-        $5,
-        $6
+        $2
     )
 RETURNING *;
 
@@ -25,10 +17,13 @@ SELECT
     COUNT(pv.variant_id) AS variant_count
 FROM
     products
-LEFT JOIN product_variants AS pv ON products.product_id = pv.product_id
+JOIN product_variants AS pv ON products.product_id = pv.product_id
 WHERE
     products.product_id = $1 AND
-    archived = COALESCE(sqlc.narg('archived'), false);
+    archived = COALESCE(sqlc.narg('archived'), false)
+GROUP BY
+    products.product_id;
+
 -- name: GetProductWithVariantByID :one
 SELECT
     *
@@ -44,33 +39,33 @@ WHERE
 -- name: GetProductDetail :many
 SELECT
     sqlc.embed(products),
-    img.image_id AS image_id, img.image_url AS image_url, img.primary AS image_primary,
-    pv.variant_id AS variant_id, pv.variant_name, pv.variant_sku, pv.variant_price, pv.variant_stock,
-    a.attribute_id AS attribute_id, a.attribute_name,
-    va.variant_attribute_id AS variant_attribute_id, va.attribute_value_id AS attribute_value_id,
-    av.attribute_value_id AS attribute_value_id, av.attribute_value
+    img.image_id, img.product_id as img_product_id, img.variant_id as img_variant_id, img.image_url, img.primary AS image_primary,
+    pv.variant_id AS variant_id, pv.sku, pv.price, pv.stock_quantity,
+    a.attribute_id AS attribute_id, a.name as attribute_name,
+    va.variant_attribute_id AS variant_attribute_id, va.value as variant_attribute_value
 FROM
     products
+JOIN product_variants AS pv ON products.product_id = pv.product_id
+JOIN variant_attributes AS va ON pv.variant_id = va.variant_id
+JOIN attributes AS a ON av.attribute_id = a.attribute_id
 LEFT JOIN images AS img ON products.product_id = img.product_id
-LEFT JOIN product_variants AS pv ON products.product_id = pv.product_id
-LEFT JOIN variant_attributes AS va ON pv.variant_id = va.variant_id
-LEFT JOIN attribute_values AS av ON va.attribute_value_id = av.attribute_value_id
-LEFT JOIN attributes AS a ON av.attribute_id = a.attribute_id
 WHERE
     products.product_id = $1 AND
     archived = COALESCE(sqlc.narg('archived'), false)
 ORDER BY
-    img.primary DESC;
+    pv.variant_id, a.attribute_id, va.variant_attribute_id, img.primary DESC;
 
 -- name: GetProducts :many
 SELECT
     p.*,
     img.image_id AS image_id, img.image_url AS image_url,
+    MIN(pv.price)::DECIMAL AS min_price,
+    MAX(pv.price)::DECIMAL AS max_price,
     COUNT(pv.variant_id) AS variant_count
 FROM
     products as p
+JOIN product_variants AS pv ON p.product_id = pv.product_id
 LEFT JOIN images AS img ON p.product_id = img.product_id AND img.primary = TRUE
-LEFT JOIN product_variants AS pv ON p.product_id = pv.product_id
 WHERE
     archived = COALESCE(sqlc.narg('archived'), archived) AND
     name ILIKE COALESCE(sqlc.narg('name'), name) AND
@@ -105,8 +100,7 @@ FROM
     products
 WHERE
     archived = COALESCE(sqlc.narg('archived'), archived) AND
-    name ILIKE COALESCE(sqlc.narg('name'), name) AND
-    sku ILIKE COALESCE(sqlc.narg('sku'), sku);
+    name ILIKE COALESCE(sqlc.narg('name'), name);
 
 -- name: UpdateProduct :one
 UPDATE
@@ -114,10 +108,6 @@ UPDATE
 SET
     name = coalesce(sqlc.narg('name'), name),
     description = coalesce(sqlc.narg('description'), description),
-    sku = coalesce(sqlc.narg('sku'), sku),
-    stock = coalesce(sqlc.narg('stock'), stock),
-    price = coalesce(sqlc.narg('price'), price),
-    discount = coalesce(sqlc.narg('discount'), discount),
     updated_at = NOW()
 WHERE
     product_id = sqlc.arg('product_id')
@@ -138,31 +128,14 @@ SET
 WHERE
     product_id = $1;
 
--- name: UpdateProductStock :exec
-UPDATE
-    products
-SET
-    stock = stock + $2
-WHERE
-    product_id = $1
-RETURNING *;
-
 -- name: AddBulkProducts :copyfrom
 INSERT INTO
     products (
         name,
-        description,
-        sku,
-        stock,
-        price,
-        discount
+        description
     )
 VALUES
     (
         $1,
-        $2,
-        $3,
-        $4,
-        $5,
-        $6
+        $2
     );

@@ -138,14 +138,11 @@ func (sv *Server) initializeRouter() {
 		attribute := v1.Group("attribute").
 			Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin))
 		{
+			attribute.POST("", sv.createAttribute)
 			attribute.GET("list", sv.getAttributes)
 			attribute.GET(":id", sv.getAttributeByID)
 			attribute.PUT(":id", sv.updateAttribute)
 			attribute.DELETE(":id", sv.deleteAttribute)
-			attribute.POST("", sv.createAttribute)
-			attribute.POST("values", sv.createAttributeValues)
-			attribute.PUT(":id/value/:value_id", sv.updateAttributeValue)
-			attribute.DELETE(":id/value/:value_id", sv.deleteAttributeValue)
 		}
 
 		cart := v1.Group("/cart")
@@ -232,7 +229,7 @@ type GenericResponse[T any] struct {
 }
 
 type GenericListResponse[T any] struct {
-	Data    []T     `json:"data,omitempty"`
+	Data    *[]T    `json:"data,omitempty"`
 	Total   int64   `json:"total,omitempty"`
 	Message *string `json:"message,omitempty"`
 	Error   *string `json:"error,omitempty"`

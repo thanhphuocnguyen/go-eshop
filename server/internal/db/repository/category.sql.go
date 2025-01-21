@@ -59,14 +59,17 @@ func (q *Queries) CreateCollection(ctx context.Context, arg CreateCollectionPara
 const getCollection = `-- name: GetCollection :many
 SELECT 
     c.category_id, c.name, c.description, c.sort_order, c.published, c.created_at, c.updated_at, 
-    p.name, p.description, p.price, p.discount, 
-    cp.product_id, 
+    p.name, p.description,
+    cp.product_id,
+    MIN(pv.price)::decimal as price_from, MAX(pv.price)::decimal as price_to, MAX(pv.discount)::int as discount, MIN(pv.stock_quantity)::int as stock_quantity, COUNT(pv.product_variant_id) as variant_count,
     i.image_id, i.image_url
 FROM categories c
 JOIN category_products cp ON cp.category_id = c.category_id
 JOIN products p ON cp.product_id = p.product_id AND p.published = TRUE
+JOIN product_variants pv ON p.product_id = pv.product_id
 LEFT JOIN images i ON p.product_id = i.product_id AND i.primary = TRUE
 WHERE categories.category_id = $1
+GROUP BY c.category_id, p.product_id, i.image_id
 `
 
 type GetCollectionRow struct {
@@ -79,9 +82,12 @@ type GetCollectionRow struct {
 	UpdatedAt     time.Time      `json:"updated_at"`
 	Name_2        string         `json:"name_2"`
 	Description_2 string         `json:"description_2"`
-	Price         pgtype.Numeric `json:"price"`
-	Discount      int32          `json:"discount"`
 	ProductID     int64          `json:"product_id"`
+	PriceFrom     pgtype.Numeric `json:"price_from"`
+	PriceTo       pgtype.Numeric `json:"price_to"`
+	Discount      int32          `json:"discount"`
+	StockQuantity int32          `json:"stock_quantity"`
+	VariantCount  int64          `json:"variant_count"`
 	ImageID       pgtype.Int4    `json:"image_id"`
 	ImageUrl      pgtype.Text    `json:"image_url"`
 }
@@ -105,9 +111,12 @@ func (q *Queries) GetCollection(ctx context.Context, categoryID int32) ([]GetCol
 			&i.UpdatedAt,
 			&i.Name_2,
 			&i.Description_2,
-			&i.Price,
-			&i.Discount,
 			&i.ProductID,
+			&i.PriceFrom,
+			&i.PriceTo,
+			&i.Discount,
+			&i.StockQuantity,
+			&i.VariantCount,
 			&i.ImageID,
 			&i.ImageUrl,
 		); err != nil {
@@ -122,7 +131,7 @@ func (q *Queries) GetCollection(ctx context.Context, categoryID int32) ([]GetCol
 }
 
 const getCollectionByName = `-- name: GetCollectionByName :one
-SELECT c.category_id, c.name, c.description, c.sort_order, published, c.created_at, c.updated_at, cp.category_id, cp.product_id, cp.sort_order, p.product_id, p.name, p.description, sku, stock, discount, archived, price, p.updated_at, p.created_at
+SELECT c.category_id, c.name, c.description, c.sort_order, published, c.created_at, c.updated_at, cp.category_id, cp.product_id, cp.sort_order, p.product_id, p.name, p.description, archived, p.created_at, p.updated_at
 FROM categories c
 JOIN category_products cp ON c.category_id = cp.category_id
 JOIN products p ON cp.product_id = p.product_id AND p.published = TRUE
@@ -131,26 +140,22 @@ LIMIT 1
 `
 
 type GetCollectionByNameRow struct {
-	CategoryID    int32          `json:"category_id"`
-	Name          string         `json:"name"`
-	Description   pgtype.Text    `json:"description"`
-	SortOrder     int16          `json:"sort_order"`
-	Published     bool           `json:"published"`
-	CreatedAt     time.Time      `json:"created_at"`
-	UpdatedAt     time.Time      `json:"updated_at"`
-	CategoryID_2  int32          `json:"category_id_2"`
-	ProductID     int64          `json:"product_id"`
-	SortOrder_2   int16          `json:"sort_order_2"`
-	ProductID_2   int64          `json:"product_id_2"`
-	Name_2        string         `json:"name_2"`
-	Description_2 string         `json:"description_2"`
-	Sku           pgtype.Text    `json:"sku"`
-	Stock         int32          `json:"stock"`
-	Discount      int32          `json:"discount"`
-	Archived      bool           `json:"archived"`
-	Price         pgtype.Numeric `json:"price"`
-	UpdatedAt_2   time.Time      `json:"updated_at_2"`
-	CreatedAt_2   time.Time      `json:"created_at_2"`
+	CategoryID    int32       `json:"category_id"`
+	Name          string      `json:"name"`
+	Description   pgtype.Text `json:"description"`
+	SortOrder     int16       `json:"sort_order"`
+	Published     bool        `json:"published"`
+	CreatedAt     time.Time   `json:"created_at"`
+	UpdatedAt     time.Time   `json:"updated_at"`
+	CategoryID_2  int32       `json:"category_id_2"`
+	ProductID     int64       `json:"product_id"`
+	SortOrder_2   int16       `json:"sort_order_2"`
+	ProductID_2   int64       `json:"product_id_2"`
+	Name_2        string      `json:"name_2"`
+	Description_2 string      `json:"description_2"`
+	Archived      bool        `json:"archived"`
+	CreatedAt_2   time.Time   `json:"created_at_2"`
+	UpdatedAt_2   time.Time   `json:"updated_at_2"`
 }
 
 func (q *Queries) GetCollectionByName(ctx context.Context, name string) (GetCollectionByNameRow, error) {
@@ -170,13 +175,9 @@ func (q *Queries) GetCollectionByName(ctx context.Context, name string) (GetColl
 		&i.ProductID_2,
 		&i.Name_2,
 		&i.Description_2,
-		&i.Sku,
-		&i.Stock,
-		&i.Discount,
 		&i.Archived,
-		&i.Price,
-		&i.UpdatedAt_2,
 		&i.CreatedAt_2,
+		&i.UpdatedAt_2,
 	)
 	return i, err
 }

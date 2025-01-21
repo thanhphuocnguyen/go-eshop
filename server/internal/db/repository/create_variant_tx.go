@@ -8,12 +8,12 @@ import (
 )
 
 type CreateVariantTxParam struct {
-	ProductID    int64   `json:"product_id" validate:"required"`
-	VariantName  string  `json:"variant_name" validate:"required"`
-	VariantPrice float64 `json:"variant_price" validate:"required"`
-	VariantSku   *string `json:"variant_sku" validate:"omitempty"`
-	VariantStock int32   `json:"variant_stock" validate:"required"`
-	Attributes   []int32 `json:"attributes" validate:"omitempty"`
+	ProductID    int64
+	VariantName  string
+	VariantPrice float64
+	VariantSku   *string
+	VariantStock int32
+	Attributes   []CreateVariantAttributeParams
 }
 
 func (s *pgRepo) CreateVariantTx(ctx context.Context, arg CreateVariantTxParam) (ProductVariant, error) {
@@ -32,14 +32,13 @@ func (s *pgRepo) CreateVariantTx(ctx context.Context, arg CreateVariantTxParam) 
 
 func createVariantUtil(ctx context.Context, q *Queries, arg CreateVariantTxParam) (*ProductVariant, error) {
 	createParam := CreateVariantParams{
-		ProductID:    arg.ProductID,
-		VariantName:  arg.VariantName,
-		VariantPrice: util.GetPgNumericFromFloat(arg.VariantPrice),
-		VariantStock: arg.VariantStock,
+		ProductID:     arg.ProductID,
+		Price:         util.GetPgNumericFromFloat(arg.VariantPrice),
+		StockQuantity: arg.VariantStock,
 	}
 
 	if arg.VariantSku != nil {
-		createParam.VariantSku = util.GetPgTypeText(*arg.VariantSku)
+		createParam.Sku = util.GetPgTypeText(*arg.VariantSku)
 	}
 
 	variant, err := q.CreateVariant(ctx, createParam)
@@ -48,18 +47,21 @@ func createVariantUtil(ctx context.Context, q *Queries, arg CreateVariantTxParam
 		return nil, err
 	}
 	if len(arg.Attributes) > 0 {
-		addVariantAttributeParam := make([]CreateBulkVariantAttributeParams, len(arg.Attributes))
-		for i, attrID := range arg.Attributes {
-			addVariantAttributeParam[i] = CreateBulkVariantAttributeParams{
-				VariantID:        variant.VariantID,
-				AttributeValueID: attrID,
+		addVariantAttributeParam := make([]CreateBulkVariantAttributesParams, len(arg.Attributes))
+		for i, param := range arg.Attributes {
+			addVariantAttributeParam[i] = CreateBulkVariantAttributesParams{
+				VariantID:   variant.VariantID,
+				AttributeID: param.AttributeID,
+				Value:       param.Value,
 			}
 		}
-		_, err = q.CreateBulkVariantAttribute(ctx, addVariantAttributeParam)
+		_, err = q.CreateBulkVariantAttributes(ctx, addVariantAttributeParam)
+
 		if err != nil {
 			log.Error().Err(err).Msg("AddVariantAttributes")
 			return nil, err
 		}
 	}
+
 	return &variant, nil
 }

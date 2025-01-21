@@ -11,9 +11,9 @@ import (
 
 // ------------------------------ API Models ------------------------------
 type Attribute struct {
-	ID              int32            `json:"id"`
-	Name            string           `json:"name"`
-	AttributeValues []AttributeValue `json:"attribute_values,omitempty"`
+	ID              int32    `json:"id"`
+	Name            string   `json:"name"`
+	AttributeValues []string `json:"values,omitempty"`
 }
 
 type AttributeRequest struct {
@@ -31,7 +31,7 @@ type AttributeParam struct {
 // @Tags attributes
 // @Accept json
 // @Produce json
-// @Param params body CreateAttributeParams true "Attribute name"
+// @Param params body AttributeRequest true "Attribute name"
 // @Success 201 {object} GenericResponse[Attribute]
 // @Failure 400 {object} errorResponse
 // @Failure 500 {object} errorResponse
@@ -69,34 +69,17 @@ func (sv *Server) getAttributeByID(c *gin.Context) {
 		return
 	}
 
-	attributeRows, err := sv.repo.GetAttributeDetailsByID(c, attributeParam.ID)
-	if len(attributeRows) == 0 {
-		c.JSON(http.StatusNotFound, mapErrResp(errors.New("attribute not found")))
-		return
-	}
-
-	var resp Attribute
-	attribute := attributeRows[0]
-	resp.ID = attribute.AttributeID
-	resp.Name = attribute.AttributeName
-	resp.AttributeValues = make([]AttributeValue, len(attributeRows))
-	for i, attRow := range attributeRows {
-		value := AttributeValue{
-			ID:    attRow.AttributeValueID,
-			Value: attRow.AttributeValue,
-		}
-		if attRow.Color.Valid {
-			color := attRow.Color.String
-			value.Color = &color
-		}
-		resp.AttributeValues[i] = value
-	}
-
+	attributeRows, err := sv.repo.GetAttributeByID(c, attributeParam.ID)
 	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, mapErrResp(err))
+			return
+		}
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
-	c.JSON(http.StatusOK, GenericResponse[Attribute]{&resp, nil, nil})
+
+	c.JSON(http.StatusOK, GenericResponse[repository.Attribute]{&attributeRows, nil, nil})
 }
 
 // @Summary Get all attributes
@@ -109,7 +92,7 @@ func (sv *Server) getAttributeByID(c *gin.Context) {
 // @Router /attributes [get]
 func (sv *Server) getAttributes(c *gin.Context) {
 	errgroup, ctx := errgroup.WithContext(c)
-	attributeRowsChan := make(chan []repository.GetAttributesRow, 1)
+	attributeRowsChan := make(chan []repository.Attribute, 1)
 	attributeCntChan := make(chan int64, 1)
 	defer close(attributeRowsChan)
 	defer close(attributeCntChan)
@@ -136,28 +119,9 @@ func (sv *Server) getAttributes(c *gin.Context) {
 		return
 	}
 
-	var resp []Attribute
-	rows := <-attributeRowsChan
-	for i, attributeRow := range rows {
-		if i == 0 || attributeRow.AttributeID != rows[i-1].AttributeID {
-			resp = append(resp, Attribute{
-				ID:   attributeRow.AttributeID,
-				Name: attributeRow.AttributeName,
-			})
-		}
+	resp := <-attributeRowsChan
 
-		value := AttributeValue{
-			ID:    attributeRow.AttributeValueID,
-			Value: attributeRow.AttributeValue,
-		}
-		if attributeRow.Color.Valid {
-			color := attributeRow.Color.String
-			value.Color = &color
-		}
-		resp[len(resp)-1].AttributeValues = append(resp[len(resp)-1].AttributeValues, value)
-	}
-
-	c.JSON(http.StatusOK, GenericListResponse[Attribute]{resp, <-attributeCntChan, nil, nil})
+	c.JSON(http.StatusOK, GenericListResponse[repository.Attribute]{&resp, <-attributeCntChan, nil, nil})
 }
 
 // @Summary Update an attribute
@@ -166,7 +130,7 @@ func (sv *Server) getAttributes(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Attribute ID"
-// @Param params body CreateAttributeParams true "Attribute name"
+// @Param params body AttributeRequest true "Attribute name"
 // @Success 200 {object} GenericResponse[Attribute]
 // @Failure 400 {object} errorResponse
 // @Failure 500 {object} errorResponse
@@ -194,14 +158,14 @@ func (sv *Server) updateAttribute(c *gin.Context) {
 		return
 	}
 
-	if existingAttribute.AttributeName == req.Name {
+	if existingAttribute.Name == req.Name {
 		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("attribute name is the same as the existing one")))
 		return
 	}
 
 	attribute, err := sv.repo.UpdateAttribute(c, repository.UpdateAttributeParams{
-		AttributeID:   existingAttribute.AttributeID,
-		AttributeName: req.Name,
+		AttributeID: existingAttribute.AttributeID,
+		Name:        req.Name,
 	})
 
 	if err != nil {

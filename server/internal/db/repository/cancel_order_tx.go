@@ -5,12 +5,14 @@ import (
 	"errors"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
+	"github.com/thanhphuocnguyen/go-eshop/internal/db/util"
 )
 
 type CancelOrderTxArgs struct {
-	OrderID                  int64
+	OrderID                  uuid.UUID
 	CancelPaymentFromGateway func(paymentID string, gateway PaymentGateway) error
 }
 
@@ -75,11 +77,13 @@ func (pg *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (or
 			log.Error().Err(err).Msg("ListOrderItems")
 			return err
 		}
+		// TODO: implement UpdateProductStock
 		for _, item := range orderItems {
-			err = q.UpdateProductStock(ctx, UpdateProductStockParams{
-				Stock:     item.Quantity,
-				ProductID: item.ProductID,
+			_, err = q.UpdateVariant(ctx, UpdateVariantParams{
+				VariantID:     item.VariantID,
+				StockQuantity: util.GetPgTypeInt4(item.Quantity),
 			})
+
 			if err != nil {
 				log.Error().Err(err).Msg("UpdateProductStock")
 				return err

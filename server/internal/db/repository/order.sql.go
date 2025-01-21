@@ -9,6 +9,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -106,8 +107,8 @@ RETURNING order_item_id, product_id, variant_id, order_id, quantity, price, crea
 
 type CreateOrderItemParams struct {
 	ProductID int64          `json:"product_id"`
-	VariantID pgtype.Int8    `json:"variant_id"`
-	OrderID   int64          `json:"order_id"`
+	VariantID int64          `json:"variant_id"`
+	OrderID   uuid.UUID      `json:"order_id"`
 	Quantity  int32          `json:"quantity"`
 	Price     pgtype.Numeric `json:"price"`
 }
@@ -140,7 +141,7 @@ WHERE
     order_id = $1
 `
 
-func (q *Queries) DeleteOrder(ctx context.Context, orderID int64) error {
+func (q *Queries) DeleteOrder(ctx context.Context, orderID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteOrder, orderID)
 	return err
 }
@@ -155,7 +156,7 @@ WHERE
 LIMIT 1
 `
 
-func (q *Queries) GetOrder(ctx context.Context, orderID int64) (Order, error) {
+func (q *Queries) GetOrder(ctx context.Context, orderID uuid.UUID) (Order, error) {
 	row := q.db.QueryRow(ctx, getOrder, orderID)
 	var i Order
 	err := row.Scan(
@@ -202,7 +203,7 @@ WHERE
 `
 
 type GetOrderDetailsRow struct {
-	OrderID        int64              `json:"order_id"`
+	OrderID        uuid.UUID          `json:"order_id"`
 	UserID         int64              `json:"user_id"`
 	UserAddressID  int64              `json:"user_address_id"`
 	TotalPrice     pgtype.Numeric     `json:"total_price"`
@@ -232,7 +233,7 @@ type GetOrderDetailsRow struct {
 	VariantID      pgtype.Int8        `json:"variant_id"`
 }
 
-func (q *Queries) GetOrderDetails(ctx context.Context, orderID int64) ([]GetOrderDetailsRow, error) {
+func (q *Queries) GetOrderDetails(ctx context.Context, orderID uuid.UUID) ([]GetOrderDetailsRow, error) {
 	rows, err := q.db.Query(ctx, getOrderDetails, orderID)
 	if err != nil {
 		return nil, err
@@ -295,9 +296,9 @@ OFFSET $3
 `
 
 type ListOrderItemsParams struct {
-	OrderID int64 `json:"order_id"`
-	Limit   int32 `json:"limit"`
-	Offset  int32 `json:"offset"`
+	OrderID uuid.UUID `json:"order_id"`
+	Limit   int32     `json:"limit"`
+	Offset  int32     `json:"offset"`
 }
 
 func (q *Queries) ListOrderItems(ctx context.Context, arg ListOrderItemsParams) ([]OrderItem, error) {
@@ -357,7 +358,7 @@ type ListOrdersParams struct {
 }
 
 type ListOrdersRow struct {
-	OrderID       int64              `json:"order_id"`
+	OrderID       uuid.UUID          `json:"order_id"`
 	UserID        int64              `json:"user_id"`
 	UserAddressID int64              `json:"user_address_id"`
 	TotalPrice    pgtype.Numeric     `json:"total_price"`
@@ -434,7 +435,7 @@ type UpdateOrderParams struct {
 	CancelledAt   pgtype.Timestamptz `json:"cancelled_at"`
 	DeliveredAt   pgtype.Timestamptz `json:"delivered_at"`
 	UserAddressID pgtype.Int8        `json:"user_address_id"`
-	OrderID       int64              `json:"order_id"`
+	OrderID       uuid.UUID          `json:"order_id"`
 }
 
 func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order, error) {

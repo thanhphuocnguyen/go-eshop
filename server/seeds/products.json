@@ -2,345 +2,517 @@
   {
     "name": "Phone Model A",
     "description": "A high-performance smartphone with a sleek design.",
-    "price": 699.99,
-    "sku": "SKU12345",
-    "stock": 25,
-    "discount": 10
+    "variants": [
+      {
+        "price": 699.99,
+        "sku": "SKU12345",
+        "stock": 25,
+        "discount": 10
+      }
+    ]
   },
   {
     "name": "Wireless Headphones X",
     "description": "Noise-cancelling wireless headphones with rich sound quality.",
-    "price": 199.99,
-    "sku": "SKU23456",
-    "stock": 50,
-    "discount": 15
+    "variants": [
+      {
+        "price": 199.99,
+        "sku": "SKU23456",
+        "stock": 50,
+        "discount": 15
+      }
+    ]
   },
   {
     "name": "Cotton T-Shirt",
     "description": "Comfortable and breathable cotton t-shirt available in various sizes.",
-    "price": 19.99,
-    "sku": "SKU34567",
-    "stock": 100,
-    "discount": 5
+    "variants": [
+      {
+        "price": 19.99,
+        "sku": "SKU34567",
+        "stock": 100,
+        "discount": 5
+      }
+    ]
   },
   {
     "name": "Bluetooth Speaker",
     "description": "Portable Bluetooth speaker with deep bass and long battery life.",
-    "price": 49.99,
-    "sku": "SKU45678",
-    "stock": 30,
-    "discount": 20
+    "variants": [
+      {
+        "price": 49.99,
+        "sku": "SKU45678",
+        "stock": 30,
+        "discount": 20
+      }
+    ]
   },
   {
     "name": "Running Shoes",
     "description": "Lightweight and durable running shoes for everyday use.",
-    "price": 89.99,
-    "sku": "SKU56789",
-    "stock": 40,
-    "discount": 10
+    "variants": [
+      {
+        "price": 89.99,
+        "sku": "SKU56789",
+        "stock": 40,
+        "discount": 10
+      }
+    ]
   },
   {
     "name": "Gaming Keyboard",
     "description": "Mechanical keyboard with customizable RGB lighting.",
-    "price": 79.99,
-    "sku": "SKU67890",
-    "stock": 35,
-    "discount": 15
+    "variants": [
+      {
+        "price": 79.99,
+        "sku": "SKU67890",
+        "stock": 35,
+        "discount": 15
+      }
+    ]
   },
   {
     "name": "Smartwatch Z",
     "description": "Feature-packed smartwatch with health tracking capabilities.",
-    "price": 249.99,
-    "sku": "SKU78901",
-    "stock": 20,
-    "discount": 12
+    "variants": [
+      {
+        "price": 249.99,
+        "sku": "SKU78901",
+        "stock": 20,
+        "discount": 12
+      }
+    ]
   },
   {
     "name": "Designer Jeans",
     "description": "Stylish and comfortable designer jeans.",
-    "price": 59.99,
-    "sku": "SKU89012",
-    "stock": 60,
-    "discount": 8
+    "variants": [
+      {
+        "price": 59.99,
+        "sku": "SKU89012",
+        "stock": 60,
+        "discount": 8
+      }
+    ]
   },
   {
     "name": "4K Monitor",
     "description": "Ultra HD monitor with stunning visuals and vibrant colors.",
-    "price": 299.99,
-    "sku": "SKU90123",
-    "stock": 15,
-    "discount": 10
+    "variants": [
+      {
+        "price": 299.99,
+        "sku": "SKU90123",
+        "stock": 15,
+        "discount": 10
+      }
+    ]
   },
   {
     "name": "Leather Jacket",
     "description": "Premium leather jacket for a timeless look.",
-    "price": 129.99,
-    "sku": "SKU01234",
-    "stock": 10,
-    "discount": 20
+    "variants": [
+      {
+        "price": 129.99,
+        "sku": "SKU01234",
+        "stock": 10,
+        "discount": 20
+      }
+    ]
   },
   {
     "name": "Phone Model B",
     "description": "Affordable smartphone with essential features.",
-    "price": 299.99,
-    "sku": "SKU13579",
-    "stock": 50,
-    "discount": 5
+    "variants": [
+      {
+        "price": 299.99,
+        "sku": "SKU13579",
+        "stock": 50,
+        "discount": 5
+      }
+    ]
   },
   {
     "name": "Wireless Earbuds",
     "description": "Compact and lightweight earbuds with clear audio.",
-    "price": 49.99,
-    "sku": "SKU24680",
-    "stock": 75,
-    "discount": 10
+    "variants": [
+      {
+        "price": 49.99,
+        "sku": "SKU24680",
+        "stock": 75,
+        "discount": 10
+      }
+    ]
   },
   {
     "name": "Hoodie",
     "description": "Cozy hoodie available in multiple colors.",
-    "price": 39.99,
-    "sku": "SKU35791",
-    "stock": 80,
-    "discount": 8
+    "variants": [
+      {
+        "price": 39.99,
+        "sku": "SKU35791",
+        "stock": 80,
+        "discount": 8
+      }
+    ]
   },
   {
     "name": "Portable Charger",
     "description": "High-capacity power bank for charging devices on the go.",
-    "price": 29.99,
-    "sku": "SKU46802",
-    "stock": 45,
-    "discount": 10
+    "variants": [
+      {
+        "price": 29.99,
+        "sku": "SKU46802",
+        "stock": 45,
+        "discount": 10
+      }
+    ]
   },
   {
     "name": "Sports Watch",
     "description": "Rugged sports watch with GPS tracking.",
-    "price": 199.99,
-    "sku": "SKU57913",
-    "stock": 25,
-    "discount": 12
+    "variants": [
+      {
+        "price": 199.99,
+        "sku": "SKU57913",
+        "stock": 25,
+        "discount": 12
+      }
+    ]
   },
   {
     "name": "Denim Jacket",
     "description": "Classic denim jacket with a modern fit.",
-    "price": 69.99,
-    "sku": "SKU68024",
-    "stock": 30,
-    "discount": 10
+    "variants": [
+      {
+        "price": 69.99,
+        "sku": "SKU68024",
+        "stock": 30,
+        "discount": 10
+      }
+    ]
   },
   {
     "name": "Laptop",
     "description": "Powerful laptop for work and gaming.",
-    "price": 899.99,
-    "sku": "SKU79135",
-    "stock": 10,
-    "discount": 15
+    "variants": [
+      {
+        "price": 899.99,
+        "sku": "SKU79135",
+        "stock": 10,
+        "discount": 15
+      }
+    ]
   },
   {
     "name": "Graphic T-Shirt",
     "description": "Trendy t-shirt with vibrant graphics.",
-    "price": 24.99,
-    "sku": "SKU80246",
-    "stock": 90,
-    "discount": 5
+    "variants": [
+      {
+        "price": 24.99,
+        "sku": "SKU80246",
+        "stock": 90,
+        "discount": 5
+      }
+    ]
   },
   {
     "name": "Electric Kettle",
     "description": "Fast boiling electric kettle with a sleek design.",
-    "price": 34.99,
-    "sku": "SKU91357",
-    "stock": 40,
-    "discount": 10
+    "variants": [
+      {
+        "price": 34.99,
+        "sku": "SKU91357",
+        "stock": 40,
+        "discount": 10
+      }
+    ]
   },
   {
     "name": "Tablet",
     "description": "Lightweight tablet for browsing and entertainment.",
-    "price": 349.99,
-    "sku": "SKU02468",
-    "stock": 20,
-    "discount": 12
+    "variants": [
+      {
+        "price": 349.99,
+        "sku": "SKU02468",
+        "stock": 20,
+        "discount": 12
+      }
+    ]
   },
   {
     "name": "Running Shorts",
     "description": "Breathable running shorts for active lifestyles.",
-    "price": 29.99,
-    "sku": "SKU13580",
-    "stock": 70,
-    "discount": 8
+    "variants": [
+      {
+        "price": 29.99,
+        "sku": "SKU13580",
+        "stock": 70,
+        "discount": 8
+      }
+    ]
   },
   {
     "name": "Phone Model C",
     "description": "Premium smartphone with advanced features.",
-    "price": 999.99,
-    "sku": "SKU24691",
-    "stock": 15,
-    "discount": 10
+    "variants": [
+      {
+        "price": 999.99,
+        "sku": "SKU24691",
+        "stock": 15,
+        "discount": 10
+      }
+    ]
   },
   {
     "name": "Fitness Tracker",
     "description": "Track your steps, calories, and heart rate.",
-    "price": 99.99,
-    "sku": "SKU35702",
-    "stock": 50,
-    "discount": 15
+    "variants": [
+      {
+        "price": 99.99,
+        "sku": "SKU35702",
+        "stock": 50,
+        "discount": 15
+      }
+    ]
   },
   {
     "name": "Leather Wallet",
     "description": "Slim leather wallet with multiple compartments.",
-    "price": 19.99,
-    "sku": "SKU46813",
-    "stock": 100,
-    "discount": 5
+    "variants": [
+      {
+        "price": 19.99,
+        "sku": "SKU46813",
+        "stock": 100,
+        "discount": 5
+      }
+    ]
   },
   {
     "name": "Gaming Mouse",
     "description": "High-precision gaming mouse with customizable buttons.",
-    "price": 59.99,
-    "sku": "SKU57924",
-    "stock": 45,
-    "discount": 10
+    "variants": [
+      {
+        "price": 59.99,
+        "sku": "SKU57924",
+        "stock": 45,
+        "discount": 10
+      }
+    ]
   },
   {
     "name": "Winter Coat",
     "description": "Warm and durable winter coat for cold weather.",
-    "price": 149.99,
-    "sku": "SKU68035",
-    "stock": 20,
-    "discount": 20
+    "variants": [
+      {
+        "price": 149.99,
+        "sku": "SKU68035",
+        "stock": 20,
+        "discount": 20
+      }
+    ]
   },
   {
     "name": "Bluetooth Headset",
     "description": "Convenient Bluetooth headset for hands-free calls.",
-    "price": 39.99,
-    "sku": "SKU79146",
-    "stock": 60,
-    "discount": 10
+    "variants": [
+      {
+        "price": 39.99,
+        "sku": "SKU79146",
+        "stock": 60,
+        "discount": 10
+      }
+    ]
   },
   {
     "name": "Office Chair",
     "description": "Ergonomic office chair with lumbar support.",
-    "price": 199.99,
-    "sku": "SKU80257",
-    "stock": 30,
-    "discount": 15
+    "variants": [
+      {
+        "price": 199.99,
+        "sku": "SKU80257",
+        "stock": 30,
+        "discount": 15
+      }
+    ]
   },
   {
     "name": "Sunglasses",
     "description": "Stylish sunglasses with UV protection.",
-    "price": 29.99,
-    "sku": "SKU91368",
-    "stock": 50,
-    "discount": 8
+    "variants": [
+      {
+        "price": 29.99,
+        "sku": "SKU91368",
+        "stock": 50,
+        "discount": 8
+      }
+    ]
   },
   {
     "name": "Phone Stand",
     "description": "Adjustable phone stand for hands-free use.",
-    "price": 14.99,
-    "sku": "SKU02479",
-    "stock": 100,
-    "discount": 5
+    "variants": [
+      {
+        "price": 14.99,
+        "sku": "SKU02479",
+        "stock": 100,
+        "discount": 5
+      }
+    ]
   },
   {
     "name": "Wireless Charger",
     "description": "Fast wireless charger for compatible devices.",
-    "price": 39.99,
-    "sku": "SKU13590",
-    "stock": 60,
-    "discount": 10
+    "variants": [
+      {
+        "price": 39.99,
+        "sku": "SKU13590",
+        "stock": 60,
+        "discount": 10
+      }
+    ]
   },
   {
     "name": "Travel Backpack",
     "description": "Spacious and durable backpack for travel.",
-    "price": 89.99,
-    "sku": "SKU24601",
-    "stock": 40,
-    "discount": 12
+    "variants": [
+      {
+        "price": 89.99,
+        "sku": "SKU24601",
+        "stock": 40,
+        "discount": 12
+      }
+    ]
   },
   {
     "name": "Smart Light Bulb",
     "description": "Energy-efficient smart bulb with app control.",
-    "price": 24.99,
-    "sku": "SKU35712",
-    "stock": 80,
-    "discount": 8
+    "variants": [
+      {
+        "price": 24.99,
+        "sku": "SKU35712",
+        "stock": 80,
+        "discount": 8
+      }
+    ]
   },
   {
     "name": "Phone Model D",
     "description": "Budget-friendly smartphone with reliable performance.",
-    "price": 199.99,
-    "sku": "SKU46823",
-    "stock": 50,
-    "discount": 10
+    "variants": [
+      {
+        "price": 199.99,
+        "sku": "SKU46823",
+        "stock": 50,
+        "discount": 10
+      }
+    ]
   },
   {
     "name": "Wireless Keyboard",
     "description": "Compact wireless keyboard with long battery life.",
-    "price": 49.99,
-    "sku": "SKU57934",
-    "stock": 30,
-    "discount": 10
+    "variants": [
+      {
+        "price": 49.99,
+        "sku": "SKU57934",
+        "stock": 30,
+        "discount": 10
+      }
+    ]
   },
   {
     "name": "Electric Toothbrush",
     "description": "Rechargeable electric toothbrush with multiple modes.",
-    "price": 59.99,
-    "sku": "SKU68045",
-    "stock": 40,
-    "discount": 12
+    "variants": [
+      {
+        "price": 59.99,
+        "sku": "SKU68045",
+        "stock": 40,
+        "discount": 12
+      }
+    ]
   },
   {
     "name": "Graphic Hoodie",
     "description": "Comfortable hoodie with stylish graphics.",
-    "price": 49.99,
-    "sku": "SKU79156",
-    "stock": 70,
-    "discount": 10
+    "variants": [
+      {
+        "price": 49.99,
+        "sku": "SKU79156",
+        "stock": 70,
+        "discount": 10
+      }
+    ]
   },
   {
     "name": "Fitness Band",
     "description": "Affordable fitness band with essential tracking features.",
-    "price": 29.99,
-    "sku": "SKU80267",
-    "stock": 50,
-    "discount": 8
+    "variants": [
+      {
+        "price": 29.99,
+        "sku": "SKU80267",
+        "stock": 50,
+        "discount": 8
+      }
+    ]
   },
   {
     "name": "Waterproof Jacket",
     "description": "Lightweight jacket for rainy weather.",
-    "price": 79.99,
-    "sku": "SKU91378",
-    "stock": 25,
-    "discount": 15
+    "variants": [
+      {
+        "price": 79.99,
+        "sku": "SKU91378",
+        "stock": 25,
+        "discount": 15
+      }
+    ]
   },
   {
     "name": "Phone Model E",
     "description": "Flagship smartphone with cutting-edge technology.",
-    "price": 1299.99,
-    "sku": "SKU02489",
-    "stock": 10,
-    "discount": 10
+    "variants": [
+      {
+        "price": 1299.99,
+        "sku": "SKU02489",
+        "stock": 10,
+        "discount": 10
+      }
+    ]
   },
   {
     "name": "Noise-Cancelling Headphones",
     "description": "Premium headphones with active noise cancellation.",
-    "price": 299.99,
-    "sku": "SKU13501",
-    "stock": 20,
-    "discount": 12
+    "variants": [
+      {
+        "price": 299.99,
+        "sku": "SKU13501",
+        "stock": 20,
+        "discount": 12
+      }
+    ]
   },
   {
     "name": "Casual Sneakers",
     "description": "Comfortable sneakers for everyday wear.",
-    "price": 59.99,
-    "sku": "SKU24612",
-    "stock": 40,
-    "discount": 10
+    "variants": [
+      {
+        "price": 59.99,
+        "sku": "SKU24612",
+        "stock": 40,
+        "discount": 10
+      }
+    ]
   },
   {
     "name": "Gaming Console",
     "description": "Next-gen gaming console for immersive experiences.",
-    "price": 499.99,
-    "sku": "SKU35723",
-    "stock": 15,
-    "discount": 8
+    "variants": [
+      {
+        "price": 499.99,
+        "sku": "SKU35723",
+        "stock": 15,
+        "discount": 8
+      }
+    ]
   }
 ]

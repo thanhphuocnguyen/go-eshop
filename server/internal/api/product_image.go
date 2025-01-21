@@ -16,6 +16,14 @@ type getProductImageParams struct {
 	ImageID int32 `uri:"image_id" binding:"required"`
 }
 
+type productImageModel struct {
+	ID        int32  `json:"id"`
+	IsPrimary bool   `json:"is_primary"`
+	ImageUrl  string `json:"image_url"`
+}
+
+// ------------------------------------------ Handlers ------------------------------------------
+
 // UploadProductImage godoc
 // @Summary Upload a product image by ID
 // @Schemes http

@@ -15,12 +15,19 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/util"
 )
 
+type Variant struct {
+	Price    float64 `json:"price"`
+	Stock    int32   `json:"stock"`
+	Sku      string  `json:"sku"`
+	Discount int32   `json:"discount,omitempty"`
+}
 type Product struct {
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Price       float64 `json:"price"`
-	Stock       int32   `json:"stock"`
-	Sku         string  `json:"sku"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Variants    []Variant `json:"variants"`
+	Price       float64   `json:"price"`
+	Stock       int32     `json:"stock"`
+	Sku         string    `json:"sku"`
 }
 
 type Collection struct {
@@ -150,21 +157,32 @@ func seedProducts(ctx context.Context, repo repository.Repository) {
 	}
 
 	log.Info().Int("product count: %d", len(products))
-	params := make([]repository.AddBulkProductsParams, len(products))
-	for i, product := range products {
-		price := util.GetPgNumericFromFloat(product.Price)
-		params[i] = repository.AddBulkProductsParams{
+	for _, product := range products {
+		params := repository.CreateProductParams{
 			Name:        product.Name,
 			Description: product.Description,
-			Sku:         util.GetPgTypeText(product.Sku),
-			Stock:       product.Stock,
-			Price:       price,
+		}
+		createdProduct, err := repo.CreateProduct(ctx, params)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to create product")
+			continue
+		}
+		for _, variant := range product.Variants {
+
+			_, err := repo.CreateVariant(ctx, repository.CreateVariantParams{
+				ProductID:     createdProduct.ProductID,
+				Price:         util.GetPgNumericFromFloat(variant.Price),
+				StockQuantity: variant.Stock,
+				Sku:           util.GetPgTypeText(variant.Sku),
+				Discount:      variant.Discount,
+			})
+			if err != nil {
+				log.Error().Err(err).Msg("failed to create variant")
+				continue
+			}
 		}
 	}
-	_, err = repo.AddBulkProducts(ctx, params)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to create products")
-	}
+
 	log.Info().Msg("products created")
 }
 
@@ -295,27 +313,9 @@ func seedAttributes(ctx context.Context, repo repository.Repository) {
 	log.Info().Msg("creating attributes")
 	log.Info().Int("attributes count: %d", len(attributes))
 	for _, attribute := range attributes {
-		attributeCreated, err := repo.CreateAttribute(ctx, attribute.Name)
+		_, err := repo.CreateAttribute(ctx, attribute.Name)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to create attribute")
-			return
-		}
-
-		attributeValues := make([]repository.CreateBulkAttributeValuesParams, len(attribute.Values))
-
-		log.Info().Int("attribute values count: %d", len(attribute.Values))
-		for i, value := range attribute.Values {
-			attributeValues[i] = repository.CreateBulkAttributeValuesParams{
-				AttributeID:    attributeCreated.AttributeID,
-				AttributeValue: value.Value,
-			}
-			if value.Color != nil {
-				attributeValues[i].Color = util.GetPgTypeText(*value.Color)
-			}
-		}
-		_, err = repo.CreateBulkAttributeValues(ctx, attributeValues)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to seed addresses")
 			return
 		}
 	}

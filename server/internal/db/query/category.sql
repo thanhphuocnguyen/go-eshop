@@ -10,14 +10,17 @@ RETURNING *;
 -- name: GetCollection :many
 SELECT 
     c.*, 
-    p.name, p.description, p.price, p.discount, 
-    cp.product_id, 
+    p.name, p.description,
+    cp.product_id,
+    MIN(pv.price)::decimal as price_from, MAX(pv.price)::decimal as price_to, MAX(pv.discount)::int as discount, MIN(pv.stock_quantity)::int as stock_quantity, COUNT(pv.product_variant_id) as variant_count,
     i.image_id, i.image_url
 FROM categories c
 JOIN category_products cp ON cp.category_id = c.category_id
 JOIN products p ON cp.product_id = p.product_id AND p.published = TRUE
+JOIN product_variants pv ON p.product_id = pv.product_id
 LEFT JOIN images i ON p.product_id = i.product_id AND i.primary = TRUE
-WHERE categories.category_id = $1;
+WHERE categories.category_id = $1
+GROUP BY c.category_id, p.product_id, i.image_id;
 
 -- name: GetCollectionByName :one
 SELECT *

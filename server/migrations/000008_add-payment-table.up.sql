@@ -1,7 +1,7 @@
 CREATE TABLE
     payments (
         payment_id VARCHAR PRIMARY KEY,
-        order_id BIGINT NOT NULL REFERENCES orders (order_id) ON DELETE CASCADE,
+        order_id UUID NOT NULL REFERENCES orders (order_id) ON DELETE CASCADE,
         amount DECIMAL(10, 2) NOT NULL,
         payment_method payment_method NOT NULL, -- e.g., card, bank_transfer
         status payment_status NOT NULL DEFAULT 'pending', -- Pending, Success, Failed

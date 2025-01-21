@@ -37,8 +37,8 @@ func (r iteratorForAddBulkAttributes) Err() error {
 	return nil
 }
 
-func (q *Queries) AddBulkAttributes(ctx context.Context, attributeName []string) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"attributes"}, []string{"attribute_name"}, &iteratorForAddBulkAttributes{rows: attributeName})
+func (q *Queries) AddBulkAttributes(ctx context.Context, name []string) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"attributes"}, []string{"name"}, &iteratorForAddBulkAttributes{rows: name})
 }
 
 // iteratorForAddBulkProducts implements pgx.CopyFromSource.
@@ -63,10 +63,6 @@ func (r iteratorForAddBulkProducts) Values() ([]interface{}, error) {
 	return []interface{}{
 		r.rows[0].Name,
 		r.rows[0].Description,
-		r.rows[0].Sku,
-		r.rows[0].Stock,
-		r.rows[0].Price,
-		r.rows[0].Discount,
 	}, nil
 }
 
@@ -75,16 +71,16 @@ func (r iteratorForAddBulkProducts) Err() error {
 }
 
 func (q *Queries) AddBulkProducts(ctx context.Context, arg []AddBulkProductsParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"products"}, []string{"name", "description", "sku", "stock", "price", "discount"}, &iteratorForAddBulkProducts{rows: arg})
+	return q.db.CopyFrom(ctx, []string{"products"}, []string{"name", "description"}, &iteratorForAddBulkProducts{rows: arg})
 }
 
-// iteratorForCreateBulkAttributeValues implements pgx.CopyFromSource.
-type iteratorForCreateBulkAttributeValues struct {
-	rows                 []CreateBulkAttributeValuesParams
+// iteratorForCreateBulkVariantAttributes implements pgx.CopyFromSource.
+type iteratorForCreateBulkVariantAttributes struct {
+	rows                 []CreateBulkVariantAttributesParams
 	skippedFirstNextCall bool
 }
 
-func (r *iteratorForCreateBulkAttributeValues) Next() bool {
+func (r *iteratorForCreateBulkVariantAttributes) Next() bool {
 	if len(r.rows) == 0 {
 		return false
 	}
@@ -96,53 +92,20 @@ func (r *iteratorForCreateBulkAttributeValues) Next() bool {
 	return len(r.rows) > 0
 }
 
-func (r iteratorForCreateBulkAttributeValues) Values() ([]interface{}, error) {
-	return []interface{}{
-		r.rows[0].AttributeID,
-		r.rows[0].AttributeValue,
-		r.rows[0].Color,
-	}, nil
-}
-
-func (r iteratorForCreateBulkAttributeValues) Err() error {
-	return nil
-}
-
-func (q *Queries) CreateBulkAttributeValues(ctx context.Context, arg []CreateBulkAttributeValuesParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"attribute_values"}, []string{"attribute_id", "attribute_value", "color"}, &iteratorForCreateBulkAttributeValues{rows: arg})
-}
-
-// iteratorForCreateBulkVariantAttribute implements pgx.CopyFromSource.
-type iteratorForCreateBulkVariantAttribute struct {
-	rows                 []CreateBulkVariantAttributeParams
-	skippedFirstNextCall bool
-}
-
-func (r *iteratorForCreateBulkVariantAttribute) Next() bool {
-	if len(r.rows) == 0 {
-		return false
-	}
-	if !r.skippedFirstNextCall {
-		r.skippedFirstNextCall = true
-		return true
-	}
-	r.rows = r.rows[1:]
-	return len(r.rows) > 0
-}
-
-func (r iteratorForCreateBulkVariantAttribute) Values() ([]interface{}, error) {
+func (r iteratorForCreateBulkVariantAttributes) Values() ([]interface{}, error) {
 	return []interface{}{
 		r.rows[0].VariantID,
-		r.rows[0].AttributeValueID,
+		r.rows[0].AttributeID,
+		r.rows[0].Value,
 	}, nil
 }
 
-func (r iteratorForCreateBulkVariantAttribute) Err() error {
+func (r iteratorForCreateBulkVariantAttributes) Err() error {
 	return nil
 }
 
-func (q *Queries) CreateBulkVariantAttribute(ctx context.Context, arg []CreateBulkVariantAttributeParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"variant_attributes"}, []string{"variant_id", "attribute_value_id"}, &iteratorForCreateBulkVariantAttribute{rows: arg})
+func (q *Queries) CreateBulkVariantAttributes(ctx context.Context, arg []CreateBulkVariantAttributesParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"variant_attributes"}, []string{"variant_id", "attribute_id", "value"}, &iteratorForCreateBulkVariantAttributes{rows: arg})
 }
 
 // iteratorForSeedAddresses implements pgx.CopyFromSource.

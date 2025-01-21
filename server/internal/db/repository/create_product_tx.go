@@ -4,20 +4,14 @@ import (
 	"context"
 
 	"github.com/rs/zerolog/log"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/util"
-	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
 // CreateProductTx creates a new product in a transaction
 type CreateProductTxParam struct {
-	Name        string
-	Description string
-	Price       float64
-	Discount    *int32
-	Stock       int32
-	BrandID     *int64
-	CategoryID  *int32
-	Variants    []CreateVariantTxParam
+	Name        string                 `json:"name" binding:"required,min=3,max=100"`
+	Description string                 `json:"description" binding:"required,min=10,max=1000"`
+	CategoryID  *int32                 `json:"category_id,omitempty"`
+	Variants    []CreateVariantTxParam `json:"variants" binding:"omitempty,dive"`
 }
 
 type CreateProductTxResult struct {
@@ -31,14 +25,7 @@ func (s *pgRepo) CreateProductTx(ctx context.Context, arg CreateProductTxParam) 
 		createProductParam := CreateProductParams{
 			Name:        arg.Name,
 			Description: arg.Description,
-			Sku:         util.GetPgTypeText(utils.GenerateSKU()),
-			Stock:       arg.Stock,
-			Price:       util.GetPgNumericFromFloat(arg.Price),
 		}
-		if arg.Discount != nil {
-			createProductParam.Discount = *arg.Discount
-		}
-
 		product, err := q.CreateProduct(ctx, createProductParam)
 		if err != nil {
 			log.Error().Err(err).Msg("CreateProduct")

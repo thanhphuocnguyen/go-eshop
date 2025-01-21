@@ -7,6 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/config"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	logger "github.com/thanhphuocnguyen/go-eshop/pkg/log"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/mailer"
 )
 
@@ -28,12 +29,14 @@ type RedisTaskProcessor struct {
 }
 
 func NewRedisTaskProcessor(redisOtp asynq.RedisClientOpt, postgres repository.Repository, mailer mailer.EmailSender, cfg config.Config) TaskProcessor {
+	logger := logger.NewLogger(nil)
 	server := asynq.NewServer(redisOtp, asynq.Config{
 		Concurrency: 10,
 		Queues: map[string]int{
 			QueueCritical: 4,
 			QueueDefault:  5,
 		},
+		Logger: logger,
 		HealthCheckFunc: func(err error) {
 			if err != nil {
 				log.Error().Err(err).Msg("error with task processor")

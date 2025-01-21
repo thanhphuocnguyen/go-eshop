@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/hibiken/asynq"
+	"github.com/rs/zerolog/log"
 )
 
 type TaskDistributor interface {
@@ -18,6 +19,12 @@ type RedisTaskDistributor struct {
 
 func NewRedisTaskDistributor(redisOpt asynq.RedisClientOpt) TaskDistributor {
 	client := asynq.NewClient(redisOpt)
+	err := client.Ping()
+	if err != nil {
+		panic(err)
+	}
+
+	log.Info().Msg("Connected to Redis")
 	return &RedisTaskDistributor{client}
 }
 

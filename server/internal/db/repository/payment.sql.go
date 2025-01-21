@@ -8,6 +8,7 @@ package repository
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -33,7 +34,7 @@ RETURNING payment_id, order_id, amount, payment_method, status, payment_gateway,
 
 type CreatePaymentTransactionParams struct {
 	PaymentID      string             `json:"payment_id"`
-	OrderID        int64              `json:"order_id"`
+	OrderID        uuid.UUID          `json:"order_id"`
 	Amount         pgtype.Numeric     `json:"amount"`
 	PaymentMethod  PaymentMethod      `json:"payment_method"`
 	PaymentGateway NullPaymentGateway `json:"payment_gateway"`
@@ -111,7 +112,7 @@ WHERE
 LIMIT 1
 `
 
-func (q *Queries) GetPaymentTransactionByOrderID(ctx context.Context, orderID int64) (Payment, error) {
+func (q *Queries) GetPaymentTransactionByOrderID(ctx context.Context, orderID uuid.UUID) (Payment, error) {
 	row := q.db.QueryRow(ctx, getPaymentTransactionByOrderID, orderID)
 	var i Payment
 	err := row.Scan(

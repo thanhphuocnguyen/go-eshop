@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/thanhphuocnguyen/go-eshop/config"
@@ -13,7 +14,7 @@ import (
 
 type Repository interface {
 	Querier
-	CreateOrderTx(ctx context.Context, arg CreateOrderTxParams) (int64, error)
+	CreateOrderTx(ctx context.Context, arg CreateOrderTxParams) (uuid.UUID, error)
 	SetPrimaryAddressTx(ctx context.Context, arg SetPrimaryAddressTxParams) error
 	SetPrimaryImageTx(ctx context.Context, arg SetPrimaryImageTxParams) error
 	CancelOrderTx(ctx context.Context, params CancelOrderTxArgs) (Order, error)

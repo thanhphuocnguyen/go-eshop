@@ -12,4 +12,4 @@ COPY app.env .
 COPY migrations ./migrations
 
 EXPOSE 8082
-CMD [ "/app/web", "api" ]
+CMD [ "/app/web" ]

@@ -8,7 +8,7 @@ import (
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/cloudinary/cloudinary-go/v2/logger"
 	"github.com/thanhphuocnguyen/go-eshop/config"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/log"
+	pkglogger "github.com/thanhphuocnguyen/go-eshop/pkg/log"
 )
 
 type CloudinaryUploadService struct {
@@ -19,7 +19,7 @@ type CloudinaryUploadService struct {
 func NewCloudinaryUploadService(cfg config.Config) UploadService {
 	cld, err := cloudinary.NewFromURL(cfg.CloudinaryUrl)
 	cld.Logger = &logger.Logger{
-		Writer: log.NewLogger(nil),
+		Writer: pkglogger.NewLogger(nil),
 	}
 
 	if err != nil {

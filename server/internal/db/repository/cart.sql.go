@@ -7,6 +7,8 @@ package repository
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 const createCart = `-- name: CreateCart :one
@@ -50,8 +52,8 @@ DELETE FROM cart_items WHERE cart_id = $1 AND cart_item_id = $2
 `
 
 type RemoveProductFromCartParams struct {
-	CartID     int32 `json:"cart_id"`
-	CartItemID int32 `json:"cart_item_id"`
+	CartID     uuid.UUID `json:"cart_id"`
+	CartItemID int32     `json:"cart_item_id"`
 }
 
 func (q *Queries) RemoveProductFromCart(ctx context.Context, arg RemoveProductFromCartParams) error {
@@ -63,7 +65,7 @@ const updateCart = `-- name: UpdateCart :exec
 UPDATE carts SET updated_at = NOW() WHERE cart_id = $1 RETURNING cart_id, user_id, updated_at, created_at
 `
 
-func (q *Queries) UpdateCart(ctx context.Context, cartID int32) error {
+func (q *Queries) UpdateCart(ctx context.Context, cartID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, updateCart, cartID)
 	return err
 }

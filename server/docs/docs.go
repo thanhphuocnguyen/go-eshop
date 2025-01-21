@@ -232,7 +232,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.CreateAttributeParams"
+                            "$ref": "#/definitions/api.AttributeRequest"
                         }
                     }
                 ],
@@ -311,6 +311,115 @@ const docTemplate = `{
                 }
             }
         },
+        "/attributes/{attribute_id}/values/{id}": {
+            "put": {
+                "description": "Update attribute value",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "attributes"
+                ],
+                "summary": "Update attribute value",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Attribute ID",
+                        "name": "attribute_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Attribute value ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Attribute value",
+                        "name": "value",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.AttributeValue"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.GenericResponse-api_AttributeValue"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Remove attribute value",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "attributes"
+                ],
+                "summary": "Remove attribute value",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Attribute ID",
+                        "name": "attribute_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Attribute value ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "$ref": "#/definitions/api.GenericResponse-bool"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/attributes/{id}": {
             "get": {
                 "description": "Get an attribute",
@@ -342,6 +451,57 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update an attribute",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "attributes"
+                ],
+                "summary": "Update an attribute",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Attribute ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Attribute name",
+                        "name": "params",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.AttributeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.GenericResponse-api_Attribute"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/api.errorResponse"
                         }
@@ -1473,7 +1633,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/api.GenericListResponse-api_productListResponse"
+                                "$ref": "#/definitions/api.GenericListResponse-api_productListModel"
                             }
                         }
                     },
@@ -1562,7 +1722,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.GenericResponse-api_productListResponse"
+                            "$ref": "#/definitions/api.GenericResponse-api_productListModel"
                         }
                     },
                     "404": {
@@ -2118,6 +2278,65 @@ const docTemplate = `{
                 }
             }
         },
+        "/variant/{product_id}": {
+            "post": {
+                "description": "Create a variant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "variant"
+                ],
+                "summary": "Create a variant",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "product_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Create Variant Request",
+                        "name": "variantRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.variantRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/repository.ProductVariant"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/variant/{variant_id}": {
             "get": {
                 "description": "Get a variant",
@@ -2318,6 +2537,17 @@ const docTemplate = `{
                 }
             }
         },
+        "api.AttributeRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "api.AttributeValue": {
             "type": "object",
             "properties": {
@@ -2363,17 +2593,6 @@ const docTemplate = `{
                 }
             }
         },
-        "api.CreateAttributeParams": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
         "api.CreateAttributeValueParams": {
             "type": "object",
             "required": [
@@ -2387,7 +2606,7 @@ const docTemplate = `{
                 "values": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.Value"
+                        "$ref": "#/definitions/api.AttributeValue"
                     }
                 }
             }
@@ -2412,13 +2631,13 @@ const docTemplate = `{
                 }
             }
         },
-        "api.GenericListResponse-api_productListResponse": {
+        "api.GenericListResponse-api_productListModel": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.productListResponse"
+                        "$ref": "#/definitions/api.productListModel"
                     }
                 },
                 "error": {
@@ -2451,6 +2670,20 @@ const docTemplate = `{
             "properties": {
                 "data": {
                     "$ref": "#/definitions/api.Attribute"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.GenericResponse-api_AttributeValue": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/api.AttributeValue"
                 },
                 "error": {
                     "type": "string"
@@ -2530,11 +2763,11 @@ const docTemplate = `{
                 }
             }
         },
-        "api.GenericResponse-api_productListResponse": {
+        "api.GenericResponse-api_productListModel": {
             "type": "object",
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/api.productListResponse"
+                    "$ref": "#/definitions/api.productListModel"
                 },
                 "error": {
                     "type": "string"
@@ -2778,20 +3011,6 @@ const docTemplate = `{
                 }
             }
         },
-        "api.Value": {
-            "type": "object",
-            "required": [
-                "value"
-            ],
-            "properties": {
-                "color": {
-                    "type": "string"
-                },
-                "value": {
-                    "type": "string"
-                }
-            }
-        },
         "api.addProductToCartRequest": {
             "type": "object",
             "required": [
@@ -2861,7 +3080,7 @@ const docTemplate = `{
                 "variants": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.variantModel"
+                        "$ref": "#/definitions/api.productVariantModel"
                     }
                 }
             }
@@ -2970,7 +3189,7 @@ const docTemplate = `{
                 "products": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.productListResponse"
+                        "$ref": "#/definitions/api.productListModel"
                     }
                 }
             }
@@ -3195,7 +3414,7 @@ const docTemplate = `{
                 }
             }
         },
-        "api.productListResponse": {
+        "api.productListModel": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -3227,6 +3446,26 @@ const docTemplate = `{
                 }
             }
         },
+        "api.productVariantModel": {
+            "type": "object",
+            "properties": {
+                "attributes": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                }
+            }
+        },
         "api.renewAccessTokenResp": {
             "type": "object",
             "properties": {
@@ -3252,10 +3491,18 @@ const docTemplate = `{
         "api.updateProductRequest": {
             "type": "object",
             "properties": {
+                "category_id": {
+                    "type": "integer"
+                },
                 "description": {
                     "type": "string",
                     "maxLength": 1000,
                     "minLength": 10
+                },
+                "discount": {
+                    "type": "integer",
+                    "maximum": 100,
+                    "minimum": 0
                 },
                 "name": {
                     "type": "string",
@@ -3271,6 +3518,12 @@ const docTemplate = `{
                 },
                 "stock": {
                     "type": "integer"
+                },
+                "variants": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/repository.UpdateVariantTxParams"
+                    }
                 }
             }
         },
@@ -3360,30 +3613,12 @@ const docTemplate = `{
                 }
             }
         },
-        "api.variantModel": {
-            "type": "object",
-            "properties": {
-                "attributes": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "price": {
-                    "type": "number"
-                }
-            }
-        },
         "api.variantRequest": {
             "type": "object",
             "required": [
-                "name"
+                "name",
+                "price",
+                "stock"
             ],
             "properties": {
                 "attributes": {
@@ -3410,9 +3645,9 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "attributes": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.AttributeValue"
                     }
                 },
                 "created_at": {
@@ -3845,6 +4080,40 @@ const docTemplate = `{
                 },
                 "verified_phone": {
                     "type": "boolean"
+                }
+            }
+        },
+        "repository.UpdateVariantTxParams": {
+            "type": "object",
+            "required": [
+                "variant_id"
+            ],
+            "properties": {
+                "attributes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "minLength": 1
+                },
+                "price": {
+                    "type": "number",
+                    "minimum": 0
+                },
+                "sku": {
+                    "type": "string",
+                    "minLength": 1
+                },
+                "stock": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "variant_id": {
+                    "type": "integer",
+                    "minimum": 1
                 }
             }
         },

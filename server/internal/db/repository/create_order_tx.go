@@ -3,13 +3,14 @@ package repository
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/util"
 )
 
 type CreateOrderTxParams struct {
 	UserID                int64
-	CartID                int32
+	CartID                uuid.UUID
 	PaymentMethod         PaymentMethod
 	PaymentGateway        PaymentGateway
 	AddressID             int64
@@ -18,8 +19,8 @@ type CreateOrderTxParams struct {
 	TotalPrice            float64
 }
 
-func (s *pgRepo) CreateOrderTx(ctx context.Context, arg CreateOrderTxParams) (int64, error) {
-	var result int64
+func (s *pgRepo) CreateOrderTx(ctx context.Context, arg CreateOrderTxParams) (uuid.UUID, error) {
+	var result uuid.UUID
 	err := s.execTx(ctx, func(q *Queries) (err error) {
 
 		order, err := s.CreateOrder(ctx, CreateOrderParams{

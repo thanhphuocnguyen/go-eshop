@@ -32,7 +32,7 @@ func (q *Queries) AddProductToCollection(ctx context.Context, arg AddProductToCo
 
 const getCollectionProduct = `-- name: GetCollectionProduct :one
 SELECT
-    p.product_id, p.name, p.description, p.sku, p.stock, p.discount, p.archived, p.price, p.updated_at, p.created_at
+    p.product_id, p.name, p.description, p.archived, p.created_at, p.updated_at
 FROM
     products p
 JOIN category_products cp ON p.product_id = cp.product_id
@@ -53,20 +53,16 @@ func (q *Queries) GetCollectionProduct(ctx context.Context, arg GetCollectionPro
 		&i.ProductID,
 		&i.Name,
 		&i.Description,
-		&i.Sku,
-		&i.Stock,
-		&i.Discount,
 		&i.Archived,
-		&i.Price,
-		&i.UpdatedAt,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getCollectionProducts = `-- name: GetCollectionProducts :many
 SELECT
-    p.product_id, p.name, p.description, p.sku, p.stock, p.discount, p.archived, p.price, p.updated_at, p.created_at
+    p.product_id, p.name, p.description, p.archived, p.created_at, p.updated_at
 FROM
     products p
     JOIN category_products cp ON p.product_id = cp.product_id
@@ -87,13 +83,9 @@ func (q *Queries) GetCollectionProducts(ctx context.Context, categoryID int32) (
 			&i.ProductID,
 			&i.Name,
 			&i.Description,
-			&i.Sku,
-			&i.Stock,
-			&i.Discount,
 			&i.Archived,
-			&i.Price,
-			&i.UpdatedAt,
 			&i.CreatedAt,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
