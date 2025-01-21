@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"strconv"
 	"time"
 
 	"aidanwoods.dev/go-paseto"
@@ -21,7 +20,7 @@ func NewPasetoTokenGenerator() TokenGenerator {
 	}
 }
 
-func (g *PasetoTokenGenerator) GenerateToken(userID int64, username, email string, duration time.Duration) (string, Payload, error) {
+func (g *PasetoTokenGenerator) GenerateToken(userID uuid.UUID, username, email string, duration time.Duration) (string, Payload, error) {
 	payload := Payload{
 		ID:        uuid.New(),
 		Username:  username,
@@ -35,7 +34,7 @@ func (g *PasetoTokenGenerator) GenerateToken(userID int64, username, email strin
 	token.SetString("username", payload.Username)
 	token.SetString("id", payload.ID.String())
 	token.SetString("email", string(payload.Email))
-	token.SetString("user_id", strconv.Itoa(int(payload.UserID)))
+	token.SetString("user_id", payload.UserID.String())
 	token.SetExpiration(payload.ExpiredAt)
 	token.SetNotBefore(payload.IssuedAt)
 	token.SetIssuedAt(payload.IssuedAt)
@@ -96,7 +95,7 @@ func getPayloadFromParsedData(t *paseto.Token) (*Payload, error) {
 		return nil, err
 	}
 
-	userId, err := strconv.ParseInt(userIDStr, 10, 64)
+	userId, err := uuid.Parse(userIDStr)
 	if err != nil {
 		return nil, err
 	}

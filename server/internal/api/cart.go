@@ -11,7 +11,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/util"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
 )
 
@@ -36,17 +35,17 @@ type cartItemResponse struct {
 
 type cartResponse struct {
 	ID         uuid.UUID          `json:"id"`
-	UserID     int64              `json:"user_id"`
+	UserID     uuid.UUID          `json:"user_id"`
+	TotalPrice float64            `json:"total_price"`
 	UpdatedAt  time.Time          `json:"updated_at,omitempty"`
 	CreatedAt  time.Time          `json:"created_at"`
 	CartItems  []cartItemResponse `json:"cart_items,omitempty"`
-	TotalPrice float64            `json:"total_price"`
 }
 
 type addProductToCartRequest struct {
 	ProductID int64 `json:"product_id" binding:"required,min=1"`
-	VariantID int64 `json:"variant_id,omitempty"`
-	Quantity  int16 `json:"quantity" binding:"required"`
+	VariantID int64 `json:"variant_id" binding:"required,min=1"`
+	Quantity  int16 `json:"quantity" binding:"required,gt=0"`
 }
 
 type getCartItemParam struct {
@@ -145,7 +144,10 @@ func (sv *Server) createCart(c *gin.Context) {
 		return
 	}
 
-	newCart, err := sv.repo.CreateCart(c, user.UserID)
+	newCart, err := sv.repo.CreateCart(c, repository.CreateCartParams{
+		CartID: uuid.New(),
+		UserID: user.UserID,
+	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
@@ -218,7 +220,10 @@ func (sv *Server) addCartItem(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			// create a new cart if not found
-			cart, err = sv.repo.CreateCart(c, authPayload.UserID)
+			cart, err = sv.repo.CreateCart(c, repository.CreateCartParams{
+				CartID: uuid.New(),
+				UserID: authPayload.UserID,
+			})
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, mapErrResp(err))
 				return
@@ -250,11 +255,7 @@ func (sv *Server) addCartItem(c *gin.Context) {
 		return
 	}
 
-	cartItem, err := sv.repo.GetCartItemByProductID(c, repository.GetCartItemByProductIDParams{
-		ProductID: req.ProductID,
-		VariantID: util.GetPgTypeInt8(req.VariantID),
-	})
-
+	cartItem, err := sv.repo.GetCartItemByVariantID(c, req.VariantID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			cartItem, err = sv.repo.AddProductToCart(c, repository.AddProductToCartParams{
@@ -272,6 +273,10 @@ func (sv *Server) addCartItem(c *gin.Context) {
 			return
 		}
 	} else {
+		if cartItem.ProductID != req.ProductID {
+			c.JSON(http.StatusBadRequest, mapErrResp(errors.New("product not found")))
+			return
+		}
 		if int32(cartItem.Quantity+req.Quantity) > product.StockQuantity {
 			c.JSON(http.StatusBadRequest, mapErrResp(errors.New("insufficient stock")))
 			return

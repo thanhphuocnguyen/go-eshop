@@ -26,7 +26,7 @@ WHERE
 `
 
 type CountOrdersParams struct {
-	UserID    int64              `json:"user_id"`
+	UserID    uuid.UUID          `json:"user_id"`
 	Status    NullOrderStatus    `json:"status"`
 	StartDate pgtype.Timestamptz `json:"start_date"`
 	EndDate   pgtype.Timestamptz `json:"end_date"`
@@ -45,29 +45,23 @@ func (q *Queries) CountOrders(ctx context.Context, arg CountOrdersParams) (int64
 }
 
 const createOrder = `-- name: CreateOrder :one
-INSERT INTO
-    orders (
-        user_id,
-        user_address_id,
-        total_price
-    )
-VALUES
-    (
-        $1,
-        $2,
-        $3
-    )
-RETURNING order_id, user_id, user_address_id, total_price, status, confirmed_at, delivered_at, cancelled_at, refunded_at, updated_at, created_at
+INSERT INTO orders (order_id,user_id,user_address_id,total_price) VALUES ($1,$2,$3,$4) RETURNING order_id, user_id, user_address_id, total_price, status, confirmed_at, delivered_at, cancelled_at, refunded_at, updated_at, created_at
 `
 
 type CreateOrderParams struct {
-	UserID        int64          `json:"user_id"`
+	OrderID       uuid.UUID      `json:"order_id"`
+	UserID        uuid.UUID      `json:"user_id"`
 	UserAddressID int64          `json:"user_address_id"`
 	TotalPrice    pgtype.Numeric `json:"total_price"`
 }
 
 func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {
-	row := q.db.QueryRow(ctx, createOrder, arg.UserID, arg.UserAddressID, arg.TotalPrice)
+	row := q.db.QueryRow(ctx, createOrder,
+		arg.OrderID,
+		arg.UserID,
+		arg.UserAddressID,
+		arg.TotalPrice,
+	)
 	var i Order
 	err := row.Scan(
 		&i.OrderID,
@@ -204,7 +198,7 @@ WHERE
 
 type GetOrderDetailsRow struct {
 	OrderID        uuid.UUID          `json:"order_id"`
-	UserID         int64              `json:"user_id"`
+	UserID         uuid.UUID          `json:"user_id"`
 	UserAddressID  int64              `json:"user_address_id"`
 	TotalPrice     pgtype.Numeric     `json:"total_price"`
 	Status         OrderStatus        `json:"status"`
@@ -351,7 +345,7 @@ OFFSET $2
 type ListOrdersParams struct {
 	Limit     int32              `json:"limit"`
 	Offset    int32              `json:"offset"`
-	UserID    pgtype.Int8        `json:"user_id"`
+	UserID    pgtype.UUID        `json:"user_id"`
 	Status    NullOrderStatus    `json:"status"`
 	StartDate pgtype.Timestamptz `json:"start_date"`
 	EndDate   pgtype.Timestamptz `json:"end_date"`
@@ -359,7 +353,7 @@ type ListOrdersParams struct {
 
 type ListOrdersRow struct {
 	OrderID       uuid.UUID          `json:"order_id"`
-	UserID        int64              `json:"user_id"`
+	UserID        uuid.UUID          `json:"user_id"`
 	UserAddressID int64              `json:"user_address_id"`
 	TotalPrice    pgtype.Numeric     `json:"total_price"`
 	Status        OrderStatus        `json:"status"`

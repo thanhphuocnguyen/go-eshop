@@ -25,13 +25,13 @@ LIMIT 1;
 SELECT
     pv.*,
     a.name as attribute_name, a.attribute_id,
-    va.variant_attribute_id
+    va.variant_attribute_id, va.value as attribute_value
 FROM
     product_variants pv
 JOIN
     variant_attributes va ON pv.variant_id = va.variant_id
 JOIN
-    attributes a ON av.attribute_id = a.attribute_id
+    attributes a ON va.attribute_id = a.attribute_id
 WHERE
     pv.product_id = $1;
 
@@ -39,13 +39,13 @@ WHERE
 SELECT
     pv.*,
     a.name as attribute_name, a.attribute_id,
-    va.variant_attribute_id
+    va.variant_attribute_id, va.value
 FROM
     product_variants pv
 JOIN
     variant_attributes va ON pv.variant_id = va.variant_id
 JOIN
-    attributes a ON av.attribute_id = a.attribute_id
+    attributes a ON va.attribute_id = a.attribute_id
 WHERE
     pv.variant_id = $1;
 

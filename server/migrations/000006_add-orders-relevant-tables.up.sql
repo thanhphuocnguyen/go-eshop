@@ -1,7 +1,7 @@
 CREATE TABLE
     "orders" (
-        "order_id" UUID PRIMARY KEY,
-        "user_id" bigint NOT NULL REFERENCES "users" ("user_id"),
+        "order_id" UUID NOT NULL PRIMARY KEY,
+        "user_id" UUID NOT NULL REFERENCES "users" ("user_id"),
         "user_address_id" bigint NOT NULL REFERENCES "user_addresses" ("user_address_id"),
         "total_price" DECIMAL(10, 2) NOT NULL,
         "status" order_status NOT NULL DEFAULT 'pending',

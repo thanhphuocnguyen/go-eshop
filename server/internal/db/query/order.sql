@@ -1,17 +1,5 @@
 -- name: CreateOrder :one
-INSERT INTO
-    orders (
-        user_id,
-        user_address_id,
-        total_price
-    )
-VALUES
-    (
-        $1,
-        $2,
-        $3
-    )
-RETURNING *;
+INSERT INTO orders (order_id,user_id,user_address_id,total_price) VALUES ($1,$2,$3,$4) RETURNING *;
 
 -- name: GetOrder :one
 SELECT

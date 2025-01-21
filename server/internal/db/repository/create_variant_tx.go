@@ -9,11 +9,14 @@ import (
 
 type CreateVariantTxParam struct {
 	ProductID    int64
-	VariantName  string
 	VariantPrice float64
 	VariantSku   *string
+	Discount     *int32
 	VariantStock int32
-	Attributes   []CreateVariantAttributeParams
+	Attributes   []struct {
+		AttributeID int32
+		Value       string
+	}
 }
 
 func (s *pgRepo) CreateVariantTx(ctx context.Context, arg CreateVariantTxParam) (ProductVariant, error) {
@@ -36,7 +39,9 @@ func createVariantUtil(ctx context.Context, q *Queries, arg CreateVariantTxParam
 		Price:         util.GetPgNumericFromFloat(arg.VariantPrice),
 		StockQuantity: arg.VariantStock,
 	}
-
+	if arg.Discount != nil {
+		createParam.Discount = *arg.Discount
+	}
 	if arg.VariantSku != nil {
 		createParam.Sku = util.GetPgTypeText(*arg.VariantSku)
 	}

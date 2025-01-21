@@ -27,13 +27,12 @@ LEFT JOIN images as img ON p.product_id = img.product_id AND img.primary = true
 WHERE ci.cart_item_id = $1
 ORDER BY ci.created_at DESC, ci.cart_item_id DESC, p.product_id, pv.variant_id, va.attribute_id;
 
--- name: GetCartItemByProductID :one
+-- name: GetCartItemByVariantID :one
 SELECT * 
 FROM 
     cart_items 
 WHERE 
-    product_id = $1
-    AND variant_id = COALESCE(sqlc.narg('variant_id'), variant_id) 
+    variant_id = $1
 LIMIT 1;
 
 -- name: GetCartItems :many

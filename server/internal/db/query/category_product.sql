@@ -33,7 +33,7 @@ WHERE
 
 -- name: GetMaxSortOrderInCollection :one
 SELECT
-    max(sort_order)::smallint
+    max(sort_order)
 FROM
     category_products
 WHERE

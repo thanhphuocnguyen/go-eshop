@@ -8,6 +8,7 @@ package repository
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -49,7 +50,7 @@ VALUES
 `
 
 type CreateAddressParams struct {
-	UserID   int64       `json:"user_id"`
+	UserID   uuid.UUID   `json:"user_id"`
 	Phone    string      `json:"phone"`
 	Street   string      `json:"street"`
 	Ward     pgtype.Text `json:"ward"`
@@ -96,8 +97,8 @@ WHERE
 `
 
 type DeleteAddressParams struct {
-	UserAddressID int64 `json:"user_address_id"`
-	UserID        int64 `json:"user_id"`
+	UserAddressID int64     `json:"user_address_id"`
+	UserID        uuid.UUID `json:"user_id"`
 }
 
 func (q *Queries) DeleteAddress(ctx context.Context, arg DeleteAddressParams) error {
@@ -116,8 +117,8 @@ LIMIT 1
 `
 
 type GetAddressParams struct {
-	UserAddressID int64 `json:"user_address_id"`
-	UserID        int64 `json:"user_id"`
+	UserAddressID int64     `json:"user_address_id"`
+	UserID        uuid.UUID `json:"user_id"`
 }
 
 func (q *Queries) GetAddress(ctx context.Context, arg GetAddressParams) (UserAddress, error) {
@@ -150,7 +151,7 @@ ORDER BY
     "default" DESC, user_address_id ASC
 `
 
-func (q *Queries) GetAddresses(ctx context.Context, userID int64) ([]UserAddress, error) {
+func (q *Queries) GetAddresses(ctx context.Context, userID uuid.UUID) ([]UserAddress, error) {
 	rows, err := q.db.Query(ctx, getAddresses, userID)
 	if err != nil {
 		return nil, err
@@ -192,7 +193,7 @@ WHERE
 LIMIT 1
 `
 
-func (q *Queries) GetDefaultAddress(ctx context.Context, userID int64) (UserAddress, error) {
+func (q *Queries) GetDefaultAddress(ctx context.Context, userID uuid.UUID) (UserAddress, error) {
 	row := q.db.QueryRow(ctx, getDefaultAddress, userID)
 	var i UserAddress
 	err := row.Scan(
@@ -220,13 +221,13 @@ WHERE
     user_id = $1 AND "default" = TRUE
 `
 
-func (q *Queries) ResetPrimaryAddress(ctx context.Context, userID int64) error {
+func (q *Queries) ResetPrimaryAddress(ctx context.Context, userID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, resetPrimaryAddress, userID)
 	return err
 }
 
 type SeedAddressesParams struct {
-	UserID   int64       `json:"user_id"`
+	UserID   uuid.UUID   `json:"user_id"`
 	Phone    string      `json:"phone"`
 	Street   string      `json:"street"`
 	Ward     pgtype.Text `json:"ward"`
@@ -245,9 +246,9 @@ WHERE
 `
 
 type SetPrimaryAddressParams struct {
-	Default       bool  `json:"default"`
-	UserID        int64 `json:"user_id"`
-	UserAddressID int64 `json:"user_address_id"`
+	Default       bool      `json:"default"`
+	UserID        uuid.UUID `json:"user_id"`
+	UserAddressID int64     `json:"user_address_id"`
 }
 
 func (q *Queries) SetPrimaryAddress(ctx context.Context, arg SetPrimaryAddressParams) error {
@@ -278,7 +279,7 @@ type UpdateAddressParams struct {
 	City          pgtype.Text `json:"city"`
 	Default       pgtype.Bool `json:"default"`
 	UserAddressID int64       `json:"user_address_id"`
-	UserID        int64       `json:"user_id"`
+	UserID        uuid.UUID   `json:"user_id"`
 }
 
 func (q *Queries) UpdateAddress(ctx context.Context, arg UpdateAddressParams) (UserAddress, error) {

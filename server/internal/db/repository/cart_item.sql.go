@@ -85,23 +85,17 @@ func (q *Queries) GetCartItem(ctx context.Context, cartItemID int32) (CartItem, 
 	return i, err
 }
 
-const getCartItemByProductID = `-- name: GetCartItemByProductID :one
+const getCartItemByVariantID = `-- name: GetCartItemByVariantID :one
 SELECT cart_id, cart_item_id, product_id, variant_id, quantity, created_at 
 FROM 
     cart_items 
 WHERE 
-    product_id = $1
-    AND variant_id = COALESCE($2, variant_id) 
+    variant_id = $1
 LIMIT 1
 `
 
-type GetCartItemByProductIDParams struct {
-	ProductID int64       `json:"product_id"`
-	VariantID pgtype.Int8 `json:"variant_id"`
-}
-
-func (q *Queries) GetCartItemByProductID(ctx context.Context, arg GetCartItemByProductIDParams) (CartItem, error) {
-	row := q.db.QueryRow(ctx, getCartItemByProductID, arg.ProductID, arg.VariantID)
+func (q *Queries) GetCartItemByVariantID(ctx context.Context, variantID int64) (CartItem, error) {
+	row := q.db.QueryRow(ctx, getCartItemByVariantID, variantID)
 	var i CartItem
 	err := row.Scan(
 		&i.CartID,

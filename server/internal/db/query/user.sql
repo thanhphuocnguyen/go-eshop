@@ -1,22 +1,8 @@
 -- name: CreateUser :one
 INSERT INTO
-    users (
-        email,
-        username,
-        phone,
-        fullname,
-        hashed_password,
-        role
-    )
+    users (user_id,email,username,phone,fullname,hashed_password,role)
 VALUES
-    (
-        $1,
-        $2,
-        $3,
-        $4,
-        $5,
-        $6
-    )
+    ($1,$2,$3,$4,$5,$6,$7)
 RETURNING user_id, email, username, fullname, role, verified_email, verified_phone, created_at, updated_at;
 
 -- name: GetUserByUsername :one
@@ -87,20 +73,6 @@ FROM
 
 -- name: SeedUsers :copyfrom
 INSERT INTO
-    users (
-        email,
-        username,
-        phone,
-        fullname,
-        hashed_password,
-        role
-    )
+    users (user_id,email,username,phone,fullname,hashed_password,role)
 VALUES
-    (
-        $1,
-        $2,
-        $3,
-        $4,
-        $5,
-        $6
-    );
+    ($1,$2,$3,$4,$5,$6,$7);

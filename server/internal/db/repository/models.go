@@ -337,7 +337,7 @@ type Attribute struct {
 
 type Cart struct {
 	CartID    uuid.UUID `json:"cart_id"`
-	UserID    int64     `json:"user_id"`
+	UserID    uuid.UUID `json:"user_id"`
 	UpdatedAt time.Time `json:"updated_at"`
 	CreatedAt time.Time `json:"created_at"`
 }
@@ -380,7 +380,7 @@ type Image struct {
 
 type Order struct {
 	OrderID       uuid.UUID          `json:"order_id"`
-	UserID        int64              `json:"user_id"`
+	UserID        uuid.UUID          `json:"user_id"`
 	UserAddressID int64              `json:"user_address_id"`
 	TotalPrice    pgtype.Numeric     `json:"total_price"`
 	Status        OrderStatus        `json:"status"`
@@ -436,7 +436,7 @@ type ProductVariant struct {
 
 type Session struct {
 	SessionID    uuid.UUID `json:"session_id"`
-	UserID       int64     `json:"user_id"`
+	UserID       uuid.UUID `json:"user_id"`
 	RefreshToken string    `json:"refresh_token"`
 	UserAgent    string    `json:"user_agent"`
 	ClientIp     string    `json:"client_ip"`
@@ -446,7 +446,7 @@ type Session struct {
 }
 
 type User struct {
-	UserID            int64     `json:"user_id"`
+	UserID            uuid.UUID `json:"user_id"`
 	Role              UserRole  `json:"role"`
 	Username          string    `json:"username"`
 	Email             string    `json:"email"`
@@ -462,7 +462,7 @@ type User struct {
 
 type UserAddress struct {
 	UserAddressID int64       `json:"user_address_id"`
-	UserID        int64       `json:"user_id"`
+	UserID        uuid.UUID   `json:"user_id"`
 	Phone         string      `json:"phone"`
 	Street        string      `json:"street"`
 	Ward          pgtype.Text `json:"ward"`
@@ -476,7 +476,7 @@ type UserAddress struct {
 
 type UserPaymentInfo struct {
 	PaymentMethodID int32              `json:"payment_method_id"`
-	UserID          pgtype.Int8        `json:"user_id"`
+	UserID          pgtype.UUID        `json:"user_id"`
 	CardNumber      string             `json:"card_number"`
 	CardholderName  string             `json:"cardholder_name"`
 	ExpirationDate  pgtype.Date        `json:"expiration_date"`
@@ -497,7 +497,7 @@ type VariantAttribute struct {
 
 type VerifyEmail struct {
 	ID         int32     `json:"id"`
-	UserID     int64     `json:"user_id"`
+	UserID     uuid.UUID `json:"user_id"`
 	Email      string    `json:"email"`
 	VerifyCode string    `json:"verify_code"`
 	IsUsed     bool      `json:"is_used"`

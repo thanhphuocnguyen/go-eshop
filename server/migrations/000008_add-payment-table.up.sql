@@ -14,7 +14,7 @@ CREATE TABLE
 CREATE TABLE
     user_payment_infos (
         "payment_method_id" SERIAL PRIMARY KEY,
-        "user_id" BIGINT REFERENCES users (user_id) ON DELETE CASCADE,
+        "user_id" UUID REFERENCES users (user_id) ON DELETE CASCADE,
         "card_number" VARCHAR(16) NOT NULL CHECK (card_number ~ '^[0-9]{16}$'),
         "cardholder_name" VARCHAR(100) NOT NULL,
         "expiration_date" DATE NOT NULL,

@@ -13,14 +13,19 @@ import (
 
 const createCart = `-- name: CreateCart :one
 INSERT INTO 
-    carts (user_id) 
+    carts (cart_id, user_id) 
 VALUES 
-    ($1) 
+    ($1, $2) 
 RETURNING cart_id, user_id, updated_at, created_at
 `
 
-func (q *Queries) CreateCart(ctx context.Context, userID int64) (Cart, error) {
-	row := q.db.QueryRow(ctx, createCart, userID)
+type CreateCartParams struct {
+	CartID uuid.UUID `json:"cart_id"`
+	UserID uuid.UUID `json:"user_id"`
+}
+
+func (q *Queries) CreateCart(ctx context.Context, arg CreateCartParams) (Cart, error) {
+	row := q.db.QueryRow(ctx, createCart, arg.CartID, arg.UserID)
 	var i Cart
 	err := row.Scan(
 		&i.CartID,
@@ -35,7 +40,7 @@ const getCart = `-- name: GetCart :one
 SELECT cart_id, user_id, updated_at, created_at FROM carts WHERE user_id = $1 LIMIT 1
 `
 
-func (q *Queries) GetCart(ctx context.Context, userID int64) (Cart, error) {
+func (q *Queries) GetCart(ctx context.Context, userID uuid.UUID) (Cart, error) {
 	row := q.db.QueryRow(ctx, getCart, userID)
 	var i Cart
 	err := row.Scan(

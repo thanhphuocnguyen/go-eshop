@@ -99,18 +99,18 @@ func (q *Queries) GetCollectionProducts(ctx context.Context, categoryID int32) (
 
 const getMaxSortOrderInCollection = `-- name: GetMaxSortOrderInCollection :one
 SELECT
-    max(sort_order)::smallint
+    max(sort_order)
 FROM
     category_products
 WHERE
     category_id = $1
 `
 
-func (q *Queries) GetMaxSortOrderInCollection(ctx context.Context, categoryID int32) (int16, error) {
+func (q *Queries) GetMaxSortOrderInCollection(ctx context.Context, categoryID int32) (interface{}, error) {
 	row := q.db.QueryRow(ctx, getMaxSortOrderInCollection, categoryID)
-	var column_1 int16
-	err := row.Scan(&column_1)
-	return column_1, err
+	var max interface{}
+	err := row.Scan(&max)
+	return max, err
 }
 
 const removeProductFromCollection = `-- name: RemoveProductFromCollection :exec

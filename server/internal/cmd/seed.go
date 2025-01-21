@@ -3,9 +3,12 @@ package cmd
 import (
 	"context"
 	"encoding/json"
+	"math/rand"
 	"os"
+	"strings"
 	"sync"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -16,10 +19,11 @@ import (
 )
 
 type Variant struct {
-	Price    float64 `json:"price"`
-	Stock    int32   `json:"stock"`
-	Sku      string  `json:"sku"`
-	Discount int32   `json:"discount,omitempty"`
+	Price      float64           `json:"price"`
+	Stock      int32             `json:"stock"`
+	Sku        string            `json:"sku"`
+	Discount   int32             `json:"discount,omitempty"`
+	Attributes map[string]string `json:"attributes,omitempty"`
 }
 type Product struct {
 	Name        string    `json:"name"`
@@ -51,7 +55,6 @@ type Address struct {
 	District string `json:"district"`
 	Ward     string `json:"ward"`
 	Phone    string `json:"phone"`
-	UserID   int64  `json:"user_id"`
 }
 
 type AttributeValue struct {
@@ -91,7 +94,6 @@ func ExecuteSeed(ctx context.Context) int {
 				go func() {
 					defer waitGroup.Done()
 					seedUsers(ctx, pg)
-					seedUserAddresses(ctx, pg)
 				}()
 				go func() {
 					defer waitGroup.Done()
@@ -107,8 +109,6 @@ func ExecuteSeed(ctx context.Context) int {
 					seedProducts(ctx, pg)
 				case "users":
 					seedUsers(ctx, pg)
-				case "addresses":
-					seedUserAddresses(ctx, pg)
 				case "collections":
 					seedCollections(ctx, pg)
 				case "attributes":
@@ -168,8 +168,7 @@ func seedProducts(ctx context.Context, repo repository.Repository) {
 			continue
 		}
 		for _, variant := range product.Variants {
-
-			_, err := repo.CreateVariant(ctx, repository.CreateVariantParams{
+			createdVariant, err := repo.CreateVariant(ctx, repository.CreateVariantParams{
 				ProductID:     createdProduct.ProductID,
 				Price:         util.GetPgNumericFromFloat(variant.Price),
 				StockQuantity: variant.Stock,
@@ -179,6 +178,24 @@ func seedProducts(ctx context.Context, repo repository.Repository) {
 			if err != nil {
 				log.Error().Err(err).Msg("failed to create variant")
 				continue
+			}
+			for key, value := range variant.Attributes {
+				existingAttribute, err := repo.GetAttributeByName(ctx, strings.Title(key))
+				if err != nil {
+					log.Error().Err(err).Msg("failed to get attribute")
+					continue
+				}
+
+				_, err = repo.CreateVariantAttribute(ctx, repository.CreateVariantAttributeParams{
+					VariantID:   createdVariant.VariantID,
+					AttributeID: existingAttribute.AttributeID,
+					Value:       value,
+				})
+
+				if err != nil {
+					log.Error().Err(err).Msg("failed to create variant attribute")
+					continue
+				}
 			}
 		}
 	}
@@ -255,14 +272,19 @@ func seedUsers(ctx context.Context, pg repository.Repository) {
 	log.Info().Msg("parsing users from data")
 	err = json.Unmarshal(userData, &users)
 	if err != nil {
+		log.Error().Err(err).Msg("failed to parse user data")
 		return
 	}
 
 	log.Info().Int("with user count: ", len(users)).Msg("creating users")
 	params := make([]repository.SeedUsersParams, len(users))
+	userIDs := make([]uuid.UUID, len(users))
 	for i, user := range users {
 		hashed, _ := auth.HashPassword(user.Password)
+		usrID := uuid.New()
+		userIDs[i] = usrID
 		params[i] = repository.SeedUsersParams{
+			UserID:         usrID,
 			Email:          user.Email,
 			Username:       user.Username,
 			Phone:          user.Phone,
@@ -270,7 +292,6 @@ func seedUsers(ctx context.Context, pg repository.Repository) {
 			Fullname:       user.FullName,
 			Role:           repository.UserRoleUser,
 		}
-
 		if params[i].Username == "admin" {
 			params[i].Role = repository.UserRoleAdmin
 		}
@@ -280,6 +301,7 @@ func seedUsers(ctx context.Context, pg repository.Repository) {
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create users")
 	}
+	seedUserAddresses(ctx, pg, userIDs)
 	log.Info().Msg("users created")
 }
 
@@ -323,7 +345,7 @@ func seedAttributes(ctx context.Context, repo repository.Repository) {
 	log.Info().Msg("attributes and values created")
 }
 
-func seedUserAddresses(ctx context.Context, repo repository.Repository) {
+func seedUserAddresses(ctx context.Context, repo repository.Repository, userIDs []uuid.UUID) {
 	countAddresses, err := repo.CountAddresses(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to count addresses")
@@ -345,6 +367,7 @@ func seedUserAddresses(ctx context.Context, repo repository.Repository) {
 	log.Info().Msg("parsing addresses from data")
 	err = json.Unmarshal(addressData, &addresses)
 	if err != nil {
+		log.Error().Err(err).Msg("failed to parse address data")
 		return
 	}
 
@@ -352,8 +375,9 @@ func seedUserAddresses(ctx context.Context, repo repository.Repository) {
 	log.Info().Int("addresses count: %d", len(addresses))
 	params := make([]repository.SeedAddressesParams, len(addresses))
 	for i, address := range addresses {
+		idx := rand.Intn(len(userIDs))
 		params[i] = repository.SeedAddressesParams{
-			UserID:   address.UserID,
+			UserID:   userIDs[idx],
 			Phone:    address.Phone,
 			Street:   address.Street,
 			Ward:     util.GetPgTypeText(address.Ward),

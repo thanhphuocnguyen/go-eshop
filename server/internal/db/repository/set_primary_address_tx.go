@@ -3,12 +3,13 @@ package repository
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
 
 type SetPrimaryAddressTxParams struct {
-	NewPrimaryID int64 `json:"new_primary_id"`
-	UserID       int64 `json:"user_id"`
+	NewPrimaryID int64     `json:"new_primary_id"`
+	UserID       uuid.UUID `json:"user_id"`
 }
 
 func (s *pgRepo) SetPrimaryAddressTx(ctx context.Context, arg SetPrimaryAddressTxParams) error {

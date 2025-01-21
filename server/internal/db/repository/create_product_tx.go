@@ -15,8 +15,8 @@ type CreateProductTxParam struct {
 }
 
 type CreateProductTxResult struct {
-	Product Product          `json:"product"`
-	Variant []ProductVariant `json:"variant"`
+	Product  Product          `json:"product"`
+	Variants []ProductVariant `json:"variants"`
 }
 
 func (s *pgRepo) CreateProductTx(ctx context.Context, arg CreateProductTxParam) (CreateProductTxResult, error) {
@@ -33,7 +33,7 @@ func (s *pgRepo) CreateProductTx(ctx context.Context, arg CreateProductTxParam) 
 		}
 
 		result.Product = product
-		result.Variant = make([]ProductVariant, 0)
+		result.Variants = make([]ProductVariant, 0)
 		if len(arg.Variants) > 0 {
 			for _, params := range arg.Variants {
 				params.ProductID = product.ProductID
@@ -42,7 +42,7 @@ func (s *pgRepo) CreateProductTx(ctx context.Context, arg CreateProductTxParam) 
 					log.Error().Err(err).Msg("CreateVariant")
 					return err
 				}
-				result.Variant = append(result.Variant, *variantCreated)
+				result.Variants = append(result.Variants, *variantCreated)
 			}
 		}
 		if arg.CategoryID != nil {
@@ -51,11 +51,14 @@ func (s *pgRepo) CreateProductTx(ctx context.Context, arg CreateProductTxParam) 
 				log.Error().Err(err).Msg("GetMaxSortOrderInCollection")
 				return err
 			}
+			if maxSortOrder == nil {
+				maxSortOrder = 0
+			}
 
 			_, err = q.AddProductToCollection(ctx, AddProductToCollectionParams{
 				CategoryID: *arg.CategoryID,
 				ProductID:  product.ProductID,
-				SortOrder:  maxSortOrder + 1,
+				SortOrder:  int16(maxSortOrder.(int) + 1),
 			})
 			if err != nil {
 				log.Error().Err(err).Msg("AddProductToCollection")

@@ -9,7 +9,7 @@ import (
 )
 
 type CreateOrderTxParams struct {
-	UserID                int64
+	UserID                uuid.UUID
 	CartID                uuid.UUID
 	PaymentMethod         PaymentMethod
 	PaymentGateway        PaymentGateway

@@ -55,7 +55,7 @@ type listUserParams struct {
 }
 
 type updateUserRequest struct {
-	UserID   int64               `json:"user_id" binding:"required,min=1"`
+	UserID   uuid.UUID           `json:"user_id" binding:"required,uuid"`
 	FullName *string             `json:"fullname,omitempty" binding:"omitempty,min=3,max=32,alphanum"`
 	Email    string              `json:"email" binding:"email,max=255,min=6"`
 	Role     repository.UserRole `json:"role"`
@@ -337,7 +337,7 @@ func (sv *Server) updateUser(c *gin.Context) {
 		return
 	}
 
-	user, err := sv.repo.GetUserByID(c, 1)
+	user, err := sv.repo.GetUserByID(c, req.UserID)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, mapErrResp(err))
 		return

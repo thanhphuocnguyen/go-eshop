@@ -7,7 +7,11 @@
         "price": 699.99,
         "sku": "SKU12345",
         "stock": 25,
-        "discount": 10
+        "discount": 10,
+        "attributes": {
+          "color": "Silver",
+          "storage": "128GB"
+        }
       }
     ]
   },
@@ -19,7 +23,11 @@
         "price": 199.99,
         "sku": "SKU23456",
         "stock": 50,
-        "discount": 15
+        "discount": 15,
+        "attributes": {
+          "color": "Black",
+          "style": "Over-ear"
+        }
       }
     ]
   },
@@ -31,7 +39,11 @@
         "price": 19.99,
         "sku": "SKU34567",
         "stock": 100,
-        "discount": 5
+        "discount": 5,
+        "attributes": {
+          "color": "White",
+          "size": "M"
+        }
       }
     ]
   },
@@ -43,7 +55,10 @@
         "price": 49.99,
         "sku": "SKU45678",
         "stock": 30,
-        "discount": 20
+        "discount": 20,
+        "attributes": {
+          "color": "Black"
+        }
       }
     ]
   },
@@ -55,7 +70,11 @@
         "price": 89.99,
         "sku": "SKU56789",
         "stock": 40,
-        "discount": 10
+        "discount": 10,
+        "attributes": {
+          "color": "Blue",
+          "size": "US 9"
+        }
       }
     ]
   },
@@ -67,7 +86,10 @@
         "price": 79.99,
         "sku": "SKU67890",
         "stock": 35,
-        "discount": 15
+        "discount": 15,
+        "attributes": {
+          "color": "Black"
+        }
       }
     ]
   },
@@ -79,7 +101,11 @@
         "price": 249.99,
         "sku": "SKU78901",
         "stock": 20,
-        "discount": 12
+        "discount": 12,
+        "attributes": {
+          "color": "Silver",
+          "size": "42mm"
+        }
       }
     ]
   },
@@ -91,7 +117,11 @@
         "price": 59.99,
         "sku": "SKU89012",
         "stock": 60,
-        "discount": 8
+        "discount": 8,
+        "attributes": {
+          "color": "Dark Blue",
+          "size": "32x32"
+        }
       }
     ]
   },
@@ -103,7 +133,10 @@
         "price": 299.99,
         "sku": "SKU90123",
         "stock": 15,
-        "discount": 10
+        "discount": 10,
+        "attributes": {
+          "size": "27-inch"
+        }
       }
     ]
   },
@@ -115,7 +148,11 @@
         "price": 129.99,
         "sku": "SKU01234",
         "stock": 10,
-        "discount": 20
+        "discount": 20,
+        "attributes": {
+          "color": "Brown",
+          "size": "L"
+        }
       }
     ]
   },
@@ -127,7 +164,11 @@
         "price": 299.99,
         "sku": "SKU13579",
         "stock": 50,
-        "discount": 5
+        "discount": 5,
+        "attributes": {
+          "color": "Black",
+          "storage": "64GB"
+        }
       }
     ]
   },
@@ -139,7 +180,10 @@
         "price": 49.99,
         "sku": "SKU24680",
         "stock": 75,
-        "discount": 10
+        "discount": 10,
+        "attributes": {
+          "color": "White"
+        }
       }
     ]
   },
@@ -151,7 +195,11 @@
         "price": 39.99,
         "sku": "SKU35791",
         "stock": 80,
-        "discount": 8
+        "discount": 8,
+        "attributes": {
+          "color": "Grey",
+          "size": "S"
+        }
       }
     ]
   },
@@ -163,7 +211,10 @@
         "price": 29.99,
         "sku": "SKU46802",
         "stock": 45,
-        "discount": 10
+        "discount": 10,
+        "attributes": {
+          "color": "Black"
+        }
       }
     ]
   },
@@ -175,7 +226,11 @@
         "price": 199.99,
         "sku": "SKU57913",
         "stock": 25,
-        "discount": 12
+        "discount": 12,
+        "attributes": {
+          "color": "Red",
+          "size": "Large"
+        }
       }
     ]
   },
@@ -187,7 +242,11 @@
         "price": 69.99,
         "sku": "SKU68024",
         "stock": 30,
-        "discount": 10
+        "discount": 10,
+        "attributes": {
+          "color": "Light Blue",
+          "size": "M"
+        }
       }
     ]
   },
@@ -199,7 +258,11 @@
         "price": 899.99,
         "sku": "SKU79135",
         "stock": 10,
-        "discount": 15
+        "discount": 15,
+        "attributes": {
+          "color": "Black",
+          "storage": "512GB"
+        }
       }
     ]
   },
@@ -211,7 +274,11 @@
         "price": 24.99,
         "sku": "SKU80246",
         "stock": 90,
-        "discount": 5
+        "discount": 5,
+        "attributes": {
+          "color": "Black",
+          "size": "L"
+        }
       }
     ]
   },
@@ -223,7 +290,10 @@
         "price": 34.99,
         "sku": "SKU91357",
         "stock": 40,
-        "discount": 10
+        "discount": 10,
+        "attributes": {
+          "color": "Silver"
+        }
       }
     ]
   },
@@ -235,7 +305,11 @@
         "price": 349.99,
         "sku": "SKU02468",
         "stock": 20,
-        "discount": 12
+        "discount": 12,
+        "attributes": {
+          "color": "Space Grey",
+          "storage": "256GB"
+        }
       }
     ]
   },
@@ -247,7 +321,11 @@
         "price": 29.99,
         "sku": "SKU13580",
         "stock": 70,
-        "discount": 8
+        "discount": 8,
+        "attributes": {
+          "color": "Black",
+          "size": "M"
+        }
       }
     ]
   },
@@ -259,7 +337,11 @@
         "price": 999.99,
         "sku": "SKU24691",
         "stock": 15,
-        "discount": 10
+        "discount": 10,
+        "attributes": {
+          "color": "Gold",
+          "storage": "256GB"
+        }
       }
     ]
   },
@@ -271,7 +353,11 @@
         "price": 99.99,
         "sku": "SKU35702",
         "stock": 50,
-        "discount": 15
+        "discount": 15,
+        "attributes": {
+          "color": "Black",
+          "size": "Small"
+        }
       }
     ]
   },
@@ -283,7 +369,10 @@
         "price": 19.99,
         "sku": "SKU46813",
         "stock": 100,
-        "discount": 5
+        "discount": 5,
+        "attributes": {
+          "color": "Brown"
+        }
       }
     ]
   },
@@ -295,7 +384,10 @@
         "price": 59.99,
         "sku": "SKU57924",
         "stock": 45,
-        "discount": 10
+        "discount": 10,
+        "attributes": {
+          "color": "Black"
+        }
       }
     ]
   },
@@ -307,7 +399,11 @@
         "price": 149.99,
         "sku": "SKU68035",
         "stock": 20,
-        "discount": 20
+        "discount": 20,
+        "attributes": {
+          "color": "Navy Blue",
+          "size": "XL"
+        }
       }
     ]
   },
@@ -319,7 +415,10 @@
         "price": 39.99,
         "sku": "SKU79146",
         "stock": 60,
-        "discount": 10
+        "discount": 10,
+        "attributes": {
+          "color": "White"
+        }
       }
     ]
   },
@@ -331,7 +430,10 @@
         "price": 199.99,
         "sku": "SKU80257",
         "stock": 30,
-        "discount": 15
+        "discount": 15,
+        "attributes": {
+          "color": "Black"
+        }
       }
     ]
   },
@@ -343,7 +445,10 @@
         "price": 29.99,
         "sku": "SKU91368",
         "stock": 50,
-        "discount": 8
+        "discount": 8,
+        "attributes": {
+          "color": "Black"
+        }
       }
     ]
   },
@@ -355,7 +460,10 @@
         "price": 14.99,
         "sku": "SKU02479",
         "stock": 100,
-        "discount": 5
+        "discount": 5,
+        "attributes": {
+          "color": "Silver"
+        }
       }
     ]
   },
@@ -367,7 +475,10 @@
         "price": 39.99,
         "sku": "SKU13590",
         "stock": 60,
-        "discount": 10
+        "discount": 10,
+        "attributes": {
+          "color": "White"
+        }
       }
     ]
   },
@@ -379,7 +490,10 @@
         "price": 89.99,
         "sku": "SKU24601",
         "stock": 40,
-        "discount": 12
+        "discount": 12,
+        "attributes": {
+          "color": "Grey"
+        }
       }
     ]
   },
@@ -391,7 +505,10 @@
         "price": 24.99,
         "sku": "SKU35712",
         "stock": 80,
-        "discount": 8
+        "discount": 8,
+        "attributes": {
+          "color": "White"
+        }
       }
     ]
   },
@@ -403,7 +520,11 @@
         "price": 199.99,
         "sku": "SKU46823",
         "stock": 50,
-        "discount": 10
+        "discount": 10,
+        "attributes": {
+          "color": "Blue",
+          "storage": "32GB"
+        }
       }
     ]
   },
@@ -415,7 +536,10 @@
         "price": 49.99,
         "sku": "SKU57934",
         "stock": 30,
-        "discount": 10
+        "discount": 10,
+        "attributes": {
+          "color": "Black"
+        }
       }
     ]
   },
@@ -427,7 +551,10 @@
         "price": 59.99,
         "sku": "SKU68045",
         "stock": 40,
-        "discount": 12
+        "discount": 12,
+        "attributes": {
+          "color": "White"
+        }
       }
     ]
   },
@@ -439,7 +566,11 @@
         "price": 49.99,
         "sku": "SKU79156",
         "stock": 70,
-        "discount": 10
+        "discount": 10,
+        "attributes": {
+          "color": "Black",
+          "size": "M"
+        }
       }
     ]
   },
@@ -451,7 +582,11 @@
         "price": 29.99,
         "sku": "SKU80267",
         "stock": 50,
-        "discount": 8
+        "discount": 8,
+        "attributes": {
+          "color": "Blue",
+          "size": "Small"
+        }
       }
     ]
   },
@@ -463,7 +598,11 @@
         "price": 79.99,
         "sku": "SKU91378",
         "stock": 25,
-        "discount": 15
+        "discount": 15,
+        "attributes": {
+          "color": "Black",
+          "size": "L"
+        }
       }
     ]
   },
@@ -475,7 +614,11 @@
         "price": 1299.99,
         "sku": "SKU02489",
         "stock": 10,
-        "discount": 10
+        "discount": 10,
+        "attributes": {
+          "color": "White",
+          "storage": "512GB"
+        }
       }
     ]
   },
@@ -487,7 +630,11 @@
         "price": 299.99,
         "sku": "SKU13501",
         "stock": 20,
-        "discount": 12
+        "discount": 12,
+        "attributes": {
+          "color": "Black",
+          "style": "Over-ear"
+        }
       }
     ]
   },
@@ -499,7 +646,11 @@
         "price": 59.99,
         "sku": "SKU24612",
         "stock": 40,
-        "discount": 10
+        "discount": 10,
+        "attributes": {
+          "color": "Grey",
+          "size": "US 10"
+        }
       }
     ]
   },
@@ -511,7 +662,10 @@
         "price": 499.99,
         "sku": "SKU35723",
         "stock": 15,
-        "discount": 8
+        "discount": 8,
+        "attributes": {
+          "color": "Black"
+        }
       }
     ]
   }

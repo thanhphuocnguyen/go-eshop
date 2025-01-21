@@ -48,6 +48,13 @@ func GetPgTypeInt8(value int64) pgtype.Int8 {
 	}
 }
 
+func GetPgTypeUUID(value [16]byte) pgtype.UUID {
+	return pgtype.UUID{
+		Bytes: value,
+		Valid: true,
+	}
+}
+
 func GetPgTypeFloat4(value float32) pgtype.Float4 {
 	return pgtype.Float4{
 		Float32: value,

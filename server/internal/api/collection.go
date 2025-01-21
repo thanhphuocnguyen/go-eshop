@@ -275,10 +275,13 @@ func (sv *Server) addProductToCollection(c *gin.Context) {
 	if cnt == 0 {
 		maxSortOrder = 0
 	} else {
-		maxSortOrder, err = sv.repo.GetMaxSortOrderInCollection(c, param.CollectionID)
+		maxSortOrder, err := sv.repo.GetMaxSortOrderInCollection(c, param.CollectionID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, mapErrResp(err))
 			return
+		}
+		if maxSortOrder == nil {
+			maxSortOrder = 0
 		}
 	}
 

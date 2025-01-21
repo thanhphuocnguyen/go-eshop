@@ -183,13 +183,13 @@ func (q *Queries) GetCollectionByName(ctx context.Context, name string) (GetColl
 }
 
 const getCollectionMaxSortOrder = `-- name: GetCollectionMaxSortOrder :one
-SELECT COALESCE(MAX(sort_order), 0)::smallint AS max_sort_order
+SELECT COALESCE(MAX(sort_order)::smallint, 0) AS max_sort_order
 FROM category_products
 `
 
-func (q *Queries) GetCollectionMaxSortOrder(ctx context.Context) (int16, error) {
+func (q *Queries) GetCollectionMaxSortOrder(ctx context.Context) (interface{}, error) {
 	row := q.db.QueryRow(ctx, getCollectionMaxSortOrder)
-	var max_sort_order int16
+	var max_sort_order interface{}
 	err := row.Scan(&max_sort_order)
 	return max_sort_order, err
 }

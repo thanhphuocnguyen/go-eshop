@@ -201,6 +201,7 @@ func (r *iteratorForSeedUsers) Next() bool {
 
 func (r iteratorForSeedUsers) Values() ([]interface{}, error) {
 	return []interface{}{
+		r.rows[0].UserID,
 		r.rows[0].Email,
 		r.rows[0].Username,
 		r.rows[0].Phone,
@@ -215,5 +216,5 @@ func (r iteratorForSeedUsers) Err() error {
 }
 
 func (q *Queries) SeedUsers(ctx context.Context, arg []SeedUsersParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"users"}, []string{"email", "username", "phone", "fullname", "hashed_password", "role"}, &iteratorForSeedUsers{rows: arg})
+	return q.db.CopyFrom(ctx, []string{"users"}, []string{"user_id", "email", "username", "phone", "fullname", "hashed_password", "role"}, &iteratorForSeedUsers{rows: arg})
 }

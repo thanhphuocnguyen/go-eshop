@@ -9,6 +9,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -28,37 +29,24 @@ func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO
-    users (
-        email,
-        username,
-        phone,
-        fullname,
-        hashed_password,
-        role
-    )
+    users (user_id,email,username,phone,fullname,hashed_password,role)
 VALUES
-    (
-        $1,
-        $2,
-        $3,
-        $4,
-        $5,
-        $6
-    )
+    ($1,$2,$3,$4,$5,$6,$7)
 RETURNING user_id, email, username, fullname, role, verified_email, verified_phone, created_at, updated_at
 `
 
 type CreateUserParams struct {
-	Email          string   `json:"email"`
-	Username       string   `json:"username"`
-	Phone          string   `json:"phone"`
-	Fullname       string   `json:"fullname"`
-	HashedPassword string   `json:"hashed_password"`
-	Role           UserRole `json:"role"`
+	UserID         uuid.UUID `json:"user_id"`
+	Email          string    `json:"email"`
+	Username       string    `json:"username"`
+	Phone          string    `json:"phone"`
+	Fullname       string    `json:"fullname"`
+	HashedPassword string    `json:"hashed_password"`
+	Role           UserRole  `json:"role"`
 }
 
 type CreateUserRow struct {
-	UserID        int64     `json:"user_id"`
+	UserID        uuid.UUID `json:"user_id"`
 	Email         string    `json:"email"`
 	Username      string    `json:"username"`
 	Fullname      string    `json:"fullname"`
@@ -71,6 +59,7 @@ type CreateUserRow struct {
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
 	row := q.db.QueryRow(ctx, createUser,
+		arg.UserID,
 		arg.Email,
 		arg.Username,
 		arg.Phone,
@@ -100,7 +89,7 @@ WHERE
     user_id = $1
 `
 
-func (q *Queries) DeleteUser(ctx context.Context, userID int64) error {
+func (q *Queries) DeleteUser(ctx context.Context, userID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteUser, userID)
 	return err
 }
@@ -145,7 +134,7 @@ WHERE
 LIMIT 1
 `
 
-func (q *Queries) GetUserByID(ctx context.Context, userID int64) (User, error) {
+func (q *Queries) GetUserByID(ctx context.Context, userID uuid.UUID) (User, error) {
 	row := q.db.QueryRow(ctx, getUserByID, userID)
 	var i User
 	err := row.Scan(
@@ -245,12 +234,13 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 }
 
 type SeedUsersParams struct {
-	Email          string   `json:"email"`
-	Username       string   `json:"username"`
-	Phone          string   `json:"phone"`
-	Fullname       string   `json:"fullname"`
-	HashedPassword string   `json:"hashed_password"`
-	Role           UserRole `json:"role"`
+	UserID         uuid.UUID `json:"user_id"`
+	Email          string    `json:"email"`
+	Username       string    `json:"username"`
+	Phone          string    `json:"phone"`
+	Fullname       string    `json:"fullname"`
+	HashedPassword string    `json:"hashed_password"`
+	Role           UserRole  `json:"role"`
 }
 
 const updateUser = `-- name: UpdateUser :one
@@ -279,11 +269,11 @@ type UpdateUserParams struct {
 	HashedPassword    pgtype.Text        `json:"hashed_password"`
 	PasswordChangedAt pgtype.Timestamptz `json:"password_changed_at"`
 	UpdatedAt         time.Time          `json:"updated_at"`
-	ID                int64              `json:"id"`
+	ID                uuid.UUID          `json:"id"`
 }
 
 type UpdateUserRow struct {
-	UserID        int64     `json:"user_id"`
+	UserID        uuid.UUID `json:"user_id"`
 	Email         string    `json:"email"`
 	Username      string    `json:"username"`
 	Fullname      string    `json:"fullname"`

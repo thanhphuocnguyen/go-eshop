@@ -24,6 +24,11 @@ type AttributeParam struct {
 	ID int32 `uri:"id" binding:"required"`
 }
 
+type productAttributeDetail struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
 // ------------------------------ API Handlers ------------------------------
 
 // @Summary Create an attribute

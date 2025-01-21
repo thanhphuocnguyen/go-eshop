@@ -7,6 +7,8 @@ package repository
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 const createVerifyEmail = `-- name: CreateVerifyEmail :one
@@ -14,9 +16,9 @@ INSERT INTO verify_emails (user_id, email, verify_code) VALUES ($1, $2, $3) RETU
 `
 
 type CreateVerifyEmailParams struct {
-	UserID     int64  `json:"user_id"`
-	Email      string `json:"email"`
-	VerifyCode string `json:"verify_code"`
+	UserID     uuid.UUID `json:"user_id"`
+	Email      string    `json:"email"`
+	VerifyCode string    `json:"verify_code"`
 }
 
 func (q *Queries) CreateVerifyEmail(ctx context.Context, arg CreateVerifyEmailParams) (VerifyEmail, error) {
@@ -39,8 +41,8 @@ SELECT id, user_id, email, verify_code, is_used, created_at, expired_at FROM ver
 `
 
 type GetVerifyEmailParams struct {
-	UserID int64  `json:"user_id"`
-	Email  string `json:"email"`
+	UserID uuid.UUID `json:"user_id"`
+	Email  string    `json:"email"`
 }
 
 func (q *Queries) GetVerifyEmail(ctx context.Context, arg GetVerifyEmailParams) (VerifyEmail, error) {

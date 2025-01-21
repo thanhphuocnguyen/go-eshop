@@ -71,5 +71,5 @@ WHERE category_id = COALESCE(sqlc.narg('category_id'), category_id);
 INSERT INTO categories (name, description, sort_order, published) VALUES ($1, $2, $3, $4);
 
 -- name: GetCollectionMaxSortOrder :one
-SELECT COALESCE(MAX(sort_order), 0)::smallint AS max_sort_order
+SELECT COALESCE(MAX(sort_order)::smallint, 0) AS max_sort_order
 FROM category_products;

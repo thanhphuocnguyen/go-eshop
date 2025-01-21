@@ -1,8 +1,8 @@
 -- name: CreateCart :one
 INSERT INTO 
-    carts (user_id) 
+    carts (cart_id, user_id) 
 VALUES 
-    ($1) 
+    ($1, $2) 
 RETURNING *;
 
 -- name: GetCart :one

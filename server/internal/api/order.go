@@ -106,7 +106,7 @@ func (sv *Server) orderList(c *gin.Context) {
 		Offset: (orderListQuery.Page - 1) * orderListQuery.PageSize,
 	}
 	if user.Role != repository.UserRoleAdmin {
-		getListOrderParams.UserID = util.GetPgTypeInt8(tokenPayload.UserID)
+		getListOrderParams.UserID = util.GetPgTypeUUID(tokenPayload.UserID)
 	}
 	listOrderRows, err := sv.repo.ListOrders(c, getListOrderParams)
 

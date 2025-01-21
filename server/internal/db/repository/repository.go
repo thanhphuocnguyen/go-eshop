@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/config"
 )
 
@@ -48,6 +49,12 @@ func GetPostgresInstance(ctx context.Context, cfg config.Config) (Repository, er
 	once.Do(func() {
 		repoInstance, err = initializePostgres(ctx, cfg)
 	})
+	err = repoInstance.DbPool.Ping(ctx)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to postgres: %w", err)
+	}
+	log.Info().Msg("Connected to postgres")
 	return repoInstance, err
 }
 
@@ -74,12 +81,11 @@ func initializePostgres(ctx context.Context, cfg config.Config) (*pgRepo, error)
 		time.Sleep(repoInstance.connTimeOut)
 	}
 	err = repoInstance.DbPool.Ping(ctx)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to postgres: %w", err)
 	}
+	// Initialize queries
 	repoInstance.Queries = New(repoInstance.DbPool)
-
 	return repoInstance, nil
 }
 

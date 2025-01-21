@@ -114,13 +114,13 @@ const getVariantByProductID = `-- name: GetVariantByProductID :many
 SELECT
     pv.variant_id, pv.product_id, pv.price, pv.discount, pv.stock_quantity, pv.sku, pv.created_at, pv.updated_at,
     a.name as attribute_name, a.attribute_id,
-    va.variant_attribute_id
+    va.variant_attribute_id, va.value as attribute_value
 FROM
     product_variants pv
 JOIN
     variant_attributes va ON pv.variant_id = va.variant_id
 JOIN
-    attributes a ON av.attribute_id = a.attribute_id
+    attributes a ON va.attribute_id = a.attribute_id
 WHERE
     pv.product_id = $1
 `
@@ -137,6 +137,7 @@ type GetVariantByProductIDRow struct {
 	AttributeName      string         `json:"attribute_name"`
 	AttributeID        int32          `json:"attribute_id"`
 	VariantAttributeID int32          `json:"variant_attribute_id"`
+	AttributeValue     string         `json:"attribute_value"`
 }
 
 func (q *Queries) GetVariantByProductID(ctx context.Context, productID int64) ([]GetVariantByProductIDRow, error) {
@@ -160,6 +161,7 @@ func (q *Queries) GetVariantByProductID(ctx context.Context, productID int64) ([
 			&i.AttributeName,
 			&i.AttributeID,
 			&i.VariantAttributeID,
+			&i.AttributeValue,
 		); err != nil {
 			return nil, err
 		}
@@ -175,13 +177,13 @@ const getVariantDetails = `-- name: GetVariantDetails :many
 SELECT
     pv.variant_id, pv.product_id, pv.price, pv.discount, pv.stock_quantity, pv.sku, pv.created_at, pv.updated_at,
     a.name as attribute_name, a.attribute_id,
-    va.variant_attribute_id
+    va.variant_attribute_id, va.value
 FROM
     product_variants pv
 JOIN
     variant_attributes va ON pv.variant_id = va.variant_id
 JOIN
-    attributes a ON av.attribute_id = a.attribute_id
+    attributes a ON va.attribute_id = a.attribute_id
 WHERE
     pv.variant_id = $1
 `
@@ -198,6 +200,7 @@ type GetVariantDetailsRow struct {
 	AttributeName      string         `json:"attribute_name"`
 	AttributeID        int32          `json:"attribute_id"`
 	VariantAttributeID int32          `json:"variant_attribute_id"`
+	Value              string         `json:"value"`
 }
 
 func (q *Queries) GetVariantDetails(ctx context.Context, variantID int64) ([]GetVariantDetailsRow, error) {
@@ -221,6 +224,7 @@ func (q *Queries) GetVariantDetails(ctx context.Context, variantID int64) ([]Get
 			&i.AttributeName,
 			&i.AttributeID,
 			&i.VariantAttributeID,
+			&i.Value,
 		); err != nil {
 			return nil, err
 		}

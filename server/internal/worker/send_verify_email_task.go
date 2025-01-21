@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
@@ -15,7 +16,7 @@ import (
 )
 
 type PayloadVerifyEmail struct {
-	UserID int64 `json:"user_id"`
+	UserID uuid.UUID `json:"user_id"`
 }
 
 const (

@@ -13,8 +13,8 @@ import (
 type createProductRequest struct {
 	Name        string           `json:"name" binding:"required,min=3,max=100"`
 	Description string           `json:"description" binding:"required,min=10,max=1000"`
-	Variants    []variantRequest `json:"variants" binding:"omitempty,dive"`
 	CategoryID  *int32           `json:"category_id,omitempty"`
+	Variants    []variantRequest `json:"variants" binding:"omitempty,dive"`
 }
 
 type updateProductRequest struct {
@@ -35,12 +35,12 @@ type productQueries struct {
 }
 
 type productVariantModel struct {
-	ID         int64       `json:"id"`
-	Price      float64     `json:"price"`
-	StockQty   int32       `json:"stock_qty"`
-	Attributes []Attribute `json:"attributes,omitempty"`
-	Sku        *string     `json:"sku,omitempty"`
-	ImageUrl   *string     `json:"image_url,omitempty"`
+	ID         int64                    `json:"id"`
+	Price      float64                  `json:"price"`
+	StockQty   int32                    `json:"stock_qty"`
+	Sku        *string                  `json:"sku,omitempty"`
+	Attributes []productAttributeDetail `json:"attributes,omitempty"`
+	ImageUrl   *string                  `json:"image_url,omitempty"`
 }
 
 type productDetailsModel struct {
@@ -88,14 +88,20 @@ func mapToProductResponse(productRows []repository.GetProductDetailRow) productD
 		// add variant if it's the first variant or different from the previous one
 		if i == 0 || row.VariantID != productRows[i-1].VariantID {
 			variantModel := productVariantModel{
-				ID:    row.VariantID,
-				Price: price.Float64,
-				Attributes: []Attribute{{
-					ID:              row.AttributeID,
-					Name:            row.AttributeName,
-					AttributeValues: []string{row.VariantAttributeValue},
-				}},
+				ID:       row.VariantID,
+				Price:    price.Float64,
+				StockQty: row.StockQuantity,
+				Attributes: []productAttributeDetail{
+					{
+						Name:  row.AttributeName,
+						Value: row.VariantAttributeValue,
+					},
+				},
 			}
+			if row.Sku.Valid {
+				variantModel.Sku = &row.Sku.String
+			}
+
 			if row.ImgVariantID.Valid {
 				variantModel.ImageUrl = &row.ImageUrl.String
 			}
@@ -106,16 +112,10 @@ func mapToProductResponse(productRows []repository.GetProductDetailRow) productD
 		} else if row.VariantID == productRows[i-1].VariantID && row.AttributeID != productRows[i-1].AttributeID {
 			// add attribute value to existing variant
 			lastVariant := &resp.Variants[len(resp.Variants)-1]
-			lastVariant.Attributes = append(lastVariant.Attributes, Attribute{
-				ID:              row.AttributeID,
-				Name:            row.AttributeName,
-				AttributeValues: []string{row.VariantAttributeValue},
+			lastVariant.Attributes = append(lastVariant.Attributes, productAttributeDetail{
+				Name:  row.AttributeName,
+				Value: row.VariantAttributeValue,
 			})
-		} else {
-			// add attribute value to existing attribute
-			lastVariant := &resp.Variants[len(resp.Variants)-1]
-			lastAttribute := &lastVariant.Attributes[len(lastVariant.Attributes)-1]
-			lastAttribute.AttributeValues = append(lastAttribute.AttributeValues, row.VariantAttributeValue)
 		}
 
 		// Add images for product or variants
@@ -182,21 +182,29 @@ func (sv *Server) createProduct(c *gin.Context) {
 
 	if len(req.Variants) > 0 {
 		createProductTxParams.Variants = make([]repository.CreateVariantTxParam, len(req.Variants))
-		for i, variant := range req.Variants {
-			attributeParams := make([]repository.CreateVariantAttributeParams, len(variant.Attributes))
-			for j, attribute := range variant.Attributes {
-				attributeParams[j] = repository.CreateVariantAttributeParams{
+		for i, variantReq := range req.Variants {
+			attributeParams := make([]struct {
+				AttributeID int32
+				Value       string
+			}, len(variantReq.Attributes))
+			for j, attribute := range variantReq.Attributes {
+				attributeParams[j] = struct {
+					AttributeID int32
+					Value       string
+				}{
 					AttributeID: attribute.AttributeID,
 					Value:       attribute.Value,
 				}
 			}
 
 			createProductTxParams.Variants[i] = repository.CreateVariantTxParam{
-				VariantName:  variant.Name,
-				VariantPrice: variant.Price,
-				VariantStock: variant.Stock,
+				VariantPrice: variantReq.Price,
+				VariantStock: variantReq.Stock,
 				Attributes:   attributeParams,
-				VariantSku:   variant.Sku,
+				VariantSku:   variantReq.Sku,
+			}
+			if variantReq.Discount != nil {
+				createProductTxParams.Variants[i].Discount = variantReq.Discount
 			}
 		}
 	}
@@ -234,10 +242,6 @@ func (sv *Server) getProductDetail(c *gin.Context) {
 	})
 
 	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, mapErrResp(err))
-			return
-		}
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
