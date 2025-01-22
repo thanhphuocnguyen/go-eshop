@@ -12,6 +12,29 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const addProductToCollection = `-- name: AddProductToCollection :one
+
+INSERT INTO
+    category_products (category_id, product_id, sort_order)
+VALUES
+    ($1, $2, $3)
+RETURNING category_id, product_id, sort_order
+`
+
+type AddProductToCollectionParams struct {
+	CategoryID int32 `json:"category_id"`
+	ProductID  int64 `json:"product_id"`
+	SortOrder  int16 `json:"sort_order"`
+}
+
+// Category Products
+func (q *Queries) AddProductToCollection(ctx context.Context, arg AddProductToCollectionParams) (CategoryProduct, error) {
+	row := q.db.QueryRow(ctx, addProductToCollection, arg.CategoryID, arg.ProductID, arg.SortOrder)
+	var i CategoryProduct
+	err := row.Scan(&i.CategoryID, &i.ProductID, &i.SortOrder)
+	return i, err
+}
+
 const countCollections = `-- name: CountCollections :one
 SELECT count(*)
 FROM categories
@@ -67,7 +90,7 @@ FROM categories c
 JOIN category_products cp ON cp.category_id = c.category_id
 JOIN products p ON cp.product_id = p.product_id AND p.published = TRUE
 JOIN product_variants pv ON p.product_id = pv.product_id
-LEFT JOIN images i ON p.product_id = i.product_id AND i.primary = TRUE
+LEFT JOIN images i ON p.product_id = i.product_id
 WHERE categories.category_id = $1
 GROUP BY c.category_id, p.product_id, i.image_id
 `
@@ -194,6 +217,73 @@ func (q *Queries) GetCollectionMaxSortOrder(ctx context.Context) (interface{}, e
 	return max_sort_order, err
 }
 
+const getCollectionProduct = `-- name: GetCollectionProduct :one
+SELECT
+    p.product_id, p.name, p.description, p.archived, p.created_at, p.updated_at
+FROM
+    products p
+JOIN category_products cp ON p.product_id = cp.product_id
+WHERE
+    cp.category_id = $1
+    AND cp.product_id = $2
+`
+
+type GetCollectionProductParams struct {
+	CategoryID int32 `json:"category_id"`
+	ProductID  int64 `json:"product_id"`
+}
+
+func (q *Queries) GetCollectionProduct(ctx context.Context, arg GetCollectionProductParams) (Product, error) {
+	row := q.db.QueryRow(ctx, getCollectionProduct, arg.CategoryID, arg.ProductID)
+	var i Product
+	err := row.Scan(
+		&i.ProductID,
+		&i.Name,
+		&i.Description,
+		&i.Archived,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getCollectionProducts = `-- name: GetCollectionProducts :many
+SELECT
+    p.product_id, p.name, p.description, p.archived, p.created_at, p.updated_at
+FROM
+    products p
+    JOIN category_products cp ON p.product_id = cp.product_id
+WHERE
+    cp.category_id = $1
+`
+
+func (q *Queries) GetCollectionProducts(ctx context.Context, categoryID int32) ([]Product, error) {
+	rows, err := q.db.Query(ctx, getCollectionProducts, categoryID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Product
+	for rows.Next() {
+		var i Product
+		if err := rows.Scan(
+			&i.ProductID,
+			&i.Name,
+			&i.Description,
+			&i.Archived,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getCollections = `-- name: GetCollections :many
 SELECT 
     category_id, name, description, sort_order, published, created_at, updated_at
@@ -269,6 +359,22 @@ func (q *Queries) GetCollectionsInIDs(ctx context.Context, idList []int32) ([]Ca
 	return items, nil
 }
 
+const getMaxSortOrderInCollection = `-- name: GetMaxSortOrderInCollection :one
+SELECT
+    max(sort_order)
+FROM
+    category_products
+WHERE
+    category_id = $1
+`
+
+func (q *Queries) GetMaxSortOrderInCollection(ctx context.Context, categoryID int32) (interface{}, error) {
+	row := q.db.QueryRow(ctx, getMaxSortOrderInCollection, categoryID)
+	var max interface{}
+	err := row.Scan(&max)
+	return max, err
+}
+
 const removeCollection = `-- name: RemoveCollection :exec
 DELETE FROM categories
 WHERE category_id = $1
@@ -276,6 +382,24 @@ WHERE category_id = $1
 
 func (q *Queries) RemoveCollection(ctx context.Context, categoryID int32) error {
 	_, err := q.db.Exec(ctx, removeCollection, categoryID)
+	return err
+}
+
+const removeProductFromCollection = `-- name: RemoveProductFromCollection :exec
+DELETE FROM
+    category_products
+WHERE
+    category_id = $1
+    AND product_id = $2
+`
+
+type RemoveProductFromCollectionParams struct {
+	CategoryID int32 `json:"category_id"`
+	ProductID  int64 `json:"product_id"`
+}
+
+func (q *Queries) RemoveProductFromCollection(ctx context.Context, arg RemoveProductFromCollectionParams) error {
+	_, err := q.db.Exec(ctx, removeProductFromCollection, arg.CategoryID, arg.ProductID)
 	return err
 }
 
@@ -325,4 +449,25 @@ func (q *Queries) UpdateCollection(ctx context.Context, arg UpdateCollectionPara
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const updateProductSortOrderInCollection = `-- name: UpdateProductSortOrderInCollection :exec
+UPDATE
+    category_products
+SET
+    sort_order = $3
+WHERE
+    category_id = $1
+    AND product_id = $2
+`
+
+type UpdateProductSortOrderInCollectionParams struct {
+	CategoryID int32 `json:"category_id"`
+	ProductID  int64 `json:"product_id"`
+	SortOrder  int16 `json:"sort_order"`
+}
+
+func (q *Queries) UpdateProductSortOrderInCollection(ctx context.Context, arg UpdateProductSortOrderInCollectionParams) error {
+	_, err := q.db.Exec(ctx, updateProductSortOrderInCollection, arg.CategoryID, arg.ProductID, arg.SortOrder)
+	return err
 }

@@ -15,7 +15,7 @@ CREATE TABLE
         variant_id BIGSERIAL PRIMARY KEY,
         product_id BIGINT NOT NULL REFERENCES products (product_id) ON DELETE CASCADE,
         price DECIMAL(10, 2) NOT NULL,
-        discount INT NOT NULL DEFAULT 0 CHECK (
+        discount SMALLINT NOT NULL DEFAULT 0 CHECK (
             discount >= 0
             AND discount <= 100
         ),

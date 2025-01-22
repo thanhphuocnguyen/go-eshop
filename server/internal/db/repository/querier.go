@@ -14,7 +14,7 @@ import (
 type Querier interface {
 	AddBulkAttributes(ctx context.Context, name []string) (int64, error)
 	AddBulkProducts(ctx context.Context, arg []AddBulkProductsParams) (int64, error)
-	AddProductToCart(ctx context.Context, arg AddProductToCartParams) (CartItem, error)
+	// Category Products
 	AddProductToCollection(ctx context.Context, arg AddProductToCollectionParams) (CategoryProduct, error)
 	ArchiveProduct(ctx context.Context, productID int64) error
 	ClearCart(ctx context.Context, cartID uuid.UUID) error
@@ -25,10 +25,13 @@ type Querier interface {
 	CountOrders(ctx context.Context, arg CountOrdersParams) (int64, error)
 	CountProducts(ctx context.Context, arg CountProductsParams) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
+	// User Address Queries
 	CreateAddress(ctx context.Context, arg CreateAddressParams) (UserAddress, error)
 	CreateAttribute(ctx context.Context, name string) (Attribute, error)
 	CreateBulkVariantAttributes(ctx context.Context, arg []CreateBulkVariantAttributesParams) (int64, error)
 	CreateCart(ctx context.Context, arg CreateCartParams) (Cart, error)
+	// Cart Item Section
+	CreateCartItem(ctx context.Context, arg CreateCartItemParams) (CartItem, error)
 	CreateCollection(ctx context.Context, arg CreateCollectionParams) (Category, error)
 	CreateImage(ctx context.Context, arg CreateImageParams) (Image, error)
 	CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error)
@@ -38,7 +41,9 @@ type Querier interface {
 	CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
 	CreateVariant(ctx context.Context, arg CreateVariantParams) (ProductVariant, error)
+	// Variant Attributes
 	CreateVariantAttribute(ctx context.Context, arg CreateVariantAttributeParams) (VariantAttribute, error)
+	// Verification Token Queries
 	CreateVerifyEmail(ctx context.Context, arg CreateVerifyEmailParams) (VerifyEmail, error)
 	DeleteAddress(ctx context.Context, arg DeleteAddressParams) error
 	DeleteAttribute(ctx context.Context, attributeID int32) error
@@ -57,7 +62,7 @@ type Querier interface {
 	GetCartItem(ctx context.Context, cartItemID int32) (CartItem, error)
 	GetCartItemByVariantID(ctx context.Context, variantID int64) (CartItem, error)
 	GetCartItemWithProduct(ctx context.Context, cartItemID int32) (GetCartItemWithProductRow, error)
-	GetCartItems(ctx context.Context, cartID uuid.UUID) ([]GetCartItemsRow, error)
+	GetCartItemsByID(ctx context.Context, cartID uuid.UUID) ([]GetCartItemsByIDRow, error)
 	GetCollection(ctx context.Context, categoryID int32) ([]GetCollectionRow, error)
 	GetCollectionByName(ctx context.Context, name string) (GetCollectionByNameRow, error)
 	GetCollectionMaxSortOrder(ctx context.Context) (interface{}, error)
@@ -106,8 +111,6 @@ type Querier interface {
 	SeedCollections(ctx context.Context, arg []SeedCollectionsParams) (int64, error)
 	SeedUsers(ctx context.Context, arg []SeedUsersParams) (int64, error)
 	SetPrimaryAddress(ctx context.Context, arg SetPrimaryAddressParams) error
-	SetPrimaryImage(ctx context.Context, imageID int32) error
-	UnsetPrimaryImage(ctx context.Context, productID pgtype.Int8) error
 	UpdateAddress(ctx context.Context, arg UpdateAddressParams) (UserAddress, error)
 	UpdateAttribute(ctx context.Context, arg UpdateAttributeParams) (Attribute, error)
 	UpdateCart(ctx context.Context, cartID uuid.UUID) error

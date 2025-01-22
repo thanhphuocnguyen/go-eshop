@@ -13,6 +13,20 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countAddresses = `-- name: CountAddresses :one
+SELECT
+    COUNT(*)
+FROM
+    user_addresses
+`
+
+func (q *Queries) CountAddresses(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countAddresses)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countUsers = `-- name: CountUsers :one
 SELECT
     count(*)
@@ -25,6 +39,67 @@ func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
 	var count int64
 	err := row.Scan(&count)
 	return count, err
+}
+
+const createAddress = `-- name: CreateAddress :one
+INSERT INTO
+    user_addresses (
+        user_id,
+        phone,
+        street,
+        ward,
+        district,
+        city,
+        "default"
+    )
+VALUES
+    (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7
+    ) RETURNING user_address_id, user_id, phone, street, ward, district, city, "default", deleted, created_at, updated_at
+`
+
+type CreateAddressParams struct {
+	UserID   uuid.UUID   `json:"user_id"`
+	Phone    string      `json:"phone"`
+	Street   string      `json:"street"`
+	Ward     pgtype.Text `json:"ward"`
+	District string      `json:"district"`
+	City     string      `json:"city"`
+	Default  bool        `json:"default"`
+}
+
+// User Address Queries
+func (q *Queries) CreateAddress(ctx context.Context, arg CreateAddressParams) (UserAddress, error) {
+	row := q.db.QueryRow(ctx, createAddress,
+		arg.UserID,
+		arg.Phone,
+		arg.Street,
+		arg.Ward,
+		arg.District,
+		arg.City,
+		arg.Default,
+	)
+	var i UserAddress
+	err := row.Scan(
+		&i.UserAddressID,
+		&i.UserID,
+		&i.Phone,
+		&i.Street,
+		&i.Ward,
+		&i.District,
+		&i.City,
+		&i.Default,
+		&i.Deleted,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const createUser = `-- name: CreateUser :one
@@ -82,6 +157,52 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 	return i, err
 }
 
+const createVerifyEmail = `-- name: CreateVerifyEmail :one
+INSERT INTO verify_emails (user_id, email, verify_code) VALUES ($1, $2, $3) RETURNING id, user_id, email, verify_code, is_used, created_at, expired_at
+`
+
+type CreateVerifyEmailParams struct {
+	UserID     uuid.UUID `json:"user_id"`
+	Email      string    `json:"email"`
+	VerifyCode string    `json:"verify_code"`
+}
+
+// Verification Token Queries
+func (q *Queries) CreateVerifyEmail(ctx context.Context, arg CreateVerifyEmailParams) (VerifyEmail, error) {
+	row := q.db.QueryRow(ctx, createVerifyEmail, arg.UserID, arg.Email, arg.VerifyCode)
+	var i VerifyEmail
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Email,
+		&i.VerifyCode,
+		&i.IsUsed,
+		&i.CreatedAt,
+		&i.ExpiredAt,
+	)
+	return i, err
+}
+
+const deleteAddress = `-- name: DeleteAddress :exec
+UPDATE
+    user_addresses
+SET
+    deleted = TRUE,
+    updated_at = now()
+WHERE
+    user_address_id = $1 AND user_id = $2
+`
+
+type DeleteAddressParams struct {
+	UserAddressID int64     `json:"user_address_id"`
+	UserID        uuid.UUID `json:"user_id"`
+}
+
+func (q *Queries) DeleteAddress(ctx context.Context, arg DeleteAddressParams) error {
+	_, err := q.db.Exec(ctx, deleteAddress, arg.UserAddressID, arg.UserID)
+	return err
+}
+
 const deleteUser = `-- name: DeleteUser :exec
 DELETE FROM
     users
@@ -92,6 +213,112 @@ WHERE
 func (q *Queries) DeleteUser(ctx context.Context, userID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteUser, userID)
 	return err
+}
+
+const getAddress = `-- name: GetAddress :one
+SELECT
+    user_address_id, user_id, phone, street, ward, district, city, "default", deleted, created_at, updated_at
+FROM
+    user_addresses
+WHERE
+    user_address_id = $1 AND user_id = $2 AND deleted = FALSE
+LIMIT 1
+`
+
+type GetAddressParams struct {
+	UserAddressID int64     `json:"user_address_id"`
+	UserID        uuid.UUID `json:"user_id"`
+}
+
+func (q *Queries) GetAddress(ctx context.Context, arg GetAddressParams) (UserAddress, error) {
+	row := q.db.QueryRow(ctx, getAddress, arg.UserAddressID, arg.UserID)
+	var i UserAddress
+	err := row.Scan(
+		&i.UserAddressID,
+		&i.UserID,
+		&i.Phone,
+		&i.Street,
+		&i.Ward,
+		&i.District,
+		&i.City,
+		&i.Default,
+		&i.Deleted,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getAddresses = `-- name: GetAddresses :many
+SELECT
+    user_address_id, user_id, phone, street, ward, district, city, "default", deleted, created_at, updated_at
+FROM
+    user_addresses
+WHERE
+    user_id = $1 AND deleted = FALSE
+ORDER BY
+    "default" DESC, user_address_id ASC
+`
+
+func (q *Queries) GetAddresses(ctx context.Context, userID uuid.UUID) ([]UserAddress, error) {
+	rows, err := q.db.Query(ctx, getAddresses, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []UserAddress
+	for rows.Next() {
+		var i UserAddress
+		if err := rows.Scan(
+			&i.UserAddressID,
+			&i.UserID,
+			&i.Phone,
+			&i.Street,
+			&i.Ward,
+			&i.District,
+			&i.City,
+			&i.Default,
+			&i.Deleted,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getDefaultAddress = `-- name: GetDefaultAddress :one
+SELECT
+    user_address_id, user_id, phone, street, ward, district, city, "default", deleted, created_at, updated_at
+FROM
+    user_addresses
+WHERE
+    user_id = $1 AND deleted = FALSE AND "default" = TRUE
+LIMIT 1
+`
+
+func (q *Queries) GetDefaultAddress(ctx context.Context, userID uuid.UUID) (UserAddress, error) {
+	row := q.db.QueryRow(ctx, getDefaultAddress, userID)
+	var i UserAddress
+	err := row.Scan(
+		&i.UserAddressID,
+		&i.UserID,
+		&i.Phone,
+		&i.Street,
+		&i.Ward,
+		&i.District,
+		&i.City,
+		&i.Default,
+		&i.Deleted,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
@@ -184,6 +411,49 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 	return i, err
 }
 
+const getVerifyEmail = `-- name: GetVerifyEmail :one
+SELECT id, user_id, email, verify_code, is_used, created_at, expired_at FROM verify_emails WHERE user_id = $1 AND email = $2
+`
+
+type GetVerifyEmailParams struct {
+	UserID uuid.UUID `json:"user_id"`
+	Email  string    `json:"email"`
+}
+
+func (q *Queries) GetVerifyEmail(ctx context.Context, arg GetVerifyEmailParams) (VerifyEmail, error) {
+	row := q.db.QueryRow(ctx, getVerifyEmail, arg.UserID, arg.Email)
+	var i VerifyEmail
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Email,
+		&i.VerifyCode,
+		&i.IsUsed,
+		&i.CreatedAt,
+		&i.ExpiredAt,
+	)
+	return i, err
+}
+
+const getVerifyEmailByID = `-- name: GetVerifyEmailByID :one
+SELECT id, user_id, email, verify_code, is_used, created_at, expired_at FROM verify_emails WHERE id = $1
+`
+
+func (q *Queries) GetVerifyEmailByID(ctx context.Context, id int32) (VerifyEmail, error) {
+	row := q.db.QueryRow(ctx, getVerifyEmailByID, id)
+	var i VerifyEmail
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Email,
+		&i.VerifyCode,
+		&i.IsUsed,
+		&i.CreatedAt,
+		&i.ExpiredAt,
+	)
+	return i, err
+}
+
 const listUsers = `-- name: ListUsers :many
 SELECT
     user_id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at
@@ -233,6 +503,30 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 	return items, nil
 }
 
+const resetPrimaryAddress = `-- name: ResetPrimaryAddress :exec
+UPDATE
+    user_addresses
+SET
+    "default" = FALSE
+WHERE
+    user_id = $1 AND "default" = TRUE
+`
+
+func (q *Queries) ResetPrimaryAddress(ctx context.Context, userID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, resetPrimaryAddress, userID)
+	return err
+}
+
+type SeedAddressesParams struct {
+	UserID   uuid.UUID   `json:"user_id"`
+	Phone    string      `json:"phone"`
+	Street   string      `json:"street"`
+	Ward     pgtype.Text `json:"ward"`
+	District string      `json:"district"`
+	City     string      `json:"city"`
+	Default  bool        `json:"default"`
+}
+
 type SeedUsersParams struct {
 	UserID         uuid.UUID `json:"user_id"`
 	Email          string    `json:"email"`
@@ -241,6 +535,80 @@ type SeedUsersParams struct {
 	Fullname       string    `json:"fullname"`
 	HashedPassword string    `json:"hashed_password"`
 	Role           UserRole  `json:"role"`
+}
+
+const setPrimaryAddress = `-- name: SetPrimaryAddress :exec
+UPDATE
+    user_addresses
+SET
+    "default" = $1
+WHERE
+    user_id = $2 AND user_address_id = $3 AND deleted = FALSE
+`
+
+type SetPrimaryAddressParams struct {
+	Default       bool      `json:"default"`
+	UserID        uuid.UUID `json:"user_id"`
+	UserAddressID int64     `json:"user_address_id"`
+}
+
+func (q *Queries) SetPrimaryAddress(ctx context.Context, arg SetPrimaryAddressParams) error {
+	_, err := q.db.Exec(ctx, setPrimaryAddress, arg.Default, arg.UserID, arg.UserAddressID)
+	return err
+}
+
+const updateAddress = `-- name: UpdateAddress :one
+UPDATE
+    user_addresses
+SET
+    phone = coalesce($1, phone),
+    street = coalesce($2, street),
+    ward = coalesce($3, ward),
+    district = coalesce($4, district),
+    city = coalesce($5, city),
+    "default" = coalesce($6, "default")
+WHERE
+    user_address_id = $7 AND user_id = $8 AND deleted = FALSE
+RETURNING user_address_id, user_id, phone, street, ward, district, city, "default", deleted, created_at, updated_at
+`
+
+type UpdateAddressParams struct {
+	Phone         pgtype.Text `json:"phone"`
+	Street        pgtype.Text `json:"street"`
+	Ward          pgtype.Text `json:"ward"`
+	District      pgtype.Text `json:"district"`
+	City          pgtype.Text `json:"city"`
+	Default       pgtype.Bool `json:"default"`
+	UserAddressID int64       `json:"user_address_id"`
+	UserID        uuid.UUID   `json:"user_id"`
+}
+
+func (q *Queries) UpdateAddress(ctx context.Context, arg UpdateAddressParams) (UserAddress, error) {
+	row := q.db.QueryRow(ctx, updateAddress,
+		arg.Phone,
+		arg.Street,
+		arg.Ward,
+		arg.District,
+		arg.City,
+		arg.Default,
+		arg.UserAddressID,
+		arg.UserID,
+	)
+	var i UserAddress
+	err := row.Scan(
+		&i.UserAddressID,
+		&i.UserID,
+		&i.Phone,
+		&i.Street,
+		&i.Ward,
+		&i.District,
+		&i.City,
+		&i.Default,
+		&i.Deleted,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const updateUser = `-- name: UpdateUser :one
@@ -307,6 +675,33 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateU
 		&i.VerifiedPhone,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateVerifyEmail = `-- name: UpdateVerifyEmail :one
+UPDATE verify_emails
+SET is_used = TRUE
+WHERE id = $1 AND verify_code = $2 AND expired_at > now()
+RETURNING id, user_id, email, verify_code, is_used, created_at, expired_at
+`
+
+type UpdateVerifyEmailParams struct {
+	ID         int32  `json:"id"`
+	VerifyCode string `json:"verify_code"`
+}
+
+func (q *Queries) UpdateVerifyEmail(ctx context.Context, arg UpdateVerifyEmailParams) (VerifyEmail, error) {
+	row := q.db.QueryRow(ctx, updateVerifyEmail, arg.ID, arg.VerifyCode)
+	var i VerifyEmail
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Email,
+		&i.VerifyCode,
+		&i.IsUsed,
+		&i.CreatedAt,
+		&i.ExpiredAt,
 	)
 	return i, err
 }

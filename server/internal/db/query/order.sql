@@ -13,26 +13,26 @@ LIMIT 1;
 -- name: GetOrderDetails :many
 SELECT
     ord.*, 
-    oit.quantity, oit.price as item_price, oit.order_item_id as order_item_id,
-    p.name as product_name, p.product_id as product_id,
+    oit.quantity, oit.price as item_price, oit.order_item_id,
+    p.name as product_name, p.product_id,
     u_addr.street, u_addr.ward, u_addr.district, u_addr.city, 
     images.image_url,
-    pm.status as payment_status, pm.payment_id as payment_id, pm.amount as payment_amount, pm.payment_method as payment_method, pm.payment_gateway as payment_gateway, pm.refund_id as refund_id,
+    pm.status as payment_status, pm.payment_id, pm.amount as payment_amount, pm.payment_method, pm.payment_gateway, pm.refund_id,
     pv.variant_id
 FROM
     orders ord
+JOIN
+    order_items oit ON oit.order_id = ord.order_id
+JOIN
+    products p ON oit.product_id = p.product_id
+JOIN 
+    product_variants AS pv ON oit.variant_id = p.variant_id
+JOIN
+    user_addresses u_addr ON ord.user_address_id = u_addr.user_address_id
 LEFT JOIN
     payments pm ON ord.order_id = pm.order_id
-LEFT JOIN
-    order_items oit ON oit.order_id = ord.order_id
-LEFT JOIN
-    products p ON oit.product_id = p.product_id
 LEFT JOIN 
-    product_variants AS pv ON oit.variant_id = p.variant_id
-LEFT JOIN 
-    images ON p.product_id = images.product_id AND images.primary = true
-LEFT JOIN
-    user_addresses u_addr ON ord.user_address_id = u_addr.user_address_id
+    images ON p.product_id = images.product_id
 WHERE
     ord.order_id = $1;
 
@@ -41,8 +41,8 @@ SELECT
     ord.*, pm.status as payment_status, COUNT(oit.order_item_id) as total_items
 FROM
     orders ord
+JOIN order_items oit ON ord.order_id = oit.order_id
 LEFT JOIN payments pm ON ord.order_id = pm.order_id
-LEFT JOIN order_items oit ON ord.order_id = oit.order_id
 WHERE
     user_id = COALESCE(sqlc.narg('user_id'), user_id) AND
     ord.status = COALESCE(sqlc.narg('status'), ord.status) AND

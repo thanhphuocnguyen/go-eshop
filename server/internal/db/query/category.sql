@@ -18,7 +18,7 @@ FROM categories c
 JOIN category_products cp ON cp.category_id = c.category_id
 JOIN products p ON cp.product_id = p.product_id AND p.published = TRUE
 JOIN product_variants pv ON p.product_id = pv.product_id
-LEFT JOIN images i ON p.product_id = i.product_id AND i.primary = TRUE
+LEFT JOIN images i ON p.product_id = i.product_id
 WHERE categories.category_id = $1
 GROUP BY c.category_id, p.product_id, i.image_id;
 
@@ -73,3 +73,55 @@ INSERT INTO categories (name, description, sort_order, published) VALUES ($1, $2
 -- name: GetCollectionMaxSortOrder :one
 SELECT COALESCE(MAX(sort_order)::smallint, 0) AS max_sort_order
 FROM category_products;
+
+-- Category Products
+
+-- name: AddProductToCollection :one
+INSERT INTO
+    category_products (category_id, product_id, sort_order)
+VALUES
+    ($1, $2, $3)
+RETURNING *;
+
+-- name: RemoveProductFromCollection :exec
+DELETE FROM
+    category_products
+WHERE
+    category_id = $1
+    AND product_id = $2;
+
+-- name: GetCollectionProduct :one
+SELECT
+    p.*
+FROM
+    products p
+JOIN category_products cp ON p.product_id = cp.product_id
+WHERE
+    cp.category_id = $1
+    AND cp.product_id = $2;
+
+-- name: GetCollectionProducts :many
+SELECT
+    p.*
+FROM
+    products p
+    JOIN category_products cp ON p.product_id = cp.product_id
+WHERE
+    cp.category_id = $1;
+
+-- name: GetMaxSortOrderInCollection :one
+SELECT
+    max(sort_order)
+FROM
+    category_products
+WHERE
+    category_id = $1;
+
+-- name: UpdateProductSortOrderInCollection :exec
+UPDATE
+    category_products
+SET
+    sort_order = $3
+WHERE
+    category_id = $1
+    AND product_id = $2;

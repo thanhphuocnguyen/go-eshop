@@ -76,3 +76,131 @@ INSERT INTO
     users (user_id,email,username,phone,fullname,hashed_password,role)
 VALUES
     ($1,$2,$3,$4,$5,$6,$7);
+
+-- User Address Queries
+-- name: CreateAddress :one
+INSERT INTO
+    user_addresses (
+        user_id,
+        phone,
+        street,
+        ward,
+        district,
+        city,
+        "default"
+    )
+VALUES
+    (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7
+    ) RETURNING *;
+
+-- name: GetAddress :one
+SELECT
+    *
+FROM
+    user_addresses
+WHERE
+    user_address_id = $1 AND user_id = $2 AND deleted = FALSE
+LIMIT 1;
+
+
+-- name: GetDefaultAddress :one
+SELECT
+    *
+FROM
+    user_addresses
+WHERE
+    user_id = $1 AND deleted = FALSE AND "default" = TRUE
+LIMIT 1;
+
+
+-- name: GetAddresses :many
+SELECT
+    *
+FROM
+    user_addresses
+WHERE
+    user_id = $1 AND deleted = FALSE
+ORDER BY
+    "default" DESC, user_address_id ASC;
+
+-- name: UpdateAddress :one
+UPDATE
+    user_addresses
+SET
+    phone = coalesce(sqlc.narg('phone'), phone),
+    street = coalesce(sqlc.narg('street'), street),
+    ward = coalesce(sqlc.narg('ward'), ward),
+    district = coalesce(sqlc.narg('district'), district),
+    city = coalesce(sqlc.narg('city'), city),
+    "default" = coalesce(sqlc.narg('default'), "default")
+WHERE
+    user_address_id = sqlc.arg('user_address_id') AND user_id = sqlc.arg('user_id') AND deleted = FALSE
+RETURNING *;
+
+-- name: DeleteAddress :exec
+UPDATE
+    user_addresses
+SET
+    deleted = TRUE,
+    updated_at = now()
+WHERE
+    user_address_id = $1 AND user_id = $2;
+
+-- name: SetPrimaryAddress :exec
+UPDATE
+    user_addresses
+SET
+    "default" = $1
+WHERE
+    user_id = $2 AND user_address_id = $3 AND deleted = FALSE;
+
+-- name: ResetPrimaryAddress :exec
+UPDATE
+    user_addresses
+SET
+    "default" = FALSE
+WHERE
+    user_id = $1 AND "default" = TRUE;
+
+-- name: CountAddresses :one
+SELECT
+    COUNT(*)
+FROM
+    user_addresses;
+
+-- name: SeedAddresses :copyfrom
+INSERT INTO
+    user_addresses (
+        user_id,
+        phone,
+        street,
+        ward,
+        district,
+        city,
+        "default"
+    )
+VALUES
+    ($1,$2,$3,$4,$5,$6,$7);
+
+-- Verification Token Queries
+-- name: CreateVerifyEmail :one
+INSERT INTO verify_emails (user_id, email, verify_code) VALUES ($1, $2, $3) RETURNING *;
+
+-- name: GetVerifyEmail :one
+SELECT * FROM verify_emails WHERE user_id = $1 AND email = $2;
+
+-- name: GetVerifyEmailByID :one
+SELECT * FROM verify_emails WHERE id = $1;
+
+-- name: UpdateVerifyEmail :one
+UPDATE verify_emails
+SET is_used = TRUE
+WHERE id = $1 AND verify_code = $2 AND expired_at > now()
+RETURNING *;

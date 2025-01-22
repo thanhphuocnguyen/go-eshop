@@ -14,7 +14,7 @@ type variantRequest struct {
 	Price      float64 `json:"price" binding:"required,gt=0,lt=1000000"`
 	Stock      int32   `json:"stock" binding:"required,gt=0,lt=1000000"`
 	Sku        *string `json:"sku,omitempty" binding:"omitempty"`
-	Discount   *int32  `json:"discount" binding:"omitempty,gte=0,lt=10000"`
+	Discount   *int16  `json:"discount" binding:"omitempty,gte=0,lt=10000"`
 	Attributes []struct {
 		AttributeID int32  `json:"attribute_id" binding:"required"`
 		Value       string `json:"value" binding:"required,gt=0,lt=255"`
@@ -43,7 +43,7 @@ type variantResponse struct {
 	VariantID  int64                    `json:"variant_id"`
 	Price      float64                  `json:"price"`
 	Stock      int32                    `json:"stock"`
-	Discount   int32                    `json:"discount,omitempty"`
+	Discount   int16                    `json:"discount,omitempty"`
 	Sku        *string                  `json:"sku,omitempty"`
 	Attributes []productAttributeDetail `json:"attributes,omitempty"`
 	CreatedAt  string                   `json:"created_at"`

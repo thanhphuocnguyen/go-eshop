@@ -172,26 +172,26 @@ func (q *Queries) GetOrder(ctx context.Context, orderID uuid.UUID) (Order, error
 const getOrderDetails = `-- name: GetOrderDetails :many
 SELECT
     ord.order_id, ord.user_id, ord.user_address_id, ord.total_price, ord.status, ord.confirmed_at, ord.delivered_at, ord.cancelled_at, ord.refunded_at, ord.updated_at, ord.created_at, 
-    oit.quantity, oit.price as item_price, oit.order_item_id as order_item_id,
-    p.name as product_name, p.product_id as product_id,
+    oit.quantity, oit.price as item_price, oit.order_item_id,
+    p.name as product_name, p.product_id,
     u_addr.street, u_addr.ward, u_addr.district, u_addr.city, 
     images.image_url,
-    pm.status as payment_status, pm.payment_id as payment_id, pm.amount as payment_amount, pm.payment_method as payment_method, pm.payment_gateway as payment_gateway, pm.refund_id as refund_id,
+    pm.status as payment_status, pm.payment_id, pm.amount as payment_amount, pm.payment_method, pm.payment_gateway, pm.refund_id,
     pv.variant_id
 FROM
     orders ord
+JOIN
+    order_items oit ON oit.order_id = ord.order_id
+JOIN
+    products p ON oit.product_id = p.product_id
+JOIN 
+    product_variants AS pv ON oit.variant_id = p.variant_id
+JOIN
+    user_addresses u_addr ON ord.user_address_id = u_addr.user_address_id
 LEFT JOIN
     payments pm ON ord.order_id = pm.order_id
-LEFT JOIN
-    order_items oit ON oit.order_id = ord.order_id
-LEFT JOIN
-    products p ON oit.product_id = p.product_id
 LEFT JOIN 
-    product_variants AS pv ON oit.variant_id = p.variant_id
-LEFT JOIN 
-    images ON p.product_id = images.product_id AND images.primary = true
-LEFT JOIN
-    user_addresses u_addr ON ord.user_address_id = u_addr.user_address_id
+    images ON p.product_id = images.product_id
 WHERE
     ord.order_id = $1
 `
@@ -208,15 +208,15 @@ type GetOrderDetailsRow struct {
 	RefundedAt     pgtype.Timestamptz `json:"refunded_at"`
 	UpdatedAt      time.Time          `json:"updated_at"`
 	CreatedAt      time.Time          `json:"created_at"`
-	Quantity       pgtype.Int4        `json:"quantity"`
+	Quantity       int32              `json:"quantity"`
 	ItemPrice      pgtype.Numeric     `json:"item_price"`
-	OrderItemID    pgtype.Int8        `json:"order_item_id"`
-	ProductName    pgtype.Text        `json:"product_name"`
-	ProductID      pgtype.Int8        `json:"product_id"`
-	Street         pgtype.Text        `json:"street"`
+	OrderItemID    int64              `json:"order_item_id"`
+	ProductName    string             `json:"product_name"`
+	ProductID      int64              `json:"product_id"`
+	Street         string             `json:"street"`
 	Ward           pgtype.Text        `json:"ward"`
-	District       pgtype.Text        `json:"district"`
-	City           pgtype.Text        `json:"city"`
+	District       string             `json:"district"`
+	City           string             `json:"city"`
 	ImageUrl       pgtype.Text        `json:"image_url"`
 	PaymentStatus  NullPaymentStatus  `json:"payment_status"`
 	PaymentID      pgtype.Text        `json:"payment_id"`
@@ -224,7 +224,7 @@ type GetOrderDetailsRow struct {
 	PaymentMethod  NullPaymentMethod  `json:"payment_method"`
 	PaymentGateway NullPaymentGateway `json:"payment_gateway"`
 	RefundID       pgtype.Text        `json:"refund_id"`
-	VariantID      pgtype.Int8        `json:"variant_id"`
+	VariantID      int64              `json:"variant_id"`
 }
 
 func (q *Queries) GetOrderDetails(ctx context.Context, orderID uuid.UUID) ([]GetOrderDetailsRow, error) {
@@ -328,8 +328,8 @@ SELECT
     ord.order_id, ord.user_id, ord.user_address_id, ord.total_price, ord.status, ord.confirmed_at, ord.delivered_at, ord.cancelled_at, ord.refunded_at, ord.updated_at, ord.created_at, pm.status as payment_status, COUNT(oit.order_item_id) as total_items
 FROM
     orders ord
+JOIN order_items oit ON ord.order_id = oit.order_id
 LEFT JOIN payments pm ON ord.order_id = pm.order_id
-LEFT JOIN order_items oit ON ord.order_id = oit.order_id
 WHERE
     user_id = COALESCE($3, user_id) AND
     ord.status = COALESCE($4, ord.status) AND

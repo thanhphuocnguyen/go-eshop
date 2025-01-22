@@ -32,7 +32,7 @@ SELECT
     pv.variant_id, pv.sku, pv.price, pv.stock_quantity,
     a.attribute_id AS attribute_id, a.name as attribute_name,
     va.variant_attribute_id AS variant_attribute_id, va.value as variant_attribute_value,
-    img.image_id, img.product_id as img_product_id, img.variant_id as img_variant_id, img.image_url, img.primary AS image_primary
+    img.image_id, img.product_id as img_product_id, img.variant_id as img_variant_id, img.image_url
 FROM
     products p
 JOIN product_variants AS pv ON p.product_id = pv.product_id
@@ -43,7 +43,7 @@ WHERE
     p.product_id = $1 AND
     archived = COALESCE(sqlc.narg('archived'), false)
 ORDER BY
-    pv.variant_id, a.attribute_id, va.variant_attribute_id, img.primary DESC;
+    pv.variant_id, a.attribute_id, va.variant_attribute_id DESC;
 
 -- name: GetProducts :many
 SELECT
@@ -55,7 +55,7 @@ SELECT
 FROM
     products as p
 JOIN product_variants AS pv ON p.product_id = pv.product_id
-LEFT JOIN images AS img ON p.product_id = img.product_id AND img.primary = TRUE
+LEFT JOIN images AS img ON p.product_id = img.product_id
 WHERE
     archived = COALESCE(sqlc.narg('archived'), archived) AND
     name ILIKE COALESCE(sqlc.narg('name'), name) AND
@@ -76,7 +76,7 @@ SELECT
     img.image_url AS image_url
 FROM
     products
-LEFT JOIN images AS img ON products.product_id = img.product_id AND img.primary = TRUE
+LEFT JOIN images AS img ON products.product_id = img.product_id
 LEFT JOIN product_variants AS pv ON products.product_id = pv.product_id
 WHERE
     products.product_id = $1 AND

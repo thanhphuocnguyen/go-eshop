@@ -28,16 +28,5 @@ SET
     external_id = COALESCE(sqlc.narg(external_id), external_id) 
 WHERE image_id = $1;
 
--- name: SetPrimaryImage :exec
-UPDATE images SET "primary" = TRUE WHERE image_id = $1;
-
--- name: UnsetPrimaryImage :exec
-UPDATE
-    images
-SET
-    "primary" = false
-WHERE
-    product_id = $1 AND "primary" = true;
-
 -- name: DeleteImage :exec
 DELETE FROM images WHERE image_id = $1;

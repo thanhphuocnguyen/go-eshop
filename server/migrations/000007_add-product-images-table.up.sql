@@ -5,7 +5,6 @@ CREATE TABLE
         variant_id bigint REFERENCES product_variants (variant_id) ON DELETE CASCADE,
         image_url TEXT NOT NULL, -- URL/path of the image
         external_id TEXT, -- ID of the image on cloudinary or other services
-        "primary" BOOLEAN DEFAULT FALSE, -- Indicates the main image
         created_at TIMESTAMP DEFAULT NOW (),
         updated_at TIMESTAMP DEFAULT NOW (),
         CHECK (

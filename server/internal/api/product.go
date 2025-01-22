@@ -122,9 +122,8 @@ func mapToProductResponse(productRows []repository.GetProductDetailRow) productD
 		if row.ImgProductID.Valid {
 			if row.ImageUrl.String != resp.Images[len(resp.Images)-1].ImageUrl {
 				resp.Images = append(resp.Images, productImageModel{
-					ID:        row.ImageID.Int32,
-					IsPrimary: row.ImagePrimary.Bool,
-					ImageUrl:  row.ImageUrl.String,
+					ID:       row.ImageID.Int32,
+					ImageUrl: row.ImageUrl.String,
 				})
 			}
 		}
@@ -211,6 +210,11 @@ func (sv *Server) createProduct(c *gin.Context) {
 	newProduct, err := sv.repo.CreateProductTx(c, createProductTxParams)
 
 	if err != nil {
+		if errors.Is(err, repository.ErrUniqueViolation) {
+			c.JSON(http.StatusBadRequest, mapErrResp(errors.New("product has already existed")))
+			return
+		}
+
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}

@@ -343,11 +343,12 @@ type Cart struct {
 }
 
 type CartItem struct {
-	CartID     uuid.UUID `json:"cart_id"`
 	CartItemID int32     `json:"cart_item_id"`
+	CartID     uuid.UUID `json:"cart_id"`
 	ProductID  int64     `json:"product_id"`
 	VariantID  int64     `json:"variant_id"`
 	Quantity   int16     `json:"quantity"`
+	UpdatedAt  time.Time `json:"updated_at"`
 	CreatedAt  time.Time `json:"created_at"`
 }
 
@@ -373,7 +374,6 @@ type Image struct {
 	VariantID  pgtype.Int8      `json:"variant_id"`
 	ImageUrl   string           `json:"image_url"`
 	ExternalID pgtype.Text      `json:"external_id"`
-	Primary    pgtype.Bool      `json:"primary"`
 	CreatedAt  pgtype.Timestamp `json:"created_at"`
 	UpdatedAt  pgtype.Timestamp `json:"updated_at"`
 }
@@ -427,7 +427,7 @@ type ProductVariant struct {
 	VariantID     int64          `json:"variant_id"`
 	ProductID     int64          `json:"product_id"`
 	Price         pgtype.Numeric `json:"price"`
-	Discount      int32          `json:"discount"`
+	Discount      int16          `json:"discount"`
 	StockQuantity int32          `json:"stock_quantity"`
 	Sku           pgtype.Text    `json:"sku"`
 	CreatedAt     time.Time      `json:"created_at"`

@@ -12,7 +12,7 @@ import (
 )
 
 const createImage = `-- name: CreateImage :one
-INSERT INTO images (product_id, variant_id, image_url, external_id) VALUES ($1, $2, $3, $4) RETURNING image_id, product_id, variant_id, image_url, external_id, "primary", created_at, updated_at
+INSERT INTO images (product_id, variant_id, image_url, external_id) VALUES ($1, $2, $3, $4) RETURNING image_id, product_id, variant_id, image_url, external_id, created_at, updated_at
 `
 
 type CreateImageParams struct {
@@ -36,7 +36,6 @@ func (q *Queries) CreateImage(ctx context.Context, arg CreateImageParams) (Image
 		&i.VariantID,
 		&i.ImageUrl,
 		&i.ExternalID,
-		&i.Primary,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -53,7 +52,7 @@ func (q *Queries) DeleteImage(ctx context.Context, imageID int32) error {
 }
 
 const getImageByExternalID = `-- name: GetImageByExternalID :one
-SELECT image_id, product_id, variant_id, image_url, external_id, "primary", created_at, updated_at FROM images WHERE external_id = $1 LIMIT 1
+SELECT image_id, product_id, variant_id, image_url, external_id, created_at, updated_at FROM images WHERE external_id = $1 LIMIT 1
 `
 
 func (q *Queries) GetImageByExternalID(ctx context.Context, externalID pgtype.Text) (Image, error) {
@@ -65,7 +64,6 @@ func (q *Queries) GetImageByExternalID(ctx context.Context, externalID pgtype.Te
 		&i.VariantID,
 		&i.ImageUrl,
 		&i.ExternalID,
-		&i.Primary,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -73,7 +71,7 @@ func (q *Queries) GetImageByExternalID(ctx context.Context, externalID pgtype.Te
 }
 
 const getImageByID = `-- name: GetImageByID :one
-SELECT image_id, product_id, variant_id, image_url, external_id, "primary", created_at, updated_at FROM images WHERE image_id = $1 LIMIT 1
+SELECT image_id, product_id, variant_id, image_url, external_id, created_at, updated_at FROM images WHERE image_id = $1 LIMIT 1
 `
 
 func (q *Queries) GetImageByID(ctx context.Context, imageID int32) (Image, error) {
@@ -85,7 +83,6 @@ func (q *Queries) GetImageByID(ctx context.Context, imageID int32) (Image, error
 		&i.VariantID,
 		&i.ImageUrl,
 		&i.ExternalID,
-		&i.Primary,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -93,7 +90,7 @@ func (q *Queries) GetImageByID(ctx context.Context, imageID int32) (Image, error
 }
 
 const getImagesByProductID = `-- name: GetImagesByProductID :many
-SELECT image_id, product_id, variant_id, image_url, external_id, "primary", created_at, updated_at FROM images WHERE product_id = $1
+SELECT image_id, product_id, variant_id, image_url, external_id, created_at, updated_at FROM images WHERE product_id = $1
 `
 
 func (q *Queries) GetImagesByProductID(ctx context.Context, productID pgtype.Int8) ([]Image, error) {
@@ -111,7 +108,6 @@ func (q *Queries) GetImagesByProductID(ctx context.Context, productID pgtype.Int
 			&i.VariantID,
 			&i.ImageUrl,
 			&i.ExternalID,
-			&i.Primary,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -126,7 +122,7 @@ func (q *Queries) GetImagesByProductID(ctx context.Context, productID pgtype.Int
 }
 
 const getImagesByVariantID = `-- name: GetImagesByVariantID :many
-SELECT image_id, product_id, variant_id, image_url, external_id, "primary", created_at, updated_at FROM images WHERE variant_id = $1
+SELECT image_id, product_id, variant_id, image_url, external_id, created_at, updated_at FROM images WHERE variant_id = $1
 `
 
 func (q *Queries) GetImagesByVariantID(ctx context.Context, variantID pgtype.Int8) ([]Image, error) {
@@ -144,7 +140,6 @@ func (q *Queries) GetImagesByVariantID(ctx context.Context, variantID pgtype.Int
 			&i.VariantID,
 			&i.ImageUrl,
 			&i.ExternalID,
-			&i.Primary,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -159,7 +154,7 @@ func (q *Queries) GetImagesByVariantID(ctx context.Context, variantID pgtype.Int
 }
 
 const getPrimaryImageByProductID = `-- name: GetPrimaryImageByProductID :one
-SELECT image_id, product_id, variant_id, image_url, external_id, "primary", created_at, updated_at FROM images WHERE product_id = $1 AND "primary" = TRUE LIMIT 1
+SELECT image_id, product_id, variant_id, image_url, external_id, created_at, updated_at FROM images WHERE product_id = $1 AND "primary" = TRUE LIMIT 1
 `
 
 func (q *Queries) GetPrimaryImageByProductID(ctx context.Context, productID pgtype.Int8) (Image, error) {
@@ -171,7 +166,6 @@ func (q *Queries) GetPrimaryImageByProductID(ctx context.Context, productID pgty
 		&i.VariantID,
 		&i.ImageUrl,
 		&i.ExternalID,
-		&i.Primary,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -179,7 +173,7 @@ func (q *Queries) GetPrimaryImageByProductID(ctx context.Context, productID pgty
 }
 
 const getPrimaryImageByVariantID = `-- name: GetPrimaryImageByVariantID :one
-SELECT image_id, product_id, variant_id, image_url, external_id, "primary", created_at, updated_at FROM images WHERE variant_id = $1 AND "primary" = TRUE LIMIT 1
+SELECT image_id, product_id, variant_id, image_url, external_id, created_at, updated_at FROM images WHERE variant_id = $1 AND "primary" = TRUE LIMIT 1
 `
 
 func (q *Queries) GetPrimaryImageByVariantID(ctx context.Context, variantID pgtype.Int8) (Image, error) {
@@ -191,34 +185,10 @@ func (q *Queries) GetPrimaryImageByVariantID(ctx context.Context, variantID pgty
 		&i.VariantID,
 		&i.ImageUrl,
 		&i.ExternalID,
-		&i.Primary,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
-}
-
-const setPrimaryImage = `-- name: SetPrimaryImage :exec
-UPDATE images SET "primary" = TRUE WHERE image_id = $1
-`
-
-func (q *Queries) SetPrimaryImage(ctx context.Context, imageID int32) error {
-	_, err := q.db.Exec(ctx, setPrimaryImage, imageID)
-	return err
-}
-
-const unsetPrimaryImage = `-- name: UnsetPrimaryImage :exec
-UPDATE
-    images
-SET
-    "primary" = false
-WHERE
-    product_id = $1 AND "primary" = true
-`
-
-func (q *Queries) UnsetPrimaryImage(ctx context.Context, productID pgtype.Int8) error {
-	_, err := q.db.Exec(ctx, unsetPrimaryImage, productID)
-	return err
 }
 
 const updateImage = `-- name: UpdateImage :exec

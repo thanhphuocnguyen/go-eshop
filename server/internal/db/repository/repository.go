@@ -17,7 +17,6 @@ type Repository interface {
 	Querier
 	CreateOrderTx(ctx context.Context, arg CreateOrderTxParams) (uuid.UUID, error)
 	SetPrimaryAddressTx(ctx context.Context, arg SetPrimaryAddressTxParams) error
-	SetPrimaryImageTx(ctx context.Context, arg SetPrimaryImageTxParams) error
 	CancelOrderTx(ctx context.Context, params CancelOrderTxArgs) (Order, error)
 	RefundOrderTx(ctx context.Context, params RefundOrderTxArgs) error
 	QueryRaw(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error)

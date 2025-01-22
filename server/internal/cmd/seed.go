@@ -18,11 +18,20 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/util"
 )
 
+var Attributes []string = []string{"Color",
+	"Size",
+	"Material",
+	"Brand",
+	"Warranty",
+	"Storage",
+	"Style",
+}
+
 type Variant struct {
 	Price      float64           `json:"price"`
 	Stock      int32             `json:"stock"`
 	Sku        string            `json:"sku"`
-	Discount   int32             `json:"discount,omitempty"`
+	Discount   int16             `json:"discount,omitempty"`
 	Attributes map[string]string `json:"attributes,omitempty"`
 }
 type Product struct {
@@ -57,15 +66,6 @@ type Address struct {
 	Phone    string `json:"phone"`
 }
 
-type AttributeValue struct {
-	Value string  `json:"value"`
-	Color *string `json:"color,omitempty"`
-}
-type Attribute struct {
-	Name   string           `json:"name"`
-	Values []AttributeValue `json:"values"`
-}
-
 func ExecuteSeed(ctx context.Context) int {
 	var rootCmd = &cobra.Command{
 		Use:   "seed",
@@ -86,9 +86,10 @@ func ExecuteSeed(ctx context.Context) int {
 			if len(args) == 0 {
 				var waitGroup sync.WaitGroup
 				defer waitGroup.Wait()
-				waitGroup.Add(4)
+				waitGroup.Add(3)
 				go func() {
 					defer waitGroup.Done()
+					seedAttributes(ctx, pg)
 					seedProducts(ctx, pg)
 				}()
 				go func() {
@@ -98,10 +99,6 @@ func ExecuteSeed(ctx context.Context) int {
 				go func() {
 					defer waitGroup.Done()
 					seedCollections(ctx, pg)
-				}()
-				go func() {
-					defer waitGroup.Done()
-					seedAttributes(ctx, pg)
 				}()
 			} else {
 				switch args[0] {
@@ -317,25 +314,8 @@ func seedAttributes(ctx context.Context, repo repository.Repository) {
 		return
 	}
 
-	log.Info().Msg("parsing attributes json")
-	attributeData, err := os.ReadFile("seeds/attributes.json")
-	if err != nil {
-		log.Error().Err(err).Msg("failed to read attribute data")
-		return
-	}
-
-	var attributes []Attribute
-	log.Info().Msg("parsing attributes from data")
-	err = json.Unmarshal(attributeData, &attributes)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to parse attribute data")
-		return
-	}
-
-	log.Info().Msg("creating attributes")
-	log.Info().Int("attributes count: %d", len(attributes))
-	for _, attribute := range attributes {
-		_, err := repo.CreateAttribute(ctx, attribute.Name)
+	for _, attribute := range Attributes {
+		_, err := repo.CreateAttribute(ctx, attribute)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to create attribute")
 			return

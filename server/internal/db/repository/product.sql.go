@@ -139,7 +139,7 @@ SELECT
     pv.variant_id, pv.sku, pv.price, pv.stock_quantity,
     a.attribute_id AS attribute_id, a.name as attribute_name,
     va.variant_attribute_id AS variant_attribute_id, va.value as variant_attribute_value,
-    img.image_id, img.product_id as img_product_id, img.variant_id as img_variant_id, img.image_url, img.primary AS image_primary
+    img.image_id, img.product_id as img_product_id, img.variant_id as img_variant_id, img.image_url
 FROM
     products p
 JOIN product_variants AS pv ON p.product_id = pv.product_id
@@ -150,7 +150,7 @@ WHERE
     p.product_id = $1 AND
     archived = COALESCE($2, false)
 ORDER BY
-    pv.variant_id, a.attribute_id, va.variant_attribute_id, img.primary DESC
+    pv.variant_id, a.attribute_id, va.variant_attribute_id DESC
 `
 
 type GetProductDetailParams struct {
@@ -172,7 +172,6 @@ type GetProductDetailRow struct {
 	ImgProductID          pgtype.Int8    `json:"img_product_id"`
 	ImgVariantID          pgtype.Int8    `json:"img_variant_id"`
 	ImageUrl              pgtype.Text    `json:"image_url"`
-	ImagePrimary          pgtype.Bool    `json:"image_primary"`
 }
 
 func (q *Queries) GetProductDetail(ctx context.Context, arg GetProductDetailParams) ([]GetProductDetailRow, error) {
@@ -203,7 +202,6 @@ func (q *Queries) GetProductDetail(ctx context.Context, arg GetProductDetailPara
 			&i.ImgProductID,
 			&i.ImgVariantID,
 			&i.ImageUrl,
-			&i.ImagePrimary,
 		); err != nil {
 			return nil, err
 		}
@@ -222,7 +220,7 @@ SELECT
     img.image_url AS image_url
 FROM
     products
-LEFT JOIN images AS img ON products.product_id = img.product_id AND img.primary = TRUE
+LEFT JOIN images AS img ON products.product_id = img.product_id
 LEFT JOIN product_variants AS pv ON products.product_id = pv.product_id
 WHERE
     products.product_id = $1 AND
@@ -292,7 +290,7 @@ type GetProductWithVariantByIDRow struct {
 	VariantID     int64          `json:"variant_id"`
 	ProductID_2   int64          `json:"product_id_2"`
 	Price         pgtype.Numeric `json:"price"`
-	Discount      int32          `json:"discount"`
+	Discount      int16          `json:"discount"`
 	StockQuantity int32          `json:"stock_quantity"`
 	Sku           pgtype.Text    `json:"sku"`
 	CreatedAt_2   time.Time      `json:"created_at_2"`
@@ -331,7 +329,7 @@ SELECT
 FROM
     products as p
 JOIN product_variants AS pv ON p.product_id = pv.product_id
-LEFT JOIN images AS img ON p.product_id = img.product_id AND img.primary = TRUE
+LEFT JOIN images AS img ON p.product_id = img.product_id
 WHERE
     archived = COALESCE($3, archived) AND
     name ILIKE COALESCE($4, name) AND

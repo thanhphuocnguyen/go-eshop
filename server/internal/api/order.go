@@ -172,33 +172,33 @@ func (sv *Server) orderDetail(c *gin.Context) {
 	orderDetailRow := getOrderDetailRows[0]
 	totalGet, _ := orderDetailRow.TotalPrice.Float64Value()
 	paymentAmount, _ := orderDetailRow.PaymentAmount.Float64Value()
-	paymentInfo := paymentInfo{
-		ID:            orderDetailRow.PaymentID.String,
-		PaymentAmount: paymentAmount.Float64,
-		PaymentMethod: string(orderDetailRow.PaymentMethod.PaymentMethod),
-		PaymentStatus: string(orderDetailRow.PaymentStatus.PaymentStatus),
-	}
-	if orderDetailRow.RefundID.Valid {
-		paymentInfo.RefundID = &orderDetailRow.RefundID.String
-	}
-	if orderDetailRow.PaymentGateway.Valid {
-		paymentInfo.PaymentGateWay = (*string)(&orderDetailRow.PaymentGateway.PaymentGateway)
-	}
 
 	orderDetail := &orderDetailResponse{
-		ID:          orderDetailRow.OrderID,
-		Total:       totalGet.Float64,
-		Status:      orderDetailRow.Status,
-		PaymentInfo: paymentInfo,
-		Products:    []orderItemResp{},
+		ID:       orderDetailRow.OrderID,
+		Total:    totalGet.Float64,
+		Status:   orderDetailRow.Status,
+		Products: []orderItemResp{},
 	}
-
+	if orderDetailRow.PaymentID.Valid {
+		orderDetail.PaymentInfo = paymentInfo{
+			ID:            orderDetailRow.PaymentID.String,
+			PaymentAmount: paymentAmount.Float64,
+			PaymentMethod: string(orderDetailRow.PaymentMethod.PaymentMethod),
+			PaymentStatus: string(orderDetailRow.PaymentStatus.PaymentStatus),
+		}
+		if orderDetailRow.RefundID.Valid {
+			orderDetail.PaymentInfo.RefundID = &orderDetailRow.RefundID.String
+		}
+		if orderDetailRow.PaymentGateway.Valid {
+			orderDetail.PaymentInfo.PaymentGateWay = (*string)(&orderDetailRow.PaymentGateway.PaymentGateway)
+		}
+	}
 	for _, item := range getOrderDetailRows {
 		orderDetail.Products = append(orderDetail.Products, orderItemResp{
-			ID:       item.ProductID.Int64,
-			Name:     item.ProductName.String,
+			ID:       item.ProductID,
+			Name:     item.ProductName,
+			Quantity: item.Quantity,
 			ImageUrl: &item.ImageUrl.String,
-			Quantity: item.Quantity.Int32,
 		})
 	}
 

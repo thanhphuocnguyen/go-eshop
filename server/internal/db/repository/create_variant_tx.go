@@ -11,7 +11,7 @@ type CreateVariantTxParam struct {
 	ProductID    int64
 	VariantPrice float64
 	VariantSku   *string
-	Discount     *int32
+	Discount     *int16
 	VariantStock int32
 	Attributes   []struct {
 		AttributeID int32

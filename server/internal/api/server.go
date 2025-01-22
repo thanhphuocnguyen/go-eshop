@@ -75,7 +75,10 @@ func (sv *Server) initializeRouter() {
 
 	v1 := router.Group("/api/v1")
 	{
-		//TODO: v1.GET("health", sv.healthCheck)
+		v1.GET("health", func(ctx *gin.Context) {
+			ctx.JSON(http.StatusOK, gin.H{"status ": "ok"})
+		})
+
 		v1.GET("verify-email", sv.verifyEmail)
 		user := v1.Group("/user")
 		{
@@ -115,13 +118,6 @@ func (sv *Server) initializeRouter() {
 				productAdmin.POST("", sv.createProduct)
 				productAdmin.PUT(":id", sv.updateProduct)
 				productAdmin.DELETE(":id", sv.removeProduct)
-
-				// product images
-				productAdmin.POST(":id/image", sv.uploadProductImage)
-				productAdmin.GET(":id/image", sv.getProductImages)
-				productAdmin.PUT(":id/image/:image_id", sv.uploadProductImage)
-				productAdmin.PUT(":id/image/:image_id/primary", sv.setImagesPrimary)
-				productAdmin.DELETE(":id/image/:image_id", sv.removeProductImage)
 			}
 
 			variant := product.Group(":id/variant").
@@ -133,6 +129,26 @@ func (sv *Server) initializeRouter() {
 				variant.PUT(":variant_id", sv.updateVariant)
 				variant.DELETE(":variant_id", sv.deleteVariant)
 			}
+		}
+
+		images := v1.Group("images")
+		{
+			// product images
+			productImage := images.Group("product").
+				Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin, repository.UserRoleModerator))
+			productImage.POST("", sv.uploadProductImage)
+			productImage.GET(":product_id", sv.getProductImage)
+			productImage.PUT(":product_id", sv.uploadProductImage)
+			productImage.DELETE(":product_id/remove", sv.removeProductImage)
+
+			// TODO: implement variant images
+			// variant images
+			// variantImage := images.Group("variant").
+			// 	Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin, repository.UserRoleModerator))
+			// variantImage.POST("", sv.uploadVariantImage)
+			// variantImage.GET(":variant_id", sv.getVariantImages)
+			// variantImage.PUT(":variant_id", sv.uploadVariantImage)
+			// variantImage.DELETE(":id/image/remove", sv.removeVariantImage)
 		}
 
 		attribute := v1.Group("attribute").
