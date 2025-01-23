@@ -96,14 +96,14 @@ VALUES
         $4,
         $5
     )
-RETURNING order_item_id, product_id, variant_id, order_id, quantity, price, created_at
+RETURNING order_item_id, order_id, product_id, variant_id, quantity, price, created_at
 `
 
 type CreateOrderItemParams struct {
 	ProductID int64          `json:"product_id"`
 	VariantID int64          `json:"variant_id"`
 	OrderID   uuid.UUID      `json:"order_id"`
-	Quantity  int32          `json:"quantity"`
+	Quantity  int16          `json:"quantity"`
 	Price     pgtype.Numeric `json:"price"`
 }
 
@@ -118,9 +118,9 @@ func (q *Queries) CreateOrderItem(ctx context.Context, arg CreateOrderItemParams
 	var i OrderItem
 	err := row.Scan(
 		&i.OrderItemID,
+		&i.OrderID,
 		&i.ProductID,
 		&i.VariantID,
-		&i.OrderID,
 		&i.Quantity,
 		&i.Price,
 		&i.CreatedAt,
@@ -172,7 +172,7 @@ func (q *Queries) GetOrder(ctx context.Context, orderID uuid.UUID) (Order, error
 const getOrderDetails = `-- name: GetOrderDetails :many
 SELECT
     ord.order_id, ord.user_id, ord.user_address_id, ord.total_price, ord.status, ord.confirmed_at, ord.delivered_at, ord.cancelled_at, ord.refunded_at, ord.updated_at, ord.created_at, 
-    oit.quantity, oit.price as item_price, oit.order_item_id,
+    oi.quantity, oi.price as item_price, oi.order_item_id,
     p.name as product_name, p.product_id,
     u_addr.street, u_addr.ward, u_addr.district, u_addr.city, 
     images.image_url,
@@ -181,11 +181,11 @@ SELECT
 FROM
     orders ord
 JOIN
-    order_items oit ON oit.order_id = ord.order_id
+    order_items oi ON oi.order_id = ord.order_id
 JOIN
-    products p ON oit.product_id = p.product_id
+    products p ON oi.product_id = p.product_id
 JOIN 
-    product_variants AS pv ON oit.variant_id = p.variant_id
+    product_variants AS pv ON oi.variant_id = pv.variant_id
 JOIN
     user_addresses u_addr ON ord.user_address_id = u_addr.user_address_id
 LEFT JOIN
@@ -208,7 +208,7 @@ type GetOrderDetailsRow struct {
 	RefundedAt     pgtype.Timestamptz `json:"refunded_at"`
 	UpdatedAt      time.Time          `json:"updated_at"`
 	CreatedAt      time.Time          `json:"created_at"`
-	Quantity       int32              `json:"quantity"`
+	Quantity       int16              `json:"quantity"`
 	ItemPrice      pgtype.Numeric     `json:"item_price"`
 	OrderItemID    int64              `json:"order_item_id"`
 	ProductName    string             `json:"product_name"`
@@ -278,7 +278,7 @@ func (q *Queries) GetOrderDetails(ctx context.Context, orderID uuid.UUID) ([]Get
 
 const listOrderItems = `-- name: ListOrderItems :many
 SELECT
-    order_item_id, product_id, variant_id, order_id, quantity, price, created_at
+    order_item_id, order_id, product_id, variant_id, quantity, price, created_at
 FROM
     order_items
 WHERE
@@ -306,9 +306,9 @@ func (q *Queries) ListOrderItems(ctx context.Context, arg ListOrderItemsParams) 
 		var i OrderItem
 		if err := rows.Scan(
 			&i.OrderItemID,
+			&i.OrderID,
 			&i.ProductID,
 			&i.VariantID,
-			&i.OrderID,
 			&i.Quantity,
 			&i.Price,
 			&i.CreatedAt,

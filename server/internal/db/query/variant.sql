@@ -18,7 +18,7 @@ FROM
 JOIN
     products p ON pv.product_id = p.product_id
 WHERE
-    pv.variant_id = $1
+    pv.variant_id = $1 AND pv.product_id = $2
 LIMIT 1;
 
 -- name: GetVariantByProductID :many
@@ -56,6 +56,7 @@ SET
     sku = COALESCE(sqlc.narg('sku'), sku),
     price = COALESCE(sqlc.narg('price'), price),
     stock_quantity = COALESCE(sqlc.narg('stock_quantity'), stock_quantity),
+    discount = COALESCE(sqlc.narg('discount'), discount),
     updated_at = NOW()
 WHERE
     variant_id = $1

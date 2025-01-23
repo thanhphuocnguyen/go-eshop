@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
 	"github.com/stripe/stripe-go/v81"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
@@ -17,7 +19,7 @@ import (
 // @Tags webhook
 // @Accept json
 // @Produce json
-// @Success 200 {object} GenericResponse
+// @Success 200 {object} GenericResponse[gin.H]
 // @Failure 400 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Router /webhook/stripe [post]
@@ -29,7 +31,7 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 	}
 
 	switch evt.Type {
-	case stripe.EventTypePaymentIntentSucceeded: // TODO: handle success payment send email order created to customer
+	case stripe.EventTypePaymentIntentSucceeded:
 	case stripe.EventTypePaymentIntentCanceled:
 	case stripe.EventTypePaymentIntentPaymentFailed:
 		var paymentIntent stripe.PaymentIntent
@@ -57,7 +59,14 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 		}
 		switch evt.Type {
 		case stripe.EventTypePaymentIntentSucceeded:
-			server.taskDistributor.SendOrderCreatedEmailTask(c, &worker.PayloadSendOrderCreatedEmailTask{})
+			server.taskDistributor.SendOrderCreatedEmailTask(c,
+				&worker.PayloadSendOrderCreatedEmailTask{
+					PaymentID: payment.PaymentID,
+					OrderID:   payment.OrderID,
+				},
+				asynq.MaxRetry(3),
+				asynq.Queue("email"),
+				asynq.ProcessIn(time.Second*5))
 			updateTransactionStatus.Status.PaymentStatus = repository.PaymentStatusSuccess
 		case stripe.EventTypePaymentIntentCanceled:
 			updateTransactionStatus.Status.PaymentStatus = repository.PaymentStatusCancelled

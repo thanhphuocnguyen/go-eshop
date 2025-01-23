@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/rs/zerolog/log"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/util"
+	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
 // CreateProductTx creates a new product in a transaction
@@ -25,10 +25,10 @@ func (s *pgRepo) UpdateProductTx(ctx context.Context, arg UpdateProductTxParam) 
 	err = s.execTx(ctx, func(q *Queries) error {
 		updateProductParam := UpdateProductParams{}
 		if arg.Name != nil {
-			updateProductParam.Name = util.GetPgTypeText(*arg.Name)
+			updateProductParam.Name = utils.GetPgTypeText(*arg.Name)
 		}
 		if arg.Description != nil {
-			updateProductParam.Description = util.GetPgTypeText(*arg.Description)
+			updateProductParam.Description = utils.GetPgTypeText(*arg.Description)
 		}
 
 		product, err := q.UpdateProduct(ctx, updateProductParam)

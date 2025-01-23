@@ -1,11 +1,15 @@
-package util
+package utils
 
 import (
 	"math/big"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/thanhphuocnguyen/go-eshop/internal/constant"
+)
+
+const (
+	MUL = 100
+	EXP = -2
 )
 
 func GetPgTypeText(value string) pgtype.Text {
@@ -71,8 +75,8 @@ func GetPgTypeFloat8(value float64) pgtype.Float8 {
 
 func GetPgNumericFromFloat(value float64) pgtype.Numeric {
 	return pgtype.Numeric{
-		Int:   big.NewInt(int64(value * constant.MUL)),
-		Exp:   constant.EXP,
+		Int:   big.NewInt(int64(value * MUL)),
+		Exp:   EXP,
 		Valid: true,
 	}
 }

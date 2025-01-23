@@ -13,7 +13,7 @@ LIMIT 1;
 -- name: GetOrderDetails :many
 SELECT
     ord.*, 
-    oit.quantity, oit.price as item_price, oit.order_item_id,
+    oi.quantity, oi.price as item_price, oi.order_item_id,
     p.name as product_name, p.product_id,
     u_addr.street, u_addr.ward, u_addr.district, u_addr.city, 
     images.image_url,
@@ -22,11 +22,11 @@ SELECT
 FROM
     orders ord
 JOIN
-    order_items oit ON oit.order_id = ord.order_id
+    order_items oi ON oi.order_id = ord.order_id
 JOIN
-    products p ON oit.product_id = p.product_id
+    products p ON oi.product_id = p.product_id
 JOIN 
-    product_variants AS pv ON oit.variant_id = p.variant_id
+    product_variants AS pv ON oi.variant_id = pv.variant_id
 JOIN
     user_addresses u_addr ON ord.user_address_id = u_addr.user_address_id
 LEFT JOIN

@@ -5,7 +5,7 @@ import (
 	"github.com/stripe/stripe-go/v81"
 	"github.com/stripe/stripe-go/v81/paymentintent"
 	"github.com/stripe/stripe-go/v81/refund"
-	"github.com/thanhphuocnguyen/go-eshop/internal/constant"
+	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
 type stripePayment struct {
@@ -15,7 +15,7 @@ type stripePayment struct {
 func (s *stripePayment) InitiatePayment(amount float64, email string) (string, error) {
 	log.Info().Msg("InitiatePayment")
 	params := &stripe.PaymentIntentParams{
-		Amount:   stripe.Int64(int64(amount * constant.MUL)),
+		Amount:   stripe.Int64(int64(amount * utils.MUL)),
 		Currency: stripe.String(string(stripe.CurrencyUSD)),
 	}
 	if email != "" {

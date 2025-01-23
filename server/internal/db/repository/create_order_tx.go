@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/util"
+	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
 type CreateOrderTxParams struct {
@@ -22,11 +22,11 @@ type CreateOrderTxParams struct {
 func (s *pgRepo) CreateOrderTx(ctx context.Context, arg CreateOrderTxParams) (uuid.UUID, error) {
 	var result uuid.UUID
 	err := s.execTx(ctx, func(q *Queries) (err error) {
-
 		order, err := s.CreateOrder(ctx, CreateOrderParams{
+			OrderID:       uuid.New(),
 			UserID:        arg.UserID,
 			UserAddressID: arg.AddressID,
-			TotalPrice:    util.GetPgNumericFromFloat(arg.TotalPrice),
+			TotalPrice:    utils.GetPgNumericFromFloat(arg.TotalPrice),
 		})
 
 		result = order.OrderID
@@ -48,7 +48,7 @@ func (s *pgRepo) CreateOrderTx(ctx context.Context, arg CreateOrderTxParams) (uu
 		_, err = q.CreatePaymentTransaction(ctx, CreatePaymentTransactionParams{
 			PaymentID:     arg.PaymentID,
 			OrderID:       order.OrderID,
-			Amount:        util.GetPgNumericFromFloat(arg.TotalPrice),
+			Amount:        utils.GetPgNumericFromFloat(arg.TotalPrice),
 			PaymentMethod: arg.PaymentMethod,
 			PaymentGateway: NullPaymentGateway{
 				PaymentGateway: arg.PaymentGateway,

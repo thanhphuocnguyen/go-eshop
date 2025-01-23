@@ -8,20 +8,26 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/util"
+	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
 // ------------------------------------------ Request and Response ------------------------------------------
-type getProductImageParams struct {
-	ID      int64 `uri:"id" binding:"required"`
-	ImageID int32 `uri:"image_id" binding:"required"`
+type RemoveImageParams struct {
+	ID        int64  `uri:"id" binding:"required"`
+	VariantID *int64 `uri:"id,omitempty"`
+	ImageID   int32  `uri:"image_id" binding:"required"`
 }
-type productImageParam struct {
-	ID int64 `uri:"product_id" binding:"required"`
+type ProductImageParam struct {
+	ProductID int64 `uri:"product_id" binding:"required"`
 }
-type productImageModel struct {
+type VariantImageParam struct {
+	ProductImageParam
+	VariantID int64 `uri:"variant_id" binding:"required"`
+}
+type ImageModel struct {
 	ID        int32  `json:"id"`
-	ProductID int32  `json:"product_id"`
+	ProductID *int64 `json:"product_id"`
+	VariantID *int64 `json:"variant_id"`
 	ImageUrl  string `json:"image_url"`
 }
 
@@ -40,14 +46,14 @@ type productImageModel struct {
 // @Failure 500 {object} gin.H
 // @Router /images/product [post]
 func (sv *Server) uploadProductImage(c *gin.Context) {
-	var param productImageParam
+	var param ProductImageParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 
 	existingProduct, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{
-		ProductID: param.ID,
+		ProductID: param.ProductID,
 	})
 
 	if err != nil {
@@ -73,9 +79,9 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 	}
 
 	img, err := sv.repo.CreateImage(c, repository.CreateImageParams{
-		ProductID:  util.GetPgTypeInt8(existingProduct.ProductID),
+		ProductID:  utils.GetPgTypeInt8(existingProduct.ProductID),
 		ImageUrl:   url,
-		ExternalID: util.GetPgTypeText(fileName),
+		ExternalID: utils.GetPgTypeText(fileName),
 	})
 
 	if err != nil {
@@ -99,14 +105,14 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /images/product/{product_id} [get]
 func (sv *Server) getProductImage(c *gin.Context) {
-	var param productImageParam
+	var param ProductImageParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 
 	images, err := sv.repo.GetImagesByProductID(c, pgtype.Int8{
-		Int64: param.ID,
+		Int64: param.ProductID,
 	})
 
 	if err != nil {
@@ -134,20 +140,14 @@ func (sv *Server) removeProductImage(c *gin.Context) {
 		return
 	}
 
-	var param productImageParam
-	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, mapErrResp(err))
-		return
-	}
-
-	var params getProductImageParams
+	var params RemoveImageParams
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 
 	existingProduct, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{
-		ProductID: param.ID,
+		ProductID: params.ID,
 	})
 
 	if err != nil {
@@ -170,6 +170,137 @@ func (sv *Server) removeProductImage(c *gin.Context) {
 	}
 
 	if img.ProductID.Int64 != existingProduct.ProductID {
+		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("image not found")))
+		return
+	}
+
+	var result string
+	if img.ExternalID.Valid {
+		result, err = sv.uploadService.RemoveFile(c, img.ExternalID.String)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, mapErrResp(err))
+			return
+		}
+	}
+	err = sv.repo.DeleteImage(c, img.ImageID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, GenericResponse[bool]{nil, &result, nil})
+}
+
+func (sv *Server) uploadVariantImage(c *gin.Context) {
+	var param VariantImageParam
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		return
+	}
+
+	existingVariant, err := sv.repo.GetVariantByID(c, repository.GetVariantByIDParams{
+		ProductID: param.ProductID,
+		VariantID: param.VariantID,
+	})
+
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, mapErrResp(errors.New("variant not found")))
+			return
+		}
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		return
+	}
+
+	file, _ := c.FormFile("file")
+	if file == nil {
+		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("missing file in request")))
+		return
+	}
+	// file name is public id
+	fileName := GetImageName(file.Filename)
+	url, err := sv.uploadService.UploadFile(c, file, fileName)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
+
+	img, err := sv.repo.CreateImage(c, repository.CreateImageParams{
+		ProductID:  utils.GetPgTypeInt8(existingVariant.ProductID),
+		VariantID:  utils.GetPgTypeInt8(existingVariant.VariantID),
+		ImageUrl:   url,
+		ExternalID: utils.GetPgTypeText(fileName),
+	})
+
+	if err != nil {
+		sv.uploadService.RemoveFile(c, fileName)
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, GenericResponse[repository.Image]{&img, nil, nil})
+}
+
+func (sv *Server) getVariantImage(c *gin.Context) {
+	var param VariantImageParam
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		return
+	}
+
+	images, err := sv.repo.GetImagesByVariantID(c, pgtype.Int8{
+		Int64: param.VariantID,
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
+	c.JSON(http.StatusOK, GenericResponse[[]repository.Image]{&images, nil, nil})
+}
+
+func (sv *Server) removeVariantImage(c *gin.Context) {
+	_, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, mapErrResp(errors.New("missing user payload in context")))
+		return
+	}
+
+	var params RemoveImageParams
+	if err := c.ShouldBindUri(&params); err != nil {
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		return
+	}
+	if params.VariantID == nil {
+		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("missing variant_id in request")))
+		return
+	}
+
+	existingProduct, err := sv.repo.GetVariantByID(c, repository.GetVariantByIDParams{
+		ProductID: params.ID,
+		VariantID: *params.VariantID,
+	})
+
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, mapErrResp(err))
+			return
+		}
+		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		return
+	}
+
+	img, err := sv.repo.GetImageByID(c, params.ImageID)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, mapErrResp(err))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
+
+	if img.VariantID.Int64 != existingProduct.VariantID {
 		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("image not found")))
 		return
 	}

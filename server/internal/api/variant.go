@@ -6,73 +6,73 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/util"
+	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
 // ----------------------------------------------------------------------------- STRUCTS ----------------------------------------------------------------------------- //
-type variantRequest struct {
+type VariantAttributeRequest struct {
+	AttributeID int32  `json:"attribute_id" binding:"required"`
+	Value       string `json:"value" binding:"required,gt=0,lt=255"`
+}
+type VariantRequest struct {
 	Price      float64 `json:"price" binding:"required,gt=0,lt=1000000"`
 	Stock      int32   `json:"stock" binding:"required,gt=0,lt=1000000"`
+	Discount   int16   `json:"discount" binding:"omitempty,gte=0,lt=10000"`
 	Sku        *string `json:"sku,omitempty" binding:"omitempty"`
-	Discount   *int16  `json:"discount" binding:"omitempty,gte=0,lt=10000"`
-	Attributes []struct {
-		AttributeID int32  `json:"attribute_id" binding:"required"`
-		Value       string `json:"value" binding:"required,gt=0,lt=255"`
-	} `json:"attributes,omitempty" binding:"omitempty"`
+	Attributes []VariantAttributeRequest
 }
 
-type updateAttributeRequest struct {
+type VariantUpdateAttributeRequest struct {
 	ID    int32  `json:"id" binding:"required"`
 	Value string `json:"value" binding:"required,gt=0,lt=255"`
 }
 
-type updateVariantRequest struct {
-	Name       *string                  `json:"name,omitempty" binding:"omitempty,gt=0,lt=255"`
-	Sku        *string                  `json:"sku,omitempty" binding:"omitempty"`
-	Price      *float64                 `json:"price,omitempty" binding:"omitempty,gt=0,lt=1000000"`
-	Stock      *int32                   `json:"stock,omitempty" binding:"omitempty,gt=0,lt=1000000"`
-	Attributes []updateAttributeRequest `json:"attributes,omitempty" binding:"omitempty"`
+type UpdateVariantRequest struct {
+	Name       *string                         `json:"name,omitempty" binding:"omitempty,gt=0,lt=255"`
+	Sku        *string                         `json:"sku,omitempty" binding:"omitempty"`
+	Price      *float64                        `json:"price,omitempty" binding:"omitempty,gt=0,lt=1000000"`
+	Stock      *int32                          `json:"stock,omitempty" binding:"omitempty,gt=0,lt=1000000"`
+	Attributes []VariantUpdateAttributeRequest `json:"attributes,omitempty" binding:"omitempty"`
 }
 
-type variantParams struct {
-	productParam
-	ID int64 `uri:"variant_id" binding:"required"`
+type VariantParams struct {
+	ProductParam
+	VariantID int64 `uri:"variant_id" binding:"required"`
 }
 
-type variantResponse struct {
+type VariantResponse struct {
 	VariantID  int64                    `json:"variant_id"`
 	Price      float64                  `json:"price"`
 	Stock      int32                    `json:"stock"`
 	Discount   int16                    `json:"discount,omitempty"`
 	Sku        *string                  `json:"sku,omitempty"`
-	Attributes []productAttributeDetail `json:"attributes,omitempty"`
+	Attributes []ProductAttributeDetail `json:"attributes,omitempty"`
 	CreatedAt  string                   `json:"created_at"`
 	UpdatedAt  string                   `json:"updated_at"`
 }
 
 // -------------------------------------------------------------------- API HANDLERS --------------------------------------------------------------------- //
 
-// godoc
 // @Summary Create a variant
 // @Description Create a variant
 // @Tags variant
 // @Accept json
 // @Produce json
 // @Param product_id path int true "Product ID"
-// @Param variantRequest body variantRequest true "Create Variant Request"
+// @Param VariantRequest body VariantRequest true "Create Variant Request"
 // @Success 201 {object} repository.ProductVariant
 // @Failure 400 {object} errorResponse
 // @Failure 404 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Router /variant/{product_id} [post]
 func (sv *Server) createVariant(c *gin.Context) {
-	var req variantRequest
+	var req VariantRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 
-	var param productParam
+	var param ProductParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
@@ -96,12 +96,21 @@ func (sv *Server) createVariant(c *gin.Context) {
 		ProductID:    param.ID,
 		VariantPrice: req.Price,
 		VariantStock: req.Stock,
+		Discount:     req.Discount,
 		VariantSku:   req.Sku,
 		Attributes:   createAttributeParams,
 	}
 
 	variant, err := sv.repo.CreateVariantTx(c, createVariantParam)
 	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, errors.New("product not found"))
+			return
+		}
+		if errors.Is(err, repository.ErrForeignKeyViolation) {
+			c.JSON(http.StatusBadRequest, errors.New("variant is already exist"))
+			return
+		}
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
@@ -109,26 +118,25 @@ func (sv *Server) createVariant(c *gin.Context) {
 	c.JSON(http.StatusCreated, GenericResponse[repository.ProductVariant]{&variant, nil, nil})
 }
 
-// godoc
 // @Summary Update a variant
 // @Description Update a variant
 // @Tags variant
 // @Accept json
 // @Produce json
 // @Param variant_id path int true "Variant ID"
-// @Param updateVariantRequest body updateVariantRequest true "Update Variant Request"
+// @Param UpdateVariantRequest body UpdateVariantRequest true "Update Variant Request"
 // @Success 200 {object} repository.ProductVariant
 // @Failure 400 {object} errorResponse
 // @Failure 404 {object} errorResponse
 // @Failure 500 {object} errorResponse
-// @Router /variant/{variant_id} [put]
+// @Router /product/{product_id}/variant/{variant_id} [put]
 func (sv *Server) updateVariant(c *gin.Context) {
-	var params variantParams
+	var params VariantParams
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
-	var req updateVariantRequest
+	var req UpdateVariantRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
@@ -139,10 +147,14 @@ func (sv *Server) updateVariant(c *gin.Context) {
 		return
 	}
 
-	variant, err := sv.repo.GetVariantByID(c, params.ID)
+	variant, err := sv.repo.GetVariantByID(c, repository.GetVariantByIDParams{
+		VariantID: params.VariantID,
+		ProductID: params.ID,
+	})
+
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, mapErrResp(err))
+			c.JSON(http.StatusNotFound, errors.New("variant not found"))
 			return
 		}
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
@@ -154,20 +166,20 @@ func (sv *Server) updateVariant(c *gin.Context) {
 	}
 
 	if req.Sku != nil {
-		updateParams.Sku = util.GetPgTypeText(*req.Sku)
+		updateParams.Sku = utils.GetPgTypeText(*req.Sku)
 	}
 	if req.Price != nil {
-		updateParams.Price = util.GetPgNumericFromFloat(*req.Price)
+		updateParams.Price = utils.GetPgNumericFromFloat(*req.Price)
 	}
 	if req.Stock != nil {
-		updateParams.StockQuantity = util.GetPgTypeInt4(*req.Stock)
+		updateParams.StockQuantity = utils.GetPgTypeInt4(*req.Stock)
 	}
 
 	if len(req.Attributes) > 0 {
 		for _, attr := range req.Attributes {
 			_, err := sv.repo.UpdateVariantAttribute(c, repository.UpdateVariantAttributeParams{
 				VariantAttributeID: attr.ID,
-				Value:              util.GetPgTypeText(attr.Value),
+				Value:              utils.GetPgTypeText(attr.Value),
 			})
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, mapErrResp(err))
@@ -188,7 +200,6 @@ func (sv *Server) updateVariant(c *gin.Context) {
 	c.JSON(http.StatusOK, GenericResponse[bool]{nil, &msg, nil})
 }
 
-// godoc
 // @Summary Delete a variant
 // @Description Delete a variant
 // @Tags variant
@@ -201,16 +212,20 @@ func (sv *Server) updateVariant(c *gin.Context) {
 // @Failure 500 {object} errorResponse
 // @Router /variant/{variant_id} [delete]
 func (sv *Server) deleteVariant(c *gin.Context) {
-	var params variantParams
+	var params VariantParams
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 
-	variant, err := sv.repo.GetVariantByID(c, params.ID)
+	variant, err := sv.repo.GetVariantByID(c, repository.GetVariantByIDParams{
+		VariantID: params.VariantID,
+		ProductID: params.ID,
+	})
+
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, mapErrResp(err))
+			c.JSON(http.StatusNotFound, errors.New("variant not found"))
 			return
 		}
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
@@ -226,20 +241,19 @@ func (sv *Server) deleteVariant(c *gin.Context) {
 	c.JSON(http.StatusNoContent, nil)
 }
 
-// godoc
 // @Summary Get a variant
 // @Description Get a variant
 // @Tags variant
 // @Accept json
 // @Produce json
 // @Param variant_id path int true "Variant ID"
-// @Success 200 {object} variantResponse
+// @Success 200 {object} VariantResponse
 // @Failure 400 {object} errorResponse
 // @Failure 404 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Router /variant/{variant_id} [get]
 func (sv *Server) getVariant(c *gin.Context) {
-	var params variantParams
+	var params VariantParams
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
@@ -257,12 +271,12 @@ func (sv *Server) getVariant(c *gin.Context) {
 
 	variant := variantRows[0]
 	price, _ := variant.Price.Float64Value()
-	resp := variantResponse{
+	resp := VariantResponse{
 		VariantID:  variant.VariantID,
 		Price:      price.Float64,
 		Stock:      variant.StockQuantity,
 		Discount:   variant.Discount,
-		Attributes: make([]productAttributeDetail, 0),
+		Attributes: make([]ProductAttributeDetail, 0),
 		CreatedAt:  variant.CreatedAt.String(),
 		UpdatedAt:  variant.UpdatedAt.String(),
 	}
@@ -271,17 +285,17 @@ func (sv *Server) getVariant(c *gin.Context) {
 		resp.Sku = &variant.Sku.String
 	}
 	for _, attr := range variantRows {
-		resp.Attributes = append(resp.Attributes, productAttributeDetail{
+		resp.Attributes = append(resp.Attributes, ProductAttributeDetail{
 			Name:  attr.AttributeName,
 			Value: attr.Value,
 		})
 	}
 
-	c.JSON(http.StatusOK, GenericResponse[variantResponse]{&resp, nil, nil})
+	c.JSON(http.StatusOK, GenericResponse[VariantResponse]{&resp, nil, nil})
 }
 
 func (sv *Server) getVariants(c *gin.Context) {
-	var params productParam
+	var params ProductParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
@@ -297,15 +311,15 @@ func (sv *Server) getVariants(c *gin.Context) {
 		c.JSON(http.StatusNotFound, mapErrResp(repository.ErrRecordNotFound))
 		return
 	}
-	variantResponses := make([]variantResponse, 0)
+	variantResponses := make([]VariantResponse, 0)
 	for _, variant := range variants {
 		if len(variantResponses) == 0 || variantResponses[len(variantResponses)-1].VariantID != variant.VariantID {
 			price, _ := variant.Price.Float64Value()
-			resp := variantResponse{
+			resp := VariantResponse{
 				VariantID:  variant.VariantID,
 				Price:      price.Float64,
 				Stock:      variant.StockQuantity,
-				Attributes: make([]productAttributeDetail, 0),
+				Attributes: make([]ProductAttributeDetail, 0),
 				CreatedAt:  variant.CreatedAt.String(),
 				UpdatedAt:  variant.UpdatedAt.String(),
 			}
@@ -315,12 +329,13 @@ func (sv *Server) getVariants(c *gin.Context) {
 			variantResponses = append(variantResponses, resp)
 		} else {
 			latest := &variantResponses[len(variantResponses)-1]
-			latest.Attributes = append(latest.Attributes, productAttributeDetail{
+			latest.Attributes = append(latest.Attributes, ProductAttributeDetail{
+				ID:    variant.VariantAttributeID,
 				Name:  variant.AttributeName,
 				Value: variant.AttributeValue,
 			})
 		}
 	}
 
-	c.JSON(http.StatusOK, GenericListResponse[variantResponse]{&variantResponses, int64(len(variantResponses)), nil, nil})
+	c.JSON(http.StatusOK, GenericListResponse[VariantResponse]{&variantResponses, int64(len(variantResponses)), nil, nil})
 }

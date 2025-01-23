@@ -173,9 +173,14 @@ FROM
 JOIN
     products p ON pv.product_id = p.product_id
 WHERE
-    pv.variant_id = $1
+    pv.variant_id = $1 AND pv.product_id = $2
 LIMIT 1
 `
+
+type GetVariantByIDParams struct {
+	VariantID int64 `json:"variant_id"`
+	ProductID int64 `json:"product_id"`
+}
 
 type GetVariantByIDRow struct {
 	VariantID     int64          `json:"variant_id"`
@@ -190,8 +195,8 @@ type GetVariantByIDRow struct {
 	ProductID_2   int64          `json:"product_id_2"`
 }
 
-func (q *Queries) GetVariantByID(ctx context.Context, variantID int64) (GetVariantByIDRow, error) {
-	row := q.db.QueryRow(ctx, getVariantByID, variantID)
+func (q *Queries) GetVariantByID(ctx context.Context, arg GetVariantByIDParams) (GetVariantByIDRow, error) {
+	row := q.db.QueryRow(ctx, getVariantByID, arg.VariantID, arg.ProductID)
 	var i GetVariantByIDRow
 	err := row.Scan(
 		&i.VariantID,
@@ -353,6 +358,7 @@ SET
     sku = COALESCE($2, sku),
     price = COALESCE($3, price),
     stock_quantity = COALESCE($4, stock_quantity),
+    discount = COALESCE($5, discount),
     updated_at = NOW()
 WHERE
     variant_id = $1
@@ -364,6 +370,7 @@ type UpdateVariantParams struct {
 	Sku           pgtype.Text    `json:"sku"`
 	Price         pgtype.Numeric `json:"price"`
 	StockQuantity pgtype.Int4    `json:"stock_quantity"`
+	Discount      pgtype.Int2    `json:"discount"`
 }
 
 func (q *Queries) UpdateVariant(ctx context.Context, arg UpdateVariantParams) (ProductVariant, error) {
@@ -372,6 +379,7 @@ func (q *Queries) UpdateVariant(ctx context.Context, arg UpdateVariantParams) (P
 		arg.Sku,
 		arg.Price,
 		arg.StockQuantity,
+		arg.Discount,
 	)
 	var i ProductVariant
 	err := row.Scan(

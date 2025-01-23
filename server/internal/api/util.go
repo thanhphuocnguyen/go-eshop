@@ -2,29 +2,16 @@ package api
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
 func GetImageName(originFileName string) string {
 	return fmt.Sprintf("%d-%s", time.Now().UnixNano(), strings.ReplaceAll(originFileName, " ", "-"))
 }
 
-func StringPtr(s string) *string {
-	return &s
-}
-
-func GetLimitOffset(c *gin.Context) (limit, offset int) {
-	limit, err := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	if err != nil {
-		limit = 10
-	}
-	offset, err = strconv.Atoi(c.DefaultQuery("offset", "0"))
-	if err != nil {
-		offset = 0
-	}
-	return
+func StandardizeDecimal(num float64) float64 {
+	return float64(int64(num*utils.MUL)) / utils.EXP
 }

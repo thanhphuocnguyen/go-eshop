@@ -14,6 +14,7 @@ import (
 const (
 	QueueCritical = "critical"
 	QueueDefault  = "default"
+	QueueLow      = "low"
 )
 
 type TaskProcessor interface {
@@ -28,7 +29,12 @@ type RedisTaskProcessor struct {
 	cfg         config.Config
 }
 
-func NewRedisTaskProcessor(redisOtp asynq.RedisClientOpt, postgres repository.Repository, mailer mailer.EmailSender, cfg config.Config) TaskProcessor {
+func NewRedisTaskProcessor(
+	redisOtp asynq.RedisClientOpt,
+	postgres repository.Repository,
+	mailer mailer.EmailSender,
+	cfg config.Config,
+) TaskProcessor {
 	logger := logger.NewLogger(nil)
 	server := asynq.NewServer(redisOtp, asynq.Config{
 		Concurrency: 10,

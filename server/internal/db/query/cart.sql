@@ -39,7 +39,7 @@ SELECT ci.*,
     img.image_url
 FROM cart_items ci
 JOIN products AS p ON ci.product_id = p.product_id
-JOIN product_variants AS pv ON ci.variant_id = p.variant_id
+JOIN product_variants AS pv ON ci.variant_id = pv.variant_id
 JOIN variant_attributes AS va ON pv.variant_id = va.variant_id
 LEFT JOIN images as img ON p.product_id = img.product_id
 WHERE ci.cart_item_id = $1

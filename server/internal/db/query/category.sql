@@ -7,36 +7,48 @@ VALUES (
 )
 RETURNING *;
 
--- name: GetCollection :many
+-- name: GetCollectionByID :many
+SELECT c.* FROM categories c WHERE c.category_id = $1;
+
+-- name: GetCollectionWithProduct :many
 SELECT 
     c.*, 
-    p.name, p.description,
+    p.name as product_name, p.description,
     cp.product_id,
-    MIN(pv.price)::decimal as price_from, MAX(pv.price)::decimal as price_to, MAX(pv.discount)::int as discount, MIN(pv.stock_quantity)::int as stock_quantity, COUNT(pv.product_variant_id) as variant_count,
-    i.image_id, i.image_url
-FROM categories c
-JOIN category_products cp ON cp.category_id = c.category_id
-JOIN products p ON cp.product_id = p.product_id AND p.published = TRUE
-JOIN product_variants pv ON p.product_id = pv.product_id
-LEFT JOIN images i ON p.product_id = i.product_id
-WHERE categories.category_id = $1
-GROUP BY c.category_id, p.product_id, i.image_id;
+    MIN(pv.price)::decimal as price_from, 
+    MAX(pv.price)::decimal as price_to, 
+    MAX(pv.discount)::smallint as discount, 
+    MIN(pv.stock_quantity)::smallint as stock_quantity, 
+    COUNT(pv.variant_id) as variant_count,
+    img.image_id, img.image_url
+FROM categories AS c
+JOIN category_products AS cp ON cp.category_id = c.category_id
+JOIN products AS p ON cp.product_id = p.product_id
+JOIN product_variants AS pv ON p.product_id = pv.product_id
+LEFT JOIN images AS img ON p.product_id = img.product_id
+WHERE c.category_id = $1
+GROUP BY c.category_id, p.product_id, img.image_id, img.image_url, cp.product_id;
 
 -- name: GetCollectionByName :one
 SELECT *
 FROM categories c
 JOIN category_products cp ON c.category_id = cp.category_id
-JOIN products p ON cp.product_id = p.product_id AND p.published = TRUE
+JOIN products p ON cp.product_id = p.product_id
 WHERE c.name = $1 AND c.published = TRUE
 LIMIT 1;
 
 -- name: GetCollections :many
 SELECT 
-    *
-FROM categories
+    categories.*,
+    COUNT(category_products.product_id) as product_count
+FROM 
+    categories
+LEFT JOIN category_products 
+    ON categories.category_id = category_products.category_id
 WHERE 
-    published = TRUE
-ORDER BY sort_order;
+    categories.published = COALESCE(sqlc.narg('published'), categories.published)
+GROUP BY categories.category_id
+ORDER BY categories.sort_order;
 -- name: GetCollectionsInIDs :many
 SELECT 
     *
@@ -46,7 +58,7 @@ WHERE
     AND published = TRUE
 ORDER BY sort_order;
 
--- name: UpdateCollection :one
+-- name: UpdateCollectionWith :one
 UPDATE categories
 SET 
     name = COALESCE(sqlc.narg('name'), name), 
@@ -59,8 +71,7 @@ RETURNING *;
 
 
 -- name: RemoveCollection :exec
-DELETE FROM categories
-WHERE category_id = $1;
+DELETE FROM categories WHERE category_id = $1;
 
 -- name: CountCollections :one
 SELECT count(*)

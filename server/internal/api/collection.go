@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/util"
+	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -24,7 +24,7 @@ type collectionResp struct {
 	ID          int32              `json:"id"`
 	Name        string             `json:"name"`
 	Description string             `json:"description"`
-	Products    []productListModel `json:"products"`
+	Products    []ProductListModel `json:"products"`
 }
 
 type getCollectionParams struct {
@@ -63,7 +63,7 @@ func (sv *Server) createCollection(c *gin.Context) {
 	}
 	params := repository.CreateCollectionParams{
 		Name:        req.Name,
-		Description: util.GetPgTypeText(req.Description),
+		Description: utils.GetPgTypeText(req.Description),
 		SortOrder:   0,
 	}
 
@@ -98,11 +98,11 @@ func (sv *Server) getCollections(c *gin.Context) {
 	errGroup, ctx := errgroup.WithContext(c)
 
 	total := make(chan int64, 1)
-	colRows := make(chan []repository.Category, 1)
+	colRows := make(chan []repository.GetCollectionsRow, 1)
 	defer close(total)
 	defer close(colRows)
 	errGroup.Go(func() error {
-		rows, err := sv.repo.GetCollections(ctx)
+		rows, err := sv.repo.GetCollections(ctx, utils.GetPgTypeBool(true))
 		if err != nil {
 			return err
 		}
@@ -133,7 +133,7 @@ func (sv *Server) getCollections(c *gin.Context) {
 	}
 	resp := <-colRows
 
-	c.JSON(http.StatusOK, GenericListResponse[repository.Category]{&resp, <-total, nil, nil})
+	c.JSON(http.StatusOK, GenericListResponse[repository.GetCollectionsRow]{&resp, <-total, nil, nil})
 }
 
 // getCollectionByID retrieves a collection by its ID.
@@ -154,7 +154,7 @@ func (sv *Server) getCollectionByID(c *gin.Context) {
 		return
 	}
 
-	colRows, err := sv.repo.GetCollection(c, param.CollectionID)
+	colRows, err := sv.repo.GetCollectionWithProduct(c, param.CollectionID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
@@ -169,24 +169,38 @@ func (sv *Server) getCollectionByID(c *gin.Context) {
 		ID:          col.CategoryID,
 		Name:        col.Name,
 		Description: col.Description.String,
-		Products:    []productListModel{},
+		Products:    []ProductListModel{},
 	}
 	for _, p := range colRows {
 		priceFrom, _ := p.PriceFrom.Float64Value()
 		priceTo, _ := p.PriceTo.Float64Value()
-		colResp.Products = append(colResp.Products, productListModel{
+		colResp.Products = append(colResp.Products, ProductListModel{
 			ID:           p.ProductID,
-			Name:         p.Name,
+			Name:         p.ProductName,
 			PriceFrom:    priceFrom.Float64,
 			VariantCount: p.VariantCount,
 			PriceTo:      priceTo.Float64,
 			Description:  p.Description.String,
+			DiscountTo:   p.Discount,
 			ImageUrl:     &p.ImageUrl.String,
+			CreatedAt:    p.CreatedAt.Format("2006-01-02 15:04:05"),
 		})
 	}
 	c.JSON(http.StatusOK, GenericResponse[collectionResp]{&colResp, nil, nil})
 }
 
+// updateCollection updates a collection.
+// @Summary Update a collection
+// @Description Update a collection
+// @ID update-collection
+// @Accept json
+// @Produce json
+// @Param id path int true "Collection ID"
+// @Param request body collectionRequest true "Collection request"
+// @Success 200 {object} GenericResponse[repository.Category]
+// @Failure 400 {object} errorResponse
+// @Failure 500 {object} errorResponse
+// @Router /collections/{id} [put]
 func (sv *Server) updateCollection(c *gin.Context) {
 	var param getCollectionParams
 	if err := c.ShouldBindUri(&param); err != nil {
@@ -199,7 +213,7 @@ func (sv *Server) updateCollection(c *gin.Context) {
 		return
 	}
 
-	_, err := sv.repo.GetCollection(c, param.CollectionID)
+	_, err := sv.repo.GetCollectionWithProduct(c, param.CollectionID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(fmt.Errorf("collection with ID %d not found", param.CollectionID)))
@@ -208,18 +222,18 @@ func (sv *Server) updateCollection(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
-	updateParam := repository.UpdateCollectionParams{
+	updateParam := repository.UpdateCollectionWithParams{
 		CategoryID:  param.CollectionID,
-		Name:        util.GetPgTypeText(req.Name),
-		Description: util.GetPgTypeText(req.Description),
+		Name:        utils.GetPgTypeText(req.Name),
+		Description: utils.GetPgTypeText(req.Description),
 	}
 	if req.Published != nil {
-		updateParam.Published = util.GetPgTypeBool(*req.Published)
+		updateParam.Published = utils.GetPgTypeBool(*req.Published)
 	}
 	if req.SortOrder != nil {
-		updateParam.SortOrder = util.GetPgTypeInt2(*req.SortOrder)
+		updateParam.SortOrder = utils.GetPgTypeInt2(*req.SortOrder)
 	}
-	col, err := sv.repo.UpdateCollection(c, updateParam)
+	col, err := sv.repo.UpdateCollectionWith(c, updateParam)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
@@ -229,6 +243,18 @@ func (sv *Server) updateCollection(c *gin.Context) {
 	c.JSON(http.StatusOK, GenericResponse[repository.Category]{&col, nil, nil})
 }
 
+// addProductToCollection adds a product to a collection.
+// @Summary Add a product to a collection
+// @Description Add a product to a collection
+// @ID add-product-to-collection
+// @Accept json
+// @Produce json
+// @Param id path int true "Collection ID"
+// @Param request body addProductToCollectionRequest true "Product ID"
+// @Success 201 {object} GenericResponse[repository.CategoryProduct]
+// @Failure 400 {object} errorResponse
+// @Failure 500 {object} errorResponse
+// @Router /collections/{id}/product [post]
 func (sv *Server) addProductToCollection(c *gin.Context) {
 	var req addProductToCollectionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -255,7 +281,7 @@ func (sv *Server) addProductToCollection(c *gin.Context) {
 		return
 	}
 
-	cnt, err := sv.repo.CountCollections(c, util.GetPgTypeInt4(param.CollectionID))
+	cnt, err := sv.repo.CountCollections(c, utils.GetPgTypeInt4(param.CollectionID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
@@ -263,7 +289,7 @@ func (sv *Server) addProductToCollection(c *gin.Context) {
 
 	_, err = sv.repo.GetCollectionProduct(c, repository.GetCollectionProductParams{
 		CategoryID: param.CollectionID,
-		ProductID:  *param.ProductID,
+		ProductID:  req.ProductID,
 	})
 
 	if err == nil {
@@ -287,10 +313,9 @@ func (sv *Server) addProductToCollection(c *gin.Context) {
 
 	cp, err := sv.repo.AddProductToCollection(c, repository.AddProductToCollectionParams{
 		CategoryID: param.CollectionID,
-		ProductID:  *param.ProductID,
+		ProductID:  req.ProductID,
 		SortOrder:  maxSortOrder + 1,
-	},
-	)
+	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
@@ -317,7 +342,7 @@ func (sv *Server) removeCollection(c *gin.Context) {
 		return
 	}
 
-	_, err := sv.repo.GetCollection(c, colID.CollectionID)
+	_, err := sv.repo.GetCollectionByID(c, colID.CollectionID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(fmt.Errorf("collection with ID %d not found", colID.CollectionID)))

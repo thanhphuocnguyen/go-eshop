@@ -15,7 +15,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/config"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/util"
+	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
 var Attributes []string = []string{"Color",
@@ -167,9 +167,9 @@ func seedProducts(ctx context.Context, repo repository.Repository) {
 		for _, variant := range product.Variants {
 			createdVariant, err := repo.CreateVariant(ctx, repository.CreateVariantParams{
 				ProductID:     createdProduct.ProductID,
-				Price:         util.GetPgNumericFromFloat(variant.Price),
+				Price:         utils.GetPgNumericFromFloat(variant.Price),
 				StockQuantity: variant.Stock,
-				Sku:           util.GetPgTypeText(variant.Sku),
+				Sku:           utils.GetPgTypeText(variant.Sku),
 				Discount:      variant.Discount,
 			})
 			if err != nil {
@@ -360,7 +360,7 @@ func seedUserAddresses(ctx context.Context, repo repository.Repository, userIDs 
 			UserID:   userIDs[idx],
 			Phone:    address.Phone,
 			Street:   address.Street,
-			Ward:     util.GetPgTypeText(address.Ward),
+			Ward:     utils.GetPgTypeText(address.Ward),
 			District: address.District,
 			City:     address.City,
 		}

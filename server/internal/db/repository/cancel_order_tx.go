@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/util"
+	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
 type CancelOrderTxArgs struct {
@@ -81,7 +81,7 @@ func (pg *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (or
 		for _, item := range orderItems {
 			_, err = q.UpdateVariant(ctx, UpdateVariantParams{
 				VariantID:     item.VariantID,
-				StockQuantity: util.GetPgTypeInt4(item.Quantity),
+				StockQuantity: utils.GetPgTypeInt4(int32(item.Quantity)),
 			})
 
 			if err != nil {

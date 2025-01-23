@@ -6,54 +6,54 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/util"
+	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"golang.org/x/sync/errgroup"
 )
 
-type createProductRequest struct {
+type CreateProductRequest struct {
 	Name        string           `json:"name" binding:"required,min=3,max=100"`
 	Description string           `json:"description" binding:"required,min=10,max=1000"`
 	CategoryID  *int32           `json:"category_id,omitempty"`
-	Variants    []variantRequest `json:"variants" binding:"omitempty,dive"`
+	Variants    []VariantRequest `json:"variants" binding:"omitempty,dive"`
 }
 
-type updateProductRequest struct {
+type UpdateProductRequest struct {
 	Name        *string                            `json:"name" binding:"omitempty,min=3,max=100"`
 	Description *string                            `json:"description" binding:"omitempty,min=10,max=1000"`
 	CategoryID  *int32                             `json:"category_id,omitempty"`
 	Variants    []repository.UpdateVariantTxParams `json:"variants" binding:"omitempty,dive"`
 }
 
-type productParam struct {
+type ProductParam struct {
 	ID int64 `uri:"id" binding:"required,min=1"`
 }
 
-type productQueries struct {
+type ProductQueries struct {
 	QueryParams
 	Name *string `form:"name" binding:"omitempty,min=3,max=100"`
 	Sku  *string `form:"sku" binding:"omitempty,alphanum"`
 }
 
-type productVariantModel struct {
+type ProductVariantModel struct {
 	ID         int64                    `json:"id"`
 	Price      float64                  `json:"price"`
 	StockQty   int32                    `json:"stock_qty"`
 	Sku        *string                  `json:"sku,omitempty"`
-	Attributes []productAttributeDetail `json:"attributes,omitempty"`
+	Attributes []ProductAttributeDetail `json:"attributes,omitempty"`
 	ImageUrl   *string                  `json:"image_url,omitempty"`
 }
 
-type productDetailsModel struct {
+type ProductDetailModel struct {
 	ID          int64                 `json:"id"`
 	Name        string                `json:"name"`
 	Description string                `json:"description"`
 	UpdatedAt   string                `json:"updated_at"`
 	CreatedAt   string                `json:"created_at"`
-	Images      []productImageModel   `json:"images,omitempty"`
-	Variants    []productVariantModel `json:"variants,omitempty"`
+	Images      []ImageModel          `json:"images,omitempty"`
+	Variants    []ProductVariantModel `json:"variants,omitempty"`
 }
 
-type productListModel struct {
+type ProductListModel struct {
 	ID           int64   `json:"id"`
 	Name         string  `json:"name"`
 	Description  string  `json:"description"`
@@ -61,24 +61,25 @@ type productListModel struct {
 	ImageUrl     *string `json:"image_url,omitempty"`
 	PriceFrom    float64 `json:"price_from,omitempty"`
 	PriceTo      float64 `json:"price_to,omitempty"`
+	DiscountTo   int16   `json:"discount_to"`
 	CreatedAt    string  `json:"created_at,omitempty"`
 }
 
 // ------------------------------ Mapper ------------------------------
 
-func mapToProductResponse(productRows []repository.GetProductDetailRow) productDetailsModel {
+func mapToProductResponse(productRows []repository.GetProductDetailRow) ProductDetailModel {
 	if len(productRows) == 0 {
-		return productDetailsModel{}
+		return ProductDetailModel{}
 	}
 	product := productRows[0].Product
-	resp := productDetailsModel{
+	resp := ProductDetailModel{
 		ID:          product.ProductID,
 		Name:        product.Name,
 		Description: product.Description,
 		UpdatedAt:   product.UpdatedAt.String(),
 		CreatedAt:   product.CreatedAt.String(),
-		Images:      make([]productImageModel, 0),
-		Variants:    make([]productVariantModel, 0),
+		Images:      make([]ImageModel, 0),
+		Variants:    make([]ProductVariantModel, 0),
 	}
 
 	for i, row := range productRows {
@@ -87,12 +88,13 @@ func mapToProductResponse(productRows []repository.GetProductDetailRow) productD
 		price, _ := row.Price.Float64Value()
 		// add variant if it's the first variant or different from the previous one
 		if i == 0 || row.VariantID != productRows[i-1].VariantID {
-			variantModel := productVariantModel{
+			variantModel := ProductVariantModel{
 				ID:       row.VariantID,
 				Price:    price.Float64,
 				StockQty: row.StockQuantity,
-				Attributes: []productAttributeDetail{
+				Attributes: []ProductAttributeDetail{
 					{
+						ID:    row.VariantAttributeID,
 						Name:  row.AttributeName,
 						Value: row.VariantAttributeValue,
 					},
@@ -112,7 +114,8 @@ func mapToProductResponse(productRows []repository.GetProductDetailRow) productD
 		} else if row.VariantID == productRows[i-1].VariantID && row.AttributeID != productRows[i-1].AttributeID {
 			// add attribute value to existing variant
 			lastVariant := &resp.Variants[len(resp.Variants)-1]
-			lastVariant.Attributes = append(lastVariant.Attributes, productAttributeDetail{
+			lastVariant.Attributes = append(lastVariant.Attributes, ProductAttributeDetail{
+				ID:    row.VariantAttributeID,
 				Name:  row.AttributeName,
 				Value: row.VariantAttributeValue,
 			})
@@ -121,7 +124,7 @@ func mapToProductResponse(productRows []repository.GetProductDetailRow) productD
 		// Add images for product or variants
 		if row.ImgProductID.Valid {
 			if row.ImageUrl.String != resp.Images[len(resp.Images)-1].ImageUrl {
-				resp.Images = append(resp.Images, productImageModel{
+				resp.Images = append(resp.Images, ImageModel{
 					ID:       row.ImageID.Int32,
 					ImageUrl: row.ImageUrl.String,
 				})
@@ -131,10 +134,10 @@ func mapToProductResponse(productRows []repository.GetProductDetailRow) productD
 	return resp
 }
 
-func mapToListProductResponse(productRow repository.GetProductsRow) productListModel {
+func mapToListProductResponse(productRow repository.GetProductsRow) ProductListModel {
 	minPrice, _ := productRow.MinPrice.Float64Value()
 	maxPrice, _ := productRow.MaxPrice.Float64Value()
-	product := productListModel{
+	product := ProductListModel{
 		ID:          productRow.ProductID,
 		Name:        productRow.Name,
 		Description: productRow.Description,
@@ -154,20 +157,19 @@ func mapToListProductResponse(productRow repository.GetProductsRow) productListM
 
 // ------------------------------ Handlers ------------------------------
 
-// createProduct godoc
 // @Summary Create a new product
 // @Schemes http
 // @Description create a new product with the input payload
 // @Tags products
 // @Accept json
-// @Param input body createProductRequest true "Product input"
+// @Param input body CreateProductRequest true "Product input"
 // @Produce json
 // @Success 200 {object} GenericResponse[repository.Product]
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
-// @Router /products [post]
+// @Router /product [post]
 func (sv *Server) createProduct(c *gin.Context) {
-	var req createProductRequest
+	var req CreateProductRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
@@ -197,13 +199,11 @@ func (sv *Server) createProduct(c *gin.Context) {
 			}
 
 			createProductTxParams.Variants[i] = repository.CreateVariantTxParam{
-				VariantPrice: variantReq.Price,
+				VariantPrice: StandardizeDecimal(variantReq.Price),
 				VariantStock: variantReq.Stock,
 				Attributes:   attributeParams,
 				VariantSku:   variantReq.Sku,
-			}
-			if variantReq.Discount != nil {
-				createProductTxParams.Variants[i].Discount = variantReq.Discount
+				Discount:     variantReq.Discount,
 			}
 		}
 	}
@@ -222,7 +222,6 @@ func (sv *Server) createProduct(c *gin.Context) {
 	c.JSON(http.StatusCreated, GenericResponse[repository.CreateProductTxResult]{&newProduct, nil, nil})
 }
 
-// getProductDetail godoc
 // @Summary Get a product detail by ID
 // @Schemes http
 // @Description get a product detail by ID
@@ -230,12 +229,12 @@ func (sv *Server) createProduct(c *gin.Context) {
 // @Accept json
 // @Param product_id path int true "Product ID"
 // @Produce json
-// @Success 200 {object} GenericResponse[productListModel]
+// @Success 200 {object} GenericResponse[ProductListModel]
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /products/{product_id} [get]
 func (sv *Server) getProductDetail(c *gin.Context) {
-	var params productParam
+	var params ProductParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
@@ -256,10 +255,9 @@ func (sv *Server) getProductDetail(c *gin.Context) {
 	}
 
 	productDetail := mapToProductResponse(productRow)
-	c.JSON(http.StatusOK, GenericResponse[productDetailsModel]{&productDetail, nil, nil})
+	c.JSON(http.StatusOK, GenericResponse[ProductDetailModel]{&productDetail, nil, nil})
 }
 
-// getProducts godoc
 // @Summary Get list of products
 // @Schemes http
 // @Description get list of products
@@ -268,12 +266,12 @@ func (sv *Server) getProductDetail(c *gin.Context) {
 // @Param page query int true "Page number"
 // @Param page_size query int true "Page size"
 // @Produce json
-// @Success 200 {array} GenericListResponse[productListModel]
+// @Success 200 {array} GenericListResponse[ProductListModel]
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /products [get]
 func (sv *Server) getProducts(c *gin.Context) {
-	var queries productQueries
+	var queries ProductQueries
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
@@ -285,10 +283,10 @@ func (sv *Server) getProducts(c *gin.Context) {
 	}
 
 	if queries.Name != nil {
-		productsQueryParams.Name = util.GetPgTypeText(*queries.Name)
+		productsQueryParams.Name = utils.GetPgTypeText(*queries.Name)
 	}
 	if queries.Sku != nil {
-		productsQueryParams.Sku = util.GetPgTypeText(*queries.Sku)
+		productsQueryParams.Sku = utils.GetPgTypeText(*queries.Sku)
 	}
 
 	errGroup, ctx := errgroup.WithContext(c)
@@ -321,34 +319,33 @@ func (sv *Server) getProducts(c *gin.Context) {
 		return
 	}
 
-	productResponses := make([]productListModel, 0)
+	productResponses := make([]ProductListModel, 0)
 	for _, product := range <-productChan {
 		productResponses = append(productResponses, mapToListProductResponse(product))
 	}
 
-	c.JSON(http.StatusOK, GenericListResponse[productListModel]{&productResponses, <-cntChan, nil, nil})
+	c.JSON(http.StatusOK, GenericListResponse[ProductListModel]{&productResponses, <-cntChan, nil, nil})
 }
 
-// updateProduct godoc
 // @Summary Update a product by ID
 // @Schemes http
 // @Description update a product by ID
 // @Tags products
 // @Accept json
 // @Param product_id path int true "Product ID"
-// @Param input body updateProductRequest true "Product input"
+// @Param input body UpdateProductRequest true "Product input"
 // @Produce json
 // @Success 200 {object} GenericResponse[repository.Product]
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /products/{product_id} [put]
 func (sv *Server) updateProduct(c *gin.Context) {
-	var params productParam
+	var params ProductParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
-	var req updateProductRequest
+	var req UpdateProductRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
@@ -379,7 +376,6 @@ func (sv *Server) updateProduct(c *gin.Context) {
 	c.JSON(http.StatusOK, GenericResponse[repository.UpdateProductTxResult]{&updated, nil, nil})
 }
 
-// removeProduct godoc
 // @Summary Remove a product by ID
 // @Schemes http
 // @Description remove a product by ID
@@ -392,7 +388,7 @@ func (sv *Server) updateProduct(c *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /products/{product_id} [delete]
 func (sv *Server) removeProduct(c *gin.Context) {
-	var params productParam
+	var params ProductParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return

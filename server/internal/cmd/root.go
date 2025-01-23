@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	_ "net/http/pprof"
 	"os"
 	"runtime"
@@ -116,7 +117,7 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 			server := api.Server(cfg.HttpAddr)
 
 			go func() {
-				log.Info().Str("addr", cfg.HttpAddr).Msg("API server started")
+				log.Info().Str("addr", fmt.Sprintf("http://%s", cfg.HttpAddr)).Msg("API server started")
 				_ = server.ListenAndServe()
 			}()
 

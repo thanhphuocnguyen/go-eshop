@@ -1,23 +1,23 @@
 CREATE TABLE
     "categories" (
-        "category_id" serial PRIMARY KEY,
-        "name" varchar UNIQUE NOT NULL,
-        "description" text,
-        "sort_order" smallint NOT NULL CHECK (
+        "category_id" SERIAL PRIMARY KEY,
+        "name" VARCHAR UNIQUE NOT NULL,
+        "description" TEXT,
+        "sort_order" SMALLINT NOT NULL CHECK (
             "sort_order" >= 0
             AND "sort_order" <= 32767
         ),
-        "published" bool NOT NULL DEFAULT TRUE,
-        "created_at" timestamptz NOT NULL DEFAULT now (),
-        "updated_at" timestamptz NOT NULL DEFAULT now (),
+        "published" BOOL NOT NULL DEFAULT TRUE,
+        "created_at" TIMESTAMPTZ NOT NULL DEFAULT now (),
+        "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now (),
         UNIQUE (category_id, sort_order)
     );
 
 CREATE TABLE
     "category_products" (
-        "category_id" int NOT NULL REFERENCES "categories" ("category_id") ON DELETE CASCADE,
-        "product_id" bigint NOT NULL REFERENCES "products" ("product_id") ON DELETE CASCADE,
-        "sort_order" smallint NOT NULL CHECK (
+        "category_id" INT NOT NULL REFERENCES "categories" ("category_id") ON DELETE CASCADE,
+        "product_id" BIGINT NOT NULL REFERENCES "products" ("product_id") ON DELETE CASCADE,
+        "sort_order" SMALLINT NOT NULL CHECK (
             "sort_order" >= 0
             AND "sort_order" <= 32767
         ),

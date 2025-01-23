@@ -71,10 +71,10 @@
             Confirm Your Email
         </div>
         <div class="content">
-            <p>Hi [%userName%],</p>
-            <p>Thank you for signing up! Please confirm your email address by clicking the button below:</p>
+            <p>Hi {{.FullName}},</p>
+            <p>Thank you for signing up with username: {{.Email}}! Please confirm your email address by clicking the button below:</p>
             <p>
-                <a href="[%verifyLink%]" class="confirm-btn">Confirm Email</a>
+                <a href="{{.VerifyLink}}" class="confirm-btn">Confirm Email</a>
             </p>
             <p>If you didn’t sign up for this account, you can safely ignore this email.</p>
             <p>Thank you,</p>

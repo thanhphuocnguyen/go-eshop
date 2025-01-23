@@ -177,6 +177,7 @@ func (sv *Server) getCartDetail(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("user not found")))
 		return
 	}
+
 	cart, err := sv.repo.GetCart(c, authPayload.UserID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
@@ -186,11 +187,13 @@ func (sv *Server) getCartDetail(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
+
 	cartItems, err := sv.repo.GetCartItemsByID(c, cart.CartID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
+
 	cartDetail := mapToCartResponse(cart, cartItems)
 
 	c.JSON(http.StatusOK, GenericResponse[cartResponse]{&cartDetail, nil, nil})
@@ -243,7 +246,10 @@ func (sv *Server) addCartItem(c *gin.Context) {
 		return
 	}
 
-	productVariant, err := sv.repo.GetVariantByID(c, req.VariantID)
+	productVariant, err := sv.repo.GetVariantByID(c, repository.GetVariantByIDParams{
+		VariantID: req.VariantID,
+		ProductID: req.ProductID,
+	})
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
@@ -356,9 +362,8 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 		return
 	}
 
-	success := true
-	message := "product removed"
-	c.JSON(http.StatusOK, GenericResponse[bool]{&success, &message, nil})
+	message := "item removed"
+	c.JSON(http.StatusOK, GenericResponse[string]{nil, &message, nil})
 }
 
 // @Summary Update product items in the cart
@@ -454,7 +459,7 @@ func (sv *Server) checkout(c *gin.Context) {
 		createOrderItemParams[i] = repository.CreateOrderItemParams{
 			ProductID: item.ProductID,
 			VariantID: item.VariantID,
-			Quantity:  int32(item.Quantity),
+			Quantity:  item.Quantity,
 			Price:     item.Price,
 		}
 		totalPrice += price.Float64 * float64(item.Quantity)
@@ -486,6 +491,7 @@ func (sv *Server) checkout(c *gin.Context) {
 			return
 		}
 	}
+
 	params := repository.CreateOrderTxParams{
 		CartID:                cart.CartID,
 		PaymentMethod:         paymentMethod,
@@ -508,10 +514,14 @@ func (sv *Server) checkout(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, GenericResponse[checkoutResponse]{&checkoutResponse{
-		OrderID:   checkoutResult,
-		PaymentID: paymentID,
-	}, nil, nil})
+	c.JSON(http.StatusOK, GenericResponse[checkoutResponse]{
+		&checkoutResponse{
+			OrderID:   checkoutResult,
+			PaymentID: paymentID,
+		},
+		nil,
+		nil,
+	})
 }
 
 // @Summary Update product items in the cart
@@ -578,7 +588,11 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 		return
 	}
 
-	_, err = sv.repo.GetVariantByID(c, cartItem.VariantID)
+	_, err = sv.repo.GetVariantByID(c, repository.GetVariantByIDParams{
+		VariantID: cartItem.VariantID,
+		ProductID: cartItem.ProductID,
+	})
+
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(errors.New("product not found")))

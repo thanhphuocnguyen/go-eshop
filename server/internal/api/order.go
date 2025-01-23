@@ -10,31 +10,32 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/util"
+	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
 )
 
 // ---------------------------------------------- API Models ----------------------------------------------
-type orderListQuery struct {
-	Page     int32 `form:"page" binding:"required,min=1"`
-	PageSize int32 `form:"page_size" binding:"required,min=1,max=100"`
+type OrderListQuery struct {
+	QueryParams
+	Status        string `form:"status"`
+	PaymentStatus string `form:"payment_status"`
 }
 
-type orderIDParams struct {
-	ID uuid.UUID `uri:"id" binding:"required,min=1"`
+type OrderIDParams struct {
+	ID string `uri:"id" binding:"required,min=1"`
 }
 
-type changeOrderStatusReq struct {
+type OrderStatusRequest struct {
 	Status string `json:"status" binding:"required,oneof=pending confirmed delivering delivered completed"`
 }
 
-type orderItemResp struct {
+type OrderItemResponse struct {
 	ID       int64   `json:"id"`
 	Name     string  `json:"name"`
 	ImageUrl *string `json:"image_url"`
-	Quantity int32   `json:"quantity"`
+	Quantity int16   `json:"quantity"`
 }
-type paymentInfo struct {
+type PaymentInfo struct {
 	ID             string  `json:"id"`
 	RefundID       *string `json:"refund_id"`
 	PaymentAmount  float64 `json:"payment_amount"`
@@ -43,14 +44,14 @@ type paymentInfo struct {
 	PaymentStatus  string  `json:"payment_status"`
 }
 
-type orderDetailResponse struct {
+type OrderDetailResponse struct {
 	ID          uuid.UUID              `json:"id"`
 	Total       float64                `json:"total"`
 	Status      repository.OrderStatus `json:"status"`
-	PaymentInfo paymentInfo            `json:"payment_info"`
-	Products    []orderItemResp        `json:"products"`
+	PaymentInfo PaymentInfo            `json:"payment_info"`
+	Products    []OrderItemResponse    `json:"products"`
 }
-type orderListResp struct {
+type OrderListResponse struct {
 	ID            uuid.UUID                `json:"id"`
 	Total         float64                  `json:"total"`
 	TotalItems    int32                    `json:"total_items"`
@@ -60,10 +61,10 @@ type orderListResp struct {
 	UpdatedAt     time.Time                `json:"updated_at"`
 }
 
-type refundOrderRequest struct {
+type RefundOrderRequest struct {
 	Reason string `json:"reason" binding:"required,oneof=defective damaged fraudulent requested_by_customer"`
 }
-type cancelOrderRequest struct {
+type CancelOrderRequest struct {
 	Reason string `json:"reason" binding:"required,oneof=duplicate fraudulent requested_by_customer abandoned"`
 }
 
@@ -77,18 +78,18 @@ type cancelOrderRequest struct {
 // @Param limit query int false "Limit"
 // @Param offset query int false "Offset"
 // @Security ApiKeyAuth
-// @Success 200 {object} orderListResp
+// @Success 200 {object} OrderListResponse
 // @Failure 400 {object} errorResponse
 // @Failure 401 {object} errorResponse
 // @Failure 500 {object} errorResponse
-// @Router /orders [get]
+// @Router /order/list [get]
 func (sv *Server) orderList(c *gin.Context) {
 	tokenPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, mapErrResp(errors.New("user not found")))
 		return
 	}
-	var orderListQuery orderListQuery
+	var orderListQuery OrderListQuery
 	if err := c.ShouldBindQuery(&orderListQuery); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
@@ -106,7 +107,7 @@ func (sv *Server) orderList(c *gin.Context) {
 		Offset: (orderListQuery.Page - 1) * orderListQuery.PageSize,
 	}
 	if user.Role != repository.UserRoleAdmin {
-		getListOrderParams.UserID = util.GetPgTypeUUID(tokenPayload.UserID)
+		getListOrderParams.UserID = utils.GetPgTypeUUID(tokenPayload.UserID)
 	}
 	listOrderRows, err := sv.repo.ListOrders(c, getListOrderParams)
 
@@ -122,10 +123,10 @@ func (sv *Server) orderList(c *gin.Context) {
 		return
 	}
 
-	var orderResponses []orderListResp
+	var orderResponses []OrderListResponse
 	for _, aggregated := range listOrderRows {
 		total, _ := aggregated.TotalPrice.Float64Value()
-		orderResponses = append(orderResponses, orderListResp{
+		orderResponses = append(orderResponses, OrderListResponse{
 			ID:            aggregated.OrderID,
 			Total:         total.Float64,
 			TotalItems:    int32(aggregated.TotalItems),
@@ -136,7 +137,7 @@ func (sv *Server) orderList(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusOK, GenericListResponse[orderListResp]{&orderResponses, count, nil, nil})
+	c.JSON(http.StatusOK, GenericListResponse[OrderListResponse]{&orderResponses, count, nil, nil})
 }
 
 // @Summary Get order detail
@@ -146,19 +147,19 @@ func (sv *Server) orderList(c *gin.Context) {
 // @Produce json
 // @Param id path int true "Order ID"
 // @Security ApiKeyAuth
-// @Success 200 {object} GenericResponse[orderDetailResponse]
+// @Success 200 {object} GenericResponse[OrderDetailResponse]
 // @Failure 400 {object} errorResponse
 // @Failure 401 {object} errorResponse
 // @Failure 500 {object} errorResponse
-// @Router /orders/{id} [get]
+// @Router /order/{order_id} [get]
 func (sv *Server) orderDetail(c *gin.Context) {
-	var params orderIDParams
+	var params OrderIDParams
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
 
-	getOrderDetailRows, err := sv.repo.GetOrderDetails(c, params.ID)
+	getOrderDetailRows, err := sv.repo.GetOrderDetails(c, uuid.MustParse(params.ID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
@@ -173,14 +174,14 @@ func (sv *Server) orderDetail(c *gin.Context) {
 	totalGet, _ := orderDetailRow.TotalPrice.Float64Value()
 	paymentAmount, _ := orderDetailRow.PaymentAmount.Float64Value()
 
-	orderDetail := &orderDetailResponse{
+	orderDetail := &OrderDetailResponse{
 		ID:       orderDetailRow.OrderID,
 		Total:    totalGet.Float64,
 		Status:   orderDetailRow.Status,
-		Products: []orderItemResp{},
+		Products: []OrderItemResponse{},
 	}
 	if orderDetailRow.PaymentID.Valid {
-		orderDetail.PaymentInfo = paymentInfo{
+		orderDetail.PaymentInfo = PaymentInfo{
 			ID:            orderDetailRow.PaymentID.String,
 			PaymentAmount: paymentAmount.Float64,
 			PaymentMethod: string(orderDetailRow.PaymentMethod.PaymentMethod),
@@ -194,7 +195,7 @@ func (sv *Server) orderDetail(c *gin.Context) {
 		}
 	}
 	for _, item := range getOrderDetailRows {
-		orderDetail.Products = append(orderDetail.Products, orderItemResp{
+		orderDetail.Products = append(orderDetail.Products, OrderItemResponse{
 			ID:       item.ProductID,
 			Name:     item.ProductName,
 			Quantity: item.Quantity,
@@ -202,7 +203,7 @@ func (sv *Server) orderDetail(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusOK, GenericResponse[orderDetailResponse]{orderDetail, nil, nil})
+	c.JSON(http.StatusOK, GenericResponse[OrderDetailResponse]{orderDetail, nil, nil})
 }
 
 // @Summary Cancel order
@@ -216,7 +217,7 @@ func (sv *Server) orderDetail(c *gin.Context) {
 // @Failure 400 {object} errorResponse
 // @Failure 401 {object} errorResponse
 // @Failure 500 {object} errorResponse
-// @Router /orders/{id}/cancel [put]
+// @Router /order/{order_id}/cancel [put]
 func (sv *Server) cancelOrder(c *gin.Context) {
 	tokenPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
@@ -231,17 +232,17 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
-	var params orderIDParams
+	var params OrderIDParams
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
-	var req cancelOrderRequest
+	var req CancelOrderRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
-	order, err := sv.repo.GetOrder(c, params.ID)
+	order, err := sv.repo.GetOrder(c, uuid.MustParse(params.ID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
@@ -274,7 +275,7 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 
 	// if order
 	order, err = sv.repo.CancelOrderTx(c, repository.CancelOrderTxArgs{
-		OrderID: params.ID,
+		OrderID: uuid.MustParse(params.ID),
 		CancelPaymentFromGateway: func(paymentID string, gateway repository.PaymentGateway) error {
 			switch gateway {
 			case repository.PaymentGatewayStripe:
@@ -312,19 +313,19 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 // @Failure 400 {object} errorResponse
 // @Failure 401 {object} errorResponse
 // @Failure 500 {object} errorResponse
-// @Router /orders/{id}/status [put]
+// @Router /order/{order_id}/status [put]
 func (sv *Server) changeOrderStatus(c *gin.Context) {
-	var params orderIDParams
+	var params OrderIDParams
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
-	var req changeOrderStatusReq
+	var req OrderStatusRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
-	order, err := sv.repo.GetOrder(c, params.ID)
+	order, err := sv.repo.GetOrder(c, uuid.MustParse(params.ID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(err))
@@ -381,19 +382,19 @@ func (sv *Server) changeOrderStatus(c *gin.Context) {
 // @Failure 400 {object} errorResponse
 // @Failure 401 {object} errorResponse
 // @Failure 500 {object} errorResponse
-// @Router /orders/{id}/refund [put]
+// @Router /order/{order_id}/refund [put]
 func (sv *Server) refundOrder(c *gin.Context) {
-	var params orderIDParams
+	var params OrderIDParams
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
-	var req refundOrderRequest
+	var req RefundOrderRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
 		return
 	}
-	order, err := sv.repo.GetOrder(c, params.ID)
+	order, err := sv.repo.GetOrder(c, uuid.MustParse(params.ID))
 	if err != nil {
 		if err == repository.ErrRecordNotFound {
 			c.JSON(http.StatusNotFound, mapErrResp(err))
@@ -426,7 +427,7 @@ func (sv *Server) refundOrder(c *gin.Context) {
 		reason = payment.RefundReasonRequestedByCustomer
 	}
 	err = sv.repo.RefundOrderTx(c, repository.RefundOrderTxArgs{
-		OrderID: params.ID,
+		OrderID: uuid.MustParse(params.ID),
 		RefundPaymentFromGateway: func(paymentID string, gateway repository.PaymentGateway) (string, error) {
 			switch gateway {
 			case repository.PaymentGatewayStripe:

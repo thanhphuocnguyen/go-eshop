@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
@@ -22,6 +20,13 @@ type PayloadVerifyEmail struct {
 const (
 	VerifyEmailTaskType = "send_verify_email"
 )
+
+type VerifyEmailData struct {
+	UserID     uuid.UUID
+	Email      string
+	FullName   string
+	VerifyCode string
+}
 
 func (distributor *RedisTaskDistributor) SendVerifyEmail(ctx context.Context, payload *PayloadVerifyEmail, options ...asynq.Option) error {
 	marshaled, err := json.Marshal(payload)
@@ -67,17 +72,19 @@ func (processor *RedisTaskProcessor) ProcessSendVerifyEmail(ctx context.Context,
 		return fmt.Errorf("could not create verify email: %w", err)
 	}
 
-	data, err := os.ReadFile("./pkg/mailer/templates/verify-email.html")
-
-	if err != nil {
-		log.Err(err).Msg("could not read email template")
+	emailData := VerifyEmailData{
+		UserID:     user.UserID,
+		Email:      user.Email,
+		FullName:   user.Fullname,
+		VerifyCode: verifyEmail.VerifyCode,
 	}
 
-	mailTemplate := string(data)
-	verifyLink := fmt.Sprintf("http://%s/v1/verify-email?id=%d&verify_code=%s", processor.cfg.HttpAddr, verifyEmail.ID, verifyEmail.VerifyCode)
+	body, err := utils.ParseHtmlTemplate("./pkg/mailer/templates/verify-email.html", emailData)
 
-	body := strings.Replace(mailTemplate, "[%userName%]", user.Fullname, 1)
-	body = strings.Replace(body, "[%verifyLink%]", verifyLink, 1)
+	if err != nil {
+		log.Err(err).Msg("could not parse html template")
+	}
+
 	err = processor.mailer.Send("Verify Email", body, []string{user.Email}, nil, nil, nil)
 	if err != nil {
 		return fmt.Errorf("could not send email: %w", err)

@@ -63,12 +63,13 @@ type Querier interface {
 	GetCartItemByVariantID(ctx context.Context, variantID int64) (CartItem, error)
 	GetCartItemWithProduct(ctx context.Context, cartItemID int32) (GetCartItemWithProductRow, error)
 	GetCartItemsByID(ctx context.Context, cartID uuid.UUID) ([]GetCartItemsByIDRow, error)
-	GetCollection(ctx context.Context, categoryID int32) ([]GetCollectionRow, error)
+	GetCollectionByID(ctx context.Context, categoryID int32) ([]Category, error)
 	GetCollectionByName(ctx context.Context, name string) (GetCollectionByNameRow, error)
 	GetCollectionMaxSortOrder(ctx context.Context) (interface{}, error)
 	GetCollectionProduct(ctx context.Context, arg GetCollectionProductParams) (Product, error)
 	GetCollectionProducts(ctx context.Context, categoryID int32) ([]Product, error)
-	GetCollections(ctx context.Context) ([]Category, error)
+	GetCollectionWithProduct(ctx context.Context, categoryID int32) ([]GetCollectionWithProductRow, error)
+	GetCollections(ctx context.Context, published pgtype.Bool) ([]GetCollectionsRow, error)
 	GetCollectionsInIDs(ctx context.Context, idList []int32) ([]Category, error)
 	GetDefaultAddress(ctx context.Context, userID uuid.UUID) (UserAddress, error)
 	GetImageByExternalID(ctx context.Context, externalID pgtype.Text) (Image, error)
@@ -94,7 +95,7 @@ type Querier interface {
 	GetUserByUsername(ctx context.Context, username string) (User, error)
 	GetVariantAttribute(ctx context.Context, variantAttributeID int32) (VariantAttribute, error)
 	GetVariantAttributes(ctx context.Context, variantID int64) ([]VariantAttribute, error)
-	GetVariantByID(ctx context.Context, variantID int64) (GetVariantByIDRow, error)
+	GetVariantByID(ctx context.Context, arg GetVariantByIDParams) (GetVariantByIDRow, error)
 	GetVariantByProductID(ctx context.Context, productID int64) ([]GetVariantByProductIDRow, error)
 	GetVariantDetails(ctx context.Context, variantID int64) ([]GetVariantDetailsRow, error)
 	GetVerifyEmail(ctx context.Context, arg GetVerifyEmailParams) (VerifyEmail, error)
@@ -115,7 +116,7 @@ type Querier interface {
 	UpdateAttribute(ctx context.Context, arg UpdateAttributeParams) (Attribute, error)
 	UpdateCart(ctx context.Context, cartID uuid.UUID) error
 	UpdateCartItemQuantity(ctx context.Context, arg UpdateCartItemQuantityParams) error
-	UpdateCollection(ctx context.Context, arg UpdateCollectionParams) (Category, error)
+	UpdateCollectionWith(ctx context.Context, arg UpdateCollectionWithParams) (Category, error)
 	UpdateImage(ctx context.Context, arg UpdateImageParams) error
 	UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order, error)
 	UpdatePaymentTransaction(ctx context.Context, arg UpdatePaymentTransactionParams) error

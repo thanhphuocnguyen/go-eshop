@@ -84,10 +84,12 @@
             <div class="order-details">
                 <h3>Your Order Details</h3>
                 <ul>
-                    <li>%s</li>
+                    {{range .Items}}
+                        <li>{{.Name}} - {{.Qty}} x ${{.Price}}</li>
+                    {{end}}
                 </ul>
-                <p><strong>Total Price:</strong> ${{.TotalPrice}}</p>
-                <p><strong>Estimated Delivery:</strong> {{.Estimated Delivery}}</p>
+                <p><strong>Total Price:</strong> ${{.Total}}</p>
+                <p><strong>Estimated Delivery:</strong> {{.EstimatedDelivery}}</p>
             </div>
             <p>If you have any questions about your order, feel free to contact us.</p>
             <p>Thank you for shopping with us!</p>

@@ -21,14 +21,14 @@ definitions:
     type: object
   api.Attribute:
     properties:
-      attribute_values:
-        items:
-          $ref: '#/definitions/api.AttributeValue'
-        type: array
       id:
         type: integer
       name:
         type: string
+      values:
+        items:
+          type: string
+        type: array
     type: object
   api.AttributeRequest:
     properties:
@@ -36,15 +36,6 @@ definitions:
         type: string
     required:
     - name
-    type: object
-  api.AttributeValue:
-    properties:
-      color:
-        type: string
-      id:
-        type: integer
-      value:
-        type: string
     type: object
   api.CreateAddressParams:
     properties:
@@ -68,17 +59,25 @@ definitions:
     - phone
     - street
     type: object
-  api.CreateAttributeValueParams:
+  api.CreateProductRequest:
     properties:
-      attribute_id:
+      category_id:
         type: integer
-      values:
+      description:
+        maxLength: 1000
+        minLength: 10
+        type: string
+      name:
+        maxLength: 100
+        minLength: 3
+        type: string
+      variants:
         items:
-          $ref: '#/definitions/api.AttributeValue'
+          $ref: '#/definitions/api.VariantRequest'
         type: array
     required:
-    - attribute_id
-    - values
+    - description
+    - name
     type: object
   api.GenericListResponse-api_Attribute:
     properties:
@@ -93,11 +92,11 @@ definitions:
       total:
         type: integer
     type: object
-  api.GenericListResponse-api_productListModel:
+  api.GenericListResponse-api_ProductListModel:
     properties:
       data:
         items:
-          $ref: '#/definitions/api.productListModel'
+          $ref: '#/definitions/api.ProductListModel'
         type: array
       error:
         type: string
@@ -124,10 +123,19 @@ definitions:
       message:
         type: string
     type: object
-  api.GenericResponse-api_AttributeValue:
+  api.GenericResponse-api_OrderDetailResponse:
     properties:
       data:
-        $ref: '#/definitions/api.AttributeValue'
+        $ref: '#/definitions/api.OrderDetailResponse'
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  api.GenericResponse-api_ProductListModel:
+    properties:
+      data:
+        $ref: '#/definitions/api.ProductListModel'
       error:
         type: string
       message:
@@ -164,24 +172,6 @@ definitions:
     properties:
       data:
         $ref: '#/definitions/api.loginResponse'
-      error:
-        type: string
-      message:
-        type: string
-    type: object
-  api.GenericResponse-api_orderDetailResponse:
-    properties:
-      data:
-        $ref: '#/definitions/api.orderDetailResponse'
-      error:
-        type: string
-      message:
-        type: string
-    type: object
-  api.GenericResponse-api_productListModel:
-    properties:
-      data:
-        $ref: '#/definitions/api.productListModel'
       error:
         type: string
       message:
@@ -238,10 +228,10 @@ definitions:
       message:
         type: string
     type: object
-  api.GenericResponse-int64:
+  api.GenericResponse-gin_H:
     properties:
       data:
-        type: integer
+        $ref: '#/definitions/gin.H'
       error:
         type: string
       message:
@@ -301,6 +291,64 @@ definitions:
       message:
         type: string
     type: object
+  api.OrderDetailResponse:
+    properties:
+      id:
+        type: string
+      payment_info:
+        $ref: '#/definitions/api.PaymentInfo'
+      products:
+        items:
+          $ref: '#/definitions/api.OrderItemResponse'
+        type: array
+      status:
+        $ref: '#/definitions/repository.OrderStatus'
+      total:
+        type: number
+    type: object
+  api.OrderItemResponse:
+    properties:
+      id:
+        type: integer
+      image_url:
+        type: string
+      name:
+        type: string
+      quantity:
+        type: integer
+    type: object
+  api.OrderListResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      payment_status:
+        $ref: '#/definitions/repository.PaymentStatus'
+      status:
+        $ref: '#/definitions/repository.OrderStatus'
+      total:
+        type: number
+      total_items:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  api.PaymentInfo:
+    properties:
+      id:
+        type: string
+      payment_amount:
+        type: number
+      payment_gateway:
+        type: string
+      payment_method:
+        type: string
+      payment_status:
+        type: string
+      refund_id:
+        type: string
+    type: object
   api.PaymentRequest:
     properties:
       cart_id:
@@ -322,6 +370,34 @@ definitions:
       transaction_id:
         type: string
     type: object
+  api.ProductAttributeDetail:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      value:
+        type: string
+    type: object
+  api.ProductListModel:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      image_url:
+        type: string
+      name:
+        type: string
+      price_from:
+        type: number
+      price_to:
+        type: number
+      variant_count:
+        type: integer
+    type: object
   api.UpdateAddressParams:
     properties:
       address_1:
@@ -339,6 +415,98 @@ definitions:
       ward:
         type: string
     type: object
+  api.UpdateProductRequest:
+    properties:
+      category_id:
+        type: integer
+      description:
+        maxLength: 1000
+        minLength: 10
+        type: string
+      name:
+        maxLength: 100
+        minLength: 3
+        type: string
+      variants:
+        items:
+          $ref: '#/definitions/repository.UpdateVariantTxParams'
+        type: array
+    type: object
+  api.UpdateVariantRequest:
+    properties:
+      attributes:
+        items:
+          $ref: '#/definitions/api.VariantUpdateAttributeRequest'
+        type: array
+      name:
+        type: string
+      price:
+        type: number
+      sku:
+        type: string
+      stock:
+        type: integer
+    type: object
+  api.VariantAttributeRequest:
+    properties:
+      attribute_id:
+        type: integer
+      value:
+        type: string
+    required:
+    - attribute_id
+    - value
+    type: object
+  api.VariantRequest:
+    properties:
+      attributes:
+        items:
+          $ref: '#/definitions/api.VariantAttributeRequest'
+        type: array
+      discount:
+        minimum: 0
+        type: integer
+      price:
+        type: number
+      sku:
+        type: string
+      stock:
+        type: integer
+    required:
+    - price
+    - stock
+    type: object
+  api.VariantResponse:
+    properties:
+      attributes:
+        items:
+          $ref: '#/definitions/api.ProductAttributeDetail'
+        type: array
+      created_at:
+        type: string
+      discount:
+        type: integer
+      price:
+        type: number
+      sku:
+        type: string
+      stock:
+        type: integer
+      updated_at:
+        type: string
+      variant_id:
+        type: integer
+    type: object
+  api.VariantUpdateAttributeRequest:
+    properties:
+      id:
+        type: integer
+      value:
+        type: string
+    required:
+    - id
+    - value
+    type: object
   api.addProductToCartRequest:
     properties:
       product_id:
@@ -347,10 +515,12 @@ definitions:
       quantity:
         type: integer
       variant_id:
+        minimum: 1
         type: integer
     required:
     - product_id
     - quantity
+    - variant_id
     type: object
   api.addressResponse:
     properties:
@@ -367,8 +537,21 @@ definitions:
       ward:
         type: string
     type: object
+  api.cartItemAttributeModel:
+    properties:
+      name:
+        type: string
+      value:
+        type: string
+    type: object
   api.cartItemResponse:
     properties:
+      attributes:
+        items:
+          $ref: '#/definitions/api.cartItemAttributeModel'
+        type: array
+      discount:
+        type: integer
       id:
         type: integer
       image_url:
@@ -381,12 +564,12 @@ definitions:
         type: integer
       quantity:
         type: integer
+      sku:
+        type: string
+      stock:
+        type: integer
       variant_id:
         type: integer
-      variants:
-        items:
-          $ref: '#/definitions/api.productVariantModel'
-        type: array
     type: object
   api.cartResponse:
     properties:
@@ -397,13 +580,13 @@ definitions:
       created_at:
         type: string
       id:
-        type: integer
+        type: string
       total_price:
         type: number
       updated_at:
         type: string
       user_id:
-        type: integer
+        type: string
     type: object
   api.checkoutRequest:
     properties:
@@ -429,7 +612,7 @@ definitions:
   api.checkoutResponse:
     properties:
       order_id:
-        type: integer
+        type: string
       payment_id:
         type: string
     type: object
@@ -459,40 +642,8 @@ definitions:
         type: string
       products:
         items:
-          $ref: '#/definitions/api.productListModel'
+          $ref: '#/definitions/api.ProductListModel'
         type: array
-    type: object
-  api.createProductRequest:
-    properties:
-      category_id:
-        type: integer
-      description:
-        maxLength: 1000
-        minLength: 10
-        type: string
-      discount:
-        minimum: 0
-        type: integer
-      name:
-        maxLength: 100
-        minLength: 3
-        type: string
-      price:
-        type: number
-      sku:
-        maxLength: 100
-        type: string
-      stock:
-        type: integer
-      variants:
-        items:
-          $ref: '#/definitions/api.variantRequest'
-        type: array
-    required:
-    - description
-    - name
-    - price
-    - stock
     type: object
   api.createUserRequest:
     properties:
@@ -557,98 +708,6 @@ definitions:
     - password
     - username
     type: object
-  api.orderDetailResponse:
-    properties:
-      id:
-        type: integer
-      payment_info:
-        $ref: '#/definitions/api.paymentInfo'
-      products:
-        items:
-          $ref: '#/definitions/api.orderItemResp'
-        type: array
-      status:
-        $ref: '#/definitions/repository.OrderStatus'
-      total:
-        type: number
-    type: object
-  api.orderItemResp:
-    properties:
-      id:
-        type: integer
-      image_url:
-        type: string
-      name:
-        type: string
-      quantity:
-        type: integer
-    type: object
-  api.orderListResp:
-    properties:
-      created_at:
-        type: string
-      id:
-        type: integer
-      payment_status:
-        $ref: '#/definitions/repository.PaymentStatus'
-      status:
-        $ref: '#/definitions/repository.OrderStatus'
-      total:
-        type: number
-      total_items:
-        type: integer
-      updated_at:
-        type: string
-    type: object
-  api.paymentInfo:
-    properties:
-      id:
-        type: string
-      payment_amount:
-        type: number
-      payment_gateway:
-        type: string
-      payment_method:
-        type: string
-      payment_status:
-        type: string
-      refund_id:
-        type: string
-    type: object
-  api.productListModel:
-    properties:
-      created_at:
-        type: string
-      description:
-        type: string
-      id:
-        type: integer
-      image_url:
-        type: string
-      name:
-        type: string
-      price:
-        type: number
-      sku:
-        type: string
-      stock:
-        type: integer
-      variant_count:
-        type: integer
-    type: object
-  api.productVariantModel:
-    properties:
-      attributes:
-        additionalProperties:
-          type: string
-        type: object
-      id:
-        type: integer
-      name:
-        type: string
-      price:
-        type: number
-    type: object
   api.renewAccessTokenResp:
     properties:
       access_token:
@@ -663,34 +722,6 @@ definitions:
     required:
     - quantity
     type: object
-  api.updateProductRequest:
-    properties:
-      category_id:
-        type: integer
-      description:
-        maxLength: 1000
-        minLength: 10
-        type: string
-      discount:
-        maximum: 100
-        minimum: 0
-        type: integer
-      name:
-        maxLength: 100
-        minLength: 3
-        type: string
-      price:
-        type: number
-      sku:
-        maxLength: 100
-        type: string
-      stock:
-        type: integer
-      variants:
-        items:
-          $ref: '#/definitions/repository.UpdateVariantTxParams'
-        type: array
-    type: object
   api.updateUserRequest:
     properties:
       email:
@@ -704,25 +735,9 @@ definitions:
       role:
         $ref: '#/definitions/repository.UserRole'
       user_id:
-        minimum: 1
-        type: integer
+        type: string
     required:
     - user_id
-    type: object
-  api.updateVariantRequest:
-    properties:
-      attributes:
-        items:
-          type: integer
-        type: array
-      name:
-        type: string
-      price:
-        type: number
-      sku:
-        type: string
-      stock:
-        type: integer
     type: object
   api.userResponse:
     properties:
@@ -749,59 +764,10 @@ definitions:
       verified_phone:
         type: boolean
     type: object
-  api.variantRequest:
-    properties:
-      attributes:
-        items:
-          type: integer
-        type: array
-      name:
-        type: string
-      price:
-        type: number
-      sku:
-        type: string
-      stock:
-        type: integer
-    required:
-    - name
-    - price
-    - stock
-    type: object
-  api.variantResponse:
-    properties:
-      attributes:
-        items:
-          $ref: '#/definitions/api.AttributeValue'
-        type: array
-      created_at:
-        type: string
-      name:
-        type: string
-      price:
-        type: number
-      product_id:
-        type: integer
-      sku:
-        type: string
-      stock:
-        type: integer
-      updated_at:
-        type: string
-      variant_id:
-        type: integer
-    type: object
   big.Int:
     type: object
   gin.H:
     additionalProperties: {}
-    type: object
-  pgtype.Bool:
-    properties:
-      bool:
-        type: boolean
-      valid:
-        type: boolean
     type: object
   pgtype.InfinityModifier:
     enum:
@@ -862,13 +828,13 @@ definitions:
   repository.Cart:
     properties:
       cart_id:
-        type: integer
+        type: string
       created_at:
         type: string
       updated_at:
         type: string
       user_id:
-        type: integer
+        type: string
     type: object
   repository.Category:
     properties:
@@ -900,7 +866,7 @@ definitions:
       updated_at:
         type: string
       user_id:
-        type: integer
+        type: string
       username:
         type: string
       verified_email:
@@ -918,8 +884,6 @@ definitions:
         type: integer
       image_url:
         type: string
-      primary:
-        $ref: '#/definitions/pgtype.Bool'
       product_id:
         $ref: '#/definitions/pgtype.Int8'
       updated_at:
@@ -938,7 +902,7 @@ definitions:
       delivered_at:
         $ref: '#/definitions/pgtype.Timestamptz'
       order_id:
-        type: integer
+        type: string
       refunded_at:
         $ref: '#/definitions/pgtype.Timestamptz'
       status:
@@ -950,7 +914,7 @@ definitions:
       user_address_id:
         type: integer
       user_id:
-        type: integer
+        type: string
     type: object
   repository.OrderStatus:
     enum:
@@ -1018,17 +982,9 @@ definitions:
         type: string
       description:
         type: string
-      discount:
-        type: integer
       name:
         type: string
-      price:
-        $ref: '#/definitions/pgtype.Numeric'
       product_id:
-        type: integer
-      sku:
-        $ref: '#/definitions/pgtype.Text'
-      stock:
         type: integer
       updated_at:
         type: string
@@ -1037,19 +993,19 @@ definitions:
     properties:
       created_at:
         type: string
+      discount:
+        type: integer
+      price:
+        $ref: '#/definitions/pgtype.Numeric'
       product_id:
+        type: integer
+      sku:
+        $ref: '#/definitions/pgtype.Text'
+      stock_quantity:
         type: integer
       updated_at:
         type: string
       variant_id:
-        type: integer
-      variant_name:
-        type: string
-      variant_price:
-        $ref: '#/definitions/pgtype.Numeric'
-      variant_sku:
-        $ref: '#/definitions/pgtype.Text'
-      variant_stock:
         type: integer
     type: object
   repository.UpdateUserRow:
@@ -1065,7 +1021,7 @@ definitions:
       updated_at:
         type: string
       user_id:
-        type: integer
+        type: string
       username:
         type: string
       verified_email:
@@ -1073,12 +1029,22 @@ definitions:
       verified_phone:
         type: boolean
     type: object
+  repository.UpdateVariantAttributeParams:
+    properties:
+      value:
+        $ref: '#/definitions/pgtype.Text'
+      variant_attribute_id:
+        type: integer
+    type: object
   repository.UpdateVariantTxParams:
     properties:
       attributes:
         items:
-          type: integer
+          $ref: '#/definitions/repository.UpdateVariantAttributeParams'
         type: array
+      discount:
+        minimum: 0
+        type: integer
       name:
         minLength: 1
         type: string
@@ -1291,114 +1257,6 @@ paths:
           schema:
             $ref: '#/definitions/api.errorResponse'
       summary: Create an attribute
-      tags:
-      - attributes
-  /attributes/{attribute_id}/values:
-    post:
-      consumes:
-      - application/json
-      description: Create attribute values
-      parameters:
-      - description: Attribute ID
-        in: path
-        name: attribute_id
-        required: true
-        type: integer
-      - description: Attribute values
-        in: body
-        name: values
-        required: true
-        schema:
-          $ref: '#/definitions/api.CreateAttributeValueParams'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/api.GenericResponse-int64'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.errorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.errorResponse'
-      summary: Create attribute values
-      tags:
-      - attributes
-  /attributes/{attribute_id}/values/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Remove attribute value
-      parameters:
-      - description: Attribute ID
-        in: path
-        name: attribute_id
-        required: true
-        type: integer
-      - description: Attribute value ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: No Content
-          schema:
-            $ref: '#/definitions/api.GenericResponse-bool'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.errorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.errorResponse'
-      summary: Remove attribute value
-      tags:
-      - attributes
-    put:
-      consumes:
-      - application/json
-      description: Update attribute value
-      parameters:
-      - description: Attribute ID
-        in: path
-        name: attribute_id
-        required: true
-        type: integer
-      - description: Attribute value ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Attribute value
-        in: body
-        name: value
-        required: true
-        schema:
-          $ref: '#/definitions/api.AttributeValue'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.GenericResponse-api_AttributeValue'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.errorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.errorResponse'
-      summary: Update attribute value
       tags:
       - attributes
   /attributes/{id}:
@@ -1855,7 +1713,99 @@ paths:
           schema:
             $ref: '#/definitions/api.errorResponse'
       summary: Update the sort order of a product in a collection
-  /orders:
+  /images/product:
+    post:
+      consumes:
+      - application/json
+      description: upload a product image by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: integer
+      - description: Image file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.GenericResponse-array_repository_Image'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Upload a product image by ID
+      tags:
+      - images
+  /images/product/{product_id}:
+    get:
+      consumes:
+      - application/json
+      description: get list of product image by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.GenericResponse-array_repository_Image'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get list of product image by ID
+      tags:
+      - images
+  /images/product/{product_id}/remove:
+    delete:
+      consumes:
+      - application/json
+      description: remove a product image by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.GenericResponse-bool'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Remove a product image by ID
+      tags:
+      - images
+  /order:
     get:
       consumes:
       - application/json
@@ -1875,7 +1825,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.orderListResp'
+            $ref: '#/definitions/api.OrderListResponse'
         "400":
           description: Bad Request
           schema:
@@ -1893,7 +1843,7 @@ paths:
       summary: List orders
       tags:
       - orders
-  /orders/{id}:
+  /order/{order_id}:
     get:
       consumes:
       - application/json
@@ -1910,7 +1860,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-api_orderDetailResponse'
+            $ref: '#/definitions/api.GenericResponse-api_OrderDetailResponse'
         "400":
           description: Bad Request
           schema:
@@ -1928,7 +1878,7 @@ paths:
       summary: Get order detail
       tags:
       - orders
-  /orders/{id}/cancel:
+  /order/{order_id}/cancel:
     put:
       consumes:
       - application/json
@@ -1963,7 +1913,7 @@ paths:
       summary: Cancel order
       tags:
       - orders
-  /orders/{id}/refund:
+  /order/{order_id}/refund:
     put:
       consumes:
       - application/json
@@ -1998,7 +1948,7 @@ paths:
       summary: Refund order
       tags:
       - orders
-  /orders/{id}/status:
+  /order/{order_id}/status:
     put:
       consumes:
       - application/json
@@ -2169,6 +2119,75 @@ paths:
       summary: Change payment status
       tags:
       - payment
+  /product:
+    post:
+      consumes:
+      - application/json
+      description: create a new product with the input payload
+      parameters:
+      - description: Product input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/api.CreateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.GenericResponse-repository_Product'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Create a new product
+      tags:
+      - products
+  /product/{product_id}/variant/{variant_id}:
+    put:
+      consumes:
+      - application/json
+      description: Update a variant
+      parameters:
+      - description: Variant ID
+        in: path
+        name: variant_id
+        required: true
+        type: integer
+      - description: Update Variant Request
+        in: body
+        name: UpdateVariantRequest
+        required: true
+        schema:
+          $ref: '#/definitions/api.UpdateVariantRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/repository.ProductVariant'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+      summary: Update a variant
+      tags:
+      - variant
   /products:
     get:
       consumes:
@@ -2192,7 +2211,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/api.GenericListResponse-api_productListModel'
+              $ref: '#/definitions/api.GenericListResponse-api_ProductListModel'
             type: array
         "404":
           description: Not Found
@@ -2203,35 +2222,6 @@ paths:
           schema:
             $ref: '#/definitions/gin.H'
       summary: Get list of products
-      tags:
-      - products
-    post:
-      consumes:
-      - application/json
-      description: create a new product with the input payload
-      parameters:
-      - description: Product input
-        in: body
-        name: input
-        required: true
-        schema:
-          $ref: '#/definitions/api.createProductRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.GenericResponse-repository_Product'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/gin.H'
-      summary: Create a new product
       tags:
       - products
   /products/{product_id}:
@@ -2279,7 +2269,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-api_productListModel'
+            $ref: '#/definitions/api.GenericResponse-api_ProductListModel'
         "404":
           description: Not Found
           schema:
@@ -2306,7 +2296,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/api.updateProductRequest'
+          $ref: '#/definitions/api.UpdateProductRequest'
       produces:
       - application/json
       responses:
@@ -2323,132 +2313,6 @@ paths:
           schema:
             $ref: '#/definitions/gin.H'
       summary: Update a product by ID
-      tags:
-      - products
-  /products/{product_id}/images:
-    get:
-      consumes:
-      - application/json
-      description: get list of product images by ID
-      parameters:
-      - description: Product ID
-        in: path
-        name: product_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.GenericResponse-array_repository_Image'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/gin.H'
-      summary: Get list of product images by ID
-      tags:
-      - products
-  /products/{product_id}/images/{image_id}/primary:
-    put:
-      consumes:
-      - application/json
-      description: set a product image as primary by ID
-      parameters:
-      - description: Product ID
-        in: path
-        name: product_id
-        required: true
-        type: integer
-      - description: Image ID
-        in: path
-        name: image_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.GenericResponse-bool'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/gin.H'
-      summary: Set a product image as primary by ID
-      tags:
-      - products
-  /products/{product_id}/remove-image:
-    delete:
-      consumes:
-      - application/json
-      description: remove a product image by ID
-      parameters:
-      - description: Product ID
-        in: path
-        name: product_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.GenericResponse-bool'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/gin.H'
-      summary: Remove a product image by ID
-      tags:
-      - products
-  /products/{product_id}/upload-image:
-    post:
-      consumes:
-      - application/json
-      description: upload a product image by ID
-      parameters:
-      - description: Product ID
-        in: path
-        name: product_id
-        required: true
-        type: integer
-      - description: Image file
-        in: formData
-        name: file
-        required: true
-        type: file
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.GenericResponse-array_repository_Image'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/gin.H'
-      summary: Upload a product image by ID
       tags:
       - products
   /users:
@@ -2631,10 +2495,10 @@ paths:
         type: integer
       - description: Create Variant Request
         in: body
-        name: variantRequest
+        name: VariantRequest
         required: true
         schema:
-          $ref: '#/definitions/api.variantRequest'
+          $ref: '#/definitions/api.VariantRequest'
       produces:
       - application/json
       responses:
@@ -2704,7 +2568,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.variantResponse'
+            $ref: '#/definitions/api.VariantResponse'
         "400":
           description: Bad Request
           schema:
@@ -2720,42 +2584,27 @@ paths:
       summary: Get a variant
       tags:
       - variant
-    put:
+  /webhook/stripe:
+    post:
       consumes:
       - application/json
-      description: Update a variant
-      parameters:
-      - description: Variant ID
-        in: path
-        name: variant_id
-        required: true
-        type: integer
-      - description: Update Variant Request
-        in: body
-        name: updateVariantRequest
-        required: true
-        schema:
-          $ref: '#/definitions/api.updateVariantRequest'
+      description: Stripe webhook
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/repository.ProductVariant'
+            $ref: '#/definitions/api.GenericResponse-gin_H'
         "400":
           description: Bad Request
-          schema:
-            $ref: '#/definitions/api.errorResponse'
-        "404":
-          description: Not Found
           schema:
             $ref: '#/definitions/api.errorResponse'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/api.errorResponse'
-      summary: Update a variant
+      summary: Stripe webhook
       tags:
-      - variant
+      - webhook
 swagger: "2.0"

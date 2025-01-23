@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	repository "github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/util"
+	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 )
 
@@ -357,7 +357,7 @@ func (sv *Server) updateUser(c *gin.Context) {
 	}
 
 	if req.FullName != nil {
-		arg.Fullname = util.GetPgTypeText(*req.FullName)
+		arg.Fullname = utils.GetPgTypeText(*req.FullName)
 	}
 
 	if user.Role == repository.UserRoleAdmin {

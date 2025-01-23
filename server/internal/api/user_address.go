@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/util"
+	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
 // ------------------------------ Params ------------------------------
@@ -104,7 +104,7 @@ func (sv *Server) createAddress(c *gin.Context) {
 	}
 
 	if req.Ward != "" {
-		payload.Ward = util.GetPgTypeText(req.Ward)
+		payload.Ward = utils.GetPgTypeText(req.Ward)
 	}
 
 	address, err := sv.repo.CreateAddress(c, payload)
@@ -206,23 +206,23 @@ func (sv *Server) updateAddress(c *gin.Context) {
 	}
 
 	if input.Phone != nil {
-		payload.Phone = util.GetPgTypeText(*input.Phone)
+		payload.Phone = utils.GetPgTypeText(*input.Phone)
 	}
 
 	if input.City != nil {
-		payload.City = util.GetPgTypeText(*input.City)
+		payload.City = utils.GetPgTypeText(*input.City)
 	}
 
 	if input.Address1 != nil {
-		payload.Street = util.GetPgTypeText(*input.Address1)
+		payload.Street = utils.GetPgTypeText(*input.Address1)
 	}
 
 	if input.Ward != nil {
-		payload.Ward = util.GetPgTypeText(*input.Ward)
+		payload.Ward = utils.GetPgTypeText(*input.Ward)
 	}
 
 	if input.District != nil {
-		payload.District = util.GetPgTypeText(*input.District)
+		payload.District = utils.GetPgTypeText(*input.District)
 	}
 
 	if input.IsDefault != nil {

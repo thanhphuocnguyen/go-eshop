@@ -4,14 +4,14 @@ import (
 	"context"
 
 	"github.com/rs/zerolog/log"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/util"
+	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
 type CreateVariantTxParam struct {
 	ProductID    int64
 	VariantPrice float64
+	Discount     int16
 	VariantSku   *string
-	Discount     *int16
 	VariantStock int32
 	Attributes   []struct {
 		AttributeID int32
@@ -36,14 +36,13 @@ func (s *pgRepo) CreateVariantTx(ctx context.Context, arg CreateVariantTxParam) 
 func createVariantUtil(ctx context.Context, q *Queries, arg CreateVariantTxParam) (*ProductVariant, error) {
 	createParam := CreateVariantParams{
 		ProductID:     arg.ProductID,
-		Price:         util.GetPgNumericFromFloat(arg.VariantPrice),
+		Price:         utils.GetPgNumericFromFloat(arg.VariantPrice),
 		StockQuantity: arg.VariantStock,
+		Discount:      arg.Discount,
 	}
-	if arg.Discount != nil {
-		createParam.Discount = *arg.Discount
-	}
+
 	if arg.VariantSku != nil {
-		createParam.Sku = util.GetPgTypeText(*arg.VariantSku)
+		createParam.Sku = utils.GetPgTypeText(*arg.VariantSku)
 	}
 
 	variant, err := q.CreateVariant(ctx, createParam)

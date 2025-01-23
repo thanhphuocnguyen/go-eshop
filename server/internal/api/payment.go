@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/util"
+	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	paymentService "github.com/thanhphuocnguyen/go-eshop/pkg/payment"
 )
 
@@ -241,7 +241,7 @@ func (sv *Server) changePaymentStatus(c *gin.Context) {
 				OrderStatus: repository.OrderStatusDelivered,
 				Valid:       true,
 			},
-			DeliveredAt: util.GetPgTypeTimestamp(time.Now()),
+			DeliveredAt: utils.GetPgTypeTimestamp(time.Now()),
 		})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, mapErrResp(err))

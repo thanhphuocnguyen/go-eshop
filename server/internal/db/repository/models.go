@@ -394,10 +394,10 @@ type Order struct {
 
 type OrderItem struct {
 	OrderItemID int64          `json:"order_item_id"`
+	OrderID     uuid.UUID      `json:"order_id"`
 	ProductID   int64          `json:"product_id"`
 	VariantID   int64          `json:"variant_id"`
-	OrderID     uuid.UUID      `json:"order_id"`
-	Quantity    int32          `json:"quantity"`
+	Quantity    int16          `json:"quantity"`
 	Price       pgtype.Numeric `json:"price"`
 	CreatedAt   time.Time      `json:"created_at"`
 }

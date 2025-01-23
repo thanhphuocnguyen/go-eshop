@@ -2,26 +2,26 @@ CREATE TABLE
     "orders" (
         "order_id" UUID NOT NULL PRIMARY KEY,
         "user_id" UUID NOT NULL REFERENCES "users" ("user_id"),
-        "user_address_id" bigint NOT NULL REFERENCES "user_addresses" ("user_address_id"),
+        "user_address_id" BIGINT NOT NULL REFERENCES "user_addresses" ("user_address_id"),
         "total_price" DECIMAL(10, 2) NOT NULL,
         "status" order_status NOT NULL DEFAULT 'pending',
-        "confirmed_at" timestamptz,
-        "delivered_at" timestamptz,
-        "cancelled_at" timestamptz,
-        "refunded_at" timestamptz,
-        "updated_at" timestamptz NOT NULL DEFAULT now (),
-        "created_at" timestamptz NOT NULL DEFAULT now ()
+        "confirmed_at" TIMESTAMPTZ,
+        "delivered_at" TIMESTAMPTZ,
+        "cancelled_at" TIMESTAMPTZ,
+        "refunded_at" TIMESTAMPTZ,
+        "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
 CREATE TABLE
     "order_items" (
-        "order_item_id" bigserial PRIMARY KEY,
-        "product_id" bigint NOT NULL REFERENCES "products" ("product_id"),
-        "variant_id" bigint NOT NULL REFERENCES "product_variants" ("variant_id"),
+        "order_item_id" BIGSERIAL PRIMARY KEY,
         "order_id" UUID NOT NULL REFERENCES "orders" ("order_id") ON DELETE CASCADE,
-        "quantity" int NOT NULL,
+        "product_id" BIGINT NOT NULL REFERENCES "products" ("product_id"),
+        "variant_id" BIGINT NOT NULL REFERENCES "product_variants" ("variant_id"),
+        "quantity" SMALLINT NOT NULL,
         "price" DECIMAL(10, 2) NOT NULL,
-        "created_at" timestamptz NOT NULL DEFAULT now (),
+        "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         CHECK ("quantity" > 0),
         CHECK ("price" > 0),
         CHECK (

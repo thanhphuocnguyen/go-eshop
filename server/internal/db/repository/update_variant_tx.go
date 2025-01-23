@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/rs/zerolog/log"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/util"
+	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
 type UpdateVariantTxParams struct {
@@ -13,6 +13,7 @@ type UpdateVariantTxParams struct {
 	Name       *string                        `json:"name" binding:"omitempty,min=1"`
 	Sku        *string                        `json:"sku" binding:"omitempty,min=1"`
 	Stock      *int32                         `json:"stock" binding:"omitempty,min=0"`
+	Discount   *int16                         `json:"discount" binding:"omitempty,min=0"`
 	Attributes []UpdateVariantAttributeParams `json:"attributes" binding:"omitempty,dive,min=1"`
 }
 
@@ -43,13 +44,16 @@ func updateVariantUtil(c context.Context, q *Queries, params UpdateVariantTxPara
 	}
 
 	if params.Sku != nil {
-		updateParams.Sku = util.GetPgTypeText(*params.Sku)
+		updateParams.Sku = utils.GetPgTypeText(*params.Sku)
 	}
 	if params.Price != nil {
-		updateParams.Price = util.GetPgNumericFromFloat(*params.Price)
+		updateParams.Price = utils.GetPgNumericFromFloat(*params.Price)
 	}
 	if params.Stock != nil {
-		updateParams.StockQuantity = util.GetPgTypeInt4(*params.Stock)
+		updateParams.StockQuantity = utils.GetPgTypeInt4(*params.Stock)
+	}
+	if params.Discount != nil {
+		updateParams.Discount = utils.GetPgTypeInt2(*params.Discount)
 	}
 
 	if len(params.Attributes) > 0 {
@@ -72,5 +76,6 @@ func updateVariantUtil(c context.Context, q *Queries, params UpdateVariantTxPara
 		log.Error().Err(err).Msg("UpdateVariant")
 		return updated, nil, err
 	}
-	return updated, nil, nil
+
+	return updated, attributes, nil
 }
