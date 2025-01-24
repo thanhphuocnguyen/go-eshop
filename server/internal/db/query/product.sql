@@ -29,7 +29,7 @@ WHERE
 -- name: GetProductDetail :many
 SELECT
     sqlc.embed(p),
-    pv.variant_id, pv.sku, pv.price, pv.stock_quantity,
+    pv.variant_id, pv.sku, pv.price, pv.stock_quantity, pv.discount,
     a.attribute_id AS attribute_id, a.name as attribute_name,
     va.variant_attribute_id AS variant_attribute_id, va.value as variant_attribute_value,
     img.image_id, img.product_id as img_product_id, img.variant_id as img_variant_id, img.image_url

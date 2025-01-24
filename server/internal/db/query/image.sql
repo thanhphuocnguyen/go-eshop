@@ -7,17 +7,11 @@ SELECT * FROM images WHERE image_id = $1 LIMIT 1;
 -- name: GetImageByExternalID :one
 SELECT * FROM images WHERE external_id = $1 LIMIT 1;
 
--- name: GetImagesByProductID :many
-SELECT * FROM images WHERE product_id = $1;
+-- name: GetImageByProductID :one
+SELECT * FROM images WHERE product_id = $1 AND variant_id = NULL LIMIT 1;
 
--- name: GetImagesByVariantID :many
-SELECT * FROM images WHERE variant_id = $1;
-
--- name: GetPrimaryImageByProductID :one
-SELECT * FROM images WHERE product_id = $1 AND "primary" = TRUE LIMIT 1;
-
--- name: GetPrimaryImageByVariantID :one
-SELECT * FROM images WHERE variant_id = $1 AND "primary" = TRUE LIMIT 1;
+-- name: GetImageByVariantID :one
+SELECT * FROM images WHERE variant_id = $1 LIMIT 1;
 
 -- name: UpdateImage :exec
 UPDATE images 

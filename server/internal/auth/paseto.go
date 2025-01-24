@@ -68,10 +68,12 @@ func getPayloadFromParsedData(t *paseto.Token) (*Payload, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	id, err := (t.GetString("id"))
 	if err != nil {
 		return nil, err
 	}
+
 	idUUID, err := uuid.Parse(id)
 	if err != nil {
 		return nil, err

@@ -136,21 +136,19 @@ func (sv *Server) initializeRouter() {
 			// product images
 			productImage := images.Group("product").
 				Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin, repository.UserRoleModerator))
-			productImage.POST("", sv.uploadProductImage)
+			productImage.POST(":product_id", sv.uploadProductImage)
 			productImage.GET(":product_id", sv.getProductImage)
-			productImage.PUT(":product_id", sv.uploadProductImage)
 			productImage.DELETE(":product_id/remove/:image_id", sv.removeProductImage)
 
 			// TODO: implement variant images
 			// variant images
-			variantImage := images.Group("variant").
+			variantImage := images.Group("product/:product_id/variant").
 				Use(authMiddleware(sv.tokenGenerator), roleMiddleware(
 					sv.repo,
 					repository.UserRoleAdmin,
 					repository.UserRoleModerator))
-			variantImage.POST("", sv.uploadVariantImage)
+			variantImage.POST(":variant_id", sv.uploadVariantImage)
 			variantImage.GET(":variant_id", sv.getVariantImage)
-			variantImage.PUT(":variant_id", sv.uploadVariantImage)
 			variantImage.DELETE(":variant_id/remove/:image_id", sv.removeVariantImage)
 		}
 

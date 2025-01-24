@@ -38,6 +38,7 @@ type ProductVariantModel struct {
 	ID         int64                    `json:"id"`
 	Price      float64                  `json:"price"`
 	StockQty   int32                    `json:"stock_qty"`
+	Discount   int16                    `json:"discount"`
 	Sku        *string                  `json:"sku,omitempty"`
 	Attributes []ProductAttributeDetail `json:"attributes,omitempty"`
 	ImageUrl   *string                  `json:"image_url,omitempty"`
@@ -49,7 +50,7 @@ type ProductDetailModel struct {
 	Description string                `json:"description"`
 	UpdatedAt   string                `json:"updated_at"`
 	CreatedAt   string                `json:"created_at"`
-	Images      []ImageModel          `json:"images,omitempty"`
+	ImageUrl    string                `json:"image_url,omitempty"`
 	Variants    []ProductVariantModel `json:"variants,omitempty"`
 }
 
@@ -78,8 +79,10 @@ func mapToProductResponse(productRows []repository.GetProductDetailRow) ProductD
 		Description: product.Description,
 		UpdatedAt:   product.UpdatedAt.String(),
 		CreatedAt:   product.CreatedAt.String(),
-		Images:      make([]ImageModel, 0),
 		Variants:    make([]ProductVariantModel, 0),
+	}
+	if productRows[0].ImgProductID.Valid {
+		resp.ImageUrl = productRows[0].ImageUrl.String
 	}
 
 	for i, row := range productRows {
@@ -92,6 +95,7 @@ func mapToProductResponse(productRows []repository.GetProductDetailRow) ProductD
 				ID:       row.VariantID,
 				Price:    price.Float64,
 				StockQty: row.StockQuantity,
+				Discount: row.Discount,
 				Attributes: []ProductAttributeDetail{
 					{
 						ID:    row.VariantAttributeID,
@@ -104,31 +108,20 @@ func mapToProductResponse(productRows []repository.GetProductDetailRow) ProductD
 				variantModel.Sku = &row.Sku.String
 			}
 
-			if row.ImgVariantID.Valid {
-				variantModel.ImageUrl = &row.ImageUrl.String
-			}
 			resp.Variants = append(
 				resp.Variants,
 				variantModel,
 			)
+		} else if row.ImgVariantID.Valid && row.ImgVariantID.Int64 == row.VariantID && resp.Variants[len(resp.Variants)-1].ID == row.VariantID {
+			resp.Variants[len(resp.Variants)-1].ImageUrl = &row.ImageUrl.String
 		} else if row.VariantID == productRows[i-1].VariantID && row.AttributeID != productRows[i-1].AttributeID {
 			// add attribute value to existing variant
-			lastVariant := &resp.Variants[len(resp.Variants)-1]
+			lastVariant := resp.Variants[len(resp.Variants)-1]
 			lastVariant.Attributes = append(lastVariant.Attributes, ProductAttributeDetail{
 				ID:    row.VariantAttributeID,
 				Name:  row.AttributeName,
 				Value: row.VariantAttributeValue,
 			})
-		}
-
-		// Add images for product or variants
-		if row.ImgProductID.Valid {
-			if row.ImageUrl.String != resp.Images[len(resp.Images)-1].ImageUrl {
-				resp.Images = append(resp.Images, ImageModel{
-					ID:       row.ImageID.Int32,
-					ImageUrl: row.ImageUrl.String,
-				})
-			}
 		}
 	}
 	return resp

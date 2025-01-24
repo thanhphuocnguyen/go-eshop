@@ -89,76 +89,12 @@ func (q *Queries) GetImageByID(ctx context.Context, imageID int32) (Image, error
 	return i, err
 }
 
-const getImagesByProductID = `-- name: GetImagesByProductID :many
-SELECT image_id, product_id, variant_id, image_url, external_id, created_at, updated_at FROM images WHERE product_id = $1
+const getImageByProductID = `-- name: GetImageByProductID :one
+SELECT image_id, product_id, variant_id, image_url, external_id, created_at, updated_at FROM images WHERE product_id = $1 AND variant_id = NULL LIMIT 1
 `
 
-func (q *Queries) GetImagesByProductID(ctx context.Context, productID pgtype.Int8) ([]Image, error) {
-	rows, err := q.db.Query(ctx, getImagesByProductID, productID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Image
-	for rows.Next() {
-		var i Image
-		if err := rows.Scan(
-			&i.ImageID,
-			&i.ProductID,
-			&i.VariantID,
-			&i.ImageUrl,
-			&i.ExternalID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getImagesByVariantID = `-- name: GetImagesByVariantID :many
-SELECT image_id, product_id, variant_id, image_url, external_id, created_at, updated_at FROM images WHERE variant_id = $1
-`
-
-func (q *Queries) GetImagesByVariantID(ctx context.Context, variantID pgtype.Int8) ([]Image, error) {
-	rows, err := q.db.Query(ctx, getImagesByVariantID, variantID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Image
-	for rows.Next() {
-		var i Image
-		if err := rows.Scan(
-			&i.ImageID,
-			&i.ProductID,
-			&i.VariantID,
-			&i.ImageUrl,
-			&i.ExternalID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getPrimaryImageByProductID = `-- name: GetPrimaryImageByProductID :one
-SELECT image_id, product_id, variant_id, image_url, external_id, created_at, updated_at FROM images WHERE product_id = $1 AND "primary" = TRUE LIMIT 1
-`
-
-func (q *Queries) GetPrimaryImageByProductID(ctx context.Context, productID pgtype.Int8) (Image, error) {
-	row := q.db.QueryRow(ctx, getPrimaryImageByProductID, productID)
+func (q *Queries) GetImageByProductID(ctx context.Context, productID pgtype.Int8) (Image, error) {
+	row := q.db.QueryRow(ctx, getImageByProductID, productID)
 	var i Image
 	err := row.Scan(
 		&i.ImageID,
@@ -172,12 +108,12 @@ func (q *Queries) GetPrimaryImageByProductID(ctx context.Context, productID pgty
 	return i, err
 }
 
-const getPrimaryImageByVariantID = `-- name: GetPrimaryImageByVariantID :one
-SELECT image_id, product_id, variant_id, image_url, external_id, created_at, updated_at FROM images WHERE variant_id = $1 AND "primary" = TRUE LIMIT 1
+const getImageByVariantID = `-- name: GetImageByVariantID :one
+SELECT image_id, product_id, variant_id, image_url, external_id, created_at, updated_at FROM images WHERE variant_id = $1 LIMIT 1
 `
 
-func (q *Queries) GetPrimaryImageByVariantID(ctx context.Context, variantID pgtype.Int8) (Image, error) {
-	row := q.db.QueryRow(ctx, getPrimaryImageByVariantID, variantID)
+func (q *Queries) GetImageByVariantID(ctx context.Context, variantID pgtype.Int8) (Image, error) {
+	row := q.db.QueryRow(ctx, getImageByVariantID, variantID)
 	var i Image
 	err := row.Scan(
 		&i.ImageID,

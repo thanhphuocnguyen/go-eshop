@@ -7,7 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/config"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	logger "github.com/thanhphuocnguyen/go-eshop/pkg/log"
+	app_logger "github.com/thanhphuocnguyen/go-eshop/pkg/logger"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/mailer"
 )
 
@@ -35,7 +35,7 @@ func NewRedisTaskProcessor(
 	mailer mailer.EmailSender,
 	cfg config.Config,
 ) TaskProcessor {
-	logger := logger.NewLogger(nil)
+	logger := app_logger.NewLogger(nil)
 	server := asynq.NewServer(redisOtp, asynq.Config{
 		Concurrency: 10,
 		Queues: map[string]int{

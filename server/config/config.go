@@ -21,6 +21,7 @@ type Config struct {
 	StripePublishableKey string        `mapstructure:"STRIPE_PUBLISHABLE_KEY"`
 	SmtpUsername         string        `mapstructure:"SMTP_USERNAME"`
 	SmtpPassword         string        `mapstructure:"SMTP_PASSWORD"`
+	SymmetricKey         string        `mapstructure:"SYMMETRIC_KEY"`
 }
 
 func LoadConfig(path string) (cfg Config, err error) {

@@ -136,7 +136,7 @@ func (q *Queries) GetProductByID(ctx context.Context, arg GetProductByIDParams) 
 const getProductDetail = `-- name: GetProductDetail :many
 SELECT
     p.product_id, p.name, p.description, p.archived, p.created_at, p.updated_at,
-    pv.variant_id, pv.sku, pv.price, pv.stock_quantity,
+    pv.variant_id, pv.sku, pv.price, pv.stock_quantity, pv.discount,
     a.attribute_id AS attribute_id, a.name as attribute_name,
     va.variant_attribute_id AS variant_attribute_id, va.value as variant_attribute_value,
     img.image_id, img.product_id as img_product_id, img.variant_id as img_variant_id, img.image_url
@@ -164,6 +164,7 @@ type GetProductDetailRow struct {
 	Sku                   pgtype.Text    `json:"sku"`
 	Price                 pgtype.Numeric `json:"price"`
 	StockQuantity         int32          `json:"stock_quantity"`
+	Discount              int16          `json:"discount"`
 	AttributeID           int32          `json:"attribute_id"`
 	AttributeName         string         `json:"attribute_name"`
 	VariantAttributeID    int32          `json:"variant_attribute_id"`
@@ -194,6 +195,7 @@ func (q *Queries) GetProductDetail(ctx context.Context, arg GetProductDetailPara
 			&i.Sku,
 			&i.Price,
 			&i.StockQuantity,
+			&i.Discount,
 			&i.AttributeID,
 			&i.AttributeName,
 			&i.VariantAttributeID,

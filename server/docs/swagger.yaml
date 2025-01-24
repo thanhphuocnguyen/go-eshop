@@ -255,10 +255,28 @@ definitions:
       message:
         type: string
     type: object
+  api.GenericResponse-repository_CategoryProduct:
+    properties:
+      data:
+        $ref: '#/definitions/repository.CategoryProduct'
+      error:
+        type: string
+      message:
+        type: string
+    type: object
   api.GenericResponse-repository_CreateUserRow:
     properties:
       data:
         $ref: '#/definitions/repository.CreateUserRow'
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  api.GenericResponse-repository_Image:
+    properties:
+      data:
+        $ref: '#/definitions/repository.Image'
       error:
         type: string
       message:
@@ -385,6 +403,8 @@ definitions:
         type: string
       description:
         type: string
+      discount_to:
+        type: integer
       id:
         type: integer
       image_url:
@@ -521,6 +541,11 @@ definitions:
     - product_id
     - quantity
     - variant_id
+    type: object
+  api.addProductToCollectionRequest:
+    properties:
+      product_id:
+        type: integer
     type: object
   api.addressResponse:
     properties:
@@ -852,6 +877,15 @@ definitions:
         type: integer
       updated_at:
         type: string
+    type: object
+  repository.CategoryProduct:
+    properties:
+      category_id:
+        type: integer
+      product_id:
+        type: integer
+      sort_order:
+        type: integer
     type: object
   repository.CreateUserRow:
     properties:
@@ -1643,6 +1677,39 @@ paths:
           schema:
             $ref: '#/definitions/api.errorResponse'
       summary: Get a collection by ID
+    put:
+      consumes:
+      - application/json
+      description: Update a collection
+      operationId: update-collection
+      parameters:
+      - description: Collection ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Collection request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.collectionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.GenericResponse-repository_Category'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+      summary: Update a collection
   /collections/{id}/product:
     delete:
       consumes:
@@ -1675,6 +1742,39 @@ paths:
           schema:
             $ref: '#/definitions/api.errorResponse'
       summary: Delete a product from a collection
+    post:
+      consumes:
+      - application/json
+      description: Add a product to a collection
+      operationId: add-product-to-collection
+      parameters:
+      - description: Collection ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Product ID
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.addProductToCollectionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/api.GenericResponse-repository_CategoryProduct'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+      summary: Add a product to a collection
   /collections/{id}/product/sort-order:
     put:
       consumes:
@@ -1764,7 +1864,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-array_repository_Image'
+            $ref: '#/definitions/api.GenericResponse-repository_Image'
         "404":
           description: Not Found
           schema:
@@ -1805,19 +1905,21 @@ paths:
       summary: Remove a product image by ID
       tags:
       - images
-  /order:
+  /images/product/{product_id}/variant/{variant_id}:
     get:
       consumes:
       - application/json
-      description: List orders of the current user
+      description: get list of variant image by ID
       parameters:
-      - description: Limit
-        in: query
-        name: limit
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
         type: integer
-      - description: Offset
-        in: query
-        name: offset
+      - description: Variant ID
+        in: path
+        name: variant_id
+        required: true
         type: integer
       produces:
       - application/json
@@ -1825,24 +1927,52 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.OrderListResponse'
-        "400":
-          description: Bad Request
+            $ref: '#/definitions/api.GenericResponse-repository_Image'
+        "404":
+          description: Not Found
           schema:
-            $ref: '#/definitions/api.errorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/gin.H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: List orders
+            $ref: '#/definitions/gin.H'
+      summary: Get list of variant image by ID
       tags:
-      - orders
+      - images
+  /images/product/{product_id}/variant/{variant_id}/remove:
+    delete:
+      consumes:
+      - application/json
+      description: remove a variant image by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: integer
+      - description: Variant ID
+        in: path
+        name: variant_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.GenericResponse-bool'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Remove a variant image by ID
+      tags:
+      - images
   /order/{order_id}:
     get:
       consumes:
@@ -1987,6 +2117,44 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Change order status
+      tags:
+      - orders
+  /order/list:
+    get:
+      consumes:
+      - application/json
+      description: List orders of the current user
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.OrderListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List orders
       tags:
       - orders
   /payment:
