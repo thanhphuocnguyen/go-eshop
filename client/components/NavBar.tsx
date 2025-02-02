@@ -21,6 +21,8 @@ import {
   ShoppingBagIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
+import Image from 'next/image';
+import Link from 'next/link';
 
 const navigation = {
   categories: [
@@ -328,14 +330,16 @@ export default function NavBar() {
 
               {/* Logo */}
               <div className='ml-4 flex lg:ml-0'>
-                <a href='#'>
+                <Link href='/'>
                   <span className='sr-only'>Your Company</span>
-                  <img
+                  <Image
                     alt=''
-                    src='https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=600'
+                    src='/images/logo/742f8029-b40b-42c5-982a-85b0aeb6f3c0.webp'
                     className='h-8 w-auto'
+                    width={50}
+                    height={50}
                   />
-                </a>
+                </Link>
               </div>
 
               {/* Flyout menus */}
@@ -438,19 +442,19 @@ export default function NavBar() {
 
               <div className='ml-auto flex items-center'>
                 <div className='hidden lg:flex lg:flex-1 lg:items-center lg:justify-end lg:space-x-6'>
-                  <a
-                    href='#'
+                  <Link
+                    href='/login'
                     className='text-sm font-medium text-gray-700 hover:text-gray-800'
                   >
                     Sign in
-                  </a>
+                  </Link>
                   <span aria-hidden='true' className='h-6 w-px bg-gray-200' />
-                  <a
-                    href='#'
+                  <Link
+                    href='/register'
                     className='text-sm font-medium text-gray-700 hover:text-gray-800'
                   >
                     Create account
-                  </a>
+                  </Link>
                 </div>
 
                 <div className='hidden lg:ml-8 lg:flex'>
