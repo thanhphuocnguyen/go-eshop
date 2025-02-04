@@ -43,7 +43,7 @@ type Product struct {
 	Sku         string    `json:"sku"`
 }
 
-type Collection struct {
+type Categorie struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	SortOrder   int    `json:"sort_order"`
@@ -98,7 +98,7 @@ func ExecuteSeed(ctx context.Context) int {
 				}()
 				go func() {
 					defer waitGroup.Done()
-					seedCollections(ctx, pg)
+					seedCategories(ctx, pg)
 				}()
 			} else {
 				switch args[0] {
@@ -106,8 +106,8 @@ func ExecuteSeed(ctx context.Context) int {
 					seedProducts(ctx, pg)
 				case "users":
 					seedUsers(ctx, pg)
-				case "collections":
-					seedCollections(ctx, pg)
+				case "Categories":
+					seedCategories(ctx, pg)
 				case "attributes":
 					seedAttributes(ctx, pg)
 				default:
@@ -200,51 +200,51 @@ func seedProducts(ctx context.Context, repo repository.Repository) {
 	log.Info().Msg("products created")
 }
 
-func seedCollections(ctx context.Context, repo repository.Repository) {
-	countCollections, err := repo.CountCollections(ctx, pgtype.Int4{})
+func seedCategories(ctx context.Context, repo repository.Repository) {
+	countCategories, err := repo.CountCategories(ctx, pgtype.Int4{})
 	if err != nil {
-		log.Error().Err(err).Msg("failed to count collections")
+		log.Error().Err(err).Msg("failed to count Categories")
 		return
 	}
 
-	if countCollections > 0 {
-		log.Info().Msg("collections already seeded")
+	if countCategories > 0 {
+		log.Info().Msg("Categories already seeded")
 		return
 	}
 
-	log.Info().Msg("seeding collections")
-	collectionData, err := os.ReadFile("seeds/collections.json")
+	log.Info().Msg("seeding Categories")
+	CategorieData, err := os.ReadFile("seeds/Categories.json")
 	if err != nil {
-		log.Error().Err(err).Msg("failed to read collection data")
+		log.Error().Err(err).Msg("failed to read Categorie data")
 		return
 	}
 
-	var collections []Collection
-	log.Info().Msg("parsing collection data")
-	err = json.Unmarshal(collectionData, &collections)
+	var Categories []Categorie
+	log.Info().Msg("parsing Categorie data")
+	err = json.Unmarshal(CategorieData, &Categories)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to parse collection data")
+		log.Error().Err(err).Msg("failed to parse Categorie data")
 		return
 	}
 
-	log.Info().Msgf("collection count: %d", len(collections))
-	params := make([]repository.SeedCollectionsParams, len(collections))
-	for i, collection := range collections {
-		params[i] = repository.SeedCollectionsParams{
-			Name: collection.Name,
+	log.Info().Msgf("Categorie count: %d", len(Categories))
+	params := make([]repository.SeedCategoriesParams, len(Categories))
+	for i, Categorie := range Categories {
+		params[i] = repository.SeedCategoriesParams{
+			Name: Categorie.Name,
 			Description: pgtype.Text{
-				String: collection.Description,
+				String: Categorie.Description,
 				Valid:  true,
 			},
-			SortOrder: int16(collection.SortOrder),
-			Published: collection.Published,
+			SortOrder: int16(Categorie.SortOrder),
+			Published: Categorie.Published,
 		}
 	}
-	_, err = repo.SeedCollections(ctx, params)
+	_, err = repo.SeedCategories(ctx, params)
 	if err != nil {
-		log.Error().Err(err).Msgf("failed to create collection: %v", err)
+		log.Error().Err(err).Msgf("failed to create Categorie: %v", err)
 	}
-	log.Info().Msg("collections created")
+	log.Info().Msg("Categories created")
 }
 
 func seedUsers(ctx context.Context, pg repository.Repository) {

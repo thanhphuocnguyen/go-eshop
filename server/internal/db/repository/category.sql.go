@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const addProductToCollection = `-- name: AddProductToCollection :one
+const addProductToCategory = `-- name: AddProductToCategory :one
 
 INSERT INTO
     category_products (category_id, product_id, sort_order)
@@ -21,34 +21,34 @@ VALUES
 RETURNING category_id, product_id, sort_order
 `
 
-type AddProductToCollectionParams struct {
+type AddProductToCategoryParams struct {
 	CategoryID int32 `json:"category_id"`
 	ProductID  int64 `json:"product_id"`
 	SortOrder  int16 `json:"sort_order"`
 }
 
 // Category Products
-func (q *Queries) AddProductToCollection(ctx context.Context, arg AddProductToCollectionParams) (CategoryProduct, error) {
-	row := q.db.QueryRow(ctx, addProductToCollection, arg.CategoryID, arg.ProductID, arg.SortOrder)
+func (q *Queries) AddProductToCategory(ctx context.Context, arg AddProductToCategoryParams) (CategoryProduct, error) {
+	row := q.db.QueryRow(ctx, addProductToCategory, arg.CategoryID, arg.ProductID, arg.SortOrder)
 	var i CategoryProduct
 	err := row.Scan(&i.CategoryID, &i.ProductID, &i.SortOrder)
 	return i, err
 }
 
-const countCollections = `-- name: CountCollections :one
+const countCategories = `-- name: CountCategories :one
 SELECT count(*)
 FROM categories
 WHERE category_id = COALESCE($1, category_id)
 `
 
-func (q *Queries) CountCollections(ctx context.Context, categoryID pgtype.Int4) (int64, error) {
-	row := q.db.QueryRow(ctx, countCollections, categoryID)
+func (q *Queries) CountCategories(ctx context.Context, categoryID pgtype.Int4) (int64, error) {
+	row := q.db.QueryRow(ctx, countCategories, categoryID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
-const createCollection = `-- name: CreateCollection :one
+const createCategory = `-- name: CreateCategory :one
 INSERT INTO categories (name, description, sort_order)
 VALUES (
     $1,
@@ -58,14 +58,14 @@ VALUES (
 RETURNING category_id, name, description, sort_order, published, created_at, updated_at
 `
 
-type CreateCollectionParams struct {
+type CreateCategoryParams struct {
 	Name        string      `json:"name"`
 	Description pgtype.Text `json:"description"`
 	SortOrder   interface{} `json:"sort_order"`
 }
 
-func (q *Queries) CreateCollection(ctx context.Context, arg CreateCollectionParams) (Category, error) {
-	row := q.db.QueryRow(ctx, createCollection, arg.Name, arg.Description, arg.SortOrder)
+func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) (Category, error) {
+	row := q.db.QueryRow(ctx, createCategory, arg.Name, arg.Description, arg.SortOrder)
 	var i Category
 	err := row.Scan(
 		&i.CategoryID,
@@ -79,12 +79,72 @@ func (q *Queries) CreateCollection(ctx context.Context, arg CreateCollectionPara
 	return i, err
 }
 
-const getCollectionByID = `-- name: GetCollectionByID :many
-SELECT c.category_id, c.name, c.description, c.sort_order, c.published, c.created_at, c.updated_at FROM categories c WHERE c.category_id = $1
+const getCategories = `-- name: GetCategories :many
+SELECT 
+    categories.category_id, categories.name, categories.description, categories.sort_order, categories.published, categories.created_at, categories.updated_at,
+    COUNT(category_products.product_id) as product_count
+FROM 
+    categories
+LEFT JOIN category_products 
+    ON categories.category_id = category_products.category_id
+WHERE 
+    categories.published = COALESCE($1, categories.published)
+GROUP BY categories.category_id
+ORDER BY categories.sort_order
 `
 
-func (q *Queries) GetCollectionByID(ctx context.Context, categoryID int32) ([]Category, error) {
-	rows, err := q.db.Query(ctx, getCollectionByID, categoryID)
+type GetCategoriesRow struct {
+	CategoryID   int32       `json:"category_id"`
+	Name         string      `json:"name"`
+	Description  pgtype.Text `json:"description"`
+	SortOrder    int16       `json:"sort_order"`
+	Published    bool        `json:"published"`
+	CreatedAt    time.Time   `json:"created_at"`
+	UpdatedAt    time.Time   `json:"updated_at"`
+	ProductCount int64       `json:"product_count"`
+}
+
+func (q *Queries) GetCategories(ctx context.Context, published pgtype.Bool) ([]GetCategoriesRow, error) {
+	rows, err := q.db.Query(ctx, getCategories, published)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetCategoriesRow
+	for rows.Next() {
+		var i GetCategoriesRow
+		if err := rows.Scan(
+			&i.CategoryID,
+			&i.Name,
+			&i.Description,
+			&i.SortOrder,
+			&i.Published,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ProductCount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getCategoriesInIDs = `-- name: GetCategoriesInIDs :many
+SELECT 
+    category_id, name, description, sort_order, published, created_at, updated_at
+FROM categories
+WHERE 
+    category_id = ANY($1::int[])
+    AND published = TRUE
+ORDER BY sort_order
+`
+
+func (q *Queries) GetCategoriesInIDs(ctx context.Context, idList []int32) ([]Category, error) {
+	rows, err := q.db.Query(ctx, getCategoriesInIDs, idList)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +171,39 @@ func (q *Queries) GetCollectionByID(ctx context.Context, categoryID int32) ([]Ca
 	return items, nil
 }
 
-const getCollectionByName = `-- name: GetCollectionByName :one
+const getCategoryByID = `-- name: GetCategoryByID :many
+SELECT c.category_id, c.name, c.description, c.sort_order, c.published, c.created_at, c.updated_at FROM categories c WHERE c.category_id = $1
+`
+
+func (q *Queries) GetCategoryByID(ctx context.Context, categoryID int32) ([]Category, error) {
+	rows, err := q.db.Query(ctx, getCategoryByID, categoryID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Category
+	for rows.Next() {
+		var i Category
+		if err := rows.Scan(
+			&i.CategoryID,
+			&i.Name,
+			&i.Description,
+			&i.SortOrder,
+			&i.Published,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getCategoryByName = `-- name: GetCategoryByName :one
 SELECT c.category_id, c.name, c.description, c.sort_order, published, c.created_at, c.updated_at, cp.category_id, cp.product_id, cp.sort_order, p.product_id, p.name, p.description, archived, p.created_at, p.updated_at
 FROM categories c
 JOIN category_products cp ON c.category_id = cp.category_id
@@ -120,7 +212,7 @@ WHERE c.name = $1 AND c.published = TRUE
 LIMIT 1
 `
 
-type GetCollectionByNameRow struct {
+type GetCategoryByNameRow struct {
 	CategoryID    int32       `json:"category_id"`
 	Name          string      `json:"name"`
 	Description   pgtype.Text `json:"description"`
@@ -139,9 +231,9 @@ type GetCollectionByNameRow struct {
 	UpdatedAt_2   time.Time   `json:"updated_at_2"`
 }
 
-func (q *Queries) GetCollectionByName(ctx context.Context, name string) (GetCollectionByNameRow, error) {
-	row := q.db.QueryRow(ctx, getCollectionByName, name)
-	var i GetCollectionByNameRow
+func (q *Queries) GetCategoryByName(ctx context.Context, name string) (GetCategoryByNameRow, error) {
+	row := q.db.QueryRow(ctx, getCategoryByName, name)
+	var i GetCategoryByNameRow
 	err := row.Scan(
 		&i.CategoryID,
 		&i.Name,
@@ -163,19 +255,19 @@ func (q *Queries) GetCollectionByName(ctx context.Context, name string) (GetColl
 	return i, err
 }
 
-const getCollectionMaxSortOrder = `-- name: GetCollectionMaxSortOrder :one
+const getCategoryMaxSortOrder = `-- name: GetCategoryMaxSortOrder :one
 SELECT COALESCE(MAX(sort_order)::smallint, 0) AS max_sort_order
 FROM category_products
 `
 
-func (q *Queries) GetCollectionMaxSortOrder(ctx context.Context) (interface{}, error) {
-	row := q.db.QueryRow(ctx, getCollectionMaxSortOrder)
+func (q *Queries) GetCategoryMaxSortOrder(ctx context.Context) (interface{}, error) {
+	row := q.db.QueryRow(ctx, getCategoryMaxSortOrder)
 	var max_sort_order interface{}
 	err := row.Scan(&max_sort_order)
 	return max_sort_order, err
 }
 
-const getCollectionProduct = `-- name: GetCollectionProduct :one
+const getCategoryProduct = `-- name: GetCategoryProduct :one
 SELECT
     p.product_id, p.name, p.description, p.archived, p.created_at, p.updated_at
 FROM
@@ -186,13 +278,13 @@ WHERE
     AND cp.product_id = $2
 `
 
-type GetCollectionProductParams struct {
+type GetCategoryProductParams struct {
 	CategoryID int32 `json:"category_id"`
 	ProductID  int64 `json:"product_id"`
 }
 
-func (q *Queries) GetCollectionProduct(ctx context.Context, arg GetCollectionProductParams) (Product, error) {
-	row := q.db.QueryRow(ctx, getCollectionProduct, arg.CategoryID, arg.ProductID)
+func (q *Queries) GetCategoryProduct(ctx context.Context, arg GetCategoryProductParams) (Product, error) {
+	row := q.db.QueryRow(ctx, getCategoryProduct, arg.CategoryID, arg.ProductID)
 	var i Product
 	err := row.Scan(
 		&i.ProductID,
@@ -205,7 +297,7 @@ func (q *Queries) GetCollectionProduct(ctx context.Context, arg GetCollectionPro
 	return i, err
 }
 
-const getCollectionProducts = `-- name: GetCollectionProducts :many
+const getCategoryProducts = `-- name: GetCategoryProducts :many
 SELECT
     p.product_id, p.name, p.description, p.archived, p.created_at, p.updated_at
 FROM
@@ -215,8 +307,8 @@ WHERE
     cp.category_id = $1
 `
 
-func (q *Queries) GetCollectionProducts(ctx context.Context, categoryID int32) ([]Product, error) {
-	rows, err := q.db.Query(ctx, getCollectionProducts, categoryID)
+func (q *Queries) GetCategoryProducts(ctx context.Context, categoryID int32) ([]Product, error) {
+	rows, err := q.db.Query(ctx, getCategoryProducts, categoryID)
 	if err != nil {
 		return nil, err
 	}
@@ -242,7 +334,7 @@ func (q *Queries) GetCollectionProducts(ctx context.Context, categoryID int32) (
 	return items, nil
 }
 
-const getCollectionWithProduct = `-- name: GetCollectionWithProduct :many
+const getCategoryWithProduct = `-- name: GetCategoryWithProduct :many
 SELECT 
     c.category_id, c.name, c.description, c.sort_order, c.published, c.created_at, c.updated_at, 
     p.name as product_name, p.description,
@@ -262,7 +354,7 @@ WHERE c.category_id = $1
 GROUP BY c.category_id, p.product_id, img.image_id, img.image_url, cp.product_id
 `
 
-type GetCollectionWithProductRow struct {
+type GetCategoryWithProductRow struct {
 	CategoryID    int32          `json:"category_id"`
 	Name          string         `json:"name"`
 	Description   pgtype.Text    `json:"description"`
@@ -282,15 +374,15 @@ type GetCollectionWithProductRow struct {
 	ImageUrl      pgtype.Text    `json:"image_url"`
 }
 
-func (q *Queries) GetCollectionWithProduct(ctx context.Context, categoryID int32) ([]GetCollectionWithProductRow, error) {
-	rows, err := q.db.Query(ctx, getCollectionWithProduct, categoryID)
+func (q *Queries) GetCategoryWithProduct(ctx context.Context, categoryID int32) ([]GetCategoryWithProductRow, error) {
+	rows, err := q.db.Query(ctx, getCategoryWithProduct, categoryID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetCollectionWithProductRow
+	var items []GetCategoryWithProductRow
 	for rows.Next() {
-		var i GetCollectionWithProductRow
+		var i GetCategoryWithProductRow
 		if err := rows.Scan(
 			&i.CategoryID,
 			&i.Name,
@@ -320,99 +412,7 @@ func (q *Queries) GetCollectionWithProduct(ctx context.Context, categoryID int32
 	return items, nil
 }
 
-const getCollections = `-- name: GetCollections :many
-SELECT 
-    categories.category_id, categories.name, categories.description, categories.sort_order, categories.published, categories.created_at, categories.updated_at,
-    COUNT(category_products.product_id) as product_count
-FROM 
-    categories
-LEFT JOIN category_products 
-    ON categories.category_id = category_products.category_id
-WHERE 
-    categories.published = COALESCE($1, categories.published)
-GROUP BY categories.category_id
-ORDER BY categories.sort_order
-`
-
-type GetCollectionsRow struct {
-	CategoryID   int32       `json:"category_id"`
-	Name         string      `json:"name"`
-	Description  pgtype.Text `json:"description"`
-	SortOrder    int16       `json:"sort_order"`
-	Published    bool        `json:"published"`
-	CreatedAt    time.Time   `json:"created_at"`
-	UpdatedAt    time.Time   `json:"updated_at"`
-	ProductCount int64       `json:"product_count"`
-}
-
-func (q *Queries) GetCollections(ctx context.Context, published pgtype.Bool) ([]GetCollectionsRow, error) {
-	rows, err := q.db.Query(ctx, getCollections, published)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetCollectionsRow
-	for rows.Next() {
-		var i GetCollectionsRow
-		if err := rows.Scan(
-			&i.CategoryID,
-			&i.Name,
-			&i.Description,
-			&i.SortOrder,
-			&i.Published,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.ProductCount,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getCollectionsInIDs = `-- name: GetCollectionsInIDs :many
-SELECT 
-    category_id, name, description, sort_order, published, created_at, updated_at
-FROM categories
-WHERE 
-    category_id = ANY($1::int[])
-    AND published = TRUE
-ORDER BY sort_order
-`
-
-func (q *Queries) GetCollectionsInIDs(ctx context.Context, idList []int32) ([]Category, error) {
-	rows, err := q.db.Query(ctx, getCollectionsInIDs, idList)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Category
-	for rows.Next() {
-		var i Category
-		if err := rows.Scan(
-			&i.CategoryID,
-			&i.Name,
-			&i.Description,
-			&i.SortOrder,
-			&i.Published,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getMaxSortOrderInCollection = `-- name: GetMaxSortOrderInCollection :one
+const getMaxSortOrderInCategory = `-- name: GetMaxSortOrderInCategory :one
 SELECT
     max(sort_order)
 FROM
@@ -421,23 +421,23 @@ WHERE
     category_id = $1
 `
 
-func (q *Queries) GetMaxSortOrderInCollection(ctx context.Context, categoryID int32) (interface{}, error) {
-	row := q.db.QueryRow(ctx, getMaxSortOrderInCollection, categoryID)
+func (q *Queries) GetMaxSortOrderInCategory(ctx context.Context, categoryID int32) (interface{}, error) {
+	row := q.db.QueryRow(ctx, getMaxSortOrderInCategory, categoryID)
 	var max interface{}
 	err := row.Scan(&max)
 	return max, err
 }
 
-const removeCollection = `-- name: RemoveCollection :exec
+const removeCategory = `-- name: RemoveCategory :exec
 DELETE FROM categories WHERE category_id = $1
 `
 
-func (q *Queries) RemoveCollection(ctx context.Context, categoryID int32) error {
-	_, err := q.db.Exec(ctx, removeCollection, categoryID)
+func (q *Queries) RemoveCategory(ctx context.Context, categoryID int32) error {
+	_, err := q.db.Exec(ctx, removeCategory, categoryID)
 	return err
 }
 
-const removeProductFromCollection = `-- name: RemoveProductFromCollection :exec
+const removeProductFromCategory = `-- name: RemoveProductFromCategory :exec
 DELETE FROM
     category_products
 WHERE
@@ -445,24 +445,24 @@ WHERE
     AND product_id = $2
 `
 
-type RemoveProductFromCollectionParams struct {
+type RemoveProductFromCategoryParams struct {
 	CategoryID int32 `json:"category_id"`
 	ProductID  int64 `json:"product_id"`
 }
 
-func (q *Queries) RemoveProductFromCollection(ctx context.Context, arg RemoveProductFromCollectionParams) error {
-	_, err := q.db.Exec(ctx, removeProductFromCollection, arg.CategoryID, arg.ProductID)
+func (q *Queries) RemoveProductFromCategory(ctx context.Context, arg RemoveProductFromCategoryParams) error {
+	_, err := q.db.Exec(ctx, removeProductFromCategory, arg.CategoryID, arg.ProductID)
 	return err
 }
 
-type SeedCollectionsParams struct {
+type SeedCategoriesParams struct {
 	Name        string      `json:"name"`
 	Description pgtype.Text `json:"description"`
 	SortOrder   int16       `json:"sort_order"`
 	Published   bool        `json:"published"`
 }
 
-const updateCollectionWith = `-- name: UpdateCollectionWith :one
+const updateCategoryWith = `-- name: UpdateCategoryWith :one
 UPDATE categories
 SET 
     name = COALESCE($2, name), 
@@ -474,7 +474,7 @@ WHERE category_id = $1
 RETURNING category_id, name, description, sort_order, published, created_at, updated_at
 `
 
-type UpdateCollectionWithParams struct {
+type UpdateCategoryWithParams struct {
 	CategoryID  int32       `json:"category_id"`
 	Name        pgtype.Text `json:"name"`
 	Description pgtype.Text `json:"description"`
@@ -482,8 +482,8 @@ type UpdateCollectionWithParams struct {
 	Published   pgtype.Bool `json:"published"`
 }
 
-func (q *Queries) UpdateCollectionWith(ctx context.Context, arg UpdateCollectionWithParams) (Category, error) {
-	row := q.db.QueryRow(ctx, updateCollectionWith,
+func (q *Queries) UpdateCategoryWith(ctx context.Context, arg UpdateCategoryWithParams) (Category, error) {
+	row := q.db.QueryRow(ctx, updateCategoryWith,
 		arg.CategoryID,
 		arg.Name,
 		arg.Description,
@@ -503,7 +503,7 @@ func (q *Queries) UpdateCollectionWith(ctx context.Context, arg UpdateCollection
 	return i, err
 }
 
-const updateProductSortOrderInCollection = `-- name: UpdateProductSortOrderInCollection :exec
+const updateProductSortOrderInCategory = `-- name: UpdateProductSortOrderInCategory :exec
 UPDATE
     category_products
 SET
@@ -513,13 +513,13 @@ WHERE
     AND product_id = $2
 `
 
-type UpdateProductSortOrderInCollectionParams struct {
+type UpdateProductSortOrderInCategoryParams struct {
 	CategoryID int32 `json:"category_id"`
 	ProductID  int64 `json:"product_id"`
 	SortOrder  int16 `json:"sort_order"`
 }
 
-func (q *Queries) UpdateProductSortOrderInCollection(ctx context.Context, arg UpdateProductSortOrderInCollectionParams) error {
-	_, err := q.db.Exec(ctx, updateProductSortOrderInCollection, arg.CategoryID, arg.ProductID, arg.SortOrder)
+func (q *Queries) UpdateProductSortOrderInCategory(ctx context.Context, arg UpdateProductSortOrderInCategoryParams) error {
+	_, err := q.db.Exec(ctx, updateProductSortOrderInCategory, arg.CategoryID, arg.ProductID, arg.SortOrder)
 	return err
 }

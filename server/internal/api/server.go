@@ -60,10 +60,13 @@ func (sv *Server) initializeRouter() {
 		gin.SetMode(gin.ReleaseMode)
 		router.Use(gin.Recovery())
 	}
+	if sv.config.Env == "development" {
+		router.Use(gin.Logger())
+	}
 
 	cors := cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
-		AllowCredentials: true,
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:8080"},
+		AllowCredentials: sv.config.Env == "production",
 	})
 
 	router.Use(cors)
@@ -195,21 +198,21 @@ func (sv *Server) initializeRouter() {
 			payment.PUT(":order_id", sv.changePaymentStatus)
 		}
 
-		collection := v1.Group("/collection")
+		category := v1.Group("/category")
 		{
-			collection.GET("list", sv.getCollections)
-			collection.GET(":id", sv.getCollectionByID)
+			category.GET("list", sv.getCategories)
+			category.GET(":id", sv.getCategoryByID)
 
-			collectionAuthRoutes := collection.Group("").Use(
+			categoryAuthRoutes := category.Group("").Use(
 				authMiddleware(sv.tokenGenerator),
 				roleMiddleware(sv.repo, repository.UserRoleAdmin),
 			)
-			collectionAuthRoutes.POST("", sv.createCollection)
-			collectionAuthRoutes.PUT(":id", sv.updateCollection)
-			collectionAuthRoutes.DELETE(":id", sv.removeCollection)
-			collectionAuthRoutes.POST(":id/product", sv.addProductToCollection)
-			collectionAuthRoutes.PUT(":id/product/sort_order", sv.updateProductSortOrder)
-			collectionAuthRoutes.DELETE(":id/product/:product_id", sv.deleteProductFromCollection)
+			categoryAuthRoutes.POST("", sv.createCategory)
+			categoryAuthRoutes.PUT(":id", sv.updateCategory)
+			categoryAuthRoutes.DELETE(":id", sv.removeCategory)
+			categoryAuthRoutes.POST(":id/product", sv.addProductToCategory)
+			categoryAuthRoutes.PUT(":id/product/sort_order", sv.updateProductSortOrder)
+			categoryAuthRoutes.DELETE(":id/product/:product_id", sv.deleteProductFromCategory)
 		}
 	}
 

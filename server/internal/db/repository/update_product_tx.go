@@ -38,7 +38,7 @@ func (s *pgRepo) UpdateProductTx(ctx context.Context, arg UpdateProductTxParam) 
 		}
 
 		if arg.CategoryID != nil {
-			q.AddProductToCollection(ctx, AddProductToCollectionParams{
+			q.AddProductToCategory(ctx, AddProductToCategoryParams{
 				CategoryID: *arg.CategoryID,
 				ProductID:  product.ProductID,
 			})

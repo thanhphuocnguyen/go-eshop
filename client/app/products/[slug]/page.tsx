@@ -1,4 +1,4 @@
-import axiosInstance from '@/axios/instance';
+import axiosInstance from '@/axios/axios';
 
 export async function generateStaticParams() {
   const posts = await axiosInstance.get('/posts');

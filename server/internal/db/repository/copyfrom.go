@@ -146,13 +146,13 @@ func (q *Queries) SeedAddresses(ctx context.Context, arg []SeedAddressesParams) 
 	return q.db.CopyFrom(ctx, []string{"user_addresses"}, []string{"user_id", "phone", "street", "ward", "district", "city", "default"}, &iteratorForSeedAddresses{rows: arg})
 }
 
-// iteratorForSeedCollections implements pgx.CopyFromSource.
-type iteratorForSeedCollections struct {
-	rows                 []SeedCollectionsParams
+// iteratorForSeedCategories implements pgx.CopyFromSource.
+type iteratorForSeedCategories struct {
+	rows                 []SeedCategoriesParams
 	skippedFirstNextCall bool
 }
 
-func (r *iteratorForSeedCollections) Next() bool {
+func (r *iteratorForSeedCategories) Next() bool {
 	if len(r.rows) == 0 {
 		return false
 	}
@@ -164,7 +164,7 @@ func (r *iteratorForSeedCollections) Next() bool {
 	return len(r.rows) > 0
 }
 
-func (r iteratorForSeedCollections) Values() ([]interface{}, error) {
+func (r iteratorForSeedCategories) Values() ([]interface{}, error) {
 	return []interface{}{
 		r.rows[0].Name,
 		r.rows[0].Description,
@@ -173,12 +173,12 @@ func (r iteratorForSeedCollections) Values() ([]interface{}, error) {
 	}, nil
 }
 
-func (r iteratorForSeedCollections) Err() error {
+func (r iteratorForSeedCategories) Err() error {
 	return nil
 }
 
-func (q *Queries) SeedCollections(ctx context.Context, arg []SeedCollectionsParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"categories"}, []string{"name", "description", "sort_order", "published"}, &iteratorForSeedCollections{rows: arg})
+func (q *Queries) SeedCategories(ctx context.Context, arg []SeedCategoriesParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"categories"}, []string{"name", "description", "sort_order", "published"}, &iteratorForSeedCategories{rows: arg})
 }
 
 // iteratorForSeedUsers implements pgx.CopyFromSource.

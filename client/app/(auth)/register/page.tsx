@@ -1,3 +1,4 @@
+'use client';
 import {
   Button,
   Field,
@@ -33,12 +34,12 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className='w-full h-[90vh] flex items-center justify-center'>
+    <div className='w-screen h-[90vh] flex items-center justify-center'>
       <div className='w-full max-w-lg px-4'>
         <Fieldset
           as='form'
           onSubmit={handleSubmit(onSubmit)}
-          className='space-y-6 rounded-xl bg-light-green shadow-md p-6 sm:p-10'
+          className='space-y-6 rounded-xl bg-gray-700 bg-light-green shadow-md p-6 sm:p-10'
         >
           <Legend className='text-base/7 font-semibold text-white'>
             Login
@@ -123,7 +124,7 @@ export default function RegisterPage() {
               </Label>
             )}
           </Field>
-          <Button disabled={!isDirty && isValid} type='submit'>
+          <Button className='btn mr-0 ml-autox' disabled={!isDirty && isValid} type='submit'>
             {isSubmitting ? 'Submitting' : 'Register'}
           </Button>
         </Fieldset>

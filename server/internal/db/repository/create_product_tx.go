@@ -46,22 +46,22 @@ func (s *pgRepo) CreateProductTx(ctx context.Context, arg CreateProductTxParam) 
 			}
 		}
 		if arg.CategoryID != nil {
-			maxSortOrder, err := q.GetMaxSortOrderInCollection(ctx, *arg.CategoryID)
+			maxSortOrder, err := q.GetMaxSortOrderInCategory(ctx, *arg.CategoryID)
 			if err != nil {
-				log.Error().Err(err).Msg("GetMaxSortOrderInCollection")
+				log.Error().Err(err).Msg("GetMaxSortOrderInCategory")
 				return err
 			}
 			if maxSortOrder == nil {
 				maxSortOrder = 0
 			}
 
-			_, err = q.AddProductToCollection(ctx, AddProductToCollectionParams{
+			_, err = q.AddProductToCategory(ctx, AddProductToCategoryParams{
 				CategoryID: *arg.CategoryID,
 				ProductID:  product.ProductID,
 				SortOrder:  int16(maxSortOrder.(int) + 1),
 			})
 			if err != nil {
-				log.Error().Err(err).Msg("AddProductToCollection")
+				log.Error().Err(err).Msg("AddProductToCategory")
 				return err
 			}
 		}

@@ -15,13 +15,13 @@ type Querier interface {
 	AddBulkAttributes(ctx context.Context, name []string) (int64, error)
 	AddBulkProducts(ctx context.Context, arg []AddBulkProductsParams) (int64, error)
 	// Category Products
-	AddProductToCollection(ctx context.Context, arg AddProductToCollectionParams) (CategoryProduct, error)
+	AddProductToCategory(ctx context.Context, arg AddProductToCategoryParams) (CategoryProduct, error)
 	ArchiveProduct(ctx context.Context, productID int64) error
 	ClearCart(ctx context.Context, cartID uuid.UUID) error
 	CountAddresses(ctx context.Context) (int64, error)
 	CountAttributes(ctx context.Context) (int64, error)
 	CountCartItem(ctx context.Context, cartID uuid.UUID) (int64, error)
-	CountCollections(ctx context.Context, categoryID pgtype.Int4) (int64, error)
+	CountCategories(ctx context.Context, categoryID pgtype.Int4) (int64, error)
 	CountOrders(ctx context.Context, arg CountOrdersParams) (int64, error)
 	CountProducts(ctx context.Context, arg CountProductsParams) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
@@ -32,7 +32,7 @@ type Querier interface {
 	CreateCart(ctx context.Context, arg CreateCartParams) (Cart, error)
 	// Cart Item Section
 	CreateCartItem(ctx context.Context, arg CreateCartItemParams) (CartItem, error)
-	CreateCollection(ctx context.Context, arg CreateCollectionParams) (Category, error)
+	CreateCategory(ctx context.Context, arg CreateCategoryParams) (Category, error)
 	CreateImage(ctx context.Context, arg CreateImageParams) (Image, error)
 	CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error)
 	CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (OrderItem, error)
@@ -63,20 +63,20 @@ type Querier interface {
 	GetCartItemByVariantID(ctx context.Context, variantID int64) (CartItem, error)
 	GetCartItemWithProduct(ctx context.Context, cartItemID int32) (GetCartItemWithProductRow, error)
 	GetCartItemsByID(ctx context.Context, cartID uuid.UUID) ([]GetCartItemsByIDRow, error)
-	GetCollectionByID(ctx context.Context, categoryID int32) ([]Category, error)
-	GetCollectionByName(ctx context.Context, name string) (GetCollectionByNameRow, error)
-	GetCollectionMaxSortOrder(ctx context.Context) (interface{}, error)
-	GetCollectionProduct(ctx context.Context, arg GetCollectionProductParams) (Product, error)
-	GetCollectionProducts(ctx context.Context, categoryID int32) ([]Product, error)
-	GetCollectionWithProduct(ctx context.Context, categoryID int32) ([]GetCollectionWithProductRow, error)
-	GetCollections(ctx context.Context, published pgtype.Bool) ([]GetCollectionsRow, error)
-	GetCollectionsInIDs(ctx context.Context, idList []int32) ([]Category, error)
+	GetCategories(ctx context.Context, published pgtype.Bool) ([]GetCategoriesRow, error)
+	GetCategoriesInIDs(ctx context.Context, idList []int32) ([]Category, error)
+	GetCategoryByID(ctx context.Context, categoryID int32) ([]Category, error)
+	GetCategoryByName(ctx context.Context, name string) (GetCategoryByNameRow, error)
+	GetCategoryMaxSortOrder(ctx context.Context) (interface{}, error)
+	GetCategoryProduct(ctx context.Context, arg GetCategoryProductParams) (Product, error)
+	GetCategoryProducts(ctx context.Context, categoryID int32) ([]Product, error)
+	GetCategoryWithProduct(ctx context.Context, categoryID int32) ([]GetCategoryWithProductRow, error)
 	GetDefaultAddress(ctx context.Context, userID uuid.UUID) (UserAddress, error)
 	GetImageByExternalID(ctx context.Context, externalID pgtype.Text) (Image, error)
 	GetImageByID(ctx context.Context, imageID int32) (Image, error)
 	GetImageByProductID(ctx context.Context, productID pgtype.Int8) (Image, error)
 	GetImageByVariantID(ctx context.Context, variantID pgtype.Int8) (Image, error)
-	GetMaxSortOrderInCollection(ctx context.Context, categoryID int32) (interface{}, error)
+	GetMaxSortOrderInCategory(ctx context.Context, categoryID int32) (interface{}, error)
 	GetOrder(ctx context.Context, orderID uuid.UUID) (Order, error)
 	GetOrderDetails(ctx context.Context, orderID uuid.UUID) ([]GetOrderDetailsRow, error)
 	GetPaymentTransactionByID(ctx context.Context, paymentID string) (Payment, error)
@@ -101,25 +101,25 @@ type Querier interface {
 	ListOrderItems(ctx context.Context, arg ListOrderItemsParams) ([]OrderItem, error)
 	ListOrders(ctx context.Context, arg ListOrdersParams) ([]ListOrdersRow, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
-	RemoveCollection(ctx context.Context, categoryID int32) error
+	RemoveCategory(ctx context.Context, categoryID int32) error
 	RemoveProductFromCart(ctx context.Context, arg RemoveProductFromCartParams) error
-	RemoveProductFromCollection(ctx context.Context, arg RemoveProductFromCollectionParams) error
+	RemoveProductFromCategory(ctx context.Context, arg RemoveProductFromCategoryParams) error
 	RemoveVariantAttribute(ctx context.Context, variantAttributeID int32) error
 	ResetPrimaryAddress(ctx context.Context, userID uuid.UUID) error
 	SeedAddresses(ctx context.Context, arg []SeedAddressesParams) (int64, error)
-	SeedCollections(ctx context.Context, arg []SeedCollectionsParams) (int64, error)
+	SeedCategories(ctx context.Context, arg []SeedCategoriesParams) (int64, error)
 	SeedUsers(ctx context.Context, arg []SeedUsersParams) (int64, error)
 	SetPrimaryAddress(ctx context.Context, arg SetPrimaryAddressParams) error
 	UpdateAddress(ctx context.Context, arg UpdateAddressParams) (UserAddress, error)
 	UpdateAttribute(ctx context.Context, arg UpdateAttributeParams) (Attribute, error)
 	UpdateCart(ctx context.Context, cartID uuid.UUID) error
 	UpdateCartItemQuantity(ctx context.Context, arg UpdateCartItemQuantityParams) error
-	UpdateCollectionWith(ctx context.Context, arg UpdateCollectionWithParams) (Category, error)
+	UpdateCategoryWith(ctx context.Context, arg UpdateCategoryWithParams) (Category, error)
 	UpdateImage(ctx context.Context, arg UpdateImageParams) error
 	UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order, error)
 	UpdatePaymentTransaction(ctx context.Context, arg UpdatePaymentTransactionParams) error
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
-	UpdateProductSortOrderInCollection(ctx context.Context, arg UpdateProductSortOrderInCollectionParams) error
+	UpdateProductSortOrderInCategory(ctx context.Context, arg UpdateProductSortOrderInCategoryParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateUserRow, error)
 	UpdateVariant(ctx context.Context, arg UpdateVariantParams) (ProductVariant, error)
 	UpdateVariantAttribute(ctx context.Context, arg UpdateVariantAttributeParams) (VariantAttribute, error)
