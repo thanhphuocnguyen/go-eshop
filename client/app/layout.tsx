@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import NavBar from '../components/NavBar';
 import { SWRConfig } from 'swr';
+import 'react-multi-carousel/lib/styles.css';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -20,13 +21,11 @@ export default function RootLayout({
   return (
     <html lang='en'>
       <body className={inter.className}>
-        <SWRConfig>
-          <NavBar />
-          <div className='main'>
-            <div className='gradient' />
-          </div>
-          <main className='app'>{children}</main>
-        </SWRConfig>
+        <NavBar />
+        <div className='main'>
+          <div className='gradient' />
+        </div>
+        <main className='app'>{children}</main>
       </body>
     </html>
   );

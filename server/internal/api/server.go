@@ -83,23 +83,31 @@ func (sv *Server) initializeRouter() {
 		})
 
 		v1.GET("verify-email", sv.verifyEmail)
-		user := v1.Group("/user")
+		auth := v1.Group("/auth")
 		{
-			user.POST("register", sv.createUser)
-			user.POST("login", sv.loginUser)
-			user.POST("refresh-token", sv.refreshToken)
-			userAuthRoutes := user.Group("").Use(authMiddleware(sv.tokenGenerator))
-			userAuthRoutes.GET("", sv.getUser)
-			userAuthRoutes.POST("send-verify-email", sv.sendVerifyEmail)
-			userAuthRoutes.PATCH("", sv.updateUser)
-			userModeratorRoutes := user.Group("").Use(
-				authMiddleware(sv.tokenGenerator),
-				roleMiddleware(
-					sv.repo,
-					repository.UserRoleAdmin,
-					repository.UserRoleModerator),
-			)
-			userModeratorRoutes.GET("list", sv.listUsers)
+			auth.POST("register", sv.createUser)
+			auth.POST("login", sv.loginUser)
+			auth.POST("refresh-token", sv.refreshToken)
+			authRoutes := auth.Group("").Use(authMiddleware(sv.tokenGenerator))
+			authRoutes.POST("send-verify-email", sv.sendVerifyEmail)
+		}
+
+		user := v1.Group("/user").Use(authMiddleware(sv.tokenGenerator))
+		{
+			user.GET("", sv.getUser)
+			user.PATCH("", sv.updateUser)
+
+		}
+
+		moderatorRoutes := v1.Group("/moderator").Use(
+			authMiddleware(sv.tokenGenerator),
+			roleMiddleware(
+				sv.repo,
+				repository.UserRoleAdmin,
+				repository.UserRoleModerator),
+		)
+		{
+			moderatorRoutes.GET("list", sv.listUsers)
 		}
 
 		userAddress := v1.Group("/address").Use(authMiddleware(sv.tokenGenerator))
@@ -114,7 +122,6 @@ func (sv *Server) initializeRouter() {
 		{
 			product.GET("list", sv.getProducts)
 			product.GET(":id", sv.getProductDetail)
-
 			productAdmin := product.Group("").
 				Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin))
 			{
@@ -202,7 +209,7 @@ func (sv *Server) initializeRouter() {
 		{
 			category.GET("list", sv.getCategories)
 			category.GET(":id", sv.getCategoryByID)
-
+			category.GET(":id/products", sv.getCategoryProducts)
 			categoryAuthRoutes := category.Group("").Use(
 				authMiddleware(sv.tokenGenerator),
 				roleMiddleware(sv.repo, repository.UserRoleAdmin),
@@ -255,7 +262,7 @@ type GenericListResponse[T any] struct {
 	Error   *string `json:"error,omitempty"`
 }
 
-type QueryParams struct {
-	Page     int32 `form:"page" binding:"required,min=1"`
-	PageSize int32 `form:"page_size" binding:"required,min=1,max=100"`
+type PaginationQueryParams struct {
+	Page     *int32 `form:"page" binding:"omitempty,min=1"`
+	PageSize *int32 `form:"page_size" binding:"omitempty,min=1,max=100"`
 }

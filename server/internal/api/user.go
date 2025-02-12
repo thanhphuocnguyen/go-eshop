@@ -61,12 +61,11 @@ type updateUserRequest struct {
 	Role     repository.UserRole `json:"role"`
 }
 type loginResponse struct {
-	SessionID            uuid.UUID    `json:"session_id"`
-	Token                string       `json:"token"`
-	TokenExpireAt        time.Time    `json:"token_expire_at"`
-	RefreshToken         string       `json:"refresh_token"`
-	RefreshTokenExpireAt time.Time    `json:"refresh_token_expire_at"`
-	User                 userResponse `json:"user"`
+	SessionID            uuid.UUID `json:"session_id"`
+	Token                string    `json:"token"`
+	TokenExpireAt        time.Time `json:"token_expire_at"`
+	RefreshToken         string    `json:"refresh_token"`
+	RefreshTokenExpireAt time.Time `json:"refresh_token_expire_at"`
 }
 
 type renewAccessTokenResp struct {
@@ -246,7 +245,6 @@ func (sv *Server) loginUser(c *gin.Context) {
 		Token:                token,
 		RefreshToken:         refreshToken,
 		RefreshTokenExpireAt: rfPayload.ExpiredAt,
-		User:                 mapToUserResponse(user),
 	}
 	c.JSON(http.StatusOK, GenericResponse[loginResponse]{&loginResp, nil, nil})
 }

@@ -29,7 +29,7 @@ type ProductParam struct {
 }
 
 type ProductQueries struct {
-	QueryParams
+	PaginationQueryParams
 	Name *string `form:"name" binding:"omitempty,min=3,max=100"`
 	Sku  *string `form:"sku" binding:"omitempty,alphanum"`
 }
@@ -270,16 +270,22 @@ func (sv *Server) getProducts(c *gin.Context) {
 		return
 	}
 
-	productsQueryParams := repository.GetProductsParams{
-		Limit:  queries.PageSize,
-		Offset: (queries.Page - 1) * queries.PageSize,
+	dbParams := repository.GetProductsParams{
+		Limit:  20,
+		Offset: 0,
+	}
+	if queries.PageSize != nil {
+		dbParams.Limit = *queries.PageSize
+		if queries.Page != nil {
+			dbParams.Offset = (*queries.Page - 1) * *queries.PageSize
+		}
 	}
 
 	if queries.Name != nil {
-		productsQueryParams.Name = utils.GetPgTypeText(*queries.Name)
+		dbParams.Name = utils.GetPgTypeText(*queries.Name)
 	}
 	if queries.Sku != nil {
-		productsQueryParams.Sku = utils.GetPgTypeText(*queries.Sku)
+		dbParams.Sku = utils.GetPgTypeText(*queries.Sku)
 	}
 
 	errGroup, ctx := errgroup.WithContext(c)
@@ -290,7 +296,7 @@ func (sv *Server) getProducts(c *gin.Context) {
 	defer close(cntChan)
 
 	errGroup.Go(func() error {
-		products, err := sv.repo.GetProducts(ctx, productsQueryParams)
+		products, err := sv.repo.GetProducts(ctx, dbParams)
 		if err != nil {
 			return err
 		}

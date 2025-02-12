@@ -37,6 +37,35 @@ definitions:
     required:
     - name
     type: object
+  api.CategoryProductRequest:
+    properties:
+      sort_order:
+        type: integer
+    type: object
+  api.CategoryRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      published:
+        type: boolean
+      sort_order:
+        type: integer
+    type: object
+  api.CategoryResp:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      products:
+        items:
+          $ref: '#/definitions/api.ProductListModel'
+        type: array
+    type: object
   api.CreateAddressParams:
     properties:
       city:
@@ -542,7 +571,7 @@ definitions:
     - quantity
     - variant_id
     type: object
-  api.addProductToCollectionRequest:
+  api.addProductToCategoryRequest:
     properties:
       product_id:
         type: integer
@@ -640,35 +669,6 @@ definitions:
         type: string
       payment_id:
         type: string
-    type: object
-  api.collectionProductRequest:
-    properties:
-      sort_order:
-        type: integer
-    type: object
-  api.collectionRequest:
-    properties:
-      description:
-        type: string
-      name:
-        type: string
-      published:
-        type: boolean
-      sort_order:
-        type: integer
-    type: object
-  api.collectionResp:
-    properties:
-      description:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      products:
-        items:
-          $ref: '#/definitions/api.ProductListModel'
-        type: array
     type: object
   api.createUserRequest:
     properties:
@@ -1561,12 +1561,12 @@ paths:
       summary: Update product items in the cart
       tags:
       - carts
-  /collections:
+  /categories:
     get:
       consumes:
       - application/json
-      description: Get a list of collections
-      operationId: get-collections
+      description: Get a list of Categories
+      operationId: get-Categories
       parameters:
       - description: Page number
         in: query
@@ -1583,7 +1583,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/api.collectionResp'
+              $ref: '#/definitions/api.CategoryResp'
             type: array
         "400":
           description: Bad Request
@@ -1593,19 +1593,19 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/api.errorResponse'
-      summary: Get a list of collections
+      summary: Get a list of Categories
     post:
       consumes:
       - application/json
-      description: Create a new collection
-      operationId: create-collection
+      description: Create a new Category
+      operationId: create-Category
       parameters:
-      - description: Collection request
+      - description: Category request
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/api.collectionRequest'
+          $ref: '#/definitions/api.CategoryRequest'
       produces:
       - application/json
       responses:
@@ -1621,15 +1621,15 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/api.errorResponse'
-      summary: Create a new collection
-  /collections/{id}:
+      summary: Create a new Category
+  /categories/{id}:
     delete:
       consumes:
       - application/json
-      description: Delete a collection
-      operationId: delete-collection
+      description: Delete a Category
+      operationId: delete-Category
       parameters:
-      - description: Collection ID
+      - description: Category ID
         in: path
         name: id
         required: true
@@ -1649,14 +1649,14 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/api.errorResponse'
-      summary: Delete a collection
+      summary: Delete a Category
     get:
       consumes:
       - application/json
-      description: Get a collection by ID
-      operationId: get-collection-by-id
+      description: Get a Category by ID
+      operationId: get-Category-by-id
       parameters:
-      - description: Collection ID
+      - description: Category ID
         in: path
         name: id
         required: true
@@ -1667,7 +1667,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.collectionResp'
+            $ref: '#/definitions/api.CategoryResp'
         "400":
           description: Bad Request
           schema:
@@ -1676,24 +1676,24 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/api.errorResponse'
-      summary: Get a collection by ID
+      summary: Get a Category by ID
     put:
       consumes:
       - application/json
-      description: Update a collection
-      operationId: update-collection
+      description: Update a Category
+      operationId: update-Category
       parameters:
-      - description: Collection ID
+      - description: Category ID
         in: path
         name: id
         required: true
         type: integer
-      - description: Collection request
+      - description: Category request
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/api.collectionRequest'
+          $ref: '#/definitions/api.CategoryRequest'
       produces:
       - application/json
       responses:
@@ -1709,15 +1709,15 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/api.errorResponse'
-      summary: Update a collection
-  /collections/{id}/product:
+      summary: Update a Category
+  /categories/{id}/product:
     delete:
       consumes:
       - application/json
-      description: Delete a product from a collection
-      operationId: delete-product-from-collection
+      description: Delete a product from a Category
+      operationId: delete-product-from-Category
       parameters:
-      - description: Collection ID
+      - description: Category ID
         in: path
         name: id
         required: true
@@ -1727,7 +1727,7 @@ paths:
         name: product_id
         required: true
         schema:
-          $ref: '#/definitions/api.collectionProductRequest'
+          $ref: '#/definitions/api.CategoryProductRequest'
       produces:
       - application/json
       responses:
@@ -1741,14 +1741,14 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/api.errorResponse'
-      summary: Delete a product from a collection
+      summary: Delete a product from a Category
     post:
       consumes:
       - application/json
-      description: Add a product to a collection
-      operationId: add-product-to-collection
+      description: Add a product to a Category
+      operationId: add-product-to-Category
       parameters:
-      - description: Collection ID
+      - description: Category ID
         in: path
         name: id
         required: true
@@ -1758,7 +1758,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/api.addProductToCollectionRequest'
+          $ref: '#/definitions/api.addProductToCategoryRequest'
       produces:
       - application/json
       responses:
@@ -1774,15 +1774,15 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/api.errorResponse'
-      summary: Add a product to a collection
-  /collections/{id}/product/sort-order:
+      summary: Add a product to a Category
+  /categories/{id}/product/sort-order:
     put:
       consumes:
       - application/json
-      description: Update the sort order of a product in a collection
+      description: Update the sort order of a product in a Category
       operationId: update-product-sort-order
       parameters:
-      - description: Collection ID
+      - description: Category ID
         in: path
         name: id
         required: true
@@ -1792,7 +1792,7 @@ paths:
         name: product_id
         required: true
         schema:
-          $ref: '#/definitions/api.collectionProductRequest'
+          $ref: '#/definitions/api.CategoryProductRequest'
       - description: Sort order
         in: body
         name: sort_order
@@ -1812,7 +1812,37 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/api.errorResponse'
-      summary: Update the sort order of a product in a collection
+      summary: Update the sort order of a product in a Category
+  /category/{id}/products:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of products in a Category
+      operationId: get-Category-products
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/api.ProductListModel'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+      summary: Get a list of products in a Category
   /images/product:
     post:
       consumes:

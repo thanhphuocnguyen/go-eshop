@@ -12,8 +12,9 @@ import (
 )
 
 type CloudinaryUploadService struct {
-	cld *cloudinary.Cloudinary
-	cfg config.Config
+	uniqFileName bool
+	cld          *cloudinary.Cloudinary
+	cfg          config.Config
 }
 
 func NewCloudinaryUploadService(cfg config.Config) UploadService {
@@ -27,20 +28,25 @@ func NewCloudinaryUploadService(cfg config.Config) UploadService {
 	}
 
 	return &CloudinaryUploadService{
-		cld: cld,
-		cfg: cfg,
+		cld:          cld,
+		cfg:          cfg,
+		uniqFileName: true,
 	}
 }
 
-func (s *CloudinaryUploadService) UploadFile(ctx context.Context, file interface{}, filename string) (string, error) {
-	uploadResult, err := s.cld.Upload.Upload(ctx, file, uploader.UploadParams{
-		PublicID: filename,
-		Folder:   s.cfg.CloudinaryFolder,
+func (s *CloudinaryUploadService) UploadFile(ctx context.Context, file interface{}) (publicID string, url string, err error) {
+	result, err := s.cld.Upload.Upload(ctx, file, uploader.UploadParams{
+		AssetFolder:    s.cfg.CloudinaryFolder,
+		UniqueFilename: &s.uniqFileName,
 	})
+
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
-	return uploadResult.SecureURL, nil
+
+	publicID = result.PublicID
+	url = result.SecureURL
+	return
 }
 
 func (s *CloudinaryUploadService) RemoveFile(ctx context.Context, publicID string) (string, error) {

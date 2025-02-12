@@ -78,8 +78,7 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 		return
 	}
 	// file name is public id
-	fileName := GetImageName(file.Filename)
-	url, err := sv.uploadService.UploadFile(c, file, fileName)
+	publicID, url, err := sv.uploadService.UploadFile(c, file)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
@@ -88,11 +87,11 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 	img, err := sv.repo.CreateImage(c, repository.CreateImageParams{
 		ProductID:  utils.GetPgTypeInt8(existingProduct.ProductID),
 		ImageUrl:   url,
-		ExternalID: utils.GetPgTypeText(fileName),
+		ExternalID: utils.GetPgTypeText(publicID),
 	})
 
 	if err != nil {
-		sv.uploadService.RemoveFile(c, fileName)
+		sv.uploadService.RemoveFile(c, publicID)
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
@@ -234,9 +233,9 @@ func (sv *Server) uploadVariantImage(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("missing file in request")))
 		return
 	}
+
 	// file name is public id
-	fileName := GetImageName(file.Filename)
-	url, err := sv.uploadService.UploadFile(c, file, fileName)
+	publicID, url, err := sv.uploadService.UploadFile(c, file)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
@@ -246,11 +245,11 @@ func (sv *Server) uploadVariantImage(c *gin.Context) {
 		ProductID:  utils.GetPgTypeInt8(existingVariant.ProductID),
 		VariantID:  utils.GetPgTypeInt8(existingVariant.VariantID),
 		ImageUrl:   url,
-		ExternalID: utils.GetPgTypeText(fileName),
+		ExternalID: utils.GetPgTypeText(publicID),
 	})
 
 	if err != nil {
-		sv.uploadService.RemoveFile(c, fileName)
+		sv.uploadService.RemoveFile(c, publicID)
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}

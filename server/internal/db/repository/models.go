@@ -335,6 +335,16 @@ type Attribute struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
+type Brand struct {
+	ID   int32  `json:"id"`
+	Name string `json:"name"`
+}
+
+type BrandProduct struct {
+	BrandID   int32     `json:"brand_id"`
+	ProductID uuid.UUID `json:"product_id"`
+}
+
 type Cart struct {
 	CartID    uuid.UUID `json:"cart_id"`
 	UserID    uuid.UUID `json:"user_id"`
@@ -432,6 +442,20 @@ type ProductVariant struct {
 	Sku           pgtype.Text    `json:"sku"`
 	CreatedAt     time.Time      `json:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at"`
+}
+
+type Rating struct {
+	ID        int32            `json:"id"`
+	ProductID pgtype.UUID      `json:"product_id"`
+	Rating    int16            `json:"rating"`
+	Comment   pgtype.Text      `json:"comment"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+}
+
+type Section struct {
+	ID         int32       `json:"id"`
+	CategoryID pgtype.UUID `json:"category_id"`
+	Name       string      `json:"name"`
 }
 
 type Session struct {

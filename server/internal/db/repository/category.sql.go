@@ -171,36 +171,23 @@ func (q *Queries) GetCategoriesInIDs(ctx context.Context, idList []int32) ([]Cat
 	return items, nil
 }
 
-const getCategoryByID = `-- name: GetCategoryByID :many
-SELECT c.category_id, c.name, c.description, c.sort_order, c.published, c.created_at, c.updated_at FROM categories c WHERE c.category_id = $1
+const getCategoryByID = `-- name: GetCategoryByID :one
+SELECT c.category_id, c.name, c.description, c.sort_order, c.published, c.created_at, c.updated_at FROM categories c WHERE c.category_id = $1 LIMIT 1
 `
 
-func (q *Queries) GetCategoryByID(ctx context.Context, categoryID int32) ([]Category, error) {
-	rows, err := q.db.Query(ctx, getCategoryByID, categoryID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Category
-	for rows.Next() {
-		var i Category
-		if err := rows.Scan(
-			&i.CategoryID,
-			&i.Name,
-			&i.Description,
-			&i.SortOrder,
-			&i.Published,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) GetCategoryByID(ctx context.Context, categoryID int32) (Category, error) {
+	row := q.db.QueryRow(ctx, getCategoryByID, categoryID)
+	var i Category
+	err := row.Scan(
+		&i.CategoryID,
+		&i.Name,
+		&i.Description,
+		&i.SortOrder,
+		&i.Published,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const getCategoryByName = `-- name: GetCategoryByName :one
@@ -255,6 +242,84 @@ func (q *Queries) GetCategoryByName(ctx context.Context, name string) (GetCatego
 	return i, err
 }
 
+const getCategoryDetail = `-- name: GetCategoryDetail :many
+SELECT 
+    c.category_id, c.name, c.description, c.sort_order, c.published, c.created_at, c.updated_at, 
+    p.name as product_name, p.description,
+    cp.product_id,
+    MIN(pv.price) as price_from, 
+    MAX(pv.price) as price_to, 
+    MAX(pv.discount) as discount, 
+    MIN(pv.stock_quantity) as stock_quantity, 
+    COUNT(pv.variant_id) as variant_count,
+    img.image_id, img.image_url
+FROM categories AS c
+LEFT JOIN category_products AS cp ON cp.category_id = c.category_id
+LEFT JOIN products AS p ON cp.product_id = p.product_id
+LEFT JOIN product_variants AS pv ON p.product_id = pv.product_id
+LEFT JOIN images AS img ON p.product_id = img.product_id
+WHERE c.category_id = $1
+GROUP BY c.category_id, p.product_id, img.image_id, img.image_url, cp.product_id
+`
+
+type GetCategoryDetailRow struct {
+	CategoryID    int32       `json:"category_id"`
+	Name          string      `json:"name"`
+	Description   pgtype.Text `json:"description"`
+	SortOrder     int16       `json:"sort_order"`
+	Published     bool        `json:"published"`
+	CreatedAt     time.Time   `json:"created_at"`
+	UpdatedAt     time.Time   `json:"updated_at"`
+	ProductName   pgtype.Text `json:"product_name"`
+	Description_2 pgtype.Text `json:"description_2"`
+	ProductID     pgtype.Int8 `json:"product_id"`
+	PriceFrom     interface{} `json:"price_from"`
+	PriceTo       interface{} `json:"price_to"`
+	Discount      interface{} `json:"discount"`
+	StockQuantity interface{} `json:"stock_quantity"`
+	VariantCount  int64       `json:"variant_count"`
+	ImageID       pgtype.Int4 `json:"image_id"`
+	ImageUrl      pgtype.Text `json:"image_url"`
+}
+
+func (q *Queries) GetCategoryDetail(ctx context.Context, categoryID int32) ([]GetCategoryDetailRow, error) {
+	rows, err := q.db.Query(ctx, getCategoryDetail, categoryID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetCategoryDetailRow
+	for rows.Next() {
+		var i GetCategoryDetailRow
+		if err := rows.Scan(
+			&i.CategoryID,
+			&i.Name,
+			&i.Description,
+			&i.SortOrder,
+			&i.Published,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ProductName,
+			&i.Description_2,
+			&i.ProductID,
+			&i.PriceFrom,
+			&i.PriceTo,
+			&i.Discount,
+			&i.StockQuantity,
+			&i.VariantCount,
+			&i.ImageID,
+			&i.ImageUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getCategoryMaxSortOrder = `-- name: GetCategoryMaxSortOrder :one
 SELECT COALESCE(MAX(sort_order)::smallint, 0) AS max_sort_order
 FROM category_products
@@ -295,121 +360,6 @@ func (q *Queries) GetCategoryProduct(ctx context.Context, arg GetCategoryProduct
 		&i.UpdatedAt,
 	)
 	return i, err
-}
-
-const getCategoryProducts = `-- name: GetCategoryProducts :many
-SELECT
-    p.product_id, p.name, p.description, p.archived, p.created_at, p.updated_at
-FROM
-    products p
-    JOIN category_products cp ON p.product_id = cp.product_id
-WHERE
-    cp.category_id = $1
-`
-
-func (q *Queries) GetCategoryProducts(ctx context.Context, categoryID int32) ([]Product, error) {
-	rows, err := q.db.Query(ctx, getCategoryProducts, categoryID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Product
-	for rows.Next() {
-		var i Product
-		if err := rows.Scan(
-			&i.ProductID,
-			&i.Name,
-			&i.Description,
-			&i.Archived,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getCategoryWithProduct = `-- name: GetCategoryWithProduct :many
-SELECT 
-    c.category_id, c.name, c.description, c.sort_order, c.published, c.created_at, c.updated_at, 
-    p.name as product_name, p.description,
-    cp.product_id,
-    MIN(pv.price)::decimal as price_from, 
-    MAX(pv.price)::decimal as price_to, 
-    MAX(pv.discount)::smallint as discount, 
-    MIN(pv.stock_quantity)::smallint as stock_quantity, 
-    COUNT(pv.variant_id) as variant_count,
-    img.image_id, img.image_url
-FROM categories AS c
-JOIN category_products AS cp ON cp.category_id = c.category_id
-JOIN products AS p ON cp.product_id = p.product_id
-JOIN product_variants AS pv ON p.product_id = pv.product_id
-LEFT JOIN images AS img ON p.product_id = img.product_id
-WHERE c.category_id = $1
-GROUP BY c.category_id, p.product_id, img.image_id, img.image_url, cp.product_id
-`
-
-type GetCategoryWithProductRow struct {
-	CategoryID    int32          `json:"category_id"`
-	Name          string         `json:"name"`
-	Description   pgtype.Text    `json:"description"`
-	SortOrder     int16          `json:"sort_order"`
-	Published     bool           `json:"published"`
-	CreatedAt     time.Time      `json:"created_at"`
-	UpdatedAt     time.Time      `json:"updated_at"`
-	ProductName   string         `json:"product_name"`
-	Description_2 string         `json:"description_2"`
-	ProductID     int64          `json:"product_id"`
-	PriceFrom     pgtype.Numeric `json:"price_from"`
-	PriceTo       pgtype.Numeric `json:"price_to"`
-	Discount      int16          `json:"discount"`
-	StockQuantity int16          `json:"stock_quantity"`
-	VariantCount  int64          `json:"variant_count"`
-	ImageID       pgtype.Int4    `json:"image_id"`
-	ImageUrl      pgtype.Text    `json:"image_url"`
-}
-
-func (q *Queries) GetCategoryWithProduct(ctx context.Context, categoryID int32) ([]GetCategoryWithProductRow, error) {
-	rows, err := q.db.Query(ctx, getCategoryWithProduct, categoryID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetCategoryWithProductRow
-	for rows.Next() {
-		var i GetCategoryWithProductRow
-		if err := rows.Scan(
-			&i.CategoryID,
-			&i.Name,
-			&i.Description,
-			&i.SortOrder,
-			&i.Published,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.ProductName,
-			&i.Description_2,
-			&i.ProductID,
-			&i.PriceFrom,
-			&i.PriceTo,
-			&i.Discount,
-			&i.StockQuantity,
-			&i.VariantCount,
-			&i.ImageID,
-			&i.ImageUrl,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const getMaxSortOrderInCategory = `-- name: GetMaxSortOrderInCategory :one

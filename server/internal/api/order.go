@@ -16,7 +16,7 @@ import (
 
 // ---------------------------------------------- API Models ----------------------------------------------
 type OrderListQuery struct {
-	QueryParams
+	PaginationQueryParams
 	Status        string `form:"status"`
 	PaymentStatus string `form:"payment_status"`
 }
@@ -102,15 +102,22 @@ func (sv *Server) orderList(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
-	getListOrderParams := repository.ListOrdersParams{
-		Limit:  orderListQuery.PageSize,
-		Offset: (orderListQuery.Page - 1) * orderListQuery.PageSize,
+	dbParams := repository.ListOrdersParams{
+		Limit:  20,
+		Offset: 1,
+	}
+
+	if orderListQuery.PageSize != nil {
+		dbParams.Limit = *orderListQuery.PageSize
+		if orderListQuery.Page != nil {
+			dbParams.Offset = (*orderListQuery.Page - 1) * *orderListQuery.PageSize
+		}
 	}
 	if user.Role != repository.UserRoleAdmin {
-		getListOrderParams.UserID = utils.GetPgTypeUUID(tokenPayload.UserID)
+		dbParams.UserID = utils.GetPgTypeUUID(tokenPayload.UserID)
 	}
-	listOrderRows, err := sv.repo.ListOrders(c, getListOrderParams)
 
+	listOrderRows, err := sv.repo.ListOrders(c, dbParams)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return

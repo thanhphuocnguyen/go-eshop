@@ -665,17 +665,17 @@ const docTemplate = `{
                 }
             }
         },
-        "/collections": {
+        "/categories": {
             "get": {
-                "description": "Get a list of collections",
+                "description": "Get a list of Categories",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Get a list of collections",
-                "operationId": "get-collections",
+                "summary": "Get a list of Categories",
+                "operationId": "get-Categories",
                 "parameters": [
                     {
                         "type": "integer",
@@ -696,7 +696,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/api.collectionResp"
+                                "$ref": "#/definitions/api.CategoryResp"
                             }
                         }
                     },
@@ -715,23 +715,23 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Create a new collection",
+                "description": "Create a new Category",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Create a new collection",
-                "operationId": "create-collection",
+                "summary": "Create a new Category",
+                "operationId": "create-Category",
                 "parameters": [
                     {
-                        "description": "Collection request",
+                        "description": "Category request",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.collectionRequest"
+                            "$ref": "#/definitions/api.CategoryRequest"
                         }
                     }
                 ],
@@ -757,21 +757,21 @@ const docTemplate = `{
                 }
             }
         },
-        "/collections/{id}": {
+        "/categories/{id}": {
             "get": {
-                "description": "Get a collection by ID",
+                "description": "Get a Category by ID",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Get a collection by ID",
-                "operationId": "get-collection-by-id",
+                "summary": "Get a Category by ID",
+                "operationId": "get-Category-by-id",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Collection ID",
+                        "description": "Category ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -781,7 +781,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.collectionResp"
+                            "$ref": "#/definitions/api.CategoryResp"
                         }
                     },
                     "400": {
@@ -799,30 +799,30 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Update a collection",
+                "description": "Update a Category",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Update a collection",
-                "operationId": "update-collection",
+                "summary": "Update a Category",
+                "operationId": "update-Category",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Collection ID",
+                        "description": "Category ID",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Collection request",
+                        "description": "Category request",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.collectionRequest"
+                            "$ref": "#/definitions/api.CategoryRequest"
                         }
                     }
                 ],
@@ -848,19 +848,19 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Delete a collection",
+                "description": "Delete a Category",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Delete a collection",
-                "operationId": "delete-collection",
+                "summary": "Delete a Category",
+                "operationId": "delete-Category",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Collection ID",
+                        "description": "Category ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -888,21 +888,21 @@ const docTemplate = `{
                 }
             }
         },
-        "/collections/{id}/product": {
+        "/categories/{id}/product": {
             "post": {
-                "description": "Add a product to a collection",
+                "description": "Add a product to a Category",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Add a product to a collection",
-                "operationId": "add-product-to-collection",
+                "summary": "Add a product to a Category",
+                "operationId": "add-product-to-Category",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Collection ID",
+                        "description": "Category ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -913,7 +913,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.addProductToCollectionRequest"
+                            "$ref": "#/definitions/api.addProductToCategoryRequest"
                         }
                     }
                 ],
@@ -939,19 +939,19 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Delete a product from a collection",
+                "description": "Delete a product from a Category",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Delete a product from a collection",
-                "operationId": "delete-product-from-collection",
+                "summary": "Delete a product from a Category",
+                "operationId": "delete-product-from-Category",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Collection ID",
+                        "description": "Category ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -962,7 +962,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.collectionProductRequest"
+                            "$ref": "#/definitions/api.CategoryProductRequest"
                         }
                     }
                 ],
@@ -985,21 +985,21 @@ const docTemplate = `{
                 }
             }
         },
-        "/collections/{id}/product/sort-order": {
+        "/categories/{id}/product/sort-order": {
             "put": {
-                "description": "Update the sort order of a product in a collection",
+                "description": "Update the sort order of a product in a Category",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "Update the sort order of a product in a collection",
+                "summary": "Update the sort order of a product in a Category",
                 "operationId": "update-product-sort-order",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Collection ID",
+                        "description": "Category ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1010,7 +1010,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.collectionProductRequest"
+                            "$ref": "#/definitions/api.CategoryProductRequest"
                         }
                     },
                     {
@@ -1026,6 +1026,51 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/category/{id}/products": {
+            "get": {
+                "description": "Get a list of products in a Category",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get a list of products in a Category",
+                "operationId": "get-Category-products",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Category ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/api.ProductListModel"
+                            }
+                        }
                     },
                     "400": {
                         "description": "Bad Request",
@@ -2574,6 +2619,51 @@ const docTemplate = `{
                 }
             }
         },
+        "api.CategoryProductRequest": {
+            "type": "object",
+            "properties": {
+                "sort_order": {
+                    "type": "integer"
+                }
+            }
+        },
+        "api.CategoryRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "published": {
+                    "type": "boolean"
+                },
+                "sort_order": {
+                    "type": "integer"
+                }
+            }
+        },
+        "api.CategoryResp": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "products": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.ProductListModel"
+                    }
+                }
+            }
+        },
         "api.CreateAddressParams": {
             "type": "object",
             "required": [
@@ -3340,7 +3430,7 @@ const docTemplate = `{
                 }
             }
         },
-        "api.addProductToCollectionRequest": {
+        "api.addProductToCategoryRequest": {
             "type": "object",
             "properties": {
                 "product_id": {
@@ -3484,51 +3574,6 @@ const docTemplate = `{
                 },
                 "payment_id": {
                     "type": "string"
-                }
-            }
-        },
-        "api.collectionProductRequest": {
-            "type": "object",
-            "properties": {
-                "sort_order": {
-                    "type": "integer"
-                }
-            }
-        },
-        "api.collectionRequest": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "published": {
-                    "type": "boolean"
-                },
-                "sort_order": {
-                    "type": "integer"
-                }
-            }
-        },
-        "api.collectionResp": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "products": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/api.ProductListModel"
-                    }
                 }
             }
         },

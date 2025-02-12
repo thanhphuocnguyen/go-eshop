@@ -1,5 +1,4 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-
 class HttpClient {
   private instance: AxiosInstance;
   constructor(baseURL: string) {
@@ -12,8 +11,25 @@ class HttpClient {
 
     // Interceptors for request
     this.instance.interceptors.request.use(
-      (config) => {
-        // Add auth token or modify headers if needed
+      async (config) => {
+        if (typeof window === 'undefined') {
+          const { cookies } = await import('next/headers'),
+            token = (await cookies()).get('token')?.value;
+
+          if (token) {
+            config.headers['Authorization'] = `Bearer ${token}`;
+          }
+        } else {
+          const token = document.cookie.replace(
+            /(?:(?:^|.*;\s*)token\s*=\s*([^;]*).*$)|^.*$/,
+            '$1'
+          );
+
+          if (token) {
+            config.headers['Authorization'] = `Bearer ${token}`;
+          }
+        }
+
         return config;
       },
       (error) => Promise.reject(error)

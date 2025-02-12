@@ -7,24 +7,24 @@ VALUES (
 )
 RETURNING *;
 
--- name: GetCategoryByID :many
-SELECT c.* FROM categories c WHERE c.category_id = $1;
+-- name: GetCategoryByID :one
+SELECT c.* FROM categories c WHERE c.category_id = $1 LIMIT 1;
 
--- name: GetCategoryWithProduct :many
+-- name: GetCategoryDetail :many
 SELECT 
     c.*, 
     p.name as product_name, p.description,
     cp.product_id,
-    MIN(pv.price)::decimal as price_from, 
-    MAX(pv.price)::decimal as price_to, 
-    MAX(pv.discount)::smallint as discount, 
-    MIN(pv.stock_quantity)::smallint as stock_quantity, 
+    MIN(pv.price) as price_from, 
+    MAX(pv.price) as price_to, 
+    MAX(pv.discount) as discount, 
+    MIN(pv.stock_quantity) as stock_quantity, 
     COUNT(pv.variant_id) as variant_count,
     img.image_id, img.image_url
 FROM categories AS c
-JOIN category_products AS cp ON cp.category_id = c.category_id
-JOIN products AS p ON cp.product_id = p.product_id
-JOIN product_variants AS pv ON p.product_id = pv.product_id
+LEFT JOIN category_products AS cp ON cp.category_id = c.category_id
+LEFT JOIN products AS p ON cp.product_id = p.product_id
+LEFT JOIN product_variants AS pv ON p.product_id = pv.product_id
 LEFT JOIN images AS img ON p.product_id = img.product_id
 WHERE c.category_id = $1
 GROUP BY c.category_id, p.product_id, img.image_id, img.image_url, cp.product_id;
@@ -110,15 +110,6 @@ JOIN category_products cp ON p.product_id = cp.product_id
 WHERE
     cp.category_id = $1
     AND cp.product_id = $2;
-
--- name: GetCategoryProducts :many
-SELECT
-    p.*
-FROM
-    products p
-    JOIN category_products cp ON p.product_id = cp.product_id
-WHERE
-    cp.category_id = $1;
 
 -- name: GetMaxSortOrderInCategory :one
 SELECT

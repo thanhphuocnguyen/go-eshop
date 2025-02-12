@@ -14,7 +14,7 @@ WHERE
 GROUP BY
     products.product_id;
 
--- name: GetProductWithVariantByID :one
+-- name: GetProductVariantsByID :one
 SELECT
     *
 FROM
@@ -83,6 +83,33 @@ WHERE
     archived = COALESCE(sqlc.narg('archived'), false) AND
     pv.variant_id = COALESCE(sqlc.narg('variant_id'), pv.variant_id);
 
+-- name: GetProductsByCategory :many
+SELECT
+    p.*,
+    img.image_id AS image_id,
+    img.image_url AS image_url,
+    MIN(pv.price)::DECIMAL AS min_price,
+    MAX(pv.price)::DECIMAL AS max_price,
+    MAX(pv.price)::SMALLINT AS discount,
+    COUNT(pv.variant_id) AS variant_count
+FROM
+    products AS p
+JOIN category_products AS cp ON p.product_id = cp.product_id AND cp.category_id = $1
+JOIN product_variants AS pv ON p.product_id = pv.product_id
+LEFT JOIN images AS img ON p.product_id = img.product_id
+WHERE
+    archived = COALESCE(sqlc.narg('archived'), archived) AND
+    name ILIKE COALESCE(sqlc.narg('name'), name) AND
+    sku ILIKE COALESCE(sqlc.narg('sku'), sku)
+GROUP BY
+    p.product_id, img.image_id
+ORDER BY
+    p.product_id
+LIMIT
+    $2
+OFFSET
+    $3;
+
 -- name: CountProducts :one
 SELECT
     COUNT(*)
@@ -119,13 +146,4 @@ WHERE
     product_id = $1;
 
 -- name: AddBulkProducts :copyfrom
-INSERT INTO
-    products (
-        name,
-        description
-    )
-VALUES
-    (
-        $1,
-        $2
-    );
+INSERT INTO products (name,description) VALUES ($1,$2);
