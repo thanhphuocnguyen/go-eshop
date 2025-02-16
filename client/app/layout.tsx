@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import NavBar from '../components/NavBar';
-import { SWRConfig } from 'swr';
+import NavBar from '../components/Nav/NavBar';
 import 'react-multi-carousel/lib/styles.css';
+import ClientToastContainer from '@/components/Common/ToastContainer';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   description: 'An e-commerce site built with Next.js',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   auth: React.ReactNode;
@@ -25,7 +25,10 @@ export default function RootLayout({
         <div className='main'>
           <div className='gradient' />
         </div>
-        <main className='app'>{children}</main>
+        <main className='app'>
+          {children}
+          <ClientToastContainer />
+        </main>
       </body>
     </html>
   );

@@ -162,6 +162,42 @@ func (sv *Server) createCart(c *gin.Context) {
 	c.JSON(http.StatusOK, GenericResponse[repository.Cart]{&newCart, nil, nil})
 }
 
+// @Summary Count the number of items in the cart
+// @Schemes http
+// @Description count the number of items in the cart
+// @Tags carts
+// @Accept json
+// @Produce json
+// @Success 200 {object} GenericResponse[int32]
+// @Failure 400 {object} errorResponse
+// @Failure 500 {object} errorResponse
+// @Router /cart/items-count [get]
+func (sv *Server) countCartItems(c *gin.Context) {
+	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	if !ok {
+		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("user not found")))
+		return
+	}
+
+	cart, err := sv.repo.GetCart(c, authPayload.UserID)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, mapErrResp(errors.New("cart not found")))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
+
+	count, err := sv.repo.CountCartItems(c, cart.CartID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, GenericResponse[int64]{&count, nil, nil})
+}
+
 // @Summary Get cart details by user ID
 // @Schemes http
 // @Description get cart details by user ID

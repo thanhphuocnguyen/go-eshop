@@ -1,4 +1,3 @@
-import apiClient from '@/axios/axios';
 import { GenericListResponse } from '@/lib/types';
 import { CategoryProductModel } from '@/lib/types/product';
 import Carousel from '../Common/Carousel';
@@ -27,20 +26,18 @@ export default async function ProductCarousel({
 }: {
   categoryID: number;
 }) {
-  const productResp = await apiClient.get<
-    GenericListResponse<CategoryProductModel>
-  >(`/category/${categoryID}/products`, {});
+  const productResp: GenericListResponse<CategoryProductModel> = await fetch(
+    process.env.NEXT_API_URL + `/category/${categoryID}/products`
+  ).then((res) => res.json());
   return (
     <Carousel
-      swipeable={false}
       draggable={false}
       showDots={true}
       responsive={responsive}
-      ssr={true} // means to render carousel on server-side.
+      ssr // means to render carousel on server-side.
       infinite={true}
       autoPlay
       autoPlaySpeed={3000}
-      keyBoardControl={true}
       customTransition='all .5'
       transitionDuration={800}
       containerClass='carousel-container'

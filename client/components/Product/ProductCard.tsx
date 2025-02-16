@@ -1,6 +1,5 @@
 import Image from 'next/image';
 import React from 'react';
-import AddToCartBtn from './AddToCartBtn';
 import Link from 'next/link';
 
 interface ProductCardProps {
@@ -15,22 +14,25 @@ const ProductCard: React.FC<ProductCardProps> = (props) => {
   const { name, image, priceFrom, priceTo, rating } = props;
   return (
     <div className='w-full h-full flex flex-col max-w-sm bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700'>
-      <Link className='w-auto h-full relative' href='/product/[id]' as={`/product/${props.ID}`}>
+      <Link
+        className='w-auto h-full relative'
+        href='/products/[id]'
+        as={`/products/${props.ID}`}
+      >
         <Image
-          className='p-4 m-auto rounded-t-lg'
+          className='p-4 m-auto rounded-t-lg object-contain'
           src={image || '/images/product-placeholder.webp'}
           alt='product image'
           width={300}
-          objectFit='cover'
           height={220}
         />
       </Link>
       <div className='px-5 pb-5 align-bottom'>
-        <a href='#'>
+        <Link href='/products/[id]' as={`/products/${props.ID}`}>
           <h5 className='text-xl font-semibold tracking-tight text-gray-900 dark:text-white'>
             {name}
           </h5>
-        </a>
+        </Link>
         <div className='flex items-center mt-2.5 mb-5'>
           <div className='flex items-center space-x-1 rtl:space-x-reverse'>
             <svg
@@ -88,7 +90,13 @@ const ProductCard: React.FC<ProductCardProps> = (props) => {
             ${priceFrom} - ${priceTo}
           </span>
         </div>
-        <AddToCartBtn productID={props.ID} />
+        <Link
+          href='/products/[id]'
+          as={`/products/${props.ID}`}
+          className='text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800'
+        >
+          Add to cart
+        </Link>
       </div>
     </div>
   );

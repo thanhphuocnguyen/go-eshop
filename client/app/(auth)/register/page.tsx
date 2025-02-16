@@ -1,4 +1,5 @@
 'use client';
+import { register } from '@/app/actions/auth';
 import {
   Button,
   Field,
@@ -7,38 +8,18 @@ import {
   Label,
   Legend,
 } from '@headlessui/react';
-import { zodResolver } from '@hookform/resolvers/zod';
 import clsx from 'clsx';
-import { useForm } from 'react-hook-form';
-import { RegisterForm, registerSchema } from './_lib/type';
+import { useActionState } from 'react';
 
 export default function RegisterPage() {
-  const {
-    handleSubmit,
-    register,
-    formState: { isSubmitting, isValid, isDirty, errors },
-  } = useForm<RegisterForm>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: {
-      confirmPassword: '',
-      email: '',
-      fullname: '',
-      password: '',
-      phone: '',
-      username: '',
-    },
-  });
-
-  const onSubmit = async (data: RegisterForm) => {
-    console.log(data);
-  };
+  const [state, action, pending] = useActionState(register, undefined);
 
   return (
     <div className='w-screen h-[90vh] flex items-center justify-center'>
       <div className='w-full max-w-lg px-4'>
         <Fieldset
           as='form'
-          onSubmit={handleSubmit(onSubmit)}
+          action={action}
           className='space-y-6 rounded-xl bg-gray-700 bg-light-green shadow-md p-6 sm:p-10'
         >
           <Legend className='text-base/7 font-semibold text-white'>
@@ -47,7 +28,6 @@ export default function RegisterPage() {
           <Field>
             <Label className='text-sm/6 font-medium text-white'>Username</Label>
             <Input
-              {...register('username')}
               disabled={false}
               id='username'
               name='username'
@@ -60,8 +40,8 @@ export default function RegisterPage() {
           <Field>
             <Label className='text-sm/6 font-medium text-white'>Password</Label>
             <Input
-              {...register('password')}
               type='password'
+              name='password'
               id='password'
               className={clsx(
                 'mt-3 block w-full rounded-lg border-none bg-white/5 py-1.5 px-3 text-sm/6 text-white',
@@ -74,34 +54,34 @@ export default function RegisterPage() {
               Confirm Password
             </Label>
             <Input
-              {...register('confirmPassword')}
               type='password'
-              id='confirm-password'
+              id='confirmPassword'
+              name='confirmPassword'
               className={clsx(
                 'mt-3 block w-full rounded-lg border-none bg-white/5 py-1.5 px-3 text-sm/6 text-white',
                 'focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25'
               )}
             />
-            {errors.confirmPassword && (
+            {state?.errors?.confirmPassword && (
               <Label className='text-red-500 text-sm/6 mt-1'>
-                {errors.confirmPassword?.message}
+                {state.errors.confirmPassword.join(', ')}
               </Label>
             )}
           </Field>
           <Field>
             <Label className='text-sm/6 font-medium text-white'>Email</Label>
             <Input
-              {...register('email')}
               type='email'
               id='email'
+              name='email'
               className={clsx(
                 'mt-3 block w-full rounded-lg border-none bg-white/5 py-1.5 px-3 text-sm/6 text-white',
                 'focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25'
               )}
             />
-            {errors.email && (
+            {state?.errors?.email && (
               <Label className='text-red-500 text-sm/6 mt-1'>
-                {errors.email?.message}
+                {state.errors.email?.join(', ')}
               </Label>
             )}
           </Field>
@@ -111,21 +91,38 @@ export default function RegisterPage() {
             </Label>
             <Input
               type='tel'
-              {...register('phone')}
-              id='phone-number'
+              name='phone'
+              id='phone'
               className={clsx(
                 'mt-3 block w-full rounded-lg border-none bg-white/5 py-1.5 px-3 text-sm/6 text-white',
                 'focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25'
               )}
             />
-            {errors.phone && (
+            {state?.errors?.phone && (
               <Label className='text-red-500 text-sm/6 mt-1'>
-                {errors.phone?.message}
+                {state?.errors.phone.join(', ')}
               </Label>
             )}
           </Field>
-          <Button className='btn mr-0 ml-autox' disabled={!isDirty && isValid} type='submit'>
-            {isSubmitting ? 'Submitting' : 'Register'}
+          <Field>
+            <Label className='text-sm/6 font-medium text-white'>FullName</Label>
+            <Input
+              type='tel'
+              id='fullname'
+              name='fullname'
+              className={clsx(
+                'mt-3 block w-full rounded-lg border-none bg-white/5 py-1.5 px-3 text-sm/6 text-white',
+                'focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25'
+              )}
+            />
+            {state?.errors?.fullname && (
+              <Label className='text-red-500 text-sm/6 mt-1'>
+                {state?.errors.fullname.join(', ')}
+              </Label>
+            )}
+          </Field>
+          <Button className='btn mr-0 ml-auto' disabled={pending} type='submit'>
+            {pending ? 'Submitting' : 'Register'}
           </Button>
         </Fieldset>
       </div>

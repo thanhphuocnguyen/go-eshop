@@ -106,7 +106,7 @@ func mapAddressToAddressResponse(address repository.UserAddress) addressResponse
 
 // ------------------------------ Handlers ------------------------------
 
-// createUser godoc
+// signUp godoc
 // @Summary Create a new user
 // @Description Create a new user
 // @Tags users
@@ -117,7 +117,7 @@ func mapAddressToAddressResponse(address repository.UserAddress) addressResponse
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /users [post]
-func (sv *Server) createUser(c *gin.Context) {
+func (sv *Server) signUp(c *gin.Context) {
 	var req createUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, mapErrResp(err))
@@ -167,6 +167,7 @@ func (sv *Server) createUser(c *gin.Context) {
 		asynq.ProcessIn(5*time.Second),
 		asynq.Queue(worker.QueueCritical),
 	)
+
 	message := "Please verify your email address to activate your account"
 	errMsg := ""
 	if err != nil {
@@ -239,6 +240,7 @@ func (sv *Server) loginUser(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
 	}
+
 	loginResp := loginResponse{
 		SessionID:            session.SessionID,
 		TokenExpireAt:        payload.ExpiredAt,
@@ -260,11 +262,12 @@ func (sv *Server) loginUser(c *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /users/refresh-token [post]
 func (sv *Server) refreshToken(c *gin.Context) {
-	refreshToken := c.GetHeader("Authorization")
-	if refreshToken == "" {
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
 		c.JSON(http.StatusUnauthorized, mapErrResp(fmt.Errorf("refresh token is required")))
 		return
 	}
+	refreshToken := authHeader[len("Bearer "):]
 	refreshTokenPayload, err := sv.tokenGenerator.VerifyToken(refreshToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, mapErrResp(err))

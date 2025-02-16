@@ -20,7 +20,7 @@ type Querier interface {
 	ClearCart(ctx context.Context, cartID uuid.UUID) error
 	CountAddresses(ctx context.Context) (int64, error)
 	CountAttributes(ctx context.Context) (int64, error)
-	CountCartItem(ctx context.Context, cartID uuid.UUID) (int64, error)
+	CountCartItems(ctx context.Context, cartID uuid.UUID) (int64, error)
 	CountCategories(ctx context.Context, categoryID pgtype.Int4) (int64, error)
 	CountOrders(ctx context.Context, arg CountOrdersParams) (int64, error)
 	CountProducts(ctx context.Context, arg CountProductsParams) (int64, error)

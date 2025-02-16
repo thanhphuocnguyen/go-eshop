@@ -85,7 +85,7 @@ func (sv *Server) initializeRouter() {
 		v1.GET("verify-email", sv.verifyEmail)
 		auth := v1.Group("/auth")
 		{
-			auth.POST("register", sv.createUser)
+			auth.POST("register", sv.signUp)
 			auth.POST("login", sv.loginUser)
 			auth.POST("refresh-token", sv.refreshToken)
 			authRoutes := auth.Group("").Use(authMiddleware(sv.tokenGenerator))
@@ -176,6 +176,7 @@ func (sv *Server) initializeRouter() {
 		{
 			cart.Use(authMiddleware(sv.tokenGenerator))
 			cart.POST("", sv.createCart)
+			cart.GET("items-count", sv.countCartItems)
 			cart.GET("", sv.getCartDetail)
 			cart.POST("checkout", sv.checkout)
 			cart.PUT("clear", sv.clearCart)

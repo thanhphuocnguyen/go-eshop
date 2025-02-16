@@ -22,12 +22,12 @@ func (q *Queries) ClearCart(ctx context.Context, cartID uuid.UUID) error {
 	return err
 }
 
-const countCartItem = `-- name: CountCartItem :one
+const countCartItems = `-- name: CountCartItems :one
 SELECT COUNT(*) FROM cart_items WHERE cart_id = $1
 `
 
-func (q *Queries) CountCartItem(ctx context.Context, cartID uuid.UUID) (int64, error) {
-	row := q.db.QueryRow(ctx, countCartItem, cartID)
+func (q *Queries) CountCartItems(ctx context.Context, cartID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countCartItems, cartID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err

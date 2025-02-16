@@ -26,7 +26,7 @@ RETURNING *;
 -- name: UpdateCartItemQuantity :exec
 UPDATE cart_items SET quantity = $1 WHERE cart_item_id = $2 RETURNING *;
 
--- name: CountCartItem :one
+-- name: CountCartItems :one
 SELECT COUNT(*) FROM cart_items WHERE cart_id = $1;
 
 -- name: GetCartItem :one

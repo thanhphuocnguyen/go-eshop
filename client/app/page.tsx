@@ -1,4 +1,3 @@
-import apiClient from '@/axios/axios';
 import CategoryProductSkeleton from '@/components/Product/CategoryProductSkeleton';
 import ProductCarousel from '@/components/Product/ProductCarousel';
 import { API_PUBLIC_PATHS } from '@/lib/constants/api';
@@ -7,10 +6,15 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 
 export default async function Home() {
-  const categoriesResp = await apiClient.get<GenericListResponse<Category>>(
-    API_PUBLIC_PATHS.CATEGORIES,
-    {}
-  );
+  const categoriesResp: GenericListResponse<Category> = await fetch(
+    process.env.NEXT_API_URL + API_PUBLIC_PATHS.CATEGORIES,
+    {
+      next: {
+        tags: ['categories'],
+      },
+    }
+  ).then((res) => res.json());
+
   return (
     <div className='w-full py-3 h-full flex flex-col gap-3'>
       {categoriesResp.data.map((category) => (
