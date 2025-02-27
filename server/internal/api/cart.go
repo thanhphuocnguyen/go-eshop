@@ -23,9 +23,9 @@ type cartItemAttributeModel struct {
 }
 
 type cartItemResponse struct {
-	ID            int32                    `json:"id"`
-	ProductID     int64                    `json:"product_id"`
-	VariantID     int64                    `json:"variant_id"`
+	ID            string                   `json:"id"`
+	ProductID     string                   `json:"product_id"`
+	VariantID     string                   `json:"variant_id"`
 	Name          string                   `json:"name"`
 	Quantity      int16                    `json:"quantity"`
 	Price         float64                  `json:"price"`
@@ -46,13 +46,13 @@ type cartResponse struct {
 }
 
 type addProductToCartRequest struct {
-	ProductID int64 `json:"product_id" binding:"required,min=1"`
-	VariantID int64 `json:"variant_id" binding:"required,min=1"`
-	Quantity  int16 `json:"quantity" binding:"required,gt=0"`
+	ProductID string `json:"product_id" binding:"required,uuid"`
+	VariantID string `json:"variant_id" binding:"required,uuid"`
+	Quantity  int16  `json:"quantity" binding:"required,gt=0"`
 }
 
 type getCartItemParam struct {
-	ID int32 `uri:"id" binding:"required,gt=0"`
+	ID string `uri:"id" binding:"required,uuid"`
 }
 
 type checkoutRequest struct {
@@ -73,18 +73,18 @@ func mapToCartResponse(cart repository.Cart, dataRows []repository.GetCartItemsB
 		// if it's the first item or the previous item is different
 		lastIdx := len(cartItems) - 1
 
-		if i == 0 || cartItems[lastIdx].VariantID != row.VariantID {
+		if i == 0 || cartItems[lastIdx].VariantID != row.VariantID.String() {
 			priceParsed, _ := row.Price.Float64Value()
 			totalPrice += priceParsed.Float64 * float64(row.Quantity)
 			productVariant := cartItemResponse{
-				ID:            row.CartItemID,
+				ID:            row.CartItemID.String(),
 				Name:          row.ProductName,
 				Quantity:      row.Quantity,
 				Price:         priceParsed.Float64,
 				Discount:      row.Discount,
 				StockQuantity: row.StockQuantity,
-				VariantID:     row.VariantID,
-				ProductID:     row.ProductID,
+				VariantID:     row.VariantID.String(),
+				ProductID:     row.ProductID.String(),
 				Attributes: []cartItemAttributeModel{
 					{
 						Name:  row.AttributeName,
@@ -283,8 +283,8 @@ func (sv *Server) addCartItem(c *gin.Context) {
 	}
 
 	productVariant, err := sv.repo.GetVariantByID(c, repository.GetVariantByIDParams{
-		VariantID: req.VariantID,
-		ProductID: req.ProductID,
+		VariantID: uuid.MustParse(req.VariantID),
+		ProductID: uuid.MustParse(req.ProductID),
 	})
 
 	if err != nil {
@@ -301,13 +301,13 @@ func (sv *Server) addCartItem(c *gin.Context) {
 		return
 	}
 
-	cartItem, err := sv.repo.GetCartItemByVariantID(c, req.VariantID)
+	cartItem, err := sv.repo.GetCartItemByVariantID(c, uuid.MustParse(req.VariantID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			cartItem, err = sv.repo.CreateCartItem(c, repository.CreateCartItemParams{
 				CartID:    cart.CartID,
-				ProductID: req.ProductID,
-				VariantID: req.VariantID,
+				ProductID: uuid.MustParse(req.ProductID),
+				VariantID: uuid.MustParse(req.VariantID),
 				Quantity:  req.Quantity,
 			})
 			if err != nil {
@@ -319,7 +319,7 @@ func (sv *Server) addCartItem(c *gin.Context) {
 			return
 		}
 	} else {
-		if cartItem.ProductID != req.ProductID {
+		if cartItem.ProductID.String() != req.ProductID {
 			c.JSON(http.StatusBadRequest, mapErrResp(errors.New("product not found")))
 			return
 		}
@@ -345,9 +345,9 @@ func (sv *Server) addCartItem(c *gin.Context) {
 		return
 	}
 
-	createdID := cartItem.CartItemID
+	createdID := cartItem.CartItemID.String()
 
-	c.JSON(http.StatusOK, GenericResponse[int32]{&createdID, nil, nil})
+	c.JSON(http.StatusOK, GenericResponse[string]{&createdID, nil, nil})
 }
 
 // @Summary Remove a product from the cart
@@ -391,7 +391,7 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 
 	err = sv.repo.RemoveProductFromCart(c, repository.RemoveProductFromCartParams{
 		CartID:     cart.CartID,
-		CartItemID: param.ID,
+		CartItemID: uuid.MustParse(param.ID),
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
@@ -606,7 +606,7 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 
 	err = sv.repo.UpdateCartItemQuantity(c, repository.UpdateCartItemQuantityParams{
 		Quantity:   req.Quantity,
-		CartItemID: param.ID,
+		CartItemID: uuid.MustParse(param.ID),
 	})
 
 	if err != nil {
@@ -614,7 +614,7 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 		return
 	}
 
-	cartItem, err := sv.repo.GetCartItemWithProduct(c, param.ID)
+	cartItem, err := sv.repo.GetCartItemWithProduct(c, uuid.MustParse(param.ID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, mapErrResp(errors.New("cart item not found")))

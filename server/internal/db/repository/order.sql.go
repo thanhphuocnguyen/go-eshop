@@ -100,8 +100,8 @@ RETURNING order_item_id, order_id, product_id, variant_id, quantity, price, crea
 `
 
 type CreateOrderItemParams struct {
-	ProductID int64          `json:"product_id"`
-	VariantID int64          `json:"variant_id"`
+	ProductID uuid.UUID      `json:"product_id"`
+	VariantID uuid.UUID      `json:"variant_id"`
 	OrderID   uuid.UUID      `json:"order_id"`
 	Quantity  int16          `json:"quantity"`
 	Price     pgtype.Numeric `json:"price"`
@@ -212,7 +212,7 @@ type GetOrderDetailsRow struct {
 	ItemPrice      pgtype.Numeric     `json:"item_price"`
 	OrderItemID    int64              `json:"order_item_id"`
 	ProductName    string             `json:"product_name"`
-	ProductID      int64              `json:"product_id"`
+	ProductID      uuid.UUID          `json:"product_id"`
 	Street         string             `json:"street"`
 	Ward           pgtype.Text        `json:"ward"`
 	District       string             `json:"district"`
@@ -224,7 +224,7 @@ type GetOrderDetailsRow struct {
 	PaymentMethod  NullPaymentMethod  `json:"payment_method"`
 	PaymentGateway NullPaymentGateway `json:"payment_gateway"`
 	RefundID       pgtype.Text        `json:"refund_id"`
-	VariantID      int64              `json:"variant_id"`
+	VariantID      uuid.UUID          `json:"variant_id"`
 }
 
 func (q *Queries) GetOrderDetails(ctx context.Context, orderID uuid.UUID) ([]GetOrderDetailsRow, error) {

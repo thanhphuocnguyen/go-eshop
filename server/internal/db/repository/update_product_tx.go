@@ -3,13 +3,14 @@ package repository
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
 // CreateProductTx creates a new product in a transaction
 type UpdateProductTxParam struct {
-	ProductID   int64
+	ProductID   uuid.UUID
 	Name        *string
 	Description *string
 	CategoryID  *int32
@@ -17,13 +18,15 @@ type UpdateProductTxParam struct {
 }
 
 type UpdateProductTxResult struct {
-	Product  Product `json:"product"`
-	Variants []UpdateVariantTxResult
+	Product  Product                 `json:"product"`
+	Variants []UpdateVariantTxResult `json:"variants,omitempty"`
 }
 
 func (s *pgRepo) UpdateProductTx(ctx context.Context, arg UpdateProductTxParam) (result UpdateProductTxResult, err error) {
 	err = s.execTx(ctx, func(q *Queries) error {
-		updateProductParam := UpdateProductParams{}
+		updateProductParam := UpdateProductParams{
+			ProductID: arg.ProductID,
+		}
 		if arg.Name != nil {
 			updateProductParam.Name = utils.GetPgTypeText(*arg.Name)
 		}
@@ -35,13 +38,6 @@ func (s *pgRepo) UpdateProductTx(ctx context.Context, arg UpdateProductTxParam) 
 		if err != nil {
 			log.Error().Err(err).Msg("CreateProduct")
 			return err
-		}
-
-		if arg.CategoryID != nil {
-			q.AddProductToCategory(ctx, AddProductToCategoryParams{
-				CategoryID: *arg.CategoryID,
-				ProductID:  product.ProductID,
-			})
 		}
 
 		result.Product = product

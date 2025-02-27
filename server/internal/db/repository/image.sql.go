@@ -16,8 +16,8 @@ INSERT INTO images (product_id, variant_id, image_url, external_id) VALUES ($1, 
 `
 
 type CreateImageParams struct {
-	ProductID  pgtype.Int8 `json:"product_id"`
-	VariantID  pgtype.Int8 `json:"variant_id"`
+	ProductID  pgtype.UUID `json:"product_id"`
+	VariantID  pgtype.UUID `json:"variant_id"`
 	ImageUrl   string      `json:"image_url"`
 	ExternalID pgtype.Text `json:"external_id"`
 }
@@ -93,7 +93,7 @@ const getImageByProductID = `-- name: GetImageByProductID :one
 SELECT image_id, product_id, variant_id, image_url, external_id, created_at, updated_at FROM images WHERE product_id = $1 AND variant_id = NULL LIMIT 1
 `
 
-func (q *Queries) GetImageByProductID(ctx context.Context, productID pgtype.Int8) (Image, error) {
+func (q *Queries) GetImageByProductID(ctx context.Context, productID pgtype.UUID) (Image, error) {
 	row := q.db.QueryRow(ctx, getImageByProductID, productID)
 	var i Image
 	err := row.Scan(
@@ -112,7 +112,7 @@ const getImageByVariantID = `-- name: GetImageByVariantID :one
 SELECT image_id, product_id, variant_id, image_url, external_id, created_at, updated_at FROM images WHERE variant_id = $1 LIMIT 1
 `
 
-func (q *Queries) GetImageByVariantID(ctx context.Context, variantID pgtype.Int8) (Image, error) {
+func (q *Queries) GetImageByVariantID(ctx context.Context, variantID pgtype.UUID) (Image, error) {
 	row := q.db.QueryRow(ctx, getImageByVariantID, variantID)
 	var i Image
 	err := row.Scan(
@@ -139,8 +139,8 @@ WHERE image_id = $1
 
 type UpdateImageParams struct {
 	ImageID    int32       `json:"image_id"`
-	ProductID  pgtype.Int8 `json:"product_id"`
-	VariantID  pgtype.Int8 `json:"variant_id"`
+	ProductID  pgtype.UUID `json:"product_id"`
+	VariantID  pgtype.UUID `json:"variant_id"`
 	ImageUrl   pgtype.Text `json:"image_url"`
 	ExternalID pgtype.Text `json:"external_id"`
 }

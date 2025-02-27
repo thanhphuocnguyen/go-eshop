@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -13,5 +14,5 @@ func GetImageName(originFileName string) string {
 }
 
 func StandardizeDecimal(num float64) float64 {
-	return float64(int64(num*utils.MUL)) / utils.EXP
+	return math.Floor(num*utils.MUL) / utils.EXP
 }

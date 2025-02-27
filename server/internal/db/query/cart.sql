@@ -18,9 +18,9 @@ UPDATE carts SET updated_at = NOW() WHERE cart_id = $1 RETURNING *;
 
 -- name: CreateCartItem :one
 INSERT INTO cart_items 
-    (cart_id, product_id, variant_id, quantity) 
+    (cart_item_id, cart_id, product_id, variant_id, quantity) 
 VALUES 
-    ($1, $2, $3, $4) 
+    ($1, $2, $3, $4, $5)
 RETURNING *;
 
 -- name: UpdateCartItemQuantity :exec

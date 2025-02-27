@@ -5,16 +5,19 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"golang.org/x/sync/errgroup"
 )
 
 type CreateProductRequest struct {
-	Name        string           `json:"name" binding:"required,min=3,max=100"`
-	Description string           `json:"description" binding:"required,min=10,max=1000"`
-	CategoryID  *int32           `json:"category_id,omitempty"`
-	Variants    []VariantRequest `json:"variants" binding:"omitempty,dive"`
+	Name         string           `json:"name" binding:"required,min=3,max=100"`
+	Description  string           `json:"description" binding:"required,min=6,max=1000"`
+	CategoryID   *int32           `json:"category_id,omitempty"`
+	BrandID      *int32           `json:"brand_id,omitempty"`
+	CollectionID *int32           `json:"collection_id,omitempty"`
+	Variants     []VariantRequest `json:"variants" binding:"omitempty,dive"`
 }
 
 type UpdateProductRequest struct {
@@ -25,7 +28,7 @@ type UpdateProductRequest struct {
 }
 
 type ProductParam struct {
-	ID int64 `uri:"id" binding:"required,min=1"`
+	ID string `uri:"id" binding:"required,uuid"`
 }
 
 type ProductQueries struct {
@@ -35,7 +38,7 @@ type ProductQueries struct {
 }
 
 type ProductVariantModel struct {
-	ID         int64                    `json:"id"`
+	ID         string                   `json:"id"`
 	Price      float64                  `json:"price"`
 	StockQty   int32                    `json:"stock_qty"`
 	Discount   int16                    `json:"discount"`
@@ -45,7 +48,7 @@ type ProductVariantModel struct {
 }
 
 type ProductDetailModel struct {
-	ID          int64                 `json:"id"`
+	ID          string                `json:"id"`
 	Name        string                `json:"name"`
 	Description string                `json:"description"`
 	UpdatedAt   string                `json:"updated_at"`
@@ -55,7 +58,7 @@ type ProductDetailModel struct {
 }
 
 type ProductListModel struct {
-	ID           int64   `json:"id"`
+	ID           string  `json:"id"`
 	Name         string  `json:"name"`
 	Description  string  `json:"description"`
 	VariantCount int64   `json:"variant_count"`
@@ -67,6 +70,33 @@ type ProductListModel struct {
 }
 
 // ------------------------------ Mapper ------------------------------
+func getVariantFromRow(row repository.GetProductDetailRow) ProductVariantModel {
+	if !row.VariantID.Valid {
+		return ProductVariantModel{}
+	}
+	price, _ := row.Price.Float64Value()
+	variantID := uuid.UUID(row.VariantID.Bytes).String()
+	attributes := []ProductAttributeDetail{}
+	variantModel := ProductVariantModel{
+		ID:       variantID,
+		Price:    price.Float64,
+		StockQty: row.StockQuantity.Int32,
+		Discount: row.Discount.Int16,
+	}
+	if row.VariantAttributeID.Valid {
+		attributes = append(attributes, ProductAttributeDetail{
+			ID:    row.VariantAttributeID.Int32,
+			Name:  row.AttributeName.String,
+			Value: []string{row.VariantAttributeValue.String},
+		})
+		variantModel.Attributes = attributes
+	}
+
+	if row.Sku.Valid {
+		variantModel.Sku = &row.Sku.String
+	}
+	return variantModel
+}
 
 func mapToProductResponse(productRows []repository.GetProductDetailRow) ProductDetailModel {
 	if len(productRows) == 0 {
@@ -74,7 +104,7 @@ func mapToProductResponse(productRows []repository.GetProductDetailRow) ProductD
 	}
 	product := productRows[0].Product
 	resp := ProductDetailModel{
-		ID:          product.ProductID,
+		ID:          product.ProductID.String(),
 		Name:        product.Name,
 		Description: product.Description,
 		UpdatedAt:   product.UpdatedAt.String(),
@@ -84,44 +114,47 @@ func mapToProductResponse(productRows []repository.GetProductDetailRow) ProductD
 	if productRows[0].ImgProductID.Valid {
 		resp.ImageUrl = productRows[0].ImageUrl.String
 	}
+	firstVariant := getVariantFromRow(productRows[0])
+	if firstVariant.ID != "" {
+		resp.Variants = append(resp.Variants, getVariantFromRow(productRows[0]))
+	}
 
-	for i, row := range productRows {
+	for i := 1; i < len(productRows); i++ {
+		row := productRows[i]
+		if !row.VariantID.Valid {
+			continue
+		}
 		// add variants
 		// get variant price
-		price, _ := row.Price.Float64Value()
+		variantID := uuid.UUID(row.VariantID.Bytes).String()
+		prevVariantID := uuid.UUID(productRows[i-1].VariantID.Bytes).String()
 		// add variant if it's the first variant or different from the previous one
-		if i == 0 || row.VariantID != productRows[i-1].VariantID {
-			variantModel := ProductVariantModel{
-				ID:       row.VariantID,
-				Price:    price.Float64,
-				StockQty: row.StockQuantity,
-				Discount: row.Discount,
-				Attributes: []ProductAttributeDetail{
-					{
-						ID:    row.VariantAttributeID,
-						Name:  row.AttributeName,
-						Value: row.VariantAttributeValue,
-					},
-				},
-			}
-			if row.Sku.Valid {
-				variantModel.Sku = &row.Sku.String
-			}
-
+		if variantID != prevVariantID {
 			resp.Variants = append(
 				resp.Variants,
-				variantModel,
+				getVariantFromRow(row),
 			)
-		} else if row.ImgVariantID.Valid && row.ImgVariantID.Int64 == row.VariantID && resp.Variants[len(resp.Variants)-1].ID == row.VariantID {
-			resp.Variants[len(resp.Variants)-1].ImageUrl = &row.ImageUrl.String
-		} else if row.VariantID == productRows[i-1].VariantID && row.AttributeID != productRows[i-1].AttributeID {
+		} else if row.AttributeID.Valid && productRows[i-1].AttributeID.Valid {
 			// add attribute value to existing variant
 			lastVariant := resp.Variants[len(resp.Variants)-1]
-			lastVariant.Attributes = append(lastVariant.Attributes, ProductAttributeDetail{
-				ID:    row.VariantAttributeID,
-				Name:  row.AttributeName,
-				Value: row.VariantAttributeValue,
-			})
+			attributeID := row.AttributeID.Int32
+			lastAttributeID := productRows[i-1].AttributeID.Int32
+			if attributeID != lastAttributeID {
+				if row.VariantAttributeID.Valid {
+					lastVariant.Attributes = append(lastVariant.Attributes, ProductAttributeDetail{
+						ID:   row.VariantAttributeID.Int32,
+						Name: row.AttributeName.String,
+						Value: []string{
+							row.VariantAttributeValue.String,
+						},
+					})
+				}
+			} else {
+				lastVariant.Attributes[len(lastVariant.Attributes)-1].Value = append(lastVariant.Attributes[len(lastVariant.Attributes)-1].Value, row.VariantAttributeValue.String)
+			}
+		}
+		if row.ImgVariantID.Valid && uuid.UUID(row.ImgVariantID.Bytes).String() == variantID && resp.Variants[len(resp.Variants)-1].ID == variantID {
+			resp.Variants[len(resp.Variants)-1].ImageUrl = &row.ImageUrl.String
 		}
 	}
 	return resp
@@ -131,12 +164,11 @@ func mapToListProductResponse(productRow repository.GetProductsRow) ProductListM
 	minPrice, _ := productRow.MinPrice.Float64Value()
 	maxPrice, _ := productRow.MaxPrice.Float64Value()
 	product := ProductListModel{
-		ID:          productRow.ProductID,
-		Name:        productRow.Name,
-		Description: productRow.Description,
-		PriceFrom:   minPrice.Float64,
-		PriceTo:     maxPrice.Float64,
-
+		ID:           productRow.ProductID.String(),
+		Name:         productRow.Name,
+		Description:  productRow.Description,
+		PriceFrom:    minPrice.Float64,
+		PriceTo:      maxPrice.Float64,
 		ImageUrl:     &productRow.ImageUrl.String,
 		VariantCount: productRow.VariantCount,
 		CreatedAt:    productRow.CreatedAt.String(),
@@ -160,7 +192,7 @@ func mapToListProductResponse(productRow repository.GetProductsRow) ProductListM
 // @Success 200 {object} GenericResponse[repository.Product]
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
-// @Router /product [post]
+// @Router /products [post]
 func (sv *Server) createProduct(c *gin.Context) {
 	var req CreateProductRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -169,9 +201,11 @@ func (sv *Server) createProduct(c *gin.Context) {
 	}
 
 	createProductTxParams := repository.CreateProductTxParam{
-		Name:        req.Name,
-		Description: req.Description,
-		CategoryID:  req.CategoryID,
+		Name:         req.Name,
+		Description:  req.Description,
+		CategoryID:   req.CategoryID,
+		CollectionID: req.CollectionID,
+		BrandID:      req.BrandID,
 	}
 
 	if len(req.Variants) > 0 {
@@ -234,7 +268,7 @@ func (sv *Server) getProductDetail(c *gin.Context) {
 	}
 
 	productRow, err := sv.repo.GetProductDetail(c, repository.GetProductDetailParams{
-		ProductID: params.ID,
+		ProductID: uuid.MustParse(params.ID),
 	})
 
 	if err != nil {
@@ -300,6 +334,7 @@ func (sv *Server) getProducts(c *gin.Context) {
 		if err != nil {
 			return err
 		}
+
 		productChan <- products
 		return nil
 	})
@@ -309,6 +344,7 @@ func (sv *Server) getProducts(c *gin.Context) {
 		if err != nil {
 			return err
 		}
+
 		cntChan <- productCnt
 		return nil
 	})
@@ -323,7 +359,7 @@ func (sv *Server) getProducts(c *gin.Context) {
 		productResponses = append(productResponses, mapToListProductResponse(product))
 	}
 
-	c.JSON(http.StatusOK, GenericListResponse[ProductListModel]{&productResponses, <-cntChan, nil, nil})
+	c.JSON(http.StatusOK, GenericListResponse[ProductListModel]{productResponses, <-cntChan, nil, nil})
 }
 
 // @Summary Update a product by ID
@@ -356,7 +392,7 @@ func (sv *Server) updateProduct(c *gin.Context) {
 	}
 
 	updated, err := sv.repo.UpdateProductTx(c, repository.UpdateProductTxParam{
-		ProductID:   params.ID,
+		ProductID:   uuid.MustParse(params.ID),
 		Name:        req.Name,
 		Description: req.Description,
 		CategoryID:  req.CategoryID,
@@ -394,7 +430,7 @@ func (sv *Server) removeProduct(c *gin.Context) {
 	}
 
 	_, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{
-		ProductID: params.ID,
+		ProductID: uuid.MustParse(params.ID),
 	})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
@@ -405,7 +441,7 @@ func (sv *Server) removeProduct(c *gin.Context) {
 		return
 	}
 
-	err = sv.repo.DeleteProduct(c, params.ID)
+	err = sv.repo.DeleteProduct(c, uuid.MustParse(params.ID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return

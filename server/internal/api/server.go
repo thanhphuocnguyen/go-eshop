@@ -110,17 +110,17 @@ func (sv *Server) initializeRouter() {
 			moderatorRoutes.GET("list", sv.listUsers)
 		}
 
-		userAddress := v1.Group("/address").Use(authMiddleware(sv.tokenGenerator))
+		userAddress := v1.Group("/addresses").Use(authMiddleware(sv.tokenGenerator))
 		{
 			userAddress.POST("", sv.createAddress)
-			userAddress.GET("list", sv.listAddresses)
+			userAddress.GET("", sv.listAddresses)
 			userAddress.PATCH(":id", sv.updateAddress)
 			userAddress.DELETE(":id", sv.removeAddress)
 		}
 
-		product := v1.Group("product")
+		product := v1.Group("products")
 		{
-			product.GET("list", sv.getProducts)
+			product.GET("", sv.getProducts)
 			product.GET(":id", sv.getProductDetail)
 			productAdmin := product.Group("").
 				Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin))
@@ -130,11 +130,11 @@ func (sv *Server) initializeRouter() {
 				productAdmin.DELETE(":id", sv.removeProduct)
 			}
 
-			variant := product.Group(":id/variant").
+			variant := product.Group(":id/variants").
 				Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin, repository.UserRoleModerator))
 			{
 				variant.POST("", sv.createVariant)
-				variant.GET("list", sv.getVariants)
+				variant.GET("", sv.getVariants)
 				variant.GET(":variant_id", sv.getVariant)
 				variant.PUT(":variant_id", sv.updateVariant)
 				variant.DELETE(":variant_id", sv.deleteVariant)
@@ -144,7 +144,7 @@ func (sv *Server) initializeRouter() {
 		images := v1.Group("images")
 		{
 			// product images
-			productImage := images.Group("product").
+			productImage := images.Group("products").
 				Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin, repository.UserRoleModerator))
 			productImage.POST(":product_id", sv.uploadProductImage)
 			productImage.GET(":product_id", sv.getProductImage)
@@ -206,9 +206,9 @@ func (sv *Server) initializeRouter() {
 			payment.PUT(":order_id", sv.changePaymentStatus)
 		}
 
-		category := v1.Group("/category")
+		category := v1.Group("categories")
 		{
-			category.GET("list", sv.getCategories)
+			category.GET("", sv.getCategories)
 			category.GET(":id", sv.getCategoryByID)
 			category.GET(":id/products", sv.getCategoryProducts)
 			categoryAuthRoutes := category.Group("").Use(
@@ -217,10 +217,37 @@ func (sv *Server) initializeRouter() {
 			)
 			categoryAuthRoutes.POST("", sv.createCategory)
 			categoryAuthRoutes.PUT(":id", sv.updateCategory)
-			categoryAuthRoutes.DELETE(":id", sv.removeCategory)
-			categoryAuthRoutes.POST(":id/product", sv.addProductToCategory)
-			categoryAuthRoutes.PUT(":id/product/sort_order", sv.updateProductSortOrder)
-			categoryAuthRoutes.DELETE(":id/product/:product_id", sv.deleteProductFromCategory)
+			categoryAuthRoutes.DELETE(":id", sv.deleteCategory)
+		}
+
+		collection := v1.Group("collections")
+		{
+			// CRUD
+			collection.GET("", sv.getCollections)
+			collection.GET(":id", sv.getCollectionByID)
+			collection.GET(":id/products", sv.getCollectionProducts)
+			collectionAuthRoutes := collection.Group("").Use(
+				authMiddleware(sv.tokenGenerator),
+				roleMiddleware(sv.repo, repository.UserRoleAdmin),
+			)
+			collectionAuthRoutes.POST("", sv.createCollection)
+			collectionAuthRoutes.PUT(":id", sv.updateCollection)
+			collectionAuthRoutes.DELETE(":id", sv.deleteCollection)
+		}
+
+		brand := v1.Group("brands")
+		{
+			// CRUD
+			brand.GET("", sv.getBrands)
+			brand.GET(":id", sv.getBrandByID)
+			brand.GET(":id/products", sv.getBrandProducts)
+			brandAuthRoutes := brand.Group("").Use(
+				authMiddleware(sv.tokenGenerator),
+				roleMiddleware(sv.repo, repository.UserRoleAdmin),
+			)
+			brandAuthRoutes.POST("", sv.createBrand)
+			brandAuthRoutes.PUT(":id", sv.updateBrand)
+			brandAuthRoutes.DELETE(":id", sv.deleteBrand)
 		}
 	}
 
@@ -257,7 +284,7 @@ type GenericResponse[T any] struct {
 }
 
 type GenericListResponse[T any] struct {
-	Data    *[]T    `json:"data,omitempty"`
+	Data    []T     `json:"data,omitempty"`
 	Total   int64   `json:"total,omitempty"`
 	Message *string `json:"message,omitempty"`
 	Error   *string `json:"error,omitempty"`

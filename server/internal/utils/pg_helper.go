@@ -9,7 +9,7 @@ import (
 
 const (
 	MUL = 100
-	EXP = -2
+	EXP = 2
 )
 
 func GetPgTypeText(value string) pgtype.Text {
@@ -76,7 +76,7 @@ func GetPgTypeFloat8(value float64) pgtype.Float8 {
 func GetPgNumericFromFloat(value float64) pgtype.Numeric {
 	return pgtype.Numeric{
 		Int:   big.NewInt(int64(value * MUL)),
-		Exp:   EXP,
+		Exp:   -EXP,
 		Valid: true,
 	}
 }

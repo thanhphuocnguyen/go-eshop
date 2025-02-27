@@ -8,10 +8,10 @@ CREATE TABLE
 
 CREATE TABLE
     "cart_items" (
-        "cart_item_id" SERIAL PRIMARY KEY,
+        "cart_item_id" UUID PRIMARY KEY,
         "cart_id" UUID NOT NULL REFERENCES "carts" ("cart_id") ON DELETE CASCADE,
-        "product_id" BIGINT NOT NULL REFERENCES "products" ("product_id") ON DELETE CASCADE,
-        "variant_id" BIGINT NOT NULL REFERENCES "product_variants" ("variant_id") ON DELETE CASCADE,
+        "product_id" UUID NOT NULL REFERENCES "products" ("product_id") ON DELETE CASCADE,
+        "variant_id" UUID NOT NULL REFERENCES "product_variants" ("variant_id") ON DELETE CASCADE,
         "quantity" smallint NOT NULL DEFAULT 1 CHECK ("quantity" > 0),
         "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),

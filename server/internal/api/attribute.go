@@ -25,9 +25,9 @@ type AttributeParam struct {
 }
 
 type ProductAttributeDetail struct {
-	ID    int32  `json:"id"`
-	Name  string `json:"name"`
-	Value string `json:"value"`
+	ID    int32    `json:"id"`
+	Name  string   `json:"name"`
+	Value []string `json:"value"`
 }
 
 // ------------------------------ API Handlers ------------------------------
@@ -127,7 +127,7 @@ func (sv *Server) getAttributes(c *gin.Context) {
 
 	resp := <-attributeRowsChan
 
-	c.JSON(http.StatusOK, GenericListResponse[repository.Attribute]{&resp, <-attributeCntChan, nil, nil})
+	c.JSON(http.StatusOK, GenericListResponse[repository.Attribute]{resp, <-attributeCntChan, nil, nil})
 }
 
 // @Summary Update an attribute

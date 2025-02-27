@@ -3,12 +3,13 @@ package repository
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
 type CreateVariantTxParam struct {
-	ProductID    int64
+	ProductID    uuid.UUID
 	VariantPrice float64
 	Discount     int16
 	VariantSku   *string
@@ -34,7 +35,11 @@ func (s *pgRepo) CreateVariantTx(ctx context.Context, arg CreateVariantTxParam) 
 }
 
 func createVariantUtil(ctx context.Context, q *Queries, arg CreateVariantTxParam) (*ProductVariant, error) {
+	if arg.VariantPrice < 0 {
+		return nil, ErrInvalidPrice
+	}
 	createParam := CreateVariantParams{
+		VariantID:     uuid.New(),
 		ProductID:     arg.ProductID,
 		Price:         utils.GetPgNumericFromFloat(arg.VariantPrice),
 		StockQuantity: arg.VariantStock,

@@ -61,22 +61,24 @@ func (q *Queries) CreateCart(ctx context.Context, arg CreateCartParams) (Cart, e
 const createCartItem = `-- name: CreateCartItem :one
 
 INSERT INTO cart_items 
-    (cart_id, product_id, variant_id, quantity) 
+    (cart_item_id, cart_id, product_id, variant_id, quantity) 
 VALUES 
-    ($1, $2, $3, $4) 
+    ($1, $2, $3, $4, $5)
 RETURNING cart_item_id, cart_id, product_id, variant_id, quantity, updated_at, created_at
 `
 
 type CreateCartItemParams struct {
-	CartID    uuid.UUID `json:"cart_id"`
-	ProductID int64     `json:"product_id"`
-	VariantID int64     `json:"variant_id"`
-	Quantity  int16     `json:"quantity"`
+	CartItemID uuid.UUID `json:"cart_item_id"`
+	CartID     uuid.UUID `json:"cart_id"`
+	ProductID  uuid.UUID `json:"product_id"`
+	VariantID  uuid.UUID `json:"variant_id"`
+	Quantity   int16     `json:"quantity"`
 }
 
 // Cart Item Section
 func (q *Queries) CreateCartItem(ctx context.Context, arg CreateCartItemParams) (CartItem, error) {
 	row := q.db.QueryRow(ctx, createCartItem,
+		arg.CartItemID,
 		arg.CartID,
 		arg.ProductID,
 		arg.VariantID,
@@ -115,7 +117,7 @@ const getCartItem = `-- name: GetCartItem :one
 SELECT cart_item_id, cart_id, product_id, variant_id, quantity, updated_at, created_at FROM cart_items WHERE cart_item_id = $1
 `
 
-func (q *Queries) GetCartItem(ctx context.Context, cartItemID int32) (CartItem, error) {
+func (q *Queries) GetCartItem(ctx context.Context, cartItemID uuid.UUID) (CartItem, error) {
 	row := q.db.QueryRow(ctx, getCartItem, cartItemID)
 	var i CartItem
 	err := row.Scan(
@@ -139,7 +141,7 @@ WHERE
 LIMIT 1
 `
 
-func (q *Queries) GetCartItemByVariantID(ctx context.Context, variantID int64) (CartItem, error) {
+func (q *Queries) GetCartItemByVariantID(ctx context.Context, variantID uuid.UUID) (CartItem, error) {
 	row := q.db.QueryRow(ctx, getCartItemByVariantID, variantID)
 	var i CartItem
 	err := row.Scan(
@@ -169,10 +171,10 @@ ORDER BY ci.created_at DESC, ci.cart_item_id DESC, p.product_id, pv.variant_id, 
 `
 
 type GetCartItemWithProductRow struct {
-	CartItemID    int32          `json:"cart_item_id"`
+	CartItemID    uuid.UUID      `json:"cart_item_id"`
 	CartID        uuid.UUID      `json:"cart_id"`
-	ProductID     int64          `json:"product_id"`
-	VariantID     int64          `json:"variant_id"`
+	ProductID     uuid.UUID      `json:"product_id"`
+	VariantID     uuid.UUID      `json:"variant_id"`
 	Quantity      int16          `json:"quantity"`
 	UpdatedAt     time.Time      `json:"updated_at"`
 	CreatedAt     time.Time      `json:"created_at"`
@@ -183,7 +185,7 @@ type GetCartItemWithProductRow struct {
 	ImageUrl      pgtype.Text    `json:"image_url"`
 }
 
-func (q *Queries) GetCartItemWithProduct(ctx context.Context, cartItemID int32) (GetCartItemWithProductRow, error) {
+func (q *Queries) GetCartItemWithProduct(ctx context.Context, cartItemID uuid.UUID) (GetCartItemWithProductRow, error) {
 	row := q.db.QueryRow(ctx, getCartItemWithProduct, cartItemID)
 	var i GetCartItemWithProductRow
 	err := row.Scan(
@@ -221,10 +223,10 @@ ORDER BY cart_items.created_at DESC, cart_items.cart_item_id DESC, p.product_id,
 `
 
 type GetCartItemsByIDRow struct {
-	CartItemID         int32          `json:"cart_item_id"`
+	CartItemID         uuid.UUID      `json:"cart_item_id"`
 	CartID             uuid.UUID      `json:"cart_id"`
-	ProductID          int64          `json:"product_id"`
-	VariantID          int64          `json:"variant_id"`
+	ProductID          uuid.UUID      `json:"product_id"`
+	VariantID          uuid.UUID      `json:"variant_id"`
 	Quantity           int16          `json:"quantity"`
 	UpdatedAt          time.Time      `json:"updated_at"`
 	CreatedAt          time.Time      `json:"created_at"`
@@ -282,7 +284,7 @@ DELETE FROM cart_items WHERE cart_id = $1 AND cart_item_id = $2
 
 type RemoveProductFromCartParams struct {
 	CartID     uuid.UUID `json:"cart_id"`
-	CartItemID int32     `json:"cart_item_id"`
+	CartItemID uuid.UUID `json:"cart_item_id"`
 }
 
 func (q *Queries) RemoveProductFromCart(ctx context.Context, arg RemoveProductFromCartParams) error {
@@ -304,8 +306,8 @@ UPDATE cart_items SET quantity = $1 WHERE cart_item_id = $2 RETURNING cart_item_
 `
 
 type UpdateCartItemQuantityParams struct {
-	Quantity   int16 `json:"quantity"`
-	CartItemID int32 `json:"cart_item_id"`
+	Quantity   int16     `json:"quantity"`
+	CartItemID uuid.UUID `json:"cart_item_id"`
 }
 
 func (q *Queries) UpdateCartItemQuantity(ctx context.Context, arg UpdateCartItemQuantityParams) error {

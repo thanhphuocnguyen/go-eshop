@@ -1,8 +1,8 @@
 CREATE TABLE
     images (
         image_id SERIAL PRIMARY KEY,
-        product_id bigint REFERENCES products (product_id) ON DELETE CASCADE,
-        variant_id bigint REFERENCES product_variants (variant_id) ON DELETE CASCADE,
+        product_id UUID REFERENCES products (product_id) ON DELETE CASCADE,
+        variant_id UUID REFERENCES product_variants (variant_id) ON DELETE CASCADE,
         image_url TEXT NOT NULL, -- URL/path of the image
         external_id TEXT, -- ID of the image on cloudinary or other services
         created_at TIMESTAMP DEFAULT NOW (),

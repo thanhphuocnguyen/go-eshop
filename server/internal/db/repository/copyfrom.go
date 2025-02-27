@@ -61,6 +61,10 @@ func (r *iteratorForAddBulkProducts) Next() bool {
 
 func (r iteratorForAddBulkProducts) Values() ([]interface{}, error) {
 	return []interface{}{
+		r.rows[0].ProductID,
+		r.rows[0].CategoryID,
+		r.rows[0].CollectionID,
+		r.rows[0].BrandID,
 		r.rows[0].Name,
 		r.rows[0].Description,
 	}, nil
@@ -71,7 +75,7 @@ func (r iteratorForAddBulkProducts) Err() error {
 }
 
 func (q *Queries) AddBulkProducts(ctx context.Context, arg []AddBulkProductsParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"products"}, []string{"name", "description"}, &iteratorForAddBulkProducts{rows: arg})
+	return q.db.CopyFrom(ctx, []string{"products"}, []string{"product_id", "category_id", "collection_id", "brand_id", "name", "description"}, &iteratorForAddBulkProducts{rows: arg})
 }
 
 // iteratorForCreateBulkVariantAttributes implements pgx.CopyFromSource.
@@ -167,7 +171,7 @@ func (r *iteratorForSeedCategories) Next() bool {
 func (r iteratorForSeedCategories) Values() ([]interface{}, error) {
 	return []interface{}{
 		r.rows[0].Name,
-		r.rows[0].Description,
+		r.rows[0].ImageUrl,
 		r.rows[0].SortOrder,
 		r.rows[0].Published,
 	}, nil
@@ -178,7 +182,41 @@ func (r iteratorForSeedCategories) Err() error {
 }
 
 func (q *Queries) SeedCategories(ctx context.Context, arg []SeedCategoriesParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"categories"}, []string{"name", "description", "sort_order", "published"}, &iteratorForSeedCategories{rows: arg})
+	return q.db.CopyFrom(ctx, []string{"categories"}, []string{"name", "image_url", "sort_order", "published"}, &iteratorForSeedCategories{rows: arg})
+}
+
+// iteratorForSeedCollections implements pgx.CopyFromSource.
+type iteratorForSeedCollections struct {
+	rows                 []SeedCollectionsParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForSeedCollections) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForSeedCollections) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].Name,
+		r.rows[0].Description,
+		r.rows[0].ImageUrl,
+	}, nil
+}
+
+func (r iteratorForSeedCollections) Err() error {
+	return nil
+}
+
+func (q *Queries) SeedCollections(ctx context.Context, arg []SeedCollectionsParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"collections"}, []string{"name", "description", "image_url"}, &iteratorForSeedCollections{rows: arg})
 }
 
 // iteratorForSeedUsers implements pgx.CopyFromSource.

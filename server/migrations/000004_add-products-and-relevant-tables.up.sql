@@ -1,7 +1,10 @@
 -- Create products table
 CREATE TABLE
     products (
-        product_id BIGSERIAL PRIMARY KEY,
+        product_id UUID PRIMARY KEY,
+        category_id INT REFERENCES categories (category_id) ON DELETE SET NULL,
+        collection_id INT REFERENCES collections (collection_id) ON DELETE SET NULL,
+        brand_id INT REFERENCES brands (brand_id) ON DELETE SET NULL,
         name VARCHAR NOT NULL,
         description TEXT NOT NULL,
         archived BOOLEAN NOT NULL DEFAULT FALSE,
@@ -12,8 +15,8 @@ CREATE TABLE
 -- Create product_variants table
 CREATE TABLE
     product_variants (
-        variant_id BIGSERIAL PRIMARY KEY,
-        product_id BIGINT NOT NULL REFERENCES products (product_id) ON DELETE CASCADE,
+        variant_id UUID PRIMARY KEY,
+        product_id UUID NOT NULL REFERENCES products (product_id) ON DELETE CASCADE,
         price DECIMAL(10, 2) NOT NULL,
         discount SMALLINT NOT NULL DEFAULT 0 CHECK (
             discount >= 0
@@ -38,7 +41,7 @@ CREATE TABLE
 CREATE TABLE
     variant_attributes (
         variant_attribute_id SERIAL PRIMARY KEY,
-        variant_id BIGINT NOT NULL REFERENCES product_variants (variant_id) ON DELETE CASCADE,
+        variant_id UUID NOT NULL REFERENCES product_variants (variant_id) ON DELETE CASCADE,
         attribute_id INT NOT NULL REFERENCES attributes (attribute_id) ON DELETE CASCADE,
         value VARCHAR NOT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),

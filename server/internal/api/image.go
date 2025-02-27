@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
@@ -13,22 +14,22 @@ import (
 
 // ------------------------------------------ Request and Response ------------------------------------------
 type RemoveImageParams struct {
-	ID        int64  `uri:"id" binding:"required"`
-	VariantID *int64 `uri:"id,omitempty"`
-	ImageID   int32  `uri:"image_id" binding:"required"`
+	ID        string  `uri:"id" binding:"required,uuid"`
+	VariantID *string `uri:"id" binding:"omitempty,uuid"`
+	ImageID   int32   `uri:"image_id" binding:"required"`
 }
 type ProductImageParam struct {
-	ProductID int64 `uri:"product_id" binding:"required"`
+	ProductID string `uri:"product_id" binding:"required,uuid"`
 }
 type VariantImageParam struct {
 	ProductImageParam
-	VariantID int64 `uri:"variant_id" binding:"required"`
+	VariantID string `uri:"variant_id" binding:"required,uuid"`
 }
 type ImageModel struct {
-	ID        int32  `json:"id"`
-	ProductID *int64 `json:"product_id"`
-	VariantID *int64 `json:"variant_id"`
-	ImageUrl  string `json:"image_url"`
+	ID        int32   `json:"id"`
+	ProductID *string `json:"product_id"`
+	VariantID *string `json:"variant_id"`
+	ImageUrl  string  `json:"image_url"`
 }
 
 // ------------------------------------------ Handlers ------------------------------------------
@@ -53,7 +54,7 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 	}
 
 	existingProduct, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{
-		ProductID: param.ProductID,
+		ProductID: uuid.MustParse(param.ProductID),
 	})
 
 	if err != nil {
@@ -65,7 +66,9 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 		return
 	}
 
-	existingImg, err := sv.repo.GetImageByProductID(c, utils.GetPgTypeInt8(existingProduct.ProductID))
+	existingImg, err := sv.repo.GetImageByProductID(c, pgtype.UUID{
+		Bytes: existingProduct.ProductID,
+	})
 	if err != nil && !errors.Is(err, repository.ErrRecordNotFound) {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
@@ -85,7 +88,7 @@ func (sv *Server) uploadProductImage(c *gin.Context) {
 	}
 
 	img, err := sv.repo.CreateImage(c, repository.CreateImageParams{
-		ProductID:  utils.GetPgTypeInt8(existingProduct.ProductID),
+		ProductID:  utils.GetPgTypeUUID(existingProduct.ProductID),
 		ImageUrl:   url,
 		ExternalID: utils.GetPgTypeText(publicID),
 	})
@@ -117,9 +120,7 @@ func (sv *Server) getProductImage(c *gin.Context) {
 		return
 	}
 
-	images, err := sv.repo.GetImageByProductID(c, pgtype.Int8{
-		Int64: param.ProductID,
-	})
+	images, err := sv.repo.GetImageByProductID(c, utils.GetPgTypeUUID(uuid.MustParse(param.ProductID)))
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
@@ -153,7 +154,7 @@ func (sv *Server) removeProductImage(c *gin.Context) {
 	}
 
 	existingProduct, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{
-		ProductID: params.ID,
+		ProductID: uuid.MustParse(params.ID),
 	})
 
 	if err != nil {
@@ -175,7 +176,7 @@ func (sv *Server) removeProductImage(c *gin.Context) {
 		return
 	}
 
-	if img.ProductID.Int64 != existingProduct.ProductID {
+	if img.ProductID.Bytes != existingProduct.ProductID {
 		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("image not found")))
 		return
 	}
@@ -215,8 +216,8 @@ func (sv *Server) uploadVariantImage(c *gin.Context) {
 	}
 
 	existingVariant, err := sv.repo.GetVariantByID(c, repository.GetVariantByIDParams{
-		ProductID: param.ProductID,
-		VariantID: param.VariantID,
+		ProductID: uuid.MustParse(param.ProductID),
+		VariantID: uuid.MustParse(param.VariantID),
 	})
 
 	if err != nil {
@@ -242,8 +243,8 @@ func (sv *Server) uploadVariantImage(c *gin.Context) {
 	}
 
 	img, err := sv.repo.CreateImage(c, repository.CreateImageParams{
-		ProductID:  utils.GetPgTypeInt8(existingVariant.ProductID),
-		VariantID:  utils.GetPgTypeInt8(existingVariant.VariantID),
+		ProductID:  utils.GetPgTypeUUID(existingVariant.ProductID),
+		VariantID:  utils.GetPgTypeUUID(existingVariant.VariantID),
 		ImageUrl:   url,
 		ExternalID: utils.GetPgTypeText(publicID),
 	})
@@ -276,9 +277,7 @@ func (sv *Server) getVariantImage(c *gin.Context) {
 		return
 	}
 
-	images, err := sv.repo.GetImageByVariantID(c, pgtype.Int8{
-		Int64: param.VariantID,
-	})
+	images, err := sv.repo.GetImageByVariantID(c, utils.GetPgTypeUUID(uuid.MustParse(param.VariantID)))
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
@@ -317,8 +316,8 @@ func (sv *Server) removeVariantImage(c *gin.Context) {
 	}
 
 	existingProduct, err := sv.repo.GetVariantByID(c, repository.GetVariantByIDParams{
-		ProductID: params.ID,
-		VariantID: *params.VariantID,
+		ProductID: uuid.MustParse(params.ID),
+		VariantID: uuid.MustParse(*params.VariantID),
 	})
 
 	if err != nil {
@@ -340,7 +339,7 @@ func (sv *Server) removeVariantImage(c *gin.Context) {
 		return
 	}
 
-	if img.VariantID.Int64 != existingProduct.VariantID {
+	if uuid.UUID(img.VariantID.Bytes).String() != existingProduct.VariantID.String() {
 		c.JSON(http.StatusBadRequest, mapErrResp(errors.New("image not found")))
 		return
 	}

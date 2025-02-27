@@ -19,6 +19,7 @@ var ErrForeignKeyViolation = &pgconn.PgError{Code: ForeignKeyViolation}
 var ErrUniqueViolation = &pgconn.PgError{Code: UniqueViolation}
 var ErrTimeout = &pgconn.PgError{Code: Timeout}
 var ErrDeadlockDetected = &pgconn.PgError{Code: DeadLock}
+var ErrInvalidPrice = errors.New("invalid price")
 
 func ErrorCode(err error) string {
 	var pgErr *pgconn.PgError

@@ -3,12 +3,13 @@ package repository
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
 type UpdateVariantTxParams struct {
-	VariantID  int64                          `json:"variant_id" binding:"required,min=1"`
+	VariantID  string                         `json:"variant_id" binding:"required,uuid"`
 	Price      *float64                       `json:"price" binding:"omitempty,min=0"`
 	Name       *string                        `json:"name" binding:"omitempty,min=1"`
 	Sku        *string                        `json:"sku" binding:"omitempty,min=1"`
@@ -19,7 +20,7 @@ type UpdateVariantTxParams struct {
 
 type UpdateVariantTxResult struct {
 	Variant    ProductVariant     `json:"variant"`
-	Attributes []VariantAttribute `json:"attributes"`
+	Attributes []VariantAttribute `json:"attributes,omitempty"`
 }
 
 func (repo *pgRepo) UpdateVariantTx(ctx context.Context, arg UpdateVariantTxParams) (UpdateVariantTxResult, error) {
@@ -40,7 +41,7 @@ func (repo *pgRepo) UpdateVariantTx(ctx context.Context, arg UpdateVariantTxPara
 func updateVariantUtil(c context.Context, q *Queries, params UpdateVariantTxParams) (ProductVariant, []VariantAttribute, error) {
 	var attributes []VariantAttribute = make([]VariantAttribute, 0)
 	var updateParams UpdateVariantParams = UpdateVariantParams{
-		VariantID: params.VariantID,
+		VariantID: uuid.MustParse(params.VariantID),
 	}
 
 	if params.Sku != nil {

@@ -17,8 +17,8 @@ CREATE TABLE
     "order_items" (
         "order_item_id" BIGSERIAL PRIMARY KEY,
         "order_id" UUID NOT NULL REFERENCES "orders" ("order_id") ON DELETE CASCADE,
-        "product_id" BIGINT NOT NULL REFERENCES "products" ("product_id"),
-        "variant_id" BIGINT NOT NULL REFERENCES "product_variants" ("variant_id"),
+        "product_id" UUID NOT NULL REFERENCES "products" ("product_id"),
+        "variant_id" UUID NOT NULL REFERENCES "product_variants" ("variant_id"),
         "quantity" SMALLINT NOT NULL,
         "price" DECIMAL(10, 2) NOT NULL,
         "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),

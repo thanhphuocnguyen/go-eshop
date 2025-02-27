@@ -43,7 +43,7 @@ type Product struct {
 	Sku         string    `json:"sku"`
 }
 
-type Categorie struct {
+type Categories struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	SortOrder   int    `json:"sort_order"`
@@ -215,34 +215,30 @@ func seedCategories(ctx context.Context, repo repository.Repository) {
 	log.Info().Msg("seeding Categories")
 	CategorieData, err := os.ReadFile("seeds/Categories.json")
 	if err != nil {
-		log.Error().Err(err).Msg("failed to read Categorie data")
+		log.Error().Err(err).Msg("failed to read Categories data")
 		return
 	}
 
-	var Categories []Categorie
-	log.Info().Msg("parsing Categorie data")
+	var Categories []Categories
+	log.Info().Msg("parsing Categories data")
 	err = json.Unmarshal(CategorieData, &Categories)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to parse Categorie data")
+		log.Error().Err(err).Msg("failed to parse Categories data")
 		return
 	}
 
-	log.Info().Msgf("Categorie count: %d", len(Categories))
+	log.Info().Msgf("Categories count: %d", len(Categories))
 	params := make([]repository.SeedCategoriesParams, len(Categories))
-	for i, Categorie := range Categories {
+	for i, Categories := range Categories {
 		params[i] = repository.SeedCategoriesParams{
-			Name: Categorie.Name,
-			Description: pgtype.Text{
-				String: Categorie.Description,
-				Valid:  true,
-			},
-			SortOrder: int16(Categorie.SortOrder),
-			Published: Categorie.Published,
+			Name:      Categories.Name,
+			SortOrder: int16(Categories.SortOrder),
+			Published: Categories.Published,
 		}
 	}
 	_, err = repo.SeedCategories(ctx, params)
 	if err != nil {
-		log.Error().Err(err).Msgf("failed to create Categorie: %v", err)
+		log.Error().Err(err).Msgf("failed to create Categories: %v", err)
 	}
 	log.Info().Msg("Categories created")
 }

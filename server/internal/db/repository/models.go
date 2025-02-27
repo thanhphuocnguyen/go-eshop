@@ -336,13 +336,12 @@ type Attribute struct {
 }
 
 type Brand struct {
-	ID   int32  `json:"id"`
-	Name string `json:"name"`
-}
-
-type BrandProduct struct {
-	BrandID   int32     `json:"brand_id"`
-	ProductID uuid.UUID `json:"product_id"`
+	BrandID     int32       `json:"brand_id"`
+	Name        string      `json:"name"`
+	ImageUrl    pgtype.Text `json:"image_url"`
+	Description pgtype.Text `json:"description"`
+	CreatedAt   time.Time   `json:"created_at"`
+	UpdatedAt   time.Time   `json:"updated_at"`
 }
 
 type Cart struct {
@@ -353,35 +352,54 @@ type Cart struct {
 }
 
 type CartItem struct {
-	CartItemID int32     `json:"cart_item_id"`
+	CartItemID uuid.UUID `json:"cart_item_id"`
 	CartID     uuid.UUID `json:"cart_id"`
-	ProductID  int64     `json:"product_id"`
-	VariantID  int64     `json:"variant_id"`
+	ProductID  uuid.UUID `json:"product_id"`
+	VariantID  uuid.UUID `json:"variant_id"`
 	Quantity   int16     `json:"quantity"`
 	UpdatedAt  time.Time `json:"updated_at"`
 	CreatedAt  time.Time `json:"created_at"`
 }
 
 type Category struct {
-	CategoryID  int32       `json:"category_id"`
+	CategoryID int32       `json:"category_id"`
+	Name       string      `json:"name"`
+	ImageUrl   pgtype.Text `json:"image_url"`
+	SortOrder  int16       `json:"sort_order"`
+	Published  bool        `json:"published"`
+	CreatedAt  time.Time   `json:"created_at"`
+}
+
+type Collection struct {
+	CollectionID int32       `json:"collection_id"`
+	Name         string      `json:"name"`
+	ImageUrl     pgtype.Text `json:"image_url"`
+	Description  pgtype.Text `json:"description"`
+	CreatedAt    time.Time   `json:"created_at"`
+	UpdatedAt    time.Time   `json:"updated_at"`
+}
+
+type FeaturedProduct struct {
+	ID         int32       `json:"id"`
+	FeaturedID pgtype.Int4 `json:"featured_id"`
+	ProductID  pgtype.UUID `json:"product_id"`
+	SortOrder  int16       `json:"sort_order"`
+}
+
+type FeaturedSection struct {
+	FeaturedID  int32       `json:"featured_id"`
 	Name        string      `json:"name"`
+	ImageUrl    pgtype.Text `json:"image_url"`
 	Description pgtype.Text `json:"description"`
 	SortOrder   int16       `json:"sort_order"`
-	Published   bool        `json:"published"`
 	CreatedAt   time.Time   `json:"created_at"`
 	UpdatedAt   time.Time   `json:"updated_at"`
 }
 
-type CategoryProduct struct {
-	CategoryID int32 `json:"category_id"`
-	ProductID  int64 `json:"product_id"`
-	SortOrder  int16 `json:"sort_order"`
-}
-
 type Image struct {
 	ImageID    int32            `json:"image_id"`
-	ProductID  pgtype.Int8      `json:"product_id"`
-	VariantID  pgtype.Int8      `json:"variant_id"`
+	ProductID  pgtype.UUID      `json:"product_id"`
+	VariantID  pgtype.UUID      `json:"variant_id"`
 	ImageUrl   string           `json:"image_url"`
 	ExternalID pgtype.Text      `json:"external_id"`
 	CreatedAt  pgtype.Timestamp `json:"created_at"`
@@ -405,8 +423,8 @@ type Order struct {
 type OrderItem struct {
 	OrderItemID int64          `json:"order_item_id"`
 	OrderID     uuid.UUID      `json:"order_id"`
-	ProductID   int64          `json:"product_id"`
-	VariantID   int64          `json:"variant_id"`
+	ProductID   uuid.UUID      `json:"product_id"`
+	VariantID   uuid.UUID      `json:"variant_id"`
 	Quantity    int16          `json:"quantity"`
 	Price       pgtype.Numeric `json:"price"`
 	CreatedAt   time.Time      `json:"created_at"`
@@ -425,37 +443,26 @@ type Payment struct {
 }
 
 type Product struct {
-	ProductID   int64     `json:"product_id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	Archived    bool      `json:"archived"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ProductID    uuid.UUID   `json:"product_id"`
+	CategoryID   pgtype.Int4 `json:"category_id"`
+	CollectionID pgtype.Int4 `json:"collection_id"`
+	BrandID      pgtype.Int4 `json:"brand_id"`
+	Name         string      `json:"name"`
+	Description  string      `json:"description"`
+	Archived     bool        `json:"archived"`
+	CreatedAt    time.Time   `json:"created_at"`
+	UpdatedAt    time.Time   `json:"updated_at"`
 }
 
 type ProductVariant struct {
-	VariantID     int64          `json:"variant_id"`
-	ProductID     int64          `json:"product_id"`
+	VariantID     uuid.UUID      `json:"variant_id"`
+	ProductID     uuid.UUID      `json:"product_id"`
 	Price         pgtype.Numeric `json:"price"`
 	Discount      int16          `json:"discount"`
 	StockQuantity int32          `json:"stock_quantity"`
 	Sku           pgtype.Text    `json:"sku"`
 	CreatedAt     time.Time      `json:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at"`
-}
-
-type Rating struct {
-	ID        int32            `json:"id"`
-	ProductID pgtype.UUID      `json:"product_id"`
-	Rating    int16            `json:"rating"`
-	Comment   pgtype.Text      `json:"comment"`
-	CreatedAt pgtype.Timestamp `json:"created_at"`
-}
-
-type Section struct {
-	ID         int32       `json:"id"`
-	CategoryID pgtype.UUID `json:"category_id"`
-	Name       string      `json:"name"`
 }
 
 type Session struct {
@@ -512,7 +519,7 @@ type UserPaymentInfo struct {
 
 type VariantAttribute struct {
 	VariantAttributeID int32     `json:"variant_attribute_id"`
-	VariantID          int64     `json:"variant_id"`
+	VariantID          uuid.UUID `json:"variant_id"`
 	AttributeID        int32     `json:"attribute_id"`
 	Value              string    `json:"value"`
 	CreatedAt          time.Time `json:"created_at"`

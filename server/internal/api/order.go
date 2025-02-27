@@ -30,7 +30,7 @@ type OrderStatusRequest struct {
 }
 
 type OrderItemResponse struct {
-	ID       int64   `json:"id"`
+	ID       string  `json:"id"`
 	Name     string  `json:"name"`
 	ImageUrl *string `json:"image_url"`
 	Quantity int16   `json:"quantity"`
@@ -144,7 +144,7 @@ func (sv *Server) orderList(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusOK, GenericListResponse[OrderListResponse]{&orderResponses, count, nil, nil})
+	c.JSON(http.StatusOK, GenericListResponse[OrderListResponse]{orderResponses, count, nil, nil})
 }
 
 // @Summary Get order detail
@@ -203,7 +203,7 @@ func (sv *Server) orderDetail(c *gin.Context) {
 	}
 	for _, item := range getOrderDetailRows {
 		orderDetail.Products = append(orderDetail.Products, OrderItemResponse{
-			ID:       item.ProductID,
+			ID:       item.ProductID.String(),
 			Name:     item.ProductName,
 			Quantity: item.Quantity,
 			ImageUrl: &item.ImageUrl.String,

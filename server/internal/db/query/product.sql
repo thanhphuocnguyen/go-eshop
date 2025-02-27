@@ -1,5 +1,18 @@
 -- name: CreateProduct :one
-INSERT INTO products (name, description) VALUES ($1, $2) RETURNING *;
+INSERT INTO products (
+    product_id,
+    name,
+    description,
+    brand_id,
+    collection_id,
+    category_id) VALUES (
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6)
+RETURNING *;
 
 -- name: GetProductByID :one
 SELECT
@@ -32,12 +45,12 @@ SELECT
     pv.variant_id, pv.sku, pv.price, pv.stock_quantity, pv.discount,
     a.attribute_id AS attribute_id, a.name as attribute_name,
     va.variant_attribute_id AS variant_attribute_id, va.value as variant_attribute_value,
-    img.image_id, img.product_id as img_product_id, img.variant_id as img_variant_id, img.image_url
+    img.image_id, img.image_url, img.product_id as img_product_id, img.variant_id as img_variant_id
 FROM
     products p
-JOIN product_variants AS pv ON p.product_id = pv.product_id
-JOIN variant_attributes AS va ON pv.variant_id = va.variant_id
-JOIN attributes AS a ON va.attribute_id = a.attribute_id
+LEFT JOIN product_variants AS pv ON p.product_id = pv.product_id
+LEFT JOIN variant_attributes AS va ON pv.variant_id = va.variant_id
+LEFT JOIN attributes AS a ON va.attribute_id = a.attribute_id
 LEFT JOIN images AS img ON p.product_id = img.product_id
 WHERE
     p.product_id = $1 AND
@@ -94,13 +107,67 @@ SELECT
     COUNT(pv.variant_id) AS variant_count
 FROM
     products AS p
-JOIN category_products AS cp ON p.product_id = cp.product_id AND cp.category_id = $1
 JOIN product_variants AS pv ON p.product_id = pv.product_id
 LEFT JOIN images AS img ON p.product_id = img.product_id
 WHERE
-    archived = COALESCE(sqlc.narg('archived'), archived) AND
-    name ILIKE COALESCE(sqlc.narg('name'), name) AND
-    sku ILIKE COALESCE(sqlc.narg('sku'), sku)
+    p.archived = COALESCE(sqlc.narg('archived'), archived) AND
+    p.name ILIKE COALESCE(sqlc.narg('name'), name) AND
+    pv.sku ILIKE COALESCE(sqlc.narg('sku'), sku) AND
+    p.category_id = $1
+GROUP BY
+    p.product_id, img.image_id
+ORDER BY
+    p.product_id
+LIMIT
+    $2
+OFFSET
+    $3;
+
+-- name: GetProductsByCollection :many
+SELECT
+    p.*,
+    img.image_id AS image_id,
+    img.image_url AS image_url,
+    MIN(pv.price)::DECIMAL AS min_price,
+    MAX(pv.price)::DECIMAL AS max_price,
+    MAX(pv.price)::SMALLINT AS discount,
+    COUNT(pv.variant_id) AS variant_count
+FROM
+    products AS p
+JOIN product_variants AS pv ON p.product_id = pv.product_id
+LEFT JOIN images AS img ON p.product_id = img.product_id
+WHERE
+    p.archived = COALESCE(sqlc.narg('archived'), archived) AND
+    p.name ILIKE COALESCE(sqlc.narg('name'), name) AND
+    pv.sku ILIKE COALESCE(sqlc.narg('sku'), sku) AND
+    p.collection_id = $1
+GROUP BY
+    p.product_id, img.image_id
+ORDER BY
+    p.product_id
+LIMIT
+    $2
+OFFSET
+    $3;
+
+-- name: GetProductsByBrand :many
+SELECT
+    p.*,
+    img.image_id AS image_id,
+    img.image_url AS image_url,
+    MIN(pv.price)::DECIMAL AS min_price,
+    MAX(pv.price)::DECIMAL AS max_price,
+    MAX(pv.price)::SMALLINT AS discount,
+    COUNT(pv.variant_id) AS variant_count
+FROM
+    products AS p
+JOIN product_variants AS pv ON p.product_id = pv.product_id
+LEFT JOIN images AS img ON p.product_id = img.product_id
+WHERE
+    p.archived = COALESCE(sqlc.narg('archived'), archived) AND
+    p.name ILIKE COALESCE(sqlc.narg('name'), name) AND
+    pv.sku ILIKE COALESCE(sqlc.narg('sku'), sku) AND
+    p.brand_id = $1
 GROUP BY
     p.product_id, img.image_id
 ORDER BY
@@ -125,6 +192,9 @@ UPDATE
 SET
     name = coalesce(sqlc.narg('name'), name),
     description = coalesce(sqlc.narg('description'), description),
+    brand_id = coalesce(sqlc.narg('brand_id'), brand_id),
+    collection_id = coalesce(sqlc.narg('collection_id'), collection_id),
+    category_id = coalesce(sqlc.narg('category_id'), category_id),
     updated_at = NOW()
 WHERE
     product_id = sqlc.arg('product_id')
@@ -146,4 +216,4 @@ WHERE
     product_id = $1;
 
 -- name: AddBulkProducts :copyfrom
-INSERT INTO products (name,description) VALUES ($1,$2);
+INSERT INTO products (product_id, category_id, collection_id, brand_id, name, description) VALUES ($1, $2, $3, $4, $5, $6);

@@ -1,12 +1,13 @@
 -- name: CreateVariant :one
 INSERT INTO product_variants (
+    variant_id,
     product_id,
     sku,
     price,
     stock_quantity,
     discount
 ) VALUES (
-    $1, $2, $3, $4, $5
+    $1, $2, $3, $4, $5, $6
 ) RETURNING *;
 
 -- name: GetVariantByID :one

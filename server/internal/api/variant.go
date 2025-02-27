@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
@@ -15,11 +16,11 @@ type VariantAttributeRequest struct {
 	Value       string `json:"value" binding:"required,gt=0,lt=255"`
 }
 type VariantRequest struct {
-	Price      float64 `json:"price" binding:"required,gt=0,lt=1000000"`
-	Stock      int32   `json:"stock" binding:"required,gt=0,lt=1000000"`
-	Discount   int16   `json:"discount" binding:"omitempty,gte=0,lt=10000"`
-	Sku        *string `json:"sku,omitempty" binding:"omitempty"`
-	Attributes []VariantAttributeRequest
+	Price      float64                   `json:"price" binding:"required,gt=0,lt=1000000"`
+	Stock      int32                     `json:"stock" binding:"required,gt=0,lt=1000000"`
+	Discount   int16                     `json:"discount" binding:"omitempty,gte=0,lt=10000"`
+	Sku        *string                   `json:"sku,omitempty" binding:"omitempty"`
+	Attributes []VariantAttributeRequest `json:"attributes" binding:"dive,omitempty"`
 }
 
 type VariantUpdateAttributeRequest struct {
@@ -37,11 +38,11 @@ type UpdateVariantRequest struct {
 
 type VariantParams struct {
 	ProductParam
-	VariantID int64 `uri:"variant_id" binding:"required"`
+	VariantID string `uri:"variant_id" binding:"required,uuid"`
 }
 
 type VariantResponse struct {
-	VariantID  int64                    `json:"variant_id"`
+	VariantID  string                   `json:"variant_id"`
 	Price      float64                  `json:"price"`
 	Stock      int32                    `json:"stock"`
 	Discount   int16                    `json:"discount,omitempty"`
@@ -93,7 +94,7 @@ func (sv *Server) createVariant(c *gin.Context) {
 	}
 
 	createVariantParam := repository.CreateVariantTxParam{
-		ProductID:    param.ID,
+		ProductID:    uuid.MustParse(param.ID),
 		VariantPrice: req.Price,
 		VariantStock: req.Stock,
 		Discount:     req.Discount,
@@ -148,8 +149,8 @@ func (sv *Server) updateVariant(c *gin.Context) {
 	}
 
 	variant, err := sv.repo.GetVariantByID(c, repository.GetVariantByIDParams{
-		VariantID: params.VariantID,
-		ProductID: params.ID,
+		VariantID: uuid.MustParse(params.VariantID),
+		ProductID: uuid.MustParse(params.ID),
 	})
 
 	if err != nil {
@@ -219,8 +220,8 @@ func (sv *Server) deleteVariant(c *gin.Context) {
 	}
 
 	variant, err := sv.repo.GetVariantByID(c, repository.GetVariantByIDParams{
-		VariantID: params.VariantID,
-		ProductID: params.ID,
+		VariantID: uuid.MustParse(params.VariantID),
+		ProductID: uuid.MustParse(params.ID),
 	})
 
 	if err != nil {
@@ -259,7 +260,7 @@ func (sv *Server) getVariant(c *gin.Context) {
 		return
 	}
 
-	variantRows, err := sv.repo.GetVariantDetails(c, params.ID)
+	variantRows, err := sv.repo.GetVariantDetails(c, uuid.MustParse(params.ID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
@@ -272,7 +273,7 @@ func (sv *Server) getVariant(c *gin.Context) {
 	variant := variantRows[0]
 	price, _ := variant.Price.Float64Value()
 	resp := VariantResponse{
-		VariantID:  variant.VariantID,
+		VariantID:  variant.VariantID.String(),
 		Price:      price.Float64,
 		Stock:      variant.StockQuantity,
 		Discount:   variant.Discount,
@@ -287,7 +288,7 @@ func (sv *Server) getVariant(c *gin.Context) {
 	for _, attr := range variantRows {
 		resp.Attributes = append(resp.Attributes, ProductAttributeDetail{
 			Name:  attr.AttributeName,
-			Value: attr.Value,
+			Value: []string{attr.Value},
 		})
 	}
 
@@ -301,7 +302,7 @@ func (sv *Server) getVariants(c *gin.Context) {
 		return
 	}
 
-	variants, err := sv.repo.GetVariantByProductID(c, params.ID)
+	variants, err := sv.repo.GetVariantByProductID(c, uuid.MustParse(params.ID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, mapErrResp(err))
 		return
@@ -313,10 +314,10 @@ func (sv *Server) getVariants(c *gin.Context) {
 	}
 	variantResponses := make([]VariantResponse, 0)
 	for _, variant := range variants {
-		if len(variantResponses) == 0 || variantResponses[len(variantResponses)-1].VariantID != variant.VariantID {
+		if len(variantResponses) == 0 || variantResponses[len(variantResponses)-1].VariantID != variant.VariantID.String() {
 			price, _ := variant.Price.Float64Value()
 			resp := VariantResponse{
-				VariantID:  variant.VariantID,
+				VariantID:  variant.VariantID.String(),
 				Price:      price.Float64,
 				Stock:      variant.StockQuantity,
 				Attributes: make([]ProductAttributeDetail, 0),
@@ -332,10 +333,10 @@ func (sv *Server) getVariants(c *gin.Context) {
 			latest.Attributes = append(latest.Attributes, ProductAttributeDetail{
 				ID:    variant.VariantAttributeID,
 				Name:  variant.AttributeName,
-				Value: variant.AttributeValue,
+				Value: []string{variant.AttributeValue},
 			})
 		}
 	}
 
-	c.JSON(http.StatusOK, GenericListResponse[VariantResponse]{&variantResponses, int64(len(variantResponses)), nil, nil})
+	c.JSON(http.StatusOK, GenericListResponse[VariantResponse]{variantResponses, int64(len(variantResponses)), nil, nil})
 }
