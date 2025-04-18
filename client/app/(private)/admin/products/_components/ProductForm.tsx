@@ -42,12 +42,18 @@ import { ImageUploader } from '@/components/FormFields/ImageUploader';
 import { TiptapController } from '@/components/Common';
 import { XMarkIcon } from '@heroicons/react/16/solid';
 
+export type SubmitResult = {
+  createProductSuccess: boolean;
+  uploadImagesSuccess: boolean;
+  uploadVariantImagesSuccess: boolean;
+};
+
 interface ProductEditFormProps {
   onSubmit: (
     data: ProductModelForm,
     productImages: ProductImageFile[],
     variantImages: ProductImageFile[]
-  ) => Promise<void>;
+  ) => Promise<SubmitResult>;
   productDetail?: ProductDetailModel;
 }
 
@@ -140,9 +146,15 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
   const { attributes, attributesLoading } = useAttributes();
 
   async function submitHandler(data: ProductModelForm) {
-    await onSubmit(data, productImages, productVariantImages);
-    setProductImages([]);
-    setProductVariantImages([]);
+    const result = await onSubmit(data, productImages, productVariantImages);
+    if (result.createProductSuccess) {
+    }
+    if (result.uploadImagesSuccess) {
+      setProductImages([]);
+    }
+    if (result.uploadVariantImagesSuccess) {
+      setProductVariantImages([]);
+    }
   }
 
   useEffect(() => {
@@ -408,7 +420,7 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
                       <div
                         key={index}
                         className='relative rounded-md h-72 w-full'
-                        >
+                      >
                         <Image
                           fill
                           src={image.url}
@@ -462,10 +474,7 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
                       (file) => file.variantID === null && file.image !== null
                     )
                     .map((file, index) => (
-                      <div
-                        key={index}
-                        className='relative rounded-md h-72'
-                      >
+                      <div key={index} className='relative rounded-md h-72'>
                         <Image
                           fill
                           src={
