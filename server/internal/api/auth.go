@@ -37,8 +37,8 @@ type LoginResponse struct {
 }
 
 type RefreshTokenResponse struct {
-	AccessToken          string        `json:"access_token"`
-	AccessTokenExpiresAt time.Duration `json:"access_token_expires_at"`
+	AccessToken          string    `json:"access_token"`
+	AccessTokenExpiresAt time.Time `json:"access_token_expires_at"`
 }
 
 // ------------------------------ Handlers ------------------------------
@@ -262,6 +262,6 @@ func (sv *Server) refreshToken(c *gin.Context) {
 
 	c.JSON(http.StatusOK, createSuccessResponse(c, RefreshTokenResponse{
 		AccessToken:          accessToken,
-		AccessTokenExpiresAt: sv.config.AccessTokenDuration,
+		AccessTokenExpiresAt: time.Now().Add(sv.config.RefreshTokenDuration),
 	}, "success", nil, nil))
 }
