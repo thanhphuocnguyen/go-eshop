@@ -1,0 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@tailwind base;
+
+@tailwind components;
+@tailwind utilities;
+
+.side-bar-item{
+  @apply p-2 hover:bg-secondary rounded-md text-white flex gap-2 items-center text-lg font-semibold
+}
+.side-bar-item-active {
+  @apply bg-secondary
+}

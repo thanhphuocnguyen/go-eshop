@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -10,57 +11,81 @@ import (
 
 // CreateProductTx creates a new product in a transaction
 type CreateProductTxParam struct {
-	CategoryID   *int32                 `json:"category_id,omitempty"`
-	CollectionID *int32                 `json:"collection_id,omitempty"`
-	BrandID      *int32                 `json:"brand_id,omitempty"`
-	Name         string                 `json:"name" binding:"required,min=3,max=100"`
-	Description  string                 `json:"description" binding:"required,min=10,max=1000"`
-	Variants     []CreateVariantTxParam `json:"variants" binding:"omitempty,dive"`
+	Name         string                         `json:"name" binding:"required,min=3,max=100"`
+	Description  string                         `json:"description" binding:"omitempty,min=6,max=1000"`
+	Price        float64                        `json:"price" binding:"required,gt=0"`
+	Sku          string                         `json:"sku" binding:"required"`
+	Slug         string                         `json:"slug" binding:"omitempty"`
+	CategoryID   string                         `json:"category_id,omitempty" binding:"omitempty,uuid"`
+	BrandID      string                         `json:"brand_id,omitempty" binding:"omitempty,uuid"`
+	CollectionID *string                        `json:"collection_id,omitempty" binding:"omitempty,uuid"`
+	Variants     []CreateProductVariantTxParams `json:"variants,omitempty"`
 }
 
-type CreateProductTxResult struct {
-	Product  Product          `json:"product"`
-	Variants []ProductVariant `json:"variants"`
-}
-
-func (s *pgRepo) CreateProductTx(ctx context.Context, arg CreateProductTxParam) (CreateProductTxResult, error) {
-	var result CreateProductTxResult
+func (s *pgRepo) CreateProductTx(ctx context.Context, arg CreateProductTxParam) (ProductTxResult, error) {
+	var result ProductTxResult
 	err := s.execTx(ctx, func(q *Queries) error {
 		createProductParam := CreateProductParams{
-			Name:        arg.Name,
-			ProductID:   uuid.New(),
-			Description: arg.Description,
+			ID:   uuid.New(),
+			Name: arg.Name,
 		}
 
-		if arg.CategoryID != nil {
-			createProductParam.CategoryID = utils.GetPgTypeInt4(*arg.CategoryID)
-		}
+		createProductParam.BasePrice = utils.GetPgNumericFromFloat(arg.Price * 100)
+		createProductParam.Description = utils.GetPgTypeText(arg.Description)
+		createProductParam.Slug = arg.Slug
+		createProductParam.BaseSku = utils.GetPgTypeText(arg.Sku)
+
+		createProductParam.CategoryID = utils.GetPgTypeUUIDFromString(arg.CategoryID)
+
+		createProductParam.BrandID = utils.GetPgTypeUUIDFromString(arg.BrandID)
 		if arg.CollectionID != nil {
-			createProductParam.CollectionID = utils.GetPgTypeInt4(*arg.CollectionID)
+			createProductParam.CollectionID = utils.GetPgTypeUUIDFromString(*arg.CollectionID)
 		}
-		if arg.BrandID != nil {
-			createProductParam.BrandID = utils.GetPgTypeInt4(*arg.BrandID)
-		}
+
 		product, err := q.CreateProduct(ctx, createProductParam)
 		if err != nil {
-			log.Error().Err(err).Msg("CreateProduct")
+			log.Error().Err(err).Timestamp()
 			return err
 		}
-
-		result.Product = product
-		result.Variants = make([]ProductVariant, 0)
-		if len(arg.Variants) > 0 {
-			for _, params := range arg.Variants {
-				params.ProductID = product.ProductID
-				variantCreated, err := createVariantUtil(ctx, q, params)
-				if err != nil {
-					log.Error().Err(err).Msg("CreateVariant")
-					return err
-				}
-				result.Variants = append(result.Variants, *variantCreated)
+		result.Variants = make([]uuid.UUID, 0)
+		for _, variantReq := range arg.Variants {
+			createVariantParam := CreateProductVariantParams{
+				ProductID: product.ID,
+				ID:        uuid.New(),
+				Sku:       variantReq.Sku,
+				Price:     utils.GetPgNumericFromFloat(variantReq.Price),
+				Stock:     variantReq.Stock,
 			}
+
+			if variantReq.Weight != nil {
+				createVariantParam.Weight = utils.GetPgNumericFromFloat(*variantReq.Weight)
+			}
+
+			createdVariant, err := q.CreateProductVariant(ctx, createVariantParam)
+
+			if err != nil {
+				log.Error().Err(err).Msg("CreateVariantProduct")
+				return err
+			}
+
+			for _, attr := range variantReq.Attributes {
+				for i, valueID := range attr.ValueIDs {
+					createProductAttributesParam := CreateProductVariantAttributeParams{
+						VariantID:        createdVariant.ID,
+						AttributeValueID: valueID,
+					}
+
+					_, err := q.CreateProductVariantAttribute(ctx, createProductAttributesParam)
+					if err != nil {
+						log.Error().Err(err).Msg(fmt.Sprintf("index: %d, id: %d", i, valueID))
+						return err
+					}
+				}
+			}
+			result.Variants = append(result.Variants, createdVariant.ID)
 		}
 
+		result.ID = product.ID
 		return nil
 	})
 

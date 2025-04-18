@@ -1,9 +1,9 @@
 -- name: CreateUser :one
 INSERT INTO
-    users (user_id,email,username,phone,fullname,hashed_password,role)
+    users (id,email,username,phone,fullname,hashed_password,role)
 VALUES
     ($1,$2,$3,$4,$5,$6,$7)
-RETURNING user_id, email, username, fullname, role, verified_email, verified_phone, created_at, updated_at;
+RETURNING id, email, username, fullname, role, verified_email, verified_phone, created_at, updated_at;
 
 -- name: GetUserByUsername :one
 SELECT
@@ -24,23 +24,10 @@ WHERE
 LIMIT 1;
 
 -- name: GetUserByID :one
-SELECT
-    *
-FROM
-    users
-WHERE
-    user_id = $1
-LIMIT 1;
+SELECT * FROM users WHERE id = $1 LIMIT 1;
 
 -- name: ListUsers :many
-SELECT
-    *
-FROM
-    users
-ORDER BY
-    user_id
-LIMIT $1
-OFFSET $2;
+SELECT * FROM users ORDER BY id LIMIT $1 OFFSET $2;
 
 -- name: UpdateUser :one
 UPDATE
@@ -55,15 +42,12 @@ SET
     password_changed_at = coalesce(sqlc.narg('password_changed_at'), password_changed_at),
     updated_at = sqlc.arg('updated_at')
 WHERE
-    user_id = sqlc.arg('id')
-RETURNING user_id, email, username, fullname, role, verified_email, verified_phone, created_at, updated_at;
+    id = sqlc.arg('id')
+RETURNING id, email, username, fullname, role, verified_email, verified_phone, created_at, updated_at;
 
 
 -- name: DeleteUser :exec
-DELETE FROM
-    users
-WHERE
-    user_id = $1;
+DELETE FROM users WHERE id = $1;
 
 -- name: CountUsers :one
 SELECT
@@ -73,9 +57,9 @@ FROM
 
 -- name: SeedUsers :copyfrom
 INSERT INTO
-    users (user_id,email,username,phone,fullname,hashed_password,role)
+    users (id,email,username,phone,fullname,hashed_password,role)
 VALUES
-    ($1,$2,$3,$4,$5,$6,$7);
+    ($1, $2, $3, $4, $5, $6, $7);
 
 -- User Address Queries
 -- name: CreateAddress :one
@@ -90,15 +74,7 @@ INSERT INTO
         "default"
     )
 VALUES
-    (
-        $1,
-        $2,
-        $3,
-        $4,
-        $5,
-        $6,
-        $7
-    ) RETURNING *;
+    ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
 
 -- name: GetAddress :one
 SELECT
@@ -106,7 +82,7 @@ SELECT
 FROM
     user_addresses
 WHERE
-    user_address_id = $1 AND user_id = $2 AND deleted = FALSE
+    id = $1 AND user_id = $2 AND deleted = FALSE
 LIMIT 1;
 
 
@@ -128,7 +104,7 @@ FROM
 WHERE
     user_id = $1 AND deleted = FALSE
 ORDER BY
-    "default" DESC, user_address_id ASC;
+    "default" DESC, id ASC;
 
 -- name: UpdateAddress :one
 UPDATE
@@ -141,7 +117,7 @@ SET
     city = coalesce(sqlc.narg('city'), city),
     "default" = coalesce(sqlc.narg('default'), "default")
 WHERE
-    user_address_id = sqlc.arg('user_address_id') AND user_id = sqlc.arg('user_id') AND deleted = FALSE
+    id = sqlc.arg('id') AND user_id = sqlc.arg('user_id') AND deleted = FALSE
 RETURNING *;
 
 -- name: DeleteAddress :exec
@@ -151,7 +127,7 @@ SET
     deleted = TRUE,
     updated_at = now()
 WHERE
-    user_address_id = $1 AND user_id = $2;
+    id = $1 AND user_id = $2;
 
 -- name: SetPrimaryAddress :exec
 UPDATE
@@ -159,7 +135,7 @@ UPDATE
 SET
     "default" = $1
 WHERE
-    user_id = $2 AND user_address_id = $3 AND deleted = FALSE;
+    id = $2 AND user_id = $3 AND deleted = FALSE;
 
 -- name: ResetPrimaryAddress :exec
 UPDATE
@@ -191,10 +167,10 @@ VALUES
 
 -- Verification Token Queries
 -- name: CreateVerifyEmail :one
-INSERT INTO verify_emails (user_id, email, verify_code) VALUES ($1, $2, $3) RETURNING *;
+INSERT INTO verify_emails (id, email, verify_code) VALUES ($1, $2, $3) RETURNING *;
 
 -- name: GetVerifyEmail :one
-SELECT * FROM verify_emails WHERE user_id = $1 AND email = $2;
+SELECT * FROM verify_emails WHERE id = $1 AND email = $2;
 
 -- name: GetVerifyEmailByID :one
 SELECT * FROM verify_emails WHERE id = $1;

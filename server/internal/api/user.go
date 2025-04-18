@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -16,25 +15,18 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 )
 
-type createUserRequest struct {
-	Username string `json:"username" binding:"required,min=3,max=32,alphanum,lowercase"`
-	Password string `json:"password" binding:"required,min=6,max=32,alphanum"`
-	FullName string `json:"fullname" binding:"required,min=3,max=32"`
-	Phone    string `json:"phone" binding:"required,min=10,max=15"`
-	Email    string `json:"email" binding:"required,email,max=255,min=6"`
-}
-
-type userResponse struct {
-	Email             string              `json:"email"`
-	FullName          string              `json:"fullname"`
+type UserResponse struct {
+	ID                uuid.UUID           `json:"id"`
 	Username          string              `json:"username"`
-	CreatedAt         string              `json:"created_at"`
-	VerifiedEmail     bool                `json:"verified_email"`
-	VerifiedPhone     bool                `json:"verified_phone"`
 	Role              repository.UserRole `json:"role"`
-	UpdatedAt         string              `json:"updated_at"`
-	PasswordChangedAt string              `json:"password_changed_at"`
-	Addresses         []addressResponse   `json:"addresses"`
+	FullName          string              `json:"fullname"`
+	Email             string              `json:"email,omitempty"`
+	CreatedAt         string              `json:"created_at,omitempty"`
+	VerifiedEmail     bool                `json:"verified_email,omitempty"`
+	VerifiedPhone     bool                `json:"verified_phone,omitempty"`
+	UpdatedAt         string              `json:"updated_at,omitempty"`
+	PasswordChangedAt string              `json:"password_changed_at,omitempty"`
+	Addresses         []addressResponse   `json:"addresses,omitempty"`
 }
 type addressResponse struct {
 	Address  string `json:"address"`
@@ -44,44 +36,28 @@ type addressResponse struct {
 	Ward     string `json:"ward"`
 	Phone    string `json:"phone"`
 }
-type loginUserRequest struct {
-	Username string `json:"username" binding:"required,min=3,max=32,alphanum"`
-	Password string `json:"password" binding:"required,min=6,max=32,alphanum"`
-}
 
-type listUserParams struct {
+type ListUserParams struct {
 	Page     int `form:"page" binding:"required,min=1"`
 	PageSize int `form:"page_size" binding:"required,min=1,max=100"`
 }
 
-type updateUserRequest struct {
+type UpdateUserRequest struct {
 	UserID   uuid.UUID           `json:"user_id" binding:"required,uuid"`
 	FullName *string             `json:"fullname,omitempty" binding:"omitempty,min=3,max=32,alphanum"`
 	Email    string              `json:"email" binding:"email,max=255,min=6"`
 	Role     repository.UserRole `json:"role"`
 }
-type loginResponse struct {
-	SessionID            uuid.UUID `json:"session_id"`
-	Token                string    `json:"token"`
-	TokenExpireAt        time.Time `json:"token_expire_at"`
-	RefreshToken         string    `json:"refresh_token"`
-	RefreshTokenExpireAt time.Time `json:"refresh_token_expire_at"`
-}
 
-type renewAccessTokenResp struct {
-	AccessToken          string        `json:"access_token"`
-	AccessTokenExpiresAt time.Duration `json:"access_token_expires_at"`
-}
-
-type verifyEmailQuery struct {
+type VerifyEmailQuery struct {
 	ID         int32  `form:"id" binding:"required,min=1"`
 	VerifyCode string `form:"verify_code" binding:"required,min=1"`
 }
 
 // ------------------------------ Mappers ------------------------------
 
-func mapToUserResponse(user repository.User) userResponse {
-	return userResponse{
+func mapToUserResponse(user repository.User) UserResponse {
+	return UserResponse{
 		Email:             user.Email,
 		FullName:          user.Fullname,
 		Role:              user.Role,
@@ -106,219 +82,6 @@ func mapAddressToAddressResponse(address repository.UserAddress) addressResponse
 
 // ------------------------------ Handlers ------------------------------
 
-// signUp godoc
-// @Summary Create a new user
-// @Description Create a new user
-// @Tags users
-// @Accept  json
-// @Produce  json
-// @Param input body createUserRequest true "User info"
-// @Success 200 {object} GenericResponse[repository.CreateUserRow]
-// @Failure 400 {object} gin.H
-// @Failure 500 {object} gin.H
-// @Router /users [post]
-func (sv *Server) signUp(c *gin.Context) {
-	var req createUserRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, mapErrResp(err))
-		return
-	}
-
-	_, err := sv.repo.GetUserByUsername(c, req.Username)
-	if err != nil && !errors.Is(err, repository.ErrRecordNotFound) {
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
-		return
-	}
-
-	if err == nil {
-		c.JSON(http.StatusBadRequest, mapErrResp(fmt.Errorf("username %s is already taken", req.Username)))
-		return
-	}
-
-	hashedPassword, err := auth.HashPassword(req.Password)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
-		return
-	}
-
-	arg := repository.CreateUserParams{
-		Username:       req.Username,
-		HashedPassword: hashedPassword,
-		Fullname:       req.FullName,
-		Email:          req.Email,
-		Phone:          req.Phone,
-		Role:           repository.UserRoleUser,
-	}
-	if req.Username == "admin" {
-		arg.Role = repository.UserRoleAdmin
-	}
-	user, err := sv.repo.CreateUser(c, arg)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
-		return
-	}
-
-	err = sv.taskDistributor.SendVerifyEmail(
-		c,
-		&worker.PayloadVerifyEmail{
-			UserID: user.UserID,
-		},
-		asynq.MaxRetry(3),
-		asynq.ProcessIn(5*time.Second),
-		asynq.Queue(worker.QueueCritical),
-	)
-
-	message := "Please verify your email address to activate your account"
-	errMsg := ""
-	if err != nil {
-		message = "Failed to send email verification"
-		errMsg = err.Error()
-	}
-
-	c.JSON(http.StatusOK, GenericResponse[repository.CreateUserRow]{&user, &message, &errMsg})
-}
-
-// loginUser godoc
-// @Summary Login to the system
-// @Description Login to the system
-// @Tags users
-// @Accept  json
-// @Produce  json
-// @Param input body loginUserRequest true "User info"
-// @Success 200 {object} GenericResponse[loginResponse]
-// @Failure 401 {object} gin.H
-// @Failure 500 {object} gin.H
-// @Router /users/login [post]
-func (sv *Server) loginUser(c *gin.Context) {
-	var req loginUserRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, mapErrResp(err))
-		return
-	}
-
-	user, err := sv.repo.GetUserByUsername(c, req.Username)
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusUnauthorized, mapErrResp(err))
-			return
-		}
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
-		return
-	}
-
-	// TODO: check if user has confirmed email or phone number
-
-	if err := auth.CheckPassword(req.Password, user.HashedPassword); err != nil {
-		c.JSON(http.StatusUnauthorized, mapErrResp(err))
-		return
-	}
-
-	token, payload, err := sv.tokenGenerator.GenerateToken(user.UserID, user.Username, user.Email, sv.config.AccessTokenDuration)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
-		return
-	}
-
-	refreshToken, rfPayload, err := sv.tokenGenerator.GenerateToken(user.UserID, user.Username, user.Email, sv.config.RefreshTokenDuration)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
-		return
-	}
-
-	sessionID := uuid.New()
-	session, err := sv.repo.CreateSession(c, repository.CreateSessionParams{
-		SessionID:    sessionID,
-		UserID:       user.UserID,
-		RefreshToken: refreshToken,
-		UserAgent:    c.GetHeader("User-Agent"),
-		ClientIp:     c.ClientIP(),
-		Blocked:      false,
-		ExpiredAt:    time.Now().Add(sv.config.RefreshTokenDuration),
-	})
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
-		return
-	}
-
-	loginResp := loginResponse{
-		SessionID:            session.SessionID,
-		TokenExpireAt:        payload.ExpiredAt,
-		Token:                token,
-		RefreshToken:         refreshToken,
-		RefreshTokenExpireAt: rfPayload.ExpiredAt,
-	}
-	c.JSON(http.StatusOK, GenericResponse[loginResponse]{&loginResp, nil, nil})
-}
-
-// refreshToken godoc
-// @Summary Refresh token
-// @Description Refresh token
-// @Tags users
-// @Accept  json
-// @Produce  json
-// @Success 200 {object} renewAccessTokenResp
-// @Failure 401 {object} gin.H
-// @Failure 500 {object} gin.H
-// @Router /users/refresh-token [post]
-func (sv *Server) refreshToken(c *gin.Context) {
-	authHeader := c.GetHeader("Authorization")
-	if authHeader == "" {
-		c.JSON(http.StatusUnauthorized, mapErrResp(fmt.Errorf("refresh token is required")))
-		return
-	}
-	refreshToken := authHeader[len("Bearer "):]
-	refreshTokenPayload, err := sv.tokenGenerator.VerifyToken(refreshToken)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, mapErrResp(err))
-		return
-	}
-
-	session, err := sv.repo.GetSession(c, refreshTokenPayload.ID)
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusUnauthorized, mapErrResp(err))
-			return
-		}
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
-		return
-	}
-
-	if session.UserID != refreshTokenPayload.UserID {
-		err := errors.New("refresh token is not valid")
-		c.JSON(http.StatusUnauthorized, mapErrResp(err))
-		return
-	}
-
-	if session.RefreshToken != refreshToken {
-		err := errors.New("refresh token is not valid")
-		c.JSON(http.StatusUnauthorized, mapErrResp(err))
-		return
-	}
-
-	if session.Blocked {
-		err := errors.New("session is blocked")
-		c.JSON(http.StatusUnauthorized, mapErrResp(err))
-		return
-	}
-
-	if time.Now().After(session.ExpiredAt) {
-		err := errors.New("refresh token was expired")
-		c.JSON(http.StatusUnauthorized, mapErrResp(err))
-		return
-	}
-	accessToken, _, err := sv.tokenGenerator.GenerateToken(session.UserID, refreshTokenPayload.Username, refreshTokenPayload.Email, sv.config.AccessTokenDuration)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
-		return
-	}
-
-	c.JSON(http.StatusOK, &renewAccessTokenResp{
-		AccessToken:          accessToken,
-		AccessTokenExpiresAt: sv.config.AccessTokenDuration,
-	})
-}
-
 // updateUser godoc
 // @Summary Update user info
 // @Description Update user info
@@ -326,26 +89,26 @@ func (sv *Server) refreshToken(c *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @Param input body updateUserRequest true "User info"
-// @Success 200 {object} GenericResponse[repository.UpdateUserRow]
-// @Failure 400 {object} gin.H
-// @Failure 401 {object} gin.H
-// @Failure 500 {object} gin.H
+// @Success 200 {object} ApiResponse
+// @Failure 400 {object} ApiResponse
+// @Failure 401 {object} ApiResponse
+// @Failure 500 {object} ApiResponse
 // @Router /users/{id} [patch]
 func (sv *Server) updateUser(c *gin.Context) {
-	var req updateUserRequest
+	var req UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
 
 	user, err := sv.repo.GetUserByID(c, req.UserID)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, mapErrResp(err))
+		c.JSON(http.StatusUnauthorized, createErrorResponse(http.StatusUnauthorized, "", err))
 		return
 	}
 
-	if user.Role != repository.UserRoleAdmin && user.UserID != req.UserID {
-		c.JSON(http.StatusUnauthorized, mapErrResp(err))
+	if user.Role != repository.UserRoleAdmin && user.ID != req.UserID {
+		c.JSON(http.StatusUnauthorized, createErrorResponse(http.StatusUnauthorized, "", err))
 		return
 	}
 
@@ -368,11 +131,11 @@ func (sv *Server) updateUser(c *gin.Context) {
 	}
 	updatedUser, err := sv.repo.UpdateUser(c, arg)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
 		return
 	}
 
-	c.JSON(http.StatusOK, GenericResponse[repository.UpdateUserRow]{&updatedUser, nil, nil})
+	c.JSON(http.StatusOK, createSuccessResponse(c, updatedUser, "", nil, nil))
 }
 
 // getUser godoc
@@ -381,30 +144,30 @@ func (sv *Server) updateUser(c *gin.Context) {
 // @Tags users
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} GenericResponse[userResponse]
-// @Failure 404 {object} gin.H
-// @Failure 500 {object} gin.H
+// @Success 200 {object} ApiResponse
+// @Failure 404 {object} ApiResponse
+// @Failure 500 {object} ApiResponse
 // @Router /users [get]
 func (sv *Server) getUser(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, mapErrResp(fmt.Errorf("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", errors.New("authorization payload is not provided")))
 		return
 	}
 
 	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, mapErrResp(err))
+			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusBadRequest, "", err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
 
-	userAddress, err := sv.repo.GetAddresses(c, user.UserID)
+	userAddress, err := sv.repo.GetAddresses(c, user.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
 
@@ -415,7 +178,7 @@ func (sv *Server) getUser(c *gin.Context) {
 	userResp := mapToUserResponse(user)
 	userResp.Addresses = addressResp
 
-	c.JSON(http.StatusOK, GenericResponse[userResponse]{&userResp, nil, nil})
+	c.JSON(http.StatusOK, createSuccessResponse(c, userResp, "", nil, nil))
 }
 
 // listUsers godoc
@@ -426,29 +189,29 @@ func (sv *Server) getUser(c *gin.Context) {
 // @Produce  json
 // @Param limit query int false "Limit"
 // @Param offset query int false "Offset"
-// @Success 200 {object} GenericResponse[[]userResponse]
-// @Failure 500 {object} gin.H
+// @Success 200 {object} ApiResponse
+// @Failure 500 {object} ApiResponse
 // @Router /users/list [get]
 func (sv *Server) listUsers(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, mapErrResp(fmt.Errorf("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", errors.New("authorization payload is not provided")))
 		return
 	}
 	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
 
 	if user.Role != repository.UserRoleAdmin {
-		c.JSON(http.StatusUnauthorized, mapErrResp(fmt.Errorf("user does not have permission")))
+		c.JSON(http.StatusUnauthorized, createErrorResponse(http.StatusUnauthorized, "", errors.New("user is not admin")))
 		return
 	}
 
-	var queries listUserParams
+	var queries ListUserParams
 	if err := c.ShouldBindUri(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
 
@@ -457,15 +220,15 @@ func (sv *Server) listUsers(c *gin.Context) {
 		Offset: int32((queries.Page - 1) * queries.PageSize),
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
 
-	userResp := make([]userResponse, 0)
+	userResp := make([]UserResponse, 0)
 	for _, user := range users {
-		userAddress, err := sv.repo.GetAddresses(c, user.UserID)
+		userAddress, err := sv.repo.GetAddresses(c, user.ID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, mapErrResp(err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
 			return
 		}
 
@@ -477,13 +240,13 @@ func (sv *Server) listUsers(c *gin.Context) {
 		userResp[len(userResp)-1].Addresses = addressResp
 	}
 
-	c.JSON(http.StatusOK, GenericResponse[[]userResponse]{&userResp, nil, nil})
+	c.JSON(http.StatusOK, createSuccessResponse(c, userResp, "", nil, nil))
 }
 
 func (sv *Server) sendVerifyEmail(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, mapErrResp(fmt.Errorf("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", errors.New("authorization payload is not provided")))
 		return
 	}
 
@@ -497,32 +260,32 @@ func (sv *Server) sendVerifyEmail(c *gin.Context) {
 		asynq.Queue(worker.QueueCritical),
 	)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
 
-	c.JSON(http.StatusOK, GenericResponse[interface{}]{nil, nil, nil})
+	c.Status(http.StatusNoContent)
 }
 
 func (sv *Server) verifyEmail(c *gin.Context) {
-	var query verifyEmailQuery
+	var query VerifyEmailQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
 	verifyEmail, err := sv.repo.GetVerifyEmailByID(c, query.ID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, mapErrResp(fmt.Errorf("not found")))
+		c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", err))
 		return
 	}
 
 	if verifyEmail.ExpiredAt.Before(time.Now()) {
-		c.JSON(http.StatusNotFound, mapErrResp(fmt.Errorf("expired")))
+		c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", errors.New("verify code expired")))
 		return
 	}
 
 	if verifyEmail.VerifyCode != query.VerifyCode {
-		c.JSON(http.StatusNotFound, mapErrResp(fmt.Errorf("not found")))
+		c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", err))
 		return
 	}
 	_, err = sv.repo.UpdateVerifyEmail(c, repository.UpdateVerifyEmailParams{
@@ -531,7 +294,7 @@ func (sv *Server) verifyEmail(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
 
@@ -543,8 +306,8 @@ func (sv *Server) verifyEmail(c *gin.Context) {
 		},
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
-
+	c.Status(http.StatusNoContent)
 }

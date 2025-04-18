@@ -1,0 +1,125 @@
+@keyframes loadership_AFHLY_roller {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+.loadership_AFHLY {
+  display: flex;
+  position: relative;
+  width: 68px;
+  height: 68px;
+}
+
+.loadership_AFHLY div {
+  animation: loadership_AFHLY_roller 1.2s infinite;
+  animation-timing-function: cubic-bezier(0.5, 0, 0.5, 1);
+  transform-origin: 34px 34px;
+}
+.loadership_AFHLY div:after {
+  content: ' ';
+  display: block;
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #77b254;
+}
+
+.loadership_AFHLY div:nth-child(1) {
+  animation-delay: 0s;
+}
+.loadership_AFHLY div:nth-child(1):after {
+  top: 60px;
+  left: 30px;
+}
+
+.loadership_AFHLY div:nth-child(2) {
+  animation-delay: -0.04s;
+}
+.loadership_AFHLY div:nth-child(2):after {
+  top: 56px;
+  left: 45px;
+}
+
+.loadership_AFHLY div:nth-child(3) {
+  animation-delay: -0.07s;
+}
+.loadership_AFHLY div:nth-child(3):after {
+  top: 45px;
+  left: 56px;
+}
+
+.loadership_AFHLY div:nth-child(4) {
+  animation-delay: -0.11s;
+}
+.loadership_AFHLY div:nth-child(4):after {
+  top: 30px;
+  left: 60px;
+}
+
+.loadership_AFHLY div:nth-child(5) {
+  animation-delay: -0.14s;
+}
+.loadership_AFHLY div:nth-child(5):after {
+  top: 15px;
+  left: 56px;
+}
+
+.loadership_AFHLY div:nth-child(6) {
+  animation-delay: -0.18s;
+}
+.loadership_AFHLY div:nth-child(6):after {
+  top: 4px;
+  left: 45px;
+}
+
+.loadership_AFHLY div:nth-child(7) {
+  animation-delay: -0.22s;
+}
+.loadership_AFHLY div:nth-child(7):after {
+  top: 0px;
+  left: 30px;
+}
+
+.loadership_AFHLY div:nth-child(8) {
+  animation-delay: -0.25s;
+}
+.loadership_AFHLY div:nth-child(8):after {
+  top: 4px;
+  left: 15px;
+}
+
+.loadership_AFHLY div:nth-child(9) {
+  animation-delay: -0.29s;
+}
+.loadership_AFHLY div:nth-child(9):after {
+  top: 15px;
+  left: 4px;
+}
+
+.loadership_AFHLY div:nth-child(10) {
+  animation-delay: -0.32s;
+}
+.loadership_AFHLY div:nth-child(10):after {
+  top: 30px;
+  left: 0px;
+}
+
+.loadership_AFHLY div:nth-child(11) {
+  animation-delay: -0.36s;
+}
+.loadership_AFHLY div:nth-child(11):after {
+  top: 45px;
+  left: 4px;
+}
+
+.loadership_AFHLY div:nth-child(12) {
+  animation-delay: -0.4s;
+}
+.loadership_AFHLY div:nth-child(12):after {
+  top: 56px;
+  left: 15px;
+}

@@ -5,6 +5,7 @@ import {
   PopoverGroup,
   PopoverPanel,
 } from '@headlessui/react';
+import Image from 'next/image';
 import React from 'react';
 
 const navigation = {
@@ -102,7 +103,7 @@ const navigation = {
             { name: 'Sweaters', href: '#' },
             { name: 'T-Shirts', href: '#' },
             { name: 'Jackets', href: '#' },
-            { name: 'Activewear', href: '#' },
+            { name: '', href: '#' },
             { name: 'Browse All', href: '#' },
           ],
         },
@@ -169,7 +170,9 @@ const CategorySection = () => {
                             key={item.name}
                             className='group relative text-base sm:text-sm'
                           >
-                            <img
+                            <Image
+                            width={200}
+                            height={200}
                               alt={item.imageAlt}
                               src={item.imageSrc}
                               className='aspect-square w-full rounded-lg bg-gray-100 object-cover group-hover:opacity-75'

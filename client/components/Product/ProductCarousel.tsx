@@ -1,7 +1,7 @@
-import { GenericListResponse } from '@/lib/types';
-import { CategoryProductModel } from '@/lib/types/product';
+import { GenericListResponse, CategoryProductModel } from '@/lib/definitions';
 import Carousel from '../Common/Carousel';
 import ProductCard from './ProductCard';
+import { apiFetch } from '@/lib/api/api';
 
 const responsive = {
   desktop: {
@@ -26,9 +26,10 @@ export default async function ProductCarousel({
 }: {
   categoryID: number;
 }) {
-  const productResp: GenericListResponse<CategoryProductModel> = await fetch(
-    process.env.NEXT_API_URL + `/category/${categoryID}/products`
-  ).then((res) => res.json());
+  const productResp = await apiFetch<GenericListResponse<CategoryProductModel>>(
+    `/category/${categoryID}/products`
+  );
+
   return (
     <Carousel
       draggable={false}
@@ -46,7 +47,7 @@ export default async function ProductCarousel({
       dotListClass='custom-dot-list-style'
       itemClass='carousel-item-padding-40-px'
     >
-      {productResp.data.map((product) => (
+      {productResp.data?.map((product) => (
         <ProductCard
           key={product.id}
           image={product.image_url}

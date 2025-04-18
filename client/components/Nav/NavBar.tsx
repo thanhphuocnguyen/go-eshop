@@ -2,16 +2,19 @@ import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { logout } from '@/app/actions/auth';
 import CartSection from './CartSection';
 import CategorySection from './CategorySection';
+import AuthButtons from './AuthButtons';
+import { UserModel } from '@/lib/types/user';
 
 export default async function NavBar() {
   const cookieStore = await cookies();
   // const [open, setOpen] = useState(false);
+  const role = cookieStore.get('user_role')?.value;
+  const fullname = cookieStore.get('user_name')?.value;
 
   return (
-    <div className='bg-white sticky top-0 z-50'>
+    <div className='bg-white sticky top-0 z-20'>
       <header className='relative bg-white'>
         <p className='flex h-10 items-center justify-center bg-indigo-600 px-4 text-sm font-medium text-white sm:px-6 lg:px-8'>
           Get free delivery on orders over $100
@@ -40,7 +43,7 @@ export default async function NavBar() {
                   <Image
                     alt=''
                     src='/images/logo/logo.webp'
-                    className='h-8 w-auto'
+                    className='h-8 w-auto rounded-md'
                     width={50}
                     height={50}
                   />
@@ -51,33 +54,10 @@ export default async function NavBar() {
 
               <div className='ml-auto flex items-center'>
                 <div className='hidden lg:flex lg:flex-1 lg:items-center lg:justify-end lg:space-x-6'>
-                  {cookieStore.get('token') ? (
-                    <button
-                      onClick={logout}
-                      className='text-sm font-medium text-gray-700 hover:text-gray-800'
-                    >
-                      Sign out
-                    </button>
-                  ) : (
-                    <>
-                      <Link
-                        href='/login'
-                        className='text-sm font-medium text-gray-700 hover:text-gray-800'
-                      >
-                        Sign in
-                      </Link>
-                      <span
-                        aria-hidden='true'
-                        className='h-6 w-px bg-gray-200'
-                      />
-                      <Link
-                        href='/register'
-                        className='text-sm font-medium text-gray-700 hover:text-gray-800'
-                      >
-                        Create account
-                      </Link>
-                    </>
-                  )}
+                  <AuthButtons
+                    role={role as UserModel['role']}
+                    name={fullname as string}
+                  />
                 </div>
 
                 <div className='hidden lg:ml-8 lg:flex'>

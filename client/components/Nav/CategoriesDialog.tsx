@@ -10,6 +10,7 @@ import {
   TabPanels,
 } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import Image from 'next/image';
 import React, { Fragment } from 'react';
 
 interface CategoriesDialogProps {
@@ -71,7 +72,7 @@ const CategoriesDialog: React.FC<CategoriesDialogProps> = ({
                     <div className='grid grid-cols-2 gap-x-4'>
                       {category.featured.map((item) => (
                         <div key={item.name} className='group relative text-sm'>
-                          <img
+                          <Image
                             alt={item.imageAlt}
                             src={item.imageSrc}
                             className='aspect-square w-full rounded-lg bg-gray-100 object-cover group-hover:opacity-75'

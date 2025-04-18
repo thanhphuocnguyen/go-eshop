@@ -1,26 +1,34 @@
 -- name: CreateImage :one
-INSERT INTO images (product_id, variant_id, image_url, external_id) VALUES ($1, $2, $3, $4) RETURNING *;
+INSERT INTO images (external_id, url, alt_text, caption, mime_type, file_size, width, height) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *;
 
--- name: GetImageByID :one
-SELECT * FROM images WHERE image_id = $1 LIMIT 1;
+-- name: CreateImageAssignment :one
+INSERT INTO image_assignments (image_id, entity_id, entity_type, display_order, role) VALUES ($1, $2, $3, $4, $5) RETURNING *;
 
--- name: GetImageByExternalID :one
+-- name: GetProductImagesProductID :many
+SELECT * FROM image_assignments
+JOIN images ON images.id = image_assignments.image_id
+WHERE entity_id = $1 AND entity_type = 'product' ORDER BY display_order;
+
+-- name: GetImageFromID :one
+SELECT * FROM images WHERE id = $1 LIMIT 1;
+
+-- name: GetProductImageByExternalID :one
 SELECT * FROM images WHERE external_id = $1 LIMIT 1;
 
--- name: GetImageByProductID :one
-SELECT * FROM images WHERE product_id = $1 AND variant_id = NULL LIMIT 1;
+-- name: GetProductImageByEntityID :one
+SELECT * FROM image_assignments
+JOIN images ON images.id = image_assignments.image_id
+WHERE entity_id = $1 LIMIT 1;
 
--- name: GetImageByVariantID :one
-SELECT * FROM images WHERE variant_id = $1 LIMIT 1;
-
--- name: UpdateImage :exec
+-- name: UpdateProductImage :exec
 UPDATE images 
 SET 
-    product_id = COALESCE(sqlc.narg(product_id), product_id),
-    variant_id = COALESCE(sqlc.narg(variant_id), variant_id), 
-    image_url = COALESCE(sqlc.narg(image_url), image_url), 
+    url = COALESCE(sqlc.narg(url), url),
     external_id = COALESCE(sqlc.narg(external_id), external_id) 
-WHERE image_id = $1;
+WHERE id = $1;
 
--- name: DeleteImage :exec
-DELETE FROM images WHERE image_id = $1;
+-- name: DeleteProductImage :exec
+DELETE FROM images WHERE id = $1;
+
+-- name: DeleteProductImageAssignment :exec
+DELETE FROM image_assignments WHERE image_id = $1 AND entity_id = $2 AND entity_type = $3;

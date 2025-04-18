@@ -2,14 +2,20 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
-  eslint: {},
+  eslint: {
+    dirs: ['components', 'app', 'utils', 'libs'],
+  },
+  reactStrictMode: true,
+  typescript: {
+    tsconfigPath: 'tsconfig.json',
+  },
   images: {
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'res.cloudinary.com',
         port: '',
-        pathname: '/**',
+        pathname: '/dboesrelq/image/upload/**',
         search: '',
       },
     ],

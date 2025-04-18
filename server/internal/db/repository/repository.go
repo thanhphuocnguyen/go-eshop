@@ -20,10 +20,8 @@ type Repository interface {
 	CancelOrderTx(ctx context.Context, params CancelOrderTxArgs) (Order, error)
 	RefundOrderTx(ctx context.Context, params RefundOrderTxArgs) error
 	QueryRaw(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error)
-	CreateProductTx(ctx context.Context, arg CreateProductTxParam) (CreateProductTxResult, error)
-	UpdateProductTx(ctx context.Context, arg UpdateProductTxParam) (UpdateProductTxResult, error)
-	CreateVariantTx(ctx context.Context, arg CreateVariantTxParam) (ProductVariant, error)
-	UpdateVariantTx(ctx context.Context, arg UpdateVariantTxParams) (UpdateVariantTxResult, error)
+	CreateProductTx(ctx context.Context, arg CreateProductTxParam) (ProductTxResult, error)
+	UpdateProductTx(ctx context.Context, productID uuid.UUID, arg UpdateProductTxParam) (ProductTxResult, error)
 	Close()
 }
 

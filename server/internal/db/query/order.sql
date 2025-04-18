@@ -1,5 +1,5 @@
 -- name: CreateOrder :one
-INSERT INTO orders (order_id,user_id,user_address_id,total_price) VALUES ($1,$2,$3,$4) RETURNING *;
+INSERT INTO orders (id,customer_id,user_address_id,total_price) VALUES ($1,$2,$3,$4) RETURNING *;
 
 -- name: GetOrder :one
 SELECT
@@ -7,48 +7,48 @@ SELECT
 FROM
     orders ord
 WHERE
-    order_id = $1
+    id = $1
 LIMIT 1;
 
 -- name: GetOrderDetails :many
 SELECT
     ord.*, 
-    oi.quantity, oi.price as item_price, oi.order_item_id,
-    p.name as product_name, p.product_id,
+    oi.quantity, oi.price_per_unit_snapshot, oi.variant_sku_snapshot, oi.product_name_snapshot, oi.line_total_snapshot,
+    oi.attributes_snapshot, oi.id as order_item_id,
+    p.name as product_name, p.id as variant_id,
     u_addr.street, u_addr.ward, u_addr.district, u_addr.city, 
-    images.image_url,
-    pm.status as payment_status, pm.payment_id, pm.amount as payment_amount, pm.payment_method, pm.payment_gateway, pm.refund_id,
-    pv.variant_id
+    img.url as image_url,
+    pm.status as payment_status, pm.id as payment_id, pm.amount as payment_amount, pm.payment_method, pm.payment_gateway, pm.refund_id
 FROM
     orders ord
 JOIN
-    order_items oi ON oi.order_id = ord.order_id
+    order_items oi ON oi.id = ord.id
 JOIN
-    products p ON oi.product_id = p.product_id
-JOIN 
-    product_variants AS pv ON oi.variant_id = pv.variant_id
+    products p ON oi.variant_id = p.id
 JOIN
     user_addresses u_addr ON ord.user_address_id = u_addr.user_address_id
 LEFT JOIN
-    payments pm ON ord.order_id = pm.order_id
+    payments pm ON ord.id = pm.id
 LEFT JOIN 
-    images ON p.product_id = images.product_id
+    image_assignments ia ON p.id = ia.entity_id AND ia.entity_type = 'product'
+LEFT JOIN
+    images img ON img.id = ia.image_id
 WHERE
-    ord.order_id = $1;
+    ord.id = $1;
 
 -- name: ListOrders :many
 SELECT
-    ord.*, pm.status as payment_status, COUNT(oit.order_item_id) as total_items
+    ord.*, pm.status as payment_status, COUNT(oit.id) as total_items
 FROM
     orders ord
-JOIN order_items oit ON ord.order_id = oit.order_id
-LEFT JOIN payments pm ON ord.order_id = pm.order_id
+JOIN order_items oit ON ord.id = oit.id
+LEFT JOIN payments pm ON ord.id = pm.id
 WHERE
-    user_id = COALESCE(sqlc.narg('user_id'), user_id) AND
+    customer_id = COALESCE(sqlc.narg('customer_id'), customer_id) AND
     ord.status = COALESCE(sqlc.narg('status'), ord.status) AND
     ord.created_at >= COALESCE(sqlc.narg('start_date'), ord.created_at) AND
     ord.created_at <= COALESCE(sqlc.narg('end_date'), ord.created_at)
-GROUP BY ord.order_id, pm.status
+GROUP BY ord.id, pm.status
 ORDER BY
     ord.created_at DESC
 LIMIT $1
@@ -65,32 +65,20 @@ SET
     user_address_id = coalesce(sqlc.narg('user_address_id'), user_address_id),
     updated_at = now()
 WHERE
-    order_id = sqlc.arg('order_id')
+    id = sqlc.arg('id')
 RETURNING *;
 
 -- name: DeleteOrder :exec
 DELETE FROM
     orders
 WHERE
-    order_id = $1;
+    id = $1;
 
 -- name: CreateOrderItem :one
 INSERT INTO
-    order_items (
-        product_id,
-        variant_id,
-        order_id,
-        quantity,
-        price
-    )
+    order_items (id, order_id, variant_id, quantity, price_per_unit_snapshot, variant_sku_snapshot, product_name_snapshot, line_total_snapshot, attributes_snapshot)
 VALUES
-    (
-        $1,
-        $2,
-        $3,
-        $4,
-        $5
-    )
+    ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 RETURNING *;
 
 -- name: ListOrderItems :many
@@ -101,7 +89,7 @@ FROM
 WHERE
     order_id = $1
 ORDER BY
-    order_item_id
+    id
 LIMIT $2
 OFFSET $3;
 
@@ -111,7 +99,7 @@ SELECT
 FROM
     orders
 WHERE
-    user_id = $1 AND
+    customer_id = $1 AND
     status = COALESCE(sqlc.narg('status'), status) AND
     created_at >= COALESCE(sqlc.narg('start_date'), created_at) AND
     created_at <= COALESCE(sqlc.narg('end_date'), created_at);

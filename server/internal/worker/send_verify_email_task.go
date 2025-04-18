@@ -63,7 +63,7 @@ func (processor *RedisTaskProcessor) ProcessSendVerifyEmail(ctx context.Context,
 	}
 
 	verifyEmail, err := processor.repo.CreateVerifyEmail(ctx, repository.CreateVerifyEmailParams{
-		UserID:     user.UserID,
+		// ID:         user.UserID,
 		Email:      user.Email,
 		VerifyCode: utils.RandomString(32),
 	})
@@ -73,7 +73,7 @@ func (processor *RedisTaskProcessor) ProcessSendVerifyEmail(ctx context.Context,
 	}
 
 	emailData := VerifyEmailData{
-		UserID:     user.UserID,
+		UserID:     user.ID,
 		Email:      user.Email,
 		FullName:   user.Fullname,
 		VerifyCode: verifyEmail.VerifyCode,

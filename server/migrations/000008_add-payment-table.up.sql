@@ -1,7 +1,7 @@
 CREATE TABLE
     payments (
-        payment_id VARCHAR PRIMARY KEY,
-        order_id UUID NOT NULL REFERENCES orders (order_id) ON DELETE CASCADE,
+        id VARCHAR PRIMARY KEY,
+        order_id UUID NOT NULL REFERENCES orders (id) ON DELETE CASCADE,
         amount DECIMAL(10, 2) NOT NULL,
         payment_method payment_method NOT NULL, -- e.g., card, bank_transfer
         status payment_status NOT NULL DEFAULT 'pending', -- Pending, Success, Failed
@@ -13,8 +13,8 @@ CREATE TABLE
 
 CREATE TABLE
     user_payment_infos (
-        "payment_method_id" SERIAL PRIMARY KEY,
-        "user_id" UUID REFERENCES users (user_id) ON DELETE CASCADE,
+        "id" SERIAL PRIMARY KEY,
+        "user_id" UUID REFERENCES users (id) ON DELETE CASCADE,
         "card_number" VARCHAR(16) NOT NULL CHECK (card_number ~ '^[0-9]{16}$'),
         "cardholder_name" VARCHAR(100) NOT NULL,
         "expiration_date" DATE NOT NULL,

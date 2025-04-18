@@ -50,9 +50,9 @@ func (s *CloudinaryUploadService) UploadFile(ctx context.Context, file interface
 }
 
 func (s *CloudinaryUploadService) RemoveFile(ctx context.Context, publicID string) (string, error) {
-	publicIDWithPath := fmt.Sprintf("%s/%s", s.cfg.CloudinaryFolder, publicID)
+	// publicIDWithPath := fmt.Sprintf("%s/%s", s.cfg.CloudinaryFolder, publicID)
 	invalidate := true
-	result, err := s.cld.Upload.Destroy(ctx, uploader.DestroyParams{PublicID: publicIDWithPath, Invalidate: &invalidate})
+	result, err := s.cld.Upload.Destroy(ctx, uploader.DestroyParams{PublicID: publicID, Invalidate: &invalidate})
 	if err != nil {
 		return "", err
 	}

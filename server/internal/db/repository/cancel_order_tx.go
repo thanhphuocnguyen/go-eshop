@@ -8,12 +8,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
-	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
 type CancelOrderTxArgs struct {
 	OrderID                  uuid.UUID
-	CancelPaymentFromGateway func(paymentID string, gateway PaymentGateway) error
+	CancelPaymentFromGateway func(ID string, gateway PaymentGateway) error
 }
 
 func (pg *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (order Order, err error) {
@@ -31,13 +30,13 @@ func (pg *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (or
 
 			// cancel payment from gateway if it's not cancelled yet
 			if args.CancelPaymentFromGateway != nil {
-				err = args.CancelPaymentFromGateway(payment.PaymentID, payment.PaymentGateway.PaymentGateway)
+				err = args.CancelPaymentFromGateway(payment.ID, payment.PaymentGateway.PaymentGateway)
 				if err != nil {
 					log.Error().Err(err).Msg("CancelPaymentFromGateway")
 					return err
 				}
 				err := q.UpdatePaymentTransaction(ctx, UpdatePaymentTransactionParams{
-					PaymentID: payment.PaymentID,
+					ID: payment.ID,
 					Status: NullPaymentStatus{
 						PaymentStatus: PaymentStatusCancelled,
 						Valid:         true,
@@ -52,7 +51,7 @@ func (pg *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (or
 
 		// cancel order
 		order, err = q.UpdateOrder(ctx, UpdateOrderParams{
-			OrderID: args.OrderID,
+			ID: args.OrderID,
 			Status: NullOrderStatus{
 				OrderStatus: OrderStatusCancelled,
 				Valid:       true,
@@ -79,9 +78,9 @@ func (pg *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (or
 		}
 		// TODO: implement UpdateProductStock
 		for _, item := range orderItems {
-			_, err = q.UpdateVariant(ctx, UpdateVariantParams{
-				VariantID:     item.VariantID,
-				StockQuantity: utils.GetPgTypeInt4(int32(item.Quantity)),
+			_, err := q.UpdateProductStock(ctx, UpdateProductStockParams{
+				ID:    item.VariantID,
+				Stock: -int32(item.Quantity),
 			})
 
 			if err != nil {

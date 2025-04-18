@@ -22,9 +22,9 @@ func (s *pgRepo) SetPrimaryAddressTx(ctx context.Context, arg SetPrimaryAddressT
 		}
 
 		err = s.SetPrimaryAddress(ctx, SetPrimaryAddressParams{
-			Default:       true,
-			UserID:        arg.UserID,
-			UserAddressID: arg.NewPrimaryID,
+			Default: true,
+			UserID:  arg.UserID,
+			ID:      arg.NewPrimaryID,
 		})
 
 		if err != nil {

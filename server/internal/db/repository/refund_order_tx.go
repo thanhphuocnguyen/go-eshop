@@ -30,13 +30,13 @@ func (pg *pgRepo) RefundOrderTx(ctx context.Context, args RefundOrderTxArgs) (er
 
 			// refund payment from gateway if it's not refunded yet
 			if args.RefundPaymentFromGateway != nil {
-				refundID, err := args.RefundPaymentFromGateway(payment.PaymentID, payment.PaymentGateway.PaymentGateway)
+				refundID, err := args.RefundPaymentFromGateway(payment.ID, payment.PaymentGateway.PaymentGateway)
 				if err != nil {
 					log.Error().Err(err).Msg("RefundPaymentFromGateway")
 					return err
 				}
 				updateParams := UpdatePaymentTransactionParams{
-					PaymentID: payment.PaymentID,
+					ID: payment.ID,
 					Status: NullPaymentStatus{
 						PaymentStatus: PaymentStatusRefunded,
 						Valid:         true,
@@ -58,7 +58,7 @@ func (pg *pgRepo) RefundOrderTx(ctx context.Context, args RefundOrderTxArgs) (er
 
 		// refund order
 		_, err = q.UpdateOrder(ctx, UpdateOrderParams{
-			OrderID: args.OrderID,
+			ID: args.OrderID,
 			Status: NullOrderStatus{
 				OrderStatus: OrderStatusRefunded,
 				Valid:       true,

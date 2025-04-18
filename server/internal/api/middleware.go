@@ -21,19 +21,19 @@ func authMiddleware(tokenGenerator auth.TokenGenerator) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		authorization := ctx.GetHeader(authorization)
 		if len(authorization) == 0 {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, mapErrResp(fmt.Errorf("authorization header is not provided")))
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, createErrorResponse(http.StatusUnauthorized, "", fmt.Errorf("authorization header is not provided")))
 			return
 		}
 		authGroup := strings.Fields(authorization)
 		if len(authGroup) != 2 || authGroup[0] != authorizationType {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, mapErrResp(fmt.Errorf("authorization header is not provided")))
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, createErrorResponse(http.StatusUnauthorized, "", fmt.Errorf("authorization header is not provided")))
 			return
 		}
 
 		payload, err := tokenGenerator.VerifyToken(authGroup[1])
 		fmt.Println(err)
 		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, mapErrResp(err))
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, createErrorResponse(http.StatusUnauthorized, "", err))
 			return
 		}
 
@@ -43,27 +43,30 @@ func authMiddleware(tokenGenerator auth.TokenGenerator) gin.HandlerFunc {
 }
 
 func roleMiddleware(repo repository.Repository, roles ...repository.UserRole) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		payload, ok := ctx.MustGet(authorizationPayload).(*auth.Payload)
+	return func(c *gin.Context) {
+		authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 		if !ok {
-			log.Error().Msg("Role middleware: cannot get authorization payload")
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, mapErrResp(fmt.Errorf("authorization payload is not provided")))
+			c.AbortWithStatusJSON(http.StatusForbidden, createErrorResponse(http.StatusForbidden, "", fmt.Errorf("authorization payload is not provided")))
 			return
 		}
-
-		user, err := repo.GetUserByID(ctx, payload.UserID)
+		user, err := repo.GetUserByID(c, authPayload.UserID)
 		if err != nil {
-			log.Error().Err(err).Msg("Role middleware: cannot get user")
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, mapErrResp(fmt.Errorf("user not found")))
+			log.Error().Err(err).Msg("get user by ID")
+			c.AbortWithStatusJSON(http.StatusForbidden, createErrorResponse(http.StatusForbidden, "", fmt.Errorf("user not found")))
 			return
 		}
 
-		for _, r := range roles {
-			if r == user.Role {
-				ctx.Next()
-				return
+		hasRole := false
+		for _, role := range roles {
+			if user.Role == role {
+				hasRole = true
+				break
 			}
 		}
-		ctx.AbortWithStatusJSON(http.StatusForbidden, mapErrResp(fmt.Errorf("user does not have permission")))
+		if !hasRole {
+			c.AbortWithStatusJSON(http.StatusForbidden, createErrorResponse(http.StatusForbidden, "", fmt.Errorf("user does not have permission")))
+			return
+		}
+		c.Next()
 	}
 }

@@ -1,4 +1,4 @@
-import { API_PRIVATE_PATHS } from '@/lib/constants/api';
+import { API_PATHS } from '@/lib/constants/api';
 import { revalidateTag } from 'next/cache';
 import { cookies } from 'next/headers';
 
@@ -11,7 +11,7 @@ export async function addProductToCart(
   }
 ) {
   const cookieStore = await cookies();
-  await fetch(process.env.NEXT_API_URL! + API_PRIVATE_PATHS.CART_ITEM, {
+  await apiFetch(process.env.NEXT_API_URL! + API_PATHS.CART_ITEM, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

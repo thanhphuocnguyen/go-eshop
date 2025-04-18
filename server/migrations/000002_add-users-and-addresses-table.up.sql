@@ -1,6 +1,6 @@
 CREATE TABLE
     "users" (
-        "user_id" UUID NOT NULL PRIMARY KEY,
+        "id" UUID NOT NULL PRIMARY KEY,
         "role" user_role NOT NULL DEFAULT 'user',
         "username" VARCHAR UNIQUE NOT NULL,
         "email" VARCHAR UNIQUE NOT NULL,
@@ -19,8 +19,8 @@ CREATE TABLE
 
 CREATE TABLE
     "user_addresses" (
-        "user_address_id" BIGSERIAL PRIMARY KEY,
-        "user_id" UUID NOT NULL REFERENCES "users" ("user_id") ON DELETE CASCADE,
+        "id" BIGSERIAL PRIMARY KEY,
+        "user_id" UUID NOT NULL REFERENCES "users" ("id") ON DELETE CASCADE,
         "phone" VARCHAR(20) NOT NULL CHECK (
             char_length(phone) >= 10
             AND char_length(phone) <= 20
@@ -38,7 +38,7 @@ CREATE TABLE
 CREATE TABLE
     verify_emails (
         id SERIAL PRIMARY KEY,
-        user_id UUID NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
+        user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
         email VARCHAR(255) NOT NULL,
         verify_code VARCHAR(255) NOT NULL,
         is_used BOOLEAN NOT NULL DEFAULT FALSE,
@@ -48,8 +48,8 @@ CREATE TABLE
 
 CREATE TABLE
     "sessions" (
-        "session_id" UUID NOT NULL PRIMARY KEY,
-        "user_id" UUID NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
+        "id" UUID NOT NULL PRIMARY KEY,
+        "user_id" UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
         "refresh_token" VARCHAR NOT NULL,
         "user_agent" VARCHAR NOT NULL,
         "client_ip" VARCHAR NOT NULL,

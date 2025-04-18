@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { UserModel } from '../types/user';
+import { UserModel } from '../definitions';
 
 export const LoginFormSchema = z.object({
   username: z.string().min(3).max(255),
@@ -34,10 +34,10 @@ export type LoginFormState =
 
 export const SignupFormSchema = z
   .object({
+    username: z.string().min(3).max(255),
     email: z.string().email(),
     fullname: z.string().min(3).max(255),
     phone: z.string().min(10).max(10),
-    name: z.string().min(3).max(255),
     password: z.string().min(6).max(255),
     confirmPassword: z.string().min(6).max(255),
   })
@@ -49,14 +49,33 @@ export type SignupFormData = z.infer<typeof SignupFormSchema>;
 
 export type SignupFormState =
   | {
+      data?: SignupFormData;
       errors?: {
         email?: string[];
         fullname?: string[];
         phone?: string[];
-        name?: string[];
+        username?: string[];
         password?: string[];
         confirmPassword?: string[];
       };
       message?: string;
     }
   | undefined;
+
+export const registerSchema = z
+  .object({
+    username: z.string().min(3).max(20),
+    password: z.string().min(8).max(100),
+    confirmPassword: z.string().min(8).max(100),
+    email: z.string().email(),
+    phone: z.string().min(10).max(15),
+    fullname: z.string().min(3).max(100),
+  })
+  .superRefine((data) => {
+    if (data.password !== data.confirmPassword) {
+      return { confirmPassword: 'Passwords do not match' };
+    }
+    return {};
+  });
+
+export type RegisterForm = z.infer<typeof registerSchema>;

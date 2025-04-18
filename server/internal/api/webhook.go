@@ -19,14 +19,14 @@ import (
 // @Tags webhook
 // @Accept json
 // @Produce json
-// @Success 200 {object} GenericResponse[gin.H]
-// @Failure 400 {object} errorResponse
-// @Failure 500 {object} errorResponse
+// @Success 200 {object} ApiResponse
+// @Failure 400 {object} ApiResponse
+// @Failure 500 {object} ApiResponse
 // @Router /webhook/stripe [post]
 func (server *Server) stripeWebhook(c *gin.Context) {
 	var evt stripe.Event
 	if err := c.ShouldBindJSON(&evt); err != nil {
-		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
 
@@ -37,7 +37,7 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 		var paymentIntent stripe.PaymentIntent
 		err := json.Unmarshal(evt.Data.Raw, &paymentIntent)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
 			return
 		}
 		log.Info().Interface("evt type", evt.Type).Msg("Received stripe event")
@@ -45,14 +45,14 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 		payment, err := server.repo.GetPaymentTransactionByID(c, paymentIntent.ID)
 		if err != nil {
 			if errors.Is(err, repository.ErrRecordNotFound) {
-				c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+				c.JSON(http.StatusNotFound, createErrorResponse(http.StatusBadRequest, "", err))
 				return
 			}
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
 			return
 		}
 		updateTransactionStatus := repository.UpdatePaymentTransactionParams{
-			PaymentID: payment.PaymentID,
+			ID: payment.ID,
 			Status: repository.NullPaymentStatus{
 				Valid: true,
 			},
@@ -61,7 +61,7 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 		case stripe.EventTypePaymentIntentSucceeded:
 			server.taskDistributor.SendOrderCreatedEmailTask(c,
 				&worker.PayloadSendOrderCreatedEmailTask{
-					PaymentID: payment.PaymentID,
+					PaymentID: payment.ID,
 					OrderID:   payment.OrderID,
 				},
 				asynq.MaxRetry(3),
@@ -75,14 +75,14 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 		}
 		err = server.repo.UpdatePaymentTransaction(c, updateTransactionStatus)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
 			return
 		}
 	default:
 		log.Info().Msgf("Unhandled event type: %s", evt.Type)
-		c.JSON(http.StatusOK, gin.H{"message": "Unhandled event type"})
+		c.JSON(http.StatusOK, createSuccessResponse(c, nil, "", nil, nil))
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "success"})
+	c.JSON(http.StatusOK, createSuccessResponse(c, nil, "", nil, nil))
 }

@@ -4,6 +4,7 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -41,6 +42,19 @@ func GetPgTypeInt2(value int16) pgtype.Int2 {
 func GetPgTypeInt4(value int32) pgtype.Int4 {
 	return pgtype.Int4{
 		Int32: value,
+		Valid: true,
+	}
+}
+
+func GetPgTypeUUIDFromString(value string) pgtype.UUID {
+	uuid, err := uuid.Parse(value)
+	if err != nil {
+		return pgtype.UUID{
+			Valid: false,
+		}
+	}
+	return pgtype.UUID{
+		Bytes: uuid,
 		Valid: true,
 	}
 }

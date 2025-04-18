@@ -1,72 +1,67 @@
 -- name: CreateCategory :one
-INSERT INTO categories (name, image_url, sort_order)
-VALUES (
-    $1,
-    $2,
-    COALESCE(sqlc.narg('sort_order'), COALESCE((SELECT MAX(sort_order) + 1 FROM categories), 1))
-)
+INSERT INTO categories
+    (id, name, slug, description, image_url, image_id)
+VALUES
+    ($1, $2, $3, $4, $5, $6)
 RETURNING *;
 
 -- name: GetCategoryByID :one
-SELECT c.* FROM categories c WHERE c.category_id = $1 LIMIT 1;
+SELECT c.*
+FROM categories c
+WHERE c.id = $1
+LIMIT 1;
 
--- name: GetCategoriesByIDs :many
-SELECT 
-    c.*, 
-    p.name as product_name, p.product_id, p.description,
-    MIN(pv.price) as price_from, 
-    MAX(pv.price) as price_to, 
-    MAX(pv.discount) as discount, 
-    MIN(pv.stock_quantity) as stock_quantity, 
-    COUNT(pv.variant_id) as variant_count,
-    img.image_id, img.image_url
-FROM categories AS c
-LEFT JOIN products AS p ON c.category_id = p.category_id
-LEFT JOIN product_variants AS pv ON p.product_id = pv.product_id
-LEFT JOIN images AS img ON p.product_id = img.product_id
-WHERE c.category_id = ANY(sqlc.narg('category_ids')::int[]) AND c.published = sqlc.narg('published')
-GROUP BY c.category_id, p.product_id, img.image_id, img.image_url
-ORDER BY c.sort_order;
+-- name: GetCategoryProductsByID :many
+SELECT
+    sqlc.embed(c),
+    p.id, p.name as product_name, p.description as product_description
+FROM
+    categories c
+LEFT JOIN
+    products p ON c.id = p.id
+LEFT JOIN
+    image_assignments ia ON ia.entity_id = p.id AND ia.entity_type = 'product'
+LEFT JOIN
+    images i ON i.id = ia.image_id
+WHERE
+    c.id = $1;
 
 -- name: GetCategories :many
-SELECT 
-    c.*, 
-    p.name as product_name, p.product_id, p.description,
-    MIN(pv.price) as price_from, 
-    MAX(pv.price) as price_to, 
-    MAX(pv.discount) as discount, 
-    MIN(pv.stock_quantity) as stock_quantity, 
-    COUNT(pv.variant_id) as variant_count,
-    img.image_id, img.image_url
-FROM categories AS c
-LEFT JOIN products AS p ON c.category_id = p.category_id
-LEFT JOIN product_variants AS pv ON p.product_id = pv.product_id
-LEFT JOIN images AS img ON p.product_id = img.product_id
-WHERE c.published = sqlc.narg('published')
-GROUP BY c.category_id, p.product_id, img.image_id, img.image_url
-ORDER BY c.sort_order;
+SELECT * FROM categories
+WHERE
+    published = COALESCE(sqlc.narg('published'), true)
+ORDER BY id
+LIMIT $1
+OFFSET $2;
 
--- name: UpdateCategoryWith :one
-UPDATE categories
-SET 
+-- name: UpdateCategory :one
+UPDATE
+    categories
+SET
     name = COALESCE(sqlc.narg('name'), name), 
+    slug = COALESCE(sqlc.narg('slug'), slug),
+    description = COALESCE(sqlc.narg('description'), description),
+    image_id = COALESCE(sqlc.narg('image_id'), image_id),
     image_url = COALESCE(sqlc.narg('image_url'), image_url), 
-    sort_order = COALESCE(sqlc.narg('sort_order'), sort_order), 
-    published = COALESCE(sqlc.narg('published'), published)
-WHERE category_id = $1
+    remarkable = COALESCE(sqlc.narg('remarkable'), remarkable),
+    published = COALESCE(sqlc.narg('published'), published),
+    updated_at = now()
+WHERE
+    id = $1
 RETURNING *;
 
 
 -- name: DeleteCategory :exec
-DELETE FROM categories WHERE category_id = $1;
+DELETE FROM categories WHERE id = $1;
 
 -- name: CountCategories :one
-SELECT count(*)
-FROM categories
-WHERE category_id = COALESCE(sqlc.narg('category_id'), category_id);
+SELECT count(*) FROM categories;
 
 -- name: SeedCategories :copyfrom
-INSERT INTO categories (name, image_url, sort_order, published) VALUES ($1, $2, $3, $4);
+INSERT INTO categories
+    (name, slug, description, image_url, image_id)
+VALUES
+    ($1, $2, $3, $4, $5);
 
 -- name: GetCategoryMaxSortOrder :one
 SELECT COALESCE(MAX(sort_order)::smallint, 0) AS max_sort_order FROM categories;

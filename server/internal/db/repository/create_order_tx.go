@@ -23,20 +23,20 @@ func (s *pgRepo) CreateOrderTx(ctx context.Context, arg CreateOrderTxParams) (uu
 	var result uuid.UUID
 	err := s.execTx(ctx, func(q *Queries) (err error) {
 		order, err := s.CreateOrder(ctx, CreateOrderParams{
-			OrderID:       uuid.New(),
-			UserID:        arg.UserID,
+			ID:            uuid.New(),
+			CustomerID:    arg.UserID,
 			UserAddressID: arg.AddressID,
 			TotalPrice:    utils.GetPgNumericFromFloat(arg.TotalPrice),
 		})
 
-		result = order.OrderID
+		result = order.ID
 		if err != nil {
 			log.Error().Err(err).Msg("CreateOrder")
 			return err
 		}
 
 		for _, createOrderItemParam := range arg.CreateOrderItemParams {
-			createOrderItemParam.OrderID = order.OrderID
+			createOrderItemParam.OrderID = order.ID
 			_, err = q.CreateOrderItem(ctx, createOrderItemParam)
 			if err != nil {
 				log.Error().Err(err).Msg("CreateOrderItem")
@@ -46,8 +46,8 @@ func (s *pgRepo) CreateOrderTx(ctx context.Context, arg CreateOrderTxParams) (uu
 
 		// create payment transaction
 		_, err = q.CreatePaymentTransaction(ctx, CreatePaymentTransactionParams{
-			PaymentID:     arg.PaymentID,
-			OrderID:       order.OrderID,
+			ID:            arg.PaymentID,
+			OrderID:       order.ID,
 			Amount:        utils.GetPgNumericFromFloat(arg.TotalPrice),
 			PaymentMethod: arg.PaymentMethod,
 			PaymentGateway: NullPaymentGateway{

@@ -2,6 +2,8 @@ package api
 
 import (
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -41,7 +43,7 @@ func NewAPI(
 	uploadService upload.UploadService,
 	paymentCtx *payment.PaymentContext,
 ) (*Server, error) {
-	tokenGenerator := auth.NewPasetoTokenGenerator()
+	tokenGenerator := auth.NewPasetoTokenGenerator(cfg)
 	server := &Server{
 		tokenGenerator:  tokenGenerator,
 		repo:            repo,
@@ -65,8 +67,12 @@ func (sv *Server) initializeRouter() {
 	}
 
 	cors := cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:8080"},
-		AllowCredentials: sv.config.Env == "production",
+		AllowAllOrigins: sv.config.Env == "development",
+		AllowHeaders:    []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
+		// AllowOrigins:     []string{"http://localhost:3000", "http://localhost:8080"},
+		AllowFiles:       true,
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowCredentials: true,
 	})
 
 	router.Use(cors)
@@ -85,8 +91,8 @@ func (sv *Server) initializeRouter() {
 		v1.GET("verify-email", sv.verifyEmail)
 		auth := v1.Group("/auth")
 		{
-			auth.POST("register", sv.signUp)
-			auth.POST("login", sv.loginUser)
+			auth.POST("register", sv.register)
+			auth.POST("login", sv.login)
 			auth.POST("refresh-token", sv.refreshToken)
 			authRoutes := auth.Group("").Use(authMiddleware(sv.tokenGenerator))
 			authRoutes.POST("send-verify-email", sv.sendVerifyEmail)
@@ -96,7 +102,6 @@ func (sv *Server) initializeRouter() {
 		{
 			user.GET("", sv.getUser)
 			user.PATCH("", sv.updateUser)
-
 		}
 
 		moderatorRoutes := v1.Group("/moderator").Use(
@@ -128,45 +133,33 @@ func (sv *Server) initializeRouter() {
 				productAdmin.POST("", sv.createProduct)
 				productAdmin.PUT(":id", sv.updateProduct)
 				productAdmin.DELETE(":id", sv.removeProduct)
-			}
 
-			variant := product.Group(":id/variants").
-				Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin, repository.UserRoleModerator))
-			{
-				variant.POST("", sv.createVariant)
-				variant.GET("", sv.getVariants)
-				variant.GET(":variant_id", sv.getVariant)
-				variant.PUT(":variant_id", sv.updateVariant)
-				variant.DELETE(":variant_id", sv.deleteVariant)
 			}
 		}
 
 		images := v1.Group("images")
 		{
 			// product images
-			productImage := images.Group("products").
+			productVariantImage := images.Group("product-variant").
 				Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin, repository.UserRoleModerator))
-			productImage.POST(":product_id", sv.uploadProductImage)
-			productImage.GET(":product_id", sv.getProductImage)
-			productImage.DELETE(":product_id/remove/:image_id", sv.removeProductImage)
+			productVariantImage.POST(":variant_id", sv.uploadProductVariantImage)
+			// productImage.GET(":product_id", sv.getProductImage)
+			productVariantImage.DELETE(":variant_id", sv.removeProductImage)
 
-			// TODO: implement variant images
-			// variant images
-			variantImage := images.Group("product/:product_id/variant").
-				Use(authMiddleware(sv.tokenGenerator), roleMiddleware(
-					sv.repo,
-					repository.UserRoleAdmin,
-					repository.UserRoleModerator))
-			variantImage.POST(":variant_id", sv.uploadVariantImage)
-			variantImage.GET(":variant_id", sv.getVariantImage)
-			variantImage.DELETE(":variant_id/remove/:image_id", sv.removeVariantImage)
+			productImage := images.Group("product").
+				Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin, repository.UserRoleModerator))
+
+			productImage.GET("", sv.getProductImages)
+			productImage.POST(":product_id", sv.uploadProductImages)
+			// productImage.GET(":product_id", sv.getProductImage)
+			productImage.DELETE(":product_id", sv.removeProductImage)
 		}
 
-		attribute := v1.Group("attribute").
+		attribute := v1.Group("attributes").
 			Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin))
 		{
 			attribute.POST("", sv.createAttribute)
-			attribute.GET("list", sv.getAttributes)
+			attribute.GET("", sv.getAttributes)
 			attribute.GET(":id", sv.getAttributeByID)
 			attribute.PUT(":id", sv.updateAttribute)
 			attribute.DELETE(":id", sv.deleteAttribute)
@@ -209,8 +202,9 @@ func (sv *Server) initializeRouter() {
 		category := v1.Group("categories")
 		{
 			category.GET("", sv.getCategories)
+			//TODO: category.GET("dashboard", sv.getCategoriesForDashboard)
 			category.GET(":id", sv.getCategoryByID)
-			category.GET(":id/products", sv.getCategoryProducts)
+			category.GET(":id/products", sv.getProductsByCategory)
 			categoryAuthRoutes := category.Group("").Use(
 				authMiddleware(sv.tokenGenerator),
 				roleMiddleware(sv.repo, repository.UserRoleAdmin),
@@ -219,13 +213,12 @@ func (sv *Server) initializeRouter() {
 			categoryAuthRoutes.PUT(":id", sv.updateCategory)
 			categoryAuthRoutes.DELETE(":id", sv.deleteCategory)
 		}
-
 		collection := v1.Group("collections")
 		{
 			// CRUD
 			collection.GET("", sv.getCollections)
 			collection.GET(":id", sv.getCollectionByID)
-			collection.GET(":id/products", sv.getCollectionProducts)
+			collection.GET(":id/products", sv.getProductsByCollection)
 			collectionAuthRoutes := collection.Group("").Use(
 				authMiddleware(sv.tokenGenerator),
 				roleMiddleware(sv.repo, repository.UserRoleAdmin),
@@ -234,13 +227,12 @@ func (sv *Server) initializeRouter() {
 			collectionAuthRoutes.PUT(":id", sv.updateCollection)
 			collectionAuthRoutes.DELETE(":id", sv.deleteCollection)
 		}
-
 		brand := v1.Group("brands")
 		{
 			// CRUD
 			brand.GET("", sv.getBrands)
 			brand.GET(":id", sv.getBrandByID)
-			brand.GET(":id/products", sv.getBrandProducts)
+			brand.GET(":id/products", sv.getProductsByBrand)
 			brandAuthRoutes := brand.Group("").Use(
 				authMiddleware(sv.tokenGenerator),
 				roleMiddleware(sv.repo, repository.UserRoleAdmin),
@@ -269,28 +261,72 @@ func (s *Server) Server(addr string) *http.Server {
 	}
 }
 
-type errorResponse struct {
-	Error string `json:"error"`
+type ApiResponse struct {
+	Success    bool        `json:"success"`
+	Message    string      `json:"message"`
+	Data       interface{} `json:"data,omitempty"`
+	Error      *ApiError   `json:"error,omitempty"`
+	Pagination *Pagination `json:"pagination,omitempty"`
+	Meta       *MetaInfo   `json:"meta"`
 }
 
-func mapErrResp(err error) errorResponse {
-	return errorResponse{Error: err.Error()}
+// Error structure for detailed errors
+type ApiError struct {
+	Code    string `json:"code"`
+	Details string `json:"details"`
+	Stack   string `json:"stack,omitempty"` // Hide in production
 }
 
-type GenericResponse[T any] struct {
-	Data    *T      `json:"data,omitempty"`
-	Message *string `json:"message,omitempty"`
-	Error   *string `json:"error,omitempty"`
+// Pagination info (for paginated endpoints)
+type Pagination struct {
+	Total           int64 `json:"total"`
+	Page            int32 `json:"page"`
+	PageSize        int32 `json:"pageSize"`
+	TotalPages      int   `json:"totalPages"`
+	HasNextPage     bool  `json:"hasNextPage"`
+	HasPreviousPage bool  `json:"hasPreviousPage"`
 }
 
-type GenericListResponse[T any] struct {
-	Data    []T     `json:"data,omitempty"`
-	Total   int64   `json:"total,omitempty"`
-	Message *string `json:"message,omitempty"`
-	Error   *string `json:"error,omitempty"`
+// Meta info about the request
+type MetaInfo struct {
+	Timestamp string `json:"timestamp"`
+	RequestID string `json:"requestId"`
+	Path      string `json:"path"`
+	Method    string `json:"method"`
 }
 
 type PaginationQueryParams struct {
-	Page     *int32 `form:"page" binding:"omitempty,min=1"`
-	PageSize *int32 `form:"page_size" binding:"omitempty,min=1,max=100"`
+	Page     int32 `form:"page,default=1" binding:"omitempty,min=1"`
+	PageSize int32 `form:"page_size,default=20" binding:"omitempty,min=1,max=100"`
+}
+
+func createErrorResponse(code int, msg string, err error) ApiResponse {
+	return ApiResponse{
+		Success: false,
+		Error: &ApiError{
+			Code:    strconv.Itoa(code),
+			Details: msg,
+			Stack:   err.Error(),
+		},
+	}
+}
+
+func createSuccessResponse(c *gin.Context, data interface{}, message string, pagination *Pagination, err *ApiError) ApiResponse {
+	resp := ApiResponse{
+		Success:    true,
+		Message:    message,
+		Data:       data,
+		Pagination: pagination,
+
+		Meta: &MetaInfo{
+			Timestamp: time.Now().Format(time.RFC3339),
+			RequestID: c.GetString("RequestID"),
+			Path:      c.FullPath(),
+			Method:    c.Request.Method,
+		},
+	}
+	if err != nil {
+		resp.Error = err
+	}
+	return resp
 }

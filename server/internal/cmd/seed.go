@@ -5,11 +5,9 @@ import (
 	"encoding/json"
 	"math/rand"
 	"os"
-	"strings"
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/thanhphuocnguyen/go-eshop/config"
@@ -156,52 +154,26 @@ func seedProducts(ctx context.Context, repo repository.Repository) {
 	log.Info().Int("product count: %d", len(products))
 	for _, product := range products {
 		params := repository.CreateProductParams{
+			ID:          uuid.New(),
 			Name:        product.Name,
-			Description: product.Description,
+			Description: utils.GetPgTypeText(product.Description),
+			BasePrice:   utils.GetPgNumericFromFloat(product.Price),
+			BaseSku:     utils.GetPgTypeText(product.Sku),
+			Slug:        product.Name,
 		}
-		createdProduct, err := repo.CreateProduct(ctx, params)
+		_, err := repo.CreateProduct(ctx, params)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to create product")
 			continue
 		}
-		for _, variant := range product.Variants {
-			createdVariant, err := repo.CreateVariant(ctx, repository.CreateVariantParams{
-				ProductID:     createdProduct.ProductID,
-				Price:         utils.GetPgNumericFromFloat(variant.Price),
-				StockQuantity: variant.Stock,
-				Sku:           utils.GetPgTypeText(variant.Sku),
-				Discount:      variant.Discount,
-			})
-			if err != nil {
-				log.Error().Err(err).Msg("failed to create variant")
-				continue
-			}
-			for key, value := range variant.Attributes {
-				existingAttribute, err := repo.GetAttributeByName(ctx, strings.Title(key))
-				if err != nil {
-					log.Error().Err(err).Msg("failed to get attribute")
-					continue
-				}
 
-				_, err = repo.CreateVariantAttribute(ctx, repository.CreateVariantAttributeParams{
-					VariantID:   createdVariant.VariantID,
-					AttributeID: existingAttribute.AttributeID,
-					Value:       value,
-				})
-
-				if err != nil {
-					log.Error().Err(err).Msg("failed to create variant attribute")
-					continue
-				}
-			}
-		}
 	}
 
 	log.Info().Msg("products created")
 }
 
 func seedCategories(ctx context.Context, repo repository.Repository) {
-	countCategories, err := repo.CountCategories(ctx, pgtype.Int4{})
+	countCategories, err := repo.CountCategories(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to count Categories")
 		return
@@ -231,9 +203,9 @@ func seedCategories(ctx context.Context, repo repository.Repository) {
 	params := make([]repository.SeedCategoriesParams, len(Categories))
 	for i, Categories := range Categories {
 		params[i] = repository.SeedCategoriesParams{
-			Name:      Categories.Name,
-			SortOrder: int16(Categories.SortOrder),
-			Published: Categories.Published,
+			Name:        Categories.Name,
+			Description: utils.GetPgTypeText(Categories.Description),
+			Slug:        Categories.Name,
 		}
 	}
 	_, err = repo.SeedCategories(ctx, params)
@@ -277,7 +249,7 @@ func seedUsers(ctx context.Context, pg repository.Repository) {
 		usrID := uuid.New()
 		userIDs[i] = usrID
 		params[i] = repository.SeedUsersParams{
-			UserID:         usrID,
+			ID:             usrID,
 			Email:          user.Email,
 			Username:       user.Username,
 			Phone:          user.Phone,

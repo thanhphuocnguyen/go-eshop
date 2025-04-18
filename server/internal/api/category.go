@@ -3,37 +3,50 @@ package api
 import (
 	"errors"
 	"fmt"
+	"mime/multipart"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
 // ------------------------------------------ Request and Response ------------------------------------------
-type CategoryRequest struct {
-	Name      string `json:"name"`
-	Published *bool  `json:"published"`
-	SortOrder *int16 `json:"sort_order"`
+type UpdateCategoryRequest struct {
+	Name         *string               `form:"name" binding:"omitempty,min=3,max=255"`
+	Description  *string               `form:"description" binding:"omitempty,max=255"`
+	Slug         *string               `form:"slug" binding:"omitempty,min=3,max=255"`
+	Published    *bool                 `form:"published" binding:"omitempty"`
+	Remarkable   *bool                 `form:"remarkable" binding:"omitempty"`
+	DisplayOrder *int16                `form:"display_order" binding:"omitempty"`
+	Image        *multipart.FileHeader `form:"image" binding:"omitempty"`
+}
+
+type CreateCategoryRequest struct {
+	Name         string                `form:"name" binding:"required,min=3,max=255"`
+	Slug         string                `form:"slug" binding:"required,min=3,max=255"`
+	Description  *string               `form:"description" binding:"omitempty,max=255"`
+	DisplayOrder *int16                `form:"display_order" binding:"omitempty"`
+	Image        *multipart.FileHeader `form:"image" binding:"omitempty"`
 }
 
 type CategoryResponse struct {
-	ID        int32              `json:"id"`
-	Name      string             `json:"name"`
-	SortOrder int16              `json:"sort_order,omitempty"`
-	Published bool               `json:"published,omitempty"`
-	Products  []ProductListModel `json:"products,omitempty"`
+	ID          uuid.UUID          `json:"id"`
+	Name        string             `json:"name"`
+	Description *string            `json:"description,omitempty"`
+	Slug        string             `json:"slug"`
+	Published   bool               `json:"published,omitempty"`
+	Remarkable  bool               `json:"remarkable,omitempty"`
+	CreatedAt   string             `json:"created_at,omitempty"`
+	UpdatedAt   string             `json:"updated_at,omitempty"`
+	ImageUrl    *string            `json:"image_url,omitempty"`
+	Products    []ProductListModel `json:"products,omitempty"`
 }
 
 type getCategoryParams struct {
-	CategoryID int32   `uri:"id"`
+	CategoryID string  `uri:"id" binding:"required,uuid"`
 	ProductID  *string `json:"product_id,omitempty"`
-}
-type getCategoriesQueries struct {
-	IncludePublished *bool    `form:"include_published,omitempty"`
-	Categories       *[]int32 `form:"categories,omitempty"`
 }
 
 type CategoryProductRequest struct {
@@ -48,28 +61,43 @@ type CategoryProductRequest struct {
 // @Accept json
 // @Produce json
 // @Param request body CategoryRequest true "Category request"
-// @Success 201 {object} GenericResponse[repository.Category]
+// @Success 201 {object} GenericResponse
 // @Failure 400 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Router /categories [post]
 func (sv *Server) createCategory(c *gin.Context) {
-	var req CategoryRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, mapErrResp(err))
+	var req CreateCategoryRequest
+	if err := c.ShouldBind(&req); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
 	params := repository.CreateCategoryParams{
-		Name:      req.Name,
-		SortOrder: 0,
+		ID:   uuid.New(),
+		Name: req.Name,
+		Slug: req.Slug,
+	}
+
+	if req.Description != nil {
+		params.Description = utils.GetPgTypeText(*req.Description)
+	}
+
+	if req.Image != nil {
+		imageID, imageURL, err := sv.uploadService.UploadFile(c, req.Image)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+			return
+		}
+		params.ImageID = utils.GetPgTypeText(imageID)
+		params.ImageUrl = utils.GetPgTypeText(imageURL)
 	}
 
 	col, err := sv.repo.CreateCategory(c, params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
 
-	c.JSON(http.StatusCreated, GenericResponse[repository.Category]{&col, nil, nil})
+	c.JSON(http.StatusCreated, createSuccessResponse(c, col, "", nil, nil))
 }
 
 // getCategories retrieves a list of Categories.
@@ -85,49 +113,43 @@ func (sv *Server) createCategory(c *gin.Context) {
 // @Failure 500 {object} errorResponse
 // @Router /categories [get]
 func (sv *Server) getCategories(c *gin.Context) {
-	var queries getCategoriesQueries
-	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, mapErrResp(err))
+	var query PaginationQueryParams
+	if err := c.ShouldBindQuery(&query); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
-	var resp []CategoryResponse
-	if queries.Categories != nil {
-		createParams := repository.GetCategoriesByIDsParams{
-			CategoryIds: *queries.Categories,
-		}
-		if queries.IncludePublished != nil {
-			createParams.Published = utils.GetPgTypeBool(queries.IncludePublished != nil)
-
-		}
-		rows, err := sv.repo.GetCategoriesByIDs(c, createParams)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, mapErrResp(err))
-			return
-		}
-		resp = groupGetCategoryByIDsRows(rows)
-	} else {
-		rows, err := sv.repo.GetCategories(c,
-			pgtype.Bool{
-				Bool:  true,
-				Valid: true,
-			})
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, mapErrResp(err))
-			return
-		}
-		resp = groupGetCategoriesRows(rows)
+	params := repository.GetCategoriesParams{
+		Limit:  10,
+		Offset: 0,
 	}
+	params.Offset = (params.Limit) * (query.Page - 1)
+	params.Limit = query.PageSize
 
-	cnt, err := sv.repo.CountCategories(c, pgtype.Int4{
-		Valid: false,
-	})
-
+	categories, err := sv.repo.GetCategories(c, params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
 
-	c.JSON(http.StatusOK, GenericListResponse[CategoryResponse]{resp, cnt, nil, nil})
+	count, err := sv.repo.CountCategories(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		return
+	}
+
+	c.JSON(http.StatusOK, createSuccessResponse(
+		c,
+		categories,
+		"",
+		&Pagination{
+			Page:            query.Page,
+			PageSize:        query.PageSize,
+			Total:           count,
+			TotalPages:      int(count / int64(query.PageSize)),
+			HasNextPage:     count > int64(query.Page*query.PageSize),
+			HasPreviousPage: query.Page > 1,
+		}, nil,
+	))
 }
 
 // getCategoryByID retrieves a Category by its ID.
@@ -144,97 +166,63 @@ func (sv *Server) getCategories(c *gin.Context) {
 func (sv *Server) getCategoryByID(c *gin.Context) {
 	var param getCategoryParams
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
 
-	result, err := sv.repo.GetCategoryByID(c, param.CategoryID)
+	result, err := sv.repo.GetCategoryByID(c, uuid.MustParse(param.CategoryID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, mapErrResp(fmt.Errorf("category with ID %d not found", param.CategoryID)))
+			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusBadRequest, "", fmt.Errorf("category with ID %s not found", param.CategoryID)))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
 
-	colResp := CategoryResponse{
-		ID:        result.CategoryID,
-		Name:      result.Name,
-		SortOrder: result.SortOrder,
-		Published: result.Published,
-		Products:  []ProductListModel{},
-	}
-	c.JSON(http.StatusOK, GenericResponse[CategoryResponse]{&colResp, nil, nil})
+	c.JSON(http.StatusOK, createSuccessResponse(c, result, "", nil, nil))
 }
 
-// getCategoryProducts retrieves a list of products in a Category.
-// @Summary Get a list of products in a Category
-// @Description Get a list of products in a Category
-// @ID get-Category-products
+// getProductsByCategory retrieves a list of Products by Category ID.
+// @Summary Get a list of Products by Category ID
+// @Description Get a list of Products by Category ID
+// @ID get-Products-by-Category
 // @Accept json
 // @Produce json
 // @Param id path int true "Category ID"
+// @Param page query int false "Page number"
+// @Param page_size query int false "Page size"
 // @Success 200 {object} []ProductListModel
 // @Failure 400 {object} errorResponse
 // @Failure 500 {object} errorResponse
-// @Router /category/{id}/products [get]
-func (sv *Server) getCategoryProducts(c *gin.Context) {
+// @Router /categories/{id}/products [get]
+func (sv *Server) getProductsByCategory(c *gin.Context) {
 	var param getCategoryParams
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
-	var queries PaginationQueryParams
-	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, mapErrResp(err))
-		return
-	}
-	category, err := sv.repo.GetCategoryByID(c, param.CategoryID)
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, mapErrResp(fmt.Errorf("category with ID %d not found", param.CategoryID)))
-			return
-		}
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+	var query PaginationQueryParams
+	if err := c.ShouldBindQuery(&query); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
 
-	getProductsParams := repository.GetProductsByCategoryParams{
-		CategoryID: utils.GetPgTypeInt4(category.CategoryID),
-		Limit:      20,
+	params := repository.GetProductsByCategoryIDParams{
+		CategoryID: utils.GetPgTypeUUID(uuid.MustParse(param.CategoryID)),
+		Limit:      10,
 		Offset:     0,
 	}
+	params.Offset = (params.Limit) * (query.Page - 1)
+	params.Limit = query.PageSize
 
-	if queries.PageSize != nil {
-		getProductsParams.Limit = *queries.PageSize
-		if queries.Page != nil {
-			getProductsParams.Offset = (*queries.Page - 1) * *queries.PageSize
-		}
-	}
-	productRows, err := sv.repo.GetProductsByCategory(c, getProductsParams)
+	products, err := sv.repo.GetProductsByCategoryID(c, params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
-	products := []ProductListModel{}
-	for _, p := range productRows {
-		priceFrom, _ := p.MinPrice.Float64Value()
-		priceTo, _ := p.MaxPrice.Float64Value()
-		products = append(products, ProductListModel{
-			ID:           p.ProductID.String(),
-			Name:         p.Name,
-			PriceFrom:    priceFrom.Float64,
-			VariantCount: p.VariantCount,
-			PriceTo:      priceTo.Float64,
-			Description:  p.Description,
-			DiscountTo:   p.Discount,
-			ImageUrl:     &p.ImageUrl.String,
-			CreatedAt:    p.CreatedAt.Format("2006-01-02 15:04:05"),
-		})
-	}
 
-	c.JSON(http.StatusOK, GenericResponse[[]ProductListModel]{&products, nil, nil})
+	c.JSON(http.StatusOK, createSuccessResponse(c, products, "", nil, nil))
 }
 
 // updateCategory updates a Category.
@@ -245,50 +233,76 @@ func (sv *Server) getCategoryProducts(c *gin.Context) {
 // @Produce json
 // @Param id path int true "Category ID"
 // @Param request body CategoryRequest true "Category request"
-// @Success 200 {object} GenericResponse[repository.Category]
+// @Success 200 {object} GenericResponse
 // @Failure 400 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Router /categories/{id} [put]
 func (sv *Server) updateCategory(c *gin.Context) {
 	var param getCategoryParams
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
-	var req CategoryRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, mapErrResp(err))
+	var req UpdateCategoryRequest
+	if err := c.ShouldBind(&req); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
 
-	category, err := sv.repo.GetCategoryByID(c, param.CategoryID)
+	category, err := sv.repo.GetCategoryByID(c, uuid.MustParse(param.CategoryID))
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, mapErrResp(fmt.Errorf("category with ID %d not found", param.CategoryID)))
+			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusBadRequest, "", fmt.Errorf("category with ID %s not found", param.CategoryID)))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
-	updateParam := repository.UpdateCategoryWithParams{
-		CategoryID: category.CategoryID,
-		Name:       utils.GetPgTypeText(req.Name),
+
+	updateParam := repository.UpdateCategoryParams{
+		ID: category.ID,
 	}
+
+	if req.Name != nil {
+		updateParam.Name = utils.GetPgTypeText(*req.Name)
+	}
+
+	if req.Slug != nil {
+		updateParam.Slug = utils.GetPgTypeText(*req.Slug)
+	}
+
+	if req.Description != nil {
+		updateParam.Description = utils.GetPgTypeText(*req.Description)
+	}
+
+	if req.Remarkable != nil {
+		updateParam.Remarkable = utils.GetPgTypeBool(*req.Remarkable)
+	}
+
 	if req.Published != nil {
 		updateParam.Published = utils.GetPgTypeBool(*req.Published)
 	}
-	if req.SortOrder != nil {
-		updateParam.SortOrder = utils.GetPgTypeInt2(*req.SortOrder)
+
+	imageID, imageURL := "", ""
+	if req.Image != nil {
+		imageID, imageURL, err = sv.uploadService.UploadFile(c, req.Image)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+			return
+		}
+		updateParam.ImageID = utils.GetPgTypeText(imageID)
+		updateParam.ImageUrl = utils.GetPgTypeText(imageURL)
 	}
-	col, err := sv.repo.UpdateCategoryWith(c, updateParam)
+
+	col, err := sv.repo.UpdateCategory(c, updateParam)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
 
-	c.JSON(http.StatusOK, GenericResponse[repository.Category]{&col, nil, nil})
+	c.JSON(http.StatusOK, createSuccessResponse(c, col, "", nil, nil))
 }
 
 // deleteCategory delete a Category.
@@ -298,116 +312,116 @@ func (sv *Server) updateCategory(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Category ID"
-// @Success 204 {object} GenericResponse[repository.Category]
+// @Success 204 {object} GenericResponse
 // @Failure 400 {object} errorResponse
 // @Failure 500 {object} errorResponse
 // @Router /categories/{id} [delete]
 func (sv *Server) deleteCategory(c *gin.Context) {
 	var colID getCategoryParams
 	if err := c.ShouldBindUri(&colID); err != nil {
-		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
 
-	_, err := sv.repo.GetCategoryByID(c, colID.CategoryID)
+	_, err := sv.repo.GetCategoryByID(c, uuid.MustParse(colID.CategoryID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, mapErrResp(fmt.Errorf("category with ID %d not found", colID.CategoryID)))
+			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", fmt.Errorf("category with ID %s not found", colID.CategoryID)))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
 		return
 	}
 
-	err = sv.repo.DeleteCategory(c, colID.CategoryID)
+	err = sv.repo.DeleteCategory(c, uuid.MustParse(colID.CategoryID))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
 		return
 	}
-	message := fmt.Sprintf("Category with ID %d deleted", colID.CategoryID)
+	message := fmt.Sprintf("Category with ID %s deleted", colID.CategoryID)
 	success := true
-	c.JSON(http.StatusOK, GenericResponse[bool]{&success, &message, nil})
+	c.JSON(http.StatusOK, createSuccessResponse(c, success, message, nil, nil))
 }
 
 // ------------------------------------------ Helpers ------------------------------------------
-func groupGetCategoriesRows(rows []repository.GetCategoriesRow) []CategoryResponse {
-	categories := []CategoryResponse{}
-	lastCategoryID := int32(-1)
-	for _, r := range rows {
-		var product ProductListModel
-		if r.ProductID.Valid {
-			priceFrom, _ := r.PriceFrom.(pgtype.Numeric).Float64Value()
-			priceTo, _ := r.PriceTo.(pgtype.Numeric).Float64Value()
-			discount := r.Discount.(int16)
-			product = ProductListModel{
-				ID:           uuid.UUID(r.ProductID.Bytes).String(),
-				Name:         r.ProductName.String,
-				Description:  r.Description.String,
-				VariantCount: r.VariantCount,
-				ImageUrl:     &r.ImageUrl.String,
-				CreatedAt:    r.CreatedAt.Format("2006-01-02 15:04:05"),
-				DiscountTo:   discount,
-				PriceFrom:    priceFrom.Float64,
-				PriceTo:      priceTo.Float64,
-			}
-		}
-		if r.CategoryID == lastCategoryID && r.ProductID.Valid {
-			categories[len(categories)-1].Products = append(categories[len(categories)-1].Products, product)
-		} else {
-			productList := []ProductListModel{}
-			if product.ID != "" {
-				productList = append(productList, product)
-			}
-			categories = append(categories, CategoryResponse{
-				ID:        r.CategoryID,
-				Name:      r.Name,
-				SortOrder: r.SortOrder,
-				Published: r.Published,
-				Products:  productList,
-			})
-			lastCategoryID = r.CategoryID
-		}
-	}
-	return categories
-}
+// func groupGetCategoriesRows(rows []repository.GetCategoriesRow) []CategoryResponse {
+// 	categories := []CategoryResponse{}
+// 	lastCategoryID := int32(-1)
+// 	for _, r := range rows {
+// 		var product ProductListModel
+// 		if r.ProductID.Valid {
+// 			priceFrom, _ := r.PriceFrom.(pgtype.Numeric).Float64Value()
+// 			priceTo, _ := r.PriceTo.(pgtype.Numeric).Float64Value()
+// 			discount := r.Discount.(int16)
+// 			product = ProductListModel{
+// 				ID:           uuid.UUID(r.ProductID.Bytes).String(),
+// 				Name:         r.ProductName.String,
+// 				Description:  r.Description.String,
+// 				VariantCount: r.VariantCount,
+// 				ImageUrl:     &r.ImageUrl.String,
+// 				CreatedAt:    r.CreatedAt.Format("2006-01-02 15:04:05"),
+// 				DiscountTo:   discount,
+// 				PriceFrom:    priceFrom.Float64,
+// 				PriceTo:      priceTo.Float64,
+// 			}
+// 		}
+// 		if r.CategoryID == lastCategoryID && r.ProductID.Valid {
+// 			categories[len(categories)-1].Products = append(categories[len(categories)-1].Products, product)
+// 		} else {
+// 			productList := []ProductListModel{}
+// 			if product.ID != "" {
+// 				productList = append(productList, product)
+// 			}
+// 			categories = append(categories, CategoryResponse{
+// 				ID:        r.CategoryID,
+// 				Name:      r.Name,
+// 				SortOrder: r.SortOrder,
+// 				Published: r.Published,
+// 				Products:  productList,
+// 			})
+// 			lastCategoryID = r.CategoryID
+// 		}
+// 	}
+// 	return categories
+// }
 
-func groupGetCategoryByIDsRows(rows []repository.GetCategoriesByIDsRow) []CategoryResponse {
-	categories := []CategoryResponse{}
-	lastCategoryID := int32(-1)
-	for _, r := range rows {
-		var product ProductListModel
-		if r.ProductID.Valid {
-			priceFrom, _ := r.PriceFrom.(pgtype.Numeric).Float64Value()
-			priceTo, _ := r.PriceTo.(pgtype.Numeric).Float64Value()
-			discount := r.Discount.(int16)
-			product = ProductListModel{
-				ID:           uuid.UUID(r.ProductID.Bytes).String(),
-				Name:         r.ProductName.String,
-				Description:  r.Description.String,
-				VariantCount: r.VariantCount,
-				ImageUrl:     &r.ImageUrl.String,
-				CreatedAt:    r.CreatedAt.Format("2006-01-02 15:04:05"),
-				DiscountTo:   discount,
-				PriceFrom:    priceFrom.Float64,
-				PriceTo:      priceTo.Float64,
-			}
-		}
-		if r.CategoryID == lastCategoryID && r.ProductID.Valid {
-			categories[len(categories)-1].Products = append(categories[len(categories)-1].Products, product)
-		} else {
-			productList := []ProductListModel{}
-			if product.ID != "" {
-				productList = append(productList, product)
-			}
-			categories = append(categories, CategoryResponse{
-				ID:        r.CategoryID,
-				Name:      r.Name,
-				SortOrder: r.SortOrder,
-				Published: r.Published,
-				Products:  productList,
-			})
-			lastCategoryID = r.CategoryID
-		}
-	}
-	return categories
-}
+// func groupGetCategoryByIDsRows(rows []repository.GetCategoriesByIDsRow) []CategoryResponse {
+// 	categories := []CategoryResponse{}
+// 	lastCategoryID := int32(-1)
+// 	for _, r := range rows {
+// 		var product ProductListModel
+// 		if r.ProductID.Valid {
+// 			priceFrom, _ := r.PriceFrom.(pgtype.Numeric).Float64Value()
+// 			priceTo, _ := r.PriceTo.(pgtype.Numeric).Float64Value()
+// 			discount := r.Discount.(int16)
+// 			product = ProductListModel{
+// 				ID:           uuid.UUID(r.ProductID.Bytes).String(),
+// 				Name:         r.ProductName.String,
+// 				Description:  r.Description.String,
+// 				VariantCount: r.VariantCount,
+// 				ImageUrl:     &r.ImageUrl.String,
+// 				CreatedAt:    r.CreatedAt.Format("2006-01-02 15:04:05"),
+// 				DiscountTo:   discount,
+// 				PriceFrom:    priceFrom.Float64,
+// 				PriceTo:      priceTo.Float64,
+// 			}
+// 		}
+// 		if r.CategoryID == lastCategoryID && r.ProductID.Valid {
+// 			categories[len(categories)-1].Products = append(categories[len(categories)-1].Products, product)
+// 		} else {
+// 			productList := []ProductListModel{}
+// 			if product.ID != "" {
+// 				productList = append(productList, product)
+// 			}
+// 			categories = append(categories, CategoryResponse{
+// 				ID:        r.CategoryID,
+// 				Name:      r.Name,
+// 				SortOrder: r.SortOrder,
+// 				Published: r.Published,
+// 				Products:  productList,
+// 			})
+// 			lastCategoryID = r.CategoryID
+// 		}
+// 	}
+// 	return categories
+// }

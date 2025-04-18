@@ -17,23 +17,10 @@
 }
 
 .main {
-  width: 100vw;
-  min-height: 100vh;
-  position: fixed;
-  display: flex;
-  justify-content: center;
-  padding: 120px 24px 160px 24px;
-  pointer-events: none;
-}
-
-.main:before {
-  background: radial-gradient(circle, rgba(2, 0, 36, 0) 0, #fafafa 100%);
-  position: absolute;
-  content: "";
-  z-index: 2;
-  width: 100%;
-  height: 100%;
-  top: 0;
+  height: 100dvh;
+  overflow: auto;
+  background-color: var(--background);
+  color: var(--foreground);
 }
 
 @media screen and (max-width: 640px) {
@@ -42,23 +29,118 @@
   }
 }
 
-.app {
-  @apply relative z-10 flex justify-center items-center flex-col mx-auto sm:px-16 px-6;
+.btn {
+  @apply text-white font-bold py-2 px-4 rounded;
 }
 
-.btn {
-  @apply  text-white font-bold py-2 px-4 rounded;
-  &.primary {
-    @apply bg-blue-500 hover:bg-blue-700;
+.btn-primary {
+  @apply bg-primary hover:bg-primary/50;
+}
+.btn-secondary {
+  @apply bg-button-secondary hover:bg-gray-700;
+}
+.btn-danger {
+  @apply bg-button-danger hover:bg-red-700;
+}
+.btn-warning {
+  @apply bg-button-warning hover:bg-yellow-700;
+}
+
+.btn-outline {
+  @apply border border-solid border-gray-500;
+}
+
+.btn-outline-primary {
+  @apply text-blue-500 border-blue-500 hover:bg-blue-500 hover:text-white;
+}
+.btn-outline-secondary {
+  @apply text-gray-500 border-gray-500 hover:bg-gray-500 hover:text-white;
+}
+.btn-outline-danger {
+  @apply text-red-500 border-red-500 hover:bg-red-500 hover:text-white;
+}
+.btn-outline-warning {
+  @apply text-yellow-500 border-yellow-500 hover:bg-yellow-500 hover:text-white;
+}
+.btn-outline-green {
+  @apply text-green-500 border-green-500 hover:bg-green-500 hover:text-white;
+}
+.btn-pill {
+  @apply rounded-full;
+}
+.btn-elevated {
+  @apply shadow-md;
+}
+.btn-disabled {
+  @apply bg-gray-300 cursor-not-allowed hover:bg-gray-300;
+}
+
+.btn-sm {
+  @apply text-sm py-1 px-2;
+}
+
+.btn-lg {
+  @apply text-lg py-3 px-6;
+}
+
+.btn-block {
+  @apply block w-full;
+}
+
+.new-arrival-ads {
+  @apply bg-cover bg-center relative bg-no-repeat flex flex-col justify-center;
+  min-height: 800px;
+  background-image: url('../public/images/banner/home-page-01-hero-full-width.jpg');
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  @apply bg-gray-900 opacity-70;
+}
+
+.not-found-bg {
+  @apply bg-cover bg-center relative bg-no-repeat h-full text-white flex flex-col items-center;
+  /* min-height: 800px; */
+  background-image: url('../public/images/not-found.webp');
+}
+
+/* Disclosure animations */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
   }
-  &.secondary {
-    @apply bg-gray-500 hover:bg-gray-700;
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 1000px;
   }
-  &.pill{
-    @apply rounded-full;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 1000px;
   }
-  
-  &.disabled {
-    @apply bg-gray-400 cursor-not-allowed;
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
   }
+}
+
+.disclosure-animate-open {
+  animation: slideDown 0.3s ease-out forwards;
+  overflow: hidden;
+}
+
+.disclosure-animate-close {
+  animation: slideUp 0.3s ease-out forwards;
+  overflow: hidden;
 }

@@ -1,7 +1,7 @@
 -- name: CreatePaymentTransaction :one
 INSERT INTO
     payments (
-        payment_id,
+        id,
         order_id,
         amount,
         payment_method,
@@ -23,7 +23,7 @@ SELECT
 FROM
     payments
 WHERE
-    payment_id = $1
+    id = $1
 LIMIT 1;
 
 -- name: GetPaymentTransactionByOrderID :one
@@ -44,10 +44,10 @@ SET
     refund_id = COALESCE(sqlc.narg(refund_id), refund_id),
     status = COALESCE(sqlc.narg(status), status)
 WHERE
-    payment_id = $1;
+    id = $1;
 
 -- name: DeletePaymentTransaction :exec
 DELETE FROM
     payments
 WHERE
-    payment_id = $1;
+    id = $1;

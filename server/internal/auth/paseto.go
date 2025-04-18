@@ -6,6 +6,7 @@ import (
 	"aidanwoods.dev/go-paseto"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
+	"github.com/thanhphuocnguyen/go-eshop/config"
 )
 
 type PasetoTokenGenerator struct {
@@ -13,9 +14,14 @@ type PasetoTokenGenerator struct {
 	implicit     []byte
 }
 
-func NewPasetoTokenGenerator() TokenGenerator {
+func NewPasetoTokenGenerator(config config.Config) TokenGenerator {
+	log.Info().Str("symmetric key", string(paseto.NewV4SymmetricKey().ExportBytes())).Msg("symmetric key generated")
+	symmetricKey, err := paseto.V4SymmetricKeyFromBytes([]byte(config.SymmetricKey))
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to generate symmetric key")
+	}
 	return &PasetoTokenGenerator{
-		symmetricKey: paseto.NewV4SymmetricKey(),
+		symmetricKey: symmetricKey,
 		implicit:     []byte("implicit claim"),
 	}
 }

@@ -1,6 +1,6 @@
 module github.com/thanhphuocnguyen/go-eshop
 
-go 1.23.0
+go 1.24.2
 
 require (
 	aidanwoods.dev/go-paseto v1.5.2

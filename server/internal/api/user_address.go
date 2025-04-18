@@ -50,7 +50,7 @@ type AddressResponse struct {
 // ------------------------------ Mapper ------------------------------
 func mapAddressResponse(address repository.UserAddress) AddressResponse {
 	return AddressResponse{
-		ID:       address.UserAddressID,
+		ID:       address.ID,
 		Phone:    address.Phone,
 		Address1: address.Street,
 		Ward:     &address.Ward.String,
@@ -76,27 +76,26 @@ func mapAddressResponse(address repository.UserAddress) AddressResponse {
 func (sv *Server) createAddress(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, mapErrResp(fmt.Errorf("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", fmt.Errorf("authorization payload is not provided")))
 		return
 	}
 	addresses, err := sv.repo.GetAddresses(c, authPayload.UserID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
 		return
 	}
 
 	if len(addresses) >= 10 {
-		c.JSON(http.StatusBadRequest, mapErrResp(fmt.Errorf("maximum number of addresses reached")))
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", fmt.Errorf("maximum number of addresses reached")))
 		return
 	}
 	var req CreateAddressParams
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
 
 	payload := repository.CreateAddressParams{
-		UserID:   authPayload.UserID,
 		Phone:    req.Phone,
 		Street:   req.Street,
 		City:     req.City,
@@ -111,23 +110,23 @@ func (sv *Server) createAddress(c *gin.Context) {
 
 	if req.IsDefault {
 		err := sv.repo.SetPrimaryAddressTx(c, repository.SetPrimaryAddressTxParams{
-			NewPrimaryID: address.UserAddressID,
+			NewPrimaryID: address.ID,
 			UserID:       authPayload.UserID,
 		})
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, mapErrResp(fmt.Errorf("failed to set primary address: %w", err)))
+			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", fmt.Errorf("failed to set primary address: %w", err)))
 			return
 		}
 		address.Default = true
 	}
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
 		return
 	}
 
 	addressDetail := mapAddressResponse(address)
-	c.JSON(http.StatusOK, GenericResponse[AddressResponse]{&addressDetail, nil, nil})
+	c.JSON(http.StatusOK, createSuccessResponse(c, addressDetail, "", nil, nil))
 }
 
 // getAddresses godoc
@@ -143,13 +142,13 @@ func (sv *Server) createAddress(c *gin.Context) {
 func (sv *Server) listAddresses(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, mapErrResp(fmt.Errorf("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", fmt.Errorf("authorization payload is not provided")))
 		return
 	}
 
 	addresses, err := sv.repo.GetAddresses(c, authPayload.UserID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
 		return
 	}
 	addressesResponse := make([]AddressResponse, len(addresses))
@@ -157,7 +156,7 @@ func (sv *Server) listAddresses(c *gin.Context) {
 		addressesResponse[i] = mapAddressResponse(address)
 	}
 
-	c.JSON(http.StatusOK, GenericResponse[[]AddressResponse]{&addressesResponse, nil, nil})
+	c.JSON(http.StatusOK, createSuccessResponse(c, addressesResponse, "", nil, nil))
 }
 
 // updateAddress godoc
@@ -173,36 +172,36 @@ func (sv *Server) listAddresses(c *gin.Context) {
 func (sv *Server) updateAddress(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, mapErrResp(fmt.Errorf("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", fmt.Errorf("authorization payload is not provided")))
 		return
 	}
 	var input UpdateAddressParams
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusInternalServerError, "", err))
 		return
 	}
 	var param GetAddressParams
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusInternalServerError, "", err))
 		return
 	}
 
 	_, err := sv.repo.GetAddress(c, repository.GetAddressParams{
-		UserAddressID: param.ID,
-		UserID:        authPayload.UserID,
+		ID:     param.ID,
+		UserID: authPayload.UserID,
 	})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, mapErrResp(err))
+			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusInternalServerError, "", err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
 		return
 	}
 
 	payload := repository.UpdateAddressParams{
-		UserAddressID: param.ID,
-		UserID:        authPayload.UserID,
+		ID:     param.ID,
+		UserID: authPayload.UserID,
 	}
 
 	if input.Phone != nil {
@@ -232,7 +231,7 @@ func (sv *Server) updateAddress(c *gin.Context) {
 				UserID:       authPayload.UserID,
 			})
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, mapErrResp(fmt.Errorf("failed to set primary address: %w", err)))
+				c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", fmt.Errorf("failed to set primary address: %w", err)))
 				return
 			}
 		}
@@ -240,11 +239,11 @@ func (sv *Server) updateAddress(c *gin.Context) {
 
 	address, err := sv.repo.UpdateAddress(c, payload)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
 		return
 	}
 	addressDetail := mapAddressResponse(address)
-	c.JSON(http.StatusOK, GenericResponse[AddressResponse]{&addressDetail, nil, nil})
+	c.JSON(http.StatusOK, createSuccessResponse(c, addressDetail, "", nil, nil))
 }
 
 // removeAddress godoc
@@ -262,46 +261,46 @@ func (sv *Server) updateAddress(c *gin.Context) {
 func (sv *Server) removeAddress(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, mapErrResp(fmt.Errorf("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", fmt.Errorf("authorization payload is not provided")))
 		return
 	}
 	var param GetAddressParams
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, mapErrResp(err))
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusInternalServerError, "", err))
 		return
 	}
 
 	address, err := sv.repo.GetAddress(c, repository.GetAddressParams{
-		UserAddressID: param.ID,
-		UserID:        authPayload.UserID,
+		ID:     param.ID,
+		UserID: authPayload.UserID,
 	})
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, mapErrResp(err))
+			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusInternalServerError, "", err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
 		return
 	}
 
 	if address.Deleted {
-		c.JSON(http.StatusNotFound, mapErrResp(fmt.Errorf("address has been removed")))
+		c.JSON(http.StatusNotFound, createErrorResponse(http.StatusInternalServerError, "", fmt.Errorf("address has been removed")))
 		return
 	}
 
 	err = sv.repo.DeleteAddress(c, repository.DeleteAddressParams{
-		UserAddressID: param.ID,
-		UserID:        authPayload.UserID,
+		ID:     param.ID,
+		UserID: authPayload.UserID,
 	})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, mapErrResp(err))
+			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusInternalServerError, "", err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, mapErrResp(err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
 		return
 	}
 	status := true
-	c.JSON(http.StatusOK, GenericResponse[bool]{&status, nil, nil})
+	c.JSON(http.StatusOK, createSuccessResponse(c, status, "", nil, nil))
 }
