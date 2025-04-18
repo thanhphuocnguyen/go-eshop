@@ -2,7 +2,7 @@ import React from 'react';
 
 const Footer = () => {
   return (
-    <div className='pt-32 pb-12 px-20 text-white bg-[#1F4529] flex flex-col content-between'>
+    <div className='pt-16 pb-12 px-20 text-white bg-primary flex flex-col content-between'>
       <div className='grid grid-cols-6 gap-4'>
         <div className=''>
           <div>Shop</div>

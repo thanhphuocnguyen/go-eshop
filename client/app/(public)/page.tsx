@@ -37,7 +37,7 @@ export default async function Home() {
               <Image
                 className='rounded-lg object-cover relative'
                 alt='shop workspace'
-                src='/images/banner/home-page-01-feature-section-01 (1).jpg'
+                src='/images/banner/home-page-01-feature-section-01.jpg'
                 fill
               />
               <div className='overlay rounded-md'></div>
