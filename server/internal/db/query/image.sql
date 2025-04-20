@@ -4,16 +4,21 @@ INSERT INTO images (external_id, url, alt_text, caption, mime_type, file_size, w
 -- name: CreateImageAssignment :one
 INSERT INTO image_assignments (image_id, entity_id, entity_type, display_order, role) VALUES ($1, $2, $3, $4, $5) RETURNING *;
 
--- name: GetProductImagesProductID :many
+-- name: GetImagesByEntityID :many
 SELECT * FROM image_assignments
 JOIN images ON images.id = image_assignments.image_id
-WHERE entity_id = $1 AND entity_type = 'product' ORDER BY display_order;
+WHERE entity_id = $1 ORDER BY display_order;
 
 -- name: GetImageFromID :one
-SELECT * FROM images WHERE id = $1 LIMIT 1;
+SELECT * FROM images 
+JOIN image_assignments ON images.id = image_assignments.image_id
+WHERE images.id = $1 AND entity_type = $2 LIMIT 1;
 
--- name: GetProductImageByExternalID :one
-SELECT * FROM images WHERE external_id = $1 LIMIT 1;
+
+-- name: GetImageFromExternalID :one
+SELECT * FROM images
+JOIN image_assignments ON images.id = image_assignments.image_id
+WHERE external_id = $1 LIMIT 1;
 
 -- name: GetProductImageByEntityID :one
 SELECT * FROM image_assignments

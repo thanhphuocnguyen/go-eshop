@@ -58,6 +58,7 @@ func NewAPI(
 
 func (sv *Server) initializeRouter() {
 	router := gin.Default()
+
 	if sv.config.Env == "production" {
 		gin.SetMode(gin.ReleaseMode)
 		router.Use(gin.Recovery())
@@ -94,23 +95,22 @@ func (sv *Server) initializeRouter() {
 			auth.POST("register", sv.register)
 			auth.POST("login", sv.login)
 			auth.POST("refresh-token", sv.refreshToken)
-			authRoutes := auth.Group("").Use(authMiddleware(sv.tokenGenerator))
+			authRoutes := auth.Use(authMiddleware(sv.tokenGenerator))
 			authRoutes.POST("send-verify-email", sv.sendVerifyEmail)
 		}
 
-		user := v1.Group("/user").Use(authMiddleware(sv.tokenGenerator))
+		user := v1.Group("/user", authMiddleware(sv.tokenGenerator))
 		{
 			user.GET("", sv.getUser)
 			user.PATCH("", sv.updateUser)
 		}
 
-		moderatorRoutes := v1.Group("/moderator").Use(
+		moderatorRoutes := v1.Group("/moderator",
 			authMiddleware(sv.tokenGenerator),
 			roleMiddleware(
 				sv.repo,
 				repository.UserRoleAdmin,
-				repository.UserRoleModerator),
-		)
+				repository.UserRoleModerator))
 		{
 			moderatorRoutes.GET("list", sv.listUsers)
 		}
@@ -127,36 +127,32 @@ func (sv *Server) initializeRouter() {
 		{
 			product.GET("", sv.getProducts)
 			product.GET(":id", sv.getProductDetail)
-			productAdmin := product.Group("").
-				Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin))
+			productAdmin := product.Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin))
 			{
 				productAdmin.POST("", sv.createProduct)
 				productAdmin.PUT(":id", sv.updateProduct)
 				productAdmin.DELETE(":id", sv.removeProduct)
-
 			}
 		}
 
-		images := v1.Group("images")
+		images := v1.Group(
+			"images",
+			authMiddleware(sv.tokenGenerator),
+			roleMiddleware(sv.repo, repository.UserRoleAdmin, repository.UserRoleModerator))
 		{
-			// product images
-			productVariantImage := images.Group("product-variant").
-				Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin, repository.UserRoleModerator))
-			productVariantImage.POST(":variant_id", sv.uploadProductVariantImage)
-			// productImage.GET(":product_id", sv.getProductImage)
-			productVariantImage.DELETE(":variant_id", sv.removeProductImage)
+			// images
+			images.DELETE("remove-external/:public_id", sv.removeImageByPublicID)
+			images.GET("", sv.getImages)
+			images.POST("", sv.uploadImages)
+			images.POST("product/:entity_id", sv.uploadProductImages)
+			images.DELETE(":entity_id", sv.removeImage)
 
-			productImage := images.Group("product").
-				Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin, repository.UserRoleModerator))
-
-			productImage.GET("", sv.getProductImages)
-			productImage.POST(":product_id", sv.uploadProductImages)
-			// productImage.GET(":product_id", sv.getProductImage)
-			productImage.DELETE(":product_id", sv.removeProductImage)
 		}
 
-		attribute := v1.Group("attributes").
-			Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin))
+		attribute := v1.Group(
+			"attributes",
+			authMiddleware(sv.tokenGenerator),
+			roleMiddleware(sv.repo, repository.UserRoleAdmin))
 		{
 			attribute.POST("", sv.createAttribute)
 			attribute.GET("", sv.getAttributes)
@@ -180,13 +176,15 @@ func (sv *Server) initializeRouter() {
 			cartItem.PUT(":id/quantity", sv.updateCartItemQuantity)
 		}
 
-		order := v1.Group("/order").Use(authMiddleware(sv.tokenGenerator))
+		order := v1.Group("/order", authMiddleware(sv.tokenGenerator))
 		{
 			order.GET("list", sv.orderList)
 			order.GET(":id", sv.orderDetail)
 			order.PUT(":id/cancel", sv.cancelOrder)
 
-			adminOrder := order.Use(roleMiddleware(sv.repo, repository.UserRoleAdmin, repository.UserRoleModerator))
+			adminOrder := order.Group(
+				"",
+				roleMiddleware(sv.repo, repository.UserRoleAdmin, repository.UserRoleModerator))
 			adminOrder.PUT(":id/refund", sv.refundOrder)
 			adminOrder.PUT(":id/status", sv.changeOrderStatus)
 		}

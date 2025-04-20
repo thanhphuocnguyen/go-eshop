@@ -137,7 +137,6 @@ func (r iteratorForCreateBulkProductVariants) Values() ([]interface{}, error) {
 		r.rows[0].Price,
 		r.rows[0].Stock,
 		r.rows[0].Weight,
-		r.rows[0].ImageUrl,
 	}, nil
 }
 
@@ -146,7 +145,7 @@ func (r iteratorForCreateBulkProductVariants) Err() error {
 }
 
 func (q *Queries) CreateBulkProductVariants(ctx context.Context, arg []CreateBulkProductVariantsParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"product_variants"}, []string{"id", "product_id", "sku", "price", "stock", "weight", "image_url"}, &iteratorForCreateBulkProductVariants{rows: arg})
+	return q.db.CopyFrom(ctx, []string{"product_variants"}, []string{"id", "product_id", "sku", "price", "stock", "weight"}, &iteratorForCreateBulkProductVariants{rows: arg})
 }
 
 // iteratorForSeedAddresses implements pgx.CopyFromSource.

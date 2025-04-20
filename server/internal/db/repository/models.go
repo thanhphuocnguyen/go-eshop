@@ -512,8 +512,6 @@ type ProductVariant struct {
 	Price     pgtype.Numeric `json:"price"`
 	Stock     int32          `json:"stock"`
 	Weight    pgtype.Numeric `json:"weight"`
-	ImageUrl  pgtype.Text    `json:"image_url"`
-	ImageID   pgtype.Text    `json:"image_id"`
 	IsActive  pgtype.Bool    `json:"is_active"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`

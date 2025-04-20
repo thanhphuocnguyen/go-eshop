@@ -1,190 +1,136 @@
 'use client';
-import { ProductModelForm } from '@/lib/definitions';
+import { ProductModelForm, VariantModelForm } from '@/lib/definitions';
 import React from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { TextField } from '@/components/FormFields';
-import { ImageUploadForm } from '@/components/FormFields';
-import {
-  Disclosure,
-  DisclosureButton,
-  DisclosurePanel,
-  Transition,
-  Switch,
-} from '@headlessui/react';
-import { ChevronUpIcon } from '@heroicons/react/24/outline';
-import { StyledMultipleComboBoxController } from '@/components/FormFields/StyledMultipleComboBoxController';
-import { useProductDetailFormContext } from '../_lib/contexts/ProductFormContext';
-import { useAttributes } from '../../_lib/hooks/useAttributes';
 
-// Define the UploadFile type locally
-type UploadFile = File & {
-  preview: string;
-};
+import clsx from 'clsx';
+import { Field, Switch } from '@headlessui/react';
+import { StyledComboBoxController } from '@/components/FormFields/StyledComboBoxController';
+import { useAttributes } from '../../_lib/hooks/useAttributes';
 
 interface AttributeFormProps {
   index: number;
+  item: VariantModelForm;
   onRemove: (index: number) => void;
 }
 export const VariantForm: React.FC<AttributeFormProps> = ({
   index,
   onRemove,
+  item,
 }) => {
-  const { control, register, getValues, setValue, watch } =
-    useFormContext<ProductModelForm>();
-  const { productVariantImages, setProductVariantImages } =
-    useProductDetailFormContext();
+  const {
+    control,
+    register,
+    getValues,
+    setValue,
+    formState: { errors },
+  } = useFormContext<ProductModelForm>();
   const { attributes } = useAttributes();
-
-  // Function to convert File to UploadFile
-  const convertToUploadFile = (file: File | null): UploadFile | null => {
-    if (!file) return null;
-    return Object.assign(file, {
-      preview: URL.createObjectURL(file),
-    }) as UploadFile;
-  };
-
-  // Watch the is_active value to use with the Switch component
-  const isActive = watch(`variants.${index}.is_active`);
+  const isActive = useWatch({
+    control,
+    name: `variants.${index}.is_active`,
+  });
 
   return (
-    <div className='w-full mb-4 border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300'>
-      <Disclosure defaultOpen={true}>
-        {({ open }) => (
-          <div className='w-full'>
-            <DisclosureButton
-              as='div'
-              className={`flex w-full justify-between ${open ? 'bg-blue-50' : 'bg-gray-100 hover:bg-gray-50'} px-4 py-3 text-left text-lg font-semibold focus:outline-none focus-visible:ring focus-visible:ring-primary focus-visible:ring-opacity-75 transition-all duration-300`}
+    <div className='w-full'>
+      <div className='flex w-full justify-between px-2 py-1 text-left mb-0'>
+        <div className='flex items-center gap-5'>
+          <span className='text-lg font-semibold'>
+            {item.sku ?? `Variant ${index + 1}`}
+          </span>
+          <Field className='flex items-center gap-2'>
+            <Switch
+              checked={!!isActive}
+              onChange={(checked) =>
+                setValue(`variants.${index}.is_active`, checked)
+              }
+              className={clsx(
+                'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+                isActive ? 'bg-primary' : 'bg-gray-200'
+              )}
             >
-              <span className='transition-colors duration-300'>{`Variant ${index + 1}`}</span>
-              <div className='flex items-center'>
-                <button
-                  type='button'
-                  className='btn btn-danger btn-sm mr-3 transition-all duration-300 hover:scale-105'
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRemove(index);
-                  }}
-                >
-                  Remove
-                </button>
-                <ChevronUpIcon
-                  className={`${
-                    open ? 'rotate-180' : 'rotate-0'
-                  } h-5 w-5 text-gray-500 transition-transform duration-300 ease-in-out`}
-                />
-              </div>
-            </DisclosureButton>
-            <Transition
-              show={open}
-              enter='transition duration-300 ease-out'
-              enterFrom='transform scale-95 opacity-0'
-              enterTo='transform scale-100 opacity-100'
-              leave='transition duration-200 ease-out'
-              leaveFrom='transform scale-100 opacity-100'
-              leaveTo='transform scale-95 opacity-0'
+              <span className='sr-only'>Active Variant</span>
+              <span
+                className={clsx(
+                  'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                  isActive ? 'translate-x-6' : 'translate-x-1'
+                )}
+              />
+            </Switch>
+            <span
+              className='font-semibold cursor-pointer'
+              onClick={() => {
+                setValue(`variants.${index}.is_active`, !isActive);
+              }}
             >
-              <DisclosurePanel
-                className={`${open ? 'disclosure-animate-open' : 'disclosure-animate-close'}`}
-              >
-                <div className='px-4 pt-4 pb-4 animate-fadeIn'>
-                  <div className='grid grid-cols-2 gap-4 mb-4'>
-                    <TextField
-                      {...register(`variants.${index}.sku`)}
-                      label='SKU'
-                      placeholder='Enter SKU'
-                      type='text'
-                      disabled={false}
-                    />
-                    <TextField
-                      {...register(`variants.${index}.price`)}
-                      label='Price'
-                      placeholder='Enter Price'
-                      type='number'
-                      disabled={false}
-                    />
-                    <TextField
-                      {...register(`variants.${index}.stock`)}
-                      label='Stock'
-                      placeholder='Enter Stock'
-                      type='number'
-                      disabled={false}
-                    />
-                    <TextField
-                      {...register(`variants.${index}.weight`)}
-                      label='Weight'
-                      placeholder='Enter Weight'
-                      type='number'
-                      disabled={false}
-                    />
+              Active
+            </span>
+          </Field>
+        </div>
+        <div className='flex items-center'>
+          <button
+            type='button'
+            className={clsx(
+              'btn btn-danger btn-sm transition-all duration-300 hover:scale-105'
+            )}
+            onClick={() => onRemove(index)}
+          >
+            Remove
+          </button>
+        </div>
+      </div>
 
-                    {getValues(`variants.${index}.attributes`)?.map(
-                      (attribute, idx) =>
-                        attribute ? (
-                          <StyledMultipleComboBoxController
-                            control={control}
-                            key={attribute.id}
-                            getDisplayValue={(attribute) =>
-                              attribute.display_value || attribute.value
-                            }
-                            name={`variants.${index}.attributes.${idx}.values`}
-                            label={attribute.name}
-                            options={
-                              attributes?.find((e) => e.id === attribute.id)
-                                ?.values ?? []
-                            }
-                          />
-                        ) : null
-                    )}
-                  </div>
-                  <div className='flex items-center gap-2 mt-2'>
-                    <Switch
-                      checked={!!isActive}
-                      onChange={(checked) =>
-                        setValue(`variants.${index}.is_active`, checked)
-                      }
-                      className={`${
-                        isActive ? 'bg-primary' : 'bg-gray-200'
-                      } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2`}
-                    >
-                      <span className='sr-only'>Active Variant</span>
-                      <span
-                        className={`${
-                          isActive ? 'translate-x-6' : 'translate-x-1'
-                        } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-                      />
-                    </Switch>
-                    <span
-                      className='font-semibold cursor-pointer'
-                      onClick={() =>
-                        setValue(`variants.${index}.is_active`, !isActive)
-                      }
-                    >
-                      Active Variant
-                    </span>
-                  </div>
-                  <div className='flex mt-5 justify-center'>
-                    <ImageUploadForm
-                      label={`Variant ${index + 1} Image`}
-                      imageUrl={getValues(`variants.${index}.image_url`)}
-                      onFileChange={(file: File | null) => {
-                        const newFiles = [...productVariantImages];
-                        const variantId = getValues(`variants.${index}.id`);
-                        newFiles[index] = {
-                          ...newFiles[index],
-                          image: convertToUploadFile(file),
-                          variantID:
-                            typeof variantId === 'number' ? variantId : -1,
-                        };
-                        setProductVariantImages(newFiles);
-                      }}
-                    />
-                  </div>
-                </div>
-              </DisclosurePanel>
-            </Transition>
-          </div>
-        )}
-      </Disclosure>
+      <div className='px-2 pt-2 pb-0'>
+        <div className='grid grid-cols-5 gap-x-3'>
+          {getValues(`variants.${index}.attributes`)?.map((attribute, idx) =>
+            attribute ? (
+              <StyledComboBoxController
+                control={control}
+                key={attribute.id}
+                error={!!errors.variants?.[index]?.attributes?.[idx]?.value?.id}
+                message={
+                  errors.variants?.[index]?.attributes?.[idx]?.value?.id
+                    ?.message
+                }
+                getDisplayValue={(attribute) =>
+                  attribute.display_value || attribute.value
+                }
+                name={`variants.${index}.attributes.${idx}.value`}
+                label={attribute.name}
+                options={
+                  attributes?.find((e) => e.id === attribute.id)?.values ?? []
+                }
+              />
+            ) : null
+          )}
+          <TextField
+            {...register(`variants.${index}.price`)}
+            label='Price'
+            placeholder='Enter Price'
+            error={!!errors.variants?.[index]?.price?.message}
+            message={errors.variants?.[index]?.price?.message}
+            type='number'
+            disabled={false}
+          />
+          <TextField
+            {...register(`variants.${index}.stock`)}
+            label='Stock'
+            placeholder='Enter Stock'
+            error={!!errors.variants?.[index]?.stock?.message}
+            message={errors.variants?.[index]?.stock?.message}
+            type='number'
+            disabled={false}
+          />
+          <TextField
+            {...register(`variants.${index}.weight`)}
+            label='Weight'
+            placeholder='Enter Weight'
+            type='number'
+            disabled={false}
+          />
+        </div>
+      </div>
     </div>
   );
 };

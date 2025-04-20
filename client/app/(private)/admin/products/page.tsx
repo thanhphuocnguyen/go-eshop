@@ -11,12 +11,15 @@ import useSWR from 'swr';
 import dayjs from 'dayjs';
 import Image from 'next/image';
 import { apiFetch } from '@/lib/api/api';
+import { ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 export default function Page() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   const { data, isLoading } = useSWR(
     [API_PATHS.PRODUCTS, page, limit, search],
@@ -24,15 +27,44 @@ export default function Page() {
       apiFetch<GenericResponse<ProductListModel[]>>(
         `${url}?page=${page}&limit=${limit}&search=${search}`,
         {}
-      ).then((data) => data.data),
+      ).then((response) => {
+        // Store pagination data
+        if (response.pagination) {
+          setTotal(response.pagination.total);
+          setTotalPages(response.pagination.totalPages);
+        }
+        return response.data;
+      }),
     {
-      refreshInterval: 0,
       revalidateOnFocus: false,
       onError: (err) => {
         console.error(err);
       },
     }
   );
+
+  const handlePreviousPage = () => {
+    if (page > 1) {
+      setPage(page - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (page < totalPages) {
+      setPage(page + 1);
+    }
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearch(searchInput);
+    setPage(1); // Reset to first page when searching
+  };
+
+  const handleLimitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setLimit(Number(e.target.value));
+    setPage(1); // Reset to first page when changing limit
+  };
 
   if (isLoading) return <Loading />;
 
@@ -47,6 +79,30 @@ export default function Page() {
         >
           Add new
         </Button>
+      </div>
+
+      {/* Search Filter */}
+      <div className="mb-6">
+        <form onSubmit={handleSearch} className="flex gap-2">
+          <div className="relative flex-grow">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <MagnifyingGlassIcon className="w-5 h-5 text-gray-500" />
+            </div>
+            <input
+              type="text"
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5"
+              placeholder="Search products..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+          </div>
+          <Button
+            type="submit"
+            className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5"
+          >
+            Search
+          </Button>
+        </form>
       </div>
 
       <div className='relative overflow-x-auto shadow-md sm:rounded-lg'>
@@ -122,6 +178,76 @@ export default function Page() {
             )}
           </tbody>
         </table>
+      </div>
+      
+      {/* Pagination Component */}
+      <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4 rounded-md">
+        <div className="flex flex-1 justify-between sm:hidden">
+          <Button
+            onClick={handlePreviousPage}
+            disabled={page <= 1}
+            className={`relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 ${page <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}
+          >
+            Previous
+          </Button>
+          <Button
+            onClick={handleNextPage}
+            disabled={page >= totalPages}
+            className={`relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 ${page >= totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}
+          >
+            Next
+          </Button>
+        </div>
+        <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm text-gray-700">
+              Showing <span className="font-medium">{(page - 1) * limit + 1}</span> to{" "}
+              <span className="font-medium">{Math.min(page * limit, total)}</span> of{" "}
+              <span className="font-medium">{total}</span> products
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            {/* Page limit selector */}
+            <div className="flex items-center">
+              <label htmlFor="pageLimit" className="mr-2 text-sm text-gray-700">Show:</label>
+              <select 
+                id="pageLimit" 
+                value={limit} 
+                onChange={handleLimitChange}
+                className="block w-20 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+            
+            <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+              <Button
+                onClick={handlePreviousPage}
+                disabled={page <= 1}
+                className={`relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ${page <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}
+              >
+                <span className="sr-only">Previous</span>
+                <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
+              </Button>
+              {/* Page number display */}
+              <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300">
+                {page} / {totalPages}
+              </span>
+              <Button
+                onClick={handleNextPage}
+                disabled={page >= totalPages}
+                className={`relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ${page >= totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}
+              >
+                <span className="sr-only">Next</span>
+                <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
+              </Button>
+            </nav>
+          </div>
+        </div>
       </div>
     </div>
   );

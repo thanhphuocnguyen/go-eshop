@@ -113,13 +113,36 @@ func (q *Queries) DeleteProductImageAssignment(ctx context.Context, arg DeletePr
 	return err
 }
 
-const getImageFromID = `-- name: GetImageFromID :one
-SELECT id, external_id, url, alt_text, caption, mime_type, file_size, width, height, uploaded_at, updated_at FROM images WHERE id = $1 LIMIT 1
+const getImageFromExternalID = `-- name: GetImageFromExternalID :one
+SELECT images.id, external_id, url, alt_text, caption, mime_type, file_size, width, height, uploaded_at, updated_at, image_assignments.id, image_id, entity_id, entity_type, display_order, role, created_at FROM images
+JOIN image_assignments ON images.id = image_assignments.image_id
+WHERE external_id = $1 LIMIT 1
 `
 
-func (q *Queries) GetImageFromID(ctx context.Context, id int32) (Image, error) {
-	row := q.db.QueryRow(ctx, getImageFromID, id)
-	var i Image
+type GetImageFromExternalIDRow struct {
+	ID           int32       `json:"id"`
+	ExternalID   string      `json:"external_id"`
+	Url          string      `json:"url"`
+	AltText      pgtype.Text `json:"alt_text"`
+	Caption      pgtype.Text `json:"caption"`
+	MimeType     pgtype.Text `json:"mime_type"`
+	FileSize     pgtype.Int8 `json:"file_size"`
+	Width        pgtype.Int4 `json:"width"`
+	Height       pgtype.Int4 `json:"height"`
+	UploadedAt   time.Time   `json:"uploaded_at"`
+	UpdatedAt    time.Time   `json:"updated_at"`
+	ID_2         int32       `json:"id_2"`
+	ImageID      int32       `json:"image_id"`
+	EntityID     uuid.UUID   `json:"entity_id"`
+	EntityType   string      `json:"entity_type"`
+	DisplayOrder int16       `json:"display_order"`
+	Role         string      `json:"role"`
+	CreatedAt    time.Time   `json:"created_at"`
+}
+
+func (q *Queries) GetImageFromExternalID(ctx context.Context, externalID string) (GetImageFromExternalIDRow, error) {
+	row := q.db.QueryRow(ctx, getImageFromExternalID, externalID)
+	var i GetImageFromExternalIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.ExternalID,
@@ -132,8 +155,139 @@ func (q *Queries) GetImageFromID(ctx context.Context, id int32) (Image, error) {
 		&i.Height,
 		&i.UploadedAt,
 		&i.UpdatedAt,
+		&i.ID_2,
+		&i.ImageID,
+		&i.EntityID,
+		&i.EntityType,
+		&i.DisplayOrder,
+		&i.Role,
+		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const getImageFromID = `-- name: GetImageFromID :one
+SELECT images.id, external_id, url, alt_text, caption, mime_type, file_size, width, height, uploaded_at, updated_at, image_assignments.id, image_id, entity_id, entity_type, display_order, role, created_at FROM images 
+JOIN image_assignments ON images.id = image_assignments.image_id
+WHERE images.id = $1 AND entity_type = $2 LIMIT 1
+`
+
+type GetImageFromIDParams struct {
+	ID         int32  `json:"id"`
+	EntityType string `json:"entity_type"`
+}
+
+type GetImageFromIDRow struct {
+	ID           int32       `json:"id"`
+	ExternalID   string      `json:"external_id"`
+	Url          string      `json:"url"`
+	AltText      pgtype.Text `json:"alt_text"`
+	Caption      pgtype.Text `json:"caption"`
+	MimeType     pgtype.Text `json:"mime_type"`
+	FileSize     pgtype.Int8 `json:"file_size"`
+	Width        pgtype.Int4 `json:"width"`
+	Height       pgtype.Int4 `json:"height"`
+	UploadedAt   time.Time   `json:"uploaded_at"`
+	UpdatedAt    time.Time   `json:"updated_at"`
+	ID_2         int32       `json:"id_2"`
+	ImageID      int32       `json:"image_id"`
+	EntityID     uuid.UUID   `json:"entity_id"`
+	EntityType   string      `json:"entity_type"`
+	DisplayOrder int16       `json:"display_order"`
+	Role         string      `json:"role"`
+	CreatedAt    time.Time   `json:"created_at"`
+}
+
+func (q *Queries) GetImageFromID(ctx context.Context, arg GetImageFromIDParams) (GetImageFromIDRow, error) {
+	row := q.db.QueryRow(ctx, getImageFromID, arg.ID, arg.EntityType)
+	var i GetImageFromIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.ExternalID,
+		&i.Url,
+		&i.AltText,
+		&i.Caption,
+		&i.MimeType,
+		&i.FileSize,
+		&i.Width,
+		&i.Height,
+		&i.UploadedAt,
+		&i.UpdatedAt,
+		&i.ID_2,
+		&i.ImageID,
+		&i.EntityID,
+		&i.EntityType,
+		&i.DisplayOrder,
+		&i.Role,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getImagesByEntityID = `-- name: GetImagesByEntityID :many
+SELECT image_assignments.id, image_id, entity_id, entity_type, display_order, role, created_at, images.id, external_id, url, alt_text, caption, mime_type, file_size, width, height, uploaded_at, updated_at FROM image_assignments
+JOIN images ON images.id = image_assignments.image_id
+WHERE entity_id = $1 ORDER BY display_order
+`
+
+type GetImagesByEntityIDRow struct {
+	ID           int32       `json:"id"`
+	ImageID      int32       `json:"image_id"`
+	EntityID     uuid.UUID   `json:"entity_id"`
+	EntityType   string      `json:"entity_type"`
+	DisplayOrder int16       `json:"display_order"`
+	Role         string      `json:"role"`
+	CreatedAt    time.Time   `json:"created_at"`
+	ID_2         int32       `json:"id_2"`
+	ExternalID   string      `json:"external_id"`
+	Url          string      `json:"url"`
+	AltText      pgtype.Text `json:"alt_text"`
+	Caption      pgtype.Text `json:"caption"`
+	MimeType     pgtype.Text `json:"mime_type"`
+	FileSize     pgtype.Int8 `json:"file_size"`
+	Width        pgtype.Int4 `json:"width"`
+	Height       pgtype.Int4 `json:"height"`
+	UploadedAt   time.Time   `json:"uploaded_at"`
+	UpdatedAt    time.Time   `json:"updated_at"`
+}
+
+func (q *Queries) GetImagesByEntityID(ctx context.Context, entityID uuid.UUID) ([]GetImagesByEntityIDRow, error) {
+	rows, err := q.db.Query(ctx, getImagesByEntityID, entityID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetImagesByEntityIDRow{}
+	for rows.Next() {
+		var i GetImagesByEntityIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ImageID,
+			&i.EntityID,
+			&i.EntityType,
+			&i.DisplayOrder,
+			&i.Role,
+			&i.CreatedAt,
+			&i.ID_2,
+			&i.ExternalID,
+			&i.Url,
+			&i.AltText,
+			&i.Caption,
+			&i.MimeType,
+			&i.FileSize,
+			&i.Width,
+			&i.Height,
+			&i.UploadedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getProductImageByEntityID = `-- name: GetProductImageByEntityID :one
@@ -187,95 +341,6 @@ func (q *Queries) GetProductImageByEntityID(ctx context.Context, entityID uuid.U
 		&i.UpdatedAt,
 	)
 	return i, err
-}
-
-const getProductImageByExternalID = `-- name: GetProductImageByExternalID :one
-SELECT id, external_id, url, alt_text, caption, mime_type, file_size, width, height, uploaded_at, updated_at FROM images WHERE external_id = $1 LIMIT 1
-`
-
-func (q *Queries) GetProductImageByExternalID(ctx context.Context, externalID string) (Image, error) {
-	row := q.db.QueryRow(ctx, getProductImageByExternalID, externalID)
-	var i Image
-	err := row.Scan(
-		&i.ID,
-		&i.ExternalID,
-		&i.Url,
-		&i.AltText,
-		&i.Caption,
-		&i.MimeType,
-		&i.FileSize,
-		&i.Width,
-		&i.Height,
-		&i.UploadedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getProductImagesProductID = `-- name: GetProductImagesProductID :many
-SELECT image_assignments.id, image_id, entity_id, entity_type, display_order, role, created_at, images.id, external_id, url, alt_text, caption, mime_type, file_size, width, height, uploaded_at, updated_at FROM image_assignments
-JOIN images ON images.id = image_assignments.image_id
-WHERE entity_id = $1 AND entity_type = 'product' ORDER BY display_order
-`
-
-type GetProductImagesProductIDRow struct {
-	ID           int32       `json:"id"`
-	ImageID      int32       `json:"image_id"`
-	EntityID     uuid.UUID   `json:"entity_id"`
-	EntityType   string      `json:"entity_type"`
-	DisplayOrder int16       `json:"display_order"`
-	Role         string      `json:"role"`
-	CreatedAt    time.Time   `json:"created_at"`
-	ID_2         int32       `json:"id_2"`
-	ExternalID   string      `json:"external_id"`
-	Url          string      `json:"url"`
-	AltText      pgtype.Text `json:"alt_text"`
-	Caption      pgtype.Text `json:"caption"`
-	MimeType     pgtype.Text `json:"mime_type"`
-	FileSize     pgtype.Int8 `json:"file_size"`
-	Width        pgtype.Int4 `json:"width"`
-	Height       pgtype.Int4 `json:"height"`
-	UploadedAt   time.Time   `json:"uploaded_at"`
-	UpdatedAt    time.Time   `json:"updated_at"`
-}
-
-func (q *Queries) GetProductImagesProductID(ctx context.Context, entityID uuid.UUID) ([]GetProductImagesProductIDRow, error) {
-	rows, err := q.db.Query(ctx, getProductImagesProductID, entityID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []GetProductImagesProductIDRow{}
-	for rows.Next() {
-		var i GetProductImagesProductIDRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.ImageID,
-			&i.EntityID,
-			&i.EntityType,
-			&i.DisplayOrder,
-			&i.Role,
-			&i.CreatedAt,
-			&i.ID_2,
-			&i.ExternalID,
-			&i.Url,
-			&i.AltText,
-			&i.Caption,
-			&i.MimeType,
-			&i.FileSize,
-			&i.Width,
-			&i.Height,
-			&i.UploadedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const updateProductImage = `-- name: UpdateProductImage :exec

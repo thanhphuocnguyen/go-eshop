@@ -1,23 +1,29 @@
 'use client';
 
 import React from 'react';
-import { ProductDetailForm, SubmitResult } from '../_components/ProductForm';
+import {
+  ProductDetailForm,
+  SubmitResult,
+} from '../_components/ProductDetailForm';
 import { API_PATHS } from '@/lib/constants/api';
 import { toast } from 'react-toastify';
-import { GenericResponse, ProductModelForm } from '@/lib/definitions';
-import { redirect } from 'next/navigation';
 import {
-  ProductDetailFormProvider,
-  ProductImageFile,
-} from '../_lib/contexts/ProductFormContext';
+  GenericResponse,
+  ProductImageModel,
+  ProductModelForm,
+} from '@/lib/definitions';
+import { redirect } from 'next/navigation';
+import { ProductDetailFormProvider } from '../_lib/contexts/ProductFormContext';
 import { apiFetch } from '@/lib/api/api';
 
 const Page: React.FC = () => {
   async function onSubmit(
     payload: ProductModelForm,
-    productImages: ProductImageFile[],
-    variantImages: ProductImageFile[]
+    productImages: File[]
   ): Promise<SubmitResult> {
+    console.log(payload);
+    console.log(productImages);
+    // return
     const result: SubmitResult = {
       createProductSuccess: false,
       uploadImagesSuccess: false,
@@ -40,7 +46,7 @@ const Page: React.FC = () => {
           ...variant,
           attributes: variant.attributes.map((attribute) => ({
             id: attribute.id,
-            value_ids: attribute.values?.map((value) => value.id),
+            value_id: attribute.value?.id,
           })),
         })),
       },
@@ -55,8 +61,8 @@ const Page: React.FC = () => {
       result.createProductSuccess = true;
       const productImageFormData = new FormData();
       productImages.forEach((image) => {
-        if (image.image) {
-          productImageFormData.append('file', image.image);
+        if (image) {
+          productImageFormData.append('files', image);
         }
       });
       const imageUploadResp = await apiFetch<GenericResponse<unknown>>(
@@ -73,37 +79,6 @@ const Page: React.FC = () => {
         result.uploadImagesSuccess = true;
       }
 
-      const variantImageFormData = new FormData();
-      const promises = data.variants.reduce(
-        (acc, variantID, index) => {
-          if (variantID && variantImages[index]?.image) {
-            variantImageFormData.append('file', variantImages[index].image);
-            acc.push(
-              apiFetch<GenericResponse<unknown>>(
-                API_PATHS.PRODUCT_VARIANT_IMAGE_UPLOAD.replaceAll(
-                  ':id',
-                  variantID.toString()
-                ),
-                {
-                  method: 'POST',
-                  body: variantImageFormData,
-                }
-              )
-            );
-          }
-          return acc;
-        },
-        [] as Promise<GenericResponse<unknown>>[]
-      );
-
-      const uploadResp = await Promise.all(promises);
-      const allOk = uploadResp.every((resp) => !resp.error);
-      if (allOk) {
-        toast.success('Product created successfully');
-        result.uploadVariantImagesSuccess = true;
-      } else {
-        toast.error('Failed to upload images');
-      }
       redirect('/admin/products/' + data.id);
     } else {
       toast.error('Failed to create product');

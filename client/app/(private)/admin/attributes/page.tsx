@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Loading from '@/app/loading';
 import { API_PATHS } from '@/lib/constants/api';
-import { GenericResponse, AttributeFormModel } from '@/lib/definitions';
+import { GenericResponse, AttributeDetailModel } from '@/lib/definitions';
 import { AddNewDialog } from './_components/AttribueFormDialog';
 import { ConfirmDialog } from '@/components/Common/Dialogs/ConfirmDialog';
 import { toast } from 'react-toastify';
@@ -12,14 +12,14 @@ import Link from 'next/link';
 import { apiFetch } from '@/lib/api/api';
 
 export default function Page() {
-  const [attributes, setAttributes] = useState<AttributeFormModel[]>([]);
+  const [attributes, setAttributes] = useState<AttributeDetailModel[]>([]);
   const [modalMode, setModalMode] = useState<'add' | 'edit' | 'delete'>();
   const [loading, setLoading] = useState(true);
   const [selectedAttribute, setSelectedAttribute] =
-    useState<AttributeFormModel | null>(null);
+    useState<AttributeDetailModel | null>(null);
 
   const fetchAttributes = async () => {
-    const response = await apiFetch<GenericResponse<AttributeFormModel[]>>(
+    const response = await apiFetch<GenericResponse<AttributeDetailModel[]>>(
       API_PATHS.ATTRIBUTES,
       {
         nextOptions: {
@@ -39,17 +39,17 @@ export default function Page() {
 
   const handleDelete = async () => {
     if (selectedAttribute?.id) {
-      const response = await apiFetch(
+      const response = await apiFetch<GenericResponse<AttributeDetailModel[]>>(
         API_PATHS.ATTRIBUTE.replace(':id', selectedAttribute.id.toString()),
         {
           method: 'DELETE',
         }
       );
-      if (response.status !== 204) {
+      if (response.error) {
         toast('Failed to delete attribute', { type: 'error' });
         return;
       }
-      if (response.ok) {
+      if (response.data) {
         setAttributes(attributes.filter((e) => e.id !== selectedAttribute?.id));
         setSelectedAttribute(null);
         setModalMode(undefined);
@@ -69,7 +69,7 @@ export default function Page() {
   }
 
   return (
-    <div className='h-full'>
+    <div className=''>
       <div className='flex justify-between pt-4 pb-8'>
         <h2 className='text-2xl font-semibold text-primary'>Attributes List</h2>
         <button
@@ -84,23 +84,9 @@ export default function Page() {
       <AddNewDialog
         open={modalMode === 'add'}
         handleSubmitted={(newAttr) => {
-          setAttributes((prev) => [
-            ...prev,
-            {
-              id: newAttr.id ?? -1,
-              name: newAttr.name,
-              values: newAttr.values?.map((e) => ({
-                display_value: e.display_value,
-                id: e.id ?? -1,
-                value: e.value,
-                display_order: attributes.length + 1,
-                is_active: true,
-              })),
-            },
-          ]);
+          setAttributes((prev) => [...prev, newAttr]);
           setSelectedAttribute(null);
         }}
-        selectedAttribute={selectedAttribute}
         onClose={() => {
           setSelectedAttribute(null);
           setModalMode(undefined);

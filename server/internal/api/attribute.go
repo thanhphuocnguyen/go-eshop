@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
-	"golang.org/x/sync/errgroup"
 )
 
 // ------------------------------ API Models ------------------------------
@@ -133,7 +132,6 @@ func (sv *Server) getAttributeByID(c *gin.Context) {
 
 	attributeRows, err := sv.repo.GetAttributeByID(c, attributeParam.ID)
 	if err != nil {
-
 		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
@@ -176,31 +174,20 @@ func (sv *Server) getAttributeByID(c *gin.Context) {
 // @Failure 500 {object} errorResponse
 // @Router /attributes [get]
 func (sv *Server) getAttributes(c *gin.Context) {
-	errgroup, ctx := errgroup.WithContext(c)
 
-	attributeRows, err := sv.repo.GetAttributes(ctx)
+	attributeRows, err := sv.repo.GetAttributes(c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
 
-	cnt, err := sv.repo.CountAttributes(ctx)
+	cnt, err := sv.repo.CountAttributes(c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
-		return
-	}
-
-	if err := errgroup.Wait(); err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
-		return
-	}
-	if len(attributeRows) == 0 {
-		c.JSON(http.StatusOK, createErrorResponse(http.StatusNotFound, "", errors.New("no attributes found")))
 		return
 	}
 
 	var attributeResp = []AttributeResponse{}
-
 	for i := 0; i < len(attributeRows); i++ {
 		if i == 0 || attributeRows[i].ID != attributeRows[i-1].ID {
 			attributeResp = append(attributeResp, AttributeResponse{

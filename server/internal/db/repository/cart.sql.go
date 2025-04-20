@@ -146,7 +146,7 @@ const getCartItemWithProduct = `-- name: GetCartItemWithProduct :one
 SELECT 
     ci.id, ci.cart_id, ci.variant_id, ci.quantity, ci.added_at, 
     p.name AS product_name, p.brand_id, p.collection_id, p.category_id,
-    pv.price, pv.stock, pv.sku, pv.image_url
+    pv.price, pv.stock, pv.sku
 FROM cart_items ci
 JOIN product_variants AS pv ON ci.variant_id = p.id
 JOIN products AS p ON p.id = ci.product_id
@@ -167,7 +167,6 @@ type GetCartItemWithProductRow struct {
 	Price        pgtype.Numeric `json:"price"`
 	Stock        int32          `json:"stock"`
 	Sku          string         `json:"sku"`
-	ImageUrl     pgtype.Text    `json:"image_url"`
 }
 
 func (q *Queries) GetCartItemWithProduct(ctx context.Context, id uuid.UUID) (GetCartItemWithProductRow, error) {
@@ -186,14 +185,13 @@ func (q *Queries) GetCartItemWithProduct(ctx context.Context, id uuid.UUID) (Get
 		&i.Price,
 		&i.Stock,
 		&i.Sku,
-		&i.ImageUrl,
 	)
 	return i, err
 }
 
 const getCartItemsByID = `-- name: GetCartItemsByID :many
 SELECT ci.id, ci.cart_id, ci.variant_id, ci.quantity, ci.added_at, p.id, p.name, p.description, p.base_price, p.base_sku, p.slug, p.is_active, p.category_id, p.collection_id, p.brand_id, p.created_at, p.updated_at,
-    av.value AS attribute_value, a.name AS attribute_name, pv.image_url AS image_url
+    av.value AS attribute_value, a.name AS attribute_name
 FROM cart_items as ci
 JOIN product_variants AS pv ON pv.id = ci.variant_id
 JOIN products AS p ON p.id = pv.product_id
@@ -209,7 +207,6 @@ type GetCartItemsByIDRow struct {
 	Product        Product     `json:"product"`
 	AttributeValue pgtype.Text `json:"attribute_value"`
 	AttributeName  pgtype.Text `json:"attribute_name"`
-	ImageUrl       pgtype.Text `json:"image_url"`
 }
 
 func (q *Queries) GetCartItemsByID(ctx context.Context, cartID uuid.UUID) ([]GetCartItemsByIDRow, error) {
@@ -241,7 +238,6 @@ func (q *Queries) GetCartItemsByID(ctx context.Context, cartID uuid.UUID) ([]Get
 			&i.Product.UpdatedAt,
 			&i.AttributeValue,
 			&i.AttributeName,
-			&i.ImageUrl,
 		); err != nil {
 			return nil, err
 		}

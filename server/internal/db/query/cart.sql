@@ -30,7 +30,7 @@ SELECT * FROM cart_items WHERE id = $1;
 SELECT 
     ci.*, 
     p.name AS product_name, p.brand_id, p.collection_id, p.category_id,
-    pv.price, pv.stock, pv.sku, pv.image_url
+    pv.price, pv.stock, pv.sku
 FROM cart_items ci
 JOIN product_variants AS pv ON ci.variant_id = p.id
 JOIN products AS p ON p.id = ci.product_id
@@ -39,7 +39,7 @@ ORDER BY ci.added_at, ci.id, pv.id DESC;
 
 -- name: GetCartItemsByID :many
 SELECT sqlc.embed(ci), sqlc.embed(p),
-    av.value AS attribute_value, a.name AS attribute_name, pv.image_url AS image_url
+    av.value AS attribute_value, a.name AS attribute_name
 FROM cart_items as ci
 JOIN product_variants AS pv ON pv.id = ci.variant_id
 JOIN products AS p ON p.id = pv.product_id

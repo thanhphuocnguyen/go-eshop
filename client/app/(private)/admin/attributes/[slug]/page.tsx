@@ -2,8 +2,8 @@
 import { API_PATHS } from '@/lib/constants/api';
 import {
   GenericResponse,
-  AttributeFormSchema,
   AttributeFormModel,
+  AttributeFormSchema,
 } from '@/lib/definitions';
 
 import { Button, Field, Fieldset, Input, Label } from '@headlessui/react';
@@ -39,7 +39,7 @@ export default function Page({
 }) {
   const { slug } = use(params);
   const sensors = useSensors(
-    useSensor(SmartPointerSensor),
+    useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -50,7 +50,7 @@ export default function Page({
   });
   const { register, control, reset, handleSubmit } = form;
 
-  const { fields, append, remove, swap } = useFieldArray({
+  const { fields, append, remove, replace } = useFieldArray({
     control,
     name: 'values',
     keyName: 'key',
@@ -98,7 +98,7 @@ export default function Page({
   }, [attribute, reset]);
 
   return (
-    <div className='p-5 bg-white'>
+    <div className='p-5 bg-white overflow-y-auto'>
       <Link
         className='flex text-sky-500 hover:underline underline-offset-1'
         href='/admin/attributes'
@@ -154,7 +154,7 @@ export default function Page({
               collisionDetection={closestCenter}
               onDragEnd={handleDragEnd}
             >
-              <Field as='ul' className='mt-5 gap-2 w-full'>
+              <Field as='ul' className='mt-2 gap-4 w-full'>
                 <SortableContext
                   items={fields.map((item) => item.key)}
                   id='key'
@@ -186,47 +186,20 @@ export default function Page({
       const newIndex = fields.findIndex((item) => item.key === over?.id);
 
       if (oldIndex !== -1 && newIndex !== -1) {
-        swap(oldIndex, newIndex);
+        // Create a new array with the moved item in the correct position
+        const updatedFields = [...fields];
+        const [movedItem] = updatedFields.splice(oldIndex, 1);
+        updatedFields.splice(newIndex, 0, movedItem);
+
+        // Update the field array values using replace function
+        // This is more efficient than using setValue for field arrays
+        const newValues = updatedFields.map((field, index) => ({
+          ...field,
+          display_order: index + 1, // Update display order based on new position
+        }));
+
+        replace(newValues);
       }
     }
   }
-}
-
-export class SmartPointerSensor extends PointerSensor {
-  static activators = [
-    {
-      eventName: 'onPointerDown',
-      handler: ({ nativeEvent: event }: PointerEvent) => {
-        if (
-          !event.isPrimary ||
-          event.button !== 0 ||
-          isInteractiveElement(event.target as Element)
-        ) {
-          return false;
-        }
-
-        return true;
-      },
-    },
-  ];
-}
-
-function isInteractiveElement(element: Element | null) {
-  const interactiveElements = [
-    'button',
-    'input',
-    'textarea',
-    'select',
-    'svg',
-    'option',
-    'span',
-  ];
-  if (
-    element?.tagName &&
-    interactiveElements.includes(element.tagName.toLowerCase())
-  ) {
-    return true;
-  }
-
-  return false;
 }

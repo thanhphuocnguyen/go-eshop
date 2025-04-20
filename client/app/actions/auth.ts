@@ -48,42 +48,33 @@ export async function login(_: LoginFormState, formData: FormData) {
   const cookieStorage = await cookies();
   cookieStorage.set('token', data.token, {
     expires: new Date(data.token_expire_at),
-    sameSite: 'lax',
     value: data.token,
   });
 
   cookieStorage.set('refresh_token', data.refresh_token, {
     expires: new Date(data.refresh_token_expire_at),
-    sameSite: 'lax',
     value: data.refresh_token,
   });
 
   cookieStorage.set('session_id', data.session_id, {
     expires: new Date(data.refresh_token_expire_at),
-    sameSite: 'lax',
-    httpOnly: true,
     value: data.session_id,
   });
   cookieStorage.set('user_role', JSON.stringify(data.user), {
     expires: new Date(data.refresh_token_expire_at),
-    sameSite: 'lax',
-    httpOnly: true,
     value: data.user.role,
   });
   cookieStorage.set('user_id', JSON.stringify(data.user), {
     expires: new Date(data.refresh_token_expire_at),
-    sameSite: 'lax',
     value: data.user.id,
   });
   cookieStorage.set('user_name', JSON.stringify(data.user), {
     expires: new Date(data.refresh_token_expire_at),
-    sameSite: 'lax',
     value: data.user.fullname,
   });
 
   cookieStorage.set('user_email', JSON.stringify(data.user), {
     expires: new Date(data.refresh_token_expire_at),
-    sameSite: 'lax',
     value: data.user.username,
   });
 

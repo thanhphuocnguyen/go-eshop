@@ -11,9 +11,9 @@ import (
 // CreateProductTx creates a new product in a transaction
 type UpdateProductTxParam struct {
 	Name          *string                        `json:"name" binding:"omitempty,min=3,max=100"`
-	Description   *string                        `json:"description" binding:"omitempty,min=6,max=1000"`
+	Description   *string                        `json:"description" binding:"omitempty,min=6,max=5000"`
 	Price         *float64                       `json:"price" binding:"omitempty,gt=0"`
-	Sku           *string                        `json:"sku" binding:"omitempty,alphanum"`
+	Sku           *string                        `json:"sku" binding:"omitempty"`
 	Slug          *string                        `json:"slug" binding:"omitempty"`
 	Stock         *int32                         `json:"stock" binding:"omitempty,gt=0"`
 	CategoryID    *string                        `json:"category_id,omitempty" binding:"omitempty,uuid"`
@@ -63,9 +63,24 @@ func (s *pgRepo) UpdateProductTx(ctx context.Context, productID uuid.UUID, arg U
 		if len(arg.Variants) > 0 {
 			rs.Variants = make([]uuid.UUID, 0)
 			for _, variant := range arg.Variants {
+				sku := ""
+				if variant.Attributes != nil {
+					attrValueIds := make([]int32, 0)
+					for _, attr := range *variant.Attributes {
+						attrValueIds = append(attrValueIds, attr.ValueID)
+					}
+					variantSku, err := GetVariantSKUWithAttributeNames(q, ctx, *arg.Sku, attrValueIds)
+					if err != nil {
+						log.Error().Err(err).Msg("GetVariantSKUWithAttributeNames Failed")
+						return err
+					}
+					sku = variantSku
+				}
+
 				if variant.ID != nil {
 					updateVariantParams := UpdateProductVariantParams{
-						ID: uuid.MustParse(*variant.ID),
+						ID:  uuid.MustParse(*variant.ID),
+						Sku: utils.GetPgTypeText(sku),
 					}
 					if variant.Stock != nil {
 						updateVariantParams.Stock = utils.GetPgTypeInt4(*variant.Stock)
@@ -76,9 +91,7 @@ func (s *pgRepo) UpdateProductTx(ctx context.Context, productID uuid.UUID, arg U
 					if variant.Price != nil {
 						updateVariantParams.Price = utils.GetPgNumericFromFloat(*variant.Price)
 					}
-					if variant.Sku != nil {
-						updateVariantParams.Sku = utils.GetPgTypeText(*variant.Sku)
-					}
+
 					if variant.IsActive != nil {
 						updateVariantParams.IsActive = utils.GetPgTypeBool(*variant.IsActive)
 					}
@@ -90,7 +103,7 @@ func (s *pgRepo) UpdateProductTx(ctx context.Context, productID uuid.UUID, arg U
 					}
 					rs.Variants = append(rs.Variants, updated.ID)
 					log.Info().Interface("attributes ", variant.Attributes).Msg("Log attributes")
-					if len(variant.Attributes) > 0 {
+					if variant.Attributes != nil && len(*variant.Attributes) > 0 {
 						// delete old attributes
 						err := q.DeleteProductVariantAttributes(ctx, updated.ID)
 						if err != nil {
@@ -99,16 +112,11 @@ func (s *pgRepo) UpdateProductTx(ctx context.Context, productID uuid.UUID, arg U
 						}
 						// create new attributes
 						createBulkProductVariantAttributesParam := make([]CreateBulkProductVariantAttributeParams, 0)
-						for _, attr := range variant.Attributes {
-							if len(attr.ValueIDs) == 0 {
-								continue
-							}
-							for _, valueID := range attr.ValueIDs {
-								createBulkProductVariantAttributesParam = append(createBulkProductVariantAttributesParam, CreateBulkProductVariantAttributeParams{
-									VariantID:        updated.ID,
-									AttributeValueID: valueID,
-								})
-							}
+						for _, attr := range *variant.Attributes {
+							createBulkProductVariantAttributesParam = append(createBulkProductVariantAttributesParam, CreateBulkProductVariantAttributeParams{
+								VariantID:        updated.ID,
+								AttributeValueID: attr.ValueID,
+							})
 						}
 						_, err = q.CreateBulkProductVariantAttribute(ctx, createBulkProductVariantAttributesParam)
 						if err != nil {
@@ -116,11 +124,14 @@ func (s *pgRepo) UpdateProductTx(ctx context.Context, productID uuid.UUID, arg U
 							return err
 						}
 					}
+
 				} else {
 					createVariantParams := CreateProductVariantParams{
 						ID:        uuid.New(),
 						ProductID: product.ID,
+						Sku:       sku,
 					}
+
 					if variant.Stock != nil {
 						createVariantParams.Stock = *variant.Stock
 					}
@@ -129,9 +140,6 @@ func (s *pgRepo) UpdateProductTx(ctx context.Context, productID uuid.UUID, arg U
 					}
 					if variant.Price != nil {
 						createVariantParams.Price = utils.GetPgNumericFromFloat(*variant.Price)
-					}
-					if variant.Sku != nil {
-						createVariantParams.Sku = *variant.Sku
 					}
 
 					created, err := q.CreateProductVariant(ctx, createVariantParams)
@@ -142,29 +150,26 @@ func (s *pgRepo) UpdateProductTx(ctx context.Context, productID uuid.UUID, arg U
 
 					rs.Variants = append(rs.Variants, created.ID)
 
-					if len(variant.Attributes) > 0 {
-						createBulkProductVariantAttributesParam := make([]CreateBulkProductVariantAttributeParams, 0)
-						for _, attr := range variant.Attributes {
-							if len(attr.ValueIDs) == 0 {
-								continue
-							}
-							for _, valueID := range attr.ValueIDs {
-								createBulkProductVariantAttributesParam = append(createBulkProductVariantAttributesParam, CreateBulkProductVariantAttributeParams{
-									VariantID:        created.ID,
-									AttributeValueID: valueID,
-								})
+					if variant.Attributes != nil && len(*variant.Attributes) > 0 {
+						createBulkProductVariantAttributesParam := make([]CreateBulkProductVariantAttributeParams, len(*variant.Attributes))
+						for i, attr := range *variant.Attributes {
+							createBulkProductVariantAttributesParam[i] = CreateBulkProductVariantAttributeParams{
+								VariantID:        created.ID,
+								AttributeValueID: attr.ValueID,
 							}
 						}
-						_, err = q.CreateBulkProductVariantAttribute(ctx, createBulkProductVariantAttributesParam)
+
+						rs, err := q.CreateBulkProductVariantAttribute(ctx, createBulkProductVariantAttributesParam)
 						if err != nil {
 							log.Error().Err(err).Msg("CreateProductVariantAttribute")
 							return err
 						}
+
+						log.Debug().Msgf("CreateProductVariantAttribute %v", rs)
 					}
 				}
 			}
 		}
-
 		rs.ID = product.ID
 
 		return nil

@@ -27,6 +27,7 @@ const _apiPaths = {
   COLLECTION: '/collections/:id',
   COLLECTION_PRODUCTS: '/collections/:id/products',
   PRODUCT_IMAGES_UPLOAD: '/images/product/:id',
+  VARIANT_IMAGES_UPLOAD: '/images/variants',
   PRODUCT_VARIANT_IMAGE_UPLOAD: '/images/product-variant/:id',
 } as const;
 

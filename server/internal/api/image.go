@@ -14,18 +14,17 @@ import (
 )
 
 // ------------------------------------------ Request and Response ------------------------------------------
+type PublicIDParam struct {
+	PublicID string `uri:"public_id" binding:"required"`
+}
 type RemoveImageParams struct {
 	ID        string  `uri:"id" binding:"required,uuid"`
 	VariantID *string `uri:"id" binding:"omitempty,uuid"`
 	ImageID   int32   `uri:"image_id" binding:"required"`
 }
 
-type ProductImageParam struct {
-	ProductID string `uri:"product_id" binding:"required,uuid"`
-}
-
-type ProductVariantImageParam struct {
-	VariantID string `uri:"variant_id" binding:"required,uuid"`
+type EntityIDParam struct {
+	EntityID string `uri:"entity_id" binding:"required,uuid"`
 }
 
 type ProductVariantImageModel struct {
@@ -49,59 +48,28 @@ type ImageResponse struct {
 
 // ------------------------------------------ Handlers ------------------------------------------
 
-// @Summary Upload a product images
+// @Summary Upload images
 // @Schemes http
-// @Description upload a product images by ID
+// @Description upload images
 // @Tags images
 // @Accept json
-// @Param product_id path int true "Product ID"
 // @Param files formData file true "Image file"
 // @Produce json
 // @Success 200 {object} GenericResponse[[]repository.Images]
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
-// @Router /images/product/{product_id} [post]
-func (sv *Server) uploadProductImages(c *gin.Context) {
-	var param ProductImageParam
-	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
-		return
-	}
-	existingProduct, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{
-		ID: uuid.MustParse(param.ProductID),
-	})
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", errors.New("product not found")))
-			return
-		}
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
-		return
-	}
-
+// @Router /images [post]
+func (sv *Server) uploadImages(c *gin.Context) {
 	form, _ := c.MultipartForm()
 	files := form.File["files"]
+	variantIDs := c.PostFormArray("variant_ids")
+	log.Debug().Msgf("variant_ids: %v", variantIDs)
 	if len(files) == 0 {
 		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("missing files in request")))
 		return
 	}
-	if len(files) > 3 {
+	if len(files) > 5 {
 		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("maximum 5 files allowed")))
-		return
-	}
-
-	productImages, err := sv.repo.GetProductImagesProductID(c, uuid.MustParse(param.ProductID))
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", errors.New("product not found")))
-			return
-		}
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
-		return
-	}
-
-	if len(productImages)+len(files) > 3 {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("maximum 3 files allowed please remove old files")))
 		return
 	}
 
@@ -118,18 +86,101 @@ func (sv *Server) uploadProductImages(c *gin.Context) {
 			MimeType:   utils.GetPgTypeText(file.Header.Get("Content-Type")),
 			FileSize:   utils.GetPgTypeInt8(file.Size),
 		})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "save image info to db failed", err))
+			return
+		}
+
+		images = append(images, ImageResponse{
+			ID:           img.ID,
+			ExternalID:   img.ExternalID,
+			Url:          img.Url,
+			MimeType:     img.MimeType.String,
+			FileSize:     img.FileSize.Int64,
+			DisplayOrder: int16(i),
+		})
+	}
+	c.JSON(http.StatusCreated, createSuccessResponse(c, images, "", nil, nil))
+}
+
+// @Summary Upload product images
+// @Schemes http
+// @Description upload product images by ID
+// @Tags images
+// @Accept json
+// @Param product_id path int true "Product ID"
+// @Param files formData file true "Image file"
+// @Produce json
+// @Success 200 {object} GenericResponse[[]repository.Images]
+// @Failure 404 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /images/product/{product_id} [post]
+func (sv *Server) uploadProductImages(c *gin.Context) {
+	var param EntityIDParam
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
+		return
+	}
+	form, _ := c.MultipartForm()
+	files := form.File["files"]
+	if len(files) == 0 {
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("missing files in request")))
+		return
+	}
+	if len(files) > 3 {
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("maximum 5 files allowed")))
+		return
+	}
+
+	existingProduct, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{
+		ID: uuid.MustParse(param.EntityID),
+	})
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", errors.New("product not found")))
+			return
+		}
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
+		return
+	}
+
+	productImages, err := sv.repo.GetImagesByEntityID(c, existingProduct.ID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
+		return
+	}
+
+	if len(productImages)+len(files) > 3 {
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("maximum 3 files allowed please remove old files")))
+		return
+	}
+
+	images := make([]ImageResponse, len(files))
+
+	for i, file := range files {
+		id, url, err := sv.uploadService.UploadFile(c, file)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "upload to server failed", err))
+			return
+		}
+		img, err := sv.repo.CreateImage(c, repository.CreateImageParams{
+			ExternalID: id,
+			Url:        url,
+			MimeType:   utils.GetPgTypeText(file.Header.Get("Content-Type")),
+			FileSize:   utils.GetPgTypeInt8(file.Size),
+		})
 		assignment, err := sv.repo.CreateImageAssignment(c, repository.CreateImageAssignmentParams{
 			ImageID:      img.ID,
 			EntityID:     existingProduct.ID,
 			EntityType:   repository.ProductImageType,
-			DisplayOrder: int16(i),
+			DisplayOrder: int16(i) + 1,
 			Role:         repository.ProductRole,
 		})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "save image info to db failed", err))
 			return
 		}
-		images = append(images, ImageResponse{
+		images[i] = ImageResponse{
 			ID:           img.ID,
 			ExternalID:   img.ExternalID,
 			Url:          img.Url,
@@ -139,86 +190,10 @@ func (sv *Server) uploadProductImages(c *gin.Context) {
 			EntityType:   assignment.EntityType,
 			DisplayOrder: assignment.DisplayOrder,
 			Role:         assignment.Role,
-		})
+		}
 	}
 	c.JSON(http.StatusCreated, createSuccessResponse(c, images, "", nil, nil))
 
-}
-
-// @Summary Upload a product variant image
-// @Schemes http
-// @Description upload a product variant image by ID
-// @Tags images
-// @Accept json
-// @Param product_id path int true "Product ID"
-// @Param file formData file true "Image file"
-// @Produce json
-// @Success 200 {object} GenericResponse[[]repository.Image]
-// @Failure 404 {object} gin.H
-// @Failure 500 {object} gin.H
-// @Router /images/product/{variant_id} [post]
-func (sv *Server) uploadProductVariantImage(c *gin.Context) {
-	var param ProductVariantImageParam
-	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
-		return
-	}
-
-	existingVariant, err := sv.repo.GetProductVariantByID(c, uuid.MustParse(param.VariantID))
-
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusBadRequest, "", errors.New("product not found")))
-			return
-		}
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
-		return
-	}
-
-	file, err := c.FormFile("file")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, fmt.Sprintf("failed to bind file: %v", err), err))
-		return
-	}
-
-	if file == nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, fmt.Sprintf("missing file in request"), errors.New("missing file in request")))
-		return
-	}
-	// file name is public id
-	publicID, url, err := sv.uploadService.UploadFile(c, file)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
-		return
-	}
-
-	img, err := sv.repo.UpdateProductVariant(c, repository.UpdateProductVariantParams{
-		ID:       existingVariant.ID,
-		ImageUrl: utils.GetPgTypeText(url),
-		ImageID:  utils.GetPgTypeText(publicID),
-	})
-
-	if err != nil {
-		sv.uploadService.RemoveFile(c, publicID)
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, fmt.Sprintf("failed to remove file: %v", publicID), err))
-		return
-	}
-
-	if existingVariant.ImageID.Valid {
-		errRemoveFile := sv.removeProductVariantImageUtil(c, existingVariant.ImageID.String)
-		if errRemoveFile != nil {
-			log.Error().Err(err).Str("external_id", existingVariant.ImageID.String).Msg("remove product variant image error")
-			// TODO: push the error to the queue
-		}
-	}
-
-	resp := ProductVariantImageModel{
-		ID:        img.ImageID.String,
-		VariantID: existingVariant.ID,
-		ImageUrl:  img.ImageUrl.String,
-		ImageID:   img.ImageID.String,
-	}
-	c.JSON(http.StatusCreated, createSuccessResponse(c, resp, "", nil, nil))
 }
 
 // @Summary Get list of product image by ID
@@ -232,21 +207,21 @@ func (sv *Server) uploadProductVariantImage(c *gin.Context) {
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /images/product/{product_id} [get]
-func (sv *Server) getProductImages(c *gin.Context) {
-	var param ProductImageParam
+func (sv *Server) getImages(c *gin.Context) {
+	var param EntityIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
 
-	images, err := sv.repo.GetProductImagesProductID(c, uuid.MustParse(param.ProductID))
+	images, err := sv.repo.GetImagesByEntityID(c, uuid.MustParse(param.EntityID))
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, fmt.Sprintf("server error"), err))
 		return
 	}
 	if len(images) == 0 {
-		c.JSON(http.StatusNotFound, createErrorResponse(http.StatusBadRequest, "", errors.New("product not found")))
+		c.JSON(http.StatusNotFound, createErrorResponse(http.StatusBadRequest, fmt.Sprintf("not images found"), errors.New("product not found")))
 		return
 	}
 	c.JSON(http.StatusOK, createSuccessResponse(c, images, "", nil, nil))
@@ -263,7 +238,7 @@ func (sv *Server) getProductImages(c *gin.Context) {
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /images/product/{product_id} [delete]
-func (sv *Server) removeProductImage(c *gin.Context) {
+func (sv *Server) removeImage(c *gin.Context) {
 	_, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", errors.New("missing user payload in context")))
@@ -276,36 +251,83 @@ func (sv *Server) removeProductImage(c *gin.Context) {
 		return
 	}
 
-	err := sv.removeImageUtil(c, params.ImageID)
+	image, err := sv.repo.GetImageFromID(c, repository.GetImageFromIDParams{
+		ID:         params.ImageID,
+		EntityType: repository.ProductImageType,
+	})
 	if err != nil {
-		createErrorResponse(http.StatusBadRequest, "", err)
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusBadRequest, "", errors.New("image not found")))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		return
+	}
+	if image.EntityType != repository.ProductImageType {
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("image not found")))
+		return
+	}
+
+	msg, err := sv.removeImageUtil(c, image.ExternalID)
+	if err != nil {
+		createErrorResponse(http.StatusBadRequest, msg, err)
 		return
 	}
 
 	c.Status(http.StatusNoContent)
 }
 
-func (sv *Server) removeProductVariantImageUtil(c *gin.Context, imgID string) (err error) {
-	_, err = sv.uploadService.RemoveFile(c, imgID)
-	return
-}
+// @Summary Remove a product by external ID
+// @Schemes http
+// @Description remove a product by external ID
+// @Tags images
+// @Accept json
+// @Param publicID path int true "Product ID"
+// @Produce json
+// @Success 200 {object} GenericResponse
+// @Failure 404 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /images/{publicID} [delete]
+func (sv *Server) removeImageByPublicID(c *gin.Context) {
+	_, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", errors.New("missing user payload in context")))
+		return
+	}
+	var params PublicIDParam
+	if err := c.ShouldBindUri(&params); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
+		return
+	}
+	msg, err := sv.removeImageUtil(c, params.PublicID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, msg, err))
+		return
+	}
 
-func (sv *Server) removeImageUtil(c *gin.Context, imageID int32) (err error) {
-	img, err := sv.repo.GetImageFromID(c, imageID)
+	image, err := sv.repo.GetImageFromExternalID(c, params.PublicID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusBadRequest, "", err))
+			c.Status(http.StatusNoContent)
 			return
 		}
 		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
 
-	msg, err := sv.uploadService.RemoveFile(c, img.ExternalID)
-	err = sv.repo.DeleteProductImage(c, img.ID)
+	err = sv.repo.DeleteProductImage(c, image.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, msg, err))
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
-	return
+
+	c.Status(http.StatusNoContent)
+}
+
+func (sv *Server) removeImageUtil(c *gin.Context, publicID string) (msg string, err error) {
+	return sv.uploadService.RemoveFile(c, publicID)
 }

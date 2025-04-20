@@ -17,8 +17,12 @@ type RequestOptions = {
 let isRefreshing = false;
 let refreshPromise: Promise<string | null> | null = null;
 
-async function getAccessToken(req?: any, res?: any): Promise<string | null> {
-  const token = (await getCookie('token', { req, res })?.toString()) || null;
+async function getAccessToken(
+  req?: any,
+  res?: any
+): Promise<string | undefined> {
+  const token = await getCookie('token', { req, res })?.toString();
+  console.log({ token });
   return token;
 }
 
@@ -91,7 +95,6 @@ export async function apiFetch<T = any>(
   const isFormData = body instanceof FormData;
 
   const token = authToken || (await getAccessToken(req, res));
-
   const finalHeaders: Record<string, string> = {
     ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -106,9 +109,8 @@ export async function apiFetch<T = any>(
     ...nextOptions,
   });
 
-  if (response.status === 401 && retryOnUnauthorized) {
+  if (response.status === 401 && retryOnUnauthorized && !token) {
     const newToken = await refreshAccessToken(req, res);
-
     if (newToken) {
       return apiFetch<T>(endpoint, {
         method,

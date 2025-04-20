@@ -224,7 +224,6 @@ func (sv *Server) getProductsByBrand(c *gin.Context) {
 			Price:       price.Float64,
 			Slug:        p.Slug,
 			Sku:         p.BaseSku.String,
-			CreatedAt:   p.CreatedAt.Format("2006-01-02 15:04:05"),
 		})
 	}
 

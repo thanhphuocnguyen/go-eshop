@@ -3,6 +3,15 @@ DB_URL=postgresql://postgres:postgres@localhost:5433/eshop?sslmode=disable
 create-migration:
 	@echo "Creating migration file..."
 	migrate create -ext sql -dir migrations -seq $(name)
+goto-migration:
+	@echo "Creating migration file..."
+	migrate -path migrations -database "$(DB_URL)" goto $(v)
+force-migration:
+	@echo "Creating migration file..."
+	migrate -path migrations -database "$(DB_URL)" force $(v)
+migrate-version:
+	@echo "Getting current migration version..."
+	migrate -path migrations -database "$(DB_URL)" version
 migrate-up:
 	@echo "Running migrations..."
 	migrate -path migrations -database "$(DB_URL)" up

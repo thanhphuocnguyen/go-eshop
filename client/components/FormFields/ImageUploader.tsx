@@ -47,7 +47,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           <input {...getInputProps()} />
           <CloudArrowUpIcon
             className={clsx(
-              'mx-auto mb-2 text-gray-500 size-20',
+              'mx-auto text-gray-500 size-16',
               'hover:text-blue-300 transition-all duration-500 ease-in-out'
             )}
           />

@@ -1,16 +1,18 @@
 import React from 'react';
 
-export interface ProductImageFile {
-  variantID: number | null;
-  image: File | null;
-}
+// Define types for variant images with variant assignments
+export type VariantImage = {
+  id?: string; // For existing images from the backend
+  file: File;
+  preview: string;
+  variantIds: string[]; // IDs of variants this image is assigned to
+};
+
 const ProductDetailFormContext = React.createContext<{
-  productImages: ProductImageFile[];
-  setProductImages: React.Dispatch<React.SetStateAction<ProductImageFile[]>>;
-  productVariantImages: ProductImageFile[];
-  setProductVariantImages: React.Dispatch<
-    React.SetStateAction<ProductImageFile[]>
-  >;
+  productImages: File[];
+  setProductImages: React.Dispatch<React.SetStateAction<File[]>>;
+  variantImages: VariantImage[];
+  setVariantImages: React.Dispatch<React.SetStateAction<VariantImage[]>>;
 } | null>(null);
 
 export const useProductDetailFormContext = () => {
@@ -26,17 +28,16 @@ export const useProductDetailFormContext = () => {
 export const ProductDetailFormProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
-  const [productImages, setProductImages] = React.useState<ProductImageFile[]>(
-    []
-  );
-  const [productVariantImages, setProductVariantImages] = React.useState<
-    ProductImageFile[]
+  const [productImages, setProductImages] = React.useState<File[]>([]);
+  const [variantImages, setVariantImages] = React.useState<
+    VariantImage[]
   >([]);
+  
   return (
     <ProductDetailFormContext.Provider
       value={{
-        productVariantImages,
-        setProductVariantImages,
+        variantImages,
+        setVariantImages,
         productImages,
         setProductImages,
       }}

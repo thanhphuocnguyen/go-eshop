@@ -86,7 +86,7 @@ export default function AdminCategoryDetail({
   }
 
   return (
-    <div className='h-full overflow-hidden'>
+    <div className='overflow-y-auto h-full'>
       <Link
         href='/admin/categories'
         className='flex space-x-2 items-center hover:underline text-blue-400'

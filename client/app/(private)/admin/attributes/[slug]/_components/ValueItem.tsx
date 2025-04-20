@@ -3,10 +3,10 @@ import clsx from 'clsx';
 import React from 'react';
 import { CSS } from '@dnd-kit/utilities';
 import { useSortable } from '@dnd-kit/sortable';
-import { Checkbox, Field, Input, Label } from '@headlessui/react';
+import { Button, Field, Input, Label, Switch } from '@headlessui/react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { AttributeFormModel, AttributeValueFormModel } from '@/lib/definitions';
-import { XCircleIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XCircleIcon } from '@heroicons/react/24/outline';
 
 interface ValueItemProps {
   idx: number;
@@ -26,13 +26,14 @@ const ValueItem: React.FC<ValueItemProps> = ({ idx, id, remove }) => {
   return (
     <li
       ref={setNodeRef}
-      className={clsx('border border-form-field-outline rounded-lg p-4 mb-2')}
-      {...attributes}
-      {...listeners}
+      className={clsx('border w-full border-form-field-outline rounded-lg py-2 px-6 mb-2')}
       style={style}
     >
-      <div className={clsx('grid grid-cols-6 gap-4 items-center')}>
-        <div className='col-span-2'>
+      <div className={clsx('flex gap-4 items-center')}>
+        <Button {...attributes} {...listeners} className={'col-span-1'}>
+          <Bars3Icon className='size-5 text-form-field-contrast-text' />
+        </Button>
+        <div className='w-56'>
           <Field>
             <Label className='text-sm/6 font-semibold'>Value</Label>
             <Input
@@ -44,7 +45,7 @@ const ValueItem: React.FC<ValueItemProps> = ({ idx, id, remove }) => {
             />
           </Field>
         </div>
-        <div className='col-span-2'>
+        <div className='w-56'>
           <Field>
             <Label className='text-sm/6 font-semibold'>Display Value</Label>
             <Input
@@ -56,42 +57,33 @@ const ValueItem: React.FC<ValueItemProps> = ({ idx, id, remove }) => {
             />
           </Field>
         </div>
-        <div className='col-span-1'>
+        <div className='w-40'>
           <Field className='flex items-center gap-2'>
             <Controller
               control={control}
               name={`values.${idx}.is_active`}
               render={({ field: { value, onChange, ...rest } }) => (
-                <Checkbox
+                <Switch
                   {...rest}
                   checked={value}
-                  onChange={(checked) => {
-                    onChange(checked);
-                  }}
-                  className={clsx(
-                    'group block size-5 rounded border bg-white data-[checked]:bg-blue-500'
-                  )}
-                  id={`values.${idx}.is_default`}
+                  onChange={onChange}
+                  className={`${
+                    value ? 'bg-blue-500' : 'bg-gray-300'
+                  } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
                 >
-                  <svg
-                    className='stroke-white opacity-0 group-data-[checked]:opacity-100'
-                    viewBox='0 0 14 14'
-                    fill='none'
-                  >
-                    <path
-                      d='M3 8L6 11L11 3.5'
-                      strokeWidth={2}
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                    />
-                  </svg>
-                </Checkbox>
+                  <span className="sr-only">Active</span>
+                  <span
+                    className={`${
+                      value ? 'translate-x-6' : 'translate-x-1'
+                    } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                  />
+                </Switch>
               )}
             />
             <Label>Active</Label>
           </Field>
         </div>
-        <div className='col-span-1 flex justify-end'>
+        <div className='flex flex-1 items-center justify-end w-20'>
           <button type='button' onClick={() => remove(idx)}>
             <XCircleIcon className='size-6 text-white bg-danger rounded-full' />
           </button>

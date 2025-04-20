@@ -35,8 +35,6 @@ export async function middleware(request: NextRequest) {
       await refreshResult.json();
     response.cookies.set('token', data.access_token, {
       expires: new Date(data.access_token_expires_at),
-      sameSite: 'lax',
-      httpOnly: true,
     });
   } catch (error) {
     console.error(error);

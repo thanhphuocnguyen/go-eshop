@@ -25,6 +25,9 @@ ORDER BY a.id, av.display_order;
 -- name: GetAttributeByName :one
 SELECT * FROM attributes WHERE name = $1 LIMIT 1;
 
+-- name: GetAttributeByIDs :many
+SELECT * FROM attributes WHERE id = ANY(sqlc.arg(ids)::int[]) ORDER BY attributes.id;
+
 -- name: UpdateAttribute :one
 UPDATE attributes SET name = $1 WHERE id = $2 RETURNING *;
 
@@ -44,6 +47,9 @@ SELECT * FROM attribute_values WHERE id = $1;
 -- name: GetAttributeValues :many
 SELECT * FROM attribute_values WHERE attribute_id = $1 ORDER BY attribute_values.id;
 
+-- name: GetAttributeValuesByIDs :many
+SELECT * FROM attribute_values WHERE id = ANY(sqlc.arg(ids)::int[]) ORDER BY attribute_values.id;
+
 -- name: UpdateAttributeValue :one
 UPDATE 
     attribute_values 
@@ -61,6 +67,7 @@ DELETE FROM attribute_values WHERE id = $1;
 -- Product Variant attributes
 -- name: CreateProductVariantAttribute :one
 INSERT INTO variant_attribute_values (variant_id, attribute_value_id) VALUES ($1, $2) RETURNING *;
+
 -- name: CreateBulkProductVariantAttribute :copyfrom
 INSERT INTO variant_attribute_values (variant_id, attribute_value_id) VALUES ($1, $2);
 

@@ -14,17 +14,13 @@ import clsx from 'clsx';
 import { CheckIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { Control, Controller, FieldValues, Path } from 'react-hook-form';
 
-type BaseOption = {
-  id: number | string;
-  name: string;
-};
-
 interface StyledComboBoxControllerProps<T extends FieldValues> {
   label: string;
-  options: BaseOption[];
+  options: any[];
   error?: boolean;
   message?: string;
   name: Path<T>;
+  getDisplayValue?: (option: any) => string;
   placeholder?: string;
   disabled?: boolean;
   control: Control<T>;
@@ -41,6 +37,7 @@ export const StyledComboBoxController = <T extends FieldValues>({
   options,
   name,
   nullable,
+  getDisplayValue,
 }: StyledComboBoxControllerProps<T>) => {
   const [query, setQuery] = useState('');
   const [filteredOptions, setFilteredOptions] = useState(options);
@@ -48,7 +45,9 @@ export const StyledComboBoxController = <T extends FieldValues>({
   useEffect(() => {
     setFilteredOptions(
       options.filter((opt) =>
-        opt.name.toLowerCase().includes(query.toLowerCase())
+        (getDisplayValue ? getDisplayValue(opt) : (opt.name ?? ''))
+          .toLowerCase()
+          .includes(query.toLowerCase())
       )
     );
   }, [query, options]);
@@ -62,11 +61,9 @@ export const StyledComboBoxController = <T extends FieldValues>({
         render={({ field: { onChange, ...rest } }) => (
           <Combobox
             {...rest}
-            disabled={disabled}
             as={'div'}
-            onChange={(value) => {
-              onChange(value);
-            }}
+            onChange={onChange}
+            disabled={disabled}
             onClose={() => setQuery('')}
           >
             <div className='relative w-full mt-1'>
@@ -76,7 +73,9 @@ export const StyledComboBoxController = <T extends FieldValues>({
                   'w-full rounded-lg border border-gray-300 bg-white py-3 pr-8 pl-3 text-sm/6 text-gray-500 transition-all duration-500 shadow-none ease-in-out',
                   'focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 focus:ring-1 focus:ring-sky-400 focus:shadow-lg'
                 )}
-                displayValue={(option: BaseOption) => option?.name}
+                displayValue={
+                  getDisplayValue ? getDisplayValue : (opt) => opt?.name
+                }
                 onChange={(event) => setQuery(event.target.value)}
               />
               <ComboboxButton className='group absolute inset-y-0 right-0 px-2.5'>
@@ -107,7 +106,9 @@ export const StyledComboBoxController = <T extends FieldValues>({
                   className='group flex cursor-default items-center gap-2 rounded-lg py-1.5 px-3 select-none data-[focus]:bg-tertiary'
                 >
                   <CheckIcon className='invisible size-4 fill-white group-data-[selected]:visible' />
-                  <div className='text-sm/6 text-gray-500'>{opt.name}</div>
+                  <div className='text-sm/6 text-gray-500'>
+                    {getDisplayValue ? getDisplayValue(opt) : opt.name}
+                  </div>
                 </ComboboxOption>
               ))}
             </ComboboxOptions>

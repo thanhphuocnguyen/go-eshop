@@ -89,9 +89,6 @@ func mapToCartResponse(cart repository.Cart, dataRows []repository.GetCartItemsB
 				},
 			}
 			productVariant.Sku = &row.Product.BaseSku.String
-			if row.ImageUrl.Valid {
-				productVariant.ImageURL = &row.ImageUrl.String
-			}
 			cartItems = append(cartItems, productVariant)
 		} else {
 			cartItems[lastIdx].Attributes = append(cartItems[lastIdx].Attributes, cartItemAttributeModel{

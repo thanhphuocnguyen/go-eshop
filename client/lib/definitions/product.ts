@@ -44,34 +44,50 @@ export interface ProductCreateBody {
   }[];
 }
 
-export const AttributeValueFormSchema = z.object({
-  id: z.number().optional(),
+export const BaseAttributeValueFormSchema = z.object({
   value: z.string().optional(),
   display_value: z.string().optional(),
   display_order: z.number().optional(),
-  created_at: z.date().optional(),
   is_active: z.boolean().optional(),
 });
 
-export const AttributeFormSchema = z.object({
-  id: z.number(),
+export const BaseAttributeFormSchema = z.object({
   name: z.string(),
-  created_at: z.string().optional().readonly(),
-  values: z.array(AttributeValueFormSchema),
 });
+
+export const AttributeFormSchema = BaseAttributeFormSchema.extend({
+  values: BaseAttributeValueFormSchema.array().min(1, {
+    message: 'At least one value is required',
+  }),
+});
+
+export const ProductVariantAttributeFormSchema = BaseAttributeFormSchema.extend(
+  {
+    value: BaseAttributeValueFormSchema.extend({
+      id: z.number().min(1, {
+        message: 'Value is required',
+      }),
+    }).nullish(),
+  }
+);
 
 export const VariantFormSchema = z.object({
   id: z.string().optional(),
   price: z.coerce.number().gt(0),
   stock: z.coerce.number().gte(0),
-  sku: z.string().nonempty(),
   weight: z.preprocess((value) => {
     if (value === '') return undefined;
     return Number(value);
   }, z.number().gte(0).nullish()),
-  image_url: z.string().optional(),
-  is_active: z.boolean().optional().default(true),
-  attributes: z.array(AttributeFormSchema).min(1),
+  is_active: z.boolean().default(true),
+  attributes: z
+    .array(
+      ProductVariantAttributeFormSchema.extend({
+        id: z.number().optional(),
+      })
+    )
+    .min(1),
+  sku: z.string().readonly().optional(),
 });
 
 export const ProductFormSchema = z.object({
@@ -101,7 +117,75 @@ export const ProductFormSchema = z.object({
 export type ProductModelForm = z.infer<typeof ProductFormSchema>;
 export type VariantModelForm = z.infer<typeof VariantFormSchema>;
 export type AttributeFormModel = z.infer<typeof AttributeFormSchema>;
-export type AttributeValueFormModel = z.infer<typeof AttributeValueFormSchema>;
+export type ProductVariantAttributeFormModel = z.infer<
+  typeof ProductVariantAttributeFormSchema
+>;
+export type AttributeValueFormModel = z.infer<
+  typeof BaseAttributeValueFormSchema
+>;
+
+export type AttributeValueDetailModel = {
+  id: number;
+  value: string;
+  display_value: string;
+  display_order: number;
+  created_at: Date;
+  is_active: boolean;
+};
+export type AttributeDetailModel = {
+  id: number;
+  name: string;
+  created_at: Date;
+  values: AttributeValueDetailModel[];
+};
+
+export type ProductVariantAttributeModel = Omit<
+  AttributeDetailModel,
+  'values'
+> & {
+  value: AttributeValueDetailModel;
+};
+
+export type VariantDetailModel = {
+  attributes: ProductVariantAttributeModel[];
+  id: string;
+  price: number;
+  stock_qty: number;
+  sku: string;
+  weight: number;
+  is_active: boolean;
+  image_url: string;
+  image_id: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AssignmentImageModel = {
+  id: number;
+  entity_id: number;
+  entity_type: string;
+  display_order: number;
+  role: string;
+};
+
+export type ProductImageModel = {
+  id: number;
+  external_id: string;
+  url: string;
+  mime_type?: string;
+  file_size?: number;
+  entity_id?: number;
+  entity_type?: string;
+  display_order?: number;
+  role?: string;
+};
+
+export type VariantImageMode = {
+  assignments: AssignmentImageModel[];
+  id: number;
+  external_id: string;
+  url: string;
+};
 
 export type ProductDetailModel = {
   id: string;
@@ -115,30 +199,9 @@ export type ProductDetailModel = {
   collection: GeneralCategoryModel;
   brand: GeneralCategoryModel;
   published: boolean;
-  variants: {
-    attributes: AttributeFormModel[];
-    id: string;
-    price: number;
-    stock_qty: number;
-    sku: string;
-    weight: number;
-    is_active: boolean;
-    image_url: string;
-    image_id: number;
-    created_at: Date;
-    updated_at: Date;
-  }[];
-  images: {
-    id: number;
-    external_id: string;
-    url: string;
-    mime_type?: string;
-    file_size?: number;
-    entity_id?: number;
-    entity_type?: string;
-    display_order?: number;
-    role?: string;
-  }[];
-  created_at: Date;
-  updated_at: Date;
+  variants: VariantDetailModel[];
+  images: ProductImageModel[];
+  variant_images: VariantImageMode[];
+  created_at: string; // date
+  updated_at: string; // date
 };
