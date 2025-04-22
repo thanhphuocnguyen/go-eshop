@@ -106,7 +106,7 @@ type CreateProductParams struct {
 	Name         string         `json:"name"`
 	Description  pgtype.Text    `json:"description"`
 	BasePrice    pgtype.Numeric `json:"base_price"`
-	BaseSku      pgtype.Text    `json:"base_sku"`
+	BaseSku      string         `json:"base_sku"`
 	Slug         string         `json:"slug"`
 	BrandID      pgtype.UUID    `json:"brand_id"`
 	CollectionID pgtype.UUID    `json:"collection_id"`
@@ -250,23 +250,21 @@ SELECT
     p.id as product_id, p.name, p.description, p.base_price, p.base_sku, p.slug, p.updated_at, p.created_at, p.is_active,
     c.id AS category_id, c.name AS category_name,
     cl.id AS collection_id, cl.name AS collection_name,
-    b.id AS brand_id, b.name AS brand_name,
-    img.id AS img_id, img.url AS img_url, img.alt_text AS img_alt, 
-    img.caption AS img_cap, img.mime_type AS img_mime_type, img.file_size AS image_size, 
-    img.width AS img_w, img.height AS img_h, img.external_id AS img_external_id,
-    ia.display_order AS img_assignment_display_order, ia.role AS img_assignment_role
+    b.id AS brand_id, b.name AS brand_name
+    -- img.id AS img_id, img.url AS img_url, img.alt_text AS img_alt, 
+    -- img.caption AS img_cap, img.mime_type AS img_mime_type, img.file_size AS image_size, 
+    -- img.width AS img_w, img.height AS img_h, img.external_id AS img_external_id,
+    -- ia.display_order AS img_assignment_display_order, ia.role AS img_assignment_role
 FROM
     products p
-LEFT JOIN categories as c ON p.category_id = c.id
+JOIN categories as c ON p.category_id = c.id
+JOIN brands AS b ON p.brand_id = b.id
 LEFT JOIN collections as cl ON p.collection_id = cl.id
-LEFT JOIN brands AS b ON p.brand_id = b.id
-LEFT JOIN image_assignments AS ia ON p.id = ia.entity_id AND ia.entity_type = 'product'
-LEFT JOIN images AS img ON img.id = ia.image_id
 WHERE
     p.id = $1 AND
     p.is_active = COALESCE($2, TRUE)
 ORDER BY
-    p.id, ia.display_order ASC, img.id ASC
+    p.id
 `
 
 type GetProductDetailParams struct {
@@ -275,32 +273,21 @@ type GetProductDetailParams struct {
 }
 
 type GetProductDetailRow struct {
-	ProductID                 uuid.UUID      `json:"product_id"`
-	Name                      string         `json:"name"`
-	Description               pgtype.Text    `json:"description"`
-	BasePrice                 pgtype.Numeric `json:"base_price"`
-	BaseSku                   pgtype.Text    `json:"base_sku"`
-	Slug                      string         `json:"slug"`
-	UpdatedAt                 time.Time      `json:"updated_at"`
-	CreatedAt                 time.Time      `json:"created_at"`
-	IsActive                  pgtype.Bool    `json:"is_active"`
-	CategoryID                pgtype.UUID    `json:"category_id"`
-	CategoryName              pgtype.Text    `json:"category_name"`
-	CollectionID              pgtype.UUID    `json:"collection_id"`
-	CollectionName            pgtype.Text    `json:"collection_name"`
-	BrandID                   pgtype.UUID    `json:"brand_id"`
-	BrandName                 pgtype.Text    `json:"brand_name"`
-	ImgID                     pgtype.Int4    `json:"img_id"`
-	ImgUrl                    pgtype.Text    `json:"img_url"`
-	ImgAlt                    pgtype.Text    `json:"img_alt"`
-	ImgCap                    pgtype.Text    `json:"img_cap"`
-	ImgMimeType               pgtype.Text    `json:"img_mime_type"`
-	ImageSize                 pgtype.Int8    `json:"image_size"`
-	ImgW                      pgtype.Int4    `json:"img_w"`
-	ImgH                      pgtype.Int4    `json:"img_h"`
-	ImgExternalID             pgtype.Text    `json:"img_external_id"`
-	ImgAssignmentDisplayOrder pgtype.Int2    `json:"img_assignment_display_order"`
-	ImgAssignmentRole         pgtype.Text    `json:"img_assignment_role"`
+	ProductID      uuid.UUID      `json:"product_id"`
+	Name           string         `json:"name"`
+	Description    pgtype.Text    `json:"description"`
+	BasePrice      pgtype.Numeric `json:"base_price"`
+	BaseSku        string         `json:"base_sku"`
+	Slug           string         `json:"slug"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+	CreatedAt      time.Time      `json:"created_at"`
+	IsActive       pgtype.Bool    `json:"is_active"`
+	CategoryID     uuid.UUID      `json:"category_id"`
+	CategoryName   string         `json:"category_name"`
+	CollectionID   pgtype.UUID    `json:"collection_id"`
+	CollectionName pgtype.Text    `json:"collection_name"`
+	BrandID        uuid.UUID      `json:"brand_id"`
+	BrandName      string         `json:"brand_name"`
 }
 
 func (q *Queries) GetProductDetail(ctx context.Context, arg GetProductDetailParams) ([]GetProductDetailRow, error) {
@@ -328,17 +315,6 @@ func (q *Queries) GetProductDetail(ctx context.Context, arg GetProductDetailPara
 			&i.CollectionName,
 			&i.BrandID,
 			&i.BrandName,
-			&i.ImgID,
-			&i.ImgUrl,
-			&i.ImgAlt,
-			&i.ImgCap,
-			&i.ImgMimeType,
-			&i.ImageSize,
-			&i.ImgW,
-			&i.ImgH,
-			&i.ImgExternalID,
-			&i.ImgAssignmentDisplayOrder,
-			&i.ImgAssignmentRole,
 		); err != nil {
 			return nil, err
 		}
@@ -381,18 +357,16 @@ SELECT
     v.id, v.product_id, v.sku, v.price, v.stock, v.weight, v.is_active, v.created_at, v.updated_at,
     a.id as attr_id, a.name as attr_name,
     av.id as attr_val_id, av.value as attr_value, av.display_order as attr_display_order, 
-    av.is_active as attr_val_is_active, av.display_value as attr_display_value,
-    img.id AS img_id, img.url AS img_url, img.alt_text AS img_alt, 
-    img.caption AS img_cap, img.mime_type AS img_mime_type, img.file_size AS image_size, 
-    img.width AS img_w, img.height AS img_h, img.external_id AS img_external_id,
-    ia.display_order AS img_assignment_display_order, ia.role AS img_assignment_role
+    av.is_active as attr_val_is_active, av.display_value as attr_display_value
+    -- img.id AS img_id, img.url AS img_url, img.alt_text AS img_alt, 
+    -- img.caption AS img_cap, img.mime_type AS img_mime_type, img.file_size AS image_size, 
+    -- img.width AS img_w, img.height AS img_h, img.external_id AS img_external_id,
+    -- ia.display_order AS img_assignment_display_order, ia.role AS img_assignment_role
 FROM
     product_variants AS v
-LEFT JOIN variant_attribute_values as vav ON v.id = vav.variant_id
-LEFT JOIN attribute_values as av ON vav.attribute_value_id = av.id
-LEFT JOIN attributes as a ON av.attribute_id = a.id
-LEFT JOIN image_assignments AS ia ON v.id = ia.entity_id AND ia.entity_type = 'product_variant'
-LEFT JOIN images AS img ON img.id = ia.image_id
+JOIN variant_attribute_values as vav ON v.id = vav.variant_id
+JOIN attribute_values as av ON vav.attribute_value_id = av.id
+JOIN attributes as a ON av.attribute_id = a.id
 WHERE
     v.product_id = $1 AND
     v.is_active = COALESCE($2, TRUE)
@@ -406,33 +380,22 @@ type GetProductVariantsParams struct {
 }
 
 type GetProductVariantsRow struct {
-	ID                        uuid.UUID      `json:"id"`
-	ProductID                 uuid.UUID      `json:"product_id"`
-	Sku                       string         `json:"sku"`
-	Price                     pgtype.Numeric `json:"price"`
-	Stock                     int32          `json:"stock"`
-	Weight                    pgtype.Numeric `json:"weight"`
-	IsActive                  pgtype.Bool    `json:"is_active"`
-	CreatedAt                 time.Time      `json:"created_at"`
-	UpdatedAt                 time.Time      `json:"updated_at"`
-	AttrID                    pgtype.Int4    `json:"attr_id"`
-	AttrName                  pgtype.Text    `json:"attr_name"`
-	AttrValID                 pgtype.Int4    `json:"attr_val_id"`
-	AttrValue                 pgtype.Text    `json:"attr_value"`
-	AttrDisplayOrder          pgtype.Int2    `json:"attr_display_order"`
-	AttrValIsActive           pgtype.Bool    `json:"attr_val_is_active"`
-	AttrDisplayValue          pgtype.Text    `json:"attr_display_value"`
-	ImgID                     pgtype.Int4    `json:"img_id"`
-	ImgUrl                    pgtype.Text    `json:"img_url"`
-	ImgAlt                    pgtype.Text    `json:"img_alt"`
-	ImgCap                    pgtype.Text    `json:"img_cap"`
-	ImgMimeType               pgtype.Text    `json:"img_mime_type"`
-	ImageSize                 pgtype.Int8    `json:"image_size"`
-	ImgW                      pgtype.Int4    `json:"img_w"`
-	ImgH                      pgtype.Int4    `json:"img_h"`
-	ImgExternalID             pgtype.Text    `json:"img_external_id"`
-	ImgAssignmentDisplayOrder pgtype.Int2    `json:"img_assignment_display_order"`
-	ImgAssignmentRole         pgtype.Text    `json:"img_assignment_role"`
+	ID               uuid.UUID      `json:"id"`
+	ProductID        uuid.UUID      `json:"product_id"`
+	Sku              string         `json:"sku"`
+	Price            pgtype.Numeric `json:"price"`
+	Stock            int32          `json:"stock"`
+	Weight           pgtype.Numeric `json:"weight"`
+	IsActive         pgtype.Bool    `json:"is_active"`
+	CreatedAt        time.Time      `json:"created_at"`
+	UpdatedAt        time.Time      `json:"updated_at"`
+	AttrID           int32          `json:"attr_id"`
+	AttrName         string         `json:"attr_name"`
+	AttrValID        int32          `json:"attr_val_id"`
+	AttrValue        string         `json:"attr_value"`
+	AttrDisplayOrder int16          `json:"attr_display_order"`
+	AttrValIsActive  pgtype.Bool    `json:"attr_val_is_active"`
+	AttrDisplayValue pgtype.Text    `json:"attr_display_value"`
 }
 
 func (q *Queries) GetProductVariants(ctx context.Context, arg GetProductVariantsParams) ([]GetProductVariantsRow, error) {
@@ -461,17 +424,6 @@ func (q *Queries) GetProductVariants(ctx context.Context, arg GetProductVariants
 			&i.AttrDisplayOrder,
 			&i.AttrValIsActive,
 			&i.AttrDisplayValue,
-			&i.ImgID,
-			&i.ImgUrl,
-			&i.ImgAlt,
-			&i.ImgCap,
-			&i.ImgMimeType,
-			&i.ImageSize,
-			&i.ImgW,
-			&i.ImgH,
-			&i.ImgExternalID,
-			&i.ImgAssignmentDisplayOrder,
-			&i.ImgAssignmentRole,
 		); err != nil {
 			return nil, err
 		}
@@ -506,7 +458,7 @@ type GetProductWithImageRow struct {
 	Name         string         `json:"name"`
 	Description  pgtype.Text    `json:"description"`
 	BasePrice    pgtype.Numeric `json:"base_price"`
-	BaseSku      pgtype.Text    `json:"base_sku"`
+	BaseSku      string         `json:"base_sku"`
 	Slug         string         `json:"slug"`
 	IsActive     pgtype.Bool    `json:"is_active"`
 	CategoryID   pgtype.UUID    `json:"category_id"`
@@ -579,7 +531,7 @@ type GetProductsRow struct {
 	Name         string         `json:"name"`
 	Description  pgtype.Text    `json:"description"`
 	BasePrice    pgtype.Numeric `json:"base_price"`
-	BaseSku      pgtype.Text    `json:"base_sku"`
+	BaseSku      string         `json:"base_sku"`
 	Slug         string         `json:"slug"`
 	IsActive     pgtype.Bool    `json:"is_active"`
 	CategoryID   pgtype.UUID    `json:"category_id"`
@@ -680,7 +632,7 @@ type GetProductsByBrandIDRow struct {
 	Name         string         `json:"name"`
 	Description  pgtype.Text    `json:"description"`
 	BasePrice    pgtype.Numeric `json:"base_price"`
-	BaseSku      pgtype.Text    `json:"base_sku"`
+	BaseSku      string         `json:"base_sku"`
 	Slug         string         `json:"slug"`
 	IsActive     pgtype.Bool    `json:"is_active"`
 	CategoryID   pgtype.UUID    `json:"category_id"`
@@ -781,7 +733,7 @@ type GetProductsByCategoryIDRow struct {
 	Name         string         `json:"name"`
 	Description  pgtype.Text    `json:"description"`
 	BasePrice    pgtype.Numeric `json:"base_price"`
-	BaseSku      pgtype.Text    `json:"base_sku"`
+	BaseSku      string         `json:"base_sku"`
 	Slug         string         `json:"slug"`
 	IsActive     pgtype.Bool    `json:"is_active"`
 	CategoryID   pgtype.UUID    `json:"category_id"`
@@ -872,7 +824,7 @@ type GetProductsByCollectionIDRow struct {
 	Name         string         `json:"name"`
 	Description  pgtype.Text    `json:"description"`
 	BasePrice    pgtype.Numeric `json:"base_price"`
-	BaseSku      pgtype.Text    `json:"base_sku"`
+	BaseSku      string         `json:"base_sku"`
 	Slug         string         `json:"slug"`
 	IsActive     pgtype.Bool    `json:"is_active"`
 	CategoryID   pgtype.UUID    `json:"category_id"`

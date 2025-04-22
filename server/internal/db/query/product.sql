@@ -42,41 +42,37 @@ SELECT
     p.id as product_id, p.name, p.description, p.base_price, p.base_sku, p.slug, p.updated_at, p.created_at, p.is_active,
     c.id AS category_id, c.name AS category_name,
     cl.id AS collection_id, cl.name AS collection_name,
-    b.id AS brand_id, b.name AS brand_name,
-    img.id AS img_id, img.url AS img_url, img.alt_text AS img_alt, 
-    img.caption AS img_cap, img.mime_type AS img_mime_type, img.file_size AS image_size, 
-    img.width AS img_w, img.height AS img_h, img.external_id AS img_external_id,
-    ia.display_order AS img_assignment_display_order, ia.role AS img_assignment_role
+    b.id AS brand_id, b.name AS brand_name
+    -- img.id AS img_id, img.url AS img_url, img.alt_text AS img_alt, 
+    -- img.caption AS img_cap, img.mime_type AS img_mime_type, img.file_size AS image_size, 
+    -- img.width AS img_w, img.height AS img_h, img.external_id AS img_external_id,
+    -- ia.display_order AS img_assignment_display_order, ia.role AS img_assignment_role
 FROM
     products p
-LEFT JOIN categories as c ON p.category_id = c.id
+JOIN categories as c ON p.category_id = c.id
+JOIN brands AS b ON p.brand_id = b.id
 LEFT JOIN collections as cl ON p.collection_id = cl.id
-LEFT JOIN brands AS b ON p.brand_id = b.id
-LEFT JOIN image_assignments AS ia ON p.id = ia.entity_id AND ia.entity_type = 'product'
-LEFT JOIN images AS img ON img.id = ia.image_id
 WHERE
     p.id = $1 AND
     p.is_active = COALESCE(sqlc.narg('is_active'), TRUE)
 ORDER BY
-    p.id, ia.display_order ASC, img.id ASC;
+    p.id;
 
 -- name: GetProductVariants :many
 SELECT
     v.*,
     a.id as attr_id, a.name as attr_name,
     av.id as attr_val_id, av.value as attr_value, av.display_order as attr_display_order, 
-    av.is_active as attr_val_is_active, av.display_value as attr_display_value,
-    img.id AS img_id, img.url AS img_url, img.alt_text AS img_alt, 
-    img.caption AS img_cap, img.mime_type AS img_mime_type, img.file_size AS image_size, 
-    img.width AS img_w, img.height AS img_h, img.external_id AS img_external_id,
-    ia.display_order AS img_assignment_display_order, ia.role AS img_assignment_role
+    av.is_active as attr_val_is_active, av.display_value as attr_display_value
+    -- img.id AS img_id, img.url AS img_url, img.alt_text AS img_alt, 
+    -- img.caption AS img_cap, img.mime_type AS img_mime_type, img.file_size AS image_size, 
+    -- img.width AS img_w, img.height AS img_h, img.external_id AS img_external_id,
+    -- ia.display_order AS img_assignment_display_order, ia.role AS img_assignment_role
 FROM
     product_variants AS v
-LEFT JOIN variant_attribute_values as vav ON v.id = vav.variant_id
-LEFT JOIN attribute_values as av ON vav.attribute_value_id = av.id
-LEFT JOIN attributes as a ON av.attribute_id = a.id
-LEFT JOIN image_assignments AS ia ON v.id = ia.entity_id AND ia.entity_type = 'product_variant'
-LEFT JOIN images AS img ON img.id = ia.image_id
+JOIN variant_attribute_values as vav ON v.id = vav.variant_id
+JOIN attribute_values as av ON vav.attribute_value_id = av.id
+JOIN attributes as a ON av.attribute_id = a.id
 WHERE
     v.product_id = $1 AND
     v.is_active = COALESCE(sqlc.narg('is_active'), TRUE)

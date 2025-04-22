@@ -223,7 +223,7 @@ func (sv *Server) getProductsByBrand(c *gin.Context) {
 			Description: p.Description.String,
 			Price:       price.Float64,
 			Slug:        p.Slug,
-			Sku:         p.BaseSku.String,
+			Sku:         p.BaseSku,
 		})
 	}
 

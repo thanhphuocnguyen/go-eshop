@@ -5,7 +5,7 @@ CREATE TABLE
         name VARCHAR NOT NULL,
         description TEXT,
         base_price DECIMAL(10, 2),
-        base_sku VARCHAR(100) UNIQUE,
+        base_sku VARCHAR(100) UNIQUE NOT NULL,
         slug VARCHAR UNIQUE NOT NULL,
         is_active BOOLEAN DEFAULT TRUE,
         category_id UUID REFERENCES categories (id) ON DELETE SET NULL,

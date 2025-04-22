@@ -31,6 +31,7 @@ type Querier interface {
 	// Attribute values
 	CreateAttributeValue(ctx context.Context, arg CreateAttributeValueParams) (AttributeValue, error)
 	CreateBrand(ctx context.Context, arg CreateBrandParams) (Brand, error)
+	CreateBulkImageAssignments(ctx context.Context, arg []CreateBulkImageAssignmentsParams) (int64, error)
 	CreateBulkProductVariantAttribute(ctx context.Context, arg []CreateBulkProductVariantAttributeParams) (int64, error)
 	CreateBulkProductVariants(ctx context.Context, arg []CreateBulkProductVariantsParams) (int64, error)
 	CreateCart(ctx context.Context, arg CreateCartParams) (Cart, error)
@@ -56,6 +57,7 @@ type Querier interface {
 	DeleteBrand(ctx context.Context, id uuid.UUID) error
 	DeleteCategory(ctx context.Context, id uuid.UUID) error
 	DeleteCollection(ctx context.Context, id uuid.UUID) error
+	DeleteImageAssignments(ctx context.Context, arg DeleteImageAssignmentsParams) error
 	DeleteOrder(ctx context.Context, id uuid.UUID) error
 	DeletePaymentTransaction(ctx context.Context, id string) error
 	DeleteProduct(ctx context.Context, id uuid.UUID) error
@@ -101,6 +103,7 @@ type Querier interface {
 	GetProductByID(ctx context.Context, arg GetProductByIDParams) (Product, error)
 	GetProductDetail(ctx context.Context, arg GetProductDetailParams) ([]GetProductDetailRow, error)
 	GetProductImageByEntityID(ctx context.Context, entityID uuid.UUID) (GetProductImageByEntityIDRow, error)
+	GetProductImagesAssigned(ctx context.Context, entityIds []uuid.UUID) ([]GetProductImagesAssignedRow, error)
 	GetProductVariantAttributeByID(ctx context.Context, variantID uuid.UUID) (VariantAttributeValue, error)
 	GetProductVariantAttributes(ctx context.Context, variantID uuid.UUID) ([]VariantAttributeValue, error)
 	GetProductVariantByID(ctx context.Context, id uuid.UUID) (ProductVariant, error)

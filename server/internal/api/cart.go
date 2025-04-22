@@ -88,7 +88,7 @@ func mapToCartResponse(cart repository.Cart, dataRows []repository.GetCartItemsB
 					},
 				},
 			}
-			productVariant.Sku = &row.Product.BaseSku.String
+			productVariant.Sku = &row.Product.BaseSku
 			cartItems = append(cartItems, productVariant)
 		} else {
 			cartItems[lastIdx].Attributes = append(cartItems[lastIdx].Attributes, cartItemAttributeModel{
@@ -481,7 +481,7 @@ func (sv *Server) checkout(c *gin.Context) {
 			PricePerUnitSnapshot: item.Product.BasePrice,
 			ID:                   uuid.New(),
 			OrderID:              uuid.New(),
-			VariantSkuSnapshot:   item.Product.BaseSku.String,
+			VariantSkuSnapshot:   item.Product.BaseSku,
 			ProductNameSnapshot:  item.Product.Name,
 			LineTotalSnapshot:    item.Product.BasePrice,
 			AttributesSnapshot:   []byte(item.AttributeName.String),

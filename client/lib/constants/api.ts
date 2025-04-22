@@ -10,6 +10,7 @@ const _apiPaths = {
   CATEGORY_PRODUCTS: '/categories/:id/products',
   PRODUCTS: '/products',
   PRODUCT_DETAIL: '/products/:id',
+  PRODUCT_VARIANTS: '/products/:id/variants',
   LOGOUT: '/auth/logout',
   USER: '/auth/user',
   CART: '/cart',
@@ -27,7 +28,6 @@ const _apiPaths = {
   COLLECTION: '/collections/:id',
   COLLECTION_PRODUCTS: '/collections/:id/products',
   PRODUCT_IMAGES_UPLOAD: '/images/product/:id',
-  VARIANT_IMAGES_UPLOAD: '/images/variants',
   PRODUCT_VARIANT_IMAGE_UPLOAD: '/images/product-variant/:id',
 } as const;
 

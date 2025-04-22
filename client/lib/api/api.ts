@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // lib/api.ts
 import { getCookie, setCookie, deleteCookie } from 'cookies-next';
 
@@ -22,7 +23,6 @@ async function getAccessToken(
   res?: any
 ): Promise<string | undefined> {
   const token = await getCookie('token', { req, res })?.toString();
-  console.log({ token });
   return token;
 }
 

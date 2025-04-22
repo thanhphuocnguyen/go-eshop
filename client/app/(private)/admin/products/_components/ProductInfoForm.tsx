@@ -1,15 +1,11 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { TextField } from '@/components/FormFields';
 import { LoadingSpinner } from '@/components/Common/Loadings/Loading';
 import { StyledComboBoxController } from '@/components/FormFields/StyledComboBoxController';
-import Image from 'next/image';
 import { StyledMultipleComboBox } from '@/components/FormFields/StyledMultipleComboBox';
-import { ImageUploader } from '@/components/FormFields/ImageUploader';
 import { TiptapController } from '@/components/Common';
-import { XMarkIcon } from '@heroicons/react/16/solid';
 import { Field, Label, Switch } from '@headlessui/react';
-import { ArrowTurnUpLeftIcon } from '@heroicons/react/24/outline';
 import { useCollections } from '../../_lib/hooks/useCollections';
 import { useBrands } from '../../_lib/hooks/useBrands';
 import { useAttributes } from '../../_lib/hooks/useAttributes';
@@ -21,6 +17,7 @@ import {
 } from '@/lib/definitions';
 import { useFormContext } from 'react-hook-form';
 import clsx from 'clsx';
+import { ProductImagesUploader } from './ProductImagesUploader';
 import { useProductDetailFormContext } from '../_lib/contexts/ProductFormContext';
 
 export const ProductInfoForm: React.FC<{
@@ -31,27 +28,39 @@ export const ProductInfoForm: React.FC<{
   const { brands, isLoading: brandsLoading } = useBrands();
   const { attributes, attributesLoading } = useAttributes();
 
-  const [selectedAttributes, setSelectedAttributes] = useState<
-    AttributeDetailModel[]
-  >([]);
+  const { selectedAttributes, setSelectedAttributes } =
+    useProductDetailFormContext();
 
-  const { productImages, setProductImages } = useProductDetailFormContext();
-
-  const { register, control, getValues, watch, formState, setValue } =
+  const { register, control, watch, formState, setValue } =
     useFormContext<ProductModelForm>();
 
   useEffect(() => {
     if (!productDetail && categories && categories.length > 0) {
-      setValue('category', categories[0]);
+      setValue('product_info.category', categories[0], {
+        shouldDirty: false,
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categories]);
+
   useEffect(() => {
     if (!productDetail && brands && brands.length > 0) {
-      setValue('brand', brands[0]);
+      setValue('product_info.brand', brands[0], {
+        shouldDirty: false,
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [brands]);
+
+  useEffect(() => {
+    if (productDetail && attributes) {
+      const attrIds = new Set(
+        productDetail.variants.map((v) => v.attributes.map((a) => a.id)).flat()
+      );
+      const selected = attributes.filter((a) => attrIds.has(a.id));
+      setSelectedAttributes(selected);
+    }
+  }, [attributes, productDetail]);
 
   return (
     <>
@@ -59,8 +68,8 @@ export const ProductInfoForm: React.FC<{
         <h2 className='text-xl font-bold text-primary'>Product Information</h2>
         <Field className='flex items-center gap-2'>
           <Switch
-            checked={watch('is_active')}
-            onChange={(value) => setValue('is_active', value)}
+            checked={watch('product_info.is_active')}
+            onChange={(value) => setValue('product_info.is_active', value)}
             className={({ checked }) =>
               clsx(
                 'relative inline-flex h-6 w-11 items-center rounded-full',
@@ -87,38 +96,38 @@ export const ProductInfoForm: React.FC<{
       <div className='grid grid-cols-4 gap-4 mb-6'>
         <TextField
           label={'Product name'}
-          {...register('name')}
-          error={!!formState.errors.name}
-          message={formState.errors.name?.message}
+          {...register('product_info.name')}
+          error={!!formState.errors.product_info?.name}
+          message={formState.errors.product_info?.name?.message}
           placeholder='Enter product name...'
           type='text'
           required
         />
         <TextField
-          {...register('sku')}
+          {...register('product_info.sku')}
           label={'Sku'}
           placeholder='Enter sku...'
           type='text'
-          error={!!formState.errors.sku}
-          message={formState.errors.sku?.message}
+          error={!!formState.errors.product_info?.sku}
+          message={formState.errors.product_info?.sku?.message}
         />
         <TextField
-          {...register('price', {
+          {...register('product_info.price', {
             valueAsNumber: true,
           })}
           label={'Price'}
           placeholder='Enter price...'
           type='number'
-          error={!!formState.errors.price}
-          message={formState.errors.price?.message}
+          error={!!formState.errors.product_info?.price}
+          message={formState.errors.product_info?.price?.message}
         />
         <TextField
           label={'Slug'}
           placeholder='Enter slug...'
           type='text'
-          error={!!formState.errors.slug}
-          message={formState.errors.slug?.message}
-          {...register('slug')}
+          error={!!formState.errors.product_info?.slug}
+          message={formState.errors.product_info?.slug?.message}
+          {...register('product_info.slug')}
         />
         {attributesLoading ? (
           <div className='flex justify-center items-center'>
@@ -145,10 +154,10 @@ export const ProductInfoForm: React.FC<{
         ) : (
           <StyledComboBoxController
             control={control}
-            name='category'
+            name='product_info.category'
             label='Category'
-            error={!!formState.errors.category}
-            message={formState.errors.category?.message ?? ''}
+            error={!!formState.errors.product_info?.category}
+            message={formState.errors.product_info?.category?.message ?? ''}
             options={
               categories?.map((e) => ({
                 id: e.id,
@@ -163,11 +172,11 @@ export const ProductInfoForm: React.FC<{
           </div>
         ) : (
           <StyledComboBoxController
-            name='brand'
+            name='product_info.brand'
             nullable
             control={control}
-            error={!!formState.errors.brand}
-            message={formState.errors.brand?.message ?? ''}
+            error={!!formState.errors.product_info?.brand}
+            message={formState.errors.product_info?.brand?.message ?? ''}
             label='Brand'
             options={
               brands?.map((e) => ({
@@ -184,11 +193,11 @@ export const ProductInfoForm: React.FC<{
         ) : (
           <StyledComboBoxController
             control={control}
-            name='collection'
+            name='product_info.collection'
             nullable
             label='Collection'
-            error={!!formState.errors.brand}
-            message={formState.errors.brand?.message ?? ''}
+            error={!!formState.errors.product_info?.brand}
+            message={formState.errors.product_info?.brand?.message ?? ''}
             options={
               collections?.map((e) => ({
                 id: e.id,
@@ -202,99 +211,17 @@ export const ProductInfoForm: React.FC<{
       <Field className='w-full'>
         <Label className='font-semibold'>Description</Label>
         <TiptapController
-          name='description'
+          name='product_info.description'
           control={control}
-          error={!!formState.errors.description}
-          message={formState.errors.description?.message as string}
+          error={!!formState.errors.product_info?.description}
+          message={
+            formState.errors.product_info?.description?.message as string
+          }
         />
       </Field>
 
       <div className='mt-6'>
-        <ImageUploader
-          label='Media'
-          multiple={true}
-          onUpload={(files) => {
-            setProductImages(files);
-          }}
-        />
-
-        {/* Preview uploaded images */}
-        <div className='grid grid-cols-4 gap-4 mt-4'>
-          {productDetail?.images.map((image, index) => {
-            const isRemoved = watch('removed_images')?.includes(image.id);
-            return (
-              <div key={index} className='relative rounded-md h-60 w-full'>
-                <Image
-                  fill
-                  src={image.url}
-                  objectFit='cover'
-                  alt={`Product image ${index + 1}`}
-                  className={clsx(isRemoved ? 'opacity-30' : '', 'rounded-md')}
-                />
-                {isRemoved && (
-                  <div className='absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 z-10'>
-                    <span className='bg-red-500 text-white px-2 py-1 rounded'>
-                      Removed
-                    </span>
-                  </div>
-                )}
-                <button
-                  type='button'
-                  onClick={() => {
-                    if (isRemoved) {
-                      // Remove from removed_images if it's already there
-                      setValue(
-                        'removed_images',
-                        (getValues('removed_images') || []).filter(
-                          (id) => id !== image.id
-                        ),
-                        { shouldDirty: true }
-                      );
-                    } else {
-                      // Add to removed_images
-                      setValue(
-                        'removed_images',
-                        getValues('removed_images')
-                          ? [...getValues('removed_images')!, image.id]
-                          : [image.id],
-                        { shouldDirty: true }
-                      );
-                    }
-                  }}
-                  className={`absolute z-20 top-1 right-1 ${isRemoved ? 'bg-green-500' : 'bg-red-500'} text-white rounded-full p-1 w-6 h-6 flex items-center justify-center`}
-                >
-                  {isRemoved ? (
-                    <ArrowTurnUpLeftIcon className='size-8' />
-                  ) : (
-                    <XMarkIcon className='size-8' />
-                  )}
-                </button>
-              </div>
-            );
-          })}
-          {productImages.map((file, index) => (
-            <div key={index} className='relative rounded-md h-60'>
-              <Image
-                fill
-                src={URL.createObjectURL(file)}
-                objectFit='cover'
-                alt={`Product image ${index + 1}`}
-                className='w-full h-full object-contain'
-              />
-              <button
-                type='button'
-                onClick={() => {
-                  setProductImages((prev) =>
-                    prev.filter((_, idx) => idx !== index)
-                  );
-                }}
-                className='absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 w-6 h-6 flex items-center justify-center'
-              >
-                <XMarkIcon className='size-8' />
-              </button>
-            </div>
-          ))}
-        </div>
+        <ProductImagesUploader productDetail={productDetail} />
       </div>
     </>
   );

@@ -7,16 +7,13 @@ import { apiFetch } from '@/lib/api/api';
 export function useAttributes() {
   const { data, isLoading, error } = useSWR(
     API_PATHS.ATTRIBUTES,
-    (url) => {
-      return apiFetch<GenericResponse<AttributeDetailModel[]>>(url, {}).then(
-        (res) => {
-          if (res.error) {
-            throw new Error(res.error.stack);
-          }
-          return res.data;
+    (url) =>
+      apiFetch<GenericResponse<AttributeDetailModel[]>>(url).then((res) => {
+        if (res.error) {
+          throw new Error(res.error.stack);
         }
-      );
-    },
+        return res.data;
+      }),
     {
       refreshInterval: 0,
       revalidateOnFocus: false,

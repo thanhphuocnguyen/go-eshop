@@ -158,7 +158,7 @@ func seedProducts(ctx context.Context, repo repository.Repository) {
 			Name:        product.Name,
 			Description: utils.GetPgTypeText(product.Description),
 			BasePrice:   utils.GetPgNumericFromFloat(product.Price),
-			BaseSku:     utils.GetPgTypeText(product.Sku),
+			BaseSku:     product.Sku,
 			Slug:        product.Name,
 		}
 		_, err := repo.CreateProduct(ctx, params)

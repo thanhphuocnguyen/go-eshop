@@ -78,6 +78,42 @@ func (q *Queries) AddBulkProducts(ctx context.Context, arg []AddBulkProductsPara
 	return q.db.CopyFrom(ctx, []string{"products"}, []string{"id", "category_id", "collection_id", "brand_id", "name", "description"}, &iteratorForAddBulkProducts{rows: arg})
 }
 
+// iteratorForCreateBulkImageAssignments implements pgx.CopyFromSource.
+type iteratorForCreateBulkImageAssignments struct {
+	rows                 []CreateBulkImageAssignmentsParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForCreateBulkImageAssignments) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForCreateBulkImageAssignments) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].ImageID,
+		r.rows[0].EntityID,
+		r.rows[0].EntityType,
+		r.rows[0].DisplayOrder,
+		r.rows[0].Role,
+	}, nil
+}
+
+func (r iteratorForCreateBulkImageAssignments) Err() error {
+	return nil
+}
+
+func (q *Queries) CreateBulkImageAssignments(ctx context.Context, arg []CreateBulkImageAssignmentsParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"image_assignments"}, []string{"image_id", "entity_id", "entity_type", "display_order", "role"}, &iteratorForCreateBulkImageAssignments{rows: arg})
+}
+
 // iteratorForCreateBulkProductVariantAttribute implements pgx.CopyFromSource.
 type iteratorForCreateBulkProductVariantAttribute struct {
 	rows                 []CreateBulkProductVariantAttributeParams

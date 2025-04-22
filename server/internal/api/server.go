@@ -131,6 +131,7 @@ func (sv *Server) initializeRouter() {
 			{
 				productAdmin.POST("", sv.createProduct)
 				productAdmin.PUT(":id", sv.updateProduct)
+				productAdmin.PUT(":id/variants", sv.updateProductVariants)
 				productAdmin.DELETE(":id", sv.removeProduct)
 			}
 		}
@@ -143,7 +144,6 @@ func (sv *Server) initializeRouter() {
 			// images
 			images.DELETE("remove-external/:public_id", sv.removeImageByPublicID)
 			images.GET("", sv.getImages)
-			images.POST("", sv.uploadImages)
 			images.POST("product/:entity_id", sv.uploadProductImages)
 			images.DELETE(":entity_id", sv.removeImage)
 

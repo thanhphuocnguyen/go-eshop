@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -23,6 +24,10 @@ type RemoveImageParams struct {
 	ImageID   int32   `uri:"image_id" binding:"required"`
 }
 
+type AssignmentRequest struct {
+	VariantIDs []string `json:"variant_ids" binding:"required"`
+}
+
 type EntityIDParam struct {
 	EntityID string `uri:"entity_id" binding:"required,uuid"`
 }
@@ -35,73 +40,15 @@ type ProductVariantImageModel struct {
 }
 
 type ImageResponse struct {
-	ID           int32  `json:"id"`
-	ExternalID   string `json:"external_id"`
-	Url          string `json:"url"`
-	MimeType     string `json:"mime_type,omitempty"`
-	FileSize     int64  `json:"file_size,omitzero"`
-	EntityID     string `json:"entity_id,omitempty"`
-	EntityType   string `json:"entity_type,omitempty"`
-	DisplayOrder int16  `json:"display_order"`
-	Role         string `json:"role,omitempty"`
+	ID          int32    `json:"id"`
+	ExternalID  string   `json:"external_id"`
+	Url         string   `json:"url"`
+	MimeType    string   `json:"mime_type,omitempty"`
+	FileSize    int64    `json:"file_size,omitzero"`
+	Assignments []string `json:"assignments,omitempty"`
 }
 
 // ------------------------------------------ Handlers ------------------------------------------
-
-// @Summary Upload images
-// @Schemes http
-// @Description upload images
-// @Tags images
-// @Accept json
-// @Param files formData file true "Image file"
-// @Produce json
-// @Success 200 {object} GenericResponse[[]repository.Images]
-// @Failure 404 {object} gin.H
-// @Failure 500 {object} gin.H
-// @Router /images [post]
-func (sv *Server) uploadImages(c *gin.Context) {
-	form, _ := c.MultipartForm()
-	files := form.File["files"]
-	variantIDs := c.PostFormArray("variant_ids")
-	log.Debug().Msgf("variant_ids: %v", variantIDs)
-	if len(files) == 0 {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("missing files in request")))
-		return
-	}
-	if len(files) > 5 {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("maximum 5 files allowed")))
-		return
-	}
-
-	images := make([]ImageResponse, 0)
-	for i, file := range files {
-		id, url, err := sv.uploadService.UploadFile(c, file)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "upload to server failed", err))
-			return
-		}
-		img, err := sv.repo.CreateImage(c, repository.CreateImageParams{
-			ExternalID: id,
-			Url:        url,
-			MimeType:   utils.GetPgTypeText(file.Header.Get("Content-Type")),
-			FileSize:   utils.GetPgTypeInt8(file.Size),
-		})
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "save image info to db failed", err))
-			return
-		}
-
-		images = append(images, ImageResponse{
-			ID:           img.ID,
-			ExternalID:   img.ExternalID,
-			Url:          img.Url,
-			MimeType:     img.MimeType.String,
-			FileSize:     img.FileSize.Int64,
-			DisplayOrder: int16(i),
-		})
-	}
-	c.JSON(http.StatusCreated, createSuccessResponse(c, images, "", nil, nil))
-}
 
 // @Summary Upload product images
 // @Schemes http
@@ -127,10 +74,26 @@ func (sv *Server) uploadProductImages(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("missing files in request")))
 		return
 	}
-	if len(files) > 3 {
+
+	if len(files) > 5 {
 		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("maximum 5 files allowed")))
 		return
 	}
+	assignmentsReq := c.PostForm("assignments")
+	if assignmentsReq == "" {
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("missing assignments in request")))
+		return
+	}
+
+	// Parse the assignments JSON
+	var assignments []string
+	if err := json.Unmarshal([]byte(assignmentsReq), &assignments); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("invalid assignments format")))
+		return
+	}
+	log.Debug().Msgf("Assignments: %v", assignments)
+	// c.Status(http.StatusNoContent)
+	// return
 
 	existingProduct, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{
 		ID: uuid.MustParse(param.EntityID),
@@ -150,8 +113,8 @@ func (sv *Server) uploadProductImages(c *gin.Context) {
 		return
 	}
 
-	if len(productImages)+len(files) > 3 {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("maximum 3 files allowed please remove old files")))
+	if len(productImages)+len(files) > 10 {
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("maximum 10 files allowed please remove old files")))
 		return
 	}
 
@@ -169,27 +132,46 @@ func (sv *Server) uploadProductImages(c *gin.Context) {
 			MimeType:   utils.GetPgTypeText(file.Header.Get("Content-Type")),
 			FileSize:   utils.GetPgTypeInt8(file.Size),
 		})
-		assignment, err := sv.repo.CreateImageAssignment(c, repository.CreateImageAssignmentParams{
+		createImageAssignmentReq := make([]repository.CreateBulkImageAssignmentsParams, 0)
+		createImageAssignmentReq = append(createImageAssignmentReq, repository.CreateBulkImageAssignmentsParams{
 			ImageID:      img.ID,
 			EntityID:     existingProduct.ID,
 			EntityType:   repository.ProductImageType,
 			DisplayOrder: int16(i) + 1,
 			Role:         repository.ProductRole,
 		})
+
+		for _, assignment := range assignments {
+			if assignment == "" {
+				continue
+			}
+
+			variantID, err := uuid.Parse(assignment)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("invalid variant id")))
+
+				return
+			}
+
+			createImageAssignmentReq = append(createImageAssignmentReq, repository.CreateBulkImageAssignmentsParams{
+				ImageID:      img.ID,
+				EntityID:     variantID,
+				EntityType:   repository.ProductVariantImageType,
+				DisplayOrder: int16(i) + 1,
+				Role:         repository.ProductRole,
+			})
+		}
+		_, err = sv.repo.CreateBulkImageAssignments(c, createImageAssignmentReq)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "save image info to db failed", err))
 			return
 		}
 		images[i] = ImageResponse{
-			ID:           img.ID,
-			ExternalID:   img.ExternalID,
-			Url:          img.Url,
-			MimeType:     img.MimeType.String,
-			FileSize:     img.FileSize.Int64,
-			EntityID:     assignment.EntityID.String(),
-			EntityType:   assignment.EntityType,
-			DisplayOrder: assignment.DisplayOrder,
-			Role:         assignment.Role,
+			ID:         img.ID,
+			ExternalID: img.ExternalID,
+			Url:        img.Url,
+			MimeType:   img.MimeType.String,
+			FileSize:   img.FileSize.Int64,
 		}
 	}
 	c.JSON(http.StatusCreated, createSuccessResponse(c, images, "", nil, nil))

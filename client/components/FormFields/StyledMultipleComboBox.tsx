@@ -13,6 +13,7 @@ import {
 import clsx from 'clsx';
 import { CheckIcon, ChevronDownIcon } from '@heroicons/react/24/solid';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface StyledMultipleComboBoxProps<T = any> {
   label: string;
   selected: T[] | null[] | undefined;
@@ -42,6 +43,7 @@ export const StyledMultipleComboBox = <T,>({
           .includes(query.toLowerCase())
       )
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, options]);
 
   return (
@@ -84,8 +86,14 @@ export const StyledMultipleComboBox = <T,>({
           {filteredOptions.map((opt) => (
             <ComboboxOption
               key={opt.id}
+              disabled={opt.disabled}
               value={opt}
-              className='group flex cursor-default items-center gap-2 rounded-lg py-1.5 px-3 select-none data-[focus]:bg-gray-100 data-[selected]:bg-tertiary '
+              className={clsx(
+                'group flex cursor-default items-center gap-2 rounded-lg py-1.5 px-3 select-none',
+                'data-[focus]:bg-gray-100',
+                'data-[selected]:text-gray-900 data-[selected]:font-semibold data-[selected]:bg-gray-200',
+                'data-[disabled]:text-gray-400 data-[disabled]:cursor-not-allowed'
+              )}
             >
               <CheckIcon className='invisible size-5 font-bold group-data-[selected]:visible text-green-600' />
               <div className='text-sm/6 text-gray-500'>

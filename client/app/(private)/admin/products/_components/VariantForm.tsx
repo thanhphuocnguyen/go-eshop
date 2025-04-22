@@ -1,13 +1,13 @@
 'use client';
-import { ProductModelForm, VariantModelForm } from '@/lib/definitions';
 import React from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
-import { TextField } from '@/components/FormFields';
-
 import clsx from 'clsx';
 import { Field, Switch } from '@headlessui/react';
+import { useFormContext, useWatch } from 'react-hook-form';
+import { ProductModelForm, VariantModelForm } from '@/lib/definitions';
+import { TextField } from '@/components/FormFields';
 import { StyledComboBoxController } from '@/components/FormFields/StyledComboBoxController';
 import { useAttributes } from '../../_lib/hooks/useAttributes';
+import { useProductDetailFormContext } from '../_lib/contexts/ProductFormContext';
 
 interface AttributeFormProps {
   index: number;
@@ -16,17 +16,18 @@ interface AttributeFormProps {
 }
 export const VariantForm: React.FC<AttributeFormProps> = ({
   index,
-  onRemove,
   item,
+  onRemove,
 }) => {
   const {
     control,
     register,
-    getValues,
     setValue,
     formState: { errors },
   } = useFormContext<ProductModelForm>();
+  const { selectedAttributes } = useProductDetailFormContext();
   const { attributes } = useAttributes();
+
   const isActive = useWatch({
     control,
     name: `variants.${index}.is_active`,
@@ -83,7 +84,7 @@ export const VariantForm: React.FC<AttributeFormProps> = ({
 
       <div className='px-2 pt-2 pb-0'>
         <div className='grid grid-cols-5 gap-x-3'>
-          {getValues(`variants.${index}.attributes`)?.map((attribute, idx) =>
+          {selectedAttributes?.map((attribute, idx) =>
             attribute ? (
               <StyledComboBoxController
                 control={control}
@@ -94,7 +95,7 @@ export const VariantForm: React.FC<AttributeFormProps> = ({
                     ?.message
                 }
                 getDisplayValue={(attribute) =>
-                  attribute.display_value || attribute.value
+                  attribute?.display_value || attribute.value
                 }
                 name={`variants.${index}.attributes.${idx}.value`}
                 label={attribute.name}
@@ -114,11 +115,11 @@ export const VariantForm: React.FC<AttributeFormProps> = ({
             disabled={false}
           />
           <TextField
-            {...register(`variants.${index}.stock`)}
+            {...register(`variants.${index}.stock_qty`)}
             label='Stock'
             placeholder='Enter Stock'
-            error={!!errors.variants?.[index]?.stock?.message}
-            message={errors.variants?.[index]?.stock?.message}
+            error={!!errors.variants?.[index]?.stock_qty?.message}
+            message={errors.variants?.[index]?.stock_qty?.message}
             type='number'
             disabled={false}
           />

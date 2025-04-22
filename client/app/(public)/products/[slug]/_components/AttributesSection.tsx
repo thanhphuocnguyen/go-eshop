@@ -1,14 +1,14 @@
 'use client';
 import {
-  AttributeDetailModel,
   AttributeValueDetailModel,
+  ProductVariantAttributeModel,
 } from '@/lib/definitions';
 import { Button } from '@headlessui/react';
 import clsx from 'clsx';
 import React, { useEffect, useState } from 'react';
 
 interface AttributesSectionProps {
-  attributes: AttributeDetailModel[];
+  attributes: ProductVariantAttributeModel[];
 }
 const AttributesSection: React.FC<AttributesSectionProps> = ({
   attributes,
@@ -31,14 +31,12 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({
     const attributeObj: Record<string, AttributeValueDetailModel[]> = {};
     const attributeValueIds = new Set<number>();
     attributes.reduce((acc, attribute) => {
-      const { name, values } = attribute;
+      const { name, value } = attribute;
       const availableValues: AttributeValueDetailModel[] = [];
-      values.forEach((value) => {
-        if (!attributeValueIds.has(value.id)) {
-          attributeValueIds.add(value.id);
-          availableValues.push({ ...value });
-        }
-      });
+      if (!attributeValueIds.has(value.id)) {
+        attributeValueIds.add(value.id);
+        availableValues.push({ ...value });
+      }
       if (!acc[name]) {
         acc[name] = availableValues;
       } else {
@@ -48,7 +46,7 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({
     }, attributeObj);
     setAttributesFormat(attributeObj);
   }, [attributes]);
-  console.log({ selectedColor });
+  console.log(attributes);
 
   return (
     <div className='flex flex-col gap-6 mt-10'>
@@ -60,9 +58,8 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({
               <h3 className='text-sm text-gray-900 font-medium'>Color</h3>
               <div className='flex items-center space-x-3 mt-2'>
                 {values.map((color) => {
-                  console.log(color.value);
                   return (
-                    <button
+                    <Button
                       key={color.id}
                       type='button' // Important: prevent form submission
                       style={{
@@ -85,7 +82,7 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({
                           backgroundColor: color.value,
                         }}
                       />
-                    </button>
+                    </Button>
                   );
                 })}
               </div>

@@ -43,7 +43,7 @@ async function ProductDetailPage({
     <div className='container mx-auto px-8 py-8'>
       <div className='lg:grid lg:grid-cols-3 lg:gap-x-8 lg:items-start'>
         {/* Image gallery */}
-        <ImagesSection images={data.images} />
+        <ImagesSection images={data.product_images} />
 
         {/* Product info */}
         <div className='mt-10 px-4 sm:px-0 sm:mt-16 lg:mt-0'>
@@ -123,7 +123,7 @@ async function ProductDetailPage({
                 Loyalty rewards
               </p>
               <p className='mt-1 text-sm text-gray-500'>
-                Don't look at other tees
+                Don&apos;t look at other tees
               </p>{' '}
               {/* Update text as needed */}
             </div>

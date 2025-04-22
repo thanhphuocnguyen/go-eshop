@@ -495,7 +495,7 @@ type Product struct {
 	Name         string         `json:"name"`
 	Description  pgtype.Text    `json:"description"`
 	BasePrice    pgtype.Numeric `json:"base_price"`
-	BaseSku      pgtype.Text    `json:"base_sku"`
+	BaseSku      string         `json:"base_sku"`
 	Slug         string         `json:"slug"`
 	IsActive     pgtype.Bool    `json:"is_active"`
 	CategoryID   pgtype.UUID    `json:"category_id"`

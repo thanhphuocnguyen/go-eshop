@@ -3,9 +3,8 @@ import React from 'react';
 import { VariantForm } from './VariantForm';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useAttributes } from '../../_lib/hooks';
-import { ProductDetailModel, ProductModelForm } from '@/lib/definitions';
-import { ArrowRightIcon, PlusIcon } from '@heroicons/react/16/solid';
-import { useProductDetailFormContext } from '../_lib/contexts/ProductFormContext';
+import { ProductModelForm } from '@/lib/definitions';
+import { PlusIcon } from '@heroicons/react/16/solid';
 import clsx from 'clsx';
 import { ChevronUpIcon } from '@heroicons/react/24/outline';
 import {
@@ -14,17 +13,12 @@ import {
   DisclosurePanel,
   Transition,
 } from '@headlessui/react';
-import Link from 'next/link';
-import { useParams } from 'next/navigation';
 
-interface VariantInfoFormProps {}
-export const VariantInfoForm: React.FC<VariantInfoFormProps> = ({}) => {
-  const params = useParams<{ slug: string }>();
-
+export const VariantInfoForm: React.FC = ({}) => {
   const { attributes } = useAttributes();
   const { control } = useFormContext<ProductModelForm>();
-  const { setVariantImages } = useProductDetailFormContext();
-  const { fields, append, update, remove } = useFieldArray({
+
+  const { fields, append, remove } = useFieldArray({
     name: 'variants',
     keyName: 'key',
     control,
@@ -32,17 +26,7 @@ export const VariantInfoForm: React.FC<VariantInfoFormProps> = ({}) => {
 
   return (
     <div>
-      <div className='flex justify-between items-center mb-2'>
-        <h2 className='text-xl font-bold text-primary'>Product Variants</h2>
-        <Link
-          className='flex gap-2 items-center text-lg text-blue-500 hover:text-blue-700'
-          href={`/admin/products/${params.slug}/variant-images`}
-        >
-          Go to variant images
-          <ArrowRightIcon className='size-5' />
-        </Link>
-      </div>
-
+      <h2 className='text-xl mb-3 font-bold text-primary'>Product Variants</h2>
       {/* Variants Accordion */}
       <Disclosure defaultOpen={true}>
         {({ open }) => (
@@ -82,15 +66,6 @@ export const VariantInfoForm: React.FC<VariantInfoFormProps> = ({}) => {
                         item={item}
                         onRemove={() => {
                           remove(index);
-                          setVariantImages((prev) => {
-                            // Update variant assignments when a variant is removed
-                            return prev.map((image) => ({
-                              ...image,
-                              variantIds: image.variantIds.filter(
-                                (id) => id !== item.id
-                              ),
-                            }));
-                          });
                         }}
                       />
                     </div>
@@ -110,7 +85,7 @@ export const VariantInfoForm: React.FC<VariantInfoFormProps> = ({}) => {
                           }))
                         : [],
                       price: 1,
-                      stock: 1,
+                      stock_qty: 0,
                       weight: undefined,
                       is_active: true,
                     });

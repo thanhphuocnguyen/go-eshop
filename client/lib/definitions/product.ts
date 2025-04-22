@@ -67,51 +67,49 @@ export const ProductVariantAttributeFormSchema = BaseAttributeFormSchema.extend(
       id: z.number().min(1, {
         message: 'Value is required',
       }),
-    }).nullish(),
+    }),
   }
 );
 
 export const VariantFormSchema = z.object({
   id: z.string().optional(),
   price: z.coerce.number().gt(0),
-  stock: z.coerce.number().gte(0),
-  weight: z.preprocess((value) => {
-    if (value === '') return undefined;
-    return Number(value);
-  }, z.number().gte(0).nullish()),
-  is_active: z.boolean().default(true),
-  attributes: z
-    .array(
-      ProductVariantAttributeFormSchema.extend({
-        id: z.number().optional(),
-      })
-    )
-    .min(1),
-  sku: z.string().readonly().optional(),
+  stock_qty: z.coerce.number().gte(0),
+  sku: z.string().optional().readonly(),
+  weight: z.coerce
+    .number()
+    .transform((v) => {
+      if (!v) return null;
+      return v;
+    })
+    .nullish(),
+  is_active: z.boolean(),
+  attributes: ProductVariantAttributeFormSchema.extend({
+    id: z.number().optional(),
+  }).array(),
 });
 
 export const ProductFormSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().min(3).max(100),
-  description: z.string().min(10).max(5000),
-  price: z.coerce.number().gt(0),
-  sku: z.string().nonempty(),
-  slug: z.string().nonempty(),
-  is_active: z.boolean().optional().default(true),
-  category: BaseOptionSchema,
-  collection: BaseOptionSchema.nullish(),
-  images: z
-    .array(
-      z.object({
-        is_deleted: z.boolean().optional(),
-        id: z.number().optional(),
-        image_url: z.string(),
-      })
-    )
-    .nullish(),
-  brand: BaseOptionSchema.nullish(),
-  variants: VariantFormSchema.array(),
-  removed_images: z.array(z.number()).optional(),
+  product_info: z.object({
+    name: z.string().min(3).max(100),
+    description: z.string().min(10).max(5000),
+    price: z.coerce.number().gt(0),
+    sku: z.string().nonempty(),
+    slug: z.string().nonempty(),
+    is_active: z.boolean(),
+    category: BaseOptionSchema,
+    brand: BaseOptionSchema,
+    collection: BaseOptionSchema.nullish(),
+  }),
+  product_images: z
+    .object({
+      id: z.number().optional(),
+      url: z.string(),
+      assignments: z.string().array(),
+      is_removed: z.boolean().optional(),
+    })
+    .array(),
+  variants: z.array(VariantFormSchema).min(1),
 });
 
 export type ProductModelForm = z.infer<typeof ProductFormSchema>;
@@ -135,7 +133,6 @@ export type AttributeValueDetailModel = {
 export type AttributeDetailModel = {
   id: number;
   name: string;
-  created_at: Date;
   values: AttributeValueDetailModel[];
 };
 
@@ -154,15 +151,13 @@ export type VariantDetailModel = {
   sku: string;
   weight: number;
   is_active: boolean;
-  image_url: string;
-  image_id: number;
   created_at: string;
   updated_at: string;
 };
 
 export type AssignmentImageModel = {
   id: number;
-  entity_id: number;
+  entity_id: string;
   entity_type: string;
   display_order: number;
   role: string;
@@ -172,19 +167,7 @@ export type ProductImageModel = {
   id: number;
   external_id: string;
   url: string;
-  mime_type?: string;
-  file_size?: number;
-  entity_id?: number;
-  entity_type?: string;
-  display_order?: number;
-  role?: string;
-};
-
-export type VariantImageMode = {
   assignments: AssignmentImageModel[];
-  id: number;
-  external_id: string;
-  url: string;
 };
 
 export type ProductDetailModel = {
@@ -200,8 +183,7 @@ export type ProductDetailModel = {
   brand: GeneralCategoryModel;
   published: boolean;
   variants: VariantDetailModel[];
-  images: ProductImageModel[];
-  variant_images: VariantImageMode[];
+  product_images: ProductImageModel[];
   created_at: string; // date
   updated_at: string; // date
 };

@@ -4,7 +4,7 @@ import { GenericResponse, ProductDetailModel } from '@/lib/definitions';
 import { toast } from 'react-toastify';
 import useSWR from 'swr';
 
-export function useProductDetail(slug: string) {
+export function useProductDetail(slug: string | number) {
   const {
     data: productDetail,
     isLoading,

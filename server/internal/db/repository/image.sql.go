@@ -13,6 +13,14 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type CreateBulkImageAssignmentsParams struct {
+	ImageID      int32     `json:"image_id"`
+	EntityID     uuid.UUID `json:"entity_id"`
+	EntityType   string    `json:"entity_type"`
+	DisplayOrder int16     `json:"display_order"`
+	Role         string    `json:"role"`
+}
+
 const createImage = `-- name: CreateImage :one
 INSERT INTO images (external_id, url, alt_text, caption, mime_type, file_size, width, height) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, external_id, url, alt_text, caption, mime_type, file_size, width, height, uploaded_at, updated_at
 `
@@ -87,6 +95,20 @@ func (q *Queries) CreateImageAssignment(ctx context.Context, arg CreateImageAssi
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const deleteImageAssignments = `-- name: DeleteImageAssignments :exec
+DELETE FROM image_assignments WHERE entity_id = ANY($2::UUID[]) AND entity_type = $1
+`
+
+type DeleteImageAssignmentsParams struct {
+	EntityType string      `json:"entity_type"`
+	EntityIds  []uuid.UUID `json:"entity_ids"`
+}
+
+func (q *Queries) DeleteImageAssignments(ctx context.Context, arg DeleteImageAssignmentsParams) error {
+	_, err := q.db.Exec(ctx, deleteImageAssignments, arg.EntityType, arg.EntityIds)
+	return err
 }
 
 const deleteProductImage = `-- name: DeleteProductImage :exec
@@ -167,7 +189,7 @@ func (q *Queries) GetImageFromExternalID(ctx context.Context, externalID string)
 }
 
 const getImageFromID = `-- name: GetImageFromID :one
-SELECT images.id, external_id, url, alt_text, caption, mime_type, file_size, width, height, uploaded_at, updated_at, image_assignments.id, image_id, entity_id, entity_type, display_order, role, created_at FROM images 
+SELECT images.id, external_id, url, alt_text, caption, mime_type, file_size, width, height, uploaded_at, updated_at, image_assignments.id, image_id, entity_id, entity_type, display_order, role, created_at FROM images
 JOIN image_assignments ON images.id = image_assignments.image_id
 WHERE images.id = $1 AND entity_type = $2 LIMIT 1
 `
@@ -341,6 +363,76 @@ func (q *Queries) GetProductImageByEntityID(ctx context.Context, entityID uuid.U
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getProductImagesAssigned = `-- name: GetProductImagesAssigned :many
+SELECT 
+    images.id,
+    images.external_id,
+    images.url,
+    images.alt_text,
+    images.caption,
+    images.mime_type,
+    images.file_size,
+    images.width,
+    images.height,
+    image_assignments.entity_id,
+    image_assignments.entity_type,
+    image_assignments.display_order,
+    image_assignments.role
+FROM images
+JOIN image_assignments ON images.id = image_assignments.image_id
+WHERE entity_id = ANY($1::UUID[]) ORDER BY entity_id, display_order
+`
+
+type GetProductImagesAssignedRow struct {
+	ID           int32       `json:"id"`
+	ExternalID   string      `json:"external_id"`
+	Url          string      `json:"url"`
+	AltText      pgtype.Text `json:"alt_text"`
+	Caption      pgtype.Text `json:"caption"`
+	MimeType     pgtype.Text `json:"mime_type"`
+	FileSize     pgtype.Int8 `json:"file_size"`
+	Width        pgtype.Int4 `json:"width"`
+	Height       pgtype.Int4 `json:"height"`
+	EntityID     uuid.UUID   `json:"entity_id"`
+	EntityType   string      `json:"entity_type"`
+	DisplayOrder int16       `json:"display_order"`
+	Role         string      `json:"role"`
+}
+
+func (q *Queries) GetProductImagesAssigned(ctx context.Context, entityIds []uuid.UUID) ([]GetProductImagesAssignedRow, error) {
+	rows, err := q.db.Query(ctx, getProductImagesAssigned, entityIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetProductImagesAssignedRow{}
+	for rows.Next() {
+		var i GetProductImagesAssignedRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ExternalID,
+			&i.Url,
+			&i.AltText,
+			&i.Caption,
+			&i.MimeType,
+			&i.FileSize,
+			&i.Width,
+			&i.Height,
+			&i.EntityID,
+			&i.EntityType,
+			&i.DisplayOrder,
+			&i.Role,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateProductImage = `-- name: UpdateProductImage :exec

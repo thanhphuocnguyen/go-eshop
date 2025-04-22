@@ -1,18 +1,20 @@
-import React from 'react';
+import { AttributeDetailModel } from '@/lib/definitions';
+import React, { useState } from 'react';
 
 // Define types for variant images with variant assignments
 export type VariantImage = {
-  id?: string; // For existing images from the backend
   file: File;
   preview: string;
   variantIds: string[]; // IDs of variants this image is assigned to
 };
 
 const ProductDetailFormContext = React.createContext<{
-  productImages: File[];
-  setProductImages: React.Dispatch<React.SetStateAction<File[]>>;
-  variantImages: VariantImage[];
-  setVariantImages: React.Dispatch<React.SetStateAction<VariantImage[]>>;
+  tempProductImages: VariantImage[];
+  setTempProductImages: React.Dispatch<React.SetStateAction<VariantImage[]>>;
+  selectedAttributes: AttributeDetailModel[];
+  setSelectedAttributes: React.Dispatch<
+    React.SetStateAction<AttributeDetailModel[]>
+  >;
 } | null>(null);
 
 export const useProductDetailFormContext = () => {
@@ -28,18 +30,20 @@ export const useProductDetailFormContext = () => {
 export const ProductDetailFormProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
-  const [productImages, setProductImages] = React.useState<File[]>([]);
-  const [variantImages, setVariantImages] = React.useState<
+  const [tempProductImages, setTempProductImages] = React.useState<
     VariantImage[]
   >([]);
-  
+  const [selectedAttributes, setSelectedAttributes] = useState<
+    AttributeDetailModel[]
+  >([]);
+
   return (
     <ProductDetailFormContext.Provider
       value={{
-        variantImages,
-        setVariantImages,
-        productImages,
-        setProductImages,
+        tempProductImages,
+        setTempProductImages,
+        selectedAttributes,
+        setSelectedAttributes,
       }}
     >
       {children}
