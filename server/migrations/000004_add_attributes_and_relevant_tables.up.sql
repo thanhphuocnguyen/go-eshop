@@ -11,9 +11,9 @@ CREATE TABLE
     attribute_values (
         id SERIAL PRIMARY KEY,
         attribute_id INT NOT NULL REFERENCES attributes (id) ON DELETE CASCADE,
-        value VARCHAR NOT NULL,
+        value VARCHAR NOT NULL UNIQUE,
         is_active BOOLEAN DEFAULT TRUE,
-        display_value VARCHAR,
+        display_value VARCHAR, -- TODO: change name to code
         display_order SMALLINT NOT NULL DEFAULT 0 CHECK (
             display_order >= 0
             AND display_order <= 32767

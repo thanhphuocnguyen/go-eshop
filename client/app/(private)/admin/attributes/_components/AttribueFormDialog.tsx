@@ -59,7 +59,10 @@ export const AddNewDialog: React.FC<AddNewDialogProps> = ({
     }
     const body: AttributeFormModel = {
       name,
-      values: newValues,
+      values: newValues.map((e, idx) => ({
+        ...e,
+        display_order: idx + 1,
+      })),
     };
 
     const resp = await apiFetch<GenericResponse<AttributeDetailModel>>(

@@ -10,7 +10,14 @@ CREATE TYPE "order_status" AS ENUM (
   'completed'
 );
 
-CREATE TYPE "payment_status" AS ENUM ('pending', 'success', 'failed', 'cancelled', 'refunded', 'processing');
+CREATE TYPE "payment_status" AS ENUM (
+  'pending',
+  'success',
+  'failed',
+  'cancelled',
+  'refunded',
+  'processing'
+);
 
 CREATE TYPE "payment_method" AS ENUM (
   'card',
@@ -36,3 +43,32 @@ CREATE TYPE "payment_gateway" AS ENUM (
 CREATE TYPE "cart_status" AS ENUM ('active', 'checked_out');
 
 CREATE TYPE "card_type" AS ENUM ('debit', 'credit');
+
+CREATE TYPE "image_role" AS ENUM (
+  "gallery",
+  "thumbnail",
+  "banner",
+  "avatar",
+  "cover",
+  "logo",
+  "icon",
+  "background",
+  "product",
+  "category",
+  "brand",
+  "user",
+  "order",
+  "cart",
+  "payment"
+);
+
+CREATE TYPE "entity_type" AS ENUM (
+  'product',
+  'product_variant',
+  'category',
+  'brand',
+  'user',
+  'order',
+  'cart',
+  'payment'
+);

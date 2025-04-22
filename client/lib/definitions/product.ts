@@ -52,18 +52,22 @@ export const BaseAttributeValueFormSchema = z.object({
 });
 
 export const BaseAttributeFormSchema = z.object({
-  name: z.string(),
+  name: z.string().optional(),
 });
 
 export const AttributeFormSchema = BaseAttributeFormSchema.extend({
-  values: BaseAttributeValueFormSchema.array().min(1, {
-    message: 'At least one value is required',
-  }),
+  values: BaseAttributeValueFormSchema.extend({
+    id: z.number().optional(),
+  })
+    .array()
+    .min(1, {
+      message: 'At least one value is required',
+    }),
 });
 
 export const ProductVariantAttributeFormSchema = BaseAttributeFormSchema.extend(
   {
-    value: BaseAttributeValueFormSchema.extend({
+    value_object: BaseAttributeValueFormSchema.extend({
       id: z.number().min(1, {
         message: 'Value is required',
       }),
@@ -100,15 +104,16 @@ export const ProductFormSchema = z.object({
     category: BaseOptionSchema,
     brand: BaseOptionSchema,
     collection: BaseOptionSchema.nullish(),
+    images: z
+      .object({
+        id: z.number().optional(),
+        url: z.string(),
+        role: z.string().nullish(),
+        assignments: z.string().array(),
+        is_removed: z.boolean().optional(),
+      })
+      .array(),
   }),
-  product_images: z
-    .object({
-      id: z.number().optional(),
-      url: z.string(),
-      assignments: z.string().array(),
-      is_removed: z.boolean().optional(),
-    })
-    .array(),
   variants: z.array(VariantFormSchema).min(1),
 });
 
@@ -134,13 +139,14 @@ export type AttributeDetailModel = {
   id: number;
   name: string;
   values: AttributeValueDetailModel[];
+  created_at: Date;
 };
 
 export type ProductVariantAttributeModel = Omit<
   AttributeDetailModel,
   'values'
 > & {
-  value: AttributeValueDetailModel;
+  value_object: AttributeValueDetailModel;
 };
 
 export type VariantDetailModel = {
@@ -167,6 +173,7 @@ export type ProductImageModel = {
   id: number;
   external_id: string;
   url: string;
+  role: string;
   assignments: AssignmentImageModel[];
 };
 

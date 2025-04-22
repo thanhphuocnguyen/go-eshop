@@ -47,6 +47,17 @@ export default function Page({
 
   const form = useForm<AttributeFormModel>({
     resolver: zodResolver(AttributeFormSchema),
+    defaultValues: {
+      name: '',
+      values: [
+        {
+          value: '',
+          display_value: '',
+          display_order: 1,
+          is_active: true,
+        },
+      ],
+    },
   });
   const { register, control, reset, handleSubmit } = form;
 
@@ -76,6 +87,7 @@ export default function Page({
       ...item,
       display_order: i + 1,
     }));
+
     const response = await apiFetch<GenericResponse<AttributeFormModel>>(
       API_PATHS.ATTRIBUTE.replace(':id', slug),
       {

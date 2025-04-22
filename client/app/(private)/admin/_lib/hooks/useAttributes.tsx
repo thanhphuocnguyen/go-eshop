@@ -10,13 +10,16 @@ export function useAttributes() {
     (url) =>
       apiFetch<GenericResponse<AttributeDetailModel[]>>(url).then((res) => {
         if (res.error) {
-          throw new Error(res.error.stack);
+          throw new Error(res.error.stack, {
+            cause: res.error,
+          });
         }
         return res.data;
       }),
     {
-      refreshInterval: 0,
+      
       revalidateOnFocus: false,
+      revalidateOnReconnect: false,
       onError: (error) => {
         toast.error(
           <div>

@@ -50,6 +50,9 @@ SELECT * FROM attribute_values WHERE attribute_id = $1 ORDER BY attribute_values
 -- name: GetAttributeValuesByIDs :many
 SELECT * FROM attribute_values WHERE id = ANY(sqlc.arg(ids)::int[]) ORDER BY attribute_values.id;
 
+-- name: GetAttrValuesByAttrIDs :many
+SELECT * FROM attribute_values WHERE attribute_id = ANY(sqlc.arg(ids)::int[]) ORDER BY attribute_values.id;
+
 -- name: UpdateAttributeValue :one
 UPDATE 
     attribute_values 

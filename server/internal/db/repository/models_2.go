@@ -2,14 +2,9 @@ package repository
 
 import "github.com/google/uuid"
 
-const (
-	// ProductImageType is the type of image for product
-	ProductImageType        = "product"
-	ProductVariantImageType = "product_variant"
-)
-
 type ProductAttributesTxParam struct {
 	// AttributeID int32 `json:"attribute_id" binding:"required"`
+	ID      int32 `json:"id" binding:"required"`
 	ValueID int32 `json:"value_id" binding:"required"`
 }
 

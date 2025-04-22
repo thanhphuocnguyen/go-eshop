@@ -30,17 +30,40 @@ func (s *pgRepo) UpdateProductVariantsTx(ctx context.Context, productID uuid.UUI
 		if len(arg.Variants) > 0 {
 			rs.UpdatedIDs = make([]uuid.UUID, 0)
 			rs.CreatedIDs = make([]uuid.UUID, 0)
+			// get all attribute values
+			attrValMp := make(map[int32]bool)
+			attrValueIds := make([]int32, 0)
 			for _, variant := range arg.Variants {
-				sku := ""
-				attrValueIds := make([]int32, 0)
 				for _, attr := range variant.Attributes {
+					if attrValMp[attr.ValueID] {
+						continue
+					}
 					attrValueIds = append(attrValueIds, attr.ValueID)
+					attrValMp[attr.ValueID] = true
 				}
-				variantSku, err := GetVariantSKUWithAttributeNames(q, ctx, product.BaseSku, attrValueIds)
-				if err != nil {
-					log.Error().Err(err).Msg("GetVariantSKUWithAttributeNames Failed")
-					return err
+			}
+
+			attributeValueMp := make(map[int32]AttributeValue)
+			attributeValueRows, err := q.GetAttributeValuesByIDs(ctx, attrValueIds)
+
+			if err != nil {
+				log.Error().Err(err).Msg("GetAttributeValuesByIDs")
+				return err
+			}
+			for _, attributeValue := range attributeValueRows {
+				if _, ok := attributeValueMp[attributeValue.ID]; !ok {
+					attributeValueMp[attributeValue.ID] = attributeValue
 				}
+			}
+			for i, variant := range arg.Variants {
+				sku := ""
+				attrValues := make([]AttributeValue, 0)
+				for _, attr := range variant.Attributes {
+					attrValues = append(attrValues, attributeValueMp[attr.ValueID])
+				}
+
+				variantSku := GetVariantSKUWithAttributeNames(product.BaseSku, attrValues)
+
 				sku = variantSku
 
 				if variant.ID != nil {
@@ -64,11 +87,11 @@ func (s *pgRepo) UpdateProductVariantsTx(ctx context.Context, productID uuid.UUI
 
 					updated, err := q.UpdateProductVariant(ctx, updateVariantParams)
 					if err != nil {
-						log.Error().Err(err).Msg("UpdateProductVariant")
+						log.Error().Err(err).Msgf("UpdateProductVariant at index %d", i)
 						return err
 					}
+
 					rs.UpdatedIDs = append(rs.UpdatedIDs, updated.ID)
-					log.Info().Interface("attributes ", variant.Attributes).Msg("Log attributes")
 					if len(variant.Attributes) > 0 {
 						// delete old attributes
 						err := q.DeleteProductVariantAttributes(ctx, updated.ID)
@@ -90,7 +113,6 @@ func (s *pgRepo) UpdateProductVariantsTx(ctx context.Context, productID uuid.UUI
 							return err
 						}
 					}
-
 				} else {
 					createVariantParams := CreateProductVariantParams{
 						ID:        uuid.New(),
@@ -125,13 +147,12 @@ func (s *pgRepo) UpdateProductVariantsTx(ctx context.Context, productID uuid.UUI
 							}
 						}
 
-						rs, err := q.CreateBulkProductVariantAttribute(ctx, createBulkProductVariantAttributesParam)
+						_, err := q.CreateBulkProductVariantAttribute(ctx, createBulkProductVariantAttributesParam)
 						if err != nil {
 							log.Error().Err(err).Msg("CreateProductVariantAttribute")
 							return err
 						}
 
-						log.Debug().Msgf("CreateProductVariantAttribute %v", rs)
 					}
 				}
 			}

@@ -116,6 +116,38 @@ func (q *Queries) DeleteProductVariantAttributes(ctx context.Context, variantID 
 	return err
 }
 
+const getAttrValuesByAttrIDs = `-- name: GetAttrValuesByAttrIDs :many
+SELECT id, attribute_id, value, is_active, display_value, display_order, created_at FROM attribute_values WHERE attribute_id = ANY($1::int[]) ORDER BY attribute_values.id
+`
+
+func (q *Queries) GetAttrValuesByAttrIDs(ctx context.Context, ids []int32) ([]AttributeValue, error) {
+	rows, err := q.db.Query(ctx, getAttrValuesByAttrIDs, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []AttributeValue{}
+	for rows.Next() {
+		var i AttributeValue
+		if err := rows.Scan(
+			&i.ID,
+			&i.AttributeID,
+			&i.Value,
+			&i.IsActive,
+			&i.DisplayValue,
+			&i.DisplayOrder,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAttributeByID = `-- name: GetAttributeByID :many
 SELECT a.id, a.name, a.created_at, 
     av.value, av.id as attribute_value_id, av.is_active as attribute_value_is_active, 

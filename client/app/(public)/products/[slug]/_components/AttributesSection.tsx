@@ -31,11 +31,11 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({
     const attributeObj: Record<string, AttributeValueDetailModel[]> = {};
     const attributeValueIds = new Set<number>();
     attributes.reduce((acc, attribute) => {
-      const { name, value } = attribute;
+      const { name, value_object } = attribute;
       const availableValues: AttributeValueDetailModel[] = [];
-      if (!attributeValueIds.has(value.id)) {
-        attributeValueIds.add(value.id);
-        availableValues.push({ ...value });
+      if (!attributeValueIds.has(value_object.id)) {
+        attributeValueIds.add(value_object.id);
+        availableValues.push({ ...value_object });
       }
       if (!acc[name]) {
         acc[name] = availableValues;
@@ -46,7 +46,6 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({
     }, attributeObj);
     setAttributesFormat(attributeObj);
   }, [attributes]);
-  console.log(attributes);
 
   return (
     <div className='flex flex-col gap-6 mt-10'>

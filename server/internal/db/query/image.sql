@@ -59,4 +59,4 @@ DELETE FROM images WHERE id = $1;
 DELETE FROM image_assignments WHERE image_id = $1 AND entity_id = $2 AND entity_type = $3;
 
 -- name: DeleteImageAssignments :exec
-DELETE FROM image_assignments WHERE entity_id = ANY(sqlc.arg(entity_ids)::UUID[]) AND entity_type = $1;
+DELETE FROM image_assignments WHERE image_id = $1 AND entity_type = $2;

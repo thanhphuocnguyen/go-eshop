@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 export type VariantImage = {
   file: File;
   preview: string;
+  role?: string | null; // Role of the image (e.g., 'thumbnail', 'gallery')
   variantIds: string[]; // IDs of variants this image is assigned to
 };
 

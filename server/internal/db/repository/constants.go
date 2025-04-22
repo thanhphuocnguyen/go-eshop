@@ -1,11 +1,13 @@
 package repository
 
+// Entity Types
 const (
-	CategoryRole = "category"
-	ProductRole  = "product"
-	VariantRole  = "product_variant"
-	BrandRole    = "brand"
-	Main         = "main"
+	AttributeEntityType = "attribute"
+	ProductEntityType   = "product"
+	CategoryEntityType  = "category"
+	BrandEntityType     = "brand"
+	TagEntityType       = "tag"
+	VariantEntityType   = "variant"
 )
 
 const (

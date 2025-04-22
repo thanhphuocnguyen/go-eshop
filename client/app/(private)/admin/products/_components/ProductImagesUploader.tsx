@@ -1,8 +1,8 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { XCircleIcon } from '@heroicons/react/16/solid';
 import { ChevronUpIcon } from '@heroicons/react/24/outline';
-import { ImageUploader } from '@/components/FormFields';
+import { ImageUploader, StyledComboBox } from '@/components/FormFields';
 import { StyledMultipleComboBox } from '@/components/FormFields/StyledMultipleComboBox';
 import Image from 'next/image';
 import { ProductDetailModel, ProductModelForm } from '@/lib/definitions';
@@ -18,6 +18,7 @@ import {
   Transition,
 } from '@headlessui/react';
 import clsx from 'clsx';
+import { capitalize } from '@/lib/utils';
 
 interface ProductImagesUploaderProps {
   productDetail?: ProductDetailModel;
@@ -32,11 +33,11 @@ export const ProductImagesUploader: React.FC<ProductImagesUploaderProps> = (
   props
 ) => {
   const { productDetail } = props;
-  const takenVariantIds = useRef<Set<string>>(new Set<string>());
   const { setValue, control } = useFormContext<ProductModelForm>();
   const productImages = useWatch({
     control,
-    name: 'product_images',
+    name: 'product_info.images',
+    defaultValue: [],
   });
 
   const { tempProductImages, setTempProductImages } =
@@ -79,17 +80,15 @@ export const ProductImagesUploader: React.FC<ProductImagesUploaderProps> = (
 
   useEffect(() => {
     if (productDetail?.variants) {
-      takenVariantIds.current = new Set(
-        productImages.flatMap((image) => image.assignments)
-      );
-
       const options = productDetail.variants.reduce((acc, variant) => {
         acc.push({
           id: variant.id,
           name: variant.attributes
-            .map((attr) => `${attr.name}: ${attr.value.display_value}`)
+            .map(
+              (attr) =>
+                `${attr.name}: ${attr.value_object.display_value || attr.value_object.value}`
+            )
             .join(', '),
-          disabled: takenVariantIds.current.has(variant.id),
         });
         return acc;
       }, [] as VariantToAssignOption[]);
@@ -110,7 +109,9 @@ export const ProductImagesUploader: React.FC<ProductImagesUploaderProps> = (
                 open ? 'bg-blue-50' : 'bg-gray-100 hover:bg-gray-50'
               )}
             >
-              <span className='text-2xl font-semibold text-primary'>Product Media</span>
+              <span className='text-2xl font-semibold text-primary'>
+                Product Media
+              </span>
               <ChevronUpIcon
                 className={clsx(
                   'h-5 w-5 text-gray-500 transition-transform duration-300 ease-in-out',
@@ -129,8 +130,8 @@ export const ProductImagesUploader: React.FC<ProductImagesUploaderProps> = (
             >
               <DisclosurePanel className='p-4'>
                 <p className='text-sm text-gray-500 mb-4'>
-                  Upload images for variants. Each image can be assigned to multiple
-                  variants.
+                  Upload images for variants. Each image can be assigned to
+                  multiple variants.
                 </p>
                 <div className='mb-8'>
                   {/* Image uploader */}
@@ -152,20 +153,37 @@ export const ProductImagesUploader: React.FC<ProductImagesUploaderProps> = (
                               className='border border-gray-200 rounded-lg p-4 bg-white shadow-sm'
                             >
                               <ImagePreview
+                                handleSelectRole={(idx, role) => {
+                                  setValue(
+                                    `product_info.images.${idx}.role`,
+                                    role,
+                                    {
+                                      shouldDirty: true,
+                                    }
+                                  );
+                                }}
                                 url={image.url}
                                 variantIds={image.assignments}
                                 index={index}
                                 variantOptions={variantOptions}
+                                selectedRole={image.role}
                                 onRemove={() => {
-                                  setValue(`product_images.${index}.is_removed`, true, {
-                                    shouldDirty: true,
-                                  });
+                                  setValue(
+                                    `product_info.images.${index}.is_removed`,
+                                    true,
+                                    {
+                                      shouldDirty: true,
+                                    }
+                                  );
                                 }}
                                 onAssignVariants={(idx, values) => {
-                                  console.log('hello');
-                                  setValue(`product_images.${idx}.assignments`, values, {
-                                    shouldDirty: true,
-                                  });
+                                  setValue(
+                                    `product_info.images.${idx}.assignments`,
+                                    values,
+                                    {
+                                      shouldDirty: true,
+                                    }
+                                  );
                                 }}
                               />
                             </div>
@@ -178,12 +196,26 @@ export const ProductImagesUploader: React.FC<ProductImagesUploaderProps> = (
                         className='border border-gray-200 rounded-lg p-4 bg-white shadow-sm'
                       >
                         <ImagePreview
+                          handleSelectRole={(idx, role) => {
+                            setTempProductImages((prev) => {
+                              const updated = [...prev];
+                              updated[idx] = {
+                                ...updated[idx],
+                                role: role,
+                              };
+
+                              return updated;
+                            });
+                          }}
                           url={image.preview}
+                          selectedRole={image.role || 'thumbnail'}
                           variantIds={image.variantIds}
                           index={index}
                           variantOptions={variantOptions}
                           onRemove={handleRemoveImage}
-                          onAssignVariants={handleAssignVariantsForUploadingFile}
+                          onAssignVariants={
+                            handleAssignVariantsForUploadingFile
+                          }
                         />
                       </div>
                     ))}
@@ -191,7 +223,9 @@ export const ProductImagesUploader: React.FC<ProductImagesUploaderProps> = (
                     {!productDetail?.product_images.length &&
                       !tempProductImages.length && (
                         <div className='text-center p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50'>
-                          <p className='text-gray-500'>No variant images uploaded yet</p>
+                          <p className='text-gray-500'>
+                            No variant images uploaded yet
+                          </p>
                         </div>
                       )}
                   </div>
@@ -209,7 +243,9 @@ interface ImagePreviewProps {
   url: string;
   index: number;
   variantIds: string[];
+  selectedRole?: string | null;
   variantOptions: { id: string; name: string }[];
+  handleSelectRole: (idx: number, role: string | undefined | null) => void;
   onRemove: (index: number) => void;
   onAssignVariants: (idx: number, ids: string[]) => void;
 }
@@ -218,8 +254,10 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({
   url,
   onRemove,
   onAssignVariants,
+  handleSelectRole,
   variantOptions,
   variantIds,
+  selectedRole,
   index,
 }) => {
   return (
@@ -246,20 +284,36 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({
             <XCircleIcon className='size-6' />
           </button>
         </div>
-        <StyledMultipleComboBox
-          label='Assign to Variants'
-          selected={variantOptions?.filter((opt) =>
-            variantIds.includes(opt.id)
-          )}
-          options={variantOptions}
-          getDisplayValue={(opt) => opt.name}
-          setSelected={(selected) =>
-            onAssignVariants(
-              index,
-              selected.map((s) => s.id)
-            )
-          }
-        />
+        <div className='flex items-center gap-6 mb-2'>
+          <div className='w-2/3'>
+            <StyledMultipleComboBox
+              label='Assign to Variants'
+              selected={variantOptions?.filter((opt) =>
+                variantIds.includes(opt.id)
+              )}
+              options={variantOptions}
+              getDisplayValue={(opt) => opt.name}
+              setSelected={(selected) =>
+                onAssignVariants(
+                  index,
+                  selected.map((s) => s.id)
+                )
+              }
+            />
+          </div>
+          <div className='w-1/3'>
+            <StyledComboBox
+              label='Image Role'
+              getKey={(opt) => opt || ''}
+              selected={selectedRole}
+              getDisplayValue={(opt) => (opt ? capitalize(opt) : '')}
+              setSelected={(role) => {
+                handleSelectRole(index, role);
+              }}
+              options={['thumbnail', 'gallery', 'additional']}
+            />
+          </div>
+        </div>
 
         {variantIds.length === 0 && (
           <p className='text-sm text-amber-600 mt-1'>

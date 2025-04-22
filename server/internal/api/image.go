@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
@@ -79,25 +79,43 @@ func (sv *Server) uploadProductImages(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("maximum 5 files allowed")))
 		return
 	}
-	assignmentsReq := c.PostForm("assignments")
-	if assignmentsReq == "" {
+
+	assignmentsReq := c.PostFormArray("assignments[]")
+	if len(assignmentsReq) == 0 {
 		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("missing assignments in request")))
 		return
 	}
 
-	// Parse the assignments JSON
-	var assignments []string
-	if err := json.Unmarshal([]byte(assignmentsReq), &assignments); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("invalid assignments format")))
+	roles := c.PostFormArray("roles")
+	if len(roles) == 0 {
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("missing roles in request")))
 		return
 	}
-	log.Debug().Msgf("Assignments: %v", assignments)
+	if len(roles) != len(assignmentsReq) {
+		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("roles and assignments must be the same length")))
+		return
+	}
+	// Check if the roles are valid
+
+	// Parse the assignments JSON
+	// log.Debug().Msgf("Assignments: %v", assignmentsReq)
+	var assignmentsList [][]string
+	for _, assignment := range assignmentsReq {
+		var assignments []string
+		if err := json.Unmarshal([]byte(assignment), &assignments); err != nil {
+			c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("invalid assignments format")))
+			return
+		}
+		assignmentsList = append(assignmentsList, assignments)
+	}
+	// log.Debug().Msgf("Assignments: %v", assignmentsList)
 	// c.Status(http.StatusNoContent)
 	// return
 
 	existingProduct, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{
 		ID: uuid.MustParse(param.EntityID),
 	})
+
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", errors.New("product not found")))
@@ -126,22 +144,24 @@ func (sv *Server) uploadProductImages(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "upload to server failed", err))
 			return
 		}
+
 		img, err := sv.repo.CreateImage(c, repository.CreateImageParams{
 			ExternalID: id,
 			Url:        url,
 			MimeType:   utils.GetPgTypeText(file.Header.Get("Content-Type")),
 			FileSize:   utils.GetPgTypeInt8(file.Size),
 		})
+
 		createImageAssignmentReq := make([]repository.CreateBulkImageAssignmentsParams, 0)
 		createImageAssignmentReq = append(createImageAssignmentReq, repository.CreateBulkImageAssignmentsParams{
 			ImageID:      img.ID,
 			EntityID:     existingProduct.ID,
-			EntityType:   repository.ProductImageType,
+			EntityType:   repository.ProductEntityType,
 			DisplayOrder: int16(i) + 1,
-			Role:         repository.ProductRole,
+			Role:         strings.ToLower(roles[i]),
 		})
 
-		for _, assignment := range assignments {
+		for _, assignment := range assignmentsList[i] {
 			if assignment == "" {
 				continue
 			}
@@ -156,9 +176,9 @@ func (sv *Server) uploadProductImages(c *gin.Context) {
 			createImageAssignmentReq = append(createImageAssignmentReq, repository.CreateBulkImageAssignmentsParams{
 				ImageID:      img.ID,
 				EntityID:     variantID,
-				EntityType:   repository.ProductVariantImageType,
+				EntityType:   repository.VariantEntityType,
 				DisplayOrder: int16(i) + 1,
-				Role:         repository.ProductRole,
+				Role:         repository.GalleryRole,
 			})
 		}
 		_, err = sv.repo.CreateBulkImageAssignments(c, createImageAssignmentReq)
@@ -235,7 +255,7 @@ func (sv *Server) removeImage(c *gin.Context) {
 
 	image, err := sv.repo.GetImageFromID(c, repository.GetImageFromIDParams{
 		ID:         params.ImageID,
-		EntityType: repository.ProductImageType,
+		EntityType: repository.ProductEntityType,
 	})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
@@ -245,7 +265,7 @@ func (sv *Server) removeImage(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
 		return
 	}
-	if image.EntityType != repository.ProductImageType {
+	if image.EntityType != repository.ProductEntityType {
 		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("image not found")))
 		return
 	}

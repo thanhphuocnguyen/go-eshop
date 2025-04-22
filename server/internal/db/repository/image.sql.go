@@ -98,16 +98,16 @@ func (q *Queries) CreateImageAssignment(ctx context.Context, arg CreateImageAssi
 }
 
 const deleteImageAssignments = `-- name: DeleteImageAssignments :exec
-DELETE FROM image_assignments WHERE entity_id = ANY($2::UUID[]) AND entity_type = $1
+DELETE FROM image_assignments WHERE image_id = $1 AND entity_type = $2
 `
 
 type DeleteImageAssignmentsParams struct {
-	EntityType string      `json:"entity_type"`
-	EntityIds  []uuid.UUID `json:"entity_ids"`
+	ImageID    int32  `json:"image_id"`
+	EntityType string `json:"entity_type"`
 }
 
 func (q *Queries) DeleteImageAssignments(ctx context.Context, arg DeleteImageAssignmentsParams) error {
-	_, err := q.db.Exec(ctx, deleteImageAssignments, arg.EntityType, arg.EntityIds)
+	_, err := q.db.Exec(ctx, deleteImageAssignments, arg.ImageID, arg.EntityType)
 	return err
 }
 

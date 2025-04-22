@@ -11,6 +11,7 @@
       "mode": "debug",
       "program": "${file}",
       "envFile": "${workspaceFolder}/app.env",
+      "cwd": "${workspaceFolder}"
     },
     {
       "name": "Launch Package",
@@ -23,6 +24,25 @@
         "--profile",
         "api"
       ],
+      "cwd": "${workspaceFolder}"
     },
+    {
+      "name": "Launch Migrate",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/cmd/migrate",
+      "envFile": "${workspaceFolder}/app.env",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Launch Seed",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/cmd/seed",
+      "envFile": "${workspaceFolder}/app.env",
+      "cwd": "${workspaceFolder}"
+    }
   ]
 }

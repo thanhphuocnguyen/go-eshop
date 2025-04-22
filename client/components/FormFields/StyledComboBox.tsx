@@ -12,34 +12,39 @@ import {
 } from '@headlessui/react';
 import clsx from 'clsx';
 import { CheckIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
-import { BaseOption } from '@/lib/definitions';
 
-interface StyledComboBoxProps {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface StyledComboBoxProps<T = any> {
   label: string;
-  selected: BaseOption | null;
-  options: BaseOption[];
+  selected: T | null;
+  options: T[];
+  getDisplayValue: (option: T) => string;
+  getKey: (option: T) => string;
   message?: string;
   error?: boolean;
-  setSelected: (value: BaseOption | null) => void;
+  setSelected: (value: T | null) => void;
 }
 
-export const StyledComboBox: React.FC<StyledComboBoxProps> = ({
+export const StyledComboBox = <T,>({
   selected,
   setSelected,
+  getDisplayValue,
   label,
   error,
   message,
   options,
-}) => {
+  getKey,
+}: StyledComboBoxProps<T>) => {
   const [query, setQuery] = useState('');
-  const [filteredOptions, setFilteredOptions] = useState(options);
+  const [filteredOptions, setFilteredOptions] = useState<T[]>(options);
 
   useEffect(() => {
     setFilteredOptions(
       options.filter((opt) =>
-        opt.name.toLowerCase().includes(query.toLowerCase())
+        getDisplayValue(opt).toLowerCase().includes(query.toLowerCase())
       )
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, options]);
 
   return (
@@ -58,7 +63,7 @@ export const StyledComboBox: React.FC<StyledComboBoxProps> = ({
               'w-full rounded-lg border border-gray-300 bg-white py-3 pr-8 pl-3 text-sm/6 text-gray-500 transition-all duration-500 shadow-none ease-in-out',
               'focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 focus:ring-1 focus:ring-sky-400 focus:shadow-lg'
             )}
-            displayValue={(option: BaseOption) => option?.name}
+            displayValue={getDisplayValue}
             onChange={(event) => setQuery(event.target.value)}
           />
           <ComboboxButton className='group absolute inset-y-0 right-0 px-2.5'>
@@ -76,12 +81,14 @@ export const StyledComboBox: React.FC<StyledComboBoxProps> = ({
         >
           {filteredOptions.map((opt) => (
             <ComboboxOption
-              key={opt.id}
+              key={getKey(opt)}
               value={opt}
               className='group flex cursor-default items-center gap-2 rounded-lg py-1.5 px-3 select-none data-[focus]:bg-tertiary'
             >
-              <CheckIcon className='invisible size-4 fill-white group-data-[selected]:visible' />
-              <div className='text-sm/6 text-gray-500'>{opt.name}</div>
+              <CheckIcon className='invisible size-6 group-data-[selected]:visible group-data-[selected]:text-green-600' />
+              <div className='text-sm/6 text-gray-500'>
+                {getDisplayValue(opt)}
+              </div>
             </ComboboxOption>
           ))}
         </ComboboxOptions>

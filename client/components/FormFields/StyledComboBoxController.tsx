@@ -50,6 +50,7 @@ export const StyledComboBoxController = <T extends FieldValues>({
           .includes(query.toLowerCase())
       )
     );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, options]);
 
   return (

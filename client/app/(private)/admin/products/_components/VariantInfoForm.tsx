@@ -79,7 +79,7 @@ export const VariantInfoForm: React.FC = ({}) => {
                         ? attributes.map((e) => ({
                             id: e.id,
                             name: e.name,
-                            value: {
+                            value_object: {
                               id: -1,
                             },
                           }))

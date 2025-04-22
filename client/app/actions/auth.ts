@@ -112,7 +112,6 @@ export async function register(_: SignupFormState, formData: FormData) {
   }
 
   const { email, username, password, fullname, phone } = validatedFields.data;
-  console.log('Sending request');
   const resp = await apiFetch(API_PATHS.REGISTER, {
     method: 'POST',
     body: {

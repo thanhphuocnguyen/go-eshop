@@ -68,6 +68,7 @@ type Querier interface {
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	GetAddress(ctx context.Context, arg GetAddressParams) (UserAddress, error)
 	GetAddresses(ctx context.Context, userID uuid.UUID) ([]UserAddress, error)
+	GetAttrValuesByAttrIDs(ctx context.Context, ids []int32) ([]AttributeValue, error)
 	GetAttributeByID(ctx context.Context, id int32) ([]GetAttributeByIDRow, error)
 	GetAttributeByIDs(ctx context.Context, ids []int32) ([]Attribute, error)
 	GetAttributeByName(ctx context.Context, name string) (Attribute, error)

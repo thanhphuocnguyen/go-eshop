@@ -21,6 +21,7 @@ type Repository interface {
 	RefundOrderTx(ctx context.Context, params RefundOrderTxArgs) error
 	QueryRaw(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error)
 	UpdateProductVariantsTx(ctx context.Context, productID uuid.UUID, arg UpdateProductVariantsTxParam) (UpdateProductVariantsTxResult, error)
+	UpdateImageAssignmentsTx(ctx context.Context, arg []UpdateImageAssignmentsTxParam) error
 	Close()
 }
 

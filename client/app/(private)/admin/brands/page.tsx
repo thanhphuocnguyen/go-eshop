@@ -1,29 +1,13 @@
 'use client';
 
-import { API_PATHS } from '@/lib/constants/api';
-import { toast } from 'react-toastify';
-
 import dayjs from 'dayjs';
 import { Button } from '@headlessui/react';
-import useSWR from 'swr';
 import Link from 'next/link';
-import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
 import { ReactNode } from 'react';
-import { apiFetch } from '@/lib/api/api';
+import { useBrands } from '../_lib/hooks';
 
 export default function Page() {
-  const { data: brands, isLoading } = useSWR<GeneralCategoryModel[]>(
-    API_PATHS.BRANDS,
-    (url) =>
-      apiFetch<GenericResponse<GeneralCategoryModel[]>>(url).then(
-        (res) => res.data
-      ),
-    {
-      onError: (error) => {
-        toast(<div>{error.message}</div>, { type: 'error' });
-      },
-    }
-  );
+  const { brands, isLoading } = useBrands();
   if (isLoading) return <div>Loading...</div>;
   return (
     <div className='h-full'>

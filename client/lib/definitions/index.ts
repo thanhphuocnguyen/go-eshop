@@ -2,7 +2,6 @@ export * from './category';
 export * from './apiResponse';
 export * from './common';
 export * from './product';
-export * from './option.type';
 export * from './collection';
 export * from './user';
 export * from './auth';

@@ -89,15 +89,18 @@ export const VariantForm: React.FC<AttributeFormProps> = ({
               <StyledComboBoxController
                 control={control}
                 key={attribute.id}
-                error={!!errors.variants?.[index]?.attributes?.[idx]?.value?.id}
+                error={
+                  !!errors.variants?.[index]?.attributes?.[idx]?.value_object
+                    ?.id
+                }
                 message={
-                  errors.variants?.[index]?.attributes?.[idx]?.value?.id
+                  errors.variants?.[index]?.attributes?.[idx]?.value_object?.id
                     ?.message
                 }
                 getDisplayValue={(attribute) =>
                   attribute?.display_value || attribute.value
                 }
-                name={`variants.${index}.attributes.${idx}.value`}
+                name={`variants.${index}.attributes.${idx}.value_object`}
                 label={attribute.name}
                 options={
                   attributes?.find((e) => e.id === attribute.id)?.values ?? []

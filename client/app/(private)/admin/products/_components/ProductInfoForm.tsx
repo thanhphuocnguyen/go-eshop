@@ -60,6 +60,7 @@ export const ProductInfoForm: React.FC<{
       const selected = attributes.filter((a) => attrIds.has(a.id));
       setSelectedAttributes(selected);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attributes, productDetail]);
 
   return (
