@@ -13,6 +13,7 @@ import {
   ReviewSection,
   ReviewsList,
 } from './_components';
+import { ErrorComponent } from './_components/ErrorComponent';
 
 async function ProductDetailPage({
   params,
@@ -31,10 +32,11 @@ async function ProductDetailPage({
       },
     }
   );
+
   if (error) {
-    console.error(error);
-    return <div>Error loading product details</div>;
+    return <ErrorComponent error={error} />;
   }
+
   if (!data) {
     return <div>Loading...</div>;
   }
@@ -63,9 +65,7 @@ async function ProductDetailPage({
             <ReviewSection rating={5} reviewsCount={30} />
           </div>
           <AttributesSection
-            attributes={data.variants
-              .map((variant) => variant.attributes)
-              .flat()}
+            variants={data.variants}
           />
           <div className='mt-6'>
             <h3 className='sr-only'>Description</h3>
@@ -81,7 +81,7 @@ async function ProductDetailPage({
             dangerouslySetInnerHTML={{
               __html: data.description,
             }}
-          ></div>
+          />
           {/* Details/Fabric & Care */}
           <div className='mt-10 pt-10 border-t border-gray-200'>
             <h3 className='text-sm font-medium text-gray-900'>Fabric & Care</h3>

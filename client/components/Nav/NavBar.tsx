@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 import CartSection from './CartSection';
 import CategorySection from './CategorySection';
 import AuthButtons from './AuthButtons';
-import { UserModel } from '@/lib/types/user';
+import { UserModel } from '@/lib/definitions';
 
 export default async function NavBar() {
   const cookieStore = await cookies();
@@ -53,27 +53,22 @@ export default async function NavBar() {
               <CategorySection />
 
               <div className='ml-auto flex items-center'>
-                <div className='hidden lg:flex lg:flex-1 lg:items-center lg:justify-end lg:space-x-6'>
-                  <AuthButtons
-                    role={role as UserModel['role']}
-                    name={fullname as string}
-                  />
-                </div>
-
-                <div className='hidden lg:ml-8 lg:flex'>
-                  <a
-                    href='#'
+                {/* <div className='hidden lg:ml-8 lg:flex'>
+                  <Link
+                    href='/'
                     className='flex items-center text-gray-700 hover:text-gray-800'
                   >
-                    <img
+                    <Image
+                      width={40}
+                      height={40}
                       alt=''
                       src='https://tailwindui.com/plus/img/flags/flag-canada.svg'
                       className='block h-auto w-5 shrink-0'
                     />
                     <span className='ml-3 block text-sm font-medium'>CAD</span>
                     <span className='sr-only'>, change currency</span>
-                  </a>
-                </div>
+                  </Link>
+                </div> */}
 
                 {/* Search */}
                 <div className='flex lg:ml-6'>
@@ -85,8 +80,13 @@ export default async function NavBar() {
                     />
                   </a>
                 </div>
-
                 <CartSection />
+                <div className='hidden lg:flex lg:flex-1 lg:items-center lg:justify-end lg:space-x-6'>
+                  <AuthButtons
+                    role={role as UserModel['role']}
+                    name={fullname as string}
+                  />
+                </div>
               </div>
             </div>
           </div>

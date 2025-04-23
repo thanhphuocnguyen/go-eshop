@@ -52,6 +52,13 @@ SET
     external_id = COALESCE(sqlc.narg(external_id), external_id) 
 WHERE id = $1;
 
+-- name: UpdateProductImageAssignment :exec
+UPDATE image_assignments
+SET 
+    display_order = COALESCE(sqlc.narg(display_order), display_order),
+    role = COALESCE(sqlc.narg(role), role)
+WHERE image_id = $1 AND entity_id = $2 AND entity_type = $3;
+
 -- name: DeleteProductImage :exec
 DELETE FROM images WHERE id = $1;
 

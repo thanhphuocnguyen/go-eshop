@@ -1,56 +1,69 @@
 'use client';
+import { useAppUser } from '@/app/components/AppUserContext';
 import {
   AttributeValueDetailModel,
-  ProductVariantAttributeModel,
+  VariantDetailModel,
 } from '@/lib/definitions';
 import { Button } from '@headlessui/react';
 import clsx from 'clsx';
 import React, { useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
 
 interface AttributesSectionProps {
-  attributes: ProductVariantAttributeModel[];
+  variants: VariantDetailModel[];
 }
-const AttributesSection: React.FC<AttributesSectionProps> = ({
-  attributes,
-}) => {
-  const [selectedColor, setSelectedColor] = useState<number>();
-  const [selectedSize, setSelectedSize] = useState<number>();
+const AttributesSection: React.FC<AttributesSectionProps> = ({ variants }) => {
+  const { addToCart } = useAppUser();
+  const [selectedAttributes, setSelectedAttributes] = useState<number[]>([]);
   const [attributesFormat, setAttributesFormat] = useState<
     Record<string, AttributeValueDetailModel[]>
   >({});
+
   const handleAddToCart = () => {
+    const variant = variants.find((variant) =>
+      variant.attributes.every((attribute) => {
+        const selectedIndex = Object.keys(attributesFormat).indexOf(
+          attribute.name
+        );
+        return attribute.value_object.id === selectedAttributes[selectedIndex];
+      })
+    );
+    console.log(variant);
+    if (!variant) {
+      toast.error('Please select a size and color');
+      return;
+    }
     // Add to cart logic here
-    console.log('Adding to cart:', {
-      size: selectedSize,
-      color: selectedColor,
-      quantity: 1,
-    });
+    addToCart(variant.id, 1);
   };
 
   useEffect(() => {
     const attributeObj: Record<string, AttributeValueDetailModel[]> = {};
     const attributeValueIds = new Set<number>();
-    attributes.reduce((acc, attribute) => {
-      const { name, value_object } = attribute;
-      const availableValues: AttributeValueDetailModel[] = [];
-      if (!attributeValueIds.has(value_object.id)) {
-        attributeValueIds.add(value_object.id);
-        availableValues.push({ ...value_object });
-      }
-      if (!acc[name]) {
-        acc[name] = availableValues;
-      } else {
-        acc[name] = acc[name].concat(availableValues);
-      }
-      return acc;
-    }, attributeObj);
+    variants
+      .flatMap((e) => e.attributes)
+      .reduce((acc, attribute) => {
+        const { name, value_object } = attribute;
+        const availableValues: AttributeValueDetailModel[] = [];
+        if (!attributeValueIds.has(value_object.id)) {
+          attributeValueIds.add(value_object.id);
+          availableValues.push({ ...value_object });
+        }
+        if (!acc[name]) {
+          acc[name] = availableValues;
+        } else {
+          acc[name] = acc[name].concat(availableValues);
+        }
+        return acc;
+      }, attributeObj);
     setAttributesFormat(attributeObj);
-  }, [attributes]);
+    setSelectedAttributes(new Array(Object.keys(attributeObj).length).fill(0));
+  }, [variants]);
 
   return (
     <div className='flex flex-col gap-6 mt-10'>
       {/* Colors */}
-      {Object.entries(attributesFormat).map(([key, values]) => (
+      {Object.entries(attributesFormat).map(([key, values], i) => (
         <div key={key}>
           {key.toLowerCase().includes('color') ? (
             <div>
@@ -63,13 +76,21 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({
                       type='button' // Important: prevent form submission
                       style={{
                         outlineColor:
-                          selectedColor === color.id ? color.value : '',
+                          selectedAttributes[i] === color.id ? color.value : '',
                       }}
                       className={clsx(
                         'relative -m-0.5 flex items-center justify-center rounded-full p-0.5 focus:outline-none',
-                        selectedColor === color.id ? `ring-2 ring-offset-2` : ''
+                        selectedAttributes[i] === color.id
+                          ? `ring-2 ring-offset-2`
+                          : ''
                       )}
-                      onClick={() => setSelectedColor(color.id)}
+                      onClick={() =>
+                        setSelectedAttributes((prev) => {
+                          const newSelectedAttributes = [...prev];
+                          newSelectedAttributes[i] = color.id;
+                          return newSelectedAttributes;
+                        })
+                      }
                       aria-label={color.display_value}
                     >
                       <span
@@ -110,13 +131,17 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({
                       // !value.inStock
                       //   ? 'bg-gray-50 text-gray-200 cursor-not-allowed'
                       //   : '',
-                      selectedSize === value.id
+                      selectedAttributes[i] === value.id
                         ? 'bg-indigo-600 border-transparent text-white hover:bg-indigo-700' // Selected style
                         : 'bg-white border-gray-200 text-gray-900 hover:bg-gray-50' // Available style,
                     )}
                     onClick={() => {
                       // if (value.inStock) {
-                      setSelectedSize(value.id);
+                      setSelectedAttributes((prev) => {
+                        const newSelectedAttributes = [...prev];
+                        newSelectedAttributes[i] = value.id;
+                        return newSelectedAttributes;
+                      });
                       // }
                     }}
                   >
@@ -152,9 +177,9 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({
       <Button
         type='button' // Change to type="submit" if this button submits the form
         onClick={handleAddToCart}
-        disabled={!selectedSize} // Disable if no size is selected
+        disabled={!selectedAttributes.every(Boolean)} // Disable if no size is selected
         className={`mt-10 w-full flex items-center justify-center rounded-md border border-transparent px-8 py-3 text-base font-medium text-white ${
-          !selectedSize
+          !selectedAttributes.every(Boolean)
             ? 'bg-gray-400 cursor-not-allowed'
             : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
         }`}

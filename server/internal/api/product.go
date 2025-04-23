@@ -14,10 +14,6 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-type ProductParam struct {
-	ID string `uri:"id" binding:"required,uuid"`
-}
-
 type ProductQueries struct {
 	PaginationQueryParams
 	Name *string `form:"name" binding:"omitempty,min=3,max=100"`
@@ -371,7 +367,7 @@ func (sv *Server) updateProduct(c *gin.Context) {
 	var removeImgErr *ApiError
 	if len(req.Images) > 0 {
 		errGroup, _ := errgroup.WithContext(c)
-		imgAssignmentArgs := make([]repository.UpdateImageAssignmentsTxParam, 0)
+		imgAssignmentArgs := make([]repository.UpdateProductImagesTxParam, 0)
 		for _, image := range req.Images {
 			if image.IsRemoved != nil && *image.IsRemoved {
 				errGroup.Go(func() (err error) {
@@ -406,20 +402,27 @@ func (sv *Server) updateProduct(c *gin.Context) {
 					}
 					return err
 				})
-			}
-			// parse the assignments to UUIDs
-			assignmentIds := make([]uuid.UUID, 0)
-			for _, assignment := range image.Assignments {
-				if assignment == productID.String() {
-					continue
+			} else {
+				// parse the assignments to UUIDs
+				assignmentIds := make([]uuid.UUID, 0)
+				for _, assignment := range image.Assignments {
+					if assignment == productID.String() {
+						continue
+					}
+					assignmentIds = append(assignmentIds, uuid.MustParse(assignment))
 				}
-				assignmentIds = append(assignmentIds, uuid.MustParse(assignment))
+				// append the image assignment to the list
+				args := repository.UpdateProductImagesTxParam{
+					ImageID:    image.ID,
+					Role:       image.Role,
+					EntityID:   productID,
+					EntityType: repository.ProductEntityType,
+					VariantIDs: assignmentIds,
+				}
+
+				imgAssignmentArgs = append(imgAssignmentArgs, args)
 			}
-			// append the image assignment to the list
-			imgAssignmentArgs = append(imgAssignmentArgs, repository.UpdateImageAssignmentsTxParam{
-				ImageID:    image.ID,
-				VariantIDs: assignmentIds,
-			})
+
 		}
 
 		err = errGroup.Wait()
@@ -430,15 +433,20 @@ func (sv *Server) updateProduct(c *gin.Context) {
 				Stack:   err.Error(),
 			}
 		}
-
-		// update the image assignments
-		err := sv.repo.UpdateImageAssignmentsTx(c, imgAssignmentArgs)
-
-		if err != nil {
-			if errors.Is(err, repository.ErrRecordNotFound) {
-				c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", err))
+		if len(imgAssignmentArgs) != 0 {
+			// update the image assignments
+			err := sv.repo.UpdateProductImagesTx(c, imgAssignmentArgs)
+			if err != nil {
+				if errors.Is(err, repository.ErrRecordNotFound) {
+					c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", err))
+					return
+				}
+				c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
 				return
 			}
+		}
+
+		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
 			return
 		}
@@ -632,9 +640,9 @@ func mapToVariantResp(variantRows []repository.GetProductVariantsRow) []ProductV
 				ValueObject: AttributeValue{
 					ID:           row.AttrValID,
 					Value:        row.AttrValue,
-					DisplayValue: row.AttrDisplayValue.String,
-					IsActive:     row.IsActive.Bool,
-					DisplayOrder: row.AttrDisplayOrder,
+					DisplayValue: &row.AttrDisplayValue.String,
+					IsActive:     &row.IsActive.Bool,
+					DisplayOrder: &row.AttrDisplayOrder,
 				},
 			})
 		} else {
@@ -653,9 +661,9 @@ func mapToVariantResp(variantRows []repository.GetProductVariantsRow) []ProductV
 						ValueObject: AttributeValue{
 							ID:           row.AttrValID,
 							Value:        row.AttrValue,
-							DisplayValue: row.AttrDisplayValue.String,
-							IsActive:     row.IsActive.Bool,
-							DisplayOrder: row.AttrDisplayOrder,
+							DisplayValue: &row.AttrDisplayValue.String,
+							IsActive:     &row.IsActive.Bool,
+							DisplayOrder: &row.AttrDisplayOrder,
 						},
 					},
 				},

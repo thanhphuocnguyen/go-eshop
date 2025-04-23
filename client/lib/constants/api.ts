@@ -1,4 +1,3 @@
-
 const _apiPaths = {
   LOGIN: '/auth/login',
   REGISTER: '/auth/register',
@@ -12,11 +11,12 @@ const _apiPaths = {
   PRODUCT_DETAIL: '/products/:id',
   PRODUCT_VARIANTS: '/products/:id/variants',
   LOGOUT: '/auth/logout',
-  USER: '/auth/user',
+  USER: '/user',
   CART: '/cart',
   CART_ITEM: '/cart/item',
-  CART_ITEM_COUNT: '/cart/items-count',
-  CHECKOUT: '/checkout',
+  CART_ITEM_DETAIL: '/cart/item/:id',
+  CART_CLEAR: '/cart/clear',
+  CHECKOUT: '/cart/checkout',
   ORDER: '/order',
   ATTRIBUTES: '/attributes',
   ATTRIBUTE: '/attributes/:id',

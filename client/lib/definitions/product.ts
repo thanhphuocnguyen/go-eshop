@@ -135,6 +135,7 @@ export type AttributeValueDetailModel = {
   created_at: Date;
   is_active: boolean;
 };
+
 export type AttributeDetailModel = {
   id: number;
   name: string;

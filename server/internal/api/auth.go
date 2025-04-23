@@ -262,6 +262,6 @@ func (sv *Server) refreshToken(c *gin.Context) {
 
 	c.JSON(http.StatusOK, createSuccessResponse(c, RefreshTokenResponse{
 		AccessToken:          accessToken,
-		AccessTokenExpiresAt: time.Now().Add(sv.config.RefreshTokenDuration),
+		AccessTokenExpiresAt: time.Now().Add(sv.config.AccessTokenDuration),
 	}, "success", nil, nil))
 }

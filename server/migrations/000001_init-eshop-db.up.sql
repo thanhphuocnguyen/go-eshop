@@ -45,21 +45,21 @@ CREATE TYPE "cart_status" AS ENUM ('active', 'checked_out');
 CREATE TYPE "card_type" AS ENUM ('debit', 'credit');
 
 CREATE TYPE "image_role" AS ENUM (
-  "gallery",
-  "thumbnail",
-  "banner",
-  "avatar",
-  "cover",
-  "logo",
-  "icon",
-  "background",
-  "product",
-  "category",
-  "brand",
-  "user",
-  "order",
-  "cart",
-  "payment"
+  'gallery',
+  'thumbnail',
+  'banner',
+  'avatar',
+  'cover',
+  'logo',
+  'icon',
+  'background',
+  'product',
+  'category',
+  'brand',
+  'user',
+  'order',
+  'cart',
+  'payment'
 );
 
 CREATE TYPE "entity_type" AS ENUM (

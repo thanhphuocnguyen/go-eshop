@@ -7,7 +7,6 @@ package repository
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -34,7 +33,7 @@ func (q *Queries) CountCartItems(ctx context.Context, id uuid.UUID) (int64, erro
 }
 
 const createCart = `-- name: CreateCart :one
-INSERT INTO carts (id, user_id, session_id) VALUES ($1, $2, $3) RETURNING id, user_id, session_id, updated_at, created_at
+INSERT INTO carts (id, user_id, session_id) VALUES ($1, $2, $3) RETURNING id, user_id, session_id, order_id, updated_at, created_at
 `
 
 type CreateCartParams struct {
@@ -50,6 +49,7 @@ func (q *Queries) CreateCart(ctx context.Context, arg CreateCartParams) (Cart, e
 		&i.ID,
 		&i.UserID,
 		&i.SessionID,
+		&i.OrderID,
 		&i.UpdatedAt,
 		&i.CreatedAt,
 	)
@@ -67,6 +67,7 @@ type CreateCartItemParams struct {
 	Quantity  int16     `json:"quantity"`
 }
 
+// Cart Item Section
 func (q *Queries) CreateCartItem(ctx context.Context, arg CreateCartItemParams) (CartItem, error) {
 	row := q.db.QueryRow(ctx, createCartItem,
 		arg.ID,
@@ -86,16 +87,25 @@ func (q *Queries) CreateCartItem(ctx context.Context, arg CreateCartItemParams) 
 }
 
 const getCart = `-- name: GetCart :one
-SELECT id, user_id, session_id, updated_at, created_at FROM carts WHERE user_id = $1 LIMIT 1
+SELECT id, user_id, session_id, order_id, updated_at, created_at
+FROM carts
+WHERE carts.user_id = $1 OR carts.session_id = $2 AND carts.order_id IS NULL
+ORDER BY carts.updated_at DESC
 `
 
-func (q *Queries) GetCart(ctx context.Context, userID uuid.UUID) (Cart, error) {
-	row := q.db.QueryRow(ctx, getCart, userID)
+type GetCartParams struct {
+	UserID    uuid.UUID `json:"user_id"`
+	SessionID string    `json:"session_id"`
+}
+
+func (q *Queries) GetCart(ctx context.Context, arg GetCartParams) (Cart, error) {
+	row := q.db.QueryRow(ctx, getCart, arg.UserID, arg.SessionID)
 	var i Cart
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
 		&i.SessionID,
+		&i.OrderID,
 		&i.UpdatedAt,
 		&i.CreatedAt,
 	)
@@ -119,18 +129,17 @@ func (q *Queries) GetCartItem(ctx context.Context, id uuid.UUID) (CartItem, erro
 	return i, err
 }
 
-const getCartItemByProductID = `-- name: GetCartItemByProductID :one
-SELECT id, cart_id, variant_id, quantity, added_at FROM cart_items WHERE id = $1 AND variant_id = $2
+const getCartItemByProductVariantID = `-- name: GetCartItemByProductVariantID :one
+SELECT id, cart_id, variant_id, quantity, added_at FROM cart_items WHERE variant_id = $1 AND cart_id = $2
 `
 
-type GetCartItemByProductIDParams struct {
-	ID        uuid.UUID `json:"id"`
+type GetCartItemByProductVariantIDParams struct {
 	VariantID uuid.UUID `json:"variant_id"`
+	CartID    uuid.UUID `json:"cart_id"`
 }
 
-// Cart Item Section
-func (q *Queries) GetCartItemByProductID(ctx context.Context, arg GetCartItemByProductIDParams) (CartItem, error) {
-	row := q.db.QueryRow(ctx, getCartItemByProductID, arg.ID, arg.VariantID)
+func (q *Queries) GetCartItemByProductVariantID(ctx context.Context, arg GetCartItemByProductVariantIDParams) (CartItem, error) {
+	row := q.db.QueryRow(ctx, getCartItemByProductVariantID, arg.VariantID, arg.CartID)
 	var i CartItem
 	err := row.Scan(
 		&i.ID,
@@ -142,102 +151,77 @@ func (q *Queries) GetCartItemByProductID(ctx context.Context, arg GetCartItemByP
 	return i, err
 }
 
-const getCartItemWithProduct = `-- name: GetCartItemWithProduct :one
+const getCartItems = `-- name: GetCartItems :many
 SELECT 
     ci.id, ci.cart_id, ci.variant_id, ci.quantity, ci.added_at, 
-    p.name AS product_name, p.brand_id, p.collection_id, p.category_id,
-    pv.price, pv.stock, pv.sku
-FROM cart_items ci
-JOIN product_variants AS pv ON ci.variant_id = p.id
-JOIN products AS p ON p.id = ci.product_id
-WHERE ci.id = $1
+    pv.id AS variant_id, pv.price, pv.stock, pv.sku, pv.stock as stock_qty,
+    p.id AS product_id, p.name AS product_name,
+    ci.id as cart_item_id, ci.quantity,
+    av.id as attr_val_id, av.value AS attr_val_text, av.display_value as attr_display_val, a.name AS attr_name, a.id AS attr_id,
+    i.id AS image_id, i.url AS image_url
+FROM cart_items AS ci
+JOIN product_variants AS pv ON pv.id = ci.variant_id
+JOIN products AS p ON p.id = pv.product_id
+JOIN variant_attribute_values AS vav ON vav.variant_id = pv.id
+JOIN attribute_values AS av ON vav.attribute_value_id = av.id
+JOIN attributes AS a ON av.attribute_id = a.id
+LEFT JOIN image_assignments AS ia ON ia.entity_id = pv.id AND ia.entity_type = 'variant'
+LEFT JOIN images AS i ON i.id = ia.image_id
+WHERE ci.cart_id = $1
 ORDER BY ci.added_at, ci.id, pv.id DESC
 `
 
-type GetCartItemWithProductRow struct {
-	ID           uuid.UUID      `json:"id"`
-	CartID       uuid.UUID      `json:"cart_id"`
-	VariantID    uuid.UUID      `json:"variant_id"`
-	Quantity     int16          `json:"quantity"`
-	AddedAt      time.Time      `json:"added_at"`
-	ProductName  string         `json:"product_name"`
-	BrandID      pgtype.UUID    `json:"brand_id"`
-	CollectionID pgtype.UUID    `json:"collection_id"`
-	CategoryID   pgtype.UUID    `json:"category_id"`
-	Price        pgtype.Numeric `json:"price"`
-	Stock        int32          `json:"stock"`
-	Sku          string         `json:"sku"`
+type GetCartItemsRow struct {
+	CartItem       CartItem       `json:"cart_item"`
+	VariantID      uuid.UUID      `json:"variant_id"`
+	Price          pgtype.Numeric `json:"price"`
+	Stock          int32          `json:"stock"`
+	Sku            string         `json:"sku"`
+	StockQty       int32          `json:"stock_qty"`
+	ProductID      uuid.UUID      `json:"product_id"`
+	ProductName    string         `json:"product_name"`
+	CartItemID     uuid.UUID      `json:"cart_item_id"`
+	Quantity       int16          `json:"quantity"`
+	AttrValID      int32          `json:"attr_val_id"`
+	AttrValText    string         `json:"attr_val_text"`
+	AttrDisplayVal pgtype.Text    `json:"attr_display_val"`
+	AttrName       string         `json:"attr_name"`
+	AttrID         int32          `json:"attr_id"`
+	ImageID        pgtype.Int4    `json:"image_id"`
+	ImageUrl       pgtype.Text    `json:"image_url"`
 }
 
-func (q *Queries) GetCartItemWithProduct(ctx context.Context, id uuid.UUID) (GetCartItemWithProductRow, error) {
-	row := q.db.QueryRow(ctx, getCartItemWithProduct, id)
-	var i GetCartItemWithProductRow
-	err := row.Scan(
-		&i.ID,
-		&i.CartID,
-		&i.VariantID,
-		&i.Quantity,
-		&i.AddedAt,
-		&i.ProductName,
-		&i.BrandID,
-		&i.CollectionID,
-		&i.CategoryID,
-		&i.Price,
-		&i.Stock,
-		&i.Sku,
-	)
-	return i, err
-}
-
-const getCartItemsByID = `-- name: GetCartItemsByID :many
-SELECT ci.id, ci.cart_id, ci.variant_id, ci.quantity, ci.added_at, p.id, p.name, p.description, p.base_price, p.base_sku, p.slug, p.is_active, p.category_id, p.collection_id, p.brand_id, p.created_at, p.updated_at,
-    av.value AS attribute_value, a.name AS attribute_name
-FROM cart_items as ci
-JOIN product_variants AS pv ON pv.id = ci.variant_id
-JOIN products AS p ON p.id = pv.product_id
-LEFT JOIN variant_attribute_values AS vav ON vav.id = pa.variant_id
-LEFT JOIN attribute_values AS av ON vav.attribute_value_id = av.id
-LEFT JOIN attributes AS a ON av.attribute_id = a.id
-WHERE cart_id = $1
-ORDER BY ci.id, ci.added_at DESC
-`
-
-type GetCartItemsByIDRow struct {
-	CartItem       CartItem    `json:"cart_item"`
-	Product        Product     `json:"product"`
-	AttributeValue pgtype.Text `json:"attribute_value"`
-	AttributeName  pgtype.Text `json:"attribute_name"`
-}
-
-func (q *Queries) GetCartItemsByID(ctx context.Context, cartID uuid.UUID) ([]GetCartItemsByIDRow, error) {
-	rows, err := q.db.Query(ctx, getCartItemsByID, cartID)
+func (q *Queries) GetCartItems(ctx context.Context, cartID uuid.UUID) ([]GetCartItemsRow, error) {
+	rows, err := q.db.Query(ctx, getCartItems, cartID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetCartItemsByIDRow{}
+	items := []GetCartItemsRow{}
 	for rows.Next() {
-		var i GetCartItemsByIDRow
+		var i GetCartItemsRow
 		if err := rows.Scan(
 			&i.CartItem.ID,
 			&i.CartItem.CartID,
 			&i.CartItem.VariantID,
 			&i.CartItem.Quantity,
 			&i.CartItem.AddedAt,
-			&i.Product.ID,
-			&i.Product.Name,
-			&i.Product.Description,
-			&i.Product.BasePrice,
-			&i.Product.BaseSku,
-			&i.Product.Slug,
-			&i.Product.IsActive,
-			&i.Product.CategoryID,
-			&i.Product.CollectionID,
-			&i.Product.BrandID,
-			&i.Product.CreatedAt,
-			&i.Product.UpdatedAt,
-			&i.AttributeValue,
-			&i.AttributeName,
+			&i.VariantID,
+			&i.Price,
+			&i.Stock,
+			&i.Sku,
+			&i.StockQty,
+			&i.ProductID,
+			&i.ProductName,
+			&i.CartItemID,
+			&i.Quantity,
+			&i.AttrValID,
+			&i.AttrValText,
+			&i.AttrDisplayVal,
+			&i.AttrName,
+			&i.AttrID,
+			&i.ImageID,
+			&i.ImageUrl,
 		); err != nil {
 			return nil, err
 		}
@@ -263,15 +247,6 @@ func (q *Queries) RemoveProductFromCart(ctx context.Context, arg RemoveProductFr
 	return err
 }
 
-const updateCart = `-- name: UpdateCart :exec
-UPDATE carts SET updated_at = NOW() WHERE id = $1 RETURNING id, user_id, session_id, updated_at, created_at
-`
-
-func (q *Queries) UpdateCart(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.Exec(ctx, updateCart, id)
-	return err
-}
-
 const updateCartItemQuantity = `-- name: UpdateCartItemQuantity :exec
 UPDATE cart_items SET quantity = $1 WHERE id = $2 RETURNING id, cart_id, variant_id, quantity, added_at
 `
@@ -283,5 +258,14 @@ type UpdateCartItemQuantityParams struct {
 
 func (q *Queries) UpdateCartItemQuantity(ctx context.Context, arg UpdateCartItemQuantityParams) error {
 	_, err := q.db.Exec(ctx, updateCartItemQuantity, arg.Quantity, arg.ID)
+	return err
+}
+
+const updateCartTimestamp = `-- name: UpdateCartTimestamp :exec
+UPDATE carts SET updated_at = NOW() WHERE id = $1 RETURNING id, user_id, session_id, order_id, updated_at, created_at
+`
+
+func (q *Queries) UpdateCartTimestamp(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, updateCartTimestamp, id)
 	return err
 }

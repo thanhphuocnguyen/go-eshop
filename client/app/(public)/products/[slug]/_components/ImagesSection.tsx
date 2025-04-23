@@ -1,6 +1,7 @@
 'use client';
 import { ProductImageModel } from '@/lib/definitions';
 import { Button } from '@headlessui/react';
+import clsx from 'clsx';
 import Image from 'next/image';
 import React from 'react';
 
@@ -16,11 +17,17 @@ export const ImagesSection: React.FC<ImagesSectionProps> = ({ images }) => {
     <div className='col-span-2 flex flex-col-reverse'>
       {/* Image selector */}
       <div className='hidden mt-6 w-full max-w-2xl mx-auto sm:block lg:max-w-none'>
-        <div className='grid grid-cols-4 gap-6' aria-orientation='horizontal'>
+        <div className='grid grid-cols-5 gap-6' aria-orientation='horizontal'>
           {images.map((image) => (
             <Button
               key={image.id}
-              className={`relative flex items-center justify-center h-72 rounded-md bg-white text-sm font-medium uppercase text-gray-900 cursor-pointer hover:bg-gray-50 focus:outline-none focus:ring focus:ring-offset-4 focus:ring-opacity-50 ${image.role === 'main' ? 'ring-2 ring-offset-2 ring-indigo-500' : ''}`}
+              className={clsx(
+                'relative flex items-center justify-center h-56 rounded-md bg-white text-sm font-medium uppercase text-gray-900 cursor-pointer',
+                'hover:bg-gray-50 focus:outline-none focus:ring focus:ring-offset-4 focus:ring-opacity-50',
+                image.role === 'main'
+                  ? 'ring-2 ring-offset-2 ring-indigo-500'
+                  : ''
+              )}
               onClick={() => setMainImage(image)}
             >
               <span className='absolute inset-0 rounded-md overflow-hidden'>
@@ -34,7 +41,10 @@ export const ImagesSection: React.FC<ImagesSectionProps> = ({ images }) => {
               </span>
               {/* Selected ring */}
               <span
-                className={`${image.role === 'main' ? 'ring-indigo-500' : 'ring-transparent'} absolute inset-0 rounded-md ring-2 ring-offset-2 pointer-events-none`}
+                className={clsx(
+                  'absolute inset-0 rounded-md ring-2 ring-offset-2 pointer-events-none',
+                  image.role === 'main' ? 'ring-indigo-500' : 'ring-transparent'
+                )}
                 aria-hidden='true'
               />
             </Button>
@@ -46,21 +56,19 @@ export const ImagesSection: React.FC<ImagesSectionProps> = ({ images }) => {
             <div
               key={`placeholder-${idx}`}
               className='relative h-full rounded-md bg-gray-100'
-            ></div>
+            />
           ))}
         </div>
       </div>
 
       {/* Main Image */}
-      <div className='w-full aspect-w-1 aspect-h-1'>
+      <div className='flex relative justify-center h-[400px] sm:h-[500px] lg:h-[1000px] w-full'>
         {mainImage && (
           <Image
-            width={1000}
-            height={400}
+            fill
             src={mainImage.url}
             alt={'Model wearing Basic Tee in black.'}
             objectFit='cover'
-            objectPosition='center'
             className='rounded-lg shadow-sm'
           />
         )}

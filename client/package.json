@@ -24,6 +24,7 @@
     "clsx": "^2.1.1",
     "cookies-next": "^5.1.0",
     "dayjs": "^1.11.13",
+    "framer-motion": "^12.7.4",
     "next": "^15.2.5",
     "prettier": "^3.5.2",
     "react": "^19.0.0",

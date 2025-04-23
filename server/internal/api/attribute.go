@@ -11,11 +11,11 @@ import (
 
 // ------------------------------ API Models ------------------------------
 type AttributeValue struct {
-	ID           int32  `json:"id"`
-	Value        string `json:"value"`
-	DisplayValue string `json:"display_value"`
-	IsActive     bool   `json:"is_active"`
-	DisplayOrder int16  `json:"display_order"`
+	ID           int32   `json:"id"`
+	Value        string  `json:"value"`
+	DisplayValue *string `json:"display_value"`
+	IsActive     *bool   `json:"is_active"`
+	DisplayOrder *int16  `json:"display_order"`
 }
 
 type AttributeValueRequest struct {
@@ -156,9 +156,9 @@ func (sv *Server) getAttributeByID(c *gin.Context) {
 		attributeResp.Values = append(attributeResp.Values, AttributeValue{
 			ID:           attributeRows[i].AttributeValueID.Int32,
 			Value:        attributeRows[i].Value.String,
-			DisplayValue: attributeRows[i].DisplayValue.String,
-			IsActive:     attributeRows[i].AttributeValueIsActive.Bool,
-			DisplayOrder: attributeRows[i].DisplayOrder.Int16,
+			DisplayValue: &attributeRows[i].DisplayValue.String,
+			IsActive:     &attributeRows[i].AttributeValueIsActive.Bool,
+			DisplayOrder: &attributeRows[i].DisplayOrder.Int16,
 		})
 	}
 
@@ -189,29 +189,30 @@ func (sv *Server) getAttributes(c *gin.Context) {
 
 	var attributeResp = []AttributeResponse{}
 	for i := 0; i < len(attributeRows); i++ {
+		attrVal := attributeRows[i]
 		if i == 0 || attributeRows[i].ID != attributeRows[i-1].ID {
 			attributeResp = append(attributeResp, AttributeResponse{
-				ID:        attributeRows[i].ID,
-				Name:      attributeRows[i].Name,
-				CreatedAt: attributeRows[i].CreatedAt.String(),
+				ID:        attrVal.ID,
+				Name:      attrVal.Name,
+				CreatedAt: attrVal.CreatedAt.String(),
 				Values:    []AttributeValue{},
 			})
-			if attributeRows[i].AttributeValueID.Valid {
+			if attrVal.AttributeValueID.Valid {
 				attributeResp[len(attributeResp)-1].Values = append(attributeResp[len(attributeResp)-1].Values, AttributeValue{
-					ID:           attributeRows[i].AttributeValueID.Int32,
-					Value:        attributeRows[i].Value.String,
-					DisplayValue: attributeRows[i].DisplayValue.String,
-					DisplayOrder: attributeRows[i].DisplayOrder.Int16,
-					IsActive:     attributeRows[i].AttributeValueIsActive.Bool,
+					ID:           attrVal.AttributeValueID.Int32,
+					Value:        attrVal.Value.String,
+					DisplayValue: &attrVal.DisplayValue.String,
+					DisplayOrder: &attrVal.DisplayOrder.Int16,
+					IsActive:     &attrVal.AttributeValueIsActive.Bool,
 				})
 			}
-		} else if attributeRows[i].AttributeValueID.Valid {
+		} else if attrVal.AttributeValueID.Valid {
 			attributeResp[len(attributeResp)-1].Values = append(attributeResp[len(attributeResp)-1].Values, AttributeValue{
-				ID:           attributeRows[i].AttributeValueID.Int32,
-				Value:        attributeRows[i].Value.String,
-				DisplayValue: attributeRows[i].DisplayValue.String,
-				IsActive:     attributeRows[i].AttributeValueIsActive.Bool,
-				DisplayOrder: attributeRows[i].DisplayOrder.Int16,
+				ID:           attrVal.AttributeValueID.Int32,
+				Value:        attrVal.Value.String,
+				DisplayValue: &attrVal.DisplayValue.String,
+				IsActive:     &attrVal.AttributeValueIsActive.Bool,
+				DisplayOrder: &attrVal.DisplayOrder.Int16,
 			})
 		}
 	}
@@ -301,9 +302,9 @@ func (sv *Server) updateAttribute(c *gin.Context) {
 				response = append(response, AttributeValue{
 					ID:           updated.ID,
 					Value:        updated.Value,
-					DisplayValue: updated.DisplayValue.String,
-					IsActive:     updated.IsActive.Bool,
-					DisplayOrder: updated.DisplayOrder,
+					DisplayValue: &updated.DisplayValue.String,
+					IsActive:     &updated.IsActive.Bool,
+					DisplayOrder: &updated.DisplayOrder,
 				})
 			}
 		} else {
@@ -325,9 +326,9 @@ func (sv *Server) updateAttribute(c *gin.Context) {
 			response = append(response, AttributeValue{
 				ID:           newAttr.ID,
 				Value:        newAttr.Value,
-				DisplayValue: newAttr.DisplayValue.String,
-				IsActive:     newAttr.IsActive.Bool,
-				DisplayOrder: newAttr.DisplayOrder,
+				DisplayValue: &newAttr.DisplayValue.String,
+				IsActive:     &newAttr.IsActive.Bool,
+				DisplayOrder: &newAttr.DisplayOrder,
 			})
 		}
 	}

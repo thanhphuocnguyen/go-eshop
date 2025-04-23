@@ -2,18 +2,18 @@
 INSERT INTO carts (id, user_id, session_id) VALUES ($1, $2, $3) RETURNING *;
 
 -- name: GetCart :one
-SELECT * FROM carts WHERE user_id = $1 LIMIT 1;
+SELECT *
+FROM carts
+WHERE carts.user_id = $1 OR carts.session_id = $2 AND carts.order_id IS NULL
+ORDER BY carts.updated_at DESC;
 
 -- name: RemoveProductFromCart :exec
 DELETE FROM cart_items WHERE cart_id = $1 AND id = $2;
 
--- name: UpdateCart :exec
+-- name: UpdateCartTimestamp :exec
 UPDATE carts SET updated_at = NOW() WHERE id = $1 RETURNING *;
 
 -- Cart Item Section
--- name: GetCartItemByProductID :one
-SELECT * FROM cart_items WHERE id = $1 AND variant_id = $2;
-
 -- name: CreateCartItem :one
 INSERT INTO cart_items (id, cart_id, variant_id, quantity) VALUES ($1, $2, $3, $4) RETURNING *;
 
@@ -26,28 +26,27 @@ SELECT COUNT(*) FROM cart_items WHERE id = $1;
 -- name: GetCartItem :one
 SELECT * FROM cart_items WHERE id = $1;
 
--- name: GetCartItemWithProduct :one
-SELECT 
-    ci.*, 
-    p.name AS product_name, p.brand_id, p.collection_id, p.category_id,
-    pv.price, pv.stock, pv.sku
-FROM cart_items ci
-JOIN product_variants AS pv ON ci.variant_id = p.id
-JOIN products AS p ON p.id = ci.product_id
-WHERE ci.id = $1
-ORDER BY ci.added_at, ci.id, pv.id DESC;
+-- name: GetCartItemByProductVariantID :one
+SELECT * FROM cart_items WHERE variant_id = $1 AND cart_id = $2;
 
--- name: GetCartItemsByID :many
-SELECT sqlc.embed(ci), sqlc.embed(p),
-    av.value AS attribute_value, a.name AS attribute_name
-FROM cart_items as ci
+-- name: GetCartItems :many
+SELECT 
+    sqlc.embed(ci), 
+    pv.id AS variant_id, pv.price, pv.stock, pv.sku, pv.stock as stock_qty,
+    p.id AS product_id, p.name AS product_name,
+    ci.id as cart_item_id, ci.quantity,
+    av.id as attr_val_id, av.value AS attr_val_text, av.display_value as attr_display_val, a.name AS attr_name, a.id AS attr_id,
+    i.id AS image_id, i.url AS image_url
+FROM cart_items AS ci
 JOIN product_variants AS pv ON pv.id = ci.variant_id
 JOIN products AS p ON p.id = pv.product_id
-LEFT JOIN variant_attribute_values AS vav ON vav.id = pa.variant_id
-LEFT JOIN attribute_values AS av ON vav.attribute_value_id = av.id
-LEFT JOIN attributes AS a ON av.attribute_id = a.id
-WHERE cart_id = $1
-ORDER BY ci.id, ci.added_at DESC;
+JOIN variant_attribute_values AS vav ON vav.variant_id = pv.id
+JOIN attribute_values AS av ON vav.attribute_value_id = av.id
+JOIN attributes AS a ON av.attribute_id = a.id
+LEFT JOIN image_assignments AS ia ON ia.entity_id = pv.id AND ia.entity_type = 'variant'
+LEFT JOIN images AS i ON i.id = ia.image_id
+WHERE ci.cart_id = $1
+ORDER BY ci.added_at, ci.id, pv.id DESC;
 
 -- name: ClearCart :exec
 DELETE FROM cart_items WHERE id = $1;

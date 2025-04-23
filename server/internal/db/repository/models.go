@@ -97,6 +97,109 @@ func (ns NullCartStatus) Value() (driver.Value, error) {
 	return string(ns.CartStatus), nil
 }
 
+type EntityType string
+
+const (
+	EntityTypeProduct        EntityType = "product"
+	EntityTypeProductVariant EntityType = "product_variant"
+	EntityTypeCategory       EntityType = "category"
+	EntityTypeBrand          EntityType = "brand"
+	EntityTypeUser           EntityType = "user"
+	EntityTypeOrder          EntityType = "order"
+	EntityTypeCart           EntityType = "cart"
+	EntityTypePayment        EntityType = "payment"
+)
+
+func (e *EntityType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = EntityType(s)
+	case string:
+		*e = EntityType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for EntityType: %T", src)
+	}
+	return nil
+}
+
+type NullEntityType struct {
+	EntityType EntityType `json:"entity_type"`
+	Valid      bool       `json:"valid"` // Valid is true if EntityType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullEntityType) Scan(value interface{}) error {
+	if value == nil {
+		ns.EntityType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.EntityType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullEntityType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.EntityType), nil
+}
+
+type ImageRole string
+
+const (
+	ImageRoleGallery    ImageRole = "gallery"
+	ImageRoleThumbnail  ImageRole = "thumbnail"
+	ImageRoleBanner     ImageRole = "banner"
+	ImageRoleAvatar     ImageRole = "avatar"
+	ImageRoleCover      ImageRole = "cover"
+	ImageRoleLogo       ImageRole = "logo"
+	ImageRoleIcon       ImageRole = "icon"
+	ImageRoleBackground ImageRole = "background"
+	ImageRoleProduct    ImageRole = "product"
+	ImageRoleCategory   ImageRole = "category"
+	ImageRoleBrand      ImageRole = "brand"
+	ImageRoleUser       ImageRole = "user"
+	ImageRoleOrder      ImageRole = "order"
+	ImageRoleCart       ImageRole = "cart"
+	ImageRolePayment    ImageRole = "payment"
+)
+
+func (e *ImageRole) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ImageRole(s)
+	case string:
+		*e = ImageRole(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ImageRole: %T", src)
+	}
+	return nil
+}
+
+type NullImageRole struct {
+	ImageRole ImageRole `json:"image_role"`
+	Valid     bool      `json:"valid"` // Valid is true if ImageRole is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullImageRole) Scan(value interface{}) error {
+	if value == nil {
+		ns.ImageRole, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ImageRole.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullImageRole) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ImageRole), nil
+}
+
 type OrderStatus string
 
 const (
@@ -359,11 +462,12 @@ type Brand struct {
 }
 
 type Cart struct {
-	ID        uuid.UUID `json:"id"`
-	UserID    uuid.UUID `json:"user_id"`
-	SessionID string    `json:"session_id"`
-	UpdatedAt time.Time `json:"updated_at"`
-	CreatedAt time.Time `json:"created_at"`
+	ID        uuid.UUID   `json:"id"`
+	UserID    uuid.UUID   `json:"user_id"`
+	SessionID string      `json:"session_id"`
+	OrderID   pgtype.UUID `json:"order_id"`
+	UpdatedAt time.Time   `json:"updated_at"`
+	CreatedAt time.Time   `json:"created_at"`
 }
 
 type CartItem struct {

@@ -77,7 +77,7 @@ WHERE
     v.product_id = $1 AND
     v.is_active = COALESCE(sqlc.narg('is_active'), TRUE)
 ORDER BY
-    vav.attribute_value_id;
+    a.id, av.display_order, v.created_at DESC;
 
 -- name: GetProducts :many
 SELECT

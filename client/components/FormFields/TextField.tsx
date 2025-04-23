@@ -6,13 +6,14 @@ import React from 'react';
 interface TextFieldProps extends HookFormProps {
   label: string;
   message?: string;
+  className?: string;
   placeholder?: string;
   error?: boolean;
 }
 export const TextField: React.FC<TextFieldProps> = (props) => {
-  const { label, placeholder, error, message, ...rest } = props;
+  const { label, placeholder, error, message, className, ...rest } = props;
   return (
-    <Field className={'w-full ease-in-out'}>
+    <Field className={clsx(className, 'w-full ease-in-out')}>
       <Label className={'text-base/6 text-gray-500 font-semibold'}>
         {label}
       </Label>

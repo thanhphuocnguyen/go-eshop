@@ -453,3 +453,30 @@ func (q *Queries) UpdateProductImage(ctx context.Context, arg UpdateProductImage
 	_, err := q.db.Exec(ctx, updateProductImage, arg.ID, arg.Url, arg.ExternalID)
 	return err
 }
+
+const updateProductImageAssignment = `-- name: UpdateProductImageAssignment :exec
+UPDATE image_assignments
+SET 
+    display_order = COALESCE($4, display_order),
+    role = COALESCE($5, role)
+WHERE image_id = $1 AND entity_id = $2 AND entity_type = $3
+`
+
+type UpdateProductImageAssignmentParams struct {
+	ImageID      int32       `json:"image_id"`
+	EntityID     uuid.UUID   `json:"entity_id"`
+	EntityType   string      `json:"entity_type"`
+	DisplayOrder pgtype.Int2 `json:"display_order"`
+	Role         pgtype.Text `json:"role"`
+}
+
+func (q *Queries) UpdateProductImageAssignment(ctx context.Context, arg UpdateProductImageAssignmentParams) error {
+	_, err := q.db.Exec(ctx, updateProductImageAssignment,
+		arg.ImageID,
+		arg.EntityID,
+		arg.EntityType,
+		arg.DisplayOrder,
+		arg.Role,
+	)
+	return err
+}

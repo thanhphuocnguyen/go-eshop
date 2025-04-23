@@ -14,12 +14,12 @@ const AuthButtons: React.FC<{ role?: string; name?: string }> = ({
 }) => {
   return name ? (
     <Menu>
-      <MenuButton className='inline-flex items-center gap-2 rounded-md bg-gray-800 py-1.5 px-3 text-sm/6 font-semibold text-white shadow-inner shadow-white/10 focus:outline-none data-[hover]:bg-gray-700 data-[open]:bg-gray-700 data-[focus]:outline-1 data-[focus]:outline-white'>
+      <MenuButton className='inline-flex items-center gap-2 rounded-md bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-md hover:bg-indigo-700 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2'>
         {({ active }) => (
           <>
-            <span className='font-bold text-lg'>{name}</span>
-            <span className={clsx('ml-2', active ? 'rotate-180' : 'rotate-0')}>
-              <ChevronDownIcon height={24} width={24} />
+            <span className='font-medium'>{name}</span>
+            <span className={clsx('transition-transform duration-200', active ? 'rotate-180' : 'rotate-0')}>
+              <ChevronDownIcon height={20} width={20} />
             </span>
           </>
         )}
@@ -27,17 +27,17 @@ const AuthButtons: React.FC<{ role?: string; name?: string }> = ({
       <MenuItems
         transition
         anchor='bottom end'
-        className='w-52 z-50 origin-top-right rounded-xl border border-white/5 bg-gray-300 p-1 text-sm/6 text-white transition duration-100 ease-out [--anchor-gap:var(--spacing-1)] focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0'
+        className='w-56 z-50 mt-2 origin-top-right rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg ring-1 ring-black ring-opacity-5 transition duration-150 ease-out focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0'
       >
         {role === 'admin' && (
           <MenuItem>
             <Link
               href='/admin'
-              className='group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10'
+              className='group flex w-full items-center gap-2.5 rounded-md py-2 px-3 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-150'
             >
-              <UserIcon className='size-4 fill-gray-500' />
+              <UserIcon className='size-5 text-indigo-500' />
               Admin
-              <kbd className='ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline'>
+              <kbd className='ml-auto hidden font-sans text-xs text-gray-400 group-hover:inline'>
                 ⌘E
               </kbd>
             </Link>
@@ -46,21 +46,21 @@ const AuthButtons: React.FC<{ role?: string; name?: string }> = ({
         <MenuItem>
           <Link
             href='/profile'
-            className='group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10'
+            className='group flex w-full items-center gap-2.5 rounded-md py-2 px-3 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-150'
           >
-            <UserIcon className='size-4 fill-white/30' />
+            <UserIcon className='size-5 text-indigo-500' />
             Profile
-            <kbd className='ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline'>
+            <kbd className='ml-auto hidden font-sans text-xs text-gray-400 group-hover:inline'>
               ⌘E
             </kbd>
           </Link>
         </MenuItem>
         <MenuItem>
           <button
-            className='group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10'
+            className='group flex w-full items-center gap-2.5 rounded-md py-2 px-3 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all duration-150'
             onClick={logout}
           >
-            <ArrowUpTrayIcon className='size-4' />
+            <ArrowUpTrayIcon className='size-5 text-red-500' />
             Logout
           </button>
         </MenuItem>
@@ -70,14 +70,14 @@ const AuthButtons: React.FC<{ role?: string; name?: string }> = ({
     <>
       <Link
         href='/login'
-        className='text-sm font-medium text-gray-700 hover:text-gray-800'
+        className='text-sm font-medium text-gray-700 hover:text-indigo-600 hover:underline transition-colors duration-150'
       >
         Sign in
       </Link>
       <span aria-hidden='true' className='h-6 w-px bg-gray-200' />
       <Link
         href='/register'
-        className='text-sm font-medium text-gray-700 hover:text-gray-800'
+        className='text-sm font-medium px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-150 shadow-sm'
       >
         Create account
       </Link>

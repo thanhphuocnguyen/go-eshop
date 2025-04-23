@@ -161,17 +161,15 @@ func (sv *Server) initializeRouter() {
 			attribute.DELETE(":id", sv.deleteAttribute)
 		}
 
-		cart := v1.Group("/cart")
+		cart := v1.Group("/cart", authMiddleware(sv.tokenGenerator))
 		{
-			cart.Use(authMiddleware(sv.tokenGenerator))
 			cart.POST("", sv.createCart)
-			cart.GET("items-count", sv.countCartItems)
-			cart.GET("", sv.getCartDetail)
+			cart.GET("", sv.getCart)
 			cart.POST("checkout", sv.checkout)
 			cart.PUT("clear", sv.clearCart)
 
 			cartItem := cart.Group("/item")
-			cartItem.POST("", sv.addCartItem)
+			cartItem.PUT("", sv.putCartItemHandler)
 			cartItem.DELETE(":id", sv.removeCartItem)
 			cartItem.PUT(":id/quantity", sv.updateCartItemQuantity)
 		}
