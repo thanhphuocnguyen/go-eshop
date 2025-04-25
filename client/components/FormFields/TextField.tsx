@@ -11,7 +11,15 @@ interface TextFieldProps extends HookFormProps {
   error?: string;
 }
 export const TextField: React.FC<TextFieldProps> = (props) => {
-  const { label, placeholder, error, className, icon, ...rest } = props;
+  const {
+    label,
+    placeholder,
+    error,
+    className,
+    icon,
+    type = 'text',
+    ...rest
+  } = props;
   return (
     <Field className={clsx(className, 'w-full ease-in-out')}>
       <Label className={'text-base/6 text-gray-500 font-semibold'}>
@@ -20,6 +28,7 @@ export const TextField: React.FC<TextFieldProps> = (props) => {
       <div className='relative'>
         <Input
           {...rest}
+          type={type}
           className={clsx(
             'border border-gray-300 mt-1 transition-all duration-500 rounded-md p-3 w-full shadow-none',
             'focus:ring-1 focus:ring-sky-400 focus:outline-none focus:shadow-lg',

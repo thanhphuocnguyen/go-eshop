@@ -36,6 +36,7 @@ SET
     email = coalesce(sqlc.narg('email'), email),
     fullname = coalesce(sqlc.narg('fullname'), fullname),
     role = coalesce(sqlc.narg('role'), role),
+    phone = coalesce(sqlc.narg('phone'), phone),
     verified_email = coalesce(sqlc.narg('verified_email'), verified_email),
     verified_phone = coalesce(sqlc.narg('verified_phone'), verified_phone),
     hashed_password = coalesce(sqlc.narg('hashed_password'), hashed_password),
@@ -63,16 +64,8 @@ VALUES
 
 -- User Address Queries
 -- name: CreateAddress :one
-INSERT INTO
-    user_addresses (
-        user_id,
-        phone,
-        street,
-        ward,
-        district,
-        city,
-        "default"
-    )
+INSERT INTO 
+    user_addresses (user_id, phone, street, ward, district, city, "default")
 VALUES
     ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
 

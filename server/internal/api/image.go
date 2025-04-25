@@ -183,6 +183,7 @@ func (sv *Server) uploadProductImages(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[[]ImageResponse](http.StatusInternalServerError, "save image info to db failed", err))
 			return
 		}
+
 		images[i] = ImageResponse{
 			ID:         img.ID,
 			ExternalID: img.ExternalID,

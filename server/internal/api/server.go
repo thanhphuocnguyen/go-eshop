@@ -92,20 +92,29 @@ func (sv *Server) initializeRouter() {
 			ctx.JSON(http.StatusOK, gin.H{"status ": "ok"})
 		})
 
-		v1.GET("verify-email", sv.verifyEmail)
+		v1.GET("verify-email", sv.verifyEmailHandler)
 		auth := v1.Group("/auth")
 		{
 			auth.POST("register", sv.registerHandler)
 			auth.POST("login", sv.loginHandler)
 			auth.POST("refresh-token", sv.refreshTokenHandler)
 			authRoutes := auth.Use(authMiddleware(sv.tokenGenerator))
-			authRoutes.POST("send-verify-email", sv.sendVerifyEmail)
+			authRoutes.POST("send-verify-email", sv.sendVerifyEmailHandler)
 		}
 
 		user := v1.Group("/user", authMiddleware(sv.tokenGenerator))
 		{
 			user.GET("", sv.getUser)
 			user.PATCH("", sv.updateUser)
+
+			userAddress := user.Group("addresses")
+			{
+				userAddress.POST("", sv.createAddressHandler)
+				userAddress.PATCH(":id/default", sv.setDefaultAddressHandler)
+				userAddress.GET("", sv.getAddressesHandlers)
+				userAddress.PATCH(":id", sv.updateAddressHandlers)
+				userAddress.DELETE(":id", sv.removeAddressHandlers)
+			}
 		}
 
 		moderatorRoutes := v1.Group("/moderator",
@@ -116,14 +125,6 @@ func (sv *Server) initializeRouter() {
 				repository.UserRoleModerator))
 		{
 			moderatorRoutes.GET("list", sv.listUsers)
-		}
-
-		userAddress := v1.Group("/addresses").Use(authMiddleware(sv.tokenGenerator))
-		{
-			userAddress.POST("", sv.createAddress)
-			userAddress.GET("", sv.listAddresses)
-			userAddress.PATCH(":id", sv.updateAddress)
-			userAddress.DELETE(":id", sv.removeAddress)
 		}
 
 		product := v1.Group("products")

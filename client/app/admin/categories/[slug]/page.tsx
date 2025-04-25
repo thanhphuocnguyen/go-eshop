@@ -21,7 +21,7 @@ export default function AdminCategoryDetail({
 }) {
   const { slug } = use(params);
   const { data: category, isLoading } = useSWR(
-    API_PATHS.CATEGORY.replace(':id', slug),
+    API_PATHS.CATEGORY.replaceAll(':id', slug),
     async (url) => {
       const response = await apiFetch(url, {});
       return response.data;
@@ -39,7 +39,7 @@ export default function AdminCategoryDetail({
   );
 
   const { data: products, isLoading: isLoadingProducts } = useSWR(
-    API_PATHS.CATEGORY_PRODUCTS.replace(':id', slug),
+    API_PATHS.CATEGORY_PRODUCTS.replaceAll(':id', slug),
     async (url) => {
       const response = await apiFetch<GenericResponse<CategoryProductModel[]>>(
         url,
@@ -60,11 +60,11 @@ export default function AdminCategoryDetail({
 
   async function handleSave(data: FormData) {
     const response = await apiFetch<GenericResponse<number>>(
-      API_PATHS.CATEGORY.replace(':slug', slug),
+      API_PATHS.CATEGORY.replace(':id', slug),
       {
         method: 'PUT',
         headers: {
-          Authorization: `Bearer ${getCookie('token')}`,
+          Authorization: `Bearer ${getCookie('access_token')}`,
         },
         body: data,
       }

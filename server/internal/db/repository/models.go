@@ -463,8 +463,8 @@ type Brand struct {
 
 type Cart struct {
 	ID        uuid.UUID   `json:"id"`
-	UserID    uuid.UUID   `json:"user_id"`
-	SessionID string      `json:"session_id"`
+	UserID    pgtype.UUID `json:"user_id"`
+	SessionID pgtype.Text `json:"session_id"`
 	OrderID   pgtype.UUID `json:"order_id"`
 	UpdatedAt time.Time   `json:"updated_at"`
 	CreatedAt time.Time   `json:"created_at"`

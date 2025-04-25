@@ -1,8 +1,8 @@
 CREATE TABLE
     "carts" (
         "id" UUID NOT NULL PRIMARY KEY,
-        "user_id" UUID NOT NULL UNIQUE REFERENCES "users" ("id") ON DELETE CASCADE,
-        "session_id" VARCHAR(255) NOT NULL UNIQUE,
+        "user_id" UUID UNIQUE REFERENCES "users" ("id") ON DELETE CASCADE,
+        "session_id" VARCHAR(255) UNIQUE,
         "order_id" UUID REFERENCES "orders" ("id") ON DELETE SET NULL,
         "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW (),
         "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW ()

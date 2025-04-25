@@ -37,9 +37,9 @@ INSERT INTO carts (id, user_id, session_id) VALUES ($1, $2, $3) RETURNING id, us
 `
 
 type CreateCartParams struct {
-	ID        uuid.UUID `json:"id"`
-	UserID    uuid.UUID `json:"user_id"`
-	SessionID string    `json:"session_id"`
+	ID        uuid.UUID   `json:"id"`
+	UserID    pgtype.UUID `json:"user_id"`
+	SessionID pgtype.Text `json:"session_id"`
 }
 
 func (q *Queries) CreateCart(ctx context.Context, arg CreateCartParams) (Cart, error) {
@@ -89,13 +89,17 @@ func (q *Queries) CreateCartItem(ctx context.Context, arg CreateCartItemParams) 
 const getCart = `-- name: GetCart :one
 SELECT id, user_id, session_id, order_id, updated_at, created_at
 FROM carts
-WHERE carts.user_id = $1 OR carts.session_id = $2 AND carts.order_id IS NULL
+WHERE (
+    (carts.user_id IS NOT NULL AND carts.user_id = $1) OR 
+    (carts.session_id IS NOT NULL AND carts.session_id = $2)
+) AND carts.order_id IS NULL
 ORDER BY carts.updated_at DESC
+LIMIT 1
 `
 
 type GetCartParams struct {
-	UserID    uuid.UUID `json:"user_id"`
-	SessionID string    `json:"session_id"`
+	UserID    pgtype.UUID `json:"user_id"`
+	SessionID pgtype.Text `json:"session_id"`
 }
 
 func (q *Queries) GetCart(ctx context.Context, arg GetCartParams) (Cart, error) {

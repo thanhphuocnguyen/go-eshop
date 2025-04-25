@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { CheckoutFormSchema, CheckoutFormValues } from './_lib/definitions';
 import Image from 'next/image';
 import { TrashIcon } from '@heroicons/react/24/solid';
-import { useAppUser } from '@/app/components/AppUserContext';
+import { useAppUser } from '@/components/AppUserContext';
 import useSWR from 'swr';
 import { API_PATHS } from '@/lib/constants/api';
 import { apiFetch } from '@/lib/api/api';

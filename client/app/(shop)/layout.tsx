@@ -1,6 +1,6 @@
 import Footer from '@/components/Footer';
 import NavBar from '@/components/Nav/NavBar';
-import { AppUserProvider } from '../components/AppUserContext';
+import { AppUserProvider } from '../../components/AppUserContext';
 import { JSX } from 'react';
 
 export default function Layout({

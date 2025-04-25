@@ -42,16 +42,8 @@ func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
 }
 
 const createAddress = `-- name: CreateAddress :one
-INSERT INTO
-    user_addresses (
-        user_id,
-        phone,
-        street,
-        ward,
-        district,
-        city,
-        "default"
-    )
+INSERT INTO 
+    user_addresses (user_id, phone, street, ward, district, city, "default")
 VALUES
     ($1, $2, $3, $4, $5, $6, $7) RETURNING id, user_id, phone, street, ward, district, city, "default", deleted, created_at, updated_at
 `
@@ -594,13 +586,14 @@ SET
     email = coalesce($1, email),
     fullname = coalesce($2, fullname),
     role = coalesce($3, role),
-    verified_email = coalesce($4, verified_email),
-    verified_phone = coalesce($5, verified_phone),
-    hashed_password = coalesce($6, hashed_password),
-    password_changed_at = coalesce($7, password_changed_at),
-    updated_at = $8
+    phone = coalesce($4, phone),
+    verified_email = coalesce($5, verified_email),
+    verified_phone = coalesce($6, verified_phone),
+    hashed_password = coalesce($7, hashed_password),
+    password_changed_at = coalesce($8, password_changed_at),
+    updated_at = $9
 WHERE
-    id = $9
+    id = $10
 RETURNING id, email, username, fullname, role, verified_email, verified_phone, created_at, updated_at
 `
 
@@ -608,6 +601,7 @@ type UpdateUserParams struct {
 	Email             pgtype.Text        `json:"email"`
 	Fullname          pgtype.Text        `json:"fullname"`
 	Role              NullUserRole       `json:"role"`
+	Phone             pgtype.Text        `json:"phone"`
 	VerifiedEmail     pgtype.Bool        `json:"verified_email"`
 	VerifiedPhone     pgtype.Bool        `json:"verified_phone"`
 	HashedPassword    pgtype.Text        `json:"hashed_password"`
@@ -633,6 +627,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateU
 		arg.Email,
 		arg.Fullname,
 		arg.Role,
+		arg.Phone,
 		arg.VerifiedEmail,
 		arg.VerifiedPhone,
 		arg.HashedPassword,

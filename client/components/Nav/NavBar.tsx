@@ -1,18 +1,15 @@
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import Link from 'next/link';
-import { cookies } from 'next/headers';
 import CartSection from './CartSection';
 import CategorySection from './CategorySection';
 import AuthButtons from './AuthButtons';
-import { UserModel } from '@/lib/definitions';
+import { Suspense } from 'react';
+import { cookies } from 'next/headers';
 
 export default async function NavBar() {
-  const cookieStore = await cookies();
-  // const [open, setOpen] = useState(false);
-  const role = cookieStore.get('user_role')?.value;
-  const fullname = cookieStore.get('user_name')?.value;
-
+  const cookieStorage = await cookies();
+  const name = cookieStorage.get('username')?.value;
   return (
     <div className='bg-white sticky top-0 z-20'>
       <header className='relative bg-white'>
@@ -82,10 +79,12 @@ export default async function NavBar() {
                 </div>
                 <CartSection />
                 <div className='hidden lg:flex lg:flex-1 lg:items-center lg:justify-end lg:space-x-6'>
-                  <AuthButtons
-                    role={role as UserModel['role']}
-                    name={fullname as string}
-                  />
+                  <Suspense>
+                    <AuthButtons
+                      name={name}
+                      role={cookieStorage.get('user_role')?.value}
+                    />
+                  </Suspense>
                 </div>
               </div>
             </div>

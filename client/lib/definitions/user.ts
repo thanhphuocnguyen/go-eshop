@@ -4,6 +4,7 @@ export type UserModel = {
   username: string;
   fullname: string;
   email: string;
+  phone: string;
   created_at?: Date;
   verified_email?: boolean;
   verified_phone?: boolean;
@@ -14,12 +15,10 @@ export type UserModel = {
 
 export type AddressModel = {
   id: number;
-  user_id: number;
+  phone: string;
   address: string;
+  ward?: string;
+  district: string;
   city: string;
-  state: string;
-  country: string;
-  postal_code: string;
-  created_at: Date;
-  updated_at: Date;
+  default: boolean;
 };

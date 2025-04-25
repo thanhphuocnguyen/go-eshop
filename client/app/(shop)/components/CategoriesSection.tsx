@@ -39,12 +39,14 @@ export default async function CategoriesSection() {
               <h2 className='text-xl font-bold absolute bottom-5 text-white text-center left-0 right-0 mx-auto z-10 '>
                 {e.name}
               </h2>
-              <Image
-                fill
-                alt='product-image'
-                className='object-cover rounded-md'
-                src={e.image_url ?? '/images/product-placeholder.webp'}
-              />
+              {
+                <Image
+                  fill
+                  alt='product-image'
+                  className='object-cover rounded-md'
+                  src={e.image_url ?? '/images/product-placeholder.webp'}
+                />
+              }
               <div className='absolute z-0 h-1/2 opacity-45 inset-x-0 bottom-0 bg-gradient-to-t from-slate-600 via-white to-transparent rounded-md'></div>
             </div>
           ))}

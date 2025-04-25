@@ -31,8 +31,8 @@ func authMiddleware(tokenGenerator auth.TokenGenerator) gin.HandlerFunc {
 		}
 
 		payload, err := tokenGenerator.VerifyToken(authGroup[1])
-		fmt.Println(err)
 		if err != nil {
+			log.Error().Err(err).Msg("verify token")
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, createErrorResponse[bool](http.StatusUnauthorized, "authorize failed", err))
 			return
 		}

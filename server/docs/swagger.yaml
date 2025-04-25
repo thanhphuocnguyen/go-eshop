@@ -681,8 +681,12 @@ definitions:
       url:
         type: string
     type: object
-  api.LoginRequestBody:
+  api.LoginRequest:
     properties:
+      email:
+        maxLength: 255
+        minLength: 6
+        type: string
       password:
         maxLength: 32
         minLength: 6
@@ -693,19 +697,18 @@ definitions:
         type: string
     required:
     - password
-    - username
     type: object
   api.LoginResponse:
     properties:
+      access_token:
+        type: string
+      access_token_expires_in:
+        type: string
       refresh_token:
         type: string
-      refresh_token_expire_at:
+      refresh_token_expires_at:
         type: string
       session_id:
-        type: string
-      token:
-        type: string
-      token_expire_at:
         type: string
       user:
         $ref: '#/definitions/api.UserResponse'
@@ -1029,6 +1032,8 @@ definitions:
       id:
         type: string
       password_changed_at:
+        type: string
+      phone:
         type: string
       role:
         $ref: '#/definitions/repository.UserRole'
@@ -2880,7 +2885,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/api.LoginRequestBody'
+          $ref: '#/definitions/api.LoginRequest'
       produces:
       - application/json
       responses:

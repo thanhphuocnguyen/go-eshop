@@ -14,7 +14,7 @@ export default function Page() {
     const response = await apiFetch(API_PATHS.CATEGORIES, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${getCookie('token')}`,
+        Authorization: `Bearer ${getCookie('access_token')}`,
       },
       body: form,
     });

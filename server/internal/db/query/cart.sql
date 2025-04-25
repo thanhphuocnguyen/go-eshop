@@ -4,8 +4,12 @@ INSERT INTO carts (id, user_id, session_id) VALUES ($1, $2, $3) RETURNING *;
 -- name: GetCart :one
 SELECT *
 FROM carts
-WHERE carts.user_id = $1 OR carts.session_id = $2 AND carts.order_id IS NULL
-ORDER BY carts.updated_at DESC;
+WHERE (
+    (carts.user_id IS NOT NULL AND carts.user_id = $1) OR 
+    (carts.session_id IS NOT NULL AND carts.session_id = $2)
+) AND carts.order_id IS NULL
+ORDER BY carts.updated_at DESC
+LIMIT 1;
 
 -- name: RemoveProductFromCart :exec
 DELETE FROM cart_items WHERE cart_id = $1 AND id = $2;

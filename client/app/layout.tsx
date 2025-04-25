@@ -19,8 +19,8 @@ export default async function RootLayout({
 }>) {
   return (
     <html lang='en'>
-      <body className={clsx(inter.className, 'overflow-hidden')}>
-        <main className='main h-full'>{children}</main>
+      <body className={clsx(inter.className)}>
+        <main className='main'>{children}</main>
         <ClientToastContainer />
       </body>
     </html>

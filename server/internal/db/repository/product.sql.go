@@ -719,14 +719,14 @@ LEFT JOIN LATERAL (
     LIMIT 1
 ) AS first_img ON true
 WHERE
-    p.is_active = COALESCE($4, is_active) AND
+    p.is_active = COALESCE($4, p.is_active) AND
     p.name ILIKE COALESCE($5, name) AND
     p.base_sku ILIKE COALESCE($6, base_sku) AND
     p.category_id = $1
 GROUP BY
-    v.id
+    p.id, first_img.id, first_img.url
 ORDER BY
-    v.id
+    p.id
 LIMIT
     $2
 OFFSET

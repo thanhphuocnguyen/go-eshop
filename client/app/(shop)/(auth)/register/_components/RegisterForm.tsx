@@ -16,15 +16,20 @@ import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api/api';
 import { API_PATHS } from '@/lib/constants/api';
 import { toast } from 'react-toastify';
-import { signIn } from 'next-auth/react';
 
 export default function RegisterFormComponent() {
   const router = useRouter();
   const form = useForm<RegisterForm>({
+    reValidateMode: 'onBlur',
     resolver: zodResolver(registerSchema),
   });
-  const { register, handleSubmit, formState: { isSubmitting, errors } } = form;
-  
+
+  const {
+    register,
+    handleSubmit,
+    formState: { isSubmitting, errors },
+  } = form;
+
   const onSubmit = async (body: RegisterForm) => {
     try {
       const { data, error } = await apiFetch<GenericResponse<unknown>>(
@@ -34,39 +39,31 @@ export default function RegisterFormComponent() {
           body,
         }
       );
-      
+
       if (error) {
         toast.error(error.details || 'Registration failed');
         return;
       }
-      
-      toast.success('Registration successful! Please sign in.');
-      
-      // Optionally auto-login after registration
-      const loginResult = await signIn('credentials', {
-        redirect: false,
-        email: body.email,
-        password: body.password,
-      });
-      
-      if (loginResult?.error) {
-        // If auto-login fails, redirect to login page
-        router.push('/login');
-      } else {
-        // If auto-login succeeds, redirect to homepage
+
+      if (data) {
+        toast.success('Registration successful! Please sign in.');
         router.refresh();
         router.push('/');
       }
+
+      // Optionally auto-login after registration
     } catch (err) {
       console.error('Registration error:', err);
       toast.error('An unexpected error occurred during registration');
     }
   };
-  
+
   return (
     <Fieldset
       as='form'
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit(onSubmit, (err) => {
+        console.log(err);
+      })}
       aria-label='register form'
       className={clsx(
         'my-auto border-2 p-6 border-gray-200 rounded-md shadow-md flex flex-col'
@@ -80,6 +77,14 @@ export default function RegisterFormComponent() {
         </Link>
       </div>
       <div className='grid grid-cols-2 gap-4'>
+        <TextField
+          {...register('username')}
+          placeholder='john_doe_123'
+          type='text'
+          icon={<FaEnvelope />}
+          label='Username'
+          error={errors.username?.message}
+        />
         <TextField
           {...register('email')}
           placeholder='john.doe@example.com'
@@ -136,6 +141,14 @@ export default function RegisterFormComponent() {
             error={errors.address?.street?.message}
           />
           <TextField
+            label='Phone'
+            icon={<FaUser />}
+            type='phone'
+            placeholder='+1 234 567 890'
+            {...register('address.phone')}
+            error={errors.address?.phone?.message}
+          />
+          <TextField
             label='City'
             icon={<FaUser />}
             type='text'
@@ -144,20 +157,20 @@ export default function RegisterFormComponent() {
             error={errors.address?.city?.message}
           />
           <TextField
-            label='State'
+            label='District'
             icon={<FaUser />}
             type='text'
-            placeholder='NY'
-            {...register('address.state')}
-            error={errors.address?.state?.message}
+            placeholder='Los Angeles'
+            {...register('address.district')}
+            error={errors.address?.district?.message}
           />
           <TextField
-            label='Zip Code'
+            label='Ward'
             icon={<FaUser />}
             type='text'
-            placeholder='10001'
-            {...register('address.zipCode')}
-            error={errors.address?.zipCode?.message}
+            placeholder='Downtown'
+            {...register('address.ward')}
+            error={errors.address?.ward?.message}
           />
         </div>
       </div>
@@ -166,7 +179,9 @@ export default function RegisterFormComponent() {
         type='submit'
         disabled={isSubmitting}
       >
-        <span className='text-lg'>{isSubmitting ? 'Creating Account...' : 'Create Account'}</span>
+        <span className='text-lg'>
+          {isSubmitting ? 'Creating Account...' : 'Create Account'}
+        </span>
       </Button>
     </Fieldset>
   );

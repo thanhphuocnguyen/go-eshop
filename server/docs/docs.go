@@ -2529,7 +2529,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.LoginRequestBody"
+                            "$ref": "#/definitions/api.LoginRequest"
                         }
                     }
                 ],
@@ -3774,13 +3774,17 @@ const docTemplate = `{
                 }
             }
         },
-        "api.LoginRequestBody": {
+        "api.LoginRequest": {
             "type": "object",
             "required": [
-                "password",
-                "username"
+                "password"
             ],
             "properties": {
+                "email": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 6
+                },
                 "password": {
                     "type": "string",
                     "maxLength": 32,
@@ -3796,19 +3800,19 @@ const docTemplate = `{
         "api.LoginResponse": {
             "type": "object",
             "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "access_token_expires_in": {
+                    "type": "string"
+                },
                 "refresh_token": {
                     "type": "string"
                 },
-                "refresh_token_expire_at": {
+                "refresh_token_expires_at": {
                     "type": "string"
                 },
                 "session_id": {
-                    "type": "string"
-                },
-                "token": {
-                    "type": "string"
-                },
-                "token_expire_at": {
                     "type": "string"
                 },
                 "user": {
@@ -4287,6 +4291,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "password_changed_at": {
+                    "type": "string"
+                },
+                "phone": {
                     "type": "string"
                 },
                 "role": {

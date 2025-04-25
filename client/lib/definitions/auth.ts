@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { UserModel } from '../definitions';
 
 export const LoginFormSchema = z.object({
   username: z.string().min(3).max(255),
@@ -10,11 +9,10 @@ export type LoginFormData = z.infer<typeof LoginFormSchema>;
 
 export type LoginResponse = {
   session_id: string;
-  token: string;
-  token_expire_at: Date;
+  access_token: string;
+  access_token_expires_in: Date;
   refresh_token: string;
-  refresh_token_expire_at: Date;
-  user: UserModel;
+  refresh_token_expires_at: Date;
 };
 
 export type RefreshTokenResponse = {
@@ -73,9 +71,9 @@ export const registerSchema = z
     address: z.object({
       street: z.string().min(3).max(100),
       city: z.string().min(3).max(50),
-      state: z.string().min(2).max(50),
-      country: z.string().min(2).max(50),
-      zipCode: z.string().min(5).max(10),
+      phone: z.string().min(10).max(15),
+      district: z.string().min(2).max(50),
+      ward: z.string().min(1).max(50).optional(),
     }),
   })
   .superRefine((data) => {

@@ -97,7 +97,7 @@ func (sv *Server) createCart(c *gin.Context) {
 		return
 	}
 	_, err = sv.repo.GetCart(c, repository.GetCartParams{
-		UserID: authPayload.UserID,
+		UserID: utils.GetPgTypeUUID(authPayload.UserID),
 	})
 	if err == nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CartDetailResponse](http.StatusBadRequest, "", errors.New("cart already exists")))
@@ -106,7 +106,7 @@ func (sv *Server) createCart(c *gin.Context) {
 
 	newCart, err := sv.repo.CreateCart(c, repository.CreateCartParams{
 		ID:     uuid.New(),
-		UserID: user.ID,
+		UserID: utils.GetPgTypeUUID(user.ID),
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[CartDetailResponse](http.StatusInternalServerError, "", err))
@@ -138,16 +138,16 @@ func (sv *Server) getCart(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CartDetailResponse](http.StatusBadRequest, "", errors.New("user not found")))
 		return
 	}
-
+	log.Debug().Msgf("get cart for user %s", authPayload.UserID.String())
 	cart, err := sv.repo.GetCart(c, repository.GetCartParams{
-		UserID: authPayload.UserID,
+		UserID: utils.GetPgTypeUUID(authPayload.UserID),
 	})
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			cart, err := sv.repo.CreateCart(c, repository.CreateCartParams{
 				ID:     uuid.New(),
-				UserID: authPayload.UserID,
+				UserID: utils.GetPgTypeUUID(authPayload.UserID),
 			})
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, createErrorResponse[CartDetailResponse](http.StatusInternalServerError, "", err))
@@ -209,7 +209,7 @@ func (sv *Server) putCartItemHandler(c *gin.Context) {
 	}
 
 	cart, err := sv.repo.GetCart(c, repository.GetCartParams{
-		UserID: authPayload.UserID,
+		UserID: utils.GetPgTypeUUID(authPayload.UserID),
 	})
 
 	if err != nil {
@@ -288,7 +288,7 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 	}
 
 	cart, err := sv.repo.GetCart(c, repository.GetCartParams{
-		UserID: authPayload.UserID,
+		UserID: utils.GetPgTypeUUID(authPayload.UserID),
 	})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
@@ -299,7 +299,7 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 		return
 	}
 
-	if cart.UserID != authPayload.UserID {
+	if cart.UserID.Valid && string(cart.UserID.Bytes[:]) != authPayload.UserID.String() {
 		c.JSON(http.StatusForbidden, createErrorResponse[string](http.StatusForbidden, "", errors.New("user not found")))
 		return
 	}
@@ -352,7 +352,7 @@ func (sv *Server) checkout(c *gin.Context) {
 	}
 
 	cart, err := sv.repo.GetCart(c, repository.GetCartParams{
-		UserID: authPayload.UserID,
+		UserID: utils.GetPgTypeUUID(authPayload.UserID),
 	})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
@@ -391,7 +391,7 @@ func (sv *Server) checkout(c *gin.Context) {
 		addressID = address.ID
 	}
 
-	if cart.UserID != authPayload.UserID {
+	if cart.UserID.Valid && string(cart.UserID.Bytes[:]) != authPayload.UserID.String() {
 		c.JSON(http.StatusForbidden, createErrorResponse[CheckoutResponse](http.StatusForbidden, "", errors.New("user not found")))
 		return
 	}
@@ -539,7 +539,7 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 	}
 
 	cart, err := sv.repo.GetCart(c, repository.GetCartParams{
-		UserID: authPayload.UserID,
+		UserID: utils.GetPgTypeUUID(authPayload.UserID),
 	})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
@@ -550,7 +550,7 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 		return
 	}
 
-	if cart.UserID != authPayload.UserID {
+	if string(cart.UserID.Bytes[:]) != authPayload.UserID.String() {
 		c.JSON(http.StatusForbidden, createErrorResponse[bool](http.StatusForbidden, "", errors.New("user not found")))
 		return
 	}
@@ -586,7 +586,7 @@ func (sv *Server) clearCart(c *gin.Context) {
 	}
 
 	cart, err := sv.repo.GetCart(c, repository.GetCartParams{
-		UserID: authPayload.UserID,
+		UserID: utils.GetPgTypeUUID(authPayload.UserID),
 	})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
@@ -597,7 +597,7 @@ func (sv *Server) clearCart(c *gin.Context) {
 		return
 	}
 
-	if cart.UserID != authPayload.UserID {
+	if string(cart.UserID.Bytes[:]) != authPayload.UserID.String() {
 		c.JSON(http.StatusForbidden, createErrorResponse[bool](http.StatusForbidden, "", errors.New("user not found")))
 		return
 	}

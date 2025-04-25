@@ -21,6 +21,7 @@ type UserResponse struct {
 	Role              repository.UserRole `json:"role"`
 	FullName          string              `json:"fullname"`
 	Email             string              `json:"email,omitempty"`
+	Phone             string              `json:"phone,omitempty"`
 	CreatedAt         string              `json:"created_at,omitempty"`
 	VerifiedEmail     bool                `json:"verified_email,omitempty"`
 	VerifiedPhone     bool                `json:"verified_phone,omitempty"`
@@ -35,10 +36,10 @@ type ListUserParams struct {
 }
 
 type UpdateUserRequest struct {
-	UserID   uuid.UUID           `json:"user_id" binding:"required,uuid"`
-	FullName *string             `json:"fullname,omitempty" binding:"omitempty,min=3,max=32,alphanum"`
-	Email    string              `json:"email" binding:"email,max=255,min=6"`
-	Role     repository.UserRole `json:"role"`
+	UserID   uuid.UUID `json:"user_id" binding:"required,uuid"`
+	FullName *string   `json:"fullname,omitempty" binding:"omitempty,min=3,max=32"`
+	Email    *string   `json:"email" binding:"email,max=255,min=6"`
+	Phone    *string   `json:"phone" binding:"omitempty,min=8,max=15"`
 }
 
 type VerifyEmailQuery struct {
@@ -55,6 +56,7 @@ func mapToUserResponse(user repository.User) UserResponse {
 		Email:             user.Email,
 		FullName:          user.Fullname,
 		Role:              user.Role,
+		Phone:             user.Phone,
 		Username:          user.Username,
 		VerifiedEmail:     user.VerifiedEmail,
 		VerifiedPhone:     user.VerifiedPhone,
@@ -70,6 +72,8 @@ func mapAddressToAddressResponse(address repository.UserAddress) AddressResponse
 		City:     address.City,
 		District: address.District,
 		Ward:     &address.Ward.String,
+		Default:  address.Default,
+		ID:       address.ID,
 		Phone:    address.Phone,
 	}
 }
@@ -108,21 +112,25 @@ func (sv *Server) updateUser(c *gin.Context) {
 
 	arg := repository.UpdateUserParams{
 		ID: req.UserID,
-		Email: pgtype.Text{
-			String: req.Email,
-			Valid:  true,
-		},
+	}
+	if req.Email != nil {
+		arg.Email = utils.GetPgTypeText(*req.Email)
+		if user.Email != *req.Email {
+			arg.VerifiedEmail = utils.GetPgTypeBool(false)
+		}
 	}
 
 	if req.FullName != nil {
 		arg.Fullname = utils.GetPgTypeText(*req.FullName)
 	}
 
-	if user.Role == repository.UserRoleAdmin {
-		arg.Role = repository.NullUserRole{
-			UserRole: req.Role,
+	if req.Phone != nil {
+		arg.Phone = utils.GetPgTypeText(*req.Phone)
+		if user.Phone != *req.Phone {
+			arg.VerifiedPhone = utils.GetPgTypeBool(false)
 		}
 	}
+
 	updatedUser, err := sv.repo.UpdateUser(c, arg)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[repository.UpdateUserRow](http.StatusInternalServerError, "", err))
@@ -237,7 +245,7 @@ func (sv *Server) listUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, createSuccessResponse(c, userResp, "", nil, nil))
 }
 
-func (sv *Server) sendVerifyEmail(c *gin.Context) {
+func (sv *Server) sendVerifyEmailHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusInternalServerError, "", errors.New("authorization payload is not provided")))
@@ -261,7 +269,7 @@ func (sv *Server) sendVerifyEmail(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// verifyEmail godoc
+// verifyEmailHandler godoc
 // @Summary Verify email
 // @Description Verify email
 // @Tags users
@@ -276,7 +284,7 @@ func (sv *Server) sendVerifyEmail(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[bool]
 // @Router /users/verify-email [get]
 // @Security BearerAuth
-func (sv *Server) verifyEmail(c *gin.Context) {
+func (sv *Server) verifyEmailHandler(c *gin.Context) {
 	var query VerifyEmailQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[bool](http.StatusBadRequest, "", err))

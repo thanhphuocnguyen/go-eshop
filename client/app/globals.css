@@ -17,8 +17,8 @@
 }
 
 .main {
-  height: 100dvh;
-  overflow: auto;
+  height: 100vh;
+  /* overflow: auto; */
   background-color: var(--background);
   color: var(--foreground);
 }
@@ -42,6 +42,11 @@
 .btn-danger {
   @apply bg-button-danger hover:bg-red-700;
 }
+
+.btn-green {
+  @apply bg-button-success hover:bg-green-700;
+}
+
 .btn-warning {
   @apply bg-button-warning hover:bg-yellow-700;
 }

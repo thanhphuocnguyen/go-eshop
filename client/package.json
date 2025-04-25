@@ -25,6 +25,7 @@
     "cookies-next": "^5.1.0",
     "dayjs": "^1.11.13",
     "framer-motion": "^12.9.1",
+    "jwt-decode": "^4.0.0",
     "next": "^15.2.5",
     "prettier": "^3.5.2",
     "react": "^19.0.0",

@@ -2,7 +2,7 @@ import { ChangeHandler, RefCallBack } from 'react-hook-form';
 
 export type HookFormProps = {
   ref?: RefCallBack;
-  type: string;
+  type?: string;
   onChange: ChangeHandler;
   onBlur: ChangeHandler;
   min?: string | number;

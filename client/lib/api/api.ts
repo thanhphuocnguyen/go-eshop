@@ -22,12 +22,12 @@ async function getAccessToken(
   req?: any,
   res?: any
 ): Promise<string | undefined> {
-  const token = await getCookie('token', { req, res })?.toString();
+  const token = await getCookie('access_token', { req, res })?.toString();
   return token;
 }
 
 function storeAccessToken(token: string, res?: any) {
-  setCookie('token', token, {
+  setCookie('access_token', token, {
     maxAge: 60 * 60, // 1 hour
     path: '/',
     ...(res ? { res } : {}),
@@ -35,17 +35,17 @@ function storeAccessToken(token: string, res?: any) {
 }
 
 function clearAccessToken(res?: any) {
-  deleteCookie('token', { path: '/', ...(res ? { res } : {}) });
+  deleteCookie('access_token', { path: '/', ...(res ? { res } : {}) });
 }
 
 async function refreshAccessToken(
+  refreshToken: string,
   req?: any,
   res?: any
 ): Promise<string | null> {
   if (isRefreshing && refreshPromise) return refreshPromise;
 
   isRefreshing = true;
-  const refreshToken = await getCookie('refresh_token');
   refreshPromise = fetch(API_PATHS.REFRESH_TOKEN, {
     method: 'POST',
     // credentials: 'include',
@@ -109,7 +109,14 @@ export async function apiFetch<T = any>(
     ...nextOptions,
   });
 
-  if (response.status === 401 && retryOnUnauthorized && !token) {
+  const refreshToken = await getCookie('refresh_token');
+
+  if (
+    response.status === 401 &&
+    retryOnUnauthorized &&
+    !token &&
+    refreshToken
+  ) {
     const newToken = await refreshAccessToken(req, res);
     if (newToken) {
       return apiFetch<T>(endpoint, {

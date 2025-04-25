@@ -25,7 +25,7 @@ export default function Page() {
         {
           method: 'DELETE',
           headers: {
-            Authorization: `Bearer ${getCookie('token')}`,
+            Authorization: `Bearer ${getCookie('access_token')}`,
           },
         }
       );
