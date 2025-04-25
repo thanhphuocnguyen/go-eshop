@@ -47,36 +47,36 @@ func (sv *Server) getStripeConfig(c *gin.Context) {
 // @Produce json
 // @Param request body PaymentRequest true "Payment request"
 // @Security BearerAuth
-// @Success 200 {object} PaymentResponse
-// @Failure 400 {object} errorResponse
-// @Failure 401 {object} errorResponse
-// @Failure 403 {object} errorResponse
-// @Failure 404 {object} errorResponse
-// @Failure 500 {object} errorResponse
+// @Success 200 {object} ApiResponse[PaymentResponse]
+// @Failure 400 {object} ApiResponse[PaymentResponse]
+// @Failure 401 {object} ApiResponse[PaymentResponse]
+// @Failure 403 {object} ApiResponse[PaymentResponse]
+// @Failure 404 {object} ApiResponse[PaymentResponse]
+// @Failure 500 {object} ApiResponse[PaymentResponse]
 // @Router /payment [post]
 func (sv *Server) initiatePayment(c *gin.Context) {
 	var param GetPaymentByOrderIDParam
 	if err := c.ShouldBindJSON(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](http.StatusBadRequest, "", err))
 		return
 	}
 
 	ord, err := sv.repo.GetOrder(c, param.OrderID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", errors.New("order not found")))
+			c.JSON(http.StatusNotFound, createErrorResponse[PaymentResponse](http.StatusNotFound, "", errors.New("order not found")))
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusNotFound, "", errors.New("order not found")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](http.StatusNotFound, "", errors.New("order not found")))
 		return
 	}
 
 	_, err = sv.repo.GetPaymentTransactionByOrderID(c, param.OrderID)
 	if err == nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("order already paid")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](http.StatusBadRequest, "", errors.New("order already paid")))
 	}
 
 	if err != nil && err != repository.ErrRecordNotFound {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusNotFound, "", errors.New("order not found")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](http.StatusNotFound, "", errors.New("order not found")))
 		return
 	}
 	// Only for cod order
@@ -87,7 +87,7 @@ func (sv *Server) initiatePayment(c *gin.Context) {
 		PaymentMethod: repository.PaymentMethodCod,
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusNotFound, "", errors.New("order not found")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](http.StatusNotFound, "", errors.New("order not found")))
 		return
 	}
 	resp := PaymentResponse{
@@ -106,54 +106,54 @@ func (sv *Server) initiatePayment(c *gin.Context) {
 // @Produce json
 // @Param order_id path int true "Order ID"
 // @Security BearerAuth
-// @Success 200 {object} PaymentResponse
-// @Failure 400 {object} errorResponse
-// @Failure 401 {object} errorResponse
-// @Failure 403 {object} errorResponse
-// @Failure 404 {object} errorResponse
-// @Failure 500 {object} errorResponse
+// @Success 200 {object} ApiResponse[PaymentResponse]
+// @Failure 400 {object} ApiResponse[PaymentResponse]
+// @Failure 401 {object} ApiResponse[PaymentResponse]
+// @Failure 403 {object} ApiResponse[PaymentResponse]
+// @Failure 404 {object} ApiResponse[PaymentResponse]
+// @Failure 500 {object} ApiResponse[PaymentResponse]
 // @Router /payment/{order_id} [get]
 func (sv *Server) getPayment(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, createErrorResponse(http.StatusUnauthorized, "", errors.New("authorization payload is not provided")))
+		c.JSON(http.StatusUnauthorized, createErrorResponse[PaymentResponse](http.StatusUnauthorized, "", errors.New("authorization payload is not provided")))
 		return
 	}
 	var param GetPaymentByOrderIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusNotFound, "", errors.New("order not found")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](http.StatusNotFound, "", errors.New("order not found")))
 		return
 	}
 
 	order, err := sv.repo.GetOrder(c, param.OrderID)
 	if err != nil {
 		if err == repository.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", errors.New("order not found")))
+			c.JSON(http.StatusNotFound, createErrorResponse[PaymentResponse](http.StatusNotFound, "", errors.New("order not found")))
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusNotFound, "", errors.New("order not found")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](http.StatusNotFound, "", errors.New("order not found")))
 		return
 	}
 	if order.CustomerID != authPayload.UserID {
-		c.JSON(http.StatusForbidden, createErrorResponse(http.StatusForbidden, "", errors.New("forbidden")))
+		c.JSON(http.StatusForbidden, createErrorResponse[PaymentResponse](http.StatusForbidden, "", errors.New("forbidden")))
 		return
 	}
 	payment, err := sv.repo.GetPaymentTransactionByOrderID(c, param.OrderID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusNotFound, "", errors.New("order not found")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](http.StatusNotFound, "", errors.New("order not found")))
 		return
 	}
 	var details interface{}
 	if payment.PaymentGateway.Valid {
 		stripeInstance, err := paymentService.NewStripePayment(sv.config.StripeSecretKey)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusNotFound, "", errors.New("order not found")))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](http.StatusNotFound, "", errors.New("order not found")))
 			return
 		}
 		sv.paymentCtx.SetStrategy(stripeInstance)
 
 		details, err = sv.paymentCtx.GetPaymentObject(payment.ID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusNotFound, "", errors.New("order not found")))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](http.StatusNotFound, "", errors.New("order not found")))
 			return
 		}
 	}
@@ -173,57 +173,57 @@ func (sv *Server) getPayment(c *gin.Context) {
 // @Produce json
 // @Param payment_id path string true "Payment ID"
 // @Security BearerAuth
-// @Success 200 {object} PaymentResponse
-// @Failure 400 {object} errorResponse
-// @Failure 401 {object} errorResponse
-// @Failure 403 {object} errorResponse
-// @Failure 404 {object} errorResponse
-// @Failure 500 {object} errorResponse
+// @Success 200 {object} ApiResponse[PaymentResponse]
+// @Failure 400 {object} ApiResponse[PaymentResponse]
+// @Failure 401 {object} ApiResponse[PaymentResponse]
+// @Failure 403 {object} ApiResponse[PaymentResponse]
+// @Failure 404 {object} ApiResponse[PaymentResponse]
+// @Failure 500 {object} ApiResponse[PaymentResponse]
 // @Router /payment/{payment_id} [get]
 func (sv *Server) changePaymentStatus(c *gin.Context) {
 	var param GetPaymentParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusNotFound, "", errors.New("order not found")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](http.StatusNotFound, "", errors.New("order not found")))
 		return
 	}
 	var req ChangePaymentStatusReq
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusNotFound, "", errors.New("order not found")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](http.StatusNotFound, "", errors.New("order not found")))
 		return
 	}
 	payment, err := sv.repo.GetPaymentTransactionByID(c, param.ID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", errors.New("order not found")))
+			c.JSON(http.StatusNotFound, createErrorResponse[PaymentResponse](http.StatusNotFound, "", errors.New("order not found")))
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusNotFound, "", errors.New("order not found")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](http.StatusNotFound, "", errors.New("order not found")))
 		return
 	}
 	order, err := sv.repo.GetOrder(c, payment.OrderID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", errors.New("order not found")))
+			c.JSON(http.StatusNotFound, createErrorResponse[PaymentResponse](http.StatusNotFound, "", errors.New("order not found")))
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusNotFound, "", errors.New("order not found")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](http.StatusNotFound, "", errors.New("order not found")))
 		return
 	}
 	if order.Status != repository.OrderStatusPending {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("order is not pending")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](http.StatusBadRequest, "", errors.New("order is not pending")))
 		return
 	}
 
 	if payment.PaymentGateway.Valid {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("cannot change payment status for stripe payment")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](http.StatusBadRequest, "", errors.New("cannot change payment status for stripe payment")))
 		return
 	}
 
 	if req.Status == repository.PaymentStatusCancelled {
 		if payment.Status == repository.PaymentStatusSuccess {
-			c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("cannot cancel payment that is already success")))
+			c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](http.StatusBadRequest, "", errors.New("cannot cancel payment that is already success")))
 			return
 		}
 		if payment.Status == repository.PaymentStatusCancelled {
-			c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("payment is already cancelled")))
+			c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](http.StatusBadRequest, "", errors.New("payment is already cancelled")))
 			return
 		}
 	}
@@ -238,7 +238,7 @@ func (sv *Server) changePaymentStatus(c *gin.Context) {
 			DeliveredAt: utils.GetPgTypeTimestamp(time.Now()),
 		})
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusNotFound, "", errors.New("order not found")))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](http.StatusNotFound, "", errors.New("order not found")))
 			return
 		}
 
@@ -252,7 +252,7 @@ func (sv *Server) changePaymentStatus(c *gin.Context) {
 		},
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusNotFound, "", errors.New("order not found")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](http.StatusNotFound, "", errors.New("order not found")))
 		return
 	}
 	resp := PaymentResponse{

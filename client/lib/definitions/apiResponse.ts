@@ -1,4 +1,5 @@
-export type GenericResponse<T> = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type GenericResponse<T = any> = {
   success: boolean;
   message: string;
   data: T;

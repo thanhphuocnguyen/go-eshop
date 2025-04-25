@@ -2,9 +2,7 @@ basePath: /api/v1
 definitions:
   api.AddressResponse:
     properties:
-      address_1:
-        type: string
-      address_2:
+      address:
         type: string
       city:
         type: string
@@ -19,54 +17,569 @@ definitions:
       ward:
         type: string
     type: object
-  api.Attribute:
+  api.ApiError:
     properties:
+      code:
+        type: string
+      details:
+        type: string
+      stack:
+        description: Hide in production
+        type: string
+    type: object
+  api.ApiResponse-api_AddressResponse:
+    properties:
+      data:
+        $ref: '#/definitions/api.AddressResponse'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-api_AttributeResponse:
+    properties:
+      data:
+        $ref: '#/definitions/api.AttributeResponse'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-api_BrandResponse:
+    properties:
+      data:
+        $ref: '#/definitions/api.BrandResponse'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-api_CartDetailResponse:
+    properties:
+      data:
+        $ref: '#/definitions/api.CartDetailResponse'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-api_CategoryResponse:
+    properties:
+      data:
+        $ref: '#/definitions/api.CategoryResponse'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-api_CheckoutResponse:
+    properties:
+      data:
+        $ref: '#/definitions/api.CheckoutResponse'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-api_CollectionResponse:
+    properties:
+      data:
+        $ref: '#/definitions/api.CollectionResponse'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-api_ImageResponse:
+    properties:
+      data:
+        $ref: '#/definitions/api.ImageResponse'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-api_LoginResponse:
+    properties:
+      data:
+        $ref: '#/definitions/api.LoginResponse'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-api_OrderListResponse:
+    properties:
+      data:
+        $ref: '#/definitions/api.OrderListResponse'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-api_PaymentResponse:
+    properties:
+      data:
+        $ref: '#/definitions/api.PaymentResponse'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-api_ProductListModel:
+    properties:
+      data:
+        $ref: '#/definitions/api.ProductListModel'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-api_RefreshTokenResponse:
+    properties:
+      data:
+        $ref: '#/definitions/api.RefreshTokenResponse'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-api_UserResponse:
+    properties:
+      data:
+        $ref: '#/definitions/api.UserResponse'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-array_api_AddressResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/api.AddressResponse'
+        type: array
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-array_api_AttributeResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/api.AttributeResponse'
+        type: array
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-array_api_ImageResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/api.ImageResponse'
+        type: array
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-array_api_OrderListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/api.OrderListResponse'
+        type: array
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-array_api_ProductListModel:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/api.ProductListModel'
+        type: array
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-array_api_UserResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/api.UserResponse'
+        type: array
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-bool:
+    properties:
+      data:
+        type: boolean
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-repository_UpdateUserRow:
+    properties:
+      data:
+        $ref: '#/definitions/repository.UpdateUserRow'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-string:
+    properties:
+      data:
+        type: string
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-uuid_UUID:
+    properties:
+      data:
+        type: string
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.AttributeResponse:
+    properties:
+      created_at:
+        type: string
       id:
         type: integer
       name:
+        type: string
+      updated_at:
         type: string
       values:
         items:
-          type: string
+          $ref: '#/definitions/api.AttributeValue'
         type: array
     type: object
-  api.AttributeRequest:
+  api.AttributeValue:
     properties:
-      name:
+      display_order:
+        type: integer
+      display_value:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      value:
+        type: string
+    type: object
+  api.AttributeValueRequest:
+    properties:
+      display_order:
+        minimum: 0
+        type: integer
+      display_value:
+        type: string
+      is_active:
+        type: boolean
+      value:
         type: string
     required:
-    - name
+    - value
     type: object
-  api.CategoryProductRequest:
-    properties:
-      sort_order:
-        type: integer
-    type: object
-  api.CategoryRequest:
-    properties:
-      description:
-        type: string
-      name:
-        type: string
-      published:
-        type: boolean
-      sort_order:
-        type: integer
-    type: object
-  api.CategoryResp:
+  api.BrandResponse:
     properties:
       description:
         type: string
       id:
+        type: string
+      image_url:
+        type: string
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  api.CartDetailResponse:
+    properties:
+      cart_items:
+        items:
+          $ref: '#/definitions/api.CartItemResponse'
+        type: array
+      created_at:
+        type: string
+      id:
+        type: string
+      total_price:
+        type: number
+      updated_at:
+        type: string
+    type: object
+  api.CartItemAttribute:
+    properties:
+      name:
+        type: string
+      value:
+        type: string
+    type: object
+  api.CartItemResponse:
+    properties:
+      attributes:
+        items:
+          $ref: '#/definitions/api.CartItemAttribute'
+        type: array
+      discount:
         type: integer
+      id:
+        type: string
+      image_url:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      product_id:
+        type: string
+      quantity:
+        type: integer
+      sku:
+        type: string
+      stock:
+        type: integer
+      variant_id:
+        type: string
+    required:
+    - id
+    - product_id
+    - variant_id
+    type: object
+  api.CategoryResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      image_url:
+        type: string
       name:
         type: string
       products:
         items:
           $ref: '#/definitions/api.ProductListModel'
         type: array
+      published:
+        type: boolean
+      remarkable:
+        type: boolean
+      slug:
+        type: string
+      updated_at:
+        type: string
     type: object
-  api.CreateAddressParams:
+  api.CheckoutRequest:
+    properties:
+      address_id:
+        type: integer
+      payment_gateway:
+        enum:
+        - stripe
+        - paypal
+        - visa
+        - mastercard
+        - apple_pay
+        - google_pay
+        - postpaid
+        - momo
+        - zalo_pay
+        - vn_pay
+        type: string
+    required:
+    - address_id
+    - payment_gateway
+    type: object
+  api.CheckoutResponse:
+    properties:
+      order_id:
+        type: string
+      payment_id:
+        type: string
+    type: object
+  api.CollectionResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      image_url:
+        type: string
+      name:
+        type: string
+      published:
+        type: boolean
+      remarkable:
+        type: boolean
+      slug:
+        type: string
+    type: object
+  api.CreateAddressReq:
     properties:
       city:
         type: string
@@ -88,254 +601,124 @@ definitions:
     - phone
     - street
     type: object
-  api.CreateProductRequest:
+  api.CreateAttributeRequest:
     properties:
-      category_id:
-        type: integer
+      name:
+        type: string
+      values:
+        items:
+          $ref: '#/definitions/api.AttributeValueRequest'
+        type: array
+    required:
+    - name
+    type: object
+  api.CreateCategoryRequest:
+    properties:
       description:
-        maxLength: 1000
-        minLength: 10
+        maxLength: 255
+        type: string
+      display_order:
+        type: integer
+      image:
+        $ref: '#/definitions/multipart.FileHeader'
+      name:
+        maxLength: 255
+        minLength: 3
+        type: string
+      slug:
+        maxLength: 255
+        minLength: 3
+        type: string
+    required:
+    - name
+    - slug
+    type: object
+  api.CreateProductReq:
+    properties:
+      brand_id:
+        type: string
+      category_id:
+        type: string
+      collection_id:
+        type: string
+      description:
+        maxLength: 5000
+        minLength: 6
         type: string
       name:
         maxLength: 100
         minLength: 3
         type: string
+      price:
+        type: number
+      sku:
+        type: string
+      slug:
+        type: string
       variants:
         items:
-          $ref: '#/definitions/api.VariantRequest'
+          $ref: '#/definitions/repository.CreateProductVariantTxParams'
         type: array
     required:
-    - description
     - name
+    - price
+    - sku
     type: object
-  api.GenericListResponse-api_Attribute:
+  api.ImageResponse:
     properties:
-      data:
+      assignments:
         items:
-          $ref: '#/definitions/api.Attribute'
+          type: string
         type: array
-      error:
+      external_id:
         type: string
-      message:
-        type: string
-      total:
+      file_size:
         type: integer
-    type: object
-  api.GenericListResponse-api_ProductListModel:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/api.ProductListModel'
-        type: array
-      error:
-        type: string
-      message:
-        type: string
-      total:
+      id:
         type: integer
-    type: object
-  api.GenericResponse-api_AddressResponse:
-    properties:
-      data:
-        $ref: '#/definitions/api.AddressResponse'
-      error:
+      mime_type:
         type: string
-      message:
+      url:
         type: string
     type: object
-  api.GenericResponse-api_Attribute:
+  api.LoginRequestBody:
     properties:
-      data:
-        $ref: '#/definitions/api.Attribute'
-      error:
+      password:
+        maxLength: 32
+        minLength: 6
         type: string
-      message:
+      username:
+        maxLength: 32
+        minLength: 3
         type: string
+    required:
+    - password
+    - username
     type: object
-  api.GenericResponse-api_OrderDetailResponse:
+  api.LoginResponse:
     properties:
-      data:
-        $ref: '#/definitions/api.OrderDetailResponse'
-      error:
+      refresh_token:
         type: string
-      message:
+      refresh_token_expire_at:
         type: string
+      session_id:
+        type: string
+      token:
+        type: string
+      token_expire_at:
+        type: string
+      user:
+        $ref: '#/definitions/api.UserResponse'
     type: object
-  api.GenericResponse-api_ProductListModel:
+  api.MetaInfo:
     properties:
-      data:
-        $ref: '#/definitions/api.ProductListModel'
-      error:
+      method:
         type: string
-      message:
+      path:
         type: string
-    type: object
-  api.GenericResponse-api_cartItemResponse:
-    properties:
-      data:
-        $ref: '#/definitions/api.cartItemResponse'
-      error:
+      requestId:
         type: string
-      message:
-        type: string
-    type: object
-  api.GenericResponse-api_cartResponse:
-    properties:
-      data:
-        $ref: '#/definitions/api.cartResponse'
-      error:
-        type: string
-      message:
-        type: string
-    type: object
-  api.GenericResponse-api_checkoutResponse:
-    properties:
-      data:
-        $ref: '#/definitions/api.checkoutResponse'
-      error:
-        type: string
-      message:
-        type: string
-    type: object
-  api.GenericResponse-api_loginResponse:
-    properties:
-      data:
-        $ref: '#/definitions/api.loginResponse'
-      error:
-        type: string
-      message:
-        type: string
-    type: object
-  api.GenericResponse-api_userResponse:
-    properties:
-      data:
-        $ref: '#/definitions/api.userResponse'
-      error:
-        type: string
-      message:
-        type: string
-    type: object
-  api.GenericResponse-array_api_AddressResponse:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/api.AddressResponse'
-        type: array
-      error:
-        type: string
-      message:
-        type: string
-    type: object
-  api.GenericResponse-array_api_userResponse:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/api.userResponse'
-        type: array
-      error:
-        type: string
-      message:
-        type: string
-    type: object
-  api.GenericResponse-array_repository_Image:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/repository.Image'
-        type: array
-      error:
-        type: string
-      message:
-        type: string
-    type: object
-  api.GenericResponse-bool:
-    properties:
-      data:
-        type: boolean
-      error:
-        type: string
-      message:
-        type: string
-    type: object
-  api.GenericResponse-gin_H:
-    properties:
-      data:
-        $ref: '#/definitions/gin.H'
-      error:
-        type: string
-      message:
-        type: string
-    type: object
-  api.GenericResponse-repository_Cart:
-    properties:
-      data:
-        $ref: '#/definitions/repository.Cart'
-      error:
-        type: string
-      message:
-        type: string
-    type: object
-  api.GenericResponse-repository_Category:
-    properties:
-      data:
-        $ref: '#/definitions/repository.Category'
-      error:
-        type: string
-      message:
-        type: string
-    type: object
-  api.GenericResponse-repository_CategoryProduct:
-    properties:
-      data:
-        $ref: '#/definitions/repository.CategoryProduct'
-      error:
-        type: string
-      message:
-        type: string
-    type: object
-  api.GenericResponse-repository_CreateUserRow:
-    properties:
-      data:
-        $ref: '#/definitions/repository.CreateUserRow'
-      error:
-        type: string
-      message:
-        type: string
-    type: object
-  api.GenericResponse-repository_Image:
-    properties:
-      data:
-        $ref: '#/definitions/repository.Image'
-      error:
-        type: string
-      message:
-        type: string
-    type: object
-  api.GenericResponse-repository_Order:
-    properties:
-      data:
-        $ref: '#/definitions/repository.Order'
-      error:
-        type: string
-      message:
-        type: string
-    type: object
-  api.GenericResponse-repository_Product:
-    properties:
-      data:
-        $ref: '#/definitions/repository.Product'
-      error:
-        type: string
-      message:
-        type: string
-    type: object
-  api.GenericResponse-repository_UpdateUserRow:
-    properties:
-      data:
-        $ref: '#/definitions/repository.UpdateUserRow'
-      error:
-        type: string
-      message:
+      timestamp:
         type: string
     type: object
   api.OrderDetailResponse:
@@ -356,7 +739,7 @@ definitions:
   api.OrderItemResponse:
     properties:
       id:
-        type: integer
+        type: string
       image_url:
         type: string
       name:
@@ -380,6 +763,21 @@ definitions:
         type: integer
       updated_at:
         type: string
+    type: object
+  api.Pagination:
+    properties:
+      hasNextPage:
+        type: boolean
+      hasPreviousPage:
+        type: boolean
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+      totalPages:
+        type: integer
     type: object
   api.PaymentInfo:
     properties:
@@ -417,261 +815,52 @@ definitions:
       transaction_id:
         type: string
     type: object
-  api.ProductAttributeDetail:
-    properties:
-      id:
-        type: integer
-      name:
-        type: string
-      value:
-        type: string
-    type: object
   api.ProductListModel:
     properties:
       created_at:
         type: string
       description:
         type: string
-      discount_to:
-        type: integer
       id:
+        type: string
+      image_id:
         type: integer
       image_url:
         type: string
       name:
         type: string
-      price_from:
+      price:
         type: number
-      price_to:
-        type: number
+      sku:
+        type: string
+      slug:
+        type: string
+      updated_at:
+        type: string
       variant_count:
         type: integer
     type: object
-  api.UpdateAddressParams:
+  api.PutCartItemReq:
     properties:
-      address_1:
-        type: string
-      address_2:
-        type: string
-      city:
-        type: string
-      district:
-        type: string
-      is_default:
-        type: boolean
-      phone:
-        type: string
-      ward:
-        type: string
-    type: object
-  api.UpdateProductRequest:
-    properties:
-      category_id:
-        type: integer
-      description:
-        maxLength: 1000
-        minLength: 10
-        type: string
-      name:
-        maxLength: 100
-        minLength: 3
-        type: string
-      variants:
-        items:
-          $ref: '#/definitions/repository.UpdateVariantTxParams'
-        type: array
-    type: object
-  api.UpdateVariantRequest:
-    properties:
-      attributes:
-        items:
-          $ref: '#/definitions/api.VariantUpdateAttributeRequest'
-        type: array
-      name:
-        type: string
-      price:
-        type: number
-      sku:
-        type: string
-      stock:
-        type: integer
-    type: object
-  api.VariantAttributeRequest:
-    properties:
-      attribute_id:
-        type: integer
-      value:
-        type: string
-    required:
-    - attribute_id
-    - value
-    type: object
-  api.VariantRequest:
-    properties:
-      attributes:
-        items:
-          $ref: '#/definitions/api.VariantAttributeRequest'
-        type: array
-      discount:
-        minimum: 0
-        type: integer
-      price:
-        type: number
-      sku:
-        type: string
-      stock:
-        type: integer
-    required:
-    - price
-    - stock
-    type: object
-  api.VariantResponse:
-    properties:
-      attributes:
-        items:
-          $ref: '#/definitions/api.ProductAttributeDetail'
-        type: array
-      created_at:
-        type: string
-      discount:
-        type: integer
-      price:
-        type: number
-      sku:
-        type: string
-      stock:
-        type: integer
-      updated_at:
-        type: string
-      variant_id:
-        type: integer
-    type: object
-  api.VariantUpdateAttributeRequest:
-    properties:
-      id:
-        type: integer
-      value:
-        type: string
-    required:
-    - id
-    - value
-    type: object
-  api.addProductToCartRequest:
-    properties:
-      product_id:
-        minimum: 1
-        type: integer
       quantity:
         type: integer
       variant_id:
-        minimum: 1
-        type: integer
+        type: string
     required:
-    - product_id
     - quantity
     - variant_id
     type: object
-  api.addProductToCategoryRequest:
+  api.RefreshTokenResponse:
     properties:
-      product_id:
-        type: integer
+      access_token:
+        type: string
+      access_token_expires_at:
+        type: string
     type: object
-  api.addressResponse:
+  api.RegisterRequestBody:
     properties:
       address:
-        type: string
-      address_2:
-        type: string
-      city:
-        type: string
-      district:
-        type: string
-      phone:
-        type: string
-      ward:
-        type: string
-    type: object
-  api.cartItemAttributeModel:
-    properties:
-      name:
-        type: string
-      value:
-        type: string
-    type: object
-  api.cartItemResponse:
-    properties:
-      attributes:
-        items:
-          $ref: '#/definitions/api.cartItemAttributeModel'
-        type: array
-      discount:
-        type: integer
-      id:
-        type: integer
-      image_url:
-        type: string
-      name:
-        type: string
-      price:
-        type: number
-      product_id:
-        type: integer
-      quantity:
-        type: integer
-      sku:
-        type: string
-      stock:
-        type: integer
-      variant_id:
-        type: integer
-    type: object
-  api.cartResponse:
-    properties:
-      cart_items:
-        items:
-          $ref: '#/definitions/api.cartItemResponse'
-        type: array
-      created_at:
-        type: string
-      id:
-        type: string
-      total_price:
-        type: number
-      updated_at:
-        type: string
-      user_id:
-        type: string
-    type: object
-  api.checkoutRequest:
-    properties:
-      address_id:
-        type: integer
-      payment_gateway:
-        enum:
-        - stripe
-        - paypal
-        - visa
-        - mastercard
-        - apple_pay
-        - google_pay
-        - postpaid
-        - momo
-        - zalo_pay
-        - vn_pay
-        type: string
-    required:
-    - address_id
-    - payment_gateway
-    type: object
-  api.checkoutResponse:
-    properties:
-      order_id:
-        type: string
-      payment_id:
-        type: string
-    type: object
-  api.createUserRequest:
-    properties:
+        $ref: '#/definitions/api.CreateAddressReq'
       email:
         maxLength: 255
         minLength: 6
@@ -693,61 +882,122 @@ definitions:
         minLength: 3
         type: string
     required:
+    - address
     - email
     - fullname
     - password
     - phone
     - username
     type: object
-  api.errorResponse:
+  api.UpdateAddressReq:
     properties:
-      error:
+      address_1:
+        type: string
+      address_2:
+        type: string
+      city:
+        type: string
+      district:
+        type: string
+      is_default:
+        type: boolean
+      phone:
+        type: string
+      ward:
         type: string
     type: object
-  api.loginResponse:
+  api.UpdateAttributeRequest:
     properties:
-      refresh_token:
+      name:
         type: string
-      refresh_token_expire_at:
-        type: string
-      session_id:
-        type: string
-      token:
-        type: string
-      token_expire_at:
-        type: string
-      user:
-        $ref: '#/definitions/api.userResponse'
+      values:
+        items:
+          $ref: '#/definitions/api.UpdateAttributeValueRequest'
+        type: array
+    required:
+    - name
     type: object
-  api.loginUserRequest:
+  api.UpdateAttributeValueRequest:
     properties:
-      password:
-        maxLength: 32
-        minLength: 6
+      display_order:
+        minimum: 0
+        type: integer
+      display_value:
         type: string
-      username:
-        maxLength: 32
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      value:
+        type: string
+    required:
+    - value
+    type: object
+  api.UpdateCategoryRequest:
+    properties:
+      description:
+        maxLength: 255
+        type: string
+      display_order:
+        type: integer
+      image:
+        $ref: '#/definitions/multipart.FileHeader'
+      name:
+        maxLength: 255
         minLength: 3
         type: string
-    required:
-    - password
-    - username
-    type: object
-  api.renewAccessTokenResp:
-    properties:
-      access_token:
+      published:
+        type: boolean
+      remarkable:
+        type: boolean
+      slug:
+        maxLength: 255
+        minLength: 3
         type: string
-      access_token_expires_at:
-        $ref: '#/definitions/time.Duration'
     type: object
-  api.updateCartItemRequest:
+  api.UpdateProductImages:
     properties:
-      quantity:
+      assignments:
+        items:
+          type: string
+        type: array
+      id:
         type: integer
-    required:
-    - quantity
+      omitempty:
+        type: boolean
+      role:
+        type: string
     type: object
-  api.updateUserRequest:
+  api.UpdateProductReq:
+    properties:
+      brand_id:
+        type: string
+      category_id:
+        type: string
+      collection_id:
+        type: string
+      description:
+        maxLength: 5000
+        minLength: 6
+        type: string
+      images:
+        items:
+          $ref: '#/definitions/api.UpdateProductImages'
+        type: array
+      name:
+        maxLength: 100
+        minLength: 3
+        type: string
+      price:
+        type: number
+      sku:
+        type: string
+      slug:
+        type: string
+      stock:
+        type: integer
+    type: object
+  api.UpdateUserRequest:
     properties:
       email:
         maxLength: 255
@@ -764,17 +1014,19 @@ definitions:
     required:
     - user_id
     type: object
-  api.userResponse:
+  api.UserResponse:
     properties:
       addresses:
         items:
-          $ref: '#/definitions/api.addressResponse'
+          $ref: '#/definitions/api.AddressResponse'
         type: array
       created_at:
         type: string
       email:
         type: string
       fullname:
+        type: string
+      id:
         type: string
       password_changed_at:
         type: string
@@ -789,166 +1041,45 @@ definitions:
       verified_phone:
         type: boolean
     type: object
-  big.Int:
+  api.updateCartItemRequest:
+    properties:
+      quantity:
+        type: integer
+    required:
+    - quantity
     type: object
   gin.H:
     additionalProperties: {}
     type: object
-  pgtype.InfinityModifier:
-    enum:
-    - 1
-    - 0
-    - -1
-    type: integer
-    x-enum-varnames:
-    - Infinity
-    - Finite
-    - NegativeInfinity
-  pgtype.Int8:
+  multipart.FileHeader:
     properties:
-      int64:
-        type: integer
-      valid:
-        type: boolean
-    type: object
-  pgtype.Numeric:
-    properties:
-      exp:
-        type: integer
-      infinityModifier:
-        $ref: '#/definitions/pgtype.InfinityModifier'
-      int:
-        $ref: '#/definitions/big.Int'
-      naN:
-        type: boolean
-      valid:
-        type: boolean
-    type: object
-  pgtype.Text:
-    properties:
-      string:
+      filename:
         type: string
-      valid:
-        type: boolean
-    type: object
-  pgtype.Timestamp:
-    properties:
-      infinityModifier:
-        $ref: '#/definitions/pgtype.InfinityModifier'
-      time:
-        description: Time zone will be ignored when encoding to PostgreSQL.
-        type: string
-      valid:
-        type: boolean
-    type: object
-  pgtype.Timestamptz:
-    properties:
-      infinityModifier:
-        $ref: '#/definitions/pgtype.InfinityModifier'
-      time:
-        type: string
-      valid:
-        type: boolean
-    type: object
-  repository.Cart:
-    properties:
-      cart_id:
-        type: string
-      created_at:
-        type: string
-      updated_at:
-        type: string
-      user_id:
-        type: string
-    type: object
-  repository.Category:
-    properties:
-      category_id:
-        type: integer
-      created_at:
-        type: string
-      description:
-        $ref: '#/definitions/pgtype.Text'
-      name:
-        type: string
-      published:
-        type: boolean
-      sort_order:
-        type: integer
-      updated_at:
-        type: string
-    type: object
-  repository.CategoryProduct:
-    properties:
-      category_id:
-        type: integer
-      product_id:
-        type: integer
-      sort_order:
+      header:
+        $ref: '#/definitions/textproto.MIMEHeader'
+      size:
         type: integer
     type: object
-  repository.CreateUserRow:
+  repository.CreateProductVariantTxParams:
     properties:
-      created_at:
-        type: string
-      email:
-        type: string
-      fullname:
-        type: string
-      role:
-        $ref: '#/definitions/repository.UserRole'
-      updated_at:
-        type: string
-      user_id:
-        type: string
-      username:
-        type: string
-      verified_email:
+      attributes:
+        items:
+          $ref: '#/definitions/repository.ProductAttributesTxParam'
+        minItems: 1
+        type: array
+      is_active:
         type: boolean
-      verified_phone:
-        type: boolean
-    type: object
-  repository.Image:
-    properties:
-      created_at:
-        $ref: '#/definitions/pgtype.Timestamp'
-      external_id:
-        $ref: '#/definitions/pgtype.Text'
-      image_id:
+      price:
+        type: number
+      stock_qty:
+        minimum: 0
         type: integer
-      image_url:
-        type: string
-      product_id:
-        $ref: '#/definitions/pgtype.Int8'
-      updated_at:
-        $ref: '#/definitions/pgtype.Timestamp'
-      variant_id:
-        $ref: '#/definitions/pgtype.Int8'
-    type: object
-  repository.Order:
-    properties:
-      cancelled_at:
-        $ref: '#/definitions/pgtype.Timestamptz'
-      confirmed_at:
-        $ref: '#/definitions/pgtype.Timestamptz'
-      created_at:
-        type: string
-      delivered_at:
-        $ref: '#/definitions/pgtype.Timestamptz'
-      order_id:
-        type: string
-      refunded_at:
-        $ref: '#/definitions/pgtype.Timestamptz'
-      status:
-        $ref: '#/definitions/repository.OrderStatus'
-      total_price:
-        $ref: '#/definitions/pgtype.Numeric'
-      updated_at:
-        type: string
-      user_address_id:
-        type: integer
-      user_id:
-        type: string
+      weight:
+        minimum: 0
+        type: number
+    required:
+    - price
+    - stock_qty
     type: object
   repository.OrderStatus:
     enum:
@@ -1008,39 +1139,16 @@ definitions:
     - PaymentStatusCancelled
     - PaymentStatusRefunded
     - PaymentStatusProcessing
-  repository.Product:
+  repository.ProductAttributesTxParam:
     properties:
-      archived:
-        type: boolean
-      created_at:
-        type: string
-      description:
-        type: string
-      name:
-        type: string
-      product_id:
+      id:
+        description: AttributeID int32 `json:"attribute_id" binding:"required"`
         type: integer
-      updated_at:
-        type: string
-    type: object
-  repository.ProductVariant:
-    properties:
-      created_at:
-        type: string
-      discount:
+      value_id:
         type: integer
-      price:
-        $ref: '#/definitions/pgtype.Numeric'
-      product_id:
-        type: integer
-      sku:
-        $ref: '#/definitions/pgtype.Text'
-      stock_quantity:
-        type: integer
-      updated_at:
-        type: string
-      variant_id:
-        type: integer
+    required:
+    - id
+    - value_id
     type: object
   repository.UpdateUserRow:
     properties:
@@ -1050,11 +1158,11 @@ definitions:
         type: string
       fullname:
         type: string
+      id:
+        type: string
       role:
         $ref: '#/definitions/repository.UserRole'
       updated_at:
-        type: string
-      user_id:
         type: string
       username:
         type: string
@@ -1062,40 +1170,6 @@ definitions:
         type: boolean
       verified_phone:
         type: boolean
-    type: object
-  repository.UpdateVariantAttributeParams:
-    properties:
-      value:
-        $ref: '#/definitions/pgtype.Text'
-      variant_attribute_id:
-        type: integer
-    type: object
-  repository.UpdateVariantTxParams:
-    properties:
-      attributes:
-        items:
-          $ref: '#/definitions/repository.UpdateVariantAttributeParams'
-        type: array
-      discount:
-        minimum: 0
-        type: integer
-      name:
-        minLength: 1
-        type: string
-      price:
-        minimum: 0
-        type: number
-      sku:
-        minLength: 1
-        type: string
-      stock:
-        minimum: 0
-        type: integer
-      variant_id:
-        minimum: 1
-        type: integer
-    required:
-    - variant_id
     type: object
   repository.UserRole:
     enum:
@@ -1107,32 +1181,193 @@ definitions:
     - UserRoleAdmin
     - UserRoleUser
     - UserRoleModerator
-  time.Duration:
-    enum:
-    - -9223372036854775808
-    - 9223372036854775807
-    - 1
-    - 1000
-    - 1000000
-    - 1000000000
-    - 60000000000
-    - 3600000000000
-    type: integer
-    x-enum-varnames:
-    - minDuration
-    - maxDuration
-    - Nanosecond
-    - Microsecond
-    - Millisecond
-    - Second
-    - Minute
-    - Hour
+  textproto.MIMEHeader:
+    additionalProperties:
+      items:
+        type: string
+      type: array
+    type: object
 host: localhost:4000
 info:
   contact: {}
   description: This is a sample server for a simple e-commerce API.
   title: E-Commerce API
 paths:
+  /Brand/{id}/products:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of products in a Brand
+      operationId: get-Brand-products
+      parameters:
+      - description: Brand ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-array_api_ProductListModel'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-array_api_ProductListModel'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-array_api_ProductListModel'
+      summary: Get a list of products in a Brand
+  /Brands:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of Brands
+      operationId: get-Brands
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+      summary: Get a list of Brands
+    post:
+      consumes:
+      - application/json
+      description: Create a new Brand
+      operationId: create-Brand
+      parameters:
+      - description: Brand request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.CreateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+      summary: Create a new Brand
+  /Brands/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a Brand
+      operationId: delete-Brand
+      parameters:
+      - description: Brand ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+      summary: Delete a Brand
+    get:
+      consumes:
+      - application/json
+      description: Get a Brand by ID
+      operationId: get-Brand-by-id
+      parameters:
+      - description: Brand ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+      summary: Get a Brand by ID
+    put:
+      consumes:
+      - application/json
+      description: Update a Brand
+      operationId: update-Brand
+      parameters:
+      - description: Brand ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Brand request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.UpdateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+      summary: Update a Brand
   /address:
     get:
       consumes:
@@ -1153,7 +1388,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-array_api_AddressResponse'
+            $ref: '#/definitions/api.ApiResponse-array_api_AddressResponse'
       summary: Get list of addresses
       tags:
       - address
@@ -1167,14 +1402,14 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/api.CreateAddressParams'
+          $ref: '#/definitions/api.CreateAddressReq'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-api_AddressResponse'
+            $ref: '#/definitions/api.ApiResponse-api_AddressResponse'
         "400":
           description: Bad Request
           schema:
@@ -1203,7 +1438,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-bool'
+            $ref: '#/definitions/api.ApiResponse-bool'
         "400":
           description: Bad Request
           schema:
@@ -1234,14 +1469,14 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/api.UpdateAddressParams'
+          $ref: '#/definitions/api.UpdateAddressReq'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-api_AddressResponse'
+            $ref: '#/definitions/api.ApiResponse-api_AddressResponse'
       summary: Update an address
       tags:
       - address
@@ -1256,11 +1491,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericListResponse-api_Attribute'
+            $ref: '#/definitions/api.ApiResponse-array_api_AttributeResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-array_api_AttributeResponse'
       summary: Get all attributes
       tags:
       - attributes
@@ -1274,22 +1509,22 @@ paths:
         name: params
         required: true
         schema:
-          $ref: '#/definitions/api.AttributeRequest'
+          $ref: '#/definitions/api.CreateAttributeRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/api.GenericResponse-api_Attribute'
+            $ref: '#/definitions/api.ApiResponse-api_AttributeResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_AttributeResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_AttributeResponse'
       summary: Create an attribute
       tags:
       - attributes
@@ -1312,7 +1547,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-bool'
       summary: Delete an attribute
       tags:
       - attributes
@@ -1332,15 +1567,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-api_Attribute'
+            $ref: '#/definitions/api.ApiResponse-api_AttributeResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_AttributeResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_AttributeResponse'
       summary: Get an attribute
       tags:
       - attributes
@@ -1359,22 +1594,22 @@ paths:
         name: params
         required: true
         schema:
-          $ref: '#/definitions/api.AttributeRequest'
+          $ref: '#/definitions/api.UpdateAttributeRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-api_Attribute'
+            $ref: '#/definitions/api.ApiResponse-api_AttributeResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_AttributeResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-array_api_AttributeResponse'
       summary: Update an attribute
       tags:
       - attributes
@@ -1389,11 +1624,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-api_cartResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CartDetailResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CartDetailResponse'
       summary: Get cart details by user ID
       tags:
       - cart
@@ -1407,15 +1642,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-repository_Cart'
+            $ref: '#/definitions/api.ApiResponse-api_CartDetailResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CartDetailResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CartDetailResponse'
       summary: Create a new cart
       tags:
       - carts
@@ -1425,27 +1660,27 @@ paths:
       - application/json
       description: update product items in the cart
       parameters:
-      - description: Update cart items input
+      - description: Checkout input
         in: body
         name: input
         required: true
         schema:
-          $ref: '#/definitions/api.checkoutRequest'
+          $ref: '#/definitions/api.CheckoutRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-api_checkoutResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CheckoutResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CheckoutResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CheckoutResponse'
       summary: Update product items in the cart
       tags:
       - carts
@@ -1460,46 +1695,16 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-bool'
+            $ref: '#/definitions/api.ApiResponse-bool'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-bool'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-bool'
       summary: Clear the cart
-      tags:
-      - carts
-  /cart/item:
-    post:
-      consumes:
-      - application/json
-      description: add a product to the cart
-      parameters:
-      - description: Add product to cart input
-        in: body
-        name: input
-        required: true
-        schema:
-          $ref: '#/definitions/api.addProductToCartRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.GenericResponse-api_cartItemResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.errorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.errorResponse'
-      summary: Add a product to the cart
       tags:
       - carts
   /cart/item/{id}:
@@ -1519,15 +1724,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-bool'
+            $ref: '#/definitions/api.ApiResponse-string'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-string'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-string'
       summary: Remove a product from the cart
       tags:
       - carts
@@ -1549,16 +1754,46 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-api_cartItemResponse'
+            $ref: '#/definitions/api.ApiResponse-bool'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-bool'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-bool'
       summary: Update product items in the cart
+      tags:
+      - carts
+  /cart/item/{variant_id}:
+    post:
+      consumes:
+      - application/json
+      description: add a product to the cart
+      parameters:
+      - description: Add product to cart input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/api.PutCartItemReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-uuid_UUID'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-uuid_UUID'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-uuid_UUID'
+      summary: Add a product to the cart
       tags:
       - carts
   /categories:
@@ -1582,17 +1817,15 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/api.CategoryResp'
-            type: array
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
       summary: Get a list of Categories
     post:
       consumes:
@@ -1605,22 +1838,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/api.CategoryRequest'
+          $ref: '#/definitions/api.CreateCategoryRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/api.GenericResponse-repository_Category'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
       summary: Create a new Category
   /categories/{id}:
     delete:
@@ -1640,15 +1873,15 @@ paths:
         "204":
           description: No Content
           schema:
-            $ref: '#/definitions/api.GenericResponse-repository_Category'
+            $ref: '#/definitions/api.ApiResponse-bool'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-bool'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-bool'
       summary: Delete a Category
     get:
       consumes:
@@ -1667,15 +1900,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.CategoryResp'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
       summary: Get a Category by ID
     put:
       consumes:
@@ -1693,134 +1930,153 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/api.CategoryRequest'
+          $ref: '#/definitions/api.UpdateCategoryRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-repository_Category'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
       summary: Update a Category
-  /categories/{id}/product:
-    delete:
+  /categories/{id}/products:
+    get:
       consumes:
       - application/json
-      description: Delete a product from a Category
-      operationId: delete-product-from-Category
+      description: Get a list of Products by Category ID
+      operationId: get-Products-by-Category
       parameters:
       - description: Category ID
         in: path
         name: id
         required: true
         type: integer
-      - description: Product ID
-        in: body
-        name: product_id
-        required: true
-        schema:
-          $ref: '#/definitions/api.CategoryProductRequest'
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
       produces:
       - application/json
       responses:
-        "204":
-          description: No Content
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-array_api_ProductListModel'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
-      summary: Delete a product from a Category
+            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
+      summary: Get a list of Products by Category ID
+  /collections:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of Collections
+      operationId: get-Collections
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
+      summary: Get a list of Collections
     post:
       consumes:
       - application/json
-      description: Add a product to a Category
-      operationId: add-product-to-Category
+      description: Create a new Collection
+      operationId: create-Collection
       parameters:
-      - description: Category ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Product ID
+      - description: Collection info
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/api.addProductToCategoryRequest'
+          $ref: '#/definitions/api.CreateCategoryRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/api.GenericResponse-repository_CategoryProduct'
+            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
-      summary: Add a product to a Category
-  /categories/{id}/product/sort-order:
-    put:
+            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
+      summary: Create a new Collection
+  /collections/{id}:
+    delete:
       consumes:
       - application/json
-      description: Update the sort order of a product in a Category
-      operationId: update-product-sort-order
+      description: Delete a Collection
+      operationId: delete-Collection
       parameters:
-      - description: Category ID
+      - description: Collection ID
         in: path
         name: id
         required: true
         type: integer
-      - description: Product ID
-        in: body
-        name: product_id
-        required: true
-        schema:
-          $ref: '#/definitions/api.CategoryProductRequest'
-      - description: Sort order
-        in: body
-        name: sort_order
-        required: true
-        schema:
-          type: integer
       produces:
       - application/json
       responses:
         "204":
           description: No Content
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-bool'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
-      summary: Update the sort order of a product in a Category
-  /category/{id}/products:
+            $ref: '#/definitions/api.ApiResponse-bool'
+      summary: Delete a Collection
     get:
       consumes:
       - application/json
-      description: Get a list of products in a Category
-      operationId: get-Category-products
+      description: Get a Collection by ID
+      operationId: get-Collection-by-id
       parameters:
-      - description: Category ID
+      - description: Collection ID
         in: path
         name: id
         required: true
@@ -1831,61 +2087,63 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/api.ProductListModel'
-            type: array
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
-      summary: Get a list of products in a Category
-  /images/product:
-    post:
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+      summary: Get a Collection by ID
+    put:
       consumes:
       - application/json
-      description: upload a product image by ID
+      description: Update a Collection
+      operationId: update-Collection
       parameters:
-      - description: Product ID
+      - description: Collection ID
         in: path
-        name: product_id
+        name: id
         required: true
         type: integer
-      - description: Image file
-        in: formData
-        name: file
+      - description: Collection info
+        in: body
+        name: request
         required: true
-        type: file
+        schema:
+          $ref: '#/definitions/api.CreateCategoryRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-array_repository_Image'
-        "404":
-          description: Not Found
+            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
+        "400":
+          description: Bad Request
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
-      summary: Upload a product image by ID
-      tags:
-      - images
-  /images/product/{product_id}:
+            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
+      summary: Update a Collection
+  /collections/{id}/products:
     get:
       consumes:
       - application/json
-      description: get list of product image by ID
+      description: Get a list of Products by Collection ID
+      operationId: get-Products-by-Collection
       parameters:
-      - description: Product ID
+      - description: Collection ID
         in: path
-        name: product_id
+        name: id
         required: true
         type: integer
       produces:
@@ -1894,19 +2152,50 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-repository_Image'
+            $ref: '#/definitions/api.ApiResponse-array_api_ProductListModel'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-array_api_ProductListModel'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-array_api_ProductListModel'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
-      summary: Get list of product image by ID
+            $ref: '#/definitions/api.ApiResponse-array_api_ProductListModel'
+      summary: Get a list of Products by Collection ID
+  /images/{publicID}:
+    delete:
+      consumes:
+      - application/json
+      description: remove a product by external ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: publicID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+      summary: Remove a product by external ID
       tags:
       - images
-  /images/product/{product_id}/remove:
+  /images/product/{product_id}:
     delete:
       consumes:
       - application/json
@@ -1923,32 +2212,26 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-bool'
+            $ref: '#/definitions/api.ApiResponse-bool'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-bool'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-bool'
       summary: Remove a product image by ID
       tags:
       - images
-  /images/product/{product_id}/variant/{variant_id}:
     get:
       consumes:
       - application/json
-      description: get list of variant image by ID
+      description: get list of product image by ID
       parameters:
       - description: Product ID
         in: path
         name: product_id
-        required: true
-        type: integer
-      - description: Variant ID
-        in: path
-        name: variant_id
         required: true
         type: integer
       produces:
@@ -1957,50 +2240,49 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-repository_Image'
+            $ref: '#/definitions/api.ApiResponse-array_api_ImageResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-api_ImageResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
-      summary: Get list of variant image by ID
+            $ref: '#/definitions/api.ApiResponse-api_ImageResponse'
+      summary: Get list of product image by ID
       tags:
       - images
-  /images/product/{product_id}/variant/{variant_id}/remove:
-    delete:
+    post:
       consumes:
       - application/json
-      description: remove a variant image by ID
+      description: upload product images by ID
       parameters:
       - description: Product ID
         in: path
         name: product_id
         required: true
         type: integer
-      - description: Variant ID
-        in: path
-        name: variant_id
+      - description: Image file
+        in: formData
+        name: files
         required: true
-        type: integer
+        type: file
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-bool'
+            $ref: '#/definitions/api.ApiResponse-array_api_ImageResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-array_api_ImageResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
-      summary: Remove a variant image by ID
+            $ref: '#/definitions/api.ApiResponse-array_api_ImageResponse'
+      summary: Upload product images
       tags:
       - images
   /order/{order_id}:
@@ -2020,21 +2302,21 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-api_OrderDetailResponse'
+            $ref: '#/definitions/api.OrderDetailResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.OrderDetailResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.OrderDetailResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.OrderDetailResponse'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: Get order detail
       tags:
       - orders
@@ -2055,21 +2337,21 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-repository_Order'
+            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: Cancel order
       tags:
       - orders
@@ -2090,21 +2372,21 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-repository_Order'
+            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: Refund order
       tags:
       - orders
@@ -2131,21 +2413,21 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-repository_Order'
+            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: Change order status
       tags:
       - orders
@@ -2169,21 +2451,21 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.OrderListResponse'
+            $ref: '#/definitions/api.ApiResponse-array_api_OrderListResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-array_api_OrderListResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-array_api_OrderListResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-array_api_OrderListResponse'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       summary: List orders
       tags:
       - orders
@@ -2205,27 +2487,27 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.PaymentResponse'
+            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
       security:
       - BearerAuth: []
       summary: Initiate payment
@@ -2248,27 +2530,27 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.PaymentResponse'
+            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
       security:
       - BearerAuth: []
       summary: Get payment transaction by order ID
@@ -2291,101 +2573,32 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.PaymentResponse'
+            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
       security:
       - BearerAuth: []
       summary: Change payment status
       tags:
       - payment
-  /product:
-    post:
-      consumes:
-      - application/json
-      description: create a new product with the input payload
-      parameters:
-      - description: Product input
-        in: body
-        name: input
-        required: true
-        schema:
-          $ref: '#/definitions/api.CreateProductRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.GenericResponse-repository_Product'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/gin.H'
-      summary: Create a new product
-      tags:
-      - products
-  /product/{product_id}/variant/{variant_id}:
-    put:
-      consumes:
-      - application/json
-      description: Update a variant
-      parameters:
-      - description: Variant ID
-        in: path
-        name: variant_id
-        required: true
-        type: integer
-      - description: Update Variant Request
-        in: body
-        name: UpdateVariantRequest
-        required: true
-        schema:
-          $ref: '#/definitions/api.UpdateVariantRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/repository.ProductVariant'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.errorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/api.errorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.errorResponse'
-      summary: Update a variant
-      tags:
-      - variant
   /products:
     get:
       consumes:
@@ -2409,17 +2622,46 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/api.GenericListResponse-api_ProductListModel'
+              $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
             type: array
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
       summary: Get list of products
+      tags:
+      - products
+    post:
+      consumes:
+      - application/json
+      description: create a new product with the input payload
+      parameters:
+      - description: Product input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/api.CreateProductReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
+      summary: Create a new product
       tags:
       - products
   /products/{product_id}:
@@ -2439,7 +2681,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-bool'
+            $ref: '#/definitions/api.ApiResponse-bool'
         "404":
           description: Not Found
           schema:
@@ -2467,15 +2709,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-api_ProductListModel'
+            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
       summary: Get a product detail by ID
       tags:
       - product detail
@@ -2494,22 +2736,22 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/api.UpdateProductRequest'
+          $ref: '#/definitions/api.UpdateProductReq'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-repository_Product'
+            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
       summary: Update a product by ID
       tags:
       - products
@@ -2524,15 +2766,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-api_userResponse'
+            $ref: '#/definitions/api.ApiResponse-api_UserResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-api_UserResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-api_UserResponse'
       summary: Get user info
       tags:
       - users
@@ -2546,22 +2788,22 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/api.createUserRequest'
+          $ref: '#/definitions/api.RegisterRequestBody'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-repository_CreateUserRow'
+            $ref: '#/definitions/api.ApiResponse-api_UserResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-api_UserResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-api_UserResponse'
       summary: Create a new user
       tags:
       - users
@@ -2576,26 +2818,26 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/api.updateUserRequest'
+          $ref: '#/definitions/api.UpdateUserRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-repository_UpdateUserRow'
+            $ref: '#/definitions/api.ApiResponse-repository_UpdateUserRow'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-repository_UpdateUserRow'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-repository_UpdateUserRow'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-repository_UpdateUserRow'
       summary: Update user info
       tags:
       - users
@@ -2619,15 +2861,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-array_api_userResponse'
+            $ref: '#/definitions/api.ApiResponse-array_api_UserResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-array_api_UserResponse'
       summary: List users
       tags:
       - users
-  /users/login:
+  /users/loginHandler:
     post:
       consumes:
       - application/json
@@ -2638,22 +2880,22 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/api.loginUserRequest'
+          $ref: '#/definitions/api.LoginRequestBody'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-api_loginResponse'
+            $ref: '#/definitions/api.ApiResponse-api_LoginResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-api_LoginResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-api_LoginResponse'
       summary: Login to the system
       tags:
       - users
@@ -2668,120 +2910,62 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.renewAccessTokenResp'
+            $ref: '#/definitions/api.ApiResponse-api_RefreshTokenResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-api_RefreshTokenResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-api_RefreshTokenResponse'
       summary: Refresh token
       tags:
       - users
-  /variant/{product_id}:
-    post:
-      consumes:
-      - application/json
-      description: Create a variant
-      parameters:
-      - description: Product ID
-        in: path
-        name: product_id
-        required: true
-        type: integer
-      - description: Create Variant Request
-        in: body
-        name: VariantRequest
-        required: true
-        schema:
-          $ref: '#/definitions/api.VariantRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/repository.ProductVariant'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.errorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/api.errorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.errorResponse'
-      summary: Create a variant
-      tags:
-      - variant
-  /variant/{variant_id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete a variant
-      parameters:
-      - description: Variant ID
-        in: path
-        name: variant_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: No Content
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.errorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/api.errorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.errorResponse'
-      summary: Delete a variant
-      tags:
-      - variant
+  /users/verify-email:
     get:
       consumes:
       - application/json
-      description: Get a variant
+      description: Verify email
       parameters:
-      - description: Variant ID
-        in: path
-        name: variant_id
+      - description: ID
+        in: query
+        name: id
         required: true
         type: integer
+      - description: Verify code
+        in: query
+        name: verify_code
+        required: true
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.VariantResponse'
+            $ref: '#/definitions/api.ApiResponse-bool'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-bool'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
-      summary: Get a variant
+            $ref: '#/definitions/api.ApiResponse-bool'
+      security:
+      - BearerAuth: []
+      summary: Verify email
       tags:
-      - variant
+      - users
   /webhook/stripe:
     post:
       consumes:
@@ -2793,15 +2977,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.GenericResponse-gin_H'
+            $ref: '#/definitions/api.ApiResponse-bool'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-bool'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.errorResponse'
+            $ref: '#/definitions/api.ApiResponse-bool'
       summary: Stripe webhook
       tags:
       - webhook

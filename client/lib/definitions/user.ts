@@ -3,7 +3,7 @@ export type UserModel = {
   role: string;
   username: string;
   fullname: string;
-  email?: string;
+  email: string;
   created_at?: Date;
   verified_email?: boolean;
   verified_phone?: boolean;

@@ -52,6 +52,10 @@ type AttributeParam struct {
 	ID int32 `uri:"id" binding:"required"`
 }
 
+type GetAttributesQuery struct {
+	IDs []int32 `form:"ids" binding:"omitempty"`
+}
+
 // ------------------------------ API Handlers ------------------------------
 
 // @Summary Create an attribute
@@ -59,21 +63,21 @@ type AttributeParam struct {
 // @Tags attributes
 // @Accept json
 // @Produce json
-// @Param params body AttributeRequest true "Attribute name"
-// @Success 201 {object} GenericResponse[AttributeResponse]
-// @Failure 400 {object} errorResponse
-// @Failure 500 {object} errorResponse
+// @Param params body CreateAttributeRequest true "Attribute name"
+// @Success 201 {object} ApiResponse[AttributeResponse]
+// @Failure 400 {object} ApiResponse[AttributeResponse]
+// @Failure 500 {object} ApiResponse[AttributeResponse]
 // @Router /attributes [post]
 func (sv *Server) createAttribute(c *gin.Context) {
 	var params CreateAttributeRequest
 	if err := c.ShouldBindJSON(&params); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[AttributeResponse](http.StatusBadRequest, "", err))
 		return
 	}
 
 	attribute, err := sv.repo.CreateAttribute(c, params.Name)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[AttributeResponse](http.StatusBadRequest, "", err))
 		return
 	}
 	attributeValues := []AttributeValue{}
@@ -91,7 +95,7 @@ func (sv *Server) createAttribute(c *gin.Context) {
 			}
 			value, err := sv.repo.CreateAttributeValue(c, createParams)
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+				c.JSON(http.StatusInternalServerError, createErrorResponse[AttributeResponse](http.StatusBadRequest, "", err))
 				return
 			}
 
@@ -119,25 +123,25 @@ func (sv *Server) createAttribute(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Attribute ID"
-// @Success 200 {object} GenericResponse[AttributeResponse]
-// @Failure 404 {object} errorResponse
-// @Failure 500 {object} errorResponse
+// @Success 200 {object} ApiResponse[AttributeResponse]
+// @Failure 404 {object} ApiResponse[AttributeResponse]
+// @Failure 500 {object} ApiResponse[AttributeResponse]
 // @Router /attributes/{id} [get]
-func (sv *Server) getAttributeByID(c *gin.Context) {
+func (sv *Server) getAttributeByIDHandler(c *gin.Context) {
 	var attributeParam AttributeParam
 	if err := c.ShouldBindUri(&attributeParam); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[AttributeResponse](http.StatusBadRequest, "", err))
 		return
 	}
 
 	attributeRows, err := sv.repo.GetAttributeByID(c, attributeParam.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[AttributeResponse](http.StatusBadRequest, "", err))
 		return
 	}
 
 	if attributeRows == nil {
-		c.JSON(http.StatusNotFound, createErrorResponse(http.StatusBadRequest, "", errors.New("attribute not found")))
+		c.JSON(http.StatusNotFound, createErrorResponse[AttributeResponse](http.StatusBadRequest, "", errors.New("attribute not found")))
 		return
 	}
 
@@ -170,20 +174,26 @@ func (sv *Server) getAttributeByID(c *gin.Context) {
 // @Tags attributes
 // @Accept json
 // @Produce json
-// @Success 200 {object} GenericListResponse[AttributeResponse]
-// @Failure 500 {object} errorResponse
+// @Success 200 {object} ApiResponse[[]AttributeResponse]
+// @Failure 500 {object} ApiResponse[[]AttributeResponse]
 // @Router /attributes [get]
-func (sv *Server) getAttributes(c *gin.Context) {
+func (sv *Server) getAttributesHandler(c *gin.Context) {
+	var queries GetAttributesQuery
 
-	attributeRows, err := sv.repo.GetAttributes(c)
+	if err := c.ShouldBindQuery(&queries); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse[[]AttributeResponse](http.StatusBadRequest, "", err))
+		return
+	}
+
+	attributeRows, err := sv.repo.GetAttributes(c, queries.IDs)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[[]AttributeResponse](http.StatusBadRequest, "", err))
 		return
 	}
 
 	cnt, err := sv.repo.CountAttributes(c)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[[]AttributeResponse](http.StatusBadRequest, "", err))
 		return
 	}
 
@@ -226,32 +236,32 @@ func (sv *Server) getAttributes(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Attribute ID"
-// @Param params body AttributeRequest true "Attribute name"
-// @Success 200 {object} GenericResponse[AttributeResponse]
-// @Failure 400 {object} errorResponse
-// @Failure 500 {object} errorResponse
+// @Param params body UpdateAttributeRequest true "Attribute name"
+// @Success 200 {object} ApiResponse[AttributeResponse]
+// @Failure 400 {object} ApiResponse[AttributeResponse]
+// @Failure 500 {object} ApiResponse[[]AttributeResponse]
 // @Router /attributes/{id} [put]
 func (sv *Server) updateAttribute(c *gin.Context) {
 	var param AttributeParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[AttributeResponse](http.StatusBadRequest, "", err))
 		return
 	}
 
 	var req UpdateAttributeRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[AttributeResponse](http.StatusBadRequest, "", err))
 		return
 	}
 
 	existingAttributeRows, err := sv.repo.GetAttributeByID(c, param.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[AttributeResponse](http.StatusBadRequest, "", err))
 		return
 	}
 
 	if existingAttributeRows == nil {
-		c.JSON(http.StatusNotFound, createErrorResponse(http.StatusBadRequest, "", errors.New("attribute not found")))
+		c.JSON(http.StatusNotFound, createErrorResponse[AttributeResponse](http.StatusBadRequest, "", errors.New("attribute not found")))
 		return
 	}
 
@@ -259,7 +269,7 @@ func (sv *Server) updateAttribute(c *gin.Context) {
 
 	currentAttributeValues, err := sv.repo.GetAttributeValues(c, existed.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[AttributeResponse](http.StatusBadRequest, "", err))
 		return
 	}
 
@@ -269,13 +279,19 @@ func (sv *Server) updateAttribute(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[AttributeResponse](http.StatusBadRequest, "", err))
 		return
 	}
 
-	currentAttributeValuesMap := make(map[int32]repository.AttributeValue)
+	currentAttributeValuesMap := make(map[int32]AttributeValue)
 	for _, value := range currentAttributeValues {
-		currentAttributeValuesMap[value.ID] = value
+		currentAttributeValuesMap[value.ID] = AttributeValue{
+			ID:           value.ID,
+			Value:        value.Value,
+			DisplayValue: &value.DisplayValue.String,
+			IsActive:     &value.IsActive.Bool,
+			DisplayOrder: &value.DisplayOrder,
+		}
 	}
 
 	response := []AttributeValue{}
@@ -295,7 +311,7 @@ func (sv *Server) updateAttribute(c *gin.Context) {
 				}
 				updated, err := sv.repo.UpdateAttributeValue(c, params)
 				if err != nil {
-					c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+					c.JSON(http.StatusInternalServerError, createErrorResponse[AttributeResponse](http.StatusBadRequest, "", err))
 					return
 				}
 				delete(currentAttributeValuesMap, *value.ID)
@@ -320,7 +336,7 @@ func (sv *Server) updateAttribute(c *gin.Context) {
 			}
 			newAttr, err := sv.repo.CreateAttributeValue(c, createParams)
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+				c.JSON(http.StatusInternalServerError, createErrorResponse[AttributeResponse](http.StatusBadRequest, "", err))
 				return
 			}
 			response = append(response, AttributeValue{
@@ -336,7 +352,7 @@ func (sv *Server) updateAttribute(c *gin.Context) {
 	for id := range currentAttributeValuesMap {
 		err := sv.repo.DeleteAttributeValue(c, id)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[AttributeResponse](http.StatusBadRequest, "", err))
 			return
 		}
 	}
@@ -358,28 +374,28 @@ func (sv *Server) updateAttribute(c *gin.Context) {
 // @Produce json
 // @Param id path int true "Attribute ID"
 // @Success 204 {object} nil
-// @Failure 500 {object} errorResponse
+// @Failure 500 {object} ApiResponse[bool]
 // @Router /attributes/{id} [delete]
 func (sv *Server) deleteAttribute(c *gin.Context) {
 	var params AttributeParam
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[bool](http.StatusBadRequest, "", err))
 		return
 	}
 
 	attribute, err := sv.repo.GetAttributeByID(c, params.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusInternalServerError, "", err))
 		return
 	}
 	if attribute == nil {
-		c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", errors.New("attribute not found")))
+		c.JSON(http.StatusNotFound, createErrorResponse[bool](http.StatusNotFound, "", errors.New("attribute not found")))
 		return
 	}
 
 	err = sv.repo.DeleteAttribute(c, attribute[0].ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusInternalServerError, "", err))
 		return
 	}
 	c.Status(http.StatusNoContent)

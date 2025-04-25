@@ -21,7 +21,7 @@
       "program": "${workspaceFolder}/cmd/web",
       "envFile": "${workspaceFolder}/app.env",
       "args": [
-        "--profile",
+        // "--profile",
         "api"
       ],
       "cwd": "${workspaceFolder}"

@@ -77,30 +77,30 @@ type CheckoutResponse struct {
 // @Tags carts
 // @Accept json
 // @Produce json
-// @Success 200 {object} ApiResponse
-// @Failure 400 {object} ApiResponse
-// @Failure 500 {object} ApiResponse
+// @Success 200 {object} ApiResponse[CartDetailResponse]
+// @Failure 400 {object} ApiResponse[CartDetailResponse]
+// @Failure 500 {object} ApiResponse[CartDetailResponse]
 // @Router /cart [post]
 func (sv *Server) createCart(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("user not found")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[CartDetailResponse](http.StatusBadRequest, "", errors.New("user not found")))
 		return
 	}
 	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", errors.New("user not found")))
+			c.JSON(http.StatusNotFound, createErrorResponse[CartDetailResponse](http.StatusNotFound, "", errors.New("user not found")))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CartDetailResponse](http.StatusInternalServerError, "", err))
 		return
 	}
 	_, err = sv.repo.GetCart(c, repository.GetCartParams{
 		UserID: authPayload.UserID,
 	})
 	if err == nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("cart already exists")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[CartDetailResponse](http.StatusBadRequest, "", errors.New("cart already exists")))
 		return
 	}
 
@@ -109,11 +109,18 @@ func (sv *Server) createCart(c *gin.Context) {
 		UserID: user.ID,
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CartDetailResponse](http.StatusInternalServerError, "", err))
 		return
 	}
+	resp := &CartDetailResponse{
+		ID:         newCart.ID,
+		TotalPrice: 0,
+		CartItems:  []CartItemResponse{},
+		UpdatedAt:  newCart.UpdatedAt,
+		CreatedAt:  newCart.CreatedAt,
+	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(c, newCart, "", nil, nil))
+	c.JSON(http.StatusOK, createSuccessResponse(c, resp, "", nil, nil))
 }
 
 // @Summary Get cart details by user ID
@@ -122,13 +129,13 @@ func (sv *Server) createCart(c *gin.Context) {
 // @Tags cart
 // @Accept json
 // @Produce json
-// @Success 200 {object} ApiResponse
-// @Failure 500 {object} ApiResponse
+// @Success 200 {object} ApiResponse[CartDetailResponse]
+// @Failure 500 {object} ApiResponse[CartDetailResponse]
 // @Router /cart [get]
 func (sv *Server) getCart(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("user not found")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[CartDetailResponse](http.StatusBadRequest, "", errors.New("user not found")))
 		return
 	}
 
@@ -143,7 +150,7 @@ func (sv *Server) getCart(c *gin.Context) {
 				UserID: authPayload.UserID,
 			})
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+				c.JSON(http.StatusInternalServerError, createErrorResponse[CartDetailResponse](http.StatusInternalServerError, "", err))
 				return
 			}
 			c.JSON(http.StatusOK, createSuccessResponse(c, CartDetailResponse{
@@ -155,7 +162,7 @@ func (sv *Server) getCart(c *gin.Context) {
 			}, "", nil, nil))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CartDetailResponse](http.StatusInternalServerError, "", err))
 		return
 	}
 
@@ -168,7 +175,7 @@ func (sv *Server) getCart(c *gin.Context) {
 	}
 	cartItemRows, err := sv.repo.GetCartItems(c, cart.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CartDetailResponse](http.StatusInternalServerError, "", err))
 		return
 	}
 
@@ -182,22 +189,22 @@ func (sv *Server) getCart(c *gin.Context) {
 // @Description add a product to the cart
 // @Tags carts
 // @Accept json
-// @Param input body addProductToCartRequest true "Add product to cart input"
+// @Param input body PutCartItemReq true "Add product to cart input"
 // @Produce json
-// @Success 200 {object} ApiResponse
-// @Failure 400 {object} ApiResponse
-// @Failure 500 {object} ApiResponse
+// @Success 200 {object} ApiResponse[uuid.UUID]
+// @Failure 400 {object} ApiResponse[uuid.UUID]
+// @Failure 500 {object} ApiResponse[uuid.UUID]
 // @Router /cart/item/{variant_id} [post]
 func (sv *Server) putCartItemHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("user not found")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[uuid.UUID](http.StatusBadRequest, "", errors.New("user not found")))
 		return
 	}
 
 	var req PutCartItemReq
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[uuid.UUID](http.StatusInternalServerError, "", err))
 		return
 	}
 
@@ -207,10 +214,10 @@ func (sv *Server) putCartItemHandler(c *gin.Context) {
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", errors.New("cart not found")))
+			c.JSON(http.StatusNotFound, createErrorResponse[uuid.UUID](http.StatusNotFound, "", errors.New("cart not found")))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[uuid.UUID](http.StatusInternalServerError, "", err))
 		return
 	}
 
@@ -228,11 +235,11 @@ func (sv *Server) putCartItemHandler(c *gin.Context) {
 				Quantity:  req.Quantity,
 			})
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+				c.JSON(http.StatusInternalServerError, createErrorResponse[uuid.UUID](http.StatusInternalServerError, "", err))
 				return
 			}
 		} else {
-			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[uuid.UUID](http.StatusInternalServerError, "", err))
 			return
 		}
 	} else {
@@ -242,14 +249,14 @@ func (sv *Server) putCartItemHandler(c *gin.Context) {
 		})
 
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[uuid.UUID](http.StatusInternalServerError, "", err))
 			return
 		}
 	}
 
 	err = sv.repo.UpdateCartTimestamp(c, cart.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[uuid.UUID](http.StatusInternalServerError, "", err))
 		return
 	}
 
@@ -263,20 +270,20 @@ func (sv *Server) putCartItemHandler(c *gin.Context) {
 // @Accept json
 // @Param id path int true "Product ID"
 // @Produce json
-// @Success 200 {object} ApiResponse
-// @Failure 400 {object} ApiResponse
-// @Failure 500 {object} ApiResponse
+// @Success 200 {object} ApiResponse[string]
+// @Failure 400 {object} ApiResponse[string]
+// @Failure 500 {object} ApiResponse[string]
 // @Router /cart/item/{id} [delete]
 func (sv *Server) removeCartItem(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("user not found")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[string](http.StatusBadRequest, "", errors.New("user not found")))
 		return
 	}
 
 	var param GetCartItemParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[string](http.StatusInternalServerError, "", err))
 		return
 	}
 
@@ -285,15 +292,15 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 	})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", errors.New("cart not found")))
+			c.JSON(http.StatusNotFound, createErrorResponse[string](http.StatusNotFound, "", errors.New("cart not found")))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[string](http.StatusInternalServerError, "", err))
 		return
 	}
 
 	if cart.UserID != authPayload.UserID {
-		c.JSON(http.StatusForbidden, createErrorResponse(http.StatusForbidden, "", errors.New("user not found")))
+		c.JSON(http.StatusForbidden, createErrorResponse[string](http.StatusForbidden, "", errors.New("user not found")))
 		return
 	}
 
@@ -302,7 +309,7 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 		ID:     uuid.MustParse(param.ID),
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[string](http.StatusInternalServerError, "", err))
 		return
 	}
 
@@ -315,32 +322,32 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 // @Description update product items in the cart
 // @Tags carts
 // @Accept json
-// @Param input body checkoutRequest true "Update cart items input"
+// @Param input body CheckoutRequest true "Checkout input"
 // @Produce json
-// @Success 200 {object} ApiResponse
-// @Failure 400 {object} ApiResponse
-// @Failure 500 {object} ApiResponse
+// @Success 200 {object} ApiResponse[CheckoutResponse]
+// @Failure 400 {object} ApiResponse[CheckoutResponse]
+// @Failure 500 {object} ApiResponse[CheckoutResponse]
 // @Router /cart/checkout [post]
 func (sv *Server) checkout(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("user not found")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[CheckoutResponse](http.StatusBadRequest, "", errors.New("user not found")))
 		return
 	}
 
 	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusBadRequest, "", errors.New("user not found")))
+			c.JSON(http.StatusNotFound, createErrorResponse[CheckoutResponse](http.StatusBadRequest, "", errors.New("user not found")))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](http.StatusInternalServerError, "", err))
 		return
 	}
 
 	var req CheckoutRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[CheckoutResponse](http.StatusInternalServerError, "", err))
 		return
 	}
 
@@ -349,10 +356,10 @@ func (sv *Server) checkout(c *gin.Context) {
 	})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", errors.New("cart not found")))
+			c.JSON(http.StatusNotFound, createErrorResponse[CheckoutResponse](http.StatusNotFound, "", errors.New("cart not found")))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](http.StatusInternalServerError, "", err))
 		return
 	}
 	var addressID int64
@@ -361,10 +368,10 @@ func (sv *Server) checkout(c *gin.Context) {
 		defaultAddress, err := sv.repo.GetDefaultAddress(c, user.ID)
 		if err != nil {
 			if errors.Is(err, repository.ErrRecordNotFound) {
-				c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", errors.New("address not found")))
+				c.JSON(http.StatusNotFound, createErrorResponse[CheckoutResponse](http.StatusNotFound, "", errors.New("address not found")))
 				return
 			}
-			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](http.StatusInternalServerError, "", err))
 			return
 		}
 		addressID = defaultAddress.ID
@@ -375,17 +382,17 @@ func (sv *Server) checkout(c *gin.Context) {
 		})
 		if err != nil {
 			if errors.Is(err, repository.ErrRecordNotFound) {
-				c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", errors.New("address not found")))
+				c.JSON(http.StatusNotFound, createErrorResponse[CheckoutResponse](http.StatusNotFound, "", errors.New("address not found")))
 				return
 			}
-			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](http.StatusInternalServerError, "", err))
 			return
 		}
 		addressID = address.ID
 	}
 
 	if cart.UserID != authPayload.UserID {
-		c.JSON(http.StatusForbidden, createErrorResponse(http.StatusForbidden, "", errors.New("user not found")))
+		c.JSON(http.StatusForbidden, createErrorResponse[CheckoutResponse](http.StatusForbidden, "", errors.New("user not found")))
 		return
 	}
 
@@ -454,12 +461,12 @@ func (sv *Server) checkout(c *gin.Context) {
 			paymentMethod = repository.PaymentMethodCard
 			stripeInstance, err := payment.NewStripePayment(sv.config.StripeSecretKey)
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+				c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](http.StatusInternalServerError, "", err))
 				return
 			}
 			sv.paymentCtx.SetStrategy(stripeInstance)
 		default:
-			c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("payment gateway not supported")))
+			c.JSON(http.StatusBadRequest, createErrorResponse[CheckoutResponse](http.StatusBadRequest, "", errors.New("payment gateway not supported")))
 			return
 		}
 	}
@@ -468,7 +475,7 @@ func (sv *Server) checkout(c *gin.Context) {
 	if req.PaymentGateway != nil {
 		paymentID, err = sv.paymentCtx.InitiatePayment(totalPrice, user.Email)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](http.StatusInternalServerError, "", err))
 			return
 		}
 	}
@@ -491,7 +498,7 @@ func (sv *Server) checkout(c *gin.Context) {
 
 	if err != nil {
 		sv.paymentCtx.CancelPayment(paymentID, "order creation failed")
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](http.StatusInternalServerError, "", err))
 		return
 	}
 	resp := CheckoutResponse{
@@ -509,25 +516,25 @@ func (sv *Server) checkout(c *gin.Context) {
 // @Accept json
 // @Param input body updateCartItemRequest true "Update cart items input"
 // @Produce json
-// @Success 200 {object} ApiResponse
-// @Failure 400 {object} ApiResponse
-// @Failure 500 {object} ApiResponse
+// @Success 200 {object} ApiResponse[bool]
+// @Failure 400 {object} ApiResponse[bool]
+// @Failure 500 {object} ApiResponse[bool]
 // @Router /cart/item/{id}/quantity [put]
 func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("user not found")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[bool](http.StatusBadRequest, "", errors.New("user not found")))
 		return
 	}
 
 	var param GetCartItemParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[bool](http.StatusInternalServerError, "", err))
 		return
 	}
 	var req updateCartItemRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[bool](http.StatusInternalServerError, "", err))
 		return
 	}
 
@@ -536,15 +543,15 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 	})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", errors.New("cart not found")))
+			c.JSON(http.StatusNotFound, createErrorResponse[bool](http.StatusNotFound, "", errors.New("cart not found")))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusInternalServerError, "", err))
 		return
 	}
 
 	if cart.UserID != authPayload.UserID {
-		c.JSON(http.StatusForbidden, createErrorResponse(http.StatusForbidden, "", errors.New("user not found")))
+		c.JSON(http.StatusForbidden, createErrorResponse[bool](http.StatusForbidden, "", errors.New("user not found")))
 		return
 	}
 
@@ -554,12 +561,11 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusInternalServerError, "", err))
 		return
 	}
 
-	msg := "cart item updated"
-	c.JSON(http.StatusOK, createSuccessResponse(c, msg, "", nil, nil))
+	c.JSON(http.StatusOK, createSuccessResponse(c, true, "cart item updated", nil, nil))
 }
 
 // @Summary  Clear the cart
@@ -568,14 +574,14 @@ func (sv *Server) updateCartItemQuantity(c *gin.Context) {
 // @Tags carts
 // @Accept json
 // @Produce json
-// @Success 200 {object} ApiResponse
-// @Failure 400 {object} ApiResponse
-// @Failure 500 {object} ApiResponse
+// @Success 200 {object} ApiResponse[bool]
+// @Failure 400 {object} ApiResponse[bool]
+// @Failure 500 {object} ApiResponse[bool]
 // @Router /cart/clear [put]
 func (sv *Server) clearCart(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("user not found")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[bool](http.StatusBadRequest, "", errors.New("user not found")))
 		return
 	}
 
@@ -584,26 +590,25 @@ func (sv *Server) clearCart(c *gin.Context) {
 	})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", errors.New("cart not found")))
+			c.JSON(http.StatusNotFound, createErrorResponse[bool](http.StatusNotFound, "", errors.New("cart not found")))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusInternalServerError, "", err))
 		return
 	}
 
 	if cart.UserID != authPayload.UserID {
-		c.JSON(http.StatusForbidden, createErrorResponse(http.StatusForbidden, "", errors.New("user not found")))
+		c.JSON(http.StatusForbidden, createErrorResponse[bool](http.StatusForbidden, "", errors.New("user not found")))
 		return
 	}
 
 	err = sv.repo.ClearCart(c, cart.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusInternalServerError, "", err))
 		return
 	}
 
-	msg := "cart cleared"
-	c.JSON(http.StatusOK, createSuccessResponse(c, msg, "", nil, nil))
+	c.JSON(http.StatusOK, createSuccessResponse(c, true, "cart cleared", nil, nil))
 }
 
 // ------------------------------ Mappers ------------------------------

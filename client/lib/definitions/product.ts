@@ -134,6 +134,7 @@ export type AttributeValueDetailModel = {
   display_order: number;
   created_at: Date;
   is_active: boolean;
+  out_of_stock?: boolean;
 };
 
 export type AttributeDetailModel = {

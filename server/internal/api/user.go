@@ -26,15 +26,7 @@ type UserResponse struct {
 	VerifiedPhone     bool                `json:"verified_phone,omitempty"`
 	UpdatedAt         string              `json:"updated_at,omitempty"`
 	PasswordChangedAt string              `json:"password_changed_at,omitempty"`
-	Addresses         []addressResponse   `json:"addresses,omitempty"`
-}
-type addressResponse struct {
-	Address  string `json:"address"`
-	Address2 string `json:"address_2"`
-	City     string `json:"city"`
-	District string `json:"district"`
-	Ward     string `json:"ward"`
-	Phone    string `json:"phone"`
+	Addresses         []AddressResponse   `json:"addresses,omitempty"`
 }
 
 type ListUserParams struct {
@@ -58,6 +50,8 @@ type VerifyEmailQuery struct {
 
 func mapToUserResponse(user repository.User) UserResponse {
 	return UserResponse{
+		ID:                user.ID,
+		Addresses:         []AddressResponse{},
 		Email:             user.Email,
 		FullName:          user.Fullname,
 		Role:              user.Role,
@@ -70,12 +64,12 @@ func mapToUserResponse(user repository.User) UserResponse {
 	}
 }
 
-func mapAddressToAddressResponse(address repository.UserAddress) addressResponse {
-	return addressResponse{
+func mapAddressToAddressResponse(address repository.UserAddress) AddressResponse {
+	return AddressResponse{
 		Address:  address.Street,
 		City:     address.City,
 		District: address.District,
-		Ward:     address.Ward.String,
+		Ward:     &address.Ward.String,
 		Phone:    address.Phone,
 	}
 }
@@ -88,27 +82,27 @@ func mapAddressToAddressResponse(address repository.UserAddress) addressResponse
 // @Tags users
 // @Accept  json
 // @Produce  json
-// @Param input body updateUserRequest true "User info"
-// @Success 200 {object} ApiResponse
-// @Failure 400 {object} ApiResponse
-// @Failure 401 {object} ApiResponse
-// @Failure 500 {object} ApiResponse
+// @Param input body UpdateUserRequest true "User info"
+// @Success 200 {object} ApiResponse[repository.UpdateUserRow]
+// @Failure 400 {object} ApiResponse[repository.UpdateUserRow]
+// @Failure 401 {object} ApiResponse[repository.UpdateUserRow]
+// @Failure 500 {object} ApiResponse[repository.UpdateUserRow]
 // @Router /users/{id} [patch]
 func (sv *Server) updateUser(c *gin.Context) {
 	var req UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[repository.UpdateUserRow](http.StatusBadRequest, "", err))
 		return
 	}
 
 	user, err := sv.repo.GetUserByID(c, req.UserID)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, createErrorResponse(http.StatusUnauthorized, "", err))
+		c.JSON(http.StatusUnauthorized, createErrorResponse[repository.UpdateUserRow](http.StatusUnauthorized, "", err))
 		return
 	}
 
 	if user.Role != repository.UserRoleAdmin && user.ID != req.UserID {
-		c.JSON(http.StatusUnauthorized, createErrorResponse(http.StatusUnauthorized, "", err))
+		c.JSON(http.StatusUnauthorized, createErrorResponse[repository.UpdateUserRow](http.StatusUnauthorized, "", err))
 		return
 	}
 
@@ -131,7 +125,7 @@ func (sv *Server) updateUser(c *gin.Context) {
 	}
 	updatedUser, err := sv.repo.UpdateUser(c, arg)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[repository.UpdateUserRow](http.StatusInternalServerError, "", err))
 		return
 	}
 
@@ -144,34 +138,34 @@ func (sv *Server) updateUser(c *gin.Context) {
 // @Tags users
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} ApiResponse
-// @Failure 404 {object} ApiResponse
-// @Failure 500 {object} ApiResponse
+// @Success 200 {object} ApiResponse[UserResponse]
+// @Failure 404 {object} ApiResponse[UserResponse]
+// @Failure 500 {object} ApiResponse[UserResponse]
 // @Router /users [get]
 func (sv *Server) getUser(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", errors.New("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](http.StatusInternalServerError, "", errors.New("authorization payload is not provided")))
 		return
 	}
 
 	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusBadRequest, "", err))
+			c.JSON(http.StatusNotFound, createErrorResponse[UserResponse](http.StatusBadRequest, "", err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](http.StatusBadRequest, "", err))
 		return
 	}
 
 	userAddress, err := sv.repo.GetAddresses(c, user.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](http.StatusBadRequest, "", err))
 		return
 	}
 
-	addressResp := make([]addressResponse, 0)
+	addressResp := make([]AddressResponse, 0)
 	for _, address := range userAddress {
 		addressResp = append(addressResp, mapAddressToAddressResponse(address))
 	}
@@ -189,29 +183,29 @@ func (sv *Server) getUser(c *gin.Context) {
 // @Produce  json
 // @Param limit query int false "Limit"
 // @Param offset query int false "Offset"
-// @Success 200 {object} ApiResponse
-// @Failure 500 {object} ApiResponse
+// @Success 200 {object} ApiResponse[[]UserResponse]
+// @Failure 500 {object} ApiResponse[[]UserResponse]
 // @Router /users/list [get]
 func (sv *Server) listUsers(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", errors.New("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[[]UserResponse](http.StatusInternalServerError, "", errors.New("authorization payload is not provided")))
 		return
 	}
 	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[[]UserResponse](http.StatusBadRequest, "", err))
 		return
 	}
 
 	if user.Role != repository.UserRoleAdmin {
-		c.JSON(http.StatusUnauthorized, createErrorResponse(http.StatusUnauthorized, "", errors.New("user is not admin")))
+		c.JSON(http.StatusUnauthorized, createErrorResponse[[]UserResponse](http.StatusUnauthorized, "", errors.New("user is not admin")))
 		return
 	}
 
 	var queries ListUserParams
 	if err := c.ShouldBindUri(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[[]UserResponse](http.StatusBadRequest, "", err))
 		return
 	}
 
@@ -220,7 +214,7 @@ func (sv *Server) listUsers(c *gin.Context) {
 		Offset: int32((queries.Page - 1) * queries.PageSize),
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[[]UserResponse](http.StatusBadRequest, "", err))
 		return
 	}
 
@@ -228,11 +222,11 @@ func (sv *Server) listUsers(c *gin.Context) {
 	for _, user := range users {
 		userAddress, err := sv.repo.GetAddresses(c, user.ID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[[]UserResponse](http.StatusBadRequest, "", err))
 			return
 		}
 
-		addressResp := make([]addressResponse, 0)
+		addressResp := make([]AddressResponse, 0)
 		for _, address := range userAddress {
 			addressResp = append(addressResp, mapAddressToAddressResponse(address))
 		}
@@ -246,7 +240,7 @@ func (sv *Server) listUsers(c *gin.Context) {
 func (sv *Server) sendVerifyEmail(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", errors.New("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusInternalServerError, "", errors.New("authorization payload is not provided")))
 		return
 	}
 
@@ -260,32 +254,47 @@ func (sv *Server) sendVerifyEmail(c *gin.Context) {
 		asynq.Queue(worker.QueueCritical),
 	)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusBadRequest, "", err))
 		return
 	}
 
 	c.Status(http.StatusNoContent)
 }
 
+// verifyEmail godoc
+// @Summary Verify email
+// @Description Verify email
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Param id query int true "ID"
+// @Param verify_code query string true "Verify code"
+// @Success 200 {object} ApiResponse[bool]
+// @Failure 400 {object} ApiResponse[bool]
+// @Failure 401 {object} ApiResponse[bool]
+// @Failure 404 {object} ApiResponse[bool]
+// @Failure 500 {object} ApiResponse[bool]
+// @Router /users/verify-email [get]
+// @Security BearerAuth
 func (sv *Server) verifyEmail(c *gin.Context) {
 	var query VerifyEmailQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[bool](http.StatusBadRequest, "", err))
 		return
 	}
 	verifyEmail, err := sv.repo.GetVerifyEmailByID(c, query.ID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", err))
+		c.JSON(http.StatusNotFound, createErrorResponse[bool](http.StatusNotFound, "", err))
 		return
 	}
 
 	if verifyEmail.ExpiredAt.Before(time.Now()) {
-		c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", errors.New("verify code expired")))
+		c.JSON(http.StatusNotFound, createErrorResponse[bool](http.StatusNotFound, "", errors.New("verify code expired")))
 		return
 	}
 
 	if verifyEmail.VerifyCode != query.VerifyCode {
-		c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", err))
+		c.JSON(http.StatusNotFound, createErrorResponse[bool](http.StatusNotFound, "", err))
 		return
 	}
 	_, err = sv.repo.UpdateVerifyEmail(c, repository.UpdateVerifyEmailParams{
@@ -294,7 +303,7 @@ func (sv *Server) verifyEmail(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusBadRequest, "", err))
 		return
 	}
 
@@ -306,7 +315,7 @@ func (sv *Server) verifyEmail(c *gin.Context) {
 		},
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusBadRequest, "", err))
 		return
 	}
 	c.Status(http.StatusNoContent)

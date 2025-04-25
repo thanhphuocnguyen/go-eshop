@@ -26,6 +26,14 @@ type BrandProductRequest struct {
 	SortOrder int16 `json:"sort_order,omitempty"`
 }
 
+type BrandResponse struct {
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Description *string   `json:"description,omitempty"`
+	Slug        string    `json:"slug"`
+	ImageUrl    *string   `json:"image_url,omitempty"`
+}
+
 // ------------------------------------------ API Handlers ------------------------------------------
 // createBrand creates a new Brand.
 // @Summary Create a new Brand
@@ -33,15 +41,15 @@ type BrandProductRequest struct {
 // @ID create-Brand
 // @Accept json
 // @Produce json
-// @Param request body BrandRequest true "Brand request"
-// @Success 201 {object} GenericResponse
-// @Failure 400 {object} errorResponse
-// @Failure 500 {object} errorResponse
+// @Param request body CreateCategoryRequest true "Brand request"
+// @Success 201 {object} ApiResponse[BrandResponse]
+// @Failure 400 {object} ApiResponse[BrandResponse]
+// @Failure 500 {object} ApiResponse[BrandResponse]
 // @Router /Brands [post]
 func (sv *Server) createBrand(c *gin.Context) {
 	var req CreateCategoryRequest
 	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[BrandResponse](http.StatusBadRequest, "", err))
 		return
 	}
 	params := repository.CreateBrandParams{
@@ -56,7 +64,7 @@ func (sv *Server) createBrand(c *gin.Context) {
 	if req.Image != nil {
 		fileName, fileID, err := sv.uploadService.UploadFile(c, *req.Image)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[BrandResponse](http.StatusBadRequest, "", err))
 			return
 		}
 		params.ImageUrl = utils.GetPgTypeText(fileName)
@@ -65,7 +73,7 @@ func (sv *Server) createBrand(c *gin.Context) {
 
 	col, err := sv.repo.CreateBrand(c, params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[BrandResponse](http.StatusBadRequest, "", err))
 		return
 	}
 
@@ -80,14 +88,14 @@ func (sv *Server) createBrand(c *gin.Context) {
 // @Produce json
 // @Param page query int false "Page number"
 // @Param page_size query int false "Page size"
-// @Success 200 {object} []BrandResp
-// @Failure 400 {object} errorResponse
-// @Failure 500 {object} errorResponse
+// @Success 200 {object} ApiResponse[BrandResponse]
+// @Failure 400 {object} ApiResponse[BrandResponse]
+// @Failure 500 {object} ApiResponse[BrandResponse]
 // @Router /Brands [get]
 func (sv *Server) getBrands(c *gin.Context) {
 	var queries getBrandsQueries
 	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[BrandResponse](http.StatusBadRequest, "", err))
 		return
 	}
 	var dbQueries repository.GetBrandsParams = repository.GetBrandsParams{
@@ -99,20 +107,32 @@ func (sv *Server) getBrands(c *gin.Context) {
 
 	rows, err := sv.repo.GetBrands(c, dbQueries)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[BrandResponse](http.StatusBadRequest, "", err))
 		return
 	}
 
 	cnt, err := sv.repo.CountBrands(c)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[BrandResponse](http.StatusBadRequest, "", err))
 		return
+	}
+
+	resp := make([]BrandResponse, 0, len(rows))
+
+	for _, row := range rows {
+		resp = append(resp, BrandResponse{
+			ID:          row.ID,
+			Name:        row.Name,
+			Description: &row.Description.String,
+			Slug:        row.Slug,
+			ImageUrl:    &row.ImageUrl.String,
+		})
 	}
 
 	c.JSON(http.StatusOK, createSuccessResponse(
 		c,
-		rows,
+		resp,
 		"",
 		&Pagination{
 			Page:            queries.Page,
@@ -132,29 +152,29 @@ func (sv *Server) getBrands(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Brand ID"
-// @Success 200 {object} BrandResp
-// @Failure 400 {object} errorResponse
-// @Failure 500 {object} errorResponse
+// @Success 200 {object} ApiResponse[CategoryResponse]
+// @Failure 400 {object} ApiResponse[CategoryResponse]
+// @Failure 500 {object} ApiResponse[CategoryResponse]
 // @Router /Brands/{id} [get]
 func (sv *Server) getBrandByID(c *gin.Context) {
 	var param getBrandParams
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](http.StatusBadRequest, "", err))
 		return
 	}
 
 	result, err := sv.repo.GetBrandByID(c, uuid.MustParse(param.ID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusBadRequest, "", fmt.Errorf("brand with ID %s not found", param.ID)))
+			c.JSON(http.StatusNotFound, createErrorResponse[CategoryResponse](http.StatusBadRequest, "", fmt.Errorf("brand with ID %s not found", param.ID)))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](http.StatusBadRequest, "", err))
 		return
 	}
 
 	colResp := CategoryResponse{
-		ID:          result.ID,
+		ID:          result.ID.String(),
 		Description: &result.Description.String,
 		Slug:        result.Slug,
 		Published:   result.Published,
@@ -175,28 +195,28 @@ func (sv *Server) getBrandByID(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Brand ID"
-// @Success 200 {object} []ProductListModel
-// @Failure 400 {object} errorResponse
-// @Failure 500 {object} errorResponse
+// @Success 200 {object} ApiResponse[[]ProductListModel]
+// @Failure 400 {object} ApiResponse[[]ProductListModel]
+// @Failure 500 {object} ApiResponse[[]ProductListModel]
 // @Router /Brand/{id}/products [get]
 func (sv *Server) getProductsByBrand(c *gin.Context) {
 	var param getBrandParams
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[[]ProductListModel](http.StatusBadRequest, "", err))
 		return
 	}
 	var queries PaginationQueryParams
 	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[[]ProductListModel](http.StatusBadRequest, "", err))
 		return
 	}
 	_, err := sv.repo.GetBrandByID(c, uuid.MustParse(param.ID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusBadRequest, "", fmt.Errorf("brand with ID %s not found", param.ID)))
+			c.JSON(http.StatusNotFound, createErrorResponse[[]ProductListModel](http.StatusBadRequest, "", fmt.Errorf("brand with ID %s not found", param.ID)))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[[]ProductListModel](http.StatusBadRequest, "", err))
 		return
 	}
 
@@ -211,14 +231,14 @@ func (sv *Server) getProductsByBrand(c *gin.Context) {
 
 	productRows, err := sv.repo.GetProductsByBrandID(c, getProductsParams)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[[]ProductListModel](http.StatusBadRequest, "", err))
 		return
 	}
 	products := []ProductListModel{}
 	for _, p := range productRows {
 		price, _ := p.BasePrice.Float64Value()
 		products = append(products, ProductListModel{
-			ID:          p.ID,
+			ID:          p.ID.String(),
 			Name:        p.Name,
 			Description: p.Description.String,
 			Price:       price.Float64,
@@ -237,20 +257,20 @@ func (sv *Server) getProductsByBrand(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Brand ID"
-// @Param request body BrandRequest true "Brand request"
-// @Success 200 {object} GenericResponse
-// @Failure 400 {object} errorResponse
-// @Failure 500 {object} errorResponse
+// @Param request body UpdateCategoryRequest true "Brand request"
+// @Success 200 {object} ApiResponse[BrandResponse]
+// @Failure 400 {object} ApiResponse[BrandResponse]
+// @Failure 500 {object} ApiResponse[BrandResponse]
 // @Router /Brands/{id} [put]
 func (sv *Server) updateBrand(c *gin.Context) {
 	var param getBrandParams
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[BrandResponse](http.StatusBadRequest, "", err))
 		return
 	}
 	var req UpdateCategoryRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[BrandResponse](http.StatusBadRequest, "", err))
 		return
 	}
 
@@ -258,10 +278,10 @@ func (sv *Server) updateBrand(c *gin.Context) {
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusBadRequest, "", fmt.Errorf("brand with ID %s not found", param.ID)))
+			c.JSON(http.StatusNotFound, createErrorResponse[BrandResponse](http.StatusBadRequest, "", fmt.Errorf("brand with ID %s not found", param.ID)))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[BrandResponse](http.StatusBadRequest, "", err))
 		return
 	}
 
@@ -272,7 +292,7 @@ func (sv *Server) updateBrand(c *gin.Context) {
 	if req.Image != nil {
 		fileName, fileID, err := sv.uploadService.UploadFile(c, *req.Image)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[BrandResponse](http.StatusBadRequest, "", err))
 			return
 		}
 		updateParam.ImageUrl = utils.GetPgTypeText(fileName)
@@ -297,7 +317,7 @@ func (sv *Server) updateBrand(c *gin.Context) {
 	col, err := sv.repo.UpdateBrandWith(c, updateParam)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[BrandResponse](http.StatusBadRequest, "", err))
 		return
 	}
 
@@ -311,113 +331,31 @@ func (sv *Server) updateBrand(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Brand ID"
-// @Success 204 {object} GenericResponse
-// @Failure 400 {object} errorResponse
-// @Failure 500 {object} errorResponse
+// @Success 204 {object} ApiResponse[bool]
+// @Failure 400 {object} ApiResponse[bool]
+// @Failure 500 {object} ApiResponse[bool]
 // @Router /Brands/{id} [delete]
 func (sv *Server) deleteBrand(c *gin.Context) {
 	var colID getBrandParams
 	if err := c.ShouldBindUri(&colID); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[bool](http.StatusBadRequest, "", err))
 		return
 	}
 
 	_, err := sv.repo.GetBrandByID(c, uuid.MustParse(colID.ID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusBadRequest, "", fmt.Errorf("brand with ID %s not found", colID.ID)))
+			c.JSON(http.StatusNotFound, createErrorResponse[bool](http.StatusBadRequest, "", fmt.Errorf("brand with ID %s not found", colID.ID)))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusBadRequest, "", err))
 		return
 	}
 
 	err = sv.repo.DeleteBrand(c, uuid.MustParse(colID.ID))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusBadRequest, "", err))
 		return
 	}
-	message := fmt.Sprintf("brand with ID %s deleted", colID.ID)
-	c.JSON(http.StatusOK, createSuccessResponse(c, message, "", nil, nil))
+	c.JSON(http.StatusOK, createSuccessResponse(c, true, fmt.Sprintf("brand with ID %s deleted", colID.ID), nil, nil))
 }
-
-// ------------------------------------------ Helpers ------------------------------------------
-// func groupGetBrandsRows(rows []repository.GetBrandsRow) []BrandResponse {
-// 	Brands := []BrandResponse{}
-// 	lastID := int32(-1)
-// 	for _, r := range rows {
-// 		var product ProductListModel
-// 		if r.ID.Valid {
-// 			priceFrom, _ := r.PriceFrom.(pgtype.Numeric).Float64Value()
-// 			priceTo, _ := r.PriceTo.(pgtype.Numeric).Float64Value()
-// 			discount := r.Discount.(int16)
-// 			product = ProductListModel{
-// 				ID:           uuid.UUID(r.ID.Bytes),
-// 				Name:         r.ProductName.String,
-// 				Description:  r.Description.String,
-// 				VariantCount: r.VariantCount,
-// 				ImageUrl:     &r.ImageUrl.String,
-// 				CreatedAt:    r.CreatedAt.Format("2006-01-02 15:04:05"),
-// 				DiscountTo:   discount,
-// 				PriceFrom:    priceFrom.Float64,
-// 				PriceTo:      priceTo.Float64,
-// 			}
-// 		}
-// 		if r.ID == lastID && r.ID.Valid {
-// 			Brands[len(Brands)-1].Products = append(Brands[len(Brands)-1].Products, product)
-// 		} else {
-// 			productList := []ProductListModel{}
-// 			if product.ID.String() != "" {
-// 				productList = append(productList, product)
-// 			}
-// 			Brands = append(Brands, BrandResponse{
-// 				ID:          r.ID,
-// 				Name:        r.Name,
-// 				Description: r.Description.String,
-// 				Products:    productList,
-// 			})
-// 			lastID = r.ID
-// 		}
-// 	}
-// 	return Brands
-// }
-
-// func groupGetBrandByIDsRows(rows []repository.GetBrandsByIDsRow) []BrandResponse {
-// 	Brands := []BrandResponse{}
-// 	lastID := int32(-1)
-// 	for _, r := range rows {
-// 		var product ProductListModel
-// 		if r.ID.Valid {
-// 			priceFrom, _ := r.PriceFrom.(pgtype.Numeric).Float64Value()
-// 			priceTo, _ := r.PriceTo.(pgtype.Numeric).Float64Value()
-// 			discount := r.Discount.(int16)
-// 			product = ProductListModel{
-// 				ID:           uuid.UUID(r.ID.Bytes),
-// 				Name:         r.ProductName.String,
-// 				Description:  r.Description.String,
-// 				VariantCount: r.VariantCount,
-// 				ImageUrl:     &r.ImageUrl.String,
-// 				CreatedAt:    r.CreatedAt.Format("2006-01-02 15:04:05"),
-// 				DiscountTo:   discount,
-// 				PriceFrom:    priceFrom.Float64,
-// 				PriceTo:      priceTo.Float64,
-// 			}
-// 		}
-// 		if r.ID == lastID && r.ID.Valid {
-// 			Brands[len(Brands)-1].Products = append(Brands[len(Brands)-1].Products, product)
-// 		} else {
-// 			productList := []ProductListModel{}
-// 			if product.ID.String() != "" {
-// 				productList = append(productList, product)
-// 			}
-// 			Brands = append(Brands, BrandResponse{
-// 				ID:          r.ID,
-// 				Name:        r.Name,
-// 				Description: r.Description.String,
-// 				Products:    productList,
-// 			})
-// 			lastID = r.ID
-// 		}
-// 	}
-// 	return Brands
-// }

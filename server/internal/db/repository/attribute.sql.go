@@ -325,6 +325,11 @@ SELECT
     av.display_value as display_value, av.created_at as attribute_value_created_at, av.display_order as display_order
 FROM attributes as a
 LEFT JOIN attribute_values as av ON a.id = av.attribute_id
+WHERE 
+    CASE 
+        WHEN array_length($1::int[], 1) > 0 THEN a.id = ANY($1::int[])
+        ELSE true
+    END
 ORDER BY a.id, av.display_order
 `
 
@@ -340,8 +345,8 @@ type GetAttributesRow struct {
 	DisplayOrder            pgtype.Int2        `json:"display_order"`
 }
 
-func (q *Queries) GetAttributes(ctx context.Context) ([]GetAttributesRow, error) {
-	rows, err := q.db.Query(ctx, getAttributes)
+func (q *Queries) GetAttributes(ctx context.Context, ids []int32) ([]GetAttributesRow, error) {
+	rows, err := q.db.Query(ctx, getAttributes, ids)
 	if err != nil {
 		return nil, err
 	}

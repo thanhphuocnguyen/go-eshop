@@ -445,11 +445,16 @@ LEFT JOIN image_assignments AS ia ON products.id = img.external_id AND img.entit
 LEFT JOIN images AS img ON img.id = ia.image_id
 WHERE
     products.id = $1 AND
-    is_active = COALESCE($2, false)
+    products.is_active = COALESCE($4, false)
+ORDER BY
+    products.id, img.id
+LIMIT $2 OFFSET $3
 `
 
 type GetProductWithImageParams struct {
 	ID       uuid.UUID   `json:"id"`
+	Limit    int32       `json:"limit"`
+	Offset   int32       `json:"offset"`
 	IsActive pgtype.Bool `json:"is_active"`
 }
 
@@ -471,7 +476,12 @@ type GetProductWithImageRow struct {
 }
 
 func (q *Queries) GetProductWithImage(ctx context.Context, arg GetProductWithImageParams) (GetProductWithImageRow, error) {
-	row := q.db.QueryRow(ctx, getProductWithImage, arg.ID, arg.IsActive)
+	row := q.db.QueryRow(ctx, getProductWithImage,
+		arg.ID,
+		arg.Limit,
+		arg.Offset,
+		arg.IsActive,
+	)
 	var i GetProductWithImageRow
 	err := row.Scan(
 		&i.ID,
@@ -695,9 +705,11 @@ func (q *Queries) GetProductsByBrandID(ctx context.Context, arg GetProductsByBra
 const getProductsByCategoryID = `-- name: GetProductsByCategoryID :many
 SELECT
     p.id, p.name, p.description, p.base_price, p.base_sku, p.slug, p.is_active, p.category_id, p.collection_id, p.brand_id, p.created_at, p.updated_at,
-    first_img.id AS img_id, first_img.url AS img_url
+    first_img.id AS img_id, first_img.url AS img_url,
+    COUNT(v.id) AS variant_count
 FROM
     products AS p
+LEFT JOIN product_variants as v ON p.id = v.product_id
 LEFT JOIN LATERAL (
     SELECT img.id, img.url
     FROM image_assignments as ia
@@ -711,8 +723,10 @@ WHERE
     p.name ILIKE COALESCE($5, name) AND
     p.base_sku ILIKE COALESCE($6, base_sku) AND
     p.category_id = $1
+GROUP BY
+    v.id
 ORDER BY
-    p.id
+    v.id
 LIMIT
     $2
 OFFSET
@@ -743,6 +757,7 @@ type GetProductsByCategoryIDRow struct {
 	UpdatedAt    time.Time      `json:"updated_at"`
 	ImgID        int32          `json:"img_id"`
 	ImgUrl       string         `json:"img_url"`
+	VariantCount int64          `json:"variant_count"`
 }
 
 func (q *Queries) GetProductsByCategoryID(ctx context.Context, arg GetProductsByCategoryIDParams) ([]GetProductsByCategoryIDRow, error) {
@@ -776,6 +791,7 @@ func (q *Queries) GetProductsByCategoryID(ctx context.Context, arg GetProductsBy
 			&i.UpdatedAt,
 			&i.ImgID,
 			&i.ImgUrl,
+			&i.VariantCount,
 		); err != nil {
 			return nil, err
 		}

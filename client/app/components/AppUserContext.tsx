@@ -100,6 +100,7 @@ export function AppUserProvider({ children }: { children: React.ReactNode }) {
           },
         }
       );
+
       if (data) {
         await fetchCart();
         toast.success(

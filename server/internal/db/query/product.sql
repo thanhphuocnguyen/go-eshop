@@ -114,14 +114,19 @@ LEFT JOIN image_assignments AS ia ON products.id = img.external_id AND img.entit
 LEFT JOIN images AS img ON img.id = ia.image_id
 WHERE
     products.id = $1 AND
-    is_active = COALESCE(sqlc.narg('is_active'), false);
+    products.is_active = COALESCE(sqlc.narg('is_active'), false)
+ORDER BY
+    products.id, img.id
+LIMIT $2 OFFSET $3;
 
 -- name: GetProductsByCategoryID :many
 SELECT
     p.*,
-    first_img.id AS img_id, first_img.url AS img_url
+    first_img.id AS img_id, first_img.url AS img_url,
+    COUNT(v.id) AS variant_count
 FROM
     products AS p
+LEFT JOIN product_variants as v ON p.id = v.product_id
 LEFT JOIN LATERAL (
     SELECT img.id, img.url
     FROM image_assignments as ia
@@ -135,8 +140,10 @@ WHERE
     p.name ILIKE COALESCE(sqlc.narg('name'), name) AND
     p.base_sku ILIKE COALESCE(sqlc.narg('base_sku'), base_sku) AND
     p.category_id = $1
+GROUP BY
+    v.id
 ORDER BY
-    p.id
+    v.id
 LIMIT
     $2
 OFFSET

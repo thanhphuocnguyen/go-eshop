@@ -19,14 +19,14 @@ import (
 // @Tags webhook
 // @Accept json
 // @Produce json
-// @Success 200 {object} ApiResponse
-// @Failure 400 {object} ApiResponse
-// @Failure 500 {object} ApiResponse
+// @Success 200 {object} ApiResponse[bool]
+// @Failure 400 {object} ApiResponse[bool]
+// @Failure 500 {object} ApiResponse[bool]
 // @Router /webhook/stripe [post]
 func (server *Server) stripeWebhook(c *gin.Context) {
 	var evt stripe.Event
 	if err := c.ShouldBindJSON(&evt); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[bool](http.StatusBadRequest, "", err))
 		return
 	}
 
@@ -37,7 +37,7 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 		var paymentIntent stripe.PaymentIntent
 		err := json.Unmarshal(evt.Data.Raw, &paymentIntent)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
+			c.JSON(http.StatusBadRequest, createErrorResponse[bool](http.StatusBadRequest, "", err))
 			return
 		}
 		log.Info().Interface("evt type", evt.Type).Msg("Received stripe event")
@@ -45,10 +45,10 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 		payment, err := server.repo.GetPaymentTransactionByID(c, paymentIntent.ID)
 		if err != nil {
 			if errors.Is(err, repository.ErrRecordNotFound) {
-				c.JSON(http.StatusNotFound, createErrorResponse(http.StatusBadRequest, "", err))
+				c.JSON(http.StatusNotFound, createErrorResponse[bool](http.StatusBadRequest, "", err))
 				return
 			}
-			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusBadRequest, "", err))
 			return
 		}
 		updateTransactionStatus := repository.UpdatePaymentTransactionParams{
@@ -75,14 +75,14 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 		}
 		err = server.repo.UpdatePaymentTransaction(c, updateTransactionStatus)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusBadRequest, "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusBadRequest, "", err))
 			return
 		}
 	default:
 		log.Info().Msgf("Unhandled event type: %s", evt.Type)
-		c.JSON(http.StatusOK, createSuccessResponse(c, nil, "", nil, nil))
+		c.JSON(http.StatusOK, createSuccessResponse(c, true, "", nil, nil))
 		return
 	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(c, nil, "", nil, nil))
+	c.JSON(http.StatusOK, createSuccessResponse(c, true, "", nil, nil))
 }

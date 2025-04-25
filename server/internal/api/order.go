@@ -77,29 +77,29 @@ type CancelOrderRequest struct {
 // @Produce json
 // @Param limit query int false "Limit"
 // @Param offset query int false "Offset"
-// @Security ApiKeyAuth
-// @Success 200 {object} OrderListResponse
-// @Failure 400 {object} errorResponse
-// @Failure 401 {object} errorResponse
-// @Failure 500 {object} errorResponse
+// @Security BearerAuth
+// @Success 200 {object} ApiResponse[[]OrderListResponse]
+// @Failure 400 {object} ApiResponse[[]OrderListResponse]
+// @Failure 401 {object} ApiResponse[[]OrderListResponse]
+// @Failure 500 {object} ApiResponse[[]OrderListResponse]
 // @Router /order/list [get]
 func (sv *Server) orderList(c *gin.Context) {
 	tokenPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, createErrorResponse(http.StatusUnauthorized, "", errors.New("authorization payload is not provided")))
+		c.JSON(http.StatusUnauthorized, createErrorResponse[[]OrderListResponse](http.StatusUnauthorized, "", errors.New("authorization payload is not provided")))
 		return
 	}
 	var orderListQuery OrderListQuery
 	if err := c.ShouldBindQuery(&orderListQuery); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[[]OrderListResponse](http.StatusBadRequest, "", err))
 		return
 	}
 	user, err := sv.repo.GetUserByID(c, tokenPayload.UserID)
 	if err != nil {
 		if err == repository.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", err))
+			c.JSON(http.StatusNotFound, createErrorResponse[[]OrderListResponse](http.StatusNotFound, "", err))
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[[]OrderListResponse](http.StatusInternalServerError, "", err))
 		return
 	}
 	dbParams := repository.ListOrdersParams{
@@ -116,14 +116,14 @@ func (sv *Server) orderList(c *gin.Context) {
 
 	listOrderRows, err := sv.repo.ListOrders(c, dbParams)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[[]OrderListResponse](http.StatusInternalServerError, "", err))
 		return
 	}
 
 	count, err := sv.repo.CountOrders(c, repository.CountOrdersParams{CustomerID: tokenPayload.UserID})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[[]OrderListResponse](http.StatusInternalServerError, "", err))
 		return
 	}
 
@@ -156,27 +156,27 @@ func (sv *Server) orderList(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Order ID"
-// @Security ApiKeyAuth
-// @Success 200 {object} ApiResponse
-// @Failure 400 {object} errorResponse
-// @Failure 401 {object} errorResponse
-// @Failure 500 {object} errorResponse
+// @Security BearerAuth
+// @Success 200 {object} OrderDetailResponse
+// @Failure 400 {object} OrderDetailResponse
+// @Failure 401 {object} OrderDetailResponse
+// @Failure 500 {object} OrderDetailResponse
 // @Router /order/{order_id} [get]
 func (sv *Server) orderDetail(c *gin.Context) {
 	var params OrderIDParams
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[OrderDetailResponse](http.StatusInternalServerError, "", err))
 		return
 	}
 
 	getOrderDetailRows, err := sv.repo.GetOrderDetails(c, uuid.MustParse(params.ID))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderDetailResponse](http.StatusInternalServerError, "", err))
 		return
 	}
 
 	if len(getOrderDetailRows) == 0 {
-		c.JSON(http.StatusNotFound, createErrorResponse(http.StatusNotFound, "", errors.New("order not found")))
+		c.JSON(http.StatusNotFound, createErrorResponse[OrderDetailResponse](http.StatusNotFound, "", errors.New("order not found")))
 		return
 	}
 
@@ -222,50 +222,50 @@ func (sv *Server) orderDetail(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Order ID"
-// @Security ApiKeyAuth
-// @Success 200 {object} ApiResponse[repository.Order]
-// @Failure 400 {object} errorResponse
-// @Failure 401 {object} errorResponse
-// @Failure 500 {object} errorResponse
+// @Security BearerAuth
+// @Success 200 {object} ApiResponse[OrderListResponse]
+// @Failure 400 {object} ApiResponse[OrderListResponse]
+// @Failure 401 {object} ApiResponse[OrderListResponse]
+// @Failure 500 {object} ApiResponse[OrderListResponse]
 // @Router /order/{order_id}/cancel [put]
 func (sv *Server) cancelOrder(c *gin.Context) {
 	tokenPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, createErrorResponse(http.StatusUnauthorized, "", errors.New("authorization payload is not provided")))
+		c.JSON(http.StatusUnauthorized, createErrorResponse[OrderListResponse](http.StatusUnauthorized, "", errors.New("authorization payload is not provided")))
 		return
 	}
 	user, err := sv.repo.GetUserByID(c, tokenPayload.UserID)
 	if err != nil {
 		if err == repository.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusInternalServerError, "", err))
+			c.JSON(http.StatusNotFound, createErrorResponse[OrderListResponse](http.StatusInternalServerError, "", err))
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](http.StatusInternalServerError, "", err))
 		return
 	}
 	var params OrderIDParams
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[OrderListResponse](http.StatusInternalServerError, "", err))
 		return
 	}
 	var req CancelOrderRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[OrderListResponse](http.StatusInternalServerError, "", err))
 		return
 	}
 	order, err := sv.repo.GetOrder(c, uuid.MustParse(params.ID))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](http.StatusInternalServerError, "", err))
 		return
 	}
 
 	if order.CustomerID != tokenPayload.UserID && user.Role != repository.UserRoleAdmin {
-		c.JSON(http.StatusForbidden, createErrorResponse(http.StatusForbidden, "", errors.New("forbidden")))
+		c.JSON(http.StatusForbidden, createErrorResponse[OrderListResponse](http.StatusForbidden, "", errors.New("forbidden")))
 		return
 	}
 
 	// if order status is not pending or user is not admin
 	if order.Status != repository.OrderStatusPending || user.Role != repository.UserRoleAdmin {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("order cannot be cancelled")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[OrderListResponse](http.StatusBadRequest, "", errors.New("order cannot be cancelled")))
 		return
 	}
 
@@ -291,7 +291,7 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 			case repository.PaymentGatewayStripe:
 				stripeInstance, err := payment.NewStripePayment(sv.config.StripeSecretKey)
 				if err != nil {
-					c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+					c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](http.StatusInternalServerError, "", err))
 					return err
 				}
 				sv.paymentCtx.SetStrategy(stripeInstance)
@@ -304,7 +304,7 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](http.StatusInternalServerError, "", err))
 		return
 	}
 
@@ -318,34 +318,34 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 // @Produce json
 // @Param id path int true "Order ID"
 // @Param status body string true "Status"
-// @Security ApiKeyAuth
-// @Success 200 {object} ApiResponse[repository.Order]
-// @Failure 400 {object} errorResponse
-// @Failure 401 {object} errorResponse
-// @Failure 500 {object} errorResponse
+// @Security BearerAuth
+// @Success 200 {object} ApiResponse[OrderListResponse]
+// @Failure 400 {object} ApiResponse[OrderListResponse]
+// @Failure 401 {object} ApiResponse[OrderListResponse]
+// @Failure 500 {object} ApiResponse[OrderListResponse]
 // @Router /order/{order_id}/status [put]
 func (sv *Server) changeOrderStatus(c *gin.Context) {
 	var params OrderIDParams
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[OrderListResponse](http.StatusInternalServerError, "", err))
 		return
 	}
 	var req OrderStatusRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[OrderListResponse](http.StatusInternalServerError, "", err))
 		return
 	}
 	order, err := sv.repo.GetOrder(c, uuid.MustParse(params.ID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusInternalServerError, "", err))
+			c.JSON(http.StatusNotFound, createErrorResponse[OrderListResponse](http.StatusInternalServerError, "", err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](http.StatusInternalServerError, "", err))
 		return
 	}
 	if order.Status == repository.OrderStatusCompleted || order.Status == repository.OrderStatusCancelled || order.Status == repository.OrderStatusRefunded {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("order cannot be changed")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[OrderListResponse](http.StatusBadRequest, "", errors.New("order cannot be changed")))
 		return
 	}
 
@@ -374,7 +374,7 @@ func (sv *Server) changeOrderStatus(c *gin.Context) {
 	rs, err := sv.repo.UpdateOrder(c, updateParams)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](http.StatusInternalServerError, "", err))
 		return
 	}
 
@@ -387,34 +387,34 @@ func (sv *Server) changeOrderStatus(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Order ID"
-// @Security ApiKeyAuth
-// @Success 200 {object} ApiResponse[repository.Order]
-// @Failure 400 {object} errorResponse
-// @Failure 401 {object} errorResponse
-// @Failure 500 {object} errorResponse
+// @Security BearerAuth
+// @Success 200 {object} ApiResponse[OrderListResponse]
+// @Failure 400 {object} ApiResponse[OrderListResponse]
+// @Failure 401 {object} ApiResponse[OrderListResponse]
+// @Failure 500 {object} ApiResponse[OrderListResponse]
 // @Router /order/{order_id}/refund [put]
 func (sv *Server) refundOrder(c *gin.Context) {
 	var params OrderIDParams
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[OrderListResponse](http.StatusInternalServerError, "", err))
 		return
 	}
 	var req RefundOrderRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[OrderListResponse](http.StatusInternalServerError, "", err))
 		return
 	}
 	order, err := sv.repo.GetOrder(c, uuid.MustParse(params.ID))
 	if err != nil {
 		if err == repository.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, createErrorResponse(http.StatusInternalServerError, "", err))
+			c.JSON(http.StatusNotFound, createErrorResponse[OrderListResponse](http.StatusInternalServerError, "", err))
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](http.StatusInternalServerError, "", err))
 		return
 	}
 
 	if order.Status != repository.OrderStatusDelivered {
-		c.JSON(http.StatusBadRequest, createErrorResponse(http.StatusBadRequest, "", errors.New("order cannot be refunded")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[OrderListResponse](http.StatusBadRequest, "", errors.New("order cannot be refunded")))
 		return
 	}
 	var reason payment.RefundReason
@@ -443,7 +443,7 @@ func (sv *Server) refundOrder(c *gin.Context) {
 			case repository.PaymentGatewayStripe:
 				stripeInstance, err := payment.NewStripePayment(sv.config.StripeSecretKey)
 				if err != nil {
-					c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+					c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](http.StatusInternalServerError, "", err))
 					return "", err
 				}
 				sv.paymentCtx.SetStrategy(stripeInstance)
@@ -456,7 +456,7 @@ func (sv *Server) refundOrder(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse(http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](http.StatusInternalServerError, "", err))
 		return
 	}
 	c.JSON(http.StatusOK, createSuccessResponse(c, order, "success", nil, nil))

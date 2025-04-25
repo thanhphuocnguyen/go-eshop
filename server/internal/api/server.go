@@ -43,7 +43,10 @@ func NewAPI(
 	uploadService upload.UploadService,
 	paymentCtx *payment.PaymentContext,
 ) (*Server, error) {
-	tokenGenerator := auth.NewPasetoTokenGenerator(cfg)
+	tokenGenerator, err := auth.NewJwtGenerator(cfg.SymmetricKey)
+	if err != nil {
+		return nil, err
+	}
 	server := &Server{
 		tokenGenerator:  tokenGenerator,
 		repo:            repo,
@@ -92,9 +95,9 @@ func (sv *Server) initializeRouter() {
 		v1.GET("verify-email", sv.verifyEmail)
 		auth := v1.Group("/auth")
 		{
-			auth.POST("register", sv.register)
-			auth.POST("login", sv.login)
-			auth.POST("refresh-token", sv.refreshToken)
+			auth.POST("register", sv.registerHandler)
+			auth.POST("login", sv.loginHandler)
+			auth.POST("refresh-token", sv.refreshTokenHandler)
 			authRoutes := auth.Use(authMiddleware(sv.tokenGenerator))
 			authRoutes.POST("send-verify-email", sv.sendVerifyEmail)
 		}
@@ -154,10 +157,14 @@ func (sv *Server) initializeRouter() {
 			authMiddleware(sv.tokenGenerator),
 			roleMiddleware(sv.repo, repository.UserRoleAdmin))
 		{
+			// C
 			attribute.POST("", sv.createAttribute)
-			attribute.GET("", sv.getAttributes)
-			attribute.GET(":id", sv.getAttributeByID)
+			// R
+			attribute.GET("", sv.getAttributesHandler)
+			attribute.GET(":id", sv.getAttributeByIDHandler)
+			// U
 			attribute.PUT(":id", sv.updateAttribute)
+			// D
 			attribute.DELETE(":id", sv.deleteAttribute)
 		}
 
@@ -187,7 +194,7 @@ func (sv *Server) initializeRouter() {
 			adminOrder.PUT(":id/status", sv.changeOrderStatus)
 		}
 
-		payment := v1.Group("/payment").Use(authMiddleware(sv.tokenGenerator))
+		payment := v1.Group("/payments").Use(authMiddleware(sv.tokenGenerator))
 		{
 			payment.GET("stripe-config", sv.getStripeConfig)
 			payment.POST("initiate", sv.initiatePayment)
@@ -209,6 +216,7 @@ func (sv *Server) initializeRouter() {
 			categoryAuthRoutes.PUT(":id", sv.updateCategory)
 			categoryAuthRoutes.DELETE(":id", sv.deleteCategory)
 		}
+
 		collection := v1.Group("collections")
 		{
 			// CRUD
@@ -223,6 +231,7 @@ func (sv *Server) initializeRouter() {
 			collectionAuthRoutes.PUT(":id", sv.updateCollection)
 			collectionAuthRoutes.DELETE(":id", sv.deleteCollection)
 		}
+
 		brand := v1.Group("brands")
 		{
 			// CRUD
@@ -257,10 +266,10 @@ func (s *Server) Server(addr string) *http.Server {
 	}
 }
 
-type ApiResponse struct {
+type ApiResponse[T any] struct {
 	Success    bool        `json:"success"`
 	Message    string      `json:"message"`
-	Data       interface{} `json:"data,omitempty"`
+	Data       *T          `json:"data,omitempty"`
 	Error      *ApiError   `json:"error,omitempty"`
 	Pagination *Pagination `json:"pagination,omitempty"`
 	Meta       *MetaInfo   `json:"meta"`
@@ -296,9 +305,10 @@ type PaginationQueryParams struct {
 	PageSize int32 `form:"page_size,default=20" binding:"omitempty,min=1,max=100"`
 }
 
-func createErrorResponse(code int, msg string, err error) ApiResponse {
-	return ApiResponse{
+func createErrorResponse[T any](code int, msg string, err error) ApiResponse[T] {
+	return ApiResponse[T]{
 		Success: false,
+		Data:    nil,
 		Error: &ApiError{
 			Code:    strconv.Itoa(code),
 			Details: msg,
@@ -307,11 +317,11 @@ func createErrorResponse(code int, msg string, err error) ApiResponse {
 	}
 }
 
-func createSuccessResponse(c *gin.Context, data interface{}, message string, pagination *Pagination, err *ApiError) ApiResponse {
-	resp := ApiResponse{
+func createSuccessResponse[T any](c *gin.Context, data T, message string, pagination *Pagination, err *ApiError) ApiResponse[T] {
+	resp := ApiResponse[T]{
 		Success:    true,
 		Message:    message,
-		Data:       data,
+		Data:       &data,
 		Pagination: pagination,
 
 		Meta: &MetaInfo{

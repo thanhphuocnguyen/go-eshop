@@ -76,7 +76,7 @@ type Querier interface {
 	GetAttributeValueByID(ctx context.Context, id int32) (AttributeValue, error)
 	GetAttributeValues(ctx context.Context, attributeID int32) ([]AttributeValue, error)
 	GetAttributeValuesByIDs(ctx context.Context, ids []int32) ([]AttributeValue, error)
-	GetAttributes(ctx context.Context) ([]GetAttributesRow, error)
+	GetAttributes(ctx context.Context, ids []int32) ([]GetAttributesRow, error)
 	GetBrandByID(ctx context.Context, id uuid.UUID) (Brand, error)
 	GetBrands(ctx context.Context, arg GetBrandsParams) ([]Brand, error)
 	GetBrandsByIDs(ctx context.Context, arg GetBrandsByIDsParams) ([]GetBrandsByIDsRow, error)

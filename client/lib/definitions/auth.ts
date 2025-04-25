@@ -65,11 +65,18 @@ export type SignupFormState =
 export const registerSchema = z
   .object({
     username: z.string().min(3).max(20),
-    password: z.string().min(8).max(100),
-    confirmPassword: z.string().min(8).max(100),
     email: z.string().email(),
     phone: z.string().min(10).max(15),
     fullname: z.string().min(3).max(100),
+    password: z.string().min(8).max(100),
+    confirmPassword: z.string().min(8).max(100),
+    address: z.object({
+      street: z.string().min(3).max(100),
+      city: z.string().min(3).max(50),
+      state: z.string().min(2).max(50),
+      country: z.string().min(2).max(50),
+      zipCode: z.string().min(5).max(10),
+    }),
   })
   .superRefine((data) => {
     if (data.password !== data.confirmPassword) {

@@ -1,24 +1,39 @@
 'use client';
 
-import { logout } from '@/app/actions/auth';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { ChevronDownIcon, UserIcon } from '@heroicons/react/16/solid';
 import { ArrowUpTrayIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
+import { deleteCookie } from 'cookies-next';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import React from 'react';
 
 const AuthButtons: React.FC<{ role?: string; name?: string }> = ({
   role,
   name,
 }) => {
+  const logout = async () => {
+    deleteCookie('token');
+    deleteCookie('refresh_token');
+    deleteCookie('session_id');
+    deleteCookie('user_role');
+    deleteCookie('user_id');
+    deleteCookie('user_name');
+    redirect('/login');
+  };
   return name ? (
     <Menu>
       <MenuButton className='inline-flex items-center gap-2 rounded-md bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-md hover:bg-indigo-700 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2'>
         {({ active }) => (
           <>
             <span className='font-medium'>{name}</span>
-            <span className={clsx('transition-transform duration-200', active ? 'rotate-180' : 'rotate-0')}>
+            <span
+              className={clsx(
+                'transition-transform duration-200',
+                active ? 'rotate-180' : 'rotate-0'
+              )}
+            >
               <ChevronDownIcon height={20} width={20} />
             </span>
           </>
