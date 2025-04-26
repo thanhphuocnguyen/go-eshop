@@ -71,12 +71,12 @@ func (sv *Server) initializeRouter() {
 	}
 
 	cors := cors.New(cors.Config{
-		AllowAllOrigins: sv.config.Env == "development",
-		AllowHeaders:    []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
-		// AllowOrigins:     []string{"http://localhost:3000", "http://localhost:8080"},
+		AllowOrigins:     []string{"http://localhost:3001", "http://localhost:8080"},
+		AllowHeaders:     []string{"Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With"},
 		AllowFiles:       true,
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowCredentials: true,
+		// AllowAllOrigins:  sv.config.Env == "development",
 	})
 
 	router.Use(cors)
@@ -172,14 +172,13 @@ func (sv *Server) initializeRouter() {
 		cart := v1.Group("/cart", authMiddleware(sv.tokenGenerator))
 		{
 			cart.POST("", sv.createCart)
-			cart.GET("", sv.getCart)
-			cart.POST("checkout", sv.checkout)
+			cart.GET("", sv.getCartHandler)
+			cart.POST("checkout", sv.checkoutHandler)
 			cart.PUT("clear", sv.clearCart)
 
-			cartItem := cart.Group("/item")
-			cartItem.PUT("", sv.putCartItemHandler)
+			cartItem := cart.Group("item")
 			cartItem.DELETE(":id", sv.removeCartItem)
-			cartItem.PUT(":id/quantity", sv.updateCartItemQuantity)
+			cartItem.PUT(":id/quantity", sv.updateCartItemQtyHandler)
 		}
 
 		order := v1.Group("/order", authMiddleware(sv.tokenGenerator))
@@ -198,8 +197,8 @@ func (sv *Server) initializeRouter() {
 		payment := v1.Group("/payments").Use(authMiddleware(sv.tokenGenerator))
 		{
 			payment.GET("stripe-config", sv.getStripeConfig)
-			payment.POST("initiate", sv.initiatePayment)
-			payment.GET(":order_id", sv.getPayment)
+			payment.POST("initiate", sv.createPaymentIntentHandler)
+			payment.GET(":order_id", sv.getPaymentHandler)
 			payment.PUT(":order_id", sv.changePaymentStatus)
 		}
 

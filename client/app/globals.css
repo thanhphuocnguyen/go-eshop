@@ -18,7 +18,8 @@
 
 .main {
   height: 100vh;
-  /* overflow: auto; */
+  overflow: auto;
+  padding: 0;
   background-color: var(--background);
   color: var(--foreground);
 }
@@ -95,7 +96,7 @@
 .new-arrival-ads {
   @apply bg-cover bg-center relative bg-no-repeat flex flex-col justify-center;
   min-height: 800px;
-  background-image: url('../public/images/banner/home-page-01-hero-full-width.jpg');
+  background-image: url('../public/images/banners/home-page-01-hero-full-width.jpg');
 }
 
 .overlay {

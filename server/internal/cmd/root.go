@@ -100,13 +100,14 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 			if err != nil {
 				return err
 			}
+
 			log.Info().Msg("Postgres instance created")
+
 			redisCfg := asynq.RedisClientOpt{
 				Addr: cfg.RedisUrl,
 			}
 
 			taskDistributor := worker.NewRedisTaskDistributor(redisCfg)
-
 			uploadService := upload.NewCloudinaryUploadService(cfg)
 			paymentCtx := &payment.PaymentContext{}
 

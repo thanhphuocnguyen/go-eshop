@@ -15,19 +15,20 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 )
 
+// ------------------------------ Structs ------------------------------
 type UserResponse struct {
 	ID                uuid.UUID           `json:"id"`
-	Username          string              `json:"username"`
 	Role              repository.UserRole `json:"role"`
+	Username          string              `json:"username"`
 	FullName          string              `json:"fullname"`
 	Email             string              `json:"email,omitempty"`
 	Phone             string              `json:"phone,omitempty"`
-	CreatedAt         string              `json:"created_at,omitempty"`
 	VerifiedEmail     bool                `json:"verified_email,omitempty"`
 	VerifiedPhone     bool                `json:"verified_phone,omitempty"`
-	UpdatedAt         string              `json:"updated_at,omitempty"`
 	PasswordChangedAt string              `json:"password_changed_at,omitempty"`
 	Addresses         []AddressResponse   `json:"addresses,omitempty"`
+	CreatedAt         string              `json:"created_at,omitempty"`
+	UpdatedAt         string              `json:"updated_at,omitempty"`
 }
 
 type ListUserParams struct {
@@ -68,13 +69,15 @@ func mapToUserResponse(user repository.User) UserResponse {
 
 func mapAddressToAddressResponse(address repository.UserAddress) AddressResponse {
 	return AddressResponse{
-		Address:  address.Street,
-		City:     address.City,
-		District: address.District,
-		Ward:     &address.Ward.String,
-		Default:  address.Default,
-		ID:       address.ID,
-		Phone:    address.Phone,
+		Address: Address{
+			Phone:    address.Phone,
+			Street:   address.Street,
+			Ward:     &address.Ward.String,
+			District: address.District,
+			City:     address.City,
+		},
+		Default: address.Default,
+		ID:      address.ID,
 	}
 }
 

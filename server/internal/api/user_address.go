@@ -37,27 +37,33 @@ type UpdateAddressReq struct {
 }
 
 // ------------------------------ API Models ------------------------------
+type Address struct {
+	Phone    string  `json:"phone"`
+	Street   string  `json:"street"`
+	Ward     *string `json:"ward,omitempty"`
+	District string  `json:"district"`
+	City     string  `json:"city"`
+}
 type AddressResponse struct {
 	ID        int64     `json:"id"`
-	Phone     string    `json:"phone"`
-	Address   string    `json:"address"`
-	Ward      *string   `json:"ward"`
-	District  string    `json:"district"`
-	City      string    `json:"city"`
 	Default   bool      `json:"default"`
+	Address   Address   `json:"address,inline"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
 // ------------------------------ Mapper ------------------------------
 func mapAddressResponse(address repository.UserAddress) AddressResponse {
 	return AddressResponse{
-		ID:       address.ID,
-		Phone:    address.Phone,
-		Address:  address.Street,
-		Ward:     &address.Ward.String,
-		District: address.District,
-		City:     address.City,
-		Default:  address.Default,
+		ID:        address.ID,
+		Default:   address.Default,
+		CreatedAt: address.CreatedAt,
+		Address: Address{
+			Phone:    address.Phone,
+			Street:   address.Street,
+			Ward:     &address.Ward.String,
+			District: address.District,
+			City:     address.City,
+		},
 	}
 }
 

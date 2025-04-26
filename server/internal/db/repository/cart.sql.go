@@ -117,11 +117,16 @@ func (q *Queries) GetCart(ctx context.Context, arg GetCartParams) (Cart, error) 
 }
 
 const getCartItem = `-- name: GetCartItem :one
-SELECT id, cart_id, variant_id, quantity, added_at FROM cart_items WHERE id = $1
+SELECT id, cart_id, variant_id, quantity, added_at FROM cart_items WHERE id = $1 AND cart_id = $2
 `
 
-func (q *Queries) GetCartItem(ctx context.Context, id uuid.UUID) (CartItem, error) {
-	row := q.db.QueryRow(ctx, getCartItem, id)
+type GetCartItemParams struct {
+	ID     uuid.UUID `json:"id"`
+	CartID uuid.UUID `json:"cart_id"`
+}
+
+func (q *Queries) GetCartItem(ctx context.Context, arg GetCartItemParams) (CartItem, error) {
+	row := q.db.QueryRow(ctx, getCartItem, arg.ID, arg.CartID)
 	var i CartItem
 	err := row.Scan(
 		&i.ID,

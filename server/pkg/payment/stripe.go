@@ -11,12 +11,15 @@ import (
 type stripePayment struct {
 }
 
-// InitiatePayment implements PaymentStrategy.
-func (s *stripePayment) InitiatePayment(amount float64, email string) (string, error) {
-	log.Info().Msg("InitiatePayment")
+// CreatePaymentIntent implements PaymentStrategy.
+func (s *stripePayment) CreatePaymentIntent(amount float64, email string) (string, error) {
+	log.Info().Msg("CreatePaymentIntent For")
 	params := &stripe.PaymentIntentParams{
-		Amount:   stripe.Int64(int64(amount * utils.MUL)),
-		Currency: stripe.String(string(stripe.CurrencyUSD)),
+		Amount:        stripe.Int64(int64(amount * utils.MUL)),
+		Currency:      stripe.String(string(stripe.CurrencyUSD)),
+		ReceiptEmail:  stripe.String(email),
+		Customer:      &email,
+		PaymentMethod: stripe.String("pm_card_visa"),
 	}
 	if email != "" {
 		params.ReceiptEmail = stripe.String(email)

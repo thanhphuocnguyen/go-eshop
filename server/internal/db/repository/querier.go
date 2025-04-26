@@ -81,7 +81,7 @@ type Querier interface {
 	GetBrands(ctx context.Context, arg GetBrandsParams) ([]Brand, error)
 	GetBrandsByIDs(ctx context.Context, arg GetBrandsByIDsParams) ([]GetBrandsByIDsRow, error)
 	GetCart(ctx context.Context, arg GetCartParams) (Cart, error)
-	GetCartItem(ctx context.Context, id uuid.UUID) (CartItem, error)
+	GetCartItem(ctx context.Context, arg GetCartItemParams) (CartItem, error)
 	GetCartItemByProductVariantID(ctx context.Context, arg GetCartItemByProductVariantIDParams) (CartItem, error)
 	GetCartItems(ctx context.Context, cartID uuid.UUID) ([]GetCartItemsRow, error)
 	GetCategories(ctx context.Context, arg GetCategoriesParams) ([]Category, error)
@@ -145,6 +145,7 @@ type Querier interface {
 	UpdateProductImageAssignment(ctx context.Context, arg UpdateProductImageAssignmentParams) error
 	UpdateProductStock(ctx context.Context, arg UpdateProductStockParams) (ProductVariant, error)
 	UpdateProductVariant(ctx context.Context, arg UpdateProductVariantParams) (ProductVariant, error)
+	UpdateSession(ctx context.Context, arg UpdateSessionParams) (Session, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateUserRow, error)
 	UpdateVerifyEmail(ctx context.Context, arg UpdateVerifyEmailParams) (VerifyEmail, error)
 }

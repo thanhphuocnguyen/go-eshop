@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createSession = `-- name: CreateSession :one
@@ -88,6 +89,47 @@ WHERE refresh_token = $1 LIMIT 1
 
 func (q *Queries) GetSessionByRefreshToken(ctx context.Context, refreshToken string) (Session, error) {
 	row := q.db.QueryRow(ctx, getSessionByRefreshToken, refreshToken)
+	var i Session
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.RefreshToken,
+		&i.UserAgent,
+		&i.ClientIp,
+		&i.Blocked,
+		&i.ExpiredAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const updateSession = `-- name: UpdateSession :one
+UPDATE sessions
+SET
+    user_agent = COALESCE($2, user_agent),
+    client_ip = COALESCE($3, client_ip),
+    blocked = COALESCE($4, blocked),
+    expired_at = COALESCE($5, expired_at)
+WHERE id = $1
+RETURNING id, user_id, refresh_token, user_agent, client_ip, blocked, expired_at, created_at
+`
+
+type UpdateSessionParams struct {
+	ID        uuid.UUID          `json:"id"`
+	UserAgent pgtype.Text        `json:"user_agent"`
+	ClientIp  pgtype.Text        `json:"client_ip"`
+	Blocked   pgtype.Bool        `json:"blocked"`
+	ExpiredAt pgtype.Timestamptz `json:"expired_at"`
+}
+
+func (q *Queries) UpdateSession(ctx context.Context, arg UpdateSessionParams) (Session, error) {
+	row := q.db.QueryRow(ctx, updateSession,
+		arg.ID,
+		arg.UserAgent,
+		arg.ClientIp,
+		arg.Blocked,
+		arg.ExpiredAt,
+	)
 	var i Session
 	err := row.Scan(
 		&i.ID,

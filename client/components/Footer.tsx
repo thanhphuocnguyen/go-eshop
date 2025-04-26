@@ -2,7 +2,7 @@ import React from 'react';
 
 const Footer = () => {
   return (
-    <div className='pt-16 pb-12 px-20 text-white bg-primary flex flex-col content-between'>
+    <section className='pt-16 pb-12 px-20 text-white bg-primary flex flex-col content-between border-t border-gray-400 shadow-sm'>
       <div className='grid grid-cols-6 gap-4'>
         <div className=''>
           <div>Shop</div>
@@ -37,7 +37,7 @@ const Footer = () => {
         </div>
       </div>
       <div className='mt-40'>Copyright © 2021 Your Company, Inc.</div>
-    </div>
+    </section>
   );
 };
 

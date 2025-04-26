@@ -8,12 +8,12 @@ import { deleteCookie } from 'cookies-next/client';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import React from 'react';
+import { useAppUser } from '../AppUserContext';
 
-const AuthButtons: React.FC<{
-  name?: string | null;
-  role?: string | null;
-}> = ({ name, role }) => {
+const AuthButtons: React.FC = () => {
+  const { user, setAppUser } = useAppUser();
   const logout = () => {
+    setAppUser(undefined);
     deleteCookie('access_token');
     deleteCookie('refresh_token');
     deleteCookie('user_email');
@@ -24,12 +24,12 @@ const AuthButtons: React.FC<{
 
   return (
     <>
-      {name ? (
+      {user?.fullname ? (
         <Menu>
           <MenuButton className='inline-flex items-center gap-2 rounded-md bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-md hover:bg-indigo-700 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2'>
             {({ active }) => (
               <>
-                <span className='font-medium'>{name}</span>
+                <span className='font-medium'>{user.fullname}</span>
                 <span
                   className={clsx(
                     'transition-transform duration-200',
@@ -46,7 +46,7 @@ const AuthButtons: React.FC<{
             anchor='bottom end'
             className='w-56 z-50 mt-2 origin-top-right rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg ring-1 ring-black ring-opacity-5 transition duration-150 ease-out focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0'
           >
-            {role === 'admin' && (
+            {user.role === 'admin' && (
               <MenuItem>
                 <Link
                   href='/admin'

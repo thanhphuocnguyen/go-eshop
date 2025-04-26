@@ -5,11 +5,8 @@ import CartSection from './CartSection';
 import CategorySection from './CategorySection';
 import AuthButtons from './AuthButtons';
 import { Suspense } from 'react';
-import { cookies } from 'next/headers';
 
 export default async function NavBar() {
-  const cookieStorage = await cookies();
-  const name = cookieStorage.get('username')?.value;
   return (
     <div className='bg-white sticky top-0 z-20'>
       <header className='relative bg-white'>
@@ -80,10 +77,7 @@ export default async function NavBar() {
                 <CartSection />
                 <div className='hidden lg:flex lg:flex-1 lg:items-center lg:justify-end lg:space-x-6'>
                   <Suspense>
-                    <AuthButtons
-                      name={name}
-                      role={cookieStorage.get('role')?.value}
-                    />
+                    <AuthButtons />
                   </Suspense>
                 </div>
               </div>

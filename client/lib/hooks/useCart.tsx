@@ -5,12 +5,17 @@ import { GenericResponse } from '../definitions';
 import { CartModel } from '../definitions/cart';
 import { toast } from 'react-toastify';
 
-export const useCart = () => {
-  const { data, error } = useSWR(
-    API_PATHS.CART,
-    (url) =>
-      apiFetch<GenericResponse<CartModel[]>>(url, {
+export const useCart = (userId?: string) => {
+  const { data, isLoading, error, mutate } = useSWR(
+    userId ? [API_PATHS.CART, userId] : null,
+    ([url]) =>
+      apiFetch<GenericResponse<CartModel>>(url, {
         method: 'GET',
+      }).then((res) => {
+        if (res.error) {
+          throw res.error;
+        }
+        return res.data;
       }),
     {
       refreshInterval: 0,
@@ -26,8 +31,9 @@ export const useCart = () => {
     }
   );
   return {
-    cart: data?.data,
-    isLoading: !error && !data,
+    cart: data,
+    cartLoading: isLoading,
     isError: error,
+    mutateCart: mutate,
   };
 };

@@ -54,7 +54,7 @@ func (sv *Server) getStripeConfig(c *gin.Context) {
 // @Failure 404 {object} ApiResponse[PaymentResponse]
 // @Failure 500 {object} ApiResponse[PaymentResponse]
 // @Router /payment [post]
-func (sv *Server) initiatePayment(c *gin.Context) {
+func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
 	var param GetPaymentByOrderIDParam
 	if err := c.ShouldBindJSON(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](http.StatusBadRequest, "", err))
@@ -113,7 +113,7 @@ func (sv *Server) initiatePayment(c *gin.Context) {
 // @Failure 404 {object} ApiResponse[PaymentResponse]
 // @Failure 500 {object} ApiResponse[PaymentResponse]
 // @Router /payment/{order_id} [get]
-func (sv *Server) getPayment(c *gin.Context) {
+func (sv *Server) getPaymentHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, createErrorResponse[PaymentResponse](http.StatusUnauthorized, "", errors.New("authorization payload is not provided")))

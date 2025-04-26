@@ -217,7 +217,7 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({ variants }) => {
                         }));
                       }}
                     >
-                      {value.name}
+                      {value.code}
                       {!isAvailable && (
                         <span
                           aria-hidden='true'

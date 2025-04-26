@@ -37,7 +37,7 @@ export default async function Home() {
               <Image
                 className='rounded-lg object-cover relative'
                 alt='shop workspace'
-                src='/images/banner/home-page-01-feature-section-01.jpg'
+                src='/images/banners/home-page-01-feature-section-01.jpg'
                 fill
               />
               <div className='overlay rounded-md'></div>
@@ -72,7 +72,7 @@ export default async function Home() {
             <div className='relative h-full rounded-md'>
               <Image
                 className='rounded-lg object-cover relative'
-                src={'/images/banner/home-page-01-feature-section-02.jpg'}
+                src={'/images/banners/home-page-01-feature-section-02.jpg'}
                 alt='product-image'
                 fill
               />

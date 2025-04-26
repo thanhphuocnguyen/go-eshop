@@ -9,12 +9,12 @@ export default function Layout({
   children: React.ReactNode;
 }): JSX.Element {
   return (
-    <div className='h-full'>
+    <>
       <AppUserProvider>
         <NavBar />
-        <div className=''>{children}</div>
+        <div className='overflow-auto'>{children}</div>
         <Footer />
       </AppUserProvider>
-    </div>
+    </>
   );
 }

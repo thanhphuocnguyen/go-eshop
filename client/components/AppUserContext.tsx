@@ -1,62 +1,37 @@
 'use client';
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
+import { createContext, useCallback, useContext, useState } from 'react';
 import { apiFetch } from '@/lib/apis/api';
 import { API_PATHS } from '@/lib/constants/api';
-import { getCookie } from 'cookies-next';
+import { getCookie } from 'cookies-next/client';
 import { toast } from 'react-toastify';
-import { CartModel, GenericResponse } from '@/lib/definitions';
+import { CartModel, GenericResponse, UserModel } from '@/lib/definitions';
+import { useCart } from '@/lib/hooks';
+import { useUser } from '@/lib/hooks/useUser';
 
 // Define types for cart items and cart
 
 interface AppUserContextType {
+  cartLoading: boolean;
   isLoading: boolean;
-  cart: CartModel | null;
+  cart: CartModel | undefined;
+  user?: UserModel | null;
+  setAppUser: (user: UserModel | undefined) => void;
   cartItemsCount: number;
   addToCart: (variantID: string, quantity: number) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
   updateCartItemQuantity: (itemId: string, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
-  refreshCart: () => Promise<void>;
+  refreshCart: () => void;
 }
 
 const AppUserContext = createContext<AppUserContextType | undefined>(undefined);
 
 export function AppUserProvider({ children }: { children: React.ReactNode }) {
-  const [cart, setCart] = useState<CartModel | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [cartItemsCount, setCartItemsCount] = useState(0);
-
+  const [isLoading, setIsLoading] = useState(false);
+  const { user, setUser } = useUser();
   // Load user from cookies if available
-
-  // Fetch cart data when user changes or when required
-  const fetchCart = useCallback(async () => {
-    const user = getCookie('user_id');
-    if (!user) {
-      setCart(null);
-      setCartItemsCount(0);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const response = await apiFetch<{ data: CartModel }>(API_PATHS.CART);
-      if (response && response.data) {
-        setCart(response.data);
-        setCartItemsCount(response.data.cart_items?.length || 0);
-      }
-    } catch (error) {
-      console.error('Error fetching cart', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const { cart, mutateCart, cartLoading } = useCart(user?.id);
 
   // Add item to cart
   const addToCart = useCallback(
@@ -77,7 +52,7 @@ export function AppUserProvider({ children }: { children: React.ReactNode }) {
       );
 
       if (data) {
-        await fetchCart();
+        await mutateCart();
         toast.success(
           <div>
             <p className='text-sm text-gray-700'>Item added to cart</p>
@@ -94,7 +69,7 @@ export function AppUserProvider({ children }: { children: React.ReactNode }) {
         );
       }
     },
-    [fetchCart]
+    [mutateCart]
   );
 
   // Remove item from cart
@@ -108,39 +83,57 @@ export function AppUserProvider({ children }: { children: React.ReactNode }) {
         await apiFetch(`${API_PATHS.CART_ITEM}/${itemId}`, {
           method: 'DELETE',
         });
-        await fetchCart();
+        await mutateCart();
       } catch (error) {
         console.error('Error removing item from cart', error);
       } finally {
         setIsLoading(false);
       }
     },
-    [fetchCart]
+    [mutateCart]
   );
 
   // Update cart item quantity
-  const updateCartItemQuantity = useCallback(
-    async (itemId: string, quantity: number) => {
-      const user = getCookie('user_id');
-      if (!user) return;
-
-      try {
-        setIsLoading(true);
-        await apiFetch(`${API_PATHS.CART_ITEM}/${itemId}/quantity`, {
-          method: 'PUT',
-          body: {
-            quantity: quantity,
-          },
-        });
-        await fetchCart();
-      } catch (error) {
-        console.error('Error updating cart item quantity', error);
-      } finally {
-        setIsLoading(false);
+  const updateCartItemQuantity = async (itemId: string, quantity: number) => {
+    if (!user || quantity < 1) return;
+    setIsLoading(true);
+    const { data, error } = await apiFetch<GenericResponse<boolean>>(
+      `${API_PATHS.CART_ITEM}/${itemId}/quantity`,
+      {
+        method: 'PUT',
+        body: {
+          quantity: quantity,
+        },
       }
-    },
-    [fetchCart]
-  );
+    );
+
+    if (error) {
+      toast.error(
+        <div>
+          <p className='text-sm text-gray-700'>Error updating item quantity</p>
+          <p className='text-sm text-gray-500'>{JSON.stringify(error)}</p>
+        </div>
+      );
+    }
+    if (data) {
+      mutateCart(
+        (prev) =>
+          prev
+            ? {
+                ...prev,
+                cart_items:
+                  prev.cart_items.map((item) =>
+                    item.id === itemId ? { ...item, quantity: quantity } : item
+                  ) ?? [],
+              }
+            : undefined,
+        {
+          revalidate: false,
+        }
+      );
+    }
+    setIsLoading(false);
+  };
 
   // Clear cart
   const clearCart = useCallback(async () => {
@@ -149,8 +142,6 @@ export function AppUserProvider({ children }: { children: React.ReactNode }) {
       await apiFetch(`${API_PATHS.CART}/clear`, {
         method: 'PUT',
       });
-      setCart(null);
-      setCartItemsCount(0);
     } catch (error) {
       console.error('Error clearing cart', error);
     } finally {
@@ -158,32 +149,21 @@ export function AppUserProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Refresh cart data
-  const refreshCart = useCallback(async () => {
-    await fetchCart();
-  }, [fetchCart]);
-
-  // Load cart data when user is available
-  useEffect(() => {
-    const user = getCookie('user_id');
-    if (user) {
-      fetchCart();
-    } else {
-      setCart(null);
-      setCartItemsCount(0);
-    }
-  }, [fetchCart]);
-
   const value = {
-    isLoading,
+    cartLoading,
     cart,
-    cartItemsCount,
+    user,
+    isLoading,
+    cartItemsCount: cart ? cart.cart_items.length : 0,
     addToCart,
     removeFromCart,
     updateCartItemQuantity,
     clearCart,
-    refreshCart,
-  };
+    refreshCart: () => mutateCart(),
+    setAppUser: (user) => {
+      setUser(user);
+    },
+  } satisfies AppUserContextType;
 
   return (
     <AppUserContext.Provider value={value}>{children}</AppUserContext.Provider>

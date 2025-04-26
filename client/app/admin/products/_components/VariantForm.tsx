@@ -90,11 +90,13 @@ export const VariantForm: React.FC<AttributeFormProps> = ({
                 control={control}
                 key={attribute.id}
                 error={
-                  errors.variants?.[index]?.attributes?.[idx]?.value_object
-                    ?.id?.message
+                  errors.variants?.[index]?.attributes?.[idx]?.value_object?.id
+                    ?.message
                 }
-                getDisplayValue={(attribute) =>
-                  attribute?.name || attribute.code
+                getDisplayValue={(attrOpt) =>
+                  attribute.name.toLowerCase().startsWith('color')
+                    ? attrOpt?.name
+                    : attrOpt.code
                 }
                 name={`variants.${index}.attributes.${idx}.value_object`}
                 label={attribute.name}

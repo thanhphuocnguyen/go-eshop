@@ -24,16 +24,14 @@ export default function CheckoutPage() {
       cardExpiry: '',
       cardNumber: '',
       city: '',
-      country: '',
+      district: '',
       email: '',
-      firstName: '',
-      lastName: '',
+      fullname: '',
       phone: '',
       paypalEmail: '',
-      state: '',
-      zip: '',
       paymentMethod: 'credit_card',
       termsAccepted: false,
+      stripeEmail: '',
     },
   });
   const { cart } = useAppUser();
@@ -67,11 +65,9 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (data) {
-      const fullname = data.fullname.split(' ');
       const defaultValue: Partial<CheckoutFormValues> = {
         email: data.email,
-        firstName: fullname[0],
-        lastName: fullname.length > 1 ? fullname[1] : '',
+        fullname: data.fullname,
         paymentMethod: 'credit_card',
         termsAccepted: false,
       };
@@ -79,9 +75,9 @@ export default function CheckoutPage() {
       if (data.addresses && data.addresses.length > 0) {
         defaultValue.address = data.addresses[0].address;
         defaultValue.city = data.addresses[0].city;
-        defaultValue.country = data.addresses[0].country;
-        defaultValue.state = data.addresses[0].state;
-        defaultValue.zip = data.addresses[0].postal_code;
+        defaultValue.district = data.addresses[0].district;
+        defaultValue.ward = data.addresses[0].ward;
+        defaultValue.phone = data.addresses[0].phone;
       }
 
       reset(defaultValue);
@@ -107,17 +103,12 @@ export default function CheckoutPage() {
             </h4>
             <div className='grid grid-cols-2 gap-6 mt-4'>
               <TextField
-                {...register('firstName')}
+                {...register('fullname')}
                 type='text'
                 label='First name'
               />
               <TextField
-                {...register('lastName')}
-                type='text'
-                label='Last name'
-              />
-              <TextField
-                className='col-span-2'
+                className=''
                 {...register('address')}
                 type='text'
                 label='Address'
@@ -130,27 +121,21 @@ export default function CheckoutPage() {
                 placeholder='City'
               />
               <TextField
-                {...register('country')}
+                {...register('district')}
                 type='text'
-                label='Country'
-                placeholder='Country'
+                label='District'
+                placeholder='District'
               />
               <TextField
-                {...register('state')}
+                {...register('ward')}
                 type='text'
-                label='State/Province'
-                placeholder='State/Province'
-              />
-              <TextField
-                {...register('zip')}
-                type='text'
-                label='Zip/Postal code'
-                placeholder='Zip/Postal code'
+                label='Ward'
+                placeholder=''
               />
               <TextField
                 {...register('phone')}
                 type='text'
-                className='col-span-2'
+                className=''
                 label='Phone number'
                 placeholder='Phone number'
               />
@@ -245,6 +230,45 @@ export default function CheckoutPage() {
                     PayPal
                   </div>
                 </div>
+
+                <div
+                  className={`border rounded-lg p-4 flex items-center cursor-pointer transition-all ${
+                    paymentMethod === 'stripe'
+                      ? 'border-indigo-600 bg-indigo-50'
+                      : 'border-gray-200 hover:border-indigo-300'
+                  }`}
+                  onClick={() => {
+                    const stripeRadio = document.getElementById(
+                      'stripe'
+                    ) as HTMLInputElement;
+                    if (stripeRadio) {
+                      stripeRadio.checked = true;
+                      stripeRadio.dispatchEvent(
+                        new Event('change', { bubbles: true })
+                      );
+                    }
+                  }}
+                >
+                  <input
+                    type='radio'
+                    id='stripe'
+                    value='stripe'
+                    className='h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300'
+                    {...register('paymentMethod')}
+                  />
+                  <label
+                    htmlFor='stripe'
+                    className='ml-3 flex-1 cursor-pointer'
+                  >
+                    <div className='font-medium text-gray-800'>Stripe</div>
+                    <div className='text-sm text-gray-500'>
+                      Pay with your Stripe account
+                    </div>
+                  </label>
+                  <div className='h-8 w-20 bg-purple-100 rounded-md flex items-center justify-center text-sm font-bold text-purple-700'>
+                    Stripe
+                  </div>
+                </div>
               </div>
 
               {paymentMethod === 'credit_card' && (
@@ -283,6 +307,17 @@ export default function CheckoutPage() {
                 </div>
               )}
 
+              {paymentMethod === 'stripe' && (
+                <div className='mt-6 p-5 border border-gray-200 rounded-lg bg-white'>
+                  <TextField
+                    {...register('stripeEmail')}
+                    type='email'
+                    label='Stripe email'
+                    placeholder='Enter your Stripe email'
+                  />
+                </div>
+              )}
+
               <div className='mt-6 flex items-start'>
                 <input
                   type='checkbox'
@@ -307,10 +342,10 @@ export default function CheckoutPage() {
                 key={e.variant_id}
                 className='flex gap-4 p-6 border-b border-gray-200'
               >
-                <div className='h-40 w-32 relative'>
+                <div className='h-28 w-24 relative'>
                   <Image
                     fill
-                    objectFit='conditions'
+                    objectFit='contains'
                     src={e.image_url ?? '/images/logo/logo.webp'}
                     alt='Product Image'
                     className='rounded-md border border-lime-300'
