@@ -47,8 +47,12 @@ type Address struct {
 type AddressResponse struct {
 	ID        int64     `json:"id"`
 	Default   bool      `json:"default"`
-	Address   Address   `json:"address,inline"`
 	CreatedAt time.Time `json:"created_at"`
+	Phone     string    `json:"phone"`
+	Street    string    `json:"street"`
+	Ward      *string   `json:"ward,omitempty"`
+	District  string    `json:"district"`
+	City      string    `json:"city"`
 }
 
 // ------------------------------ Mapper ------------------------------
@@ -57,13 +61,11 @@ func mapAddressResponse(address repository.UserAddress) AddressResponse {
 		ID:        address.ID,
 		Default:   address.Default,
 		CreatedAt: address.CreatedAt,
-		Address: Address{
-			Phone:    address.Phone,
-			Street:   address.Street,
-			Ward:     &address.Ward.String,
-			District: address.District,
-			City:     address.City,
-		},
+		Phone:     address.Phone,
+		Street:    address.Street,
+		Ward:      &address.Ward.String,
+		District:  address.District,
+		City:      address.City,
 	}
 }
 

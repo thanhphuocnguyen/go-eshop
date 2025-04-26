@@ -1,13 +1,18 @@
 'use client';
 
-import { createContext, useCallback, useContext, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import { apiFetch } from '@/lib/apis/api';
 import { API_PATHS } from '@/lib/constants/api';
 import { getCookie } from 'cookies-next/client';
 import { toast } from 'react-toastify';
-import { CartModel, GenericResponse, UserModel } from '@/lib/definitions';
+import { CartModel, GenericResponse } from '@/lib/definitions';
 import { useCart } from '@/lib/hooks';
-import { useUser } from '@/lib/hooks/useUser';
 
 // Define types for cart items and cart
 
@@ -15,8 +20,18 @@ interface AppUserContextType {
   cartLoading: boolean;
   isLoading: boolean;
   cart: CartModel | undefined;
-  user?: UserModel | null;
-  setAppUser: (user: UserModel | undefined) => void;
+  user: {
+    name?: string;
+    id?: string;
+    role?: string;
+  };
+  setAppUser: React.Dispatch<
+    React.SetStateAction<{
+      name?: string;
+      id?: string;
+      role?: string;
+    }>
+  >;
   cartItemsCount: number;
   addToCart: (variantID: string, quantity: number) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
@@ -28,10 +43,15 @@ interface AppUserContextType {
 const AppUserContext = createContext<AppUserContextType | undefined>(undefined);
 
 export function AppUserProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<{
+    name?: string;
+    id?: string;
+    role?: string;
+  }>({});
   const [isLoading, setIsLoading] = useState(false);
-  const { user, setUser } = useUser();
+
   // Load user from cookies if available
-  const { cart, mutateCart, cartLoading } = useCart(user?.id);
+  const { cart, mutateCart, cartLoading } = useCart(user.id);
 
   // Add item to cart
   const addToCart = useCallback(
@@ -149,6 +169,20 @@ export function AppUserProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Load cart data when user is available
+  useEffect(() => {
+    const userId = getCookie('user_id');
+    const userName = getCookie('username');
+    const userRole = getCookie('role');
+    if (userId) {
+      setUser({
+        id: userId,
+        name: userName,
+        role: userRole,
+      });
+    }
+  }, []);
+
   const value = {
     cartLoading,
     cart,
@@ -160,9 +194,7 @@ export function AppUserProvider({ children }: { children: React.ReactNode }) {
     updateCartItemQuantity,
     clearCart,
     refreshCart: () => mutateCart(),
-    setAppUser: (user) => {
-      setUser(user);
-    },
+    setAppUser: setUser,
   } satisfies AppUserContextType;
 
   return (

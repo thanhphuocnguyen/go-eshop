@@ -26,7 +26,7 @@ type UserResponse struct {
 	VerifiedEmail     bool                `json:"verified_email,omitempty"`
 	VerifiedPhone     bool                `json:"verified_phone,omitempty"`
 	PasswordChangedAt string              `json:"password_changed_at,omitempty"`
-	Addresses         []AddressResponse   `json:"addresses,omitempty"`
+	Addresses         []AddressResponse   `json:"addresses"`
 	CreatedAt         string              `json:"created_at,omitempty"`
 	UpdatedAt         string              `json:"updated_at,omitempty"`
 }
@@ -69,15 +69,13 @@ func mapToUserResponse(user repository.User) UserResponse {
 
 func mapAddressToAddressResponse(address repository.UserAddress) AddressResponse {
 	return AddressResponse{
-		Address: Address{
-			Phone:    address.Phone,
-			Street:   address.Street,
-			Ward:     &address.Ward.String,
-			District: address.District,
-			City:     address.City,
-		},
-		Default: address.Default,
-		ID:      address.ID,
+		Phone:    address.Phone,
+		Street:   address.Street,
+		Ward:     &address.Ward.String,
+		District: address.District,
+		City:     address.City,
+		Default:  address.Default,
+		ID:       address.ID,
 	}
 }
 
