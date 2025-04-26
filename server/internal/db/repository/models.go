@@ -440,9 +440,9 @@ type Attribute struct {
 type AttributeValue struct {
 	ID           int32       `json:"id"`
 	AttributeID  int32       `json:"attribute_id"`
-	Value        string      `json:"value"`
+	Name         string      `json:"name"`
+	Code         string      `json:"code"`
 	IsActive     pgtype.Bool `json:"is_active"`
-	DisplayValue pgtype.Text `json:"display_value"`
 	DisplayOrder int16       `json:"display_order"`
 	CreatedAt    time.Time   `json:"created_at"`
 }

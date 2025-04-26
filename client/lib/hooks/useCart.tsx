@@ -1,14 +1,15 @@
-import { apiFetch } from '@/lib/apis/api';
-import { API_PATHS } from '@/lib/constants/api';
-import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
-import { toast } from 'react-toastify';
 import useSWR from 'swr';
+import { API_PATHS } from '../constants/api';
+import { apiFetch } from '../apis/api';
+import { GenericResponse } from '../definitions';
+import { CartModel } from '../definitions/cart';
+import { toast } from 'react-toastify';
 
-export function useBrands() {
+export const useCart = () => {
   const { data, error } = useSWR(
-    API_PATHS.BRANDS,
+    API_PATHS.CART,
     (url) =>
-      apiFetch<GenericResponse<GeneralCategoryModel[]>>(url, {
+      apiFetch<GenericResponse<CartModel[]>>(url, {
         method: 'GET',
       }),
     {
@@ -17,7 +18,7 @@ export function useBrands() {
       onError: (error) => {
         toast.error(
           <div>
-            Failed to fetch collections:
+            Failed to fetch cart:
             <div>{JSON.stringify(error)}</div>
           </div>
         );
@@ -25,8 +26,8 @@ export function useBrands() {
     }
   );
   return {
-    brands: data?.data,
+    cart: data?.data,
     isLoading: !error && !data,
     isError: error,
   };
-}
+};

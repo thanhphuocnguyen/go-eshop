@@ -356,8 +356,8 @@ const getProductVariants = `-- name: GetProductVariants :many
 SELECT
     v.id, v.product_id, v.sku, v.price, v.stock, v.weight, v.is_active, v.created_at, v.updated_at,
     a.id as attr_id, a.name as attr_name,
-    av.id as attr_val_id, av.value as attr_value, av.display_order as attr_display_order, 
-    av.is_active as attr_val_is_active, av.display_value as attr_display_value
+    av.id as attr_val_id, av.code as attr_val_code, av.display_order as attr_display_order, 
+    av.is_active as attr_val_is_active, av.name as attr_val_name
     -- img.id AS img_id, img.url AS img_url, img.alt_text AS img_alt, 
     -- img.caption AS img_cap, img.mime_type AS img_mime_type, img.file_size AS image_size, 
     -- img.width AS img_w, img.height AS img_h, img.external_id AS img_external_id,
@@ -392,10 +392,10 @@ type GetProductVariantsRow struct {
 	AttrID           int32          `json:"attr_id"`
 	AttrName         string         `json:"attr_name"`
 	AttrValID        int32          `json:"attr_val_id"`
-	AttrValue        string         `json:"attr_value"`
+	AttrValCode      string         `json:"attr_val_code"`
 	AttrDisplayOrder int16          `json:"attr_display_order"`
 	AttrValIsActive  pgtype.Bool    `json:"attr_val_is_active"`
-	AttrDisplayValue pgtype.Text    `json:"attr_display_value"`
+	AttrValName      string         `json:"attr_val_name"`
 }
 
 func (q *Queries) GetProductVariants(ctx context.Context, arg GetProductVariantsParams) ([]GetProductVariantsRow, error) {
@@ -420,10 +420,10 @@ func (q *Queries) GetProductVariants(ctx context.Context, arg GetProductVariants
 			&i.AttrID,
 			&i.AttrName,
 			&i.AttrValID,
-			&i.AttrValue,
+			&i.AttrValCode,
 			&i.AttrDisplayOrder,
 			&i.AttrValIsActive,
-			&i.AttrDisplayValue,
+			&i.AttrValName,
 		); err != nil {
 			return nil, err
 		}

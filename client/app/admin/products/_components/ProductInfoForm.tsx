@@ -98,8 +98,7 @@ export const ProductInfoForm: React.FC<{
         <TextField
           label={'Product name'}
           {...register('product_info.name')}
-          error={!!formState.errors.product_info?.name}
-          message={formState.errors.product_info?.name?.message}
+          error={formState.errors.product_info?.name?.message}
           placeholder='Enter product name...'
           type='text'
           required
@@ -109,8 +108,7 @@ export const ProductInfoForm: React.FC<{
           label={'Sku'}
           placeholder='Enter sku...'
           type='text'
-          error={!!formState.errors.product_info?.sku}
-          message={formState.errors.product_info?.sku?.message}
+          error={formState.errors.product_info?.sku?.message}
         />
         <TextField
           {...register('product_info.price', {
@@ -119,15 +117,13 @@ export const ProductInfoForm: React.FC<{
           label={'Price'}
           placeholder='Enter price...'
           type='number'
-          error={!!formState.errors.product_info?.price}
-          message={formState.errors.product_info?.price?.message}
+          error={formState.errors.product_info?.price?.message}
         />
         <TextField
           label={'Slug'}
           placeholder='Enter slug...'
           type='text'
-          error={!!formState.errors.product_info?.slug}
-          message={formState.errors.product_info?.slug?.message}
+          error={formState.errors.product_info?.slug?.message}
           {...register('product_info.slug')}
         />
         {attributesLoading ? (
@@ -157,8 +153,7 @@ export const ProductInfoForm: React.FC<{
             control={control}
             name='product_info.category'
             label='Category'
-            error={!!formState.errors.product_info?.category}
-            message={formState.errors.product_info?.category?.message ?? ''}
+            error={formState.errors.product_info?.category?.message}
             options={
               categories?.map((e) => ({
                 id: e.id,
@@ -176,8 +171,7 @@ export const ProductInfoForm: React.FC<{
             name='product_info.brand'
             nullable
             control={control}
-            error={!!formState.errors.product_info?.brand}
-            message={formState.errors.product_info?.brand?.message ?? ''}
+            error={formState.errors.product_info?.brand?.message}
             label='Brand'
             options={
               brands?.map((e) => ({
@@ -197,8 +191,7 @@ export const ProductInfoForm: React.FC<{
             name='product_info.collection'
             nullable
             label='Collection'
-            error={!!formState.errors.product_info?.brand}
-            message={formState.errors.product_info?.brand?.message ?? ''}
+            error={formState.errors.product_info?.brand?.message}
             options={
               collections?.map((e) => ({
                 id: e.id,
@@ -214,10 +207,7 @@ export const ProductInfoForm: React.FC<{
         <TiptapController
           name='product_info.description'
           control={control}
-          error={!!formState.errors.product_info?.description}
-          message={
-            formState.errors.product_info?.description?.message as string
-          }
+          error={formState.errors.product_info?.description?.message}
         />
       </Field>
 

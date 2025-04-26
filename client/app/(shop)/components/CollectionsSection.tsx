@@ -1,4 +1,4 @@
-import { apiFetch } from '@/lib/api/api';
+import { apiFetch } from '@/lib/apis/api';
 import { API_PATHS } from '@/lib/constants/api';
 import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
 import Image from 'next/image';

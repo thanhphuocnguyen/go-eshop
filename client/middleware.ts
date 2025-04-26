@@ -10,7 +10,7 @@ export async function middleware(request: NextRequest) {
 
   if (
     path.startsWith(AdminPath) &&
-    request.cookies.get('user_role')?.value !== 'admin'
+    request.cookies.get('role')?.value !== 'admin'
   ) {
     return NextResponse.redirect(new URL('/not-found', request.nextUrl));
   }

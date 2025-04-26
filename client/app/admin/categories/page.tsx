@@ -10,7 +10,7 @@ import { ConfirmDialog } from '@/components/Common/Dialogs/ConfirmDialog';
 import { toast } from 'react-toastify';
 import { getCookie } from 'cookies-next';
 import Image from 'next/image';
-import { apiFetch } from '@/lib/api/api';
+import { apiFetch } from '@/lib/apis/api';
 
 export default function Page() {
   const [categories, setCategories] = useState<GeneralCategoryModel[]>([]);

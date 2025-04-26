@@ -112,7 +112,7 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({ variants }) => {
                       style={{
                         outlineColor:
                           selectedAttributeValues[attr.id] === color.id
-                            ? color.value
+                            ? color.code
                             : '',
                       }}
                       className={clsx(
@@ -136,7 +136,7 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({ variants }) => {
                           [attr.id]: color.id,
                         }));
                       }}
-                      aria-label={color.display_value}
+                      aria-label={color.code}
                     >
                       <span
                         aria-hidden='true'
@@ -145,7 +145,7 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({ variants }) => {
                           !isAvailable ? 'opacity-40' : ''
                         )}
                         style={{
-                          backgroundColor: color.value,
+                          backgroundColor: color.code,
                         }}
                       />
                       {!isAvailable && (
@@ -217,7 +217,7 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({ variants }) => {
                         }));
                       }}
                     >
-                      {value.value}
+                      {value.name}
                       {!isAvailable && (
                         <span
                           aria-hidden='true'

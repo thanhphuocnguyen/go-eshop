@@ -82,7 +82,7 @@ export default async function NavBar() {
                   <Suspense>
                     <AuthButtons
                       name={name}
-                      role={cookieStorage.get('user_role')?.value}
+                      role={cookieStorage.get('role')?.value}
                     />
                   </Suspense>
                 </div>

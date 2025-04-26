@@ -12,15 +12,15 @@ import (
 // ------------------------------ API Models ------------------------------
 type AttributeValue struct {
 	ID           int32   `json:"id"`
-	Value        string  `json:"value"`
-	DisplayValue *string `json:"display_value"`
+	Code         string  `json:"code"`
+	Name         *string `json:"name"`
 	IsActive     *bool   `json:"is_active"`
 	DisplayOrder *int16  `json:"display_order"`
 }
 
 type AttributeValueRequest struct {
-	Value        string  `json:"value" binding:"required"`
-	DisplayValue *string `json:"display_value" binding:"omitempty"`
+	Code         string  `json:"code" binding:"required"`
+	Name         *string `json:"name" binding:"omitempty"`
 	DisplayOrder *int16  `json:"display_order" binding:"omitempty,min=0"`
 	IsActive     *bool   `json:"is_active" binding:"omitempty"`
 }
@@ -85,11 +85,10 @@ func (sv *Server) createAttribute(c *gin.Context) {
 		for _, value := range params.Values {
 			createParams := repository.CreateAttributeValueParams{
 				AttributeID: attribute.ID,
-				Value:       value.Value,
+				Code:        value.Code,
+				Name:        *value.Name,
 			}
-			if value.DisplayValue != nil {
-				createParams.DisplayValue = utils.GetPgTypeText(*value.DisplayValue)
-			}
+
 			if value.DisplayOrder != nil {
 				createParams.DisplayOrder = *value.DisplayOrder
 			}
@@ -100,8 +99,9 @@ func (sv *Server) createAttribute(c *gin.Context) {
 			}
 
 			attributeValues = append(attributeValues, AttributeValue{
-				ID:    value.ID,
-				Value: value.Value,
+				ID:   value.ID,
+				Code: value.Code,
+				Name: &value.Name,
 			})
 
 		}
@@ -159,8 +159,8 @@ func (sv *Server) getAttributeByIDHandler(c *gin.Context) {
 		}
 		attributeResp.Values = append(attributeResp.Values, AttributeValue{
 			ID:           attributeRows[i].AttributeValueID.Int32,
-			Value:        attributeRows[i].Value.String,
-			DisplayValue: &attributeRows[i].DisplayValue.String,
+			Code:         attributeRows[i].AttrValCode.String,
+			Name:         &attributeRows[i].AttrValName.String,
 			IsActive:     &attributeRows[i].AttributeValueIsActive.Bool,
 			DisplayOrder: &attributeRows[i].DisplayOrder.Int16,
 		})
@@ -210,8 +210,8 @@ func (sv *Server) getAttributesHandler(c *gin.Context) {
 			if attrVal.AttributeValueID.Valid {
 				attributeResp[len(attributeResp)-1].Values = append(attributeResp[len(attributeResp)-1].Values, AttributeValue{
 					ID:           attrVal.AttributeValueID.Int32,
-					Value:        attrVal.Value.String,
-					DisplayValue: &attrVal.DisplayValue.String,
+					Code:         attrVal.AttrValCode.String,
+					Name:         &attrVal.AttrValName.String,
 					DisplayOrder: &attrVal.DisplayOrder.Int16,
 					IsActive:     &attrVal.AttributeValueIsActive.Bool,
 				})
@@ -219,8 +219,8 @@ func (sv *Server) getAttributesHandler(c *gin.Context) {
 		} else if attrVal.AttributeValueID.Valid {
 			attributeResp[len(attributeResp)-1].Values = append(attributeResp[len(attributeResp)-1].Values, AttributeValue{
 				ID:           attrVal.AttributeValueID.Int32,
-				Value:        attrVal.Value.String,
-				DisplayValue: &attrVal.DisplayValue.String,
+				Code:         attrVal.AttrValCode.String,
+				Name:         &attrVal.AttrValName.String,
 				IsActive:     &attrVal.AttributeValueIsActive.Bool,
 				DisplayOrder: &attrVal.DisplayOrder.Int16,
 			})
@@ -287,8 +287,8 @@ func (sv *Server) updateAttribute(c *gin.Context) {
 	for _, value := range currentAttributeValues {
 		currentAttributeValuesMap[value.ID] = AttributeValue{
 			ID:           value.ID,
-			Value:        value.Value,
-			DisplayValue: &value.DisplayValue.String,
+			Code:         value.Code,
+			Name:         &value.Name,
 			IsActive:     &value.IsActive.Bool,
 			DisplayOrder: &value.DisplayOrder,
 		}
@@ -300,11 +300,11 @@ func (sv *Server) updateAttribute(c *gin.Context) {
 		if value.ID != nil {
 			if _, ok := currentAttributeValuesMap[*value.ID]; ok {
 				params := repository.UpdateAttributeValueParams{
-					ID:    *value.ID,
-					Value: value.Value,
+					ID:   *value.ID,
+					Code: value.Code,
 				}
-				if value.DisplayValue != nil {
-					params.DisplayValue = utils.GetPgTypeText(*value.DisplayValue)
+				if value.Name != nil {
+					params.Name = utils.GetPgTypeText(*value.Name)
 				}
 				if value.DisplayOrder != nil {
 					params.DisplayOrder = utils.GetPgTypeInt2(*value.DisplayOrder)
@@ -317,8 +317,8 @@ func (sv *Server) updateAttribute(c *gin.Context) {
 				delete(currentAttributeValuesMap, *value.ID)
 				response = append(response, AttributeValue{
 					ID:           updated.ID,
-					Value:        updated.Value,
-					DisplayValue: &updated.DisplayValue.String,
+					Code:         updated.Code,
+					Name:         &updated.Name,
 					IsActive:     &updated.IsActive.Bool,
 					DisplayOrder: &updated.DisplayOrder,
 				})
@@ -326,10 +326,10 @@ func (sv *Server) updateAttribute(c *gin.Context) {
 		} else {
 			createParams := repository.CreateAttributeValueParams{
 				AttributeID: existed.ID,
-				Value:       value.Value,
+				Name:        *value.Name,
 			}
-			if value.DisplayValue != nil {
-				createParams.DisplayValue = utils.GetPgTypeText(*value.DisplayValue)
+			if value.Name != nil {
+				createParams.Name = *value.Name
 			}
 			if value.DisplayOrder != nil {
 				createParams.DisplayOrder = *value.DisplayOrder
@@ -341,8 +341,8 @@ func (sv *Server) updateAttribute(c *gin.Context) {
 			}
 			response = append(response, AttributeValue{
 				ID:           newAttr.ID,
-				Value:        newAttr.Value,
-				DisplayValue: &newAttr.DisplayValue.String,
+				Code:         newAttr.Code,
+				Name:         &newAttr.Name,
 				IsActive:     &newAttr.IsActive.Bool,
 				DisplayOrder: &newAttr.DisplayOrder,
 			})

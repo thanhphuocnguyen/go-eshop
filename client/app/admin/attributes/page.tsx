@@ -9,7 +9,7 @@ import { ConfirmDialog } from '@/components/Common/Dialogs/ConfirmDialog';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
 import Link from 'next/link';
-import { apiFetch } from '@/lib/api/api';
+import { apiFetch } from '@/lib/apis/api';
 
 export default function Page() {
   const [attributes, setAttributes] = useState<AttributeDetailModel[]>([]);
@@ -132,7 +132,7 @@ export default function Page() {
                   </Link>
                 </th>
                 <td className='px-6 py-4'>
-                  {e.values?.map((e) => e.display_value || e.value)?.join(', ')}
+                  {e.values?.map((e) => e.name || e.code)?.join(', ')}
                 </td>
                 <td className='px-6 py-4'>
                   {dayjs(e.created_at).format('YYYY/MM/DD')}

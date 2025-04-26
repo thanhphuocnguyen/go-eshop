@@ -13,7 +13,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { TextField } from '@/components/FormFields';
 import { useRouter } from 'next/navigation';
-import { apiFetch } from '@/lib/api/api';
+import { apiFetch } from '@/lib/apis/api';
 import { API_PATHS } from '@/lib/constants/api';
 import { toast } from 'react-toastify';
 

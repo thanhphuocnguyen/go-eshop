@@ -62,8 +62,8 @@ ORDER BY
 SELECT
     v.*,
     a.id as attr_id, a.name as attr_name,
-    av.id as attr_val_id, av.value as attr_value, av.display_order as attr_display_order, 
-    av.is_active as attr_val_is_active, av.display_value as attr_display_value
+    av.id as attr_val_id, av.code as attr_val_code, av.display_order as attr_display_order, 
+    av.is_active as attr_val_is_active, av.name as attr_val_name
     -- img.id AS img_id, img.url AS img_url, img.alt_text AS img_alt, 
     -- img.caption AS img_cap, img.mime_type AS img_mime_type, img.file_size AS image_size, 
     -- img.width AS img_w, img.height AS img_h, img.external_id AS img_external_id,

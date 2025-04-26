@@ -12,7 +12,7 @@ import Loading from '@/app/loading';
 import { GenericResponse, CategoryProductModel } from '@/lib/definitions';
 import LoadingInline from '@/components/Common/Loadings/LoadingInline';
 import CategoryProductList from '../../_components/CategoryProductList';
-import { apiFetch } from '@/lib/api/api';
+import { apiFetch } from '@/lib/apis/api';
 
 export default function AdminCategoryDetail({
   params,

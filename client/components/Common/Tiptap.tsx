@@ -25,7 +25,6 @@ import {
   MinusIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
-import { BaseOption } from '@/lib/definitions';
 import {
   Control,
   Controller,
@@ -79,8 +78,7 @@ interface TiptapControllerProps<T extends FieldValues> {
   control: Control<T>;
   defaultValue?: PathValue<T, Path<T>>;
   label?: string;
-  error?: boolean;
-  message?: string;
+  error?: string;
 }
 
 export const TiptapController = <T extends FieldValues>({
@@ -89,7 +87,6 @@ export const TiptapController = <T extends FieldValues>({
   defaultValue = '' as PathValue<T, Path<T>>,
   label,
   error,
-  message,
 }: TiptapControllerProps<T>) => {
   return (
     <div className='w-full'>
@@ -109,9 +106,7 @@ export const TiptapController = <T extends FieldValues>({
           </div>
         )}
       />
-      {error && message && (
-        <p className={clsx('text-sm mt-2', 'text-red-500')}>{message}</p>
-      )}
+      {error && <p className={clsx('text-sm mt-2', 'text-red-500')}>{error}</p>}
     </div>
   );
 };
@@ -126,7 +121,7 @@ const options = [
 ];
 
 const MenuBar = ({ editor }: { editor: Editor | null }) => {
-  const [selected, setSelected] = React.useState<BaseOption>(options[0]);
+  const [selected, setSelected] = React.useState(options[0]);
 
   useEffect(() => {
     if (selected && editor) {
@@ -224,9 +219,7 @@ const MenuBar = ({ editor }: { editor: Editor | null }) => {
                   'w-32 rounded bg-transparent px-2 py-1 text-sm text-gray-700 border border-gray-300',
                   'focus:outline-none focus:ring-1 focus:ring-sky-400'
                 )}
-                displayValue={(option) =>
-                  (option as BaseOption | null)?.name ?? ''
-                }
+                displayValue={(option) => option?.name ?? ''}
                 // readOnly
               />
               <ComboboxButton className='absolute inset-y-0 right-0 px-2'>

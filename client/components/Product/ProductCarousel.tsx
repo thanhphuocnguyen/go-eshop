@@ -1,7 +1,7 @@
 import { GenericListResponse, CategoryProductModel } from '@/lib/definitions';
 import Carousel from '../Common/Carousel';
 import ProductCard from './ProductCard';
-import { apiFetch } from '@/lib/api/api';
+import { apiFetch } from '@/lib/apis/api';
 
 const responsive = {
   desktop: {

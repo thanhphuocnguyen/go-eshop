@@ -10,7 +10,7 @@ import { TrashIcon } from '@heroicons/react/24/solid';
 import { useAppUser } from '@/components/AppUserContext';
 import useSWR from 'swr';
 import { API_PATHS } from '@/lib/constants/api';
-import { apiFetch } from '@/lib/api/api';
+import { apiFetch } from '@/lib/apis/api';
 import { GenericResponse, UserModel } from '@/lib/definitions';
 import { useEffect } from 'react';
 import { toast } from 'react-toastify';

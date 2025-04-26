@@ -649,8 +649,8 @@ func mapToVariantResp(variantRows []repository.GetProductVariantsRow) []ProductV
 				Name: row.AttrName,
 				ValueObject: AttributeValue{
 					ID:           row.AttrValID,
-					Value:        row.AttrValue,
-					DisplayValue: &row.AttrDisplayValue.String,
+					Code:         row.AttrValCode,
+					Name:         &row.AttrValName,
 					IsActive:     &row.IsActive.Bool,
 					DisplayOrder: &row.AttrDisplayOrder,
 				},
@@ -670,8 +670,8 @@ func mapToVariantResp(variantRows []repository.GetProductVariantsRow) []ProductV
 						Name: row.AttrName,
 						ValueObject: AttributeValue{
 							ID:           row.AttrValID,
-							Value:        row.AttrValue,
-							DisplayValue: &row.AttrDisplayValue.String,
+							Code:         row.AttrValCode,
+							Name:         &row.AttrValName,
 							IsActive:     &row.IsActive.Bool,
 							DisplayOrder: &row.AttrDisplayOrder,
 						},

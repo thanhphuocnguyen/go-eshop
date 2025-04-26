@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 import { toast } from 'react-toastify';
-import { apiFetch } from '@/lib/api/api';
+import { apiFetch } from '@/lib/apis/api';
 import { API_PATHS } from '@/lib/constants/api';
 import { AttributeDetailModel, GenericResponse } from '@/lib/definitions';
 

@@ -1,4 +1,5 @@
 'use client';
+
 import clsx from 'clsx';
 import React from 'react';
 import { CSS } from '@dnd-kit/utilities';
@@ -23,21 +24,24 @@ const ValueItem: React.FC<ValueItemProps> = ({ idx, id, remove }) => {
     transform: CSS.Transform.toString(transform),
     transition,
   };
+
   return (
     <li
       ref={setNodeRef}
-      className={clsx('border w-full border-form-field-outline rounded-lg py-2 px-6 mb-2')}
+      className={clsx(
+        'border w-full border-form-field-outline rounded-lg py-2 px-6 mb-2'
+      )}
       style={style}
     >
       <div className={clsx('flex gap-4 items-center')}>
-        <Button {...attributes} {...listeners} className={'col-span-1'}>
+        <Button {...listeners} {...attributes} className={'col-span-1'}>
           <Bars3Icon className='size-5 text-form-field-contrast-text' />
         </Button>
         <div className='w-56'>
           <Field>
             <Label className='text-sm/6 font-semibold'>Value</Label>
             <Input
-              {...register(`values.${idx}.value`)}
+              {...register(`values.${idx}.code`)}
               className={clsx(
                 'mt-1 block w-full rounded-lg border border-form-field-outline bg-white h-12 py-1.5 px-3 text-sm/6 text-form-field-contrast-text',
                 'focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-form-field-outline-hover'
@@ -49,7 +53,7 @@ const ValueItem: React.FC<ValueItemProps> = ({ idx, id, remove }) => {
           <Field>
             <Label className='text-sm/6 font-semibold'>Display Value</Label>
             <Input
-              {...register(`values.${idx}.display_value`)}
+              {...register(`values.${idx}.name`)}
               className={clsx(
                 'mt-1 block w-full rounded-lg border border-form-field-outline bg-white h-12 py-1.5 px-3 text-sm/6 text-form-field-contrast-text',
                 'focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-form-field-outline-hover'
@@ -71,7 +75,7 @@ const ValueItem: React.FC<ValueItemProps> = ({ idx, id, remove }) => {
                     value ? 'bg-blue-500' : 'bg-gray-300'
                   } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
                 >
-                  <span className="sr-only">Active</span>
+                  <span className='sr-only'>Active</span>
                   <span
                     className={`${
                       value ? 'translate-x-6' : 'translate-x-1'

@@ -10,7 +10,7 @@ import { TextField } from '@/components/FormFields';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
-import { apiFetch } from '@/lib/api/api';
+import { apiFetch } from '@/lib/apis/api';
 import { GenericResponse, LoginResponse } from '@/lib/definitions';
 import { API_PATHS } from '@/lib/constants/api';
 import { useState } from 'react';

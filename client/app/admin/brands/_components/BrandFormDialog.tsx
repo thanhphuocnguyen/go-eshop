@@ -19,7 +19,7 @@ import clsx from 'clsx';
 import React from 'react';
 import { getCookie } from 'cookies-next';
 import { toast } from 'react-toastify';
-import { apiFetch } from '@/lib/api/api';
+import { apiFetch } from '@/lib/apis/api';
 
 interface BrandFormDialogProps {
   open: boolean;

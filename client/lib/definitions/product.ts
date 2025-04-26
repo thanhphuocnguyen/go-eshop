@@ -45,8 +45,8 @@ export interface ProductCreateBody {
 }
 
 export const BaseAttributeValueFormSchema = z.object({
-  value: z.string().optional(),
-  display_value: z.string().optional(),
+  name: z.string().optional(),
+  code: z.string().optional(),
   display_order: z.number().optional(),
   is_active: z.boolean().optional(),
 });
@@ -123,14 +123,15 @@ export type AttributeFormModel = z.infer<typeof AttributeFormSchema>;
 export type ProductVariantAttributeFormModel = z.infer<
   typeof ProductVariantAttributeFormSchema
 >;
+
 export type AttributeValueFormModel = z.infer<
   typeof BaseAttributeValueFormSchema
 >;
 
 export type AttributeValueDetailModel = {
   id: number;
-  value: string;
-  display_value: string;
+  name: string;
+  code: string;
   display_order: number;
   created_at: Date;
   is_active: boolean;

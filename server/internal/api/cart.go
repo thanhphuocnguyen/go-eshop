@@ -428,9 +428,9 @@ func (sv *Server) checkout(c *gin.Context) {
 			}
 			createOrderItemParams = append(createOrderItemParams, itemParam)
 			attributeList = append(attributeList, AttributeValue{
-				ID:           item.AttrID,
-				Value:        item.AttrValText,
-				DisplayValue: &item.AttrDisplayVal.String,
+				ID:   item.AttrID,
+				Code: item.AttrValCode,
+				Name: &item.AttrValName,
 			})
 		} else {
 			attrIdx := -1
@@ -442,9 +442,9 @@ func (sv *Server) checkout(c *gin.Context) {
 			}
 			if attrIdx == -1 {
 				attributeList = append(attributeList, AttributeValue{
-					ID:           item.AttrValID,
-					Value:        item.AttrValText,
-					DisplayValue: &item.AttrDisplayVal.String,
+					ID:   item.AttrValID,
+					Code: item.AttrValCode,
+					Name: &item.AttrValName,
 				})
 			} else {
 
@@ -630,11 +630,9 @@ func mapToCartItemsResp(rows []repository.GetCartItemsRow) ([]CartItemResponse, 
 			price, _ := row.Price.Float64Value()
 			attr := CartItemAttribute{
 				Name:  row.AttrName,
-				Value: row.AttrValText,
+				Value: row.AttrValName,
 			}
-			if row.AttrDisplayVal.Valid && row.AttrDisplayVal.String != "" {
-				attr.Value = row.AttrDisplayVal.String
-			}
+
 			cartItem := CartItemResponse{
 				ID:        row.CartItemID.String(),
 				ProductID: row.ProductID.String(),
@@ -663,11 +661,9 @@ func mapToCartItemsResp(rows []repository.GetCartItemsRow) ([]CartItemResponse, 
 			if attrIdx == -1 {
 				attr := CartItemAttribute{
 					Name:  row.AttrName,
-					Value: row.AttrValText,
+					Value: row.AttrValName,
 				}
-				if row.AttrDisplayVal.Valid && row.AttrDisplayVal.String != "" {
-					attr.Value = row.AttrDisplayVal.String
-				}
+
 				cartItemsResp[cartItemIdx].Attributes = append(cartItemsResp[cartItemIdx].Attributes, attr)
 			}
 		}

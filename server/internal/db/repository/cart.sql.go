@@ -161,7 +161,7 @@ SELECT
     pv.id AS variant_id, pv.price, pv.stock, pv.sku, pv.stock as stock_qty,
     p.id AS product_id, p.name AS product_name,
     ci.id as cart_item_id, ci.quantity,
-    av.id as attr_val_id, av.value AS attr_val_text, av.display_value as attr_display_val, a.name AS attr_name, a.id AS attr_id,
+    av.id as attr_val_id, av.code AS attr_val_code, av.name as attr_val_name, a.name AS attr_name, a.id AS attr_id,
     i.id AS image_id, i.url AS image_url
 FROM cart_items AS ci
 JOIN product_variants AS pv ON pv.id = ci.variant_id
@@ -176,23 +176,23 @@ ORDER BY ci.added_at, ci.id, pv.id DESC
 `
 
 type GetCartItemsRow struct {
-	CartItem       CartItem       `json:"cart_item"`
-	VariantID      uuid.UUID      `json:"variant_id"`
-	Price          pgtype.Numeric `json:"price"`
-	Stock          int32          `json:"stock"`
-	Sku            string         `json:"sku"`
-	StockQty       int32          `json:"stock_qty"`
-	ProductID      uuid.UUID      `json:"product_id"`
-	ProductName    string         `json:"product_name"`
-	CartItemID     uuid.UUID      `json:"cart_item_id"`
-	Quantity       int16          `json:"quantity"`
-	AttrValID      int32          `json:"attr_val_id"`
-	AttrValText    string         `json:"attr_val_text"`
-	AttrDisplayVal pgtype.Text    `json:"attr_display_val"`
-	AttrName       string         `json:"attr_name"`
-	AttrID         int32          `json:"attr_id"`
-	ImageID        pgtype.Int4    `json:"image_id"`
-	ImageUrl       pgtype.Text    `json:"image_url"`
+	CartItem    CartItem       `json:"cart_item"`
+	VariantID   uuid.UUID      `json:"variant_id"`
+	Price       pgtype.Numeric `json:"price"`
+	Stock       int32          `json:"stock"`
+	Sku         string         `json:"sku"`
+	StockQty    int32          `json:"stock_qty"`
+	ProductID   uuid.UUID      `json:"product_id"`
+	ProductName string         `json:"product_name"`
+	CartItemID  uuid.UUID      `json:"cart_item_id"`
+	Quantity    int16          `json:"quantity"`
+	AttrValID   int32          `json:"attr_val_id"`
+	AttrValCode string         `json:"attr_val_code"`
+	AttrValName string         `json:"attr_val_name"`
+	AttrName    string         `json:"attr_name"`
+	AttrID      int32          `json:"attr_id"`
+	ImageID     pgtype.Int4    `json:"image_id"`
+	ImageUrl    pgtype.Text    `json:"image_url"`
 }
 
 func (q *Queries) GetCartItems(ctx context.Context, cartID uuid.UUID) ([]GetCartItemsRow, error) {
@@ -220,8 +220,8 @@ func (q *Queries) GetCartItems(ctx context.Context, cartID uuid.UUID) ([]GetCart
 			&i.CartItemID,
 			&i.Quantity,
 			&i.AttrValID,
-			&i.AttrValText,
-			&i.AttrDisplayVal,
+			&i.AttrValCode,
+			&i.AttrValName,
 			&i.AttrName,
 			&i.AttrID,
 			&i.ImageID,

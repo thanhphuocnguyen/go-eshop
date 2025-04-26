@@ -10,7 +10,7 @@ import useSWR from 'swr';
 
 import dayjs from 'dayjs';
 import Image from 'next/image';
-import { apiFetch } from '@/lib/api/api';
+import { apiFetch } from '@/lib/apis/api';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,

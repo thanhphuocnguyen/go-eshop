@@ -86,7 +86,7 @@ export const ProductImagesUploader: React.FC<ProductImagesUploaderProps> = (
           name: variant.attributes
             .map(
               (attr) =>
-                `${attr.name}: ${attr.value_object.display_value || attr.value_object.value}`
+                `${attr.name}: ${attr.value_object.name || attr.value_object.code}`
             )
             .join(', '),
         });

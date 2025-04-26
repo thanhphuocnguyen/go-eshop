@@ -1,6 +1,6 @@
 'use client';
 
-import { apiFetch } from '@/lib/api/api';
+import { apiFetch } from '@/lib/apis/api';
 import { API_PATHS } from '@/lib/constants/api';
 import { AddressModel, GenericResponse, UserModel } from '@/lib/definitions';
 import { TextField } from '@/components/FormFields';

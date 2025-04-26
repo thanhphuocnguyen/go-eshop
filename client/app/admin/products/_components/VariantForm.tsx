@@ -90,15 +90,11 @@ export const VariantForm: React.FC<AttributeFormProps> = ({
                 control={control}
                 key={attribute.id}
                 error={
-                  !!errors.variants?.[index]?.attributes?.[idx]?.value_object
-                    ?.id
-                }
-                message={
-                  errors.variants?.[index]?.attributes?.[idx]?.value_object?.id
-                    ?.message
+                  errors.variants?.[index]?.attributes?.[idx]?.value_object
+                    ?.id?.message
                 }
                 getDisplayValue={(attribute) =>
-                  attribute?.display_value || attribute.value
+                  attribute?.name || attribute.code
                 }
                 name={`variants.${index}.attributes.${idx}.value_object`}
                 label={attribute.name}
@@ -112,8 +108,7 @@ export const VariantForm: React.FC<AttributeFormProps> = ({
             {...register(`variants.${index}.price`)}
             label='Price'
             placeholder='Enter Price'
-            error={!!errors.variants?.[index]?.price?.message}
-            message={errors.variants?.[index]?.price?.message}
+            error={errors.variants?.[index]?.price?.message}
             type='number'
             disabled={false}
           />
@@ -121,8 +116,7 @@ export const VariantForm: React.FC<AttributeFormProps> = ({
             {...register(`variants.${index}.stock_qty`)}
             label='Stock'
             placeholder='Enter Stock'
-            error={!!errors.variants?.[index]?.stock_qty?.message}
-            message={errors.variants?.[index]?.stock_qty?.message}
+            error={errors.variants?.[index]?.stock_qty?.message}
             type='number'
             disabled={false}
           />

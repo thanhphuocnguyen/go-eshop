@@ -39,7 +39,7 @@ SELECT
     pv.id AS variant_id, pv.price, pv.stock, pv.sku, pv.stock as stock_qty,
     p.id AS product_id, p.name AS product_name,
     ci.id as cart_item_id, ci.quantity,
-    av.id as attr_val_id, av.value AS attr_val_text, av.display_value as attr_display_val, a.name AS attr_name, a.id AS attr_id,
+    av.id as attr_val_id, av.code AS attr_val_code, av.name as attr_val_name, a.name AS attr_name, a.id AS attr_id,
     i.id AS image_id, i.url AS image_url
 FROM cart_items AS ci
 JOIN product_variants AS pv ON pv.id = ci.variant_id

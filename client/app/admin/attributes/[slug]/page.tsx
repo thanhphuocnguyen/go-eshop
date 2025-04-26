@@ -1,4 +1,5 @@
 'use client';
+
 import { API_PATHS } from '@/lib/constants/api';
 import {
   GenericResponse,
@@ -30,7 +31,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import ValueItem from './_components/ValueItem';
-import { apiFetch } from '@/lib/api/api';
+import { apiFetch } from '@/lib/apis/api';
 
 export default function Page({
   params,
@@ -51,14 +52,15 @@ export default function Page({
       name: '',
       values: [
         {
-          value: '',
-          display_value: '',
+          code: '',
+          name: '',
           display_order: 1,
           is_active: true,
         },
       ],
     },
   });
+
   const { register, control, reset, handleSubmit } = form;
 
   const { fields, append, remove, replace } = useFieldArray({
@@ -150,8 +152,8 @@ export default function Page({
                 type='button'
                 onClick={() =>
                   append({
-                    value: '',
-                    display_value: '',
+                    code: '',
+                    name: '',
                     display_order: fields.length,
                     is_active: true,
                   })

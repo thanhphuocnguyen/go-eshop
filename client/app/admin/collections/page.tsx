@@ -9,7 +9,7 @@ import Image from 'next/image';
 import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/Common/Dialogs/ConfirmDialog';
-import { apiFetch } from '@/lib/api/api';
+import { apiFetch } from '@/lib/apis/api';
 
 export default function Page() {
   const [selectedCollection, setSelectedCollection] =

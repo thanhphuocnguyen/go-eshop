@@ -7,42 +7,17 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { apiFetch } from '@/lib/api/api';
+import { apiFetch } from '@/lib/apis/api';
 import { API_PATHS } from '@/lib/constants/api';
 import { getCookie } from 'cookies-next';
 import { toast } from 'react-toastify';
-import { GenericResponse } from '@/lib/definitions';
+import { CartModel, GenericResponse } from '@/lib/definitions';
 
 // Define types for cart items and cart
-interface CartItem {
-  id: string;
-  product_id: string;
-  variant_id: string;
-  name: string;
-  quantity: number;
-  price: number;
-  discount: number;
-  stock: number;
-  sku: string;
-  image_url?: string;
-  attributes: Array<{
-    name: string;
-    value: string;
-  }>;
-}
-
-interface Cart {
-  id: string;
-  user_id: string;
-  total_price: number;
-  cart_items: CartItem[];
-  updated_at: string;
-  created_at: string;
-}
 
 interface AppUserContextType {
   isLoading: boolean;
-  cart: Cart | null;
+  cart: CartModel | null;
   cartItemsCount: number;
   addToCart: (variantID: string, quantity: number) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
@@ -54,7 +29,7 @@ interface AppUserContextType {
 const AppUserContext = createContext<AppUserContextType | undefined>(undefined);
 
 export function AppUserProvider({ children }: { children: React.ReactNode }) {
-  const [cart, setCart] = useState<Cart | null>(null);
+  const [cart, setCart] = useState<CartModel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [cartItemsCount, setCartItemsCount] = useState(0);
 
@@ -71,7 +46,7 @@ export function AppUserProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setIsLoading(true);
-      const response = await apiFetch<{ data: Cart }>(API_PATHS.CART);
+      const response = await apiFetch<{ data: CartModel }>(API_PATHS.CART);
       if (response && response.data) {
         setCart(response.data);
         setCartItemsCount(response.data.cart_items?.length || 0);

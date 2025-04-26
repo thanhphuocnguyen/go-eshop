@@ -17,8 +17,7 @@ import { Control, Controller, FieldValues, Path } from 'react-hook-form';
 interface StyledComboBoxControllerProps<T extends FieldValues> {
   label: string;
   options: any[];
-  error?: boolean;
-  message?: string;
+  error?: string;
   name: Path<T>;
   getDisplayValue?: (option: any) => string;
   placeholder?: string;
@@ -31,7 +30,6 @@ export const StyledComboBoxController = <T extends FieldValues>({
   control,
   label,
   error,
-  message,
   disabled,
   placeholder,
   options,
@@ -50,7 +48,7 @@ export const StyledComboBoxController = <T extends FieldValues>({
           .includes(query.toLowerCase())
       )
     );
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, options]);
 
   return (
@@ -116,14 +114,14 @@ export const StyledComboBoxController = <T extends FieldValues>({
           </Combobox>
         )}
       />
-      {message && (
+      {error && (
         <div
           className={clsx(
             'text-sm mt-2',
             error ? 'text-red-500' : 'text-gray-500'
           )}
         >
-          {message}
+          {error}
         </div>
       )}
     </Field>

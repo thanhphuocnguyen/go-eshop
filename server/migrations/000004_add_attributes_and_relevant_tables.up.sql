@@ -2,7 +2,7 @@
 CREATE TABLE
     attributes (
         id SERIAL PRIMARY KEY,
-        name VARCHAR(100) UNIQUE NOT NULL,
+        "name" VARCHAR(100) UNIQUE NOT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW ()
     );
 
@@ -11,9 +11,9 @@ CREATE TABLE
     attribute_values (
         id SERIAL PRIMARY KEY,
         attribute_id INT NOT NULL REFERENCES attributes (id) ON DELETE CASCADE,
-        value VARCHAR NOT NULL UNIQUE,
+        "name" VARCHAR NOT NULL UNIQUE,
+        code VARCHAR NOT NULL UNIQUE, -- TODO: change name to code and not null
         is_active BOOLEAN DEFAULT TRUE,
-        display_value VARCHAR, -- TODO: change name to code
         display_order SMALLINT NOT NULL DEFAULT 0 CHECK (
             display_order >= 0
             AND display_order <= 32767

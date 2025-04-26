@@ -20,11 +20,8 @@ func GetVariantSKUWithAttributeNames(productSku string, attrs []AttributeValue) 
 
 	attributeNames := make([]string, 0)
 	for _, attr := range attrs {
-		if attr.DisplayValue.Valid && attr.DisplayValue.String != "" {
-			attributeNames = append(attributeNames, attr.DisplayValue.String)
-		} else {
-			attributeNames = append(attributeNames, attr.Value)
-		}
+		attributeNames = append(attributeNames, attr.Name)
+
 	}
 	return GetVariantSKU(productSku, attributeNames)
 }

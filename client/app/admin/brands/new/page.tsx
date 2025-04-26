@@ -7,7 +7,7 @@ import { toast } from 'react-toastify';
 import { redirect } from 'next/navigation';
 import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
 import { API_PATHS } from '@/lib/constants/api';
-import { apiFetch } from '@/lib/api/api';
+import { apiFetch } from '@/lib/apis/api';
 
 export default function Page() {
   const handleSave = async (form: FormData) => {
