@@ -1,88 +1,176 @@
 'use client';
 
 import { TextField } from '@/components/FormFields';
-import { Button, Fieldset } from '@headlessui/react';
+import {
+  Button,
+  Checkbox,
+  Fieldset,
+  Radio,
+  RadioGroup,
+} from '@headlessui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { CheckoutFormSchema, CheckoutFormValues } from './_lib/definitions';
+import { useForm, useWatch } from 'react-hook-form';
+import {
+  CheckoutDataResponse,
+  CheckoutFormSchema,
+  CheckoutFormValues,
+} from './_lib/definitions';
 import Image from 'next/image';
 import { TrashIcon } from '@heroicons/react/24/solid';
 import { useAppUser } from '@/components/AppUserContext';
-import useSWR from 'swr';
-import { API_PATHS } from '@/lib/constants/api';
+import { useEffect, useState } from 'react';
+import { useUser } from '@/lib/hooks/useUser';
+import { CheckIcon } from '@heroicons/react/24/outline';
+import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/apis/api';
-import { GenericResponse, UserModel } from '@/lib/definitions';
-import { useEffect } from 'react';
+import { API_PATHS } from '@/lib/constants/api';
+import { GenericResponse } from '@/lib/definitions';
 import { toast } from 'react-toastify';
 
 export default function CheckoutPage() {
-  const { register, watch, reset } = useForm<CheckoutFormValues>({
-    resolver: zodResolver(CheckoutFormSchema),
-    defaultValues: {
-      address: '',
-      cardCvc: '',
-      cardExpiry: '',
-      cardNumber: '',
-      city: '',
-      district: '',
-      email: '',
-      fullname: '',
-      phone: '',
-      paypalEmail: '',
-      paymentMethod: 'credit_card',
-      termsAccepted: false,
-      stripeEmail: '',
-    },
-  });
-  const { cart } = useAppUser();
-  const paymentMethod = watch('paymentMethod');
-
-  const { data } = useSWR(
-    API_PATHS.USER,
-    (url) =>
-      apiFetch<GenericResponse<UserModel>>(url, {}).then((data) => data.data),
-    {
-      refreshInterval: 0,
-      onError: (error) => {
-        toast.error(
-          <div>
-            Error fetching user data. Please try again later.
-            <br />
-            {error.message}
-          </div>,
-          {
-            position: 'top-right',
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-          }
-        );
-      },
-    }
+  const router = useRouter();
+  const [isNewAddress, setIsNewAddress] = useState(true);
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(
+    null
   );
 
+  const { register, control, watch, reset, setValue, handleSubmit } =
+    useForm<CheckoutFormValues>({
+      resolver: zodResolver(CheckoutFormSchema),
+      defaultValues: {
+        address: {
+          city: '',
+          street: '',
+          district: '',
+          phone: '',
+        },
+        fullname: '',
+        email: '',
+        payment_method: 'cod',
+        terms_accepted: false,
+      },
+    });
+  const { cart, user: info } = useAppUser();
+
+  const paymentMethod = useWatch({ control, name: 'payment_method' });
+
+  const { user } = useUser(!!info.id);
+
+  const handleAddressChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const addressId = parseInt(e.target.value);
+
+    if (addressId === -1) {
+      setIsNewAddress(true);
+      setSelectedAddressId(null);
+
+      setValue('address', {
+        city: '',
+        district: '',
+        phone: '',
+        street: '',
+        ward: '',
+      });
+    } else {
+      setIsNewAddress(false);
+      setSelectedAddressId(addressId);
+
+      const selectedAddress = user?.addresses?.find(
+        (addr) => addr.id === addressId
+      );
+      if (selectedAddress) {
+        setValue('address_id', selectedAddress.id);
+        setValue('address', {
+          street: selectedAddress.street,
+          city: selectedAddress.city,
+          district: selectedAddress.district,
+          ward: selectedAddress.ward,
+          phone: selectedAddress.phone,
+        });
+      }
+    }
+  };
+
   useEffect(() => {
-    if (data) {
+    if (user) {
       const defaultValue: Partial<CheckoutFormValues> = {
-        email: data.email,
-        fullname: data.fullname,
-        paymentMethod: 'credit_card',
-        termsAccepted: false,
+        email: user.email,
+        fullname: user.fullname,
+        payment_method: 'cod',
+        terms_accepted: false,
       };
 
-      if (data.addresses && data.addresses.length > 0) {
-        defaultValue.address = data.addresses[0].address;
-        defaultValue.city = data.addresses[0].city;
-        defaultValue.district = data.addresses[0].district;
-        defaultValue.ward = data.addresses[0].ward;
-        defaultValue.phone = data.addresses[0].phone;
+      if (user.addresses && user.addresses.length > 0) {
+        const defaultAddress =
+          user.addresses.find((addr) => addr.default) || user.addresses[0];
+        defaultValue.address_id = defaultAddress.id;
+        defaultValue.address = {
+          street: defaultAddress.street,
+          city: defaultAddress.city,
+          district: defaultAddress.district,
+          phone: defaultAddress.phone,
+          ward: defaultAddress.ward,
+        };
+        setIsNewAddress(false);
+        setSelectedAddressId(defaultAddress.id);
+      } else {
+        setIsNewAddress(true);
+        setSelectedAddressId(null);
       }
 
       reset(defaultValue);
     }
-  }, [data, reset]);
+  }, [user, reset, setValue]);
+
+  const onSubmit = async (body: CheckoutFormValues) => {
+    // Save form data to session storage for the next step
+    const { data, error } = await apiFetch<
+      GenericResponse<CheckoutDataResponse>
+    >(API_PATHS.CHECKOUT, {
+      method: 'POST',
+      body: {
+        ...body,
+        address: body.address_id ? undefined : body.address,
+        payment_receipt_email: body.payment_receipt_email
+          ? body.payment_receipt_email
+          : undefined,
+      },
+    });
+
+    if (error) {
+      if(error.code === '')
+      toast.error(
+        <div>
+          <h3 className='text-lg font-semibold text-red-600 mb-2'>
+            Error checkout
+          </h3>
+          <p className='text-sm text-gray-500'>{JSON.stringify(error)}</p>
+        </div>
+      );
+      return;
+    }
+
+    if (data) {
+      sessionStorage.setItem('checkoutData', JSON.stringify(body));
+      // If Stripe is selected, redirect to the Stripe payment page
+      if (body.payment_method === 'stripe') {
+        router.push('/checkout/payment/stripe');
+      } else {
+        // Handle COD checkout
+        // You would typically call your API to create the order here
+        console.log('Processing COD order', body);
+        // Implement your COD order processing logic
+      }
+    } else {
+      toast.error(
+        <div>
+          <h3 className='text-lg font-semibold text-red-600 mb-2'>
+            Error create order
+          </h3>
+          <p className='text-sm text-gray-500'>Unknown error</p>
+        </div>
+      );
+    }
+  };
 
   return (
     <div className='bg-gray-50 m-auto h-full p-10'>
@@ -101,43 +189,85 @@ export default function CheckoutPage() {
             <h4 className='text-lg font-semibold text-gray-600'>
               Shipping Information
             </h4>
+
+            {user?.addresses && user.addresses.length > 0 && (
+              <div className='mt-4 mb-6'>
+                <label className='block text-sm font-medium text-gray-700 mb-1'>
+                  Select Address
+                </label>
+                <div className='flex gap-4'>
+                  <select
+                    className='flex-1 py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm'
+                    value={selectedAddressId === null ? -1 : selectedAddressId}
+                    onChange={handleAddressChange}
+                  >
+                    {user.addresses.map((address) => (
+                      <option key={address.id} value={address.id}>
+                        {address.street}, {address.district}, {address.city}
+                        {address.default ? ' (Default)' : ''}
+                      </option>
+                    ))}
+                    <option value='-1'>+ Add new address</option>
+                  </select>
+
+                  {!isNewAddress && (
+                    <Button
+                      type='button'
+                      onClick={() => {
+                        setIsNewAddress(true);
+                        setSelectedAddressId(-1);
+                      }}
+                      className='bg-white border border-gray-300 rounded-md shadow-sm px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+                    >
+                      Add New
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className='grid grid-cols-2 gap-6 mt-4'>
               <TextField
                 {...register('fullname')}
                 type='text'
-                label='First name'
+                label='Full name'
               />
               <TextField
                 className=''
-                {...register('address')}
+                {...register('address.street')}
                 type='text'
-                label='Address'
+                label='Street address'
                 placeholder='Street address'
+                disabled={!isNewAddress}
               />
               <TextField
-                {...register('city')}
+                {...register('address.city')}
                 type='text'
                 label='City'
                 placeholder='City'
+                disabled={!isNewAddress}
               />
               <TextField
-                {...register('district')}
+                {...register('address.district')}
                 type='text'
                 label='District'
                 placeholder='District'
+                disabled={!isNewAddress}
               />
               <TextField
-                {...register('ward')}
+                {...register('address.ward')}
                 type='text'
                 label='Ward'
                 placeholder=''
+                disabled={!isNewAddress}
               />
               <TextField
-                {...register('phone')}
-                type='text'
+                {...register('address.phone')}
+                type='phone'
                 className=''
                 label='Phone number'
                 placeholder='Phone number'
+                disabled={!isNewAddress}
               />
             </div>
 
@@ -147,187 +277,114 @@ export default function CheckoutPage() {
             </h4>
 
             <div className='flex flex-col space-y-6'>
-              <div className='grid grid-cols-2 gap-4'>
-                <div
-                  className={`border rounded-lg p-4 flex items-center cursor-pointer transition-all ${
-                    paymentMethod === 'credit_card'
-                      ? 'border-indigo-600 bg-indigo-50'
-                      : 'border-gray-200 hover:border-indigo-300'
-                  }`}
-                  onClick={() => {
-                    const creditCardRadio = document.getElementById(
-                      'credit_card'
-                    ) as HTMLInputElement;
-                    if (creditCardRadio) {
-                      creditCardRadio.checked = true;
-                      creditCardRadio.dispatchEvent(
-                        new Event('change', { bubbles: true })
-                      );
-                    }
-                  }}
+              <RadioGroup
+                value={paymentMethod}
+                onChange={(value) =>
+                  setValue('payment_method', value as 'stripe' | 'cod')
+                }
+                className='grid grid-cols-2 gap-4'
+              >
+                <Radio
+                  value='stripe'
+                  className={({ checked }) =>
+                    `border rounded-lg p-4 flex items-center cursor-pointer transition-all 
+                    ${checked ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-indigo-300'}`
+                  }
                 >
-                  <input
-                    type='radio'
-                    id='credit_card'
-                    value='credit_card'
-                    className='h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300'
-                    {...register('paymentMethod')}
-                  />
-                  <label
-                    htmlFor='credit_card'
-                    className='ml-3 flex-1 cursor-pointer'
-                  >
-                    <div className='font-medium text-gray-800'>Credit Card</div>
-                    <div className='text-sm text-gray-500'>
-                      Pay with Visa, Mastercard, etc.
-                    </div>
-                  </label>
-                  <div className='flex gap-2 ml-2'>
-                    <div className='h-8 w-12 bg-gray-100 rounded-md flex items-center justify-center text-xs font-medium text-gray-800'>
-                      Visa
-                    </div>
-                    <div className='h-8 w-12 bg-gray-100 rounded-md flex items-center justify-center text-xs font-medium text-gray-800'>
-                      MC
-                    </div>
-                  </div>
-                </div>
+                  {({ checked }) => (
+                    <>
+                      <div className='h-5 w-5 mr-3 flex items-center justify-center'>
+                        <div
+                          className={`h-3 w-3 rounded-full ${checked ? 'bg-indigo-600' : 'bg-gray-300'}`}
+                        />
+                      </div>
+                      <div className='flex-1'>
+                        <div className='font-medium text-gray-800'>Stripe</div>
+                        <div className='text-sm text-gray-500'>
+                          Pay securely with Stripe
+                        </div>
+                      </div>
+                      <div className='h-8 w-20 bg-purple-100 rounded-md flex items-center justify-center text-sm font-bold text-purple-700'>
+                        Stripe
+                      </div>
+                    </>
+                  )}
+                </Radio>
 
-                <div
-                  className={`border rounded-lg p-4 flex items-center cursor-pointer transition-all ${
-                    paymentMethod === 'paypal'
-                      ? 'border-indigo-600 bg-indigo-50'
-                      : 'border-gray-200 hover:border-indigo-300'
-                  }`}
-                  onClick={() => {
-                    const paypalRadio = document.getElementById(
-                      'paypal'
-                    ) as HTMLInputElement;
-                    if (paypalRadio) {
-                      paypalRadio.checked = true;
-                      paypalRadio.dispatchEvent(
-                        new Event('change', { bubbles: true })
-                      );
-                    }
-                  }}
+                <Radio
+                  value='cod'
+                  className={({ checked }) =>
+                    `border rounded-lg p-4 flex items-center cursor-pointer transition-all 
+                    ${checked ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-indigo-300'}`
+                  }
                 >
-                  <input
-                    type='radio'
-                    id='paypal'
-                    value='paypal'
-                    className='h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300'
-                    {...register('paymentMethod')}
-                  />
-                  <label
-                    htmlFor='paypal'
-                    className='ml-3 flex-1 cursor-pointer'
-                  >
-                    <div className='font-medium text-gray-800'>PayPal</div>
-                    <div className='text-sm text-gray-500'>
-                      Pay with your PayPal account
-                    </div>
-                  </label>
-                  <div className='h-8 w-20 bg-blue-100 rounded-md flex items-center justify-center text-sm font-bold text-blue-700'>
-                    PayPal
-                  </div>
-                </div>
-
-                <div
-                  className={`border rounded-lg p-4 flex items-center cursor-pointer transition-all ${
-                    paymentMethod === 'stripe'
-                      ? 'border-indigo-600 bg-indigo-50'
-                      : 'border-gray-200 hover:border-indigo-300'
-                  }`}
-                  onClick={() => {
-                    const stripeRadio = document.getElementById(
-                      'stripe'
-                    ) as HTMLInputElement;
-                    if (stripeRadio) {
-                      stripeRadio.checked = true;
-                      stripeRadio.dispatchEvent(
-                        new Event('change', { bubbles: true })
-                      );
-                    }
-                  }}
-                >
-                  <input
-                    type='radio'
-                    id='stripe'
-                    value='stripe'
-                    className='h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300'
-                    {...register('paymentMethod')}
-                  />
-                  <label
-                    htmlFor='stripe'
-                    className='ml-3 flex-1 cursor-pointer'
-                  >
-                    <div className='font-medium text-gray-800'>Stripe</div>
-                    <div className='text-sm text-gray-500'>
-                      Pay with your Stripe account
-                    </div>
-                  </label>
-                  <div className='h-8 w-20 bg-purple-100 rounded-md flex items-center justify-center text-sm font-bold text-purple-700'>
-                    Stripe
-                  </div>
-                </div>
-              </div>
-
-              {paymentMethod === 'credit_card' && (
-                <div className='mt-6 p-5 border border-gray-200 rounded-lg bg-white space-y-4'>
-                  <TextField
-                    {...register('cardNumber')}
-                    type='text'
-                    label='Card number'
-                    placeholder='0000 0000 0000 0000'
-                  />
-                  <div className='grid grid-cols-2 gap-4'>
-                    <TextField
-                      {...register('cardExpiry')}
-                      type='text'
-                      label='Expiration date'
-                      placeholder='MM/YY'
-                    />
-                    <TextField
-                      {...register('cardCvc')}
-                      type='text'
-                      label='CVC'
-                      placeholder='000'
-                    />
-                  </div>
-                </div>
-              )}
-
-              {paymentMethod === 'paypal' && (
-                <div className='mt-6 p-5 border border-gray-200 rounded-lg bg-white'>
-                  <TextField
-                    {...register('paypalEmail')}
-                    type='email'
-                    label='PayPal email'
-                    placeholder='Enter your PayPal email'
-                  />
-                </div>
-              )}
+                  {({ checked }) => (
+                    <>
+                      <div className='h-5 w-5 mr-3 flex items-center justify-center'>
+                        <div
+                          className={`h-3 w-3 rounded-full ${checked ? 'bg-indigo-600' : 'bg-gray-300'}`}
+                        />
+                      </div>
+                      <div className='flex-1'>
+                        <div className='font-medium text-gray-800'>
+                          Cash on Delivery
+                        </div>
+                        <div className='text-sm text-gray-500'>
+                          Pay with cash upon delivery
+                        </div>
+                      </div>
+                      <div className='h-8 w-20 bg-green-100 rounded-md flex items-center justify-center text-sm font-bold text-green-700'>
+                        COD
+                      </div>
+                    </>
+                  )}
+                </Radio>
+              </RadioGroup>
 
               {paymentMethod === 'stripe' && (
                 <div className='mt-6 p-5 border border-gray-200 rounded-lg bg-white'>
                   <TextField
-                    {...register('stripeEmail')}
+                    {...register('payment_receipt_email')}
                     type='email'
-                    label='Stripe email'
-                    placeholder='Enter your Stripe email'
+                    label='Email for payment receipt'
+                    placeholder='Enter your email for payment receipt'
                   />
+                  <p className='mt-2 text-sm text-gray-600'>
+                    You will be redirected to our secure payment page after
+                    confirming your order.
+                  </p>
                 </div>
               )}
 
-              <div className='mt-6 flex items-start'>
-                <input
-                  type='checkbox'
-                  id='terms'
-                  className='h-5 w-5 mt-0.5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded'
-                  {...register('termsAccepted')}
-                />
-                <label htmlFor='terms' className='ml-3 text-sm text-gray-600'>
-                  I agree to the terms and conditions and the privacy policy
-                </label>
+              {paymentMethod === 'cod' && (
+                <div className='mt-6 p-5 border border-gray-200 rounded-lg bg-white'>
+                  <p className='text-sm text-gray-600'>
+                    You will pay in cash when your order is delivered. No
+                    additional information is required.
+                  </p>
+                </div>
+              )}
+
+              <div className='mt-6'>
+                <Checkbox
+                  checked={!!watch('terms_accepted')}
+                  onChange={(checked) => setValue('terms_accepted', checked)}
+                  className='flex items-center'
+                >
+                  {({ checked }) => (
+                    <>
+                      <div className='flex h-5 w-5 items-center justify-center rounded border border-gray-300 bg-white'>
+                        {checked && (
+                          <CheckIcon className='h-4 w-4 text-indigo-600' />
+                        )}
+                      </div>
+                      <span className='ml-3 text-sm text-gray-600'>
+                        I agree to the terms and conditions and the privacy
+                        policy
+                      </span>
+                    </>
+                  )}
+                </Checkbox>
               </div>
             </div>
           </Fieldset>
@@ -405,7 +462,9 @@ export default function CheckoutPage() {
             <hr className='my-6' />
             <div className='px-6 pb-6'>
               <Button
-                type='submit'
+                onClick={handleSubmit(onSubmit, (err) => {
+                  console.log(err);
+                })}
                 className='w-full bg-indigo-600 h-12 text-white py-2 rounded-md hover:bg-indigo-700'
               >
                 Confirm Order

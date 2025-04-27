@@ -21,7 +21,7 @@ const (
 )
 
 type PaymentStrategy interface {
-	CreatePaymentIntent(amount float64, email string) (string, error)
+	CreatePaymentIntent(amount float64, email string) (result interface{}, err error)
 	ProcessPayment(transactionID string) (string, error)
 	GetPaymentObject(transactionID string) (interface{}, error)
 	RefundPayment(transactionID string, amount int64, reason RefundReason) (string, error)
@@ -41,9 +41,9 @@ func (p *PaymentContext) SetStrategy(strategy PaymentStrategy) {
 	p.strategy = strategy
 }
 
-func (p *PaymentContext) CreatePaymentIntent(amount float64, email string) (string, error) {
+func (p *PaymentContext) CreatePaymentIntent(amount float64, email string) (result interface{}, err error) {
 	if p.strategy == nil {
-		return "", ErrPaymentStrategyNotSet
+		return nil, ErrPaymentStrategyNotSet
 	}
 	return p.strategy.CreatePaymentIntent(amount, email)
 }

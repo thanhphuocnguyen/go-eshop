@@ -8,26 +8,35 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
-type CreateOrderTxParams struct {
+type CustomerInfoTxArgs struct {
+	FullName string
+	Email    string
+	Phone    string
+}
+
+type CreateOrderTxArgs struct {
 	UserID                uuid.UUID
 	CartID                uuid.UUID
-	PaymentMethod         PaymentMethod
-	PaymentGateway        PaymentGateway
 	AddressID             int64
-	PaymentID             string
-	CreateOrderItemParams []CreateOrderItemParams
+	CustomerInfo          CustomerInfoTxArgs
+	CreateOrderItemParams []CreateBulkOrderItemsParams
 	TotalPrice            float64
 }
 
-func (s *pgRepo) CreateOrderTx(ctx context.Context, arg CreateOrderTxParams) (uuid.UUID, error) {
+func (s *pgRepo) CreateOrderTx(ctx context.Context, arg CreateOrderTxArgs) (uuid.UUID, error) {
 	var result uuid.UUID
 	err := s.execTx(ctx, func(q *Queries) (err error) {
-		order, err := s.CreateOrder(ctx, CreateOrderParams{
+		params := CreateOrderParams{
 			ID:            uuid.New(),
 			CustomerID:    arg.UserID,
 			UserAddressID: arg.AddressID,
 			TotalPrice:    utils.GetPgNumericFromFloat(arg.TotalPrice),
-		})
+			CustomerEmail: arg.CustomerInfo.Email,
+			CustomerName:  arg.CustomerInfo.FullName,
+			CustomerPhone: utils.GetPgTypeText(arg.CustomerInfo.Phone),
+		}
+
+		order, err := s.CreateOrder(ctx, params)
 
 		result = order.ID
 		if err != nil {
@@ -35,36 +44,25 @@ func (s *pgRepo) CreateOrderTx(ctx context.Context, arg CreateOrderTxParams) (uu
 			return err
 		}
 
-		for _, createOrderItemParam := range arg.CreateOrderItemParams {
-			createOrderItemParam.OrderID = order.ID
-			_, err = q.CreateOrderItem(ctx, createOrderItemParam)
-			if err != nil {
-				log.Error().Err(err).Msg("CreateOrderItem")
-				return err
-			}
-		}
+		for i := range arg.CreateOrderItemParams {
+			arg.CreateOrderItemParams[i].OrderID = order.ID
 
-		// create payment transaction
-		_, err = q.CreatePaymentTransaction(ctx, CreatePaymentTransactionParams{
-			ID:            arg.PaymentID,
-			OrderID:       order.ID,
-			Amount:        utils.GetPgNumericFromFloat(arg.TotalPrice),
-			PaymentMethod: arg.PaymentMethod,
-			PaymentGateway: NullPaymentGateway{
-				PaymentGateway: arg.PaymentGateway,
-				Valid:          true,
-			},
-		})
+		}
+		_, err = q.CreateBulkOrderItems(ctx, arg.CreateOrderItemParams)
 
 		if err != nil {
-			log.Error().Err(err).Msg("CreatePaymentTransaction")
+			log.Error().Err(err).Msg("CreateOrderItem")
 			return err
 		}
 
 		// clear cart
-		err = s.ClearCart(ctx, arg.CartID)
+		err = s.CheckoutCart(ctx, CheckoutCartParams{
+			OrderID: utils.GetPgTypeUUID(order.ID),
+			ID:      arg.CartID,
+		})
+
 		if err != nil {
-			log.Error().Err(err).Msg("ClearCart")
+			log.Error().Err(err).Msg("CheckoutCart")
 			return err
 		}
 

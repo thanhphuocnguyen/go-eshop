@@ -1,5 +1,16 @@
 -- name: CreateOrder :one
-INSERT INTO orders (id,customer_id,user_address_id,total_price) VALUES ($1,$2,$3,$4) RETURNING *;
+INSERT INTO orders (
+    id,
+    customer_id,
+    user_address_id,
+    customer_email,
+    customer_name,
+    customer_phone,
+    total_price
+)
+VALUES 
+    ($1,$2,$3,$4, $5, $6, $7)
+RETURNING *;
 
 -- name: GetOrder :one
 SELECT
@@ -80,6 +91,12 @@ INSERT INTO
 VALUES
     ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 RETURNING *;
+
+-- name: CreateBulkOrderItems :copyfrom
+INSERT INTO
+    order_items (id, order_id, variant_id, quantity, price_per_unit_snapshot, variant_sku_snapshot, product_name_snapshot, line_total_snapshot, attributes_snapshot)
+VALUES
+    ($1, $2, $3, $4, $5, $6, $7, $8, $9);
 
 -- name: ListOrderItems :many
 SELECT

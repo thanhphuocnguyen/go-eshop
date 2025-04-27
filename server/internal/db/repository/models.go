@@ -255,7 +255,6 @@ const (
 	PaymentGatewayVisa       PaymentGateway = "visa"
 	PaymentGatewayMastercard PaymentGateway = "mastercard"
 	PaymentGatewayApplePay   PaymentGateway = "apple_pay"
-	PaymentGatewayGooglePay  PaymentGateway = "google_pay"
 	PaymentGatewayPostpaid   PaymentGateway = "postpaid"
 	PaymentGatewayMomo       PaymentGateway = "momo"
 	PaymentGatewayZaloPay    PaymentGateway = "zalo_pay"
@@ -300,11 +299,12 @@ func (ns NullPaymentGateway) Value() (driver.Value, error) {
 type PaymentMethod string
 
 const (
-	PaymentMethodCard         PaymentMethod = "card"
-	PaymentMethodCod          PaymentMethod = "cod"
-	PaymentMethodWallet       PaymentMethod = "wallet"
-	PaymentMethodPostpaid     PaymentMethod = "postpaid"
+	PaymentMethodCreditCard   PaymentMethod = "credit_card"
+	PaymentMethodPaypal       PaymentMethod = "paypal"
+	PaymentMethodStripe       PaymentMethod = "stripe"
+	PaymentMethodApplePay     PaymentMethod = "apple_pay"
 	PaymentMethodBankTransfer PaymentMethod = "bank_transfer"
+	PaymentMethodCod          PaymentMethod = "cod"
 )
 
 func (e *PaymentMethod) Scan(src interface{}) error {

@@ -59,24 +59,24 @@ type RefreshTokenResponse struct {
 func (sv *Server) registerHandler(c *gin.Context) {
 	var req RegisterRequestBody
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[UserResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[UserResponse](InvalidBodyCode, "", err))
 		return
 	}
 
 	_, err := sv.repo.GetUserByUsername(c, req.Username)
 	if err != nil && !errors.Is(err, repository.ErrRecordNotFound) {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", err))
 		return
 	}
 
 	if err == nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[UserResponse](http.StatusBadRequest, "", fmt.Errorf("username %s is already taken", req.Username)))
+		c.JSON(http.StatusBadRequest, createErrorResponse[UserResponse](UsernameExistedCode, "", fmt.Errorf("username %s is already taken", req.Username)))
 		return
 	}
 
 	hashedPassword, err := auth.HashPassword(req.Password)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](HashPasswordCode, "", err))
 		return
 	}
 
@@ -96,7 +96,7 @@ func (sv *Server) registerHandler(c *gin.Context) {
 	user, err := sv.repo.CreateUser(c, arg)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -114,14 +114,14 @@ func (sv *Server) registerHandler(c *gin.Context) {
 	createdAddress, err := sv.repo.CreateAddress(c, createAddressArgs)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](AddressCodeCode, "", err))
 		return
 	}
 
 	err = sv.taskDistributor.SendVerifyEmail(c, &worker.PayloadVerifyEmail{UserID: user.ID}, asynq.MaxRetry(3), asynq.ProcessIn(5*time.Second), asynq.Queue(worker.QueueCritical))
 
 	if err != nil {
-		createErrorResponse[UserResponse](http.StatusInternalServerError, "Please verify your email address to activate your account", err)
+		createErrorResponse[UserResponse](ActivateUserCode, "Please verify your email address to activate your account", err)
 		return
 	}
 
@@ -141,14 +141,12 @@ func (sv *Server) registerHandler(c *gin.Context) {
 		UpdatedAt:     user.UpdatedAt.String(),
 		FullName:      user.Fullname,
 		Addresses: []AddressResponse{{
-			ID: createdAddress.ID,
-			Address: Address{
-				Phone:    createdAddress.Phone,
-				Street:   createdAddress.Street,
-				Ward:     &ward,
-				District: createdAddress.District,
-				City:     createdAddress.City,
-			},
+			ID:        createdAddress.ID,
+			Phone:     createdAddress.Phone,
+			Street:    createdAddress.Street,
+			Ward:      &ward,
+			District:  createdAddress.District,
+			City:      createdAddress.City,
 			Default:   createdAddress.Default,
 			CreatedAt: createdAddress.CreatedAt,
 		}},
@@ -171,11 +169,11 @@ func (sv *Server) registerHandler(c *gin.Context) {
 func (sv *Server) loginHandler(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[LoginResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[LoginResponse](InvalidBodyCode, "", err))
 		return
 	}
 	if req.Username == nil && req.Email == nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[LoginResponse](http.StatusBadRequest, "", fmt.Errorf("username or email is required")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[LoginResponse](InvalidEmailCode, "", fmt.Errorf("username or email is required")))
 		return
 	}
 
@@ -189,27 +187,27 @@ func (sv *Server) loginHandler(c *gin.Context) {
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusUnauthorized, createErrorResponse[LoginResponse](http.StatusUnauthorized, "User not existed", err))
+			c.JSON(http.StatusUnauthorized, createErrorResponse[LoginResponse](NotFoundCode, "User not existed", err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[LoginResponse](http.StatusInternalServerError, "Internal Server Error", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[LoginResponse](InternalServerErrorCode, "Internal Server Error", err))
 		return
 	}
 
 	if err := auth.CheckPassword(req.Password, user.HashedPassword); err != nil {
-		c.JSON(http.StatusUnauthorized, createErrorResponse[LoginResponse](http.StatusUnauthorized, "Invalid credentials", err))
+		c.JSON(http.StatusUnauthorized, createErrorResponse[LoginResponse](UnauthorizedCode, "Invalid credentials", err))
 		return
 	}
 
 	accessToken, payload, err := sv.tokenGenerator.GenerateToken(user.ID, user.Username, user.Role, sv.config.AccessTokenDuration)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[LoginResponse](http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[LoginResponse](InvalidTokenCode, "", err))
 		return
 	}
 
 	refreshToken, rfPayload, err := sv.tokenGenerator.GenerateToken(user.ID, user.Username, user.Role, sv.config.RefreshTokenDuration)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[LoginResponse](http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[LoginResponse](InvalidTokenCode, "", err))
 		return
 	}
 
@@ -224,7 +222,7 @@ func (sv *Server) loginHandler(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[LoginResponse](http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[LoginResponse](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -251,14 +249,14 @@ func (sv *Server) loginHandler(c *gin.Context) {
 func (sv *Server) refreshTokenHandler(c *gin.Context) {
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {
-		c.JSON(http.StatusUnauthorized, createErrorResponse[RefreshTokenResponse](http.StatusUnauthorized, "", fmt.Errorf("refresh token is required")))
+		c.JSON(http.StatusUnauthorized, createErrorResponse[RefreshTokenResponse](UnauthorizedCode, "", fmt.Errorf("refresh token is required")))
 		return
 	}
 
 	refreshToken := authHeader[len("Bearer "):]
 	refreshTokenPayload, err := sv.tokenGenerator.VerifyToken(refreshToken)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, createErrorResponse[RefreshTokenResponse](http.StatusUnauthorized, "", err))
+		c.JSON(http.StatusUnauthorized, createErrorResponse[RefreshTokenResponse](UnauthorizedCode, "", err))
 		return
 	}
 
@@ -266,39 +264,39 @@ func (sv *Server) refreshTokenHandler(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound,
-				createErrorResponse[RefreshTokenResponse](http.StatusNotFound, "Not found", fmt.Errorf("session not found")))
+				createErrorResponse[RefreshTokenResponse](NotFoundCode, "Not found", fmt.Errorf("session not found")))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[RefreshTokenResponse](http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[RefreshTokenResponse](InternalServerErrorCode, "", err))
 		return
 	}
 
 	if session.ID != refreshTokenPayload.ID {
 		err := errors.New("refresh token is not valid")
-		c.JSON(http.StatusUnauthorized, createErrorResponse[RefreshTokenResponse](http.StatusUnauthorized, "", err))
+		c.JSON(http.StatusUnauthorized, createErrorResponse[RefreshTokenResponse](InvalidTokenCode, "", err))
 		return
 	}
 
 	if session.RefreshToken != refreshToken {
 		err := errors.New("refresh token is not valid")
-		c.JSON(http.StatusUnauthorized, createErrorResponse[RefreshTokenResponse](http.StatusUnauthorized, "", err))
+		c.JSON(http.StatusUnauthorized, createErrorResponse[RefreshTokenResponse](InvalidTokenCode, "", err))
 		return
 	}
 
 	if session.Blocked {
 		err := errors.New("session is blocked")
-		c.JSON(http.StatusUnauthorized, createErrorResponse[RefreshTokenResponse](http.StatusUnauthorized, "", err))
+		c.JSON(http.StatusUnauthorized, createErrorResponse[RefreshTokenResponse](InvalidSessionCode, "", err))
 		return
 	}
 
 	if time.Now().After(session.ExpiredAt) {
 		err := errors.New("refresh token was expired")
-		c.JSON(http.StatusUnauthorized, createErrorResponse[RefreshTokenResponse](http.StatusUnauthorized, "", err))
+		c.JSON(http.StatusUnauthorized, createErrorResponse[RefreshTokenResponse](InvalidSessionCode, "", err))
 		return
 	}
 	accessToken, _, err := sv.tokenGenerator.GenerateToken(session.UserID, refreshTokenPayload.Username, refreshTokenPayload.Role, sv.config.AccessTokenDuration)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[RefreshTokenResponse](http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[RefreshTokenResponse](InternalServerErrorCode, "", err))
 		return
 	}
 

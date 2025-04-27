@@ -20,11 +20,12 @@ CREATE TYPE "payment_status" AS ENUM (
 );
 
 CREATE TYPE "payment_method" AS ENUM (
-  'card',
-  'cod',
-  'wallet',
-  'postpaid',
-  'bank_transfer'
+  'credit_card',
+  'paypal',
+  'stripe',
+  'apple_pay',
+  'bank_transfer',
+  'cod'
 );
 
 CREATE TYPE "payment_gateway" AS ENUM (
@@ -33,7 +34,6 @@ CREATE TYPE "payment_gateway" AS ENUM (
   'visa',
   'mastercard',
   'apple_pay',
-  'google_pay',
   'postpaid',
   'momo',
   'zalo_pay',

@@ -17,6 +17,9 @@ DELETE FROM cart_items WHERE cart_id = $1 AND id = $2;
 -- name: UpdateCartTimestamp :exec
 UPDATE carts SET updated_at = NOW() WHERE id = $1 RETURNING *;
 
+-- name: CheckoutCart :exec
+UPDATE carts SET order_id = $1 WHERE id = $2 RETURNING *;
+
 -- Cart Item Section
 -- name: CreateCartItem :one
 INSERT INTO cart_items (id, cart_id, variant_id, quantity) VALUES ($1, $2, $3, $4) RETURNING *;
@@ -49,6 +52,21 @@ JOIN attribute_values AS av ON vav.attribute_value_id = av.id
 JOIN attributes AS a ON av.attribute_id = a.id
 LEFT JOIN image_assignments AS ia ON ia.entity_id = pv.id AND ia.entity_type = 'variant'
 LEFT JOIN images AS i ON i.id = ia.image_id
+WHERE ci.cart_id = $1
+ORDER BY ci.added_at, ci.id, pv.id DESC;
+
+-- name: GetCartItemsForOrder :many
+SELECT 
+    sqlc.embed(ci), 
+    pv.id AS variant_id, pv.price, pv.stock, pv.sku, pv.stock as stock_qty,
+    p.name AS product_name,
+    av.code AS attr_val_code, av.name as attr_val_name, a.name AS attr_name
+FROM cart_items AS ci
+JOIN product_variants AS pv ON pv.id = ci.variant_id
+JOIN products AS p ON p.id = pv.product_id
+JOIN variant_attribute_values AS vav ON vav.variant_id = pv.id
+JOIN attribute_values AS av ON vav.attribute_value_id = av.id
+JOIN attributes AS a ON av.attribute_id = a.id
 WHERE ci.cart_id = $1
 ORDER BY ci.added_at, ci.id, pv.id DESC;
 

@@ -15,6 +15,7 @@ type Querier interface {
 	AddBulkProducts(ctx context.Context, arg []AddBulkProductsParams) (int64, error)
 	ArchiveProduct(ctx context.Context, arg ArchiveProductParams) error
 	ArchiveProductVariant(ctx context.Context, arg ArchiveProductVariantParams) error
+	CheckoutCart(ctx context.Context, arg CheckoutCartParams) error
 	ClearCart(ctx context.Context, id uuid.UUID) error
 	CountAddresses(ctx context.Context) (int64, error)
 	CountAttributes(ctx context.Context) (int64, error)
@@ -32,6 +33,7 @@ type Querier interface {
 	CreateAttributeValue(ctx context.Context, arg CreateAttributeValueParams) (AttributeValue, error)
 	CreateBrand(ctx context.Context, arg CreateBrandParams) (Brand, error)
 	CreateBulkImageAssignments(ctx context.Context, arg []CreateBulkImageAssignmentsParams) (int64, error)
+	CreateBulkOrderItems(ctx context.Context, arg []CreateBulkOrderItemsParams) (int64, error)
 	CreateBulkProductVariantAttribute(ctx context.Context, arg []CreateBulkProductVariantAttributeParams) (int64, error)
 	CreateBulkProductVariants(ctx context.Context, arg []CreateBulkProductVariantsParams) (int64, error)
 	CreateCart(ctx context.Context, arg CreateCartParams) (Cart, error)
@@ -84,6 +86,7 @@ type Querier interface {
 	GetCartItem(ctx context.Context, arg GetCartItemParams) (CartItem, error)
 	GetCartItemByProductVariantID(ctx context.Context, arg GetCartItemByProductVariantIDParams) (CartItem, error)
 	GetCartItems(ctx context.Context, cartID uuid.UUID) ([]GetCartItemsRow, error)
+	GetCartItemsForOrder(ctx context.Context, cartID uuid.UUID) ([]GetCartItemsForOrderRow, error)
 	GetCategories(ctx context.Context, arg GetCategoriesParams) ([]Category, error)
 	GetCategoryByID(ctx context.Context, id uuid.UUID) (Category, error)
 	GetCategoryMaxSortOrder(ctx context.Context) (interface{}, error)

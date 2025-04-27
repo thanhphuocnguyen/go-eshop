@@ -7,12 +7,12 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type SetPrimaryAddressTxParams struct {
+type SetPrimaryAddressTxArgs struct {
 	NewPrimaryID int64     `json:"new_primary_id"`
 	UserID       uuid.UUID `json:"user_id"`
 }
 
-func (s *pgRepo) SetPrimaryAddressTx(ctx context.Context, arg SetPrimaryAddressTxParams) error {
+func (s *pgRepo) SetPrimaryAddressTx(ctx context.Context, arg SetPrimaryAddressTxArgs) error {
 	err := s.execTx(ctx, func(q *Queries) error {
 		var err error
 		err = s.ResetPrimaryAddress(ctx, arg.UserID)

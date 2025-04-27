@@ -12,6 +12,20 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const checkoutCart = `-- name: CheckoutCart :exec
+UPDATE carts SET order_id = $1 WHERE id = $2 RETURNING id, user_id, session_id, order_id, updated_at, created_at
+`
+
+type CheckoutCartParams struct {
+	OrderID pgtype.UUID `json:"order_id"`
+	ID      uuid.UUID   `json:"id"`
+}
+
+func (q *Queries) CheckoutCart(ctx context.Context, arg CheckoutCartParams) error {
+	_, err := q.db.Exec(ctx, checkoutCart, arg.OrderID, arg.ID)
+	return err
+}
+
 const clearCart = `-- name: ClearCart :exec
 DELETE FROM cart_items WHERE id = $1
 `
@@ -231,6 +245,70 @@ func (q *Queries) GetCartItems(ctx context.Context, cartID uuid.UUID) ([]GetCart
 			&i.AttrID,
 			&i.ImageID,
 			&i.ImageUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getCartItemsForOrder = `-- name: GetCartItemsForOrder :many
+SELECT 
+    ci.id, ci.cart_id, ci.variant_id, ci.quantity, ci.added_at, 
+    pv.id AS variant_id, pv.price, pv.stock, pv.sku, pv.stock as stock_qty,
+    p.name AS product_name,
+    av.code AS attr_val_code, av.name as attr_val_name, a.name AS attr_name
+FROM cart_items AS ci
+JOIN product_variants AS pv ON pv.id = ci.variant_id
+JOIN products AS p ON p.id = pv.product_id
+JOIN variant_attribute_values AS vav ON vav.variant_id = pv.id
+JOIN attribute_values AS av ON vav.attribute_value_id = av.id
+JOIN attributes AS a ON av.attribute_id = a.id
+WHERE ci.cart_id = $1
+ORDER BY ci.added_at, ci.id, pv.id DESC
+`
+
+type GetCartItemsForOrderRow struct {
+	CartItem    CartItem       `json:"cart_item"`
+	VariantID   uuid.UUID      `json:"variant_id"`
+	Price       pgtype.Numeric `json:"price"`
+	Stock       int32          `json:"stock"`
+	Sku         string         `json:"sku"`
+	StockQty    int32          `json:"stock_qty"`
+	ProductName string         `json:"product_name"`
+	AttrValCode string         `json:"attr_val_code"`
+	AttrValName string         `json:"attr_val_name"`
+	AttrName    string         `json:"attr_name"`
+}
+
+func (q *Queries) GetCartItemsForOrder(ctx context.Context, cartID uuid.UUID) ([]GetCartItemsForOrderRow, error) {
+	rows, err := q.db.Query(ctx, getCartItemsForOrder, cartID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetCartItemsForOrderRow{}
+	for rows.Next() {
+		var i GetCartItemsForOrderRow
+		if err := rows.Scan(
+			&i.CartItem.ID,
+			&i.CartItem.CartID,
+			&i.CartItem.VariantID,
+			&i.CartItem.Quantity,
+			&i.CartItem.AddedAt,
+			&i.VariantID,
+			&i.Price,
+			&i.Stock,
+			&i.Sku,
+			&i.StockQty,
+			&i.ProductName,
+			&i.AttrValCode,
+			&i.AttrValName,
+			&i.AttrName,
 		); err != nil {
 			return nil, err
 		}

@@ -15,13 +15,13 @@ import (
 
 type Repository interface {
 	Querier
-	CreateOrderTx(ctx context.Context, arg CreateOrderTxParams) (uuid.UUID, error)
-	SetPrimaryAddressTx(ctx context.Context, arg SetPrimaryAddressTxParams) error
+	CreateOrderTx(ctx context.Context, arg CreateOrderTxArgs) (uuid.UUID, error)
+	SetPrimaryAddressTx(ctx context.Context, arg SetPrimaryAddressTxArgs) error
 	CancelOrderTx(ctx context.Context, params CancelOrderTxArgs) (Order, error)
 	RefundOrderTx(ctx context.Context, params RefundOrderTxArgs) error
 	QueryRaw(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error)
-	UpdateProductVariantsTx(ctx context.Context, productID uuid.UUID, arg UpdateProductVariantsTxParam) (UpdateProductVariantsTxResult, error)
-	UpdateProductImagesTx(ctx context.Context, arg []UpdateProductImagesTxParam) (err error)
+	UpdateProductVariantsTx(ctx context.Context, productID uuid.UUID, arg UpdateProdVariantsTxArgs) (UpdateProductVariantsTxResult, error)
+	UpdateProductImagesTx(ctx context.Context, arg []UpdateProdImagesTxArgs) (err error)
 	Close()
 }
 

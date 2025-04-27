@@ -140,7 +140,7 @@ type ProductListModel struct {
 func (sv *Server) createProduct(c *gin.Context) {
 	var req CreateProductReq
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](InvalidBodyCode, "", err))
 		return
 	}
 
@@ -166,10 +166,10 @@ func (sv *Server) createProduct(c *gin.Context) {
 		log.Error().Err(err).Timestamp()
 
 		if errors.Is(err, repository.ErrUniqueViolation) {
-			c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](http.StatusBadRequest, "", err))
+			c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](ConflictCode, "", err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -200,7 +200,7 @@ func (sv *Server) createProduct(c *gin.Context) {
 func (sv *Server) getProductDetail(c *gin.Context) {
 	var params ProductParam
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[ProductModel](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[ProductModel](InvalidBodyCode, "", err))
 		return
 	}
 	productID := uuid.MustParse(params.ID)
@@ -209,12 +209,7 @@ func (sv *Server) getProductDetail(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductModel](http.StatusInternalServerError, "", err))
-		return
-	}
-
-	if len(productRows) == 0 {
-		c.JSON(http.StatusNotFound, createErrorResponse[ProductModel](http.StatusNotFound, "", errors.New("product not found")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductModel](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -225,7 +220,7 @@ func (sv *Server) getProductDetail(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductModel](http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductModel](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -265,7 +260,7 @@ func (sv *Server) getProductDetail(c *gin.Context) {
 func (sv *Server) getProducts(c *gin.Context) {
 	var queries ProductQueries
 	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[[]ProductListModel](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[[]ProductListModel](InvalidBodyCode, "", err))
 		return
 	}
 
@@ -287,13 +282,13 @@ func (sv *Server) getProducts(c *gin.Context) {
 
 	products, err := sv.repo.GetProducts(c, dbParams)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[[]ProductListModel](http.StatusInternalServerError, "Server error", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[[]ProductListModel](InternalServerErrorCode, "Server error", err))
 		return
 	}
 
 	productCnt, err := sv.repo.CountProducts(c, repository.CountProductsParams{})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[[]ProductListModel](http.StatusInternalServerError, "Server error", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[[]ProductListModel](InternalServerErrorCode, "Server error", err))
 		return
 	}
 
@@ -327,13 +322,13 @@ func (sv *Server) getProducts(c *gin.Context) {
 func (sv *Server) updateProduct(c *gin.Context) {
 	var param ProductParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](InvalidBodyCode, "", err))
 		return
 	}
 
 	var req UpdateProductReq
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](InvalidBodyCode, "", err))
 		return
 	}
 	productID := uuid.MustParse(param.ID)
@@ -370,14 +365,14 @@ func (sv *Server) updateProduct(c *gin.Context) {
 
 	if err != nil {
 		log.Error().Err(err).Msg("UpdateProduct")
-		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](InternalServerErrorCode, "", err))
 		return
 	}
 
 	var removeImgErr *ApiError
 	if len(req.Images) > 0 {
 		errGroup, _ := errgroup.WithContext(c)
-		imgAssignmentArgs := make([]repository.UpdateProductImagesTxParam, 0)
+		imgAssignmentArgs := make([]repository.UpdateProdImagesTxArgs, 0)
 		for _, image := range req.Images {
 			if image.IsRemoved != nil && *image.IsRemoved {
 				errGroup.Go(func() (err error) {
@@ -388,10 +383,10 @@ func (sv *Server) updateProduct(c *gin.Context) {
 
 					if err != nil {
 						if errors.Is(err, repository.ErrRecordNotFound) {
-							c.JSON(http.StatusNotFound, createErrorResponse[ProductListModel](http.StatusNotFound, "", err))
+							c.JSON(http.StatusNotFound, createErrorResponse[ProductListModel](NotFoundCode, "", err))
 							return
 						}
-						c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](http.StatusInternalServerError, "", err))
+						c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](InternalServerErrorCode, "", err))
 						return
 					}
 
@@ -404,10 +399,10 @@ func (sv *Server) updateProduct(c *gin.Context) {
 					err = sv.repo.DeleteProductImage(c, image.ID)
 					if err != nil {
 						if errors.Is(err, repository.ErrRecordNotFound) {
-							c.JSON(http.StatusNotFound, createErrorResponse[ProductListModel](http.StatusNotFound, "", err))
+							c.JSON(http.StatusNotFound, createErrorResponse[ProductListModel](NotFoundCode, "", err))
 							return
 						}
-						c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](http.StatusInternalServerError, "", err))
+						c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](InternalServerErrorCode, "", err))
 						return
 					}
 					return err
@@ -422,7 +417,7 @@ func (sv *Server) updateProduct(c *gin.Context) {
 					assignmentIds = append(assignmentIds, uuid.MustParse(assignment))
 				}
 				// append the image assignment to the list
-				args := repository.UpdateProductImagesTxParam{
+				args := repository.UpdateProdImagesTxArgs{
 					ImageID:    image.ID,
 					Role:       image.Role,
 					EntityID:   productID,
@@ -448,16 +443,16 @@ func (sv *Server) updateProduct(c *gin.Context) {
 			err := sv.repo.UpdateProductImagesTx(c, imgAssignmentArgs)
 			if err != nil {
 				if errors.Is(err, repository.ErrRecordNotFound) {
-					c.JSON(http.StatusNotFound, createErrorResponse[ProductListModel](http.StatusNotFound, "", err))
+					c.JSON(http.StatusNotFound, createErrorResponse[ProductListModel](InternalServerErrorCode, "", err))
 					return
 				}
-				c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](http.StatusInternalServerError, "", err))
+				c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](InternalServerErrorCode, "", err))
 				return
 			}
 		}
 
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](http.StatusInternalServerError, "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](InternalServerErrorCode, "", err))
 			return
 		}
 	}
@@ -468,23 +463,23 @@ func (sv *Server) updateProduct(c *gin.Context) {
 func (sv *Server) updateProductVariants(c *gin.Context) {
 	var params ProductParam
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[repository.UpdateProductVariantsTxResult](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[repository.UpdateProductVariantsTxResult](InvalidBodyCode, "", err))
 		return
 	}
 
-	var req repository.UpdateProductVariantsTxParam
+	var req repository.UpdateProdVariantsTxArgs
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[repository.UpdateProductVariantsTxResult](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[repository.UpdateProductVariantsTxResult](InvalidBodyCode, "", err))
 		return
 	}
 
 	updated, err := sv.repo.UpdateProductVariantsTx(c, uuid.MustParse(params.ID), req)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[repository.UpdateProductVariantsTxResult](http.StatusNotFound, "", err))
+			c.JSON(http.StatusNotFound, createErrorResponse[repository.UpdateProductVariantsTxResult](NotFoundCode, "", err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[repository.UpdateProductVariantsTxResult](http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[repository.UpdateProductVariantsTxResult](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -505,7 +500,7 @@ func (sv *Server) updateProductVariants(c *gin.Context) {
 func (sv *Server) removeProduct(c *gin.Context) {
 	var params ProductParam
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[bool](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidBodyCode, "", err))
 		return
 	}
 
@@ -514,10 +509,10 @@ func (sv *Server) removeProduct(c *gin.Context) {
 	})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[bool](http.StatusNotFound, "", err))
+			c.JSON(http.StatusNotFound, createErrorResponse[bool](NotFoundCode, "", err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -525,10 +520,10 @@ func (sv *Server) removeProduct(c *gin.Context) {
 	images, err := sv.repo.GetProductImagesAssigned(c, []uuid.UUID{product.ID})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[bool](http.StatusNotFound, "", err))
+			c.JSON(http.StatusNotFound, createErrorResponse[bool](NotFoundCode, "", err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 		return
 	}
 	errGroup, _ := errgroup.WithContext(c)
@@ -541,10 +536,10 @@ func (sv *Server) removeProduct(c *gin.Context) {
 
 			if err != nil {
 				if errors.Is(err, repository.ErrRecordNotFound) {
-					c.JSON(http.StatusNotFound, createErrorResponse[bool](http.StatusNotFound, "", err))
+					c.JSON(http.StatusNotFound, createErrorResponse[bool](NotFoundCode, "", err))
 					return
 				}
-				c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusInternalServerError, "", err))
+				c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 				return
 			}
 			// Remove image from storage
@@ -557,10 +552,10 @@ func (sv *Server) removeProduct(c *gin.Context) {
 			err = sv.repo.DeleteProductImage(c, image.ID)
 			if err != nil {
 				if errors.Is(err, repository.ErrRecordNotFound) {
-					c.JSON(http.StatusNotFound, createErrorResponse[bool](http.StatusNotFound, "", err))
+					c.JSON(http.StatusNotFound, createErrorResponse[bool](NotFoundCode, "", err))
 					return
 				}
-				c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusInternalServerError, "", err))
+				c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 				return
 			}
 			return
@@ -571,7 +566,7 @@ func (sv *Server) removeProduct(c *gin.Context) {
 
 	err = sv.repo.DeleteProduct(c, uuid.MustParse(params.ID))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 		return
 	}
 

@@ -65,34 +65,34 @@ type ImageResponse struct {
 func (sv *Server) uploadProductImages(c *gin.Context) {
 	var param EntityIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](InvalidBodyCode, "", err))
 		return
 	}
 	form, _ := c.MultipartForm()
 	files := form.File["files"]
 	if len(files) == 0 {
-		c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](http.StatusBadRequest, "", errors.New("missing files in request")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](InvalidBodyCode, "", errors.New("missing files in request")))
 		return
 	}
 
 	if len(files) > 5 {
-		c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](http.StatusBadRequest, "", errors.New("maximum 5 files allowed")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](InvalidBodyCode, "", errors.New("maximum 5 files allowed")))
 		return
 	}
 
 	assignmentsReq := c.PostFormArray("assignments[]")
 	if len(assignmentsReq) == 0 {
-		c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](http.StatusBadRequest, "", errors.New("missing assignments in request")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](InvalidBodyCode, "", errors.New("missing assignments in request")))
 		return
 	}
 
 	roles := c.PostFormArray("roles")
 	if len(roles) == 0 {
-		c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](http.StatusBadRequest, "", errors.New("missing roles in request")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](InvalidBodyCode, "", errors.New("missing roles in request")))
 		return
 	}
 	if len(roles) != len(assignmentsReq) {
-		c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](http.StatusBadRequest, "", errors.New("roles and assignments must be the same length")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](InvalidBodyCode, "", errors.New("roles and assignments must be the same length")))
 		return
 	}
 	// Check if the roles are valid
@@ -103,7 +103,7 @@ func (sv *Server) uploadProductImages(c *gin.Context) {
 	for _, assignment := range assignmentsReq {
 		var assignments []string
 		if err := json.Unmarshal([]byte(assignment), &assignments); err != nil {
-			c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](http.StatusBadRequest, "", errors.New("invalid assignments format")))
+			c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](InvalidBodyCode, "", errors.New("invalid assignments format")))
 			return
 		}
 		assignmentsList = append(assignmentsList, assignments)
@@ -115,21 +115,21 @@ func (sv *Server) uploadProductImages(c *gin.Context) {
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[[]ImageResponse](http.StatusNotFound, "", errors.New("product not found")))
+			c.JSON(http.StatusNotFound, createErrorResponse[[]ImageResponse](NotFoundCode, "", errors.New("product not found")))
 			return
 		}
-		c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](InternalServerErrorCode, "", err))
 		return
 	}
 
 	productImages, err := sv.repo.GetImagesByEntityID(c, existingProduct.ID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](InternalServerErrorCode, "", err))
 		return
 	}
 
 	if len(productImages)+len(files) > 10 {
-		c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](http.StatusBadRequest, "", errors.New("maximum 10 files allowed please remove old files")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](InternalServerErrorCode, "", errors.New("maximum 10 files allowed please remove old files")))
 		return
 	}
 
@@ -138,7 +138,7 @@ func (sv *Server) uploadProductImages(c *gin.Context) {
 	for i, file := range files {
 		id, url, err := sv.uploadService.UploadFile(c, file)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[[]ImageResponse](http.StatusInternalServerError, "upload to server failed", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[[]ImageResponse](UploadFileCode, "upload to server failed", err))
 			return
 		}
 
@@ -165,7 +165,7 @@ func (sv *Server) uploadProductImages(c *gin.Context) {
 
 			variantID, err := uuid.Parse(assignment)
 			if err != nil {
-				c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](http.StatusBadRequest, "", errors.New("invalid variant id")))
+				c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](InternalServerErrorCode, "", errors.New("invalid variant id")))
 
 				return
 			}
@@ -180,7 +180,7 @@ func (sv *Server) uploadProductImages(c *gin.Context) {
 		}
 		_, err = sv.repo.CreateBulkImageAssignments(c, createImageAssignmentReq)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[[]ImageResponse](http.StatusInternalServerError, "save image info to db failed", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[[]ImageResponse](InternalServerErrorCode, "save image info to db failed", err))
 			return
 		}
 
@@ -210,18 +210,14 @@ func (sv *Server) uploadProductImages(c *gin.Context) {
 func (sv *Server) getImages(c *gin.Context) {
 	var param EntityIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[ImageResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[ImageResponse](InvalidBodyCode, "", err))
 		return
 	}
 
 	images, err := sv.repo.GetImagesByEntityID(c, uuid.MustParse(param.EntityID))
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[ImageResponse](http.StatusBadRequest, fmt.Sprintf("server error"), err))
-		return
-	}
-	if len(images) == 0 {
-		c.JSON(http.StatusNotFound, createErrorResponse[ImageResponse](http.StatusBadRequest, fmt.Sprintf("not images found"), errors.New("product not found")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[ImageResponse](InternalServerErrorCode, fmt.Sprintf("server error"), err))
 		return
 	}
 
@@ -254,13 +250,13 @@ func (sv *Server) getImages(c *gin.Context) {
 func (sv *Server) removeImage(c *gin.Context) {
 	_, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusBadRequest, "", errors.New("missing user payload in context")))
+		c.JSON(http.StatusUnauthorized, createErrorResponse[bool](UnauthorizedCode, "", errors.New("missing user payload in context")))
 		return
 	}
 
 	var params RemoveImageParams
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[bool](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidBodyCode, "", err))
 		return
 	}
 
@@ -270,20 +266,20 @@ func (sv *Server) removeImage(c *gin.Context) {
 	})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[bool](http.StatusBadRequest, "", errors.New("image not found")))
+			c.JSON(http.StatusNotFound, createErrorResponse[bool](NotFoundCode, "", errors.New("image not found")))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 		return
 	}
 	if image.EntityType != repository.ProductEntityType {
-		c.JSON(http.StatusBadRequest, createErrorResponse[bool](http.StatusBadRequest, "", errors.New("image not found")))
+		c.JSON(http.StatusNotFound, createErrorResponse[bool](NotFoundCode, "", errors.New("image not found")))
 		return
 	}
 
 	msg, err := sv.removeImageUtil(c, image.ExternalID)
 	if err != nil {
-		createErrorResponse[bool](http.StatusBadRequest, msg, err)
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, msg, err))
 		return
 	}
 
@@ -304,17 +300,17 @@ func (sv *Server) removeImage(c *gin.Context) {
 func (sv *Server) removeImageByPublicID(c *gin.Context) {
 	_, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusBadRequest, "", errors.New("missing user payload in context")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](UnauthorizedCode, "", errors.New("missing user payload in context")))
 		return
 	}
 	var params PublicIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[bool](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidBodyCode, "", err))
 		return
 	}
 	msg, err := sv.removeImageUtil(c, params.PublicID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusBadRequest, msg, err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, msg, err))
 		return
 	}
 
@@ -324,7 +320,7 @@ func (sv *Server) removeImageByPublicID(c *gin.Context) {
 			c.Status(http.StatusNoContent)
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -334,7 +330,7 @@ func (sv *Server) removeImageByPublicID(c *gin.Context) {
 			c.Status(http.StatusNotFound)
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 		return
 	}
 

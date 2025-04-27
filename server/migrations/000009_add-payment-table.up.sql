@@ -5,10 +5,10 @@ CREATE TABLE
         amount DECIMAL(10, 2) NOT NULL,
         payment_method payment_method NOT NULL, -- e.g., card, bank_transfer
         status payment_status NOT NULL DEFAULT 'pending', -- Pending, Success, Failed
-        payment_gateway payment_gateway, -- e.g., Stripe, PayPal
+        payment_gateway payment_gateway DEFAULT NULL, -- e.g., Stripe, PayPal
         refund_id VARCHAR, -- From the payment gateway, e.g., Stripe
-        created_at TIMESTAMPTZ DEFAULT now (),
-        updated_at TIMESTAMPTZ DEFAULT now ()
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
     );
 
 CREATE TABLE
@@ -20,8 +20,8 @@ CREATE TABLE
         "expiration_date" DATE NOT NULL,
         "billing_address" TEXT NOT NULL,
         "default" BOOLEAN DEFAULT FALSE,
-        "created_at" TIMESTAMPTZ DEFAULT now (),
-        "updated_at" TIMESTAMPTZ DEFAULT now (),
+        "created_at" TIMESTAMPTZ DEFAULT NOW(),
+        "updated_at" TIMESTAMPTZ DEFAULT NOW(),
         UNIQUE ("user_id", "card_number")
     );
 

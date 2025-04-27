@@ -68,7 +68,7 @@ type CategoryProductRequest struct {
 func (sv *Server) createCategory(c *gin.Context) {
 	var req CreateCategoryRequest
 	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
 		return
 	}
 	params := repository.CreateCategoryParams{
@@ -84,7 +84,7 @@ func (sv *Server) createCategory(c *gin.Context) {
 	if req.Image != nil {
 		imageID, imageURL, err := sv.uploadService.UploadFile(c, req.Image)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](http.StatusBadRequest, "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](UploadFileCode, "", err))
 			return
 		}
 		params.ImageID = utils.GetPgTypeText(imageID)
@@ -93,7 +93,7 @@ func (sv *Server) createCategory(c *gin.Context) {
 
 	col, err := sv.repo.CreateCategory(c, params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
 		return
 	}
 	resp := CategoryResponse{
@@ -126,7 +126,7 @@ func (sv *Server) createCategory(c *gin.Context) {
 func (sv *Server) getCategories(c *gin.Context) {
 	var query PaginationQueryParams
 	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
 		return
 	}
 	params := repository.GetCategoriesParams{
@@ -138,13 +138,13 @@ func (sv *Server) getCategories(c *gin.Context) {
 
 	categories, err := sv.repo.GetCategories(c, params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
 		return
 	}
 
 	count, err := sv.repo.CountCategories(c)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
 		return
 	}
 	categoriesResp := make([]CategoryResponse, len(categories))
@@ -192,17 +192,17 @@ func (sv *Server) getCategories(c *gin.Context) {
 func (sv *Server) getCategoryByID(c *gin.Context) {
 	var param getCategoryParams
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
 		return
 	}
 
 	result, err := sv.repo.GetCategoryByID(c, uuid.MustParse(param.CategoryID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[CategoryResponse](http.StatusBadRequest, "", fmt.Errorf("category with ID %s not found", param.CategoryID)))
+			c.JSON(http.StatusNotFound, createErrorResponse[CategoryResponse](InvalidBodyCode, "", fmt.Errorf("category with ID %s not found", param.CategoryID)))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -225,12 +225,12 @@ func (sv *Server) getCategoryByID(c *gin.Context) {
 func (sv *Server) getProductsByCategory(c *gin.Context) {
 	var param getCategoryParams
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](InvalidBodyCode, "", err))
 		return
 	}
 	var query PaginationQueryParams
 	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](InvalidBodyCode, "", err))
 		return
 	}
 
@@ -244,7 +244,7 @@ func (sv *Server) getProductsByCategory(c *gin.Context) {
 
 	products, err := sv.repo.GetProductsByCategoryID(c, params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -284,12 +284,12 @@ func (sv *Server) getProductsByCategory(c *gin.Context) {
 func (sv *Server) updateCategory(c *gin.Context) {
 	var param getCategoryParams
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
 		return
 	}
 	var req UpdateCategoryRequest
 	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
 		return
 	}
 
@@ -297,10 +297,10 @@ func (sv *Server) updateCategory(c *gin.Context) {
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[CategoryResponse](http.StatusBadRequest, "", fmt.Errorf("category with ID %s not found", param.CategoryID)))
+			c.JSON(http.StatusNotFound, createErrorResponse[CategoryResponse](NotFoundCode, "", fmt.Errorf("category with ID %s not found", param.CategoryID)))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -332,7 +332,7 @@ func (sv *Server) updateCategory(c *gin.Context) {
 	if req.Image != nil {
 		imageID, imageURL, err = sv.uploadService.UploadFile(c, req.Image)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](http.StatusBadRequest, "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](UploadFileCode, "", err))
 			return
 		}
 		updateParam.ImageID = utils.GetPgTypeText(imageID)
@@ -342,7 +342,7 @@ func (sv *Server) updateCategory(c *gin.Context) {
 	col, err := sv.repo.UpdateCategory(c, updateParam)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -363,23 +363,23 @@ func (sv *Server) updateCategory(c *gin.Context) {
 func (sv *Server) deleteCategory(c *gin.Context) {
 	var colID getCategoryParams
 	if err := c.ShouldBindUri(&colID); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[bool](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidBodyCode, "", err))
 		return
 	}
 
 	_, err := sv.repo.GetCategoryByID(c, uuid.MustParse(colID.CategoryID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[bool](http.StatusNotFound, "", fmt.Errorf("category with ID %s not found", colID.CategoryID)))
+			c.JSON(http.StatusNotFound, createErrorResponse[bool](NotFoundCode, "", fmt.Errorf("category with ID %s not found", colID.CategoryID)))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 		return
 	}
 
 	err = sv.repo.DeleteCategory(c, uuid.MustParse(colID.CategoryID))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 		return
 	}
 	c.JSON(http.StatusOK, createSuccessResponse(c, true, fmt.Sprintf("Category with ID %s deleted", colID.CategoryID), nil, nil))

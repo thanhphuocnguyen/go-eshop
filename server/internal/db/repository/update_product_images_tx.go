@@ -8,7 +8,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
-type UpdateProductImagesTxParam struct {
+type UpdateProdImagesTxArgs struct {
 	ImageID    int32       `json:"image_id"`
 	EntityID   uuid.UUID   `json:"entity_id"`
 	EntityType string      `json:"entity_type"`
@@ -16,7 +16,7 @@ type UpdateProductImagesTxParam struct {
 	VariantIDs []uuid.UUID `json:"variant_ids"`
 }
 
-func (s *pgRepo) UpdateProductImagesTx(ctx context.Context, arg []UpdateProductImagesTxParam) (err error) {
+func (s *pgRepo) UpdateProductImagesTx(ctx context.Context, arg []UpdateProdImagesTxArgs) (err error) {
 	err = s.execTx(ctx, func(q *Queries) (err error) {
 		for _, image := range arg {
 			if image.Role != nil {

@@ -1,12 +1,13 @@
 package api
 
 import (
+	"encoding/gob"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/stripe/stripe-go/v81"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/thanhphuocnguyen/go-eshop/config"
@@ -61,7 +62,7 @@ func NewAPI(
 
 func (sv *Server) initializeRouter() {
 	router := gin.Default()
-
+	gob.Register(&stripe.PaymentIntent{})
 	if sv.config.Env == "production" {
 		gin.SetMode(gin.ReleaseMode)
 		router.Use(gin.Recovery())
@@ -305,12 +306,12 @@ type PaginationQueryParams struct {
 	PageSize int32 `form:"page_size,default=20" binding:"omitempty,min=1,max=100"`
 }
 
-func createErrorResponse[T any](code int, msg string, err error) ApiResponse[T] {
+func createErrorResponse[T any](code string, msg string, err error) ApiResponse[T] {
 	return ApiResponse[T]{
 		Success: false,
 		Data:    nil,
 		Error: &ApiError{
-			Code:    strconv.Itoa(code),
+			Code:    code,
 			Details: msg,
 			Stack:   err.Error(),
 		},

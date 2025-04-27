@@ -16,7 +16,7 @@ export type UserModel = {
 export type AddressModel = {
   id: number;
   phone: string;
-  address: string;
+  street: string;
   ward?: string;
   district: string;
   city: string;

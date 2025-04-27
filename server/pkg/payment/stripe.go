@@ -12,7 +12,7 @@ type stripePayment struct {
 }
 
 // CreatePaymentIntent implements PaymentStrategy.
-func (s *stripePayment) CreatePaymentIntent(amount float64, email string) (string, error) {
+func (s *stripePayment) CreatePaymentIntent(amount float64, email string) (result interface{}, err error) {
 	log.Info().Msg("CreatePaymentIntent For")
 	params := &stripe.PaymentIntentParams{
 		Amount:        stripe.Int64(int64(amount * utils.MUL)),
@@ -28,10 +28,10 @@ func (s *stripePayment) CreatePaymentIntent(amount float64, email string) (strin
 	rs, err := paymentintent.New(params)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return rs.ID, nil
+	return rs, nil
 }
 
 // ProcessPayment implements PaymentStrategy.

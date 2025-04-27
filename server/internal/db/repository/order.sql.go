@@ -44,14 +44,40 @@ func (q *Queries) CountOrders(ctx context.Context, arg CountOrdersParams) (int64
 	return count, err
 }
 
+type CreateBulkOrderItemsParams struct {
+	ID                   uuid.UUID      `json:"id"`
+	OrderID              uuid.UUID      `json:"order_id"`
+	VariantID            uuid.UUID      `json:"variant_id"`
+	Quantity             int16          `json:"quantity"`
+	PricePerUnitSnapshot pgtype.Numeric `json:"price_per_unit_snapshot"`
+	VariantSkuSnapshot   string         `json:"variant_sku_snapshot"`
+	ProductNameSnapshot  string         `json:"product_name_snapshot"`
+	LineTotalSnapshot    pgtype.Numeric `json:"line_total_snapshot"`
+	AttributesSnapshot   []byte         `json:"attributes_snapshot"`
+}
+
 const createOrder = `-- name: CreateOrder :one
-INSERT INTO orders (id,customer_id,user_address_id,total_price) VALUES ($1,$2,$3,$4) RETURNING id, customer_id, customer_email, customer_name, customer_phone, user_address_id, total_price, status, confirmed_at, delivered_at, cancelled_at, refunded_at, order_date, shipping_address, updated_at, created_at
+INSERT INTO orders (
+    id,
+    customer_id,
+    user_address_id,
+    customer_email,
+    customer_name,
+    customer_phone,
+    total_price
+)
+VALUES 
+    ($1,$2,$3,$4, $5, $6, $7)
+RETURNING id, customer_id, customer_email, customer_name, customer_phone, user_address_id, total_price, status, confirmed_at, delivered_at, cancelled_at, refunded_at, order_date, shipping_address, updated_at, created_at
 `
 
 type CreateOrderParams struct {
 	ID            uuid.UUID      `json:"id"`
 	CustomerID    uuid.UUID      `json:"customer_id"`
 	UserAddressID int64          `json:"user_address_id"`
+	CustomerEmail string         `json:"customer_email"`
+	CustomerName  string         `json:"customer_name"`
+	CustomerPhone pgtype.Text    `json:"customer_phone"`
 	TotalPrice    pgtype.Numeric `json:"total_price"`
 }
 
@@ -60,6 +86,9 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 		arg.ID,
 		arg.CustomerID,
 		arg.UserAddressID,
+		arg.CustomerEmail,
+		arg.CustomerName,
+		arg.CustomerPhone,
 		arg.TotalPrice,
 	)
 	var i Order

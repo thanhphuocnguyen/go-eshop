@@ -8,7 +8,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
-type UpdateProductVariantsTxParam struct {
+type UpdateProdVariantsTxArgs struct {
 	Variants []UpdateProductVariantTxParams `json:"variants" binding:"required,dive"`
 }
 
@@ -17,7 +17,7 @@ type UpdateProductVariantsTxResult struct {
 	CreatedIDs []uuid.UUID `json:"created_ids"`
 }
 
-func (s *pgRepo) UpdateProductVariantsTx(ctx context.Context, productID uuid.UUID, arg UpdateProductVariantsTxParam) (rs UpdateProductVariantsTxResult, err error) {
+func (s *pgRepo) UpdateProductVariantsTx(ctx context.Context, productID uuid.UUID, arg UpdateProdVariantsTxArgs) (rs UpdateProductVariantsTxResult, err error) {
 	err = s.execTx(ctx, func(q *Queries) (err error) {
 		product, err := q.GetProductByID(ctx, GetProductByIDParams{
 			ID: productID,

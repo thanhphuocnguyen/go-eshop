@@ -96,18 +96,18 @@ func mapAddressToAddressResponse(address repository.UserAddress) AddressResponse
 func (sv *Server) updateUser(c *gin.Context) {
 	var req UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[repository.UpdateUserRow](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[repository.UpdateUserRow]("bad_request", "", err))
 		return
 	}
 
 	user, err := sv.repo.GetUserByID(c, req.UserID)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, createErrorResponse[repository.UpdateUserRow](http.StatusUnauthorized, "", err))
+		c.JSON(http.StatusUnauthorized, createErrorResponse[repository.UpdateUserRow]("unauthorized", "", err))
 		return
 	}
 
 	if user.Role != repository.UserRoleAdmin && user.ID != req.UserID {
-		c.JSON(http.StatusUnauthorized, createErrorResponse[repository.UpdateUserRow](http.StatusUnauthorized, "", err))
+		c.JSON(http.StatusUnauthorized, createErrorResponse[repository.UpdateUserRow]("unauthorized", "", err))
 		return
 	}
 
@@ -134,7 +134,7 @@ func (sv *Server) updateUser(c *gin.Context) {
 
 	updatedUser, err := sv.repo.UpdateUser(c, arg)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[repository.UpdateUserRow](http.StatusInternalServerError, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[repository.UpdateUserRow]("internal_server_error", "", err))
 		return
 	}
 
@@ -154,23 +154,23 @@ func (sv *Server) updateUser(c *gin.Context) {
 func (sv *Server) getUser(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](http.StatusInternalServerError, "", errors.New("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse]("internal_server_error", "", errors.New("authorization payload is not provided")))
 		return
 	}
 
 	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[UserResponse](http.StatusBadRequest, "", err))
+			c.JSON(http.StatusNotFound, createErrorResponse[UserResponse]("not_found", "", err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse]("internal_server_error", "", err))
 		return
 	}
 
 	userAddress, err := sv.repo.GetAddresses(c, user.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse]("internal_server_error", "", err))
 		return
 	}
 
@@ -198,23 +198,23 @@ func (sv *Server) getUser(c *gin.Context) {
 func (sv *Server) listUsers(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[[]UserResponse](http.StatusInternalServerError, "", errors.New("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[[]UserResponse]("internal_server_error", "", errors.New("authorization payload is not provided")))
 		return
 	}
 	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[[]UserResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[[]UserResponse]("internal_server_error", "", err))
 		return
 	}
 
 	if user.Role != repository.UserRoleAdmin {
-		c.JSON(http.StatusUnauthorized, createErrorResponse[[]UserResponse](http.StatusUnauthorized, "", errors.New("user is not admin")))
+		c.JSON(http.StatusUnauthorized, createErrorResponse[[]UserResponse]("unauthorized", "", errors.New("user is not admin")))
 		return
 	}
 
 	var queries ListUserParams
 	if err := c.ShouldBindUri(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[[]UserResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[[]UserResponse]("bad_request", "", err))
 		return
 	}
 
@@ -223,7 +223,7 @@ func (sv *Server) listUsers(c *gin.Context) {
 		Offset: int32((queries.Page - 1) * queries.PageSize),
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[[]UserResponse](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[[]UserResponse]("internal_server_error", "", err))
 		return
 	}
 
@@ -231,7 +231,7 @@ func (sv *Server) listUsers(c *gin.Context) {
 	for _, user := range users {
 		userAddress, err := sv.repo.GetAddresses(c, user.ID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[[]UserResponse](http.StatusBadRequest, "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[[]UserResponse]("internal_server_error", "", err))
 			return
 		}
 
@@ -249,7 +249,7 @@ func (sv *Server) listUsers(c *gin.Context) {
 func (sv *Server) sendVerifyEmailHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusInternalServerError, "", errors.New("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool]("internal_server_error", "", errors.New("authorization payload is not provided")))
 		return
 	}
 
@@ -263,7 +263,7 @@ func (sv *Server) sendVerifyEmailHandler(c *gin.Context) {
 		asynq.Queue(worker.QueueCritical),
 	)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool]("internal_server_error", "", err))
 		return
 	}
 
@@ -288,22 +288,22 @@ func (sv *Server) sendVerifyEmailHandler(c *gin.Context) {
 func (sv *Server) verifyEmailHandler(c *gin.Context) {
 	var query VerifyEmailQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[bool](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[bool]("bad_request", "", err))
 		return
 	}
 	verifyEmail, err := sv.repo.GetVerifyEmailByID(c, query.ID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, createErrorResponse[bool](http.StatusNotFound, "", err))
+		c.JSON(http.StatusNotFound, createErrorResponse[bool]("not_found", "", err))
 		return
 	}
 
 	if verifyEmail.ExpiredAt.Before(time.Now()) {
-		c.JSON(http.StatusNotFound, createErrorResponse[bool](http.StatusNotFound, "", errors.New("verify code expired")))
+		c.JSON(http.StatusNotFound, createErrorResponse[bool]("not_found", "", errors.New("verify code expired")))
 		return
 	}
 
 	if verifyEmail.VerifyCode != query.VerifyCode {
-		c.JSON(http.StatusNotFound, createErrorResponse[bool](http.StatusNotFound, "", err))
+		c.JSON(http.StatusNotFound, createErrorResponse[bool]("not_found", "", err))
 		return
 	}
 	_, err = sv.repo.UpdateVerifyEmail(c, repository.UpdateVerifyEmailParams{
@@ -312,7 +312,7 @@ func (sv *Server) verifyEmailHandler(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool]("internal_server_error", "", err))
 		return
 	}
 
@@ -324,7 +324,7 @@ func (sv *Server) verifyEmailHandler(c *gin.Context) {
 		},
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](http.StatusBadRequest, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool]("internal_server_error", "", err))
 		return
 	}
 	c.Status(http.StatusNoContent)
