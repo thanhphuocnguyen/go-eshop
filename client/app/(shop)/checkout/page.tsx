@@ -21,7 +21,7 @@ import { useAppUser } from '@/components/AppUserContext';
 import { useEffect, useState } from 'react';
 import { useUser } from '@/lib/hooks/useUser';
 import { CheckIcon } from '@heroicons/react/24/outline';
-import { useRouter } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/apis/api';
 import { API_PATHS } from '@/lib/constants/api';
 import { GenericResponse } from '@/lib/definitions';
@@ -137,7 +137,17 @@ export default function CheckoutPage() {
     });
 
     if (error) {
-      if(error.code === '')
+      if (error.code === 'payment_gateway_error') {
+        toast.error(
+          <div>
+            <h3 className='text-lg font-semibold text-red-600 mb-2'>
+              Payment gateway error
+            </h3>
+          </div>
+        );
+        redirect(`orders/${data.order_id}`);
+      }
+
       toast.error(
         <div>
           <h3 className='text-lg font-semibold text-red-600 mb-2'>
@@ -150,6 +160,18 @@ export default function CheckoutPage() {
     }
 
     if (data) {
+      if (!data.client_secret || !data.payment_id) {
+        toast.error(
+          <div>
+            <h3 className='text-lg font-semibold text-red-600 mb-2'>
+              Error checkout
+            </h3>
+            <p className='text-sm text-gray-500'>Invalid payment data</p>
+          </div>
+        );
+        redirect(`orders/${data.order_id}`);
+      }
+
       sessionStorage.setItem('checkoutData', JSON.stringify(body));
       // If Stripe is selected, redirect to the Stripe payment page
       if (body.payment_method === 'stripe') {

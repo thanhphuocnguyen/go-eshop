@@ -6,10 +6,11 @@ import {
   useStripe,
   useElements,
 } from '@stripe/react-stripe-js';
+import { StripeError } from '@stripe/stripe-js';
 
 interface StripeCheckoutFormProps {
   onSuccess: () => void;
-  onError: (error: any) => void;
+  onError: (error: StripeError | unknown) => void;
 }
 
 export default function StripeCheckoutForm({
@@ -51,7 +52,7 @@ export default function StripeCheckoutForm({
         // The payment was successful
         onSuccess();
       }
-    } catch (e) {
+    } catch (e: unknown) {
       setErrorMessage('An unexpected error occurred.');
       onError(e);
     } finally {

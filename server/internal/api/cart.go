@@ -515,12 +515,12 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 
 		stripeInstance, err := payment.NewStripePayment(sv.config.StripeSecretKey)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse]("internal_server_error", "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", err))
 			return
 		}
 		sv.paymentCtx.SetStrategy(stripeInstance)
 	default:
-		c.JSON(http.StatusBadRequest, createErrorResponse[CheckoutResponse]("bad_request", "", errors.New("payment gateway not supported")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[CheckoutResponse](InvalidBodyCode, "", errors.New("payment gateway not supported")))
 		return
 	}
 
@@ -540,7 +540,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 	checkoutResult, checkoutErr := sv.paymentCtx.CreatePaymentIntent(totalPrice, receiptEmail)
 	if checkoutErr != nil {
 		c.JSON(http.StatusOK, createSuccessResponse(c, checkoutResp, "", nil, &ApiError{
-			Code:    "checkout_error",
+			Code:    "payment_gateway_error",
 			Details: checkoutErr.Error(),
 			Stack:   checkoutErr.Error(),
 		}))
@@ -553,7 +553,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 	// create payment transaction
 	payment, err := sv.repo.CreatePaymentTransaction(c, createPaymentArgs)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse]("internal_server_error", "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", err))
 		return
 	}
 

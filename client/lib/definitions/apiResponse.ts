@@ -9,7 +9,7 @@ export type GenericResponse<T = any> = {
 };
 
 export type ErrorResponse = {
-  code: number;
+  code: string;
   details: string;
   stack: string;
 };
