@@ -59,9 +59,9 @@ export default function LoginFormComponent() {
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: loginMethod === 'email' ? 'admin@simple-life.com' : undefined,
+      email: loginMethod === 'email' ? 'admin@eshop.com' : undefined,
       username: loginMethod === 'username' ? 'admin' : undefined,
-      password: 'secret',
+      password: 'admin123',
     },
     mode: 'onChange',
   });

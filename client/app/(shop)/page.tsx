@@ -4,6 +4,13 @@ import { Suspense } from 'react';
 import Loading from '../loading';
 import CategoriesSection from './components/CategoriesSection';
 import CollectionsSection from './components/CollectionsSection';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Homepage',
+  description:
+    'Welcome to our homepage! Explore our latest products and collections.',
+};
 
 export default async function Home() {
   return (

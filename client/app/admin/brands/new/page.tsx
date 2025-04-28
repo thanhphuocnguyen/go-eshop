@@ -18,12 +18,19 @@ export default function Page() {
         body: form,
       }
     );
+    if (response.error) {
+      console.error(response.error);
+      toast.error(
+        <div>
+          <p className='text-red-500'>Failed to create brand</p>
+          <p className='text-red-500'>{JSON.stringify(response.error)}</p>
+        </div>
+      );
+      return;
+    }
     if (response.data) {
       toast('Brand created', { type: 'success' });
       redirect('/admin/brands/' + response.data.id);
-    } else {
-      console.error(response);
-      toast('Failed to save brand', { type: 'error', data: response.error });
     }
   };
   return (

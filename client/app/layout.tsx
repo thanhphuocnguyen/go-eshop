@@ -8,8 +8,10 @@ import clsx from 'clsx';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Simple Life',
-  description: 'An e-commerce site built with Next.js',
+  title: {
+    template: '%s | Eshop',
+    default: 'Eshop', // a default is required when creating a template
+  },
 };
 
 export default async function RootLayout({

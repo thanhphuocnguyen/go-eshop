@@ -430,7 +430,7 @@ const updateAttributeValue = `-- name: UpdateAttributeValue :one
 UPDATE 
     attribute_values 
 SET 
-    code = $2,
+    code = COALESCE($2, code),
     is_active = COALESCE($3, is_active),
     "name" = COALESCE($4, "name"),
     display_order = COALESCE($5, display_order)
@@ -440,7 +440,7 @@ RETURNING id, attribute_id, name, code, is_active, display_order, created_at
 
 type UpdateAttributeValueParams struct {
 	ID           int32       `json:"id"`
-	Code         string      `json:"code"`
+	Code         pgtype.Text `json:"code"`
 	IsActive     pgtype.Bool `json:"is_active"`
 	Name         pgtype.Text `json:"name"`
 	DisplayOrder pgtype.Int2 `json:"display_order"`

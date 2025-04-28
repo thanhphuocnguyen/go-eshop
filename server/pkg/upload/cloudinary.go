@@ -7,6 +7,7 @@ import (
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/cloudinary/cloudinary-go/v2/logger"
+	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/config"
 	applogger "github.com/thanhphuocnguyen/go-eshop/pkg/logger"
 )
@@ -35,12 +36,15 @@ func NewCloudinaryUploadService(cfg config.Config) UploadService {
 }
 
 func (s *CloudinaryUploadService) UploadFile(ctx context.Context, file interface{}) (publicID string, url string, err error) {
+	useAssetFolderAsPublicIdPrefix := true
 	result, err := s.cld.Upload.Upload(ctx, file, uploader.UploadParams{
-		AssetFolder:    s.cfg.CloudinaryFolder,
-		UniqueFilename: &s.uniqFileName,
+		AssetFolder:                    s.cfg.CloudinaryFolder,
+		UseAssetFolderAsPublicIDPrefix: &useAssetFolderAsPublicIdPrefix,
+		UniqueFilename:                 &s.uniqFileName,
 	})
 
 	if err != nil {
+		log.Err(err).Msg("failed to upload file")
 		return "", "", err
 	}
 

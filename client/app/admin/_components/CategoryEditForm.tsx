@@ -150,11 +150,6 @@ export const CategoryEditForm: React.FC<CategoryEditFormProps> = ({
                 'focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-green-500'
               )}
             />
-            {state?.slug && (
-              <Label className='text-red-500 text-sm/6 mt-1'>
-                {state.slug.join(', ')}
-              </Label>
-            )}
           </Field>
         </div>
 

@@ -11,9 +11,11 @@ import React from 'react';
 import { useAppUser } from '../AppUserContext';
 
 const AuthButtons: React.FC = () => {
-  const { user, setAppUser } = useAppUser();
+  const { user, mutateUser } = useAppUser();
   const logout = () => {
-    setAppUser({});
+    mutateUser?.(undefined, {
+      revalidate: false,
+    });
     deleteCookie('access_token');
     deleteCookie('refresh_token');
     deleteCookie('user_email');
@@ -24,12 +26,12 @@ const AuthButtons: React.FC = () => {
 
   return (
     <>
-      {user?.name ? (
+      {user?.fullname ? (
         <Menu>
           <MenuButton className='inline-flex items-center gap-2 rounded-md bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-md hover:bg-indigo-700 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2'>
             {({ active }) => (
               <>
-                <span className='font-medium'>{user.name}</span>
+                <span className='font-medium'>{user.fullname}</span>
                 <span
                   className={clsx(
                     'transition-transform duration-200',

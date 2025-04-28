@@ -62,7 +62,7 @@ SELECT * FROM attribute_values WHERE attribute_id = ANY(sqlc.arg(ids)::int[]) OR
 UPDATE 
     attribute_values 
 SET 
-    code = sqlc.arg('code'),
+    code = COALESCE(sqlc.narg('code'), code),
     is_active = COALESCE(sqlc.narg('is_active'), is_active),
     "name" = COALESCE(sqlc.narg('name'), "name"),
     display_order = COALESCE(sqlc.narg('display_order'), display_order)

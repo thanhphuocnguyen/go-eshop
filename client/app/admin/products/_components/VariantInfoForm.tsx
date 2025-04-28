@@ -16,7 +16,7 @@ import {
 
 export const VariantInfoForm: React.FC = ({}) => {
   const { attributes } = useAttributes();
-  const { control } = useFormContext<ProductModelForm>();
+  const { control, getValues } = useFormContext<ProductModelForm>();
 
   const { fields, append, remove } = useFieldArray({
     name: 'variants',
@@ -84,7 +84,7 @@ export const VariantInfoForm: React.FC = ({}) => {
                             },
                           }))
                         : [],
-                      price: 1,
+                      price: getValues('product_info.price'),
                       stock_qty: 0,
                       weight: undefined,
                       is_active: true,

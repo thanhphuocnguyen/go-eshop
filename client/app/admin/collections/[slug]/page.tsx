@@ -2,7 +2,6 @@
 
 import { API_PATHS } from '@/lib/constants/api';
 import { use } from 'react';
-import { getCookie } from 'cookies-next';
 import { toast } from 'react-toastify';
 import Link from 'next/link';
 import { ArrowLeftCircleIcon } from '@heroicons/react/24/outline';
@@ -56,7 +55,6 @@ export default function AdminCollectionDetail({
       API_PATHS.COLLECTION.replace(':id', slug),
       {
         method: 'PUT',
-
         body: data,
       }
     );

@@ -18,7 +18,7 @@ type CancelOrderTxArgs struct {
 func (pg *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (order Order, err error) {
 	pg.execTx(ctx, func(q *Queries) error {
 		// cancel payment
-		payment, err := q.GetPaymentTransactionByOrderID(ctx, args.OrderID)
+		payment, err := q.GetPaymentByOrderID(ctx, args.OrderID)
 		if !errors.Is(err, ErrRecordNotFound) {
 			log.Error().Err(err).Msg("GetPaymentTransactionByOrderID")
 		}
@@ -30,7 +30,7 @@ func (pg *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (or
 
 			// cancel payment from gateway if it's not cancelled yet
 			if args.CancelPaymentFromGateway != nil {
-				err = args.CancelPaymentFromGateway(payment.ID, payment.PaymentGateway.PaymentGateway)
+				err = args.CancelPaymentFromGateway(payment.GatewayPaymentIntentID.String, payment.PaymentGateway.PaymentGateway)
 				if err != nil {
 					log.Error().Err(err).Msg("CancelPaymentFromGateway")
 					return err

@@ -7,10 +7,12 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
 	"github.com/stripe/stripe-go/v81"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 )
 
@@ -42,7 +44,7 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 		}
 		log.Info().Interface("evt type", evt.Type).Msg("Received stripe event")
 
-		payment, err := server.repo.GetPaymentTransactionByID(c, paymentIntent.ID)
+		payment, err := server.repo.GetPaymentByPaymentIntentID(c, utils.GetPgTypeText(paymentIntent.ID))
 		if err != nil {
 			if errors.Is(err, repository.ErrRecordNotFound) {
 				c.JSON(http.StatusNotFound, createErrorResponse[bool]("payment_not_found", "", err))
@@ -51,7 +53,7 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 			return
 		}
-		updateTransactionStatus := repository.UpdatePaymentTransactionParams{
+		updateTransactionStatus := repository.UpdatePaymentParams{
 			ID: payment.ID,
 			Status: repository.NullPaymentStatus{
 				Valid: true,
@@ -61,19 +63,50 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 		case stripe.EventTypePaymentIntentSucceeded:
 			server.taskDistributor.SendOrderCreatedEmailTask(c,
 				&worker.PayloadSendOrderCreatedEmailTask{
-					PaymentID: payment.ID,
+					PaymentID: payment.ID.String(),
 					OrderID:   payment.OrderID,
 				},
 				asynq.MaxRetry(3),
 				asynq.Queue("email"),
 				asynq.ProcessIn(time.Second*5))
+			server.repo.CreatePaymentTransaction(c, repository.CreatePaymentTransactionParams{
+				ID:                     uuid.New(),
+				PaymentID:              payment.ID,
+				Amount:                 payment.Amount,
+				Status:                 repository.PaymentStatusSuccess,
+				GatewayTransactionID:   payment.GatewayPaymentIntentID,
+				GatewayResponseCode:    utils.GetPgTypeText(evt.LastResponse.Status),
+				GatewayResponseMessage: utils.GetPgTypeText(string(evt.LastResponse.RawJSON)),
+			})
 			updateTransactionStatus.Status.PaymentStatus = repository.PaymentStatusSuccess
 		case stripe.EventTypePaymentIntentCanceled:
+			server.repo.CreatePaymentTransaction(c, repository.CreatePaymentTransactionParams{
+				ID:                     uuid.New(),
+				PaymentID:              payment.ID,
+				Amount:                 payment.Amount,
+				Status:                 repository.PaymentStatusCancelled,
+				GatewayTransactionID:   payment.GatewayPaymentIntentID,
+				GatewayResponseCode:    utils.GetPgTypeText(evt.LastResponse.Status),
+				GatewayResponseMessage: utils.GetPgTypeText(string(evt.LastResponse.RawJSON)),
+			})
 			updateTransactionStatus.Status.PaymentStatus = repository.PaymentStatusCancelled
 		case stripe.EventTypePaymentIntentPaymentFailed:
 			updateTransactionStatus.Status.PaymentStatus = repository.PaymentStatusFailed
+			server.repo.CreatePaymentTransaction(c, repository.CreatePaymentTransactionParams{
+				ID:                     uuid.New(),
+				PaymentID:              payment.ID,
+				Amount:                 payment.Amount,
+				Status:                 repository.PaymentStatusFailed,
+				GatewayTransactionID:   payment.GatewayPaymentIntentID,
+				GatewayResponseCode:    utils.GetPgTypeText(evt.LastResponse.Status),
+				GatewayResponseMessage: utils.GetPgTypeText(string(evt.LastResponse.RawJSON)),
+			})
+			updateTransactionStatus.Status.PaymentStatus = repository.PaymentStatusFailed
+			updateTransactionStatus.ErrorMessage = utils.GetPgTypeText(string(evt.LastResponse.RawJSON))
+			updateTransactionStatus.ErrorCode = utils.GetPgTypeText(evt.LastResponse.Status)
 		}
-		err = server.repo.UpdatePaymentTransaction(c, updateTransactionStatus)
+		updateTransactionStatus.UpdatedAt = utils.GetPgTypeTimestamp(time.Now())
+		err = server.repo.UpdatePayment(c, updateTransactionStatus)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 			return

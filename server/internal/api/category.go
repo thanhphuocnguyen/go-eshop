@@ -15,7 +15,7 @@ import (
 // ------------------------------------------ Request and Response ------------------------------------------
 type UpdateCategoryRequest struct {
 	Name         *string               `form:"name" binding:"omitempty,min=3,max=255"`
-	Description  *string               `form:"description" binding:"omitempty,max=255"`
+	Description  *string               `form:"description" binding:"omitempty,max=1000"`
 	Slug         *string               `form:"slug" binding:"omitempty,min=3,max=255"`
 	Published    *bool                 `form:"published" binding:"omitempty"`
 	Remarkable   *bool                 `form:"remarkable" binding:"omitempty"`
@@ -26,7 +26,7 @@ type UpdateCategoryRequest struct {
 type CreateCategoryRequest struct {
 	Name         string                `form:"name" binding:"required,min=3,max=255"`
 	Slug         string                `form:"slug" binding:"required,min=3,max=255"`
-	Description  *string               `form:"description" binding:"omitempty,max=255"`
+	Description  *string               `form:"description" binding:"omitempty,max=1000"`
 	DisplayOrder *int16                `form:"display_order" binding:"omitempty"`
 	Image        *multipart.FileHeader `form:"image" binding:"omitempty"`
 }
@@ -54,7 +54,7 @@ type CategoryProductRequest struct {
 }
 
 // ------------------------------------------ API Handlers ------------------------------------------
-// createCategory creates a new Category.
+// addCategoryHandler creates a new Category.
 // @Summary Create a new Category
 // @Description Create a new Category
 // @ID create-Category
@@ -65,7 +65,7 @@ type CategoryProductRequest struct {
 // @Failure 400 {object} ApiResponse[CategoryResponse]
 // @Failure 500 {object} ApiResponse[CategoryResponse]
 // @Router /categories [post]
-func (sv *Server) createCategory(c *gin.Context) {
+func (sv *Server) addCategoryHandler(c *gin.Context) {
 	var req CreateCategoryRequest
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))

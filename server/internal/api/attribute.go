@@ -236,7 +236,7 @@ func (sv *Server) getAttributesHandler(c *gin.Context) {
 // @Failure 400 {object} ApiResponse[AttributeResponse]
 // @Failure 500 {object} ApiResponse[[]AttributeResponse]
 // @Router /attributes/{id} [put]
-func (sv *Server) updateAttribute(c *gin.Context) {
+func (sv *Server) updateAttributeHandler(c *gin.Context) {
 	var param AttributeParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[AttributeResponse](InvalidBodyCode, "", err))
@@ -284,14 +284,16 @@ func (sv *Server) updateAttribute(c *gin.Context) {
 		}
 	}
 
-	response := []AttributeValue{}
+	attrVals := []AttributeValue{}
 
 	for _, value := range req.Values {
 		if value.ID != nil {
 			if _, ok := currentAttributeValuesMap[*value.ID]; ok {
 				params := repository.UpdateAttributeValueParams{
-					ID:   *value.ID,
-					Code: value.Code,
+					ID: *value.ID,
+				}
+				if value.Code != "" {
+					params.Code = utils.GetPgTypeText(value.Code)
 				}
 				if value.Name != nil {
 					params.Name = utils.GetPgTypeText(*value.Name)
@@ -305,7 +307,7 @@ func (sv *Server) updateAttribute(c *gin.Context) {
 					return
 				}
 				delete(currentAttributeValuesMap, *value.ID)
-				response = append(response, AttributeValue{
+				attrVals = append(attrVals, AttributeValue{
 					ID:           updated.ID,
 					Code:         updated.Code,
 					Name:         &updated.Name,
@@ -316,7 +318,7 @@ func (sv *Server) updateAttribute(c *gin.Context) {
 		} else {
 			createParams := repository.CreateAttributeValueParams{
 				AttributeID: existed.ID,
-				Name:        *value.Name,
+				Code:        value.Code,
 			}
 			if value.Name != nil {
 				createParams.Name = *value.Name
@@ -329,7 +331,7 @@ func (sv *Server) updateAttribute(c *gin.Context) {
 				c.JSON(http.StatusInternalServerError, createErrorResponse[AttributeResponse](InternalServerErrorCode, "", err))
 				return
 			}
-			response = append(response, AttributeValue{
+			attrVals = append(attrVals, AttributeValue{
 				ID:           newAttr.ID,
 				Code:         newAttr.Code,
 				Name:         &newAttr.Name,
@@ -350,7 +352,7 @@ func (sv *Server) updateAttribute(c *gin.Context) {
 	attributeResp := AttributeResponse{
 		ID:        attribute.ID,
 		Name:      attribute.Name,
-		Values:    response,
+		Values:    attrVals,
 		CreatedAt: attribute.CreatedAt.String(),
 	}
 

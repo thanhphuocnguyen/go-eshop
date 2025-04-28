@@ -194,7 +194,7 @@ WHERE
     p.base_sku ILIKE COALESCE(sqlc.narg('base_sku'), base_sku) AND
     p.brand_id = $1
 GROUP BY
-    p.id, img.id
+    p.id, img.id, img.url
 ORDER BY
     p.id
 LIMIT

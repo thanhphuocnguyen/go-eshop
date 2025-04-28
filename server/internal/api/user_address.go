@@ -20,9 +20,9 @@ type GetAddressParams struct {
 type CreateAddressReq struct {
 	Phone     string  `json:"phone" binding:"required,min=10,max=15"`
 	Street    string  `json:"street" binding:"required"`
-	Ward      *string `json:"ward,omitempty" binding:"omitempty,max=100"`
 	District  string  `json:"district" binding:"required"`
 	City      string  `json:"city" binding:"required"`
+	Ward      *string `json:"ward,omitempty" binding:"omitempty,max=100"`
 	IsDefault bool    `json:"is_default,omitempty" binding:"omitempty"`
 }
 

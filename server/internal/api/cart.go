@@ -35,6 +35,14 @@ type OrderItemAttribute struct {
 	Value string `json:"value"`
 }
 
+type ShippingAddress struct {
+	Street   string `json:"street" binding:"required"`
+	Ward     string `json:"ward" binding:"required"`
+	District string `json:"district" binding:"required"`
+	City     string `json:"city" binding:"required"`
+	Phone    string `json:"phone" binding:"required"`
+}
+
 type CartItemResponse struct {
 	ID         string              `json:"id" binding:"required,uuid"`
 	ProductID  string              `json:"product_id" binding:"required,uuid"`
@@ -76,9 +84,10 @@ type CheckoutRequest struct {
 }
 
 type CheckoutResponse struct {
-	OrderID      uuid.UUID `json:"order_id"`
-	PaymentID    string    `json:"payment_id"`
-	ClientSecret *string   `json:"client_secret,omitempty"`
+	OrderID         uuid.UUID `json:"order_id"`
+	PaymentID       string    `json:"payment_id"`
+	PaymentIntentID *string   `json:"payment_intent_id,omitempty"`
+	ClientSecret    *string   `json:"client_secret,omitempty"`
 }
 
 // ------------------------------ Handlers ------------------------------
@@ -96,23 +105,23 @@ type CheckoutResponse struct {
 func (sv *Server) createCart(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusBadRequest, createErrorResponse[CartDetailResponse]("bad_request", "", errors.New("user not found")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[CartDetailResponse](InvalidBodyCode, "", errors.New("user not found")))
 		return
 	}
 	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[CartDetailResponse]("not_found", "", errors.New("user not found")))
+			c.JSON(http.StatusNotFound, createErrorResponse[CartDetailResponse](NotFoundCode, "", errors.New("user not found")))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CartDetailResponse]("internal_server_error", "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CartDetailResponse](InternalServerErrorCode, "", err))
 		return
 	}
 	_, err = sv.repo.GetCart(c, repository.GetCartParams{
 		UserID: utils.GetPgTypeUUID(authPayload.UserID),
 	})
 	if err == nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[CartDetailResponse]("bad_request", "", errors.New("cart already exists")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[CartDetailResponse](InvalidBodyCode, "", errors.New("cart already exists")))
 		return
 	}
 
@@ -121,7 +130,7 @@ func (sv *Server) createCart(c *gin.Context) {
 		UserID: utils.GetPgTypeUUID(user.ID),
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CartDetailResponse]("internal_server_error", "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CartDetailResponse](InternalServerErrorCode, "", err))
 		return
 	}
 	resp := &CartDetailResponse{
@@ -147,7 +156,7 @@ func (sv *Server) createCart(c *gin.Context) {
 func (sv *Server) getCartHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusBadRequest, createErrorResponse[CartDetailResponse]("bad_request", "", errors.New("user not found")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[CartDetailResponse](InvalidBodyCode, "", errors.New("user not found")))
 		return
 	}
 	cart, err := sv.repo.GetCart(c, repository.GetCartParams{
@@ -161,7 +170,7 @@ func (sv *Server) getCartHandler(c *gin.Context) {
 				UserID: utils.GetPgTypeUUID(authPayload.UserID),
 			})
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, createErrorResponse[CartDetailResponse]("internal_server_error", "", err))
+				c.JSON(http.StatusInternalServerError, createErrorResponse[CartDetailResponse](InternalServerErrorCode, "", err))
 				return
 			}
 			c.JSON(http.StatusOK, createSuccessResponse(c, CartDetailResponse{
@@ -173,7 +182,7 @@ func (sv *Server) getCartHandler(c *gin.Context) {
 			}, "", nil, nil))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CartDetailResponse]("internal_server_error", "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CartDetailResponse](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -186,7 +195,7 @@ func (sv *Server) getCartHandler(c *gin.Context) {
 	}
 	cartItemRows, err := sv.repo.GetCartItems(c, cart.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CartDetailResponse]("internal_server_error", "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CartDetailResponse](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -209,19 +218,19 @@ func (sv *Server) getCartHandler(c *gin.Context) {
 func (sv *Server) updateCartItemQtyHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusBadRequest, createErrorResponse[uuid.UUID]("bad_request", "", errors.New("user not found")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[uuid.UUID](InvalidBodyCode, "", errors.New("user not found")))
 		return
 	}
 
 	var param CartItemParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[uuid.UUID]("bad_request", "", errors.New("invalid variant id")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[uuid.UUID](InvalidBodyCode, "", errors.New("invalid variant id")))
 		return
 	}
 
 	var req UpdateCartItemQtyReq
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[uuid.UUID]("internal_server_error", "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[uuid.UUID](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -231,10 +240,10 @@ func (sv *Server) updateCartItemQtyHandler(c *gin.Context) {
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[uuid.UUID]("not_found", "", errors.New("cart not found")))
+			c.JSON(http.StatusNotFound, createErrorResponse[uuid.UUID](NotFoundCode, "", errors.New("cart not found")))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[uuid.UUID]("internal_server_error", "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[uuid.UUID](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -252,11 +261,11 @@ func (sv *Server) updateCartItemQtyHandler(c *gin.Context) {
 				Quantity:  req.Quantity,
 			})
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, createErrorResponse[uuid.UUID]("internal_server_error", "", err))
+				c.JSON(http.StatusInternalServerError, createErrorResponse[uuid.UUID](InternalServerErrorCode, "", err))
 				return
 			}
 		} else {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[uuid.UUID]("internal_server_error", "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[uuid.UUID](InternalServerErrorCode, "", err))
 			return
 		}
 	} else {
@@ -266,14 +275,14 @@ func (sv *Server) updateCartItemQtyHandler(c *gin.Context) {
 		})
 
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[uuid.UUID]("internal_server_error", "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[uuid.UUID](InternalServerErrorCode, "", err))
 			return
 		}
 	}
 
 	err = sv.repo.UpdateCartTimestamp(c, cart.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[uuid.UUID]("internal_server_error", "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[uuid.UUID](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -294,13 +303,13 @@ func (sv *Server) updateCartItemQtyHandler(c *gin.Context) {
 func (sv *Server) removeCartItem(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusBadRequest, createErrorResponse[string]("bad_request", "", errors.New("user not found")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[string](InvalidBodyCode, "", errors.New("user not found")))
 		return
 	}
 
 	var param GetCartItemParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[string]("internal_server_error", "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[string](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -309,10 +318,10 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 	})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[string]("not_found", "", errors.New("cart not found")))
+			c.JSON(http.StatusNotFound, createErrorResponse[string](NotFoundCode, "", errors.New("cart not found")))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[string]("internal_server_error", "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[string](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -326,7 +335,7 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 		ID:     uuid.MustParse(param.ID),
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[string]("internal_server_error", "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[string](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -348,23 +357,23 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 func (sv *Server) checkoutHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusBadRequest, createErrorResponse[CheckoutResponse]("unauthorized", "", errors.New("user not found")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[CheckoutResponse](InvalidBodyCode, "", errors.New("user not found")))
 		return
 	}
 
 	var req CheckoutRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[CheckoutResponse]("bad_request", "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[CheckoutResponse](InvalidBodyCode, "", err))
 		return
 	}
 
 	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[CheckoutResponse]("not_found", "", errors.New("user not found")))
+			c.JSON(http.StatusNotFound, createErrorResponse[CheckoutResponse](NotFoundCode, "", errors.New("user not found")))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse]("internal_server_error", "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -374,19 +383,17 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[CheckoutResponse]("not_found", "", errors.New("cart not found")))
+			c.JSON(http.StatusNotFound, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", errors.New("cart not found")))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse]("internal_server_error", "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", err))
 		return
 	}
-
-	var addressID int64
-
+	var shippingAddr ShippingAddress
 	if req.AddressID == nil {
 		// create new address
 		if req.Address == nil {
-			c.JSON(http.StatusBadRequest, createErrorResponse[CheckoutResponse]("not_found", "", errors.New("address not found")))
+			c.JSON(http.StatusBadRequest, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", errors.New("address not found")))
 			return
 		}
 		address, err := sv.repo.CreateAddress(c, repository.CreateAddressParams{
@@ -399,10 +406,16 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 			Default:  false,
 		})
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse]("internal_server_error", "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", err))
 			return
 		}
-		addressID = address.ID
+		shippingAddr = ShippingAddress{
+			Street:   address.Street,
+			Ward:     address.Ward.String,
+			District: address.District,
+			City:     address.City,
+			Phone:    address.Phone,
+		}
 	} else {
 		address, err := sv.repo.GetAddress(c, repository.GetAddressParams{
 			ID:     *req.AddressID,
@@ -410,23 +423,29 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 		})
 		if err != nil {
 			if errors.Is(err, repository.ErrRecordNotFound) {
-				c.JSON(http.StatusNotFound, createErrorResponse[CheckoutResponse]("not_found", "", errors.New("address not found")))
+				c.JSON(http.StatusNotFound, createErrorResponse[CheckoutResponse](NotFoundCode, "", errors.New("address not found")))
 				return
 			}
-			c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse]("internal_server_error", "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", err))
 			return
 		}
-		addressID = address.ID
+		shippingAddr = ShippingAddress{
+			Street:   address.Street,
+			Ward:     address.Ward.String,
+			District: address.District,
+			City:     address.City,
+			Phone:    address.Phone,
+		}
 	}
 	if cart.UserID.Valid {
 		cartUserId, err := uuid.FromBytes(cart.UserID.Bytes[:])
 		if err != nil {
 			log.Error().Err(err).Msg("GetCart")
-			c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse]("internal_server_error", "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", err))
 			return
 		}
 		if cartUserId.String() != authPayload.UserID.String() {
-			c.JSON(http.StatusForbidden, createErrorResponse[CheckoutResponse]("forbidden", "", errors.New("user not found")))
+			c.JSON(http.StatusForbidden, createErrorResponse[CheckoutResponse](PermissionDeniedCode, "", errors.New("you are not allowed to access this cart")))
 			return
 		}
 	}
@@ -477,12 +496,17 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 	for i, param := range createOrderItemParams {
 		createOrderItemParams[i].AttributesSnapshot, _ = json.Marshal(attributeList[param.VariantID.String()])
 	}
+	shippingAddrMarshalled, err := json.Marshal(shippingAddr)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", err))
+		return
+	}
 
 	params := repository.CreateOrderTxArgs{
-		CartID:     cart.ID,
-		AddressID:  addressID,
-		TotalPrice: totalPrice,
-		UserID:     authPayload.UserID,
+		CartID:          cart.ID,
+		TotalPrice:      totalPrice,
+		ShippingAddress: shippingAddrMarshalled,
+		UserID:          authPayload.UserID,
 		CustomerInfo: repository.CustomerInfoTxArgs{
 			FullName: user.Fullname,
 			Email:    user.Email,
@@ -500,8 +524,12 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 	}
 
 	orderID, err := sv.repo.CreateOrderTx(c, params)
-
-	createPaymentArgs := repository.CreatePaymentTransactionParams{
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", err))
+		return
+	}
+	createPaymentArgs := repository.CreatePaymentParams{
+		ID:      uuid.New(),
 		OrderID: orderID,
 		Amount:  utils.GetPgNumericFromFloat(totalPrice),
 	}
@@ -525,7 +553,6 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 	}
 
 	// init payment for custom payment
-	var paymentID string = uuid.New().String()
 
 	receiptEmail := ""
 	if req.PaymentRecipeEmail != nil {
@@ -533,6 +560,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 	} else {
 		receiptEmail = user.Email
 	}
+
 	checkoutResp := CheckoutResponse{
 		OrderID: orderID,
 	}
@@ -546,18 +574,20 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 		}))
 		return
 	}
+
 	paymentIntent := checkoutResult.(*stripe.PaymentIntent)
+	createPaymentArgs.GatewayPaymentIntentID = utils.GetPgTypeText(paymentIntent.ID)
 	checkoutResp.ClientSecret = &paymentIntent.ClientSecret
-	createPaymentArgs.ID = paymentID
 
 	// create payment transaction
-	payment, err := sv.repo.CreatePaymentTransaction(c, createPaymentArgs)
+	payment, err := sv.repo.CreatePayment(c, createPaymentArgs)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", err))
 		return
 	}
 
-	checkoutResp.PaymentID = payment.ID
+	checkoutResp.PaymentIntentID = &paymentIntent.ID
+	checkoutResp.PaymentID = payment.ID.String()
 	c.JSON(http.StatusOK, createSuccessResponse(c, checkoutResp, "", nil, nil))
 }
 
@@ -574,7 +604,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 func (sv *Server) clearCart(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusBadRequest, createErrorResponse[bool]("bad_request", "", errors.New("user not found")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidBodyCode, "", errors.New("user not found")))
 		return
 	}
 
@@ -583,10 +613,10 @@ func (sv *Server) clearCart(c *gin.Context) {
 	})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[bool]("not_found", "", errors.New("cart not found")))
+			c.JSON(http.StatusNotFound, createErrorResponse[bool](NotFoundCode, "", errors.New("cart not found")))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool]("internal_server_error", "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -597,7 +627,7 @@ func (sv *Server) clearCart(c *gin.Context) {
 
 	err = sv.repo.ClearCart(c, cart.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool]("internal_server_error", "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 		return
 	}
 

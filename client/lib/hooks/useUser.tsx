@@ -3,12 +3,13 @@ import { API_PATHS } from '../constants/api';
 import { apiFetch } from '../apis/api';
 import { GenericResponse, UserModel } from '../definitions';
 
-export const useUser = (isUser?: boolean) => {
+export const useUser = (accessToken?: string) => {
   const { data, isLoading, mutate } = useSWR(
-    isUser ? API_PATHS.USER : null,
-    (url) =>
+    accessToken ? [API_PATHS.USER, accessToken] : null,
+    ([url, accessToken]) =>
       apiFetch<GenericResponse<UserModel>>(url, {
         method: 'GET',
+        authToken: accessToken,
       }).then((res) => {
         if (res.error) {
           throw res.error;
@@ -23,6 +24,6 @@ export const useUser = (isUser?: boolean) => {
   return {
     user: data,
     isLoading,
-    setUser: mutate,
+    mutateUser: mutate,
   };
 };

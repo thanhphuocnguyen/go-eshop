@@ -2,11 +2,11 @@
 INSERT INTO orders (
     id,
     customer_id,
-    user_address_id,
     customer_email,
     customer_name,
     customer_phone,
-    total_price
+    total_price,
+    shipping_address
 )
 VALUES 
     ($1,$2,$3,$4, $5, $6, $7)
@@ -73,7 +73,6 @@ SET
     confirmed_at = coalesce(sqlc.narg('confirmed_at'), confirmed_at),
     cancelled_at = coalesce(sqlc.narg('cancelled_at'), cancelled_at),
     delivered_at = coalesce(sqlc.narg('delivered_at'), delivered_at),
-    user_address_id = coalesce(sqlc.narg('user_address_id'), user_address_id),
     updated_at = now()
 WHERE
     id = sqlc.arg('id')

@@ -619,7 +619,7 @@ WHERE
     p.base_sku ILIKE COALESCE($6, base_sku) AND
     p.brand_id = $1
 GROUP BY
-    p.id, img.id
+    p.id, img.id, img.url
 ORDER BY
     p.id
 LIMIT

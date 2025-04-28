@@ -12,7 +12,7 @@ CREATE TABLE
         id SERIAL PRIMARY KEY,
         attribute_id INT NOT NULL REFERENCES attributes (id) ON DELETE CASCADE,
         "name" VARCHAR NOT NULL UNIQUE,
-        code VARCHAR NOT NULL UNIQUE, -- TODO: change name to code and not null
+        code VARCHAR NOT NULL UNIQUE,
         is_active BOOLEAN DEFAULT TRUE,
         display_order SMALLINT NOT NULL DEFAULT 0 CHECK (
             display_order >= 0

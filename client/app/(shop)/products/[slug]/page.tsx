@@ -5,7 +5,7 @@ import {
   CurrencyDollarIcon,
   GlobeAsiaAustraliaIcon,
 } from '@heroicons/react/16/solid';
-import React from 'react';
+import React, { cache } from 'react';
 import {
   AttributesSection,
   ImagesSection,
@@ -13,15 +13,9 @@ import {
   ReviewSection,
   ReviewsList,
 } from './_components';
-import { ErrorComponent } from './_components/ErrorComponent';
+import { Metadata } from 'next';
 
-async function ProductDetailPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = await params;
-
+export const getProduct = cache(async (slug: string) => {
   const { data, error } = await apiFetch<GenericResponse<ProductDetailModel>>(
     API_PATHS.PRODUCT_DETAIL.replace(':id', slug),
     {
@@ -32,14 +26,26 @@ async function ProductDetailPage({
       },
     }
   );
-
   if (error) {
-    return <ErrorComponent error={error} />;
+    throw new Error(error.details);
   }
+  return data;
+});
 
-  if (!data) {
-    return <div>Loading...</div>;
-  }
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
+  const post = await getProduct(params.slug);
+  return {
+    title: post.name,
+    description: post.description,
+  };
+}
+
+async function ProductDetailPage({ params }: { params: { slug: string } }) {
+  const data = await getProduct(params.slug);
 
   return (
     <div className='container mx-auto px-8 py-8'>

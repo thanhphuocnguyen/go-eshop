@@ -7,17 +7,18 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
 // ------------------------------------------ Request and Response ------------------------------------------
 
-type getBrandParams struct {
+type BrandParams struct {
 	ID        string  `uri:"id" binding:"required,uuid"`
 	ProductID *string `json:"product_id,omitempty"`
 }
-type getBrandsQueries struct {
+type BrandsQueries struct {
 	PaginationQueryParams
 	Brands []int32 `form:"Brand_ids,omitempty"`
 }
@@ -35,7 +36,7 @@ type BrandResponse struct {
 }
 
 // ------------------------------------------ API Handlers ------------------------------------------
-// createBrand creates a new Brand.
+// createBrandHandler creates a new Brand.
 // @Summary Create a new Brand
 // @Description Create a new Brand
 // @ID create-Brand
@@ -46,7 +47,7 @@ type BrandResponse struct {
 // @Failure 400 {object} ApiResponse[BrandResponse]
 // @Failure 500 {object} ApiResponse[BrandResponse]
 // @Router /Brands [post]
-func (sv *Server) createBrand(c *gin.Context) {
+func (sv *Server) createBrandHandler(c *gin.Context) {
 	var req CreateCategoryRequest
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[BrandResponse](InvalidBodyCode, "", err))
@@ -62,9 +63,9 @@ func (sv *Server) createBrand(c *gin.Context) {
 		params.Description = utils.GetPgTypeText(*req.Description)
 	}
 	if req.Image != nil {
-		fileName, fileID, err := sv.uploadService.UploadFile(c, *req.Image)
+		fileName, fileID, err := sv.uploadService.UploadFile(c, req.Image)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[BrandResponse](UploadFileCode, "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[BrandResponse](UploadFileCode, "error when upload image", err))
 			return
 		}
 		params.ImageUrl = utils.GetPgTypeText(fileName)
@@ -80,7 +81,7 @@ func (sv *Server) createBrand(c *gin.Context) {
 	c.JSON(http.StatusCreated, createSuccessResponse(c, col, "", nil, nil))
 }
 
-// getBrands retrieves a list of Brands.
+// getBrandsHandler retrieves a list of Brands.
 // @Summary Get a list of Brands
 // @Description Get a list of Brands
 // @ID get-Brands
@@ -92,8 +93,8 @@ func (sv *Server) createBrand(c *gin.Context) {
 // @Failure 400 {object} ApiResponse[BrandResponse]
 // @Failure 500 {object} ApiResponse[BrandResponse]
 // @Router /Brands [get]
-func (sv *Server) getBrands(c *gin.Context) {
-	var queries getBrandsQueries
+func (sv *Server) getBrandsHandler(c *gin.Context) {
+	var queries BrandsQueries
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[BrandResponse](InvalidBodyCode, "", err))
 		return
@@ -145,7 +146,7 @@ func (sv *Server) getBrands(c *gin.Context) {
 	))
 }
 
-// getBrandByID retrieves a Brand by its ID.
+// getBrandByIDHandler retrieves a Brand by its ID.
 // @Summary Get a Brand by ID
 // @Description Get a Brand by ID
 // @ID get-Brand-by-id
@@ -156,8 +157,8 @@ func (sv *Server) getBrands(c *gin.Context) {
 // @Failure 400 {object} ApiResponse[CategoryResponse]
 // @Failure 500 {object} ApiResponse[CategoryResponse]
 // @Router /Brands/{id} [get]
-func (sv *Server) getBrandByID(c *gin.Context) {
-	var param getBrandParams
+func (sv *Server) getBrandByIDHandler(c *gin.Context) {
+	var param BrandParams
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
 		return
@@ -188,7 +189,7 @@ func (sv *Server) getBrandByID(c *gin.Context) {
 	c.JSON(http.StatusOK, createSuccessResponse(c, colResp, "", nil, nil))
 }
 
-// getProductsByBrand retrieves a list of products in a Brand.
+// getProductsByBrandHandler retrieves a list of products in a Brand.
 // @Summary Get a list of products in a Brand
 // @Description Get a list of products in a Brand
 // @ID get-Brand-products
@@ -199,8 +200,8 @@ func (sv *Server) getBrandByID(c *gin.Context) {
 // @Failure 400 {object} ApiResponse[[]ProductListModel]
 // @Failure 500 {object} ApiResponse[[]ProductListModel]
 // @Router /Brand/{id}/products [get]
-func (sv *Server) getProductsByBrand(c *gin.Context) {
-	var param getBrandParams
+func (sv *Server) getProductsByBrandHandler(c *gin.Context) {
+	var param BrandParams
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[[]ProductListModel](InvalidBodyCode, "", err))
 		return
@@ -263,13 +264,13 @@ func (sv *Server) getProductsByBrand(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[BrandResponse]
 // @Router /Brands/{id} [put]
 func (sv *Server) updateBrand(c *gin.Context) {
-	var param getBrandParams
+	var param BrandParams
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[BrandResponse](InvalidBodyCode, "", err))
 		return
 	}
 	var req UpdateCategoryRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[BrandResponse](InvalidBodyCode, "", err))
 		return
 	}
@@ -290,8 +291,9 @@ func (sv *Server) updateBrand(c *gin.Context) {
 		Name: utils.GetPgTypeText(*req.Name),
 	}
 	if req.Image != nil {
-		fileName, fileID, err := sv.uploadService.UploadFile(c, *req.Image)
+		fileName, fileID, err := sv.uploadService.UploadFile(c, req.Image)
 		if err != nil {
+			log.Error().Err(err).Interface("value", req.Image.Header).Msg("error when upload image")
 			c.JSON(http.StatusInternalServerError, createErrorResponse[BrandResponse](UploadFileCode, "", err))
 			return
 		}
@@ -336,7 +338,7 @@ func (sv *Server) updateBrand(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[bool]
 // @Router /Brands/{id} [delete]
 func (sv *Server) deleteBrand(c *gin.Context) {
-	var colID getBrandParams
+	var colID BrandParams
 	if err := c.ShouldBindUri(&colID); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidBodyCode, "", err))
 		return

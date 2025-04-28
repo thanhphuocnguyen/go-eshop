@@ -187,7 +187,7 @@ func (sv *Server) orderDetail(c *gin.Context) {
 	}
 	if orderDetailRow.PaymentID.Valid {
 		orderDetail.PaymentInfo = PaymentInfo{
-			ID:            orderDetailRow.PaymentID.String,
+			ID:            string(orderDetailRow.PaymentID.Bytes[:]),
 			PaymentAmount: paymentAmount.Float64,
 			PaymentMethod: string(orderDetailRow.PaymentMethod.PaymentMethod),
 			PaymentStatus: string(orderDetailRow.PaymentStatus.PaymentStatus),

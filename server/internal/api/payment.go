@@ -22,14 +22,14 @@ type GetPaymentByOrderIDParam struct {
 }
 
 type GetPaymentParam struct {
-	ID string `uri:"payment_id" binding:"required"`
+	ID string `uri:"payment_id" binding:"required,uuid"`
 }
 
 type PaymentResponse struct {
-	TransactionID string                    `json:"transaction_id"`
-	Gateway       repository.PaymentGateway `json:"gateway,omitempty"`
-	Status        repository.PaymentStatus  `json:"status,omitempty"`
-	Details       interface{}               `json:"details"`
+	ID      string                    `json:"_id"`
+	Gateway repository.PaymentGateway `json:"gateway,omitempty"`
+	Status  repository.PaymentStatus  `json:"status,omitempty"`
+	Details interface{}               `json:"details"`
 }
 
 type ChangePaymentStatusReq struct {
@@ -70,7 +70,7 @@ func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
 		return
 	}
 
-	_, err = sv.repo.GetPaymentTransactionByOrderID(c, param.OrderID)
+	_, err = sv.repo.GetPaymentByOrderID(c, param.OrderID)
 	if err == nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", errors.New("order already paid")))
 	}
@@ -81,8 +81,8 @@ func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
 	}
 
 	// Only for cod order
-	payment, err := sv.repo.CreatePaymentTransaction(c, repository.CreatePaymentTransactionParams{
-		ID:            uuid.New().String(),
+	payment, err := sv.repo.CreatePayment(c, repository.CreatePaymentParams{
+		ID:            uuid.New(),
 		OrderID:       ord.ID,
 		Amount:        ord.TotalPrice,
 		PaymentMethod: repository.PaymentMethodCod,
@@ -94,16 +94,16 @@ func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
 	}
 
 	resp := PaymentResponse{
-		TransactionID: payment.ID,
-		Gateway:       payment.PaymentGateway.PaymentGateway,
-		Status:        payment.Status,
-		Details:       nil,
+		ID:      payment.ID.String(),
+		Gateway: payment.PaymentGateway.PaymentGateway,
+		Status:  payment.Status,
+		Details: nil,
 	}
 	c.JSON(http.StatusOK, createSuccessResponse(c, resp, "", nil, nil))
 }
 
-// @Summary Get payment transaction by order ID
-// @Description Get payment transaction by order ID
+// @Summary Get payment  by order ID
+// @Description Get payment  by order ID
 // @Tags payment
 // @Accept json
 // @Produce json
@@ -140,7 +140,7 @@ func (sv *Server) getPaymentHandler(c *gin.Context) {
 		c.JSON(http.StatusForbidden, createErrorResponse[PaymentResponse](PermissionDeniedCode, "", errors.New("permission denied")))
 		return
 	}
-	payment, err := sv.repo.GetPaymentTransactionByOrderID(c, param.OrderID)
+	payment, err := sv.repo.GetPaymentByOrderID(c, param.OrderID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
 		return
@@ -154,17 +154,17 @@ func (sv *Server) getPaymentHandler(c *gin.Context) {
 		}
 		sv.paymentCtx.SetStrategy(stripeInstance)
 
-		details, err = sv.paymentCtx.GetPaymentObject(payment.ID)
+		details, err = sv.paymentCtx.GetPaymentObject(payment.GatewayPaymentIntentID.String)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
 			return
 		}
 	}
 	resp := PaymentResponse{
-		TransactionID: payment.ID,
-		Gateway:       payment.PaymentGateway.PaymentGateway,
-		Status:        payment.Status,
-		Details:       details,
+		ID:      payment.ID.String(),
+		Gateway: payment.PaymentGateway.PaymentGateway,
+		Status:  payment.Status,
+		Details: details,
 	}
 	c.JSON(http.StatusOK, createSuccessResponse(c, resp, "", nil, nil))
 }
@@ -194,7 +194,7 @@ func (sv *Server) changePaymentStatus(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](InvalidBodyCode, "", errors.New("order not found")))
 		return
 	}
-	payment, err := sv.repo.GetPaymentTransactionByID(c, param.ID)
+	payment, err := sv.repo.GetPaymentByID(c, uuid.MustParse(param.ID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, createErrorResponse[PaymentResponse](NotFoundCode, "", errors.New("order not found")))
@@ -247,7 +247,7 @@ func (sv *Server) changePaymentStatus(c *gin.Context) {
 
 	}
 
-	err = sv.repo.UpdatePaymentTransaction(c, repository.UpdatePaymentTransactionParams{
+	err = sv.repo.UpdatePayment(c, repository.UpdatePaymentParams{
 		ID: payment.ID,
 		Status: repository.NullPaymentStatus{
 			PaymentStatus: req.Status,
@@ -259,8 +259,8 @@ func (sv *Server) changePaymentStatus(c *gin.Context) {
 		return
 	}
 	resp := PaymentResponse{
-		TransactionID: payment.ID,
-		Status:        req.Status,
+		ID:     payment.ID.String(),
+		Status: req.Status,
 	}
 	c.JSON(http.StatusOK, createSuccessResponse(c, resp, "", nil, nil))
 }

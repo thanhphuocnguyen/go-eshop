@@ -55,7 +55,7 @@ export default function AdminBrandDetail({
   );
 
   async function handleSave(data: FormData) {
-    const response = await apiFetch<GenericResponse<any>>(
+    const response = await apiFetch<GenericResponse<GeneralCategoryModel>>(
       API_PATHS.BRAND.replace(':id', slug),
       {
         method: 'PUT',

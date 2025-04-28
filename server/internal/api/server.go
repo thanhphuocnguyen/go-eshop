@@ -165,7 +165,7 @@ func (sv *Server) initializeRouter() {
 			attribute.GET("", sv.getAttributesHandler)
 			attribute.GET(":id", sv.getAttributeByIDHandler)
 			// U
-			attribute.PUT(":id", sv.updateAttribute)
+			attribute.PUT(":id", sv.updateAttributeHandler)
 			// D
 			attribute.DELETE(":id", sv.deleteAttribute)
 		}
@@ -213,7 +213,7 @@ func (sv *Server) initializeRouter() {
 				authMiddleware(sv.tokenGenerator),
 				roleMiddleware(sv.repo, repository.UserRoleAdmin),
 			)
-			categoryAuthRoutes.POST("", sv.createCategory)
+			categoryAuthRoutes.POST("", sv.addCategoryHandler)
 			categoryAuthRoutes.PUT(":id", sv.updateCategory)
 			categoryAuthRoutes.DELETE(":id", sv.deleteCategory)
 		}
@@ -236,14 +236,14 @@ func (sv *Server) initializeRouter() {
 		brand := v1.Group("brands")
 		{
 			// CRUD
-			brand.GET("", sv.getBrands)
-			brand.GET(":id", sv.getBrandByID)
-			brand.GET(":id/products", sv.getProductsByBrand)
+			brand.GET("", sv.getBrandsHandler)
+			brand.GET(":id", sv.getBrandByIDHandler)
+			brand.GET(":id/products", sv.getProductsByBrandHandler)
 			brandAuthRoutes := brand.Group("").Use(
 				authMiddleware(sv.tokenGenerator),
 				roleMiddleware(sv.repo, repository.UserRoleAdmin),
 			)
-			brandAuthRoutes.POST("", sv.createBrand)
+			brandAuthRoutes.POST("", sv.createBrandHandler)
 			brandAuthRoutes.PUT(":id", sv.updateBrand)
 			brandAuthRoutes.DELETE(":id", sv.deleteBrand)
 		}

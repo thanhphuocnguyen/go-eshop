@@ -11,3 +11,7 @@ DROP TABLE IF EXISTS verify_emails;
 DROP TABLE IF EXISTS "sessions" CASCADE;
 
 DROP TABLE IF EXISTS "users" CASCADE;
+
+DROP INDEX IF EXISTS "user_payment_infos_user_id_idx";
+
+DROP TABLE IF EXISTS user_payment_infos;

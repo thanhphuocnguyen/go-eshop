@@ -17,23 +17,23 @@ type CustomerInfoTxArgs struct {
 type CreateOrderTxArgs struct {
 	UserID                uuid.UUID
 	CartID                uuid.UUID
-	AddressID             int64
 	CustomerInfo          CustomerInfoTxArgs
 	CreateOrderItemParams []CreateBulkOrderItemsParams
 	TotalPrice            float64
+	ShippingAddress       []byte
 }
 
 func (s *pgRepo) CreateOrderTx(ctx context.Context, arg CreateOrderTxArgs) (uuid.UUID, error) {
 	var result uuid.UUID
 	err := s.execTx(ctx, func(q *Queries) (err error) {
 		params := CreateOrderParams{
-			ID:            uuid.New(),
-			CustomerID:    arg.UserID,
-			UserAddressID: arg.AddressID,
-			TotalPrice:    utils.GetPgNumericFromFloat(arg.TotalPrice),
-			CustomerEmail: arg.CustomerInfo.Email,
-			CustomerName:  arg.CustomerInfo.FullName,
-			CustomerPhone: utils.GetPgTypeText(arg.CustomerInfo.Phone),
+			ID:              uuid.New(),
+			CustomerID:      arg.UserID,
+			ShippingAddress: arg.ShippingAddress,
+			TotalPrice:      utils.GetPgNumericFromFloat(arg.TotalPrice),
+			CustomerEmail:   arg.CustomerInfo.Email,
+			CustomerName:    arg.CustomerInfo.FullName,
+			CustomerPhone:   arg.CustomerInfo.Phone,
 		}
 
 		order, err := s.CreateOrder(ctx, params)

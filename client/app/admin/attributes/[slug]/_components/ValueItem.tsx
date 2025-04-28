@@ -19,11 +19,15 @@ const ValueItem: React.FC<ValueItemProps> = ({ idx, id, remove }) => {
   const { register, control } = useFormContext<AttributeFormModel>();
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id });
+  const [style, setStyle] = React.useState({});
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+  React.useEffect(() => {
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+    };
+    setStyle(style);
+  }, [transform, transition]);
 
   return (
     <li
@@ -39,7 +43,7 @@ const ValueItem: React.FC<ValueItemProps> = ({ idx, id, remove }) => {
         </Button>
         <div className='w-56'>
           <Field>
-            <Label className='text-sm/6 font-semibold'>Value</Label>
+            <Label className='text-sm/6 font-semibold'>Code</Label>
             <Input
               {...register(`values.${idx}.code`)}
               className={clsx(
@@ -51,7 +55,7 @@ const ValueItem: React.FC<ValueItemProps> = ({ idx, id, remove }) => {
         </div>
         <div className='w-56'>
           <Field>
-            <Label className='text-sm/6 font-semibold'>Display Value</Label>
+            <Label className='text-sm/6 font-semibold'>Name</Label>
             <Input
               {...register(`values.${idx}.name`)}
               className={clsx(

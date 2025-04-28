@@ -9,3 +9,6 @@ assets
 /web
 /seed
 /migrate
+.DS_Store
+*.log
+__debug_bin

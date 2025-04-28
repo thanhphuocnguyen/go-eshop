@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
@@ -45,7 +46,9 @@ type Querier interface {
 	CreateImageAssignment(ctx context.Context, arg CreateImageAssignmentParams) (ImageAssignment, error)
 	CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error)
 	CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (OrderItem, error)
-	CreatePaymentTransaction(ctx context.Context, arg CreatePaymentTransactionParams) (Payment, error)
+	CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payment, error)
+	// Payment Transactions --
+	CreatePaymentTransaction(ctx context.Context, arg CreatePaymentTransactionParams) (PaymentTransaction, error)
 	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
 	CreateProductVariant(ctx context.Context, arg CreateProductVariantParams) (ProductVariant, error)
 	// Product Variant attributes
@@ -62,7 +65,8 @@ type Querier interface {
 	DeleteCollection(ctx context.Context, id uuid.UUID) error
 	DeleteImageAssignments(ctx context.Context, arg DeleteImageAssignmentsParams) error
 	DeleteOrder(ctx context.Context, id uuid.UUID) error
-	DeletePaymentTransaction(ctx context.Context, id string) error
+	DeletePayment(ctx context.Context, id uuid.UUID) error
+	DeletePaymentTransaction(ctx context.Context, id uuid.UUID) error
 	DeleteProduct(ctx context.Context, id uuid.UUID) error
 	DeleteProductImage(ctx context.Context, id int32) error
 	DeleteProductImageAssignment(ctx context.Context, arg DeleteProductImageAssignmentParams) error
@@ -101,8 +105,11 @@ type Querier interface {
 	GetImagesByEntityID(ctx context.Context, entityID uuid.UUID) ([]GetImagesByEntityIDRow, error)
 	GetOrder(ctx context.Context, id uuid.UUID) (Order, error)
 	GetOrderDetails(ctx context.Context, id uuid.UUID) ([]GetOrderDetailsRow, error)
-	GetPaymentTransactionByID(ctx context.Context, id string) (Payment, error)
-	GetPaymentTransactionByOrderID(ctx context.Context, orderID uuid.UUID) (Payment, error)
+	GetPaymentByID(ctx context.Context, id uuid.UUID) (Payment, error)
+	GetPaymentByOrderID(ctx context.Context, orderID uuid.UUID) (Payment, error)
+	GetPaymentByPaymentIntentID(ctx context.Context, gatewayPaymentIntentID pgtype.Text) (Payment, error)
+	GetPaymentTransactionByID(ctx context.Context, id uuid.UUID) (PaymentTransaction, error)
+	GetPaymentTransactionByPaymentID(ctx context.Context, paymentID uuid.UUID) (PaymentTransaction, error)
 	GetProductByID(ctx context.Context, arg GetProductByIDParams) (Product, error)
 	GetProductDetail(ctx context.Context, arg GetProductDetailParams) ([]GetProductDetailRow, error)
 	GetProductImageByEntityID(ctx context.Context, entityID uuid.UUID) (GetProductImageByEntityIDRow, error)
@@ -142,6 +149,7 @@ type Querier interface {
 	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error)
 	UpdateCollectionWith(ctx context.Context, arg UpdateCollectionWithParams) (Collection, error)
 	UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order, error)
+	UpdatePayment(ctx context.Context, arg UpdatePaymentParams) error
 	UpdatePaymentTransaction(ctx context.Context, arg UpdatePaymentTransactionParams) error
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
 	UpdateProductImage(ctx context.Context, arg UpdateProductImageParams) error

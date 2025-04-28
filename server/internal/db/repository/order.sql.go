@@ -60,36 +60,36 @@ const createOrder = `-- name: CreateOrder :one
 INSERT INTO orders (
     id,
     customer_id,
-    user_address_id,
     customer_email,
     customer_name,
     customer_phone,
-    total_price
+    total_price,
+    shipping_address
 )
 VALUES 
     ($1,$2,$3,$4, $5, $6, $7)
-RETURNING id, customer_id, customer_email, customer_name, customer_phone, user_address_id, total_price, status, confirmed_at, delivered_at, cancelled_at, refunded_at, order_date, shipping_address, updated_at, created_at
+RETURNING id, customer_id, customer_email, customer_name, customer_phone, shipping_address, total_price, status, confirmed_at, delivered_at, cancelled_at, shipping_method, refunded_at, order_date, updated_at, created_at
 `
 
 type CreateOrderParams struct {
-	ID            uuid.UUID      `json:"id"`
-	CustomerID    uuid.UUID      `json:"customer_id"`
-	UserAddressID int64          `json:"user_address_id"`
-	CustomerEmail string         `json:"customer_email"`
-	CustomerName  string         `json:"customer_name"`
-	CustomerPhone pgtype.Text    `json:"customer_phone"`
-	TotalPrice    pgtype.Numeric `json:"total_price"`
+	ID              uuid.UUID      `json:"id"`
+	CustomerID      uuid.UUID      `json:"customer_id"`
+	CustomerEmail   string         `json:"customer_email"`
+	CustomerName    string         `json:"customer_name"`
+	CustomerPhone   string         `json:"customer_phone"`
+	TotalPrice      pgtype.Numeric `json:"total_price"`
+	ShippingAddress []byte         `json:"shipping_address"`
 }
 
 func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {
 	row := q.db.QueryRow(ctx, createOrder,
 		arg.ID,
 		arg.CustomerID,
-		arg.UserAddressID,
 		arg.CustomerEmail,
 		arg.CustomerName,
 		arg.CustomerPhone,
 		arg.TotalPrice,
+		arg.ShippingAddress,
 	)
 	var i Order
 	err := row.Scan(
@@ -98,15 +98,15 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 		&i.CustomerEmail,
 		&i.CustomerName,
 		&i.CustomerPhone,
-		&i.UserAddressID,
+		&i.ShippingAddress,
 		&i.TotalPrice,
 		&i.Status,
 		&i.ConfirmedAt,
 		&i.DeliveredAt,
 		&i.CancelledAt,
+		&i.ShippingMethod,
 		&i.RefundedAt,
 		&i.OrderDate,
-		&i.ShippingAddress,
 		&i.UpdatedAt,
 		&i.CreatedAt,
 	)
@@ -118,7 +118,7 @@ INSERT INTO
     order_items (id, order_id, variant_id, quantity, price_per_unit_snapshot, variant_sku_snapshot, product_name_snapshot, line_total_snapshot, attributes_snapshot)
 VALUES
     ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING id, order_id, variant_id, price_per_unit_snapshot, line_total_snapshot, product_name_snapshot, variant_sku_snapshot, attributes_snapshot, quantity, created_at, updated_at
+RETURNING id, order_id, variant_id, quantity, price_per_unit_snapshot, line_total_snapshot, product_name_snapshot, variant_sku_snapshot, attributes_snapshot, created_at, updated_at
 `
 
 type CreateOrderItemParams struct {
@@ -150,12 +150,12 @@ func (q *Queries) CreateOrderItem(ctx context.Context, arg CreateOrderItemParams
 		&i.ID,
 		&i.OrderID,
 		&i.VariantID,
+		&i.Quantity,
 		&i.PricePerUnitSnapshot,
 		&i.LineTotalSnapshot,
 		&i.ProductNameSnapshot,
 		&i.VariantSkuSnapshot,
 		&i.AttributesSnapshot,
-		&i.Quantity,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -176,7 +176,7 @@ func (q *Queries) DeleteOrder(ctx context.Context, id uuid.UUID) error {
 
 const getOrder = `-- name: GetOrder :one
 SELECT
-    id, customer_id, customer_email, customer_name, customer_phone, user_address_id, total_price, status, confirmed_at, delivered_at, cancelled_at, refunded_at, order_date, shipping_address, updated_at, created_at
+    id, customer_id, customer_email, customer_name, customer_phone, shipping_address, total_price, status, confirmed_at, delivered_at, cancelled_at, shipping_method, refunded_at, order_date, updated_at, created_at
 FROM
     orders ord
 WHERE
@@ -193,15 +193,15 @@ func (q *Queries) GetOrder(ctx context.Context, id uuid.UUID) (Order, error) {
 		&i.CustomerEmail,
 		&i.CustomerName,
 		&i.CustomerPhone,
-		&i.UserAddressID,
+		&i.ShippingAddress,
 		&i.TotalPrice,
 		&i.Status,
 		&i.ConfirmedAt,
 		&i.DeliveredAt,
 		&i.CancelledAt,
+		&i.ShippingMethod,
 		&i.RefundedAt,
 		&i.OrderDate,
-		&i.ShippingAddress,
 		&i.UpdatedAt,
 		&i.CreatedAt,
 	)
@@ -210,7 +210,7 @@ func (q *Queries) GetOrder(ctx context.Context, id uuid.UUID) (Order, error) {
 
 const getOrderDetails = `-- name: GetOrderDetails :many
 SELECT
-    ord.id, ord.customer_id, ord.customer_email, ord.customer_name, ord.customer_phone, ord.user_address_id, ord.total_price, ord.status, ord.confirmed_at, ord.delivered_at, ord.cancelled_at, ord.refunded_at, ord.order_date, ord.shipping_address, ord.updated_at, ord.created_at, 
+    ord.id, ord.customer_id, ord.customer_email, ord.customer_name, ord.customer_phone, ord.shipping_address, ord.total_price, ord.status, ord.confirmed_at, ord.delivered_at, ord.cancelled_at, ord.shipping_method, ord.refunded_at, ord.order_date, ord.updated_at, ord.created_at, 
     oi.quantity, oi.price_per_unit_snapshot, oi.variant_sku_snapshot, oi.product_name_snapshot, oi.line_total_snapshot,
     oi.attributes_snapshot, oi.id as order_item_id,
     p.name as product_name, p.id as variant_id,
@@ -240,16 +240,16 @@ type GetOrderDetailsRow struct {
 	CustomerID           uuid.UUID          `json:"customer_id"`
 	CustomerEmail        string             `json:"customer_email"`
 	CustomerName         string             `json:"customer_name"`
-	CustomerPhone        pgtype.Text        `json:"customer_phone"`
-	UserAddressID        int64              `json:"user_address_id"`
+	CustomerPhone        string             `json:"customer_phone"`
+	ShippingAddress      []byte             `json:"shipping_address"`
 	TotalPrice           pgtype.Numeric     `json:"total_price"`
 	Status               OrderStatus        `json:"status"`
 	ConfirmedAt          pgtype.Timestamptz `json:"confirmed_at"`
 	DeliveredAt          pgtype.Timestamptz `json:"delivered_at"`
 	CancelledAt          pgtype.Timestamptz `json:"cancelled_at"`
+	ShippingMethod       pgtype.Text        `json:"shipping_method"`
 	RefundedAt           pgtype.Timestamptz `json:"refunded_at"`
 	OrderDate            time.Time          `json:"order_date"`
-	ShippingAddress      []byte             `json:"shipping_address"`
 	UpdatedAt            time.Time          `json:"updated_at"`
 	CreatedAt            time.Time          `json:"created_at"`
 	Quantity             int16              `json:"quantity"`
@@ -267,7 +267,7 @@ type GetOrderDetailsRow struct {
 	City                 string             `json:"city"`
 	ImageUrl             pgtype.Text        `json:"image_url"`
 	PaymentStatus        NullPaymentStatus  `json:"payment_status"`
-	PaymentID            pgtype.Text        `json:"payment_id"`
+	PaymentID            pgtype.UUID        `json:"payment_id"`
 	PaymentAmount        pgtype.Numeric     `json:"payment_amount"`
 	PaymentMethod        NullPaymentMethod  `json:"payment_method"`
 	PaymentGateway       NullPaymentGateway `json:"payment_gateway"`
@@ -289,15 +289,15 @@ func (q *Queries) GetOrderDetails(ctx context.Context, id uuid.UUID) ([]GetOrder
 			&i.CustomerEmail,
 			&i.CustomerName,
 			&i.CustomerPhone,
-			&i.UserAddressID,
+			&i.ShippingAddress,
 			&i.TotalPrice,
 			&i.Status,
 			&i.ConfirmedAt,
 			&i.DeliveredAt,
 			&i.CancelledAt,
+			&i.ShippingMethod,
 			&i.RefundedAt,
 			&i.OrderDate,
-			&i.ShippingAddress,
 			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.Quantity,
@@ -333,7 +333,7 @@ func (q *Queries) GetOrderDetails(ctx context.Context, id uuid.UUID) ([]GetOrder
 
 const listOrderItems = `-- name: ListOrderItems :many
 SELECT
-    id, order_id, variant_id, price_per_unit_snapshot, line_total_snapshot, product_name_snapshot, variant_sku_snapshot, attributes_snapshot, quantity, created_at, updated_at
+    id, order_id, variant_id, quantity, price_per_unit_snapshot, line_total_snapshot, product_name_snapshot, variant_sku_snapshot, attributes_snapshot, created_at, updated_at
 FROM
     order_items
 WHERE
@@ -363,12 +363,12 @@ func (q *Queries) ListOrderItems(ctx context.Context, arg ListOrderItemsParams) 
 			&i.ID,
 			&i.OrderID,
 			&i.VariantID,
+			&i.Quantity,
 			&i.PricePerUnitSnapshot,
 			&i.LineTotalSnapshot,
 			&i.ProductNameSnapshot,
 			&i.VariantSkuSnapshot,
 			&i.AttributesSnapshot,
-			&i.Quantity,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -384,7 +384,7 @@ func (q *Queries) ListOrderItems(ctx context.Context, arg ListOrderItemsParams) 
 
 const listOrders = `-- name: ListOrders :many
 SELECT
-    ord.id, ord.customer_id, ord.customer_email, ord.customer_name, ord.customer_phone, ord.user_address_id, ord.total_price, ord.status, ord.confirmed_at, ord.delivered_at, ord.cancelled_at, ord.refunded_at, ord.order_date, ord.shipping_address, ord.updated_at, ord.created_at, pm.status as payment_status, COUNT(oit.id) as total_items
+    ord.id, ord.customer_id, ord.customer_email, ord.customer_name, ord.customer_phone, ord.shipping_address, ord.total_price, ord.status, ord.confirmed_at, ord.delivered_at, ord.cancelled_at, ord.shipping_method, ord.refunded_at, ord.order_date, ord.updated_at, ord.created_at, pm.status as payment_status, COUNT(oit.id) as total_items
 FROM
     orders ord
 JOIN order_items oit ON ord.id = oit.id
@@ -415,16 +415,16 @@ type ListOrdersRow struct {
 	CustomerID      uuid.UUID          `json:"customer_id"`
 	CustomerEmail   string             `json:"customer_email"`
 	CustomerName    string             `json:"customer_name"`
-	CustomerPhone   pgtype.Text        `json:"customer_phone"`
-	UserAddressID   int64              `json:"user_address_id"`
+	CustomerPhone   string             `json:"customer_phone"`
+	ShippingAddress []byte             `json:"shipping_address"`
 	TotalPrice      pgtype.Numeric     `json:"total_price"`
 	Status          OrderStatus        `json:"status"`
 	ConfirmedAt     pgtype.Timestamptz `json:"confirmed_at"`
 	DeliveredAt     pgtype.Timestamptz `json:"delivered_at"`
 	CancelledAt     pgtype.Timestamptz `json:"cancelled_at"`
+	ShippingMethod  pgtype.Text        `json:"shipping_method"`
 	RefundedAt      pgtype.Timestamptz `json:"refunded_at"`
 	OrderDate       time.Time          `json:"order_date"`
-	ShippingAddress []byte             `json:"shipping_address"`
 	UpdatedAt       time.Time          `json:"updated_at"`
 	CreatedAt       time.Time          `json:"created_at"`
 	PaymentStatus   NullPaymentStatus  `json:"payment_status"`
@@ -453,15 +453,15 @@ func (q *Queries) ListOrders(ctx context.Context, arg ListOrdersParams) ([]ListO
 			&i.CustomerEmail,
 			&i.CustomerName,
 			&i.CustomerPhone,
-			&i.UserAddressID,
+			&i.ShippingAddress,
 			&i.TotalPrice,
 			&i.Status,
 			&i.ConfirmedAt,
 			&i.DeliveredAt,
 			&i.CancelledAt,
+			&i.ShippingMethod,
 			&i.RefundedAt,
 			&i.OrderDate,
-			&i.ShippingAddress,
 			&i.UpdatedAt,
 			&i.CreatedAt,
 			&i.PaymentStatus,
@@ -485,20 +485,18 @@ SET
     confirmed_at = coalesce($2, confirmed_at),
     cancelled_at = coalesce($3, cancelled_at),
     delivered_at = coalesce($4, delivered_at),
-    user_address_id = coalesce($5, user_address_id),
     updated_at = now()
 WHERE
-    id = $6
-RETURNING id, customer_id, customer_email, customer_name, customer_phone, user_address_id, total_price, status, confirmed_at, delivered_at, cancelled_at, refunded_at, order_date, shipping_address, updated_at, created_at
+    id = $5
+RETURNING id, customer_id, customer_email, customer_name, customer_phone, shipping_address, total_price, status, confirmed_at, delivered_at, cancelled_at, shipping_method, refunded_at, order_date, updated_at, created_at
 `
 
 type UpdateOrderParams struct {
-	Status        NullOrderStatus    `json:"status"`
-	ConfirmedAt   pgtype.Timestamptz `json:"confirmed_at"`
-	CancelledAt   pgtype.Timestamptz `json:"cancelled_at"`
-	DeliveredAt   pgtype.Timestamptz `json:"delivered_at"`
-	UserAddressID pgtype.Int8        `json:"user_address_id"`
-	ID            uuid.UUID          `json:"id"`
+	Status      NullOrderStatus    `json:"status"`
+	ConfirmedAt pgtype.Timestamptz `json:"confirmed_at"`
+	CancelledAt pgtype.Timestamptz `json:"cancelled_at"`
+	DeliveredAt pgtype.Timestamptz `json:"delivered_at"`
+	ID          uuid.UUID          `json:"id"`
 }
 
 func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order, error) {
@@ -507,7 +505,6 @@ func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order
 		arg.ConfirmedAt,
 		arg.CancelledAt,
 		arg.DeliveredAt,
-		arg.UserAddressID,
 		arg.ID,
 	)
 	var i Order
@@ -517,15 +514,15 @@ func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order
 		&i.CustomerEmail,
 		&i.CustomerName,
 		&i.CustomerPhone,
-		&i.UserAddressID,
+		&i.ShippingAddress,
 		&i.TotalPrice,
 		&i.Status,
 		&i.ConfirmedAt,
 		&i.DeliveredAt,
 		&i.CancelledAt,
+		&i.ShippingMethod,
 		&i.RefundedAt,
 		&i.OrderDate,
-		&i.ShippingAddress,
 		&i.UpdatedAt,
 		&i.CreatedAt,
 	)

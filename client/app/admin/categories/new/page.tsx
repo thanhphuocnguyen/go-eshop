@@ -8,23 +8,34 @@ import { toast } from 'react-toastify';
 import { getCookie } from 'cookies-next';
 import { redirect } from 'next/navigation';
 import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
+import { apiFetch } from '@/lib/apis/api';
 
 export default function Page() {
   const handleSave = async (form: FormData) => {
-    const response = await apiFetch(API_PATHS.CATEGORIES, {
+    const { data, error } = await apiFetch<
+      GenericResponse<GeneralCategoryModel>
+    >(API_PATHS.CATEGORIES, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${getCookie('access_token')}`,
       },
       body: form,
     });
-    const data: GenericResponse<GeneralCategoryModel> = await response.json();
-    if (!response.ok) {
-      toast('Failed to save category', { type: 'error' });
+    if (error) {
+      toast.error(
+        <div>
+          <p className='text-red-500'>Failed to save category</p>
+          <p className='text-red-500'>{JSON.stringify(error)}</p>
+        </div>
+      );
       return;
     }
-    toast('Category saved', { type: 'success' });
-    redirect('/admin/categories/' + data.data.id);
+    if (!data) {
+      toast.error('Failed to save category');
+      return;
+    }
+    toast.success('Category created');
+    redirect('/admin/categories/' + data.id);
   };
   return (
     <div className='h-full overflow-hidden'>

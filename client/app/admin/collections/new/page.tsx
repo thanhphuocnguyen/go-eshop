@@ -11,19 +11,25 @@ import { apiFetch } from '@/lib/apis/api';
 
 export default function Page() {
   const handleSave = async (form: FormData) => {
-    const response = await apiFetch(API_PATHS.COLLECTIONS, {
+    const { data, error } = await apiFetch<
+      GenericResponse<GeneralCategoryModel>
+    >(API_PATHS.COLLECTIONS, {
       method: 'POST',
       body: form,
     });
 
-    const data: GenericResponse<GeneralCategoryModel> = await response.json();
-    if (!response.ok) {
-      console.error(response);
-      toast('Failed to save collection', { type: 'error' });
+    if (error) {
+      console.error(error);
+      toast.error(
+        <div>
+          <p className='text-red-500'>Failed to create collection</p>
+          <p className='text-red-500'>{JSON.stringify(error)}</p>
+        </div>
+      );
       return;
     }
-    toast('Collection created', { type: 'success' });
-    redirect('/admin/collections/' + data.data.id);
+    toast.success('Collection created');
+    redirect('/admin/collections/' + data.id);
   };
   return (
     <div className=''>

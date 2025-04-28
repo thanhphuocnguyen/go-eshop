@@ -4,18 +4,18 @@ CREATE TABLE
         "customer_id" UUID NOT NULL REFERENCES "users" ("id"),
         "customer_email" VARCHAR(255) NOT NULL,
         "customer_name" VARCHAR(255) NOT NULL,
-        "customer_phone" VARCHAR(50),
-        "user_address_id" BIGINT NOT NULL REFERENCES "user_addresses" ("id"),
+        "customer_phone" VARCHAR(50) NOT NULL,
+        "shipping_address" JSONB NOT NULL,
         "total_price" DECIMAL(10, 2) NOT NULL,
         "status" order_status NOT NULL DEFAULT 'pending',
         "confirmed_at" TIMESTAMPTZ,
         "delivered_at" TIMESTAMPTZ,
         "cancelled_at" TIMESTAMPTZ,
+        "shipping_method" VARCHAR(100),
         "refunded_at" TIMESTAMPTZ,
-        "order_date" TIMESTAMPTZ NOT NULL DEFAULT NOW (),
-        "shipping_address" JSONB NOT NULL,
-        "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW (),
-        "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW ()
+        "order_date" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
 CREATE TABLE
@@ -23,14 +23,14 @@ CREATE TABLE
         "id" UUID PRIMARY KEY,
         "order_id" UUID NOT NULL REFERENCES "orders" ("id") ON DELETE CASCADE,
         "variant_id" UUID NOT NULL REFERENCES "product_variants" ("id") ON DELETE CASCADE,
+        "quantity" SMALLINT NOT NULL DEFAULT 1,
         "price_per_unit_snapshot" DECIMAL(10, 2) NOT NULL,
         "line_total_snapshot" DECIMAL(10, 2) NOT NULL,
         "product_name_snapshot" VARCHAR(255) NOT NULL,
         "variant_sku_snapshot" VARCHAR(100) NOT NULL,
-        "attributes_snapshot" JSONB NOT NULL,
-        "quantity" SMALLINT NOT NULL DEFAULT 1,
-        "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW (),
-        "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW ()
+        "attributes_snapshot" JSONB,
+        "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
 -- Indexes for `orders` table

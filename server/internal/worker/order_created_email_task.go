@@ -57,7 +57,7 @@ func (p *RedisTaskProcessor) ProcessSendOrderCreatedEmail(ctx context.Context, t
 	if err := json.Unmarshal(task.Payload(), &payload); err != nil {
 		return err
 	}
-	payment, err := p.repo.GetPaymentTransactionByOrderID(ctx, payload.OrderID)
+	payment, err := p.repo.GetPaymentByOrderID(ctx, payload.OrderID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return fmt.Errorf("could not find payment transaction: %w", asynq.SkipRetry)
@@ -65,7 +65,7 @@ func (p *RedisTaskProcessor) ProcessSendOrderCreatedEmail(ctx context.Context, t
 
 		return fmt.Errorf("could not get payment transaction: %w", asynq.SkipRetry)
 	}
-	if payment.ID != payload.PaymentID {
+	if payment.GatewayPaymentIntentID.String != payload.PaymentID {
 		return fmt.Errorf("payment id mismatch: %w", asynq.SkipRetry)
 	}
 

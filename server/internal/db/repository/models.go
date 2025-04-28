@@ -554,16 +554,16 @@ type Order struct {
 	CustomerID      uuid.UUID          `json:"customer_id"`
 	CustomerEmail   string             `json:"customer_email"`
 	CustomerName    string             `json:"customer_name"`
-	CustomerPhone   pgtype.Text        `json:"customer_phone"`
-	UserAddressID   int64              `json:"user_address_id"`
+	CustomerPhone   string             `json:"customer_phone"`
+	ShippingAddress []byte             `json:"shipping_address"`
 	TotalPrice      pgtype.Numeric     `json:"total_price"`
 	Status          OrderStatus        `json:"status"`
 	ConfirmedAt     pgtype.Timestamptz `json:"confirmed_at"`
 	DeliveredAt     pgtype.Timestamptz `json:"delivered_at"`
 	CancelledAt     pgtype.Timestamptz `json:"cancelled_at"`
+	ShippingMethod  pgtype.Text        `json:"shipping_method"`
 	RefundedAt      pgtype.Timestamptz `json:"refunded_at"`
 	OrderDate       time.Time          `json:"order_date"`
-	ShippingAddress []byte             `json:"shipping_address"`
 	UpdatedAt       time.Time          `json:"updated_at"`
 	CreatedAt       time.Time          `json:"created_at"`
 }
@@ -572,26 +572,42 @@ type OrderItem struct {
 	ID                   uuid.UUID      `json:"id"`
 	OrderID              uuid.UUID      `json:"order_id"`
 	VariantID            uuid.UUID      `json:"variant_id"`
+	Quantity             int16          `json:"quantity"`
 	PricePerUnitSnapshot pgtype.Numeric `json:"price_per_unit_snapshot"`
 	LineTotalSnapshot    pgtype.Numeric `json:"line_total_snapshot"`
 	ProductNameSnapshot  string         `json:"product_name_snapshot"`
 	VariantSkuSnapshot   string         `json:"variant_sku_snapshot"`
 	AttributesSnapshot   []byte         `json:"attributes_snapshot"`
-	Quantity             int16          `json:"quantity"`
 	CreatedAt            time.Time      `json:"created_at"`
 	UpdatedAt            time.Time      `json:"updated_at"`
 }
 
 type Payment struct {
-	ID             string             `json:"id"`
-	OrderID        uuid.UUID          `json:"order_id"`
-	Amount         pgtype.Numeric     `json:"amount"`
-	PaymentMethod  PaymentMethod      `json:"payment_method"`
-	Status         PaymentStatus      `json:"status"`
-	PaymentGateway NullPaymentGateway `json:"payment_gateway"`
-	RefundID       pgtype.Text        `json:"refund_id"`
-	CreatedAt      pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+	ID                     uuid.UUID          `json:"id"`
+	OrderID                uuid.UUID          `json:"order_id"`
+	Amount                 pgtype.Numeric     `json:"amount"`
+	Status                 PaymentStatus      `json:"status"`
+	PaymentMethod          PaymentMethod      `json:"payment_method"`
+	PaymentGateway         NullPaymentGateway `json:"payment_gateway"`
+	RefundID               pgtype.Text        `json:"refund_id"`
+	GatewayPaymentIntentID pgtype.Text        `json:"gateway_payment_intent_id"`
+	GatewayChargeID        pgtype.Text        `json:"gateway_charge_id"`
+	ErrorCode              pgtype.Text        `json:"error_code"`
+	ErrorMessage           pgtype.Text        `json:"error_message"`
+	CreatedAt              pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt              pgtype.Timestamptz `json:"updated_at"`
+}
+
+type PaymentTransaction struct {
+	ID                     uuid.UUID          `json:"id"`
+	PaymentID              uuid.UUID          `json:"payment_id"`
+	Amount                 pgtype.Numeric     `json:"amount"`
+	Status                 PaymentStatus      `json:"status"`
+	GatewayTransactionID   pgtype.Text        `json:"gateway_transaction_id"`
+	GatewayResponseCode    pgtype.Text        `json:"gateway_response_code"`
+	GatewayResponseMessage pgtype.Text        `json:"gateway_response_message"`
+	TransactionDate        pgtype.Timestamptz `json:"transaction_date"`
+	CreatedAt              pgtype.Timestamptz `json:"created_at"`
 }
 
 type Product struct {

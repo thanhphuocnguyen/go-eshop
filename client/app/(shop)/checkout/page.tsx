@@ -19,9 +19,8 @@ import Image from 'next/image';
 import { TrashIcon } from '@heroicons/react/24/solid';
 import { useAppUser } from '@/components/AppUserContext';
 import { useEffect, useState } from 'react';
-import { useUser } from '@/lib/hooks/useUser';
 import { CheckIcon } from '@heroicons/react/24/outline';
-import { redirect, useRouter } from 'next/navigation';
+import { redirect, RedirectType, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/apis/api';
 import { API_PATHS } from '@/lib/constants/api';
 import { GenericResponse } from '@/lib/definitions';
@@ -50,11 +49,9 @@ export default function CheckoutPage() {
         terms_accepted: false,
       },
     });
-  const { cart, user: info } = useAppUser();
+  const { cart, user } = useAppUser();
 
   const paymentMethod = useWatch({ control, name: 'payment_method' });
-
-  const { user } = useUser(!!info.id);
 
   const handleAddressChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const addressId = parseInt(e.target.value);
@@ -145,7 +142,7 @@ export default function CheckoutPage() {
             </h3>
           </div>
         );
-        redirect(`orders/${data.order_id}`);
+        redirect(`orders/${data.order_id}`, RedirectType.replace);
       }
 
       toast.error(
@@ -160,21 +157,20 @@ export default function CheckoutPage() {
     }
 
     if (data) {
-      if (!data.client_secret || !data.payment_id) {
-        toast.error(
-          <div>
-            <h3 className='text-lg font-semibold text-red-600 mb-2'>
-              Error checkout
-            </h3>
-            <p className='text-sm text-gray-500'>Invalid payment data</p>
-          </div>
-        );
-        redirect(`orders/${data.order_id}`);
-      }
-
       sessionStorage.setItem('checkoutData', JSON.stringify(body));
       // If Stripe is selected, redirect to the Stripe payment page
       if (body.payment_method === 'stripe') {
+        if (!data.client_secret || !data.payment_id) {
+          toast.error(
+            <div>
+              <h3 className='text-lg font-semibold text-red-600 mb-2'>
+                Error checkout
+              </h3>
+              <p className='text-sm text-gray-500'>Invalid payment data</p>
+            </div>
+          );
+          redirect(`orders/${data.order_id}`, RedirectType.replace);
+        }
         router.push('/checkout/payment/stripe');
       } else {
         // Handle COD checkout
