@@ -1,63 +1,69 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
+import { loadStripe, StripeError } from '@stripe/stripe-js';
 import StripeCheckoutForm from './StripeCheckoutForm';
-import { useAppUser } from '@/components/AppUserContext';
+import { apiFetch } from '@/lib/apis/api';
+import {
+  CreatePaymentIntentResponse,
+  GenericResponse,
+} from '@/lib/definitions';
+import { API_PATHS } from '@/lib/constants/api';
+import { toast } from 'react-toastify';
+import { PaymentResponse } from '../../_lib/definitions';
 
 // Initialize Stripe - replace with your publishable key
 // In a real application, you would fetch this from an environment variable
-const stripePromise = loadStripe('pk_test_your_stripe_key');
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ''
+);
 
 export default function StripePage() {
+  const searchParams = useSearchParams();
+  const [totalPrice, setTotalPrice] = useState(0);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [checkoutData, setCheckoutData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  const { cart } = useAppUser();
+
+  async function getPaymentById() {
+    if (searchParams.get('payment_id') === null) {
+      router.push('/checkout');
+      return;
+    }
+    setIsLoading(true);
+    const { data, error } = await apiFetch<GenericResponse<PaymentResponse>>(
+      API_PATHS.PAYMENT_DETAIL.replace(':id', searchParams.get('payment_id')!)
+    );
+
+    if (error) {
+      console.error('Error fetching payment:', error);
+      toast.error(
+        error.details || 'Failed to fetch payment details. Please try again.'
+      );
+      return null;
+    }
+
+    if (data.details) {
+      setClientSecret(data.details.client_secret);
+      setTotalPrice(data.details.amount / 100);
+    }
+    setIsLoading(false);
+  }
 
   useEffect(() => {
     // Get checkout data from session storage
     const storedData = sessionStorage.getItem('checkoutData');
+
     if (!storedData) {
-      // Redirect back to checkout if no data is available
-      router.push('/checkout');
-      return;
+      getPaymentById();
+    } else {
+      const parsedData = JSON.parse(storedData) as CreatePaymentIntentResponse;
+      setClientSecret(parsedData.client_secret);
     }
-
-    const parsedData = JSON.parse(storedData);
-    setCheckoutData(parsedData);
-
-    const fetchPaymentIntent = async () => {
-      try {
-        // In a real application, you would call your backend to create a payment intent
-        // Example API call:
-        // const response = await fetch('/api/create-payment-intent', {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify({
-        //     amount: cart?.total_price || 0,
-        //     email: parsedData.stripeEmail || parsedData.email,
-        //   }),
-        // });
-        // const data = await response.json();
-        // setClientSecret(data.clientSecret);
-
-        // For demo purposes, we'll just simulate a successful response after a delay
-        setTimeout(() => {
-          setClientSecret('dummy_client_secret');
-          setIsLoading(false);
-        }, 1000);
-      } catch (error) {
-        console.error('Error creating payment intent:', error);
-        setIsLoading(false);
-      }
-    };
-
-    fetchPaymentIntent();
-  }, [router, cart]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handlePaymentSuccess = () => {
     // Clear checkout data from session storage
@@ -67,7 +73,7 @@ export default function StripePage() {
     router.push('/checkout/success');
   };
 
-  const handlePaymentError = (error: any) => {
+  const handlePaymentError = (error: StripeError | unknown) => {
     console.error('Payment error:', error);
     // You could redirect to an error page or display an error message
   };
@@ -96,7 +102,7 @@ export default function StripePage() {
               </h2>
               <div className='flex justify-between py-2 border-b border-gray-200'>
                 <span className='text-gray-600'>Subtotal</span>
-                <span className='font-medium'>${cart?.total_price || 0}</span>
+                <span className='font-medium'>${totalPrice}</span>
               </div>
               <div className='flex justify-between py-2 border-b border-gray-200'>
                 <span className='text-gray-600'>Shipping</span>
@@ -104,23 +110,25 @@ export default function StripePage() {
               </div>
               <div className='flex justify-between py-2 border-b border-gray-200'>
                 <span className='text-gray-600'>Tax</span>
-                <span className='font-medium'>$0.20</span>
+                <span className='font-medium'>$0.00</span>
               </div>
               <div className='flex justify-between py-3 font-bold'>
                 <span>Total</span>
-                <span>${cart?.total_price || 0}</span>
+                <span>${totalPrice}</span>
               </div>
             </div>
 
-            <Elements
-              stripe={stripePromise}
-              options={{ clientSecret, appearance: { theme: 'stripe' } }}
-            >
-              <StripeCheckoutForm
-                onSuccess={handlePaymentSuccess}
-                onError={handlePaymentError}
-              />
-            </Elements>
+            {clientSecret && (
+              <Elements
+                stripe={stripePromise}
+                options={{ clientSecret, appearance: { theme: 'stripe' } }}
+              >
+                <StripeCheckoutForm
+                  onSuccess={handlePaymentSuccess}
+                  onError={handlePaymentError}
+                />
+              </Elements>
+            )}
           </div>
         ) : (
           <div className='bg-white p-8 rounded-lg shadow-md'>

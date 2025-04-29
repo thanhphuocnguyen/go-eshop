@@ -59,6 +59,15 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 				Valid: true,
 			},
 		}
+		createPaymentTransactionArg := repository.CreatePaymentTransactionParams{
+			ID:                     uuid.New(),
+			PaymentID:              payment.ID,
+			Amount:                 payment.Amount,
+			Status:                 repository.PaymentStatusFailed,
+			GatewayTransactionID:   payment.GatewayPaymentIntentID,
+			GatewayResponseCode:    &evt.LastResponse.Status,
+			GatewayResponseMessage: evt.LastResponse.RawJSON,
+		}
 		switch evt.Type {
 		case stripe.EventTypePaymentIntentSucceeded:
 			server.taskDistributor.SendOrderCreatedEmailTask(c,
@@ -69,42 +78,18 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 				asynq.MaxRetry(3),
 				asynq.Queue("email"),
 				asynq.ProcessIn(time.Second*5))
-			server.repo.CreatePaymentTransaction(c, repository.CreatePaymentTransactionParams{
-				ID:                     uuid.New(),
-				PaymentID:              payment.ID,
-				Amount:                 payment.Amount,
-				Status:                 repository.PaymentStatusSuccess,
-				GatewayTransactionID:   payment.GatewayPaymentIntentID,
-				GatewayResponseCode:    &evt.LastResponse.Status,
-				GatewayResponseMessage: evt.LastResponse.RawJSON,
-			})
+			createPaymentTransactionArg.Status = repository.PaymentStatusSuccess
 			updateTransactionStatus.Status.PaymentStatus = repository.PaymentStatusSuccess
 		case stripe.EventTypePaymentIntentCanceled:
-			server.repo.CreatePaymentTransaction(c, repository.CreatePaymentTransactionParams{
-				ID:                     uuid.New(),
-				PaymentID:              payment.ID,
-				Amount:                 payment.Amount,
-				Status:                 repository.PaymentStatusCancelled,
-				GatewayTransactionID:   payment.GatewayPaymentIntentID,
-				GatewayResponseCode:    &evt.LastResponse.Status,
-				GatewayResponseMessage: evt.LastResponse.RawJSON,
-			})
 			updateTransactionStatus.Status.PaymentStatus = repository.PaymentStatusCancelled
+			createPaymentTransactionArg.Status = repository.PaymentStatusCancelled
 		case stripe.EventTypePaymentIntentPaymentFailed:
-			updateTransactionStatus.Status.PaymentStatus = repository.PaymentStatusFailed
-			server.repo.CreatePaymentTransaction(c, repository.CreatePaymentTransactionParams{
-				ID:                     uuid.New(),
-				PaymentID:              payment.ID,
-				Amount:                 payment.Amount,
-				Status:                 repository.PaymentStatusFailed,
-				GatewayTransactionID:   payment.GatewayPaymentIntentID,
-				GatewayResponseCode:    &evt.LastResponse.Status,
-				GatewayResponseMessage: evt.LastResponse.RawJSON,
-			})
 			updateTransactionStatus.Status.PaymentStatus = repository.PaymentStatusFailed
 			updateTransactionStatus.ErrorMessage = evt.LastResponse.RawJSON
 			updateTransactionStatus.ErrorCode = &evt.LastResponse.Status
+			createPaymentTransactionArg.Status = repository.PaymentStatusFailed
 		}
+		server.repo.CreatePaymentTransaction(c, createPaymentTransactionArg)
 		updateTransactionStatus.UpdatedAt = utils.GetPgTypeTimestamp(time.Now())
 		err = server.repo.UpdatePayment(c, updateTransactionStatus)
 		if err != nil {

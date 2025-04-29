@@ -24,7 +24,7 @@ type GetPaymentByOrderIDParam struct {
 }
 
 type GetPaymentParam struct {
-	ID string `uri:"payment_id" binding:"required,uuid"`
+	ID string `uri:"id" binding:"required,uuid"`
 }
 
 type CreatePaymentIntentResult struct {
@@ -33,7 +33,7 @@ type CreatePaymentIntentResult struct {
 }
 
 type PaymentResponse struct {
-	ID      string                    `json:"_id"`
+	ID      string                    `json:"id"`
 	Gateway repository.PaymentGateway `json:"gateway,omitempty"`
 	Status  repository.PaymentStatus  `json:"status,omitempty"`
 	Details interface{}               `json:"details"`
@@ -102,9 +102,12 @@ func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", errors.New("order not found")))
 		return
 	}
+
 	if payment.ID != uuid.Nil && payment.Status != repository.PaymentStatusCancelled {
 		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](InvalidPaymentCode, "", errors.New("payment already exists")))
+		return
 	}
+
 	total, _ := ord.TotalPrice.Float64Value()
 	// create new payment
 	createPaymentParams := repository.CreatePaymentParams{
@@ -133,15 +136,16 @@ func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
 			Valid:          true,
 		}
 		createPaymentParams.GatewayPaymentIntentID = &paymentIntent.ID
-		createPaymentParams.GatewayChargeID = &paymentIntent.LatestCharge.AuthorizationCode
 		resp.ClientSecret = &paymentIntent.ClientSecret
 	}
 
 	payment, err = sv.repo.CreatePayment(c, createPaymentParams)
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
 		return
 	}
+
 	resp.PaymentID = payment.ID.String()
 	c.JSON(http.StatusOK, createSuccessResponse(c, resp, "", nil, nil))
 	return
@@ -152,7 +156,7 @@ func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
 // @Tags payment
 // @Accept json
 // @Produce json
-// @Param order_id path int true "Order ID"
+// @Param id path int true "Order ID"
 // @Security BearerAuth
 // @Success 200 {object} ApiResponse[PaymentResponse]
 // @Failure 400 {object} ApiResponse[PaymentResponse]
@@ -160,36 +164,20 @@ func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
 // @Failure 403 {object} ApiResponse[PaymentResponse]
 // @Failure 404 {object} ApiResponse[PaymentResponse]
 // @Failure 500 {object} ApiResponse[PaymentResponse]
-// @Router /payment/{order_id} [get]
+// @Router /payment/{id} [get]
 func (sv *Server) getPaymentHandler(c *gin.Context) {
-	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, createErrorResponse[PaymentResponse](UnauthorizedCode, "", errors.New("authorization payload is not provided")))
-		return
-	}
-	var param GetPaymentByOrderIDParam
+	var param GetPaymentParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](InvalidBodyCode, "", errors.New("order not found")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](InvalidBodyCode, "", err))
 		return
 	}
 
-	order, err := sv.repo.GetOrder(c, param.OrderID)
-	if err != nil {
-		if err == repository.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, createErrorResponse[PaymentResponse](NotFoundCode, "", errors.New("order not found")))
-		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", errors.New("order not found")))
-		return
-	}
-	if order.CustomerID != authPayload.UserID {
-		c.JSON(http.StatusForbidden, createErrorResponse[PaymentResponse](PermissionDeniedCode, "", errors.New("permission denied")))
-		return
-	}
-	payment, err := sv.repo.GetPaymentByOrderID(c, param.OrderID)
+	payment, err := sv.repo.GetPaymentByID(c, uuid.MustParse(param.ID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
 		return
 	}
+
 	var details interface{}
 	if payment.PaymentGateway.Valid {
 		stripeInstance, err := paymentService.NewStripePayment(sv.config.StripeSecretKey)
@@ -205,12 +193,14 @@ func (sv *Server) getPaymentHandler(c *gin.Context) {
 			return
 		}
 	}
+
 	resp := PaymentResponse{
 		ID:      payment.ID.String(),
 		Gateway: payment.PaymentGateway.PaymentGateway,
 		Status:  payment.Status,
 		Details: details,
 	}
+
 	c.JSON(http.StatusOK, createSuccessResponse(c, resp, "", nil, nil))
 }
 

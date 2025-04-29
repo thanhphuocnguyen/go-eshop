@@ -23,6 +23,8 @@ const _apiPaths = {
   CHECKOUT: '/cart/checkout',
   ORDER: '/order',
   ORDER_ITEM: '/order/:id',
+  PAYMENTS: '/payments',
+  PAYMENT_DETAIL: '/payments/:id',
   ATTRIBUTES: '/attributes',
   ATTRIBUTE: '/attributes/:id',
   BRANDS: '/brands',

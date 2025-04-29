@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import StyledModal from '../StyledModal';
 import { apiFetch } from '@/lib/apis/api';
-import { useRouter } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
 import LoadingButton from '../Common/LoadingButton';
 import { toast } from 'react-toastify';
 import { Button } from '@headlessui/react';
+import { API_PATHS } from '@/lib/constants/api';
+import { GenericResponse } from '@/lib/definitions';
 
 interface PaymentSetupModalProps {
   orderId: string;
@@ -37,25 +39,36 @@ const PaymentSetupModal: React.FC<PaymentSetupModalProps> = ({
 
     setIsLoading(true);
     try {
-      const response = await apiFetch(`/payment`, {
+      const response = await apiFetch<
+        GenericResponse<{
+          client_secret: string;
+          payment_id: string;
+        }>
+      >(API_PATHS.PAYMENTS, {
         method: 'POST',
         body: {
           order_id: orderId,
           payment_method: selectedMethod,
-          payment_gateway: selectedMethod === 'stripe' ? 'stripe' : undefined,
         },
       });
 
-      if (response.error) {
-        toast.error(response.error.details || 'Failed to setup payment');
+      if (response.error || !response.data) {
+        toast.error(response?.error?.details || 'Failed to setup payment');
         return;
       }
 
       if (selectedMethod === 'stripe') {
         // Redirect to stripe payment page or handle stripe checkout
-        window.open(
-          `/checkout/payment?order_id=${orderId}&type=stripe`,
-          '_blank'
+        localStorage.setItem(
+          'checkoutData',
+          JSON.stringify({
+            order_id: orderId,
+            total,
+            payment_method: selectedMethod,
+          })
+        );
+        redirect(
+          `/checkout/payment/stripe?payment_id=${response.data.payment_id}`
         );
       } else {
         // For COD, just refresh the page to show updated payment info

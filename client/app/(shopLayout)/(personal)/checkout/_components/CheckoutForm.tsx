@@ -9,9 +9,7 @@ const CheckoutForm = ({}) => {
   const stripe = useStripe();
   const elements = useElements();
 
-  const handleSubmit = async (
-    event: FormEvent
-  ) => {
+  const handleSubmit = async (event: FormEvent) => {
     // We don't want to let default form submission happen here,
     // which would refresh the page.
     event.preventDefault();
@@ -26,7 +24,7 @@ const CheckoutForm = ({}) => {
       //`Elements` instance that was used to create the Payment Element
       elements,
       confirmParams: {
-        return_url: 'https://example.com/order/123/complete',
+        return_url: `${window.location.origin}/checkout/success`,
       },
     });
 

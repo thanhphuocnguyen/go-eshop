@@ -197,9 +197,9 @@ func (sv *Server) initializeRouter() {
 
 		payment := v1.Group("/payments").Use(authMiddleware(sv.tokenGenerator))
 		{
+			payment.GET(":id", sv.getPaymentHandler)
 			payment.GET("stripe-config", sv.getStripeConfig)
 			payment.POST("", sv.createPaymentIntentHandler)
-			payment.GET(":order_id", sv.getPaymentHandler)
 			payment.PUT(":order_id", sv.changePaymentStatus)
 		}
 

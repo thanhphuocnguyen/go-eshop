@@ -38,3 +38,11 @@ export type CheckoutDataResponse = {
   payment_id?: string;
   client_secret?: string;
 };
+
+export type PaymentResponse = {
+  id: string;
+  gateway: string;
+  status: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  details: Record<string, any>;
+};
