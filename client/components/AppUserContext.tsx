@@ -19,7 +19,6 @@ interface AppUserContextType {
   user: UserModel | undefined;
   mutateUser?: KeyedMutator<UserModel>;
   cartItemsCount: number;
-  addToCart: (variantID: string, quantity: number) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
   updateCartItemQuantity: (itemId: string, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
@@ -33,45 +32,6 @@ export function AppUserProvider({ children }: { children: React.ReactNode }) {
   const { user, mutateUser } = useUser(getCookie('access_token'));
   // Load user from cookies if available
   const { cart, mutateCart, cartLoading } = useCart(user?.id);
-
-  // Add item to cart
-  const addToCart = useCallback(
-    async (variantID: string, quantity: number) => {
-      const user = getCookie('user_id');
-      if (!user) return;
-
-      setIsLoading(true);
-      const { data, error } = await apiFetch<GenericResponse<string>>(
-        API_PATHS.CART_ITEM.replaceAll(':variant_id', variantID.toString()),
-        {
-          method: 'PUT',
-          body: {
-            variant_id: variantID,
-            quantity: quantity,
-          },
-        }
-      );
-
-      if (data) {
-        await mutateCart();
-        toast.success(
-          <div>
-            <p className='text-sm text-gray-700'>Item added to cart</p>
-            <p className='text-sm text-gray-500'>{JSON.stringify(data)}</p>
-          </div>
-        );
-      }
-      if (error) {
-        toast.error(
-          <div>
-            <p className='text-sm text-gray-700'>Error adding item to cart</p>
-            <p className='text-sm text-gray-500'>{JSON.stringify(error)}</p>
-          </div>
-        );
-      }
-    },
-    [mutateCart]
-  );
 
   // Remove item from cart
   const removeFromCart = useCallback(
@@ -98,8 +58,14 @@ export function AppUserProvider({ children }: { children: React.ReactNode }) {
   const updateCartItemQuantity = async (itemId: string, quantity: number) => {
     if (!user || quantity < 1) return;
     setIsLoading(true);
+    const cartItem = cart?.cart_items.find((item) => item.id === itemId);
+
+    if (cartItem) {
+      quantity = cartItem.quantity + quantity;
+    }
+
     const { data, error } = await apiFetch<GenericResponse<boolean>>(
-      `${API_PATHS.CART_ITEM}/${itemId}/quantity`,
+      API_PATHS.CART_ITEM_QUANTITY.replace(':id', itemId),
       {
         method: 'PUT',
         body: {
@@ -108,7 +74,7 @@ export function AppUserProvider({ children }: { children: React.ReactNode }) {
       }
     );
 
-    if (error) {
+    if (error || !data) {
       toast.error(
         <div>
           <p className='text-sm text-gray-700'>Error updating item quantity</p>
@@ -116,6 +82,7 @@ export function AppUserProvider({ children }: { children: React.ReactNode }) {
         </div>
       );
     }
+
     if (data) {
       mutateCart(
         (prev) =>
@@ -132,6 +99,10 @@ export function AppUserProvider({ children }: { children: React.ReactNode }) {
           revalidate: false,
         }
       );
+      toast.success('Item quantity updated successfully');
+      if (!cartItem) {
+        mutateCart();
+      }
     }
     setIsLoading(false);
   };
@@ -158,7 +129,6 @@ export function AppUserProvider({ children }: { children: React.ReactNode }) {
     user,
     isLoading,
     cartItemsCount: cart ? cart.cart_items.length : 0,
-    addToCart,
     removeFromCart,
     updateCartItemQuantity,
     clearCart,

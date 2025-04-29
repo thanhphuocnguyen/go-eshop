@@ -18,7 +18,6 @@ func (s *stripePayment) CreatePaymentIntent(amount float64, email string) (resul
 		Amount:        stripe.Int64(int64(amount * utils.MUL)),
 		Currency:      stripe.String(string(stripe.CurrencyUSD)),
 		ReceiptEmail:  stripe.String(email),
-		Customer:      &email,
 		PaymentMethod: stripe.String("pm_card_visa"),
 	}
 	if email != "" {

@@ -72,7 +72,7 @@ export const CartItemSection = () => {
                     <Button
                       onClick={() => {
                         if (e.quantity > 1) {
-                          updateCartItemQuantity(e.id, e.quantity - 1);
+                          updateCartItemQuantity(e.id, -1);
                         } else {
                           removeFromCart(e.id);
                         }
@@ -84,7 +84,7 @@ export const CartItemSection = () => {
                     <span>{e.quantity}</span>
                     <Button
                       onClick={() => {
-                        updateCartItemQuantity(e.id, e.quantity + 1);
+                        updateCartItemQuantity(e.id, 1);
                       }}
                       className='bg-gray-200 rounded-md px-2 py-1'
                     >

@@ -140,6 +140,7 @@ export default function CheckoutPage() {
             <h3 className='text-lg font-semibold text-red-600 mb-2'>
               Payment gateway error
             </h3>
+            <div>{JSON.stringify(error)}</div>
           </div>
         );
         redirect(`orders/${data.order_id}`, RedirectType.replace);

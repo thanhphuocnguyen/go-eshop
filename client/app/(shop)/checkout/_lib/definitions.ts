@@ -21,9 +21,11 @@ export const CheckoutFormSchema = z.object({
 });
 
 export type CheckoutFormValues = z.infer<typeof CheckoutFormSchema>;
+
 export type CheckoutFormErrors = Partial<
   Record<keyof CheckoutFormValues, string>
 >;
+
 export type CheckoutFormProps = {
   onSubmit: (values: CheckoutFormValues) => void;
   onError: (errors: CheckoutFormErrors) => void;

@@ -104,7 +104,7 @@ type Querier interface {
 	GetImageFromID(ctx context.Context, arg GetImageFromIDParams) (GetImageFromIDRow, error)
 	GetImagesByEntityID(ctx context.Context, entityID uuid.UUID) ([]GetImagesByEntityIDRow, error)
 	GetOrder(ctx context.Context, id uuid.UUID) (Order, error)
-	GetOrderDetails(ctx context.Context, id uuid.UUID) ([]GetOrderDetailsRow, error)
+	GetOrderProducts(ctx context.Context, orderID uuid.UUID) ([]GetOrderProductsRow, error)
 	GetPaymentByID(ctx context.Context, id uuid.UUID) (Payment, error)
 	GetPaymentByOrderID(ctx context.Context, orderID uuid.UUID) (Payment, error)
 	GetPaymentByPaymentIntentID(ctx context.Context, gatewayPaymentIntentID pgtype.Text) (Payment, error)

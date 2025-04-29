@@ -12,7 +12,7 @@ interface AttributesSectionProps {
   variants: VariantDetailModel[];
 }
 const AttributesSection: React.FC<AttributesSectionProps> = ({ variants }) => {
-  const { addToCart } = useAppUser();
+  const { updateCartItemQuantity } = useAppUser();
 
   const { attributes, attributesLoading } = useAttributes([
     ...new Set(variants.flatMap((e) => e.attributes.map((e) => e.id))),
@@ -76,7 +76,7 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({ variants }) => {
       return;
     }
     // Add to cart logic here
-    addToCart(variant.id, 1);
+    updateCartItemQuantity(variant.id, 1);
   };
 
   useEffect(() => {

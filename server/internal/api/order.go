@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"time"
@@ -8,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
@@ -30,10 +32,12 @@ type OrderStatusRequest struct {
 }
 
 type OrderItemResponse struct {
-	ID       string  `json:"id"`
-	Name     string  `json:"name"`
-	ImageUrl *string `json:"image_url"`
-	Quantity int16   `json:"quantity"`
+	ID                 string              `json:"id"`
+	Name               string              `json:"name"`
+	ImageUrl           *string             `json:"image_url"`
+	AttributesSnapshot []CartItemAttribute `json:"attribute_snapshot"`
+	LineTotal          float64             `json:"line_total"`
+	Quantity           int16               `json:"quantity"`
 }
 type PaymentInfo struct {
 	ID             string  `json:"id"`
@@ -45,11 +49,15 @@ type PaymentInfo struct {
 }
 
 type OrderDetailResponse struct {
-	ID          uuid.UUID              `json:"id"`
-	Total       float64                `json:"total"`
-	Status      repository.OrderStatus `json:"status"`
-	PaymentInfo PaymentInfo            `json:"payment_info"`
-	Products    []OrderItemResponse    `json:"products"`
+	ID            uuid.UUID              `json:"id"`
+	Total         float64                `json:"total"`
+	Status        repository.OrderStatus `json:"status"`
+	CustomerName  string                 `json:"customer_name"`
+	CustomerEmail string                 `json:"customer_email"`
+	PaymentInfo   *PaymentInfo           `json:"payment_info,omitempty"`
+	ShippingInfo  ShippingAddress        `json:"shipping_info"`
+	Products      []OrderItemResponse    `json:"products"`
+	CreatedAt     time.Time              `json:"created_at"`
 }
 type OrderListResponse struct {
 	ID            uuid.UUID                `json:"id"`
@@ -89,6 +97,7 @@ func (sv *Server) orderList(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, createErrorResponse[[]OrderListResponse](UnauthorizedCode, "", errors.New("authorization payload is not provided")))
 		return
 	}
+
 	var orderListQuery OrderListQuery
 	if err := c.ShouldBindQuery(&orderListQuery); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[[]OrderListResponse](InvalidBodyCode, "", err))
@@ -102,6 +111,7 @@ func (sv *Server) orderList(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[[]OrderListResponse](InternalServerErrorCode, "", err))
 		return
 	}
+
 	dbParams := repository.ListOrdersParams{
 		Limit:  20,
 		Offset: 1,
@@ -169,46 +179,83 @@ func (sv *Server) orderDetail(c *gin.Context) {
 		return
 	}
 
-	getOrderDetailRows, err := sv.repo.GetOrderDetails(c, uuid.MustParse(params.ID))
+	order, err := sv.repo.GetOrder(c, uuid.MustParse(params.ID))
+	if err != nil {
+		if err == repository.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, createErrorResponse[OrderDetailResponse](NotFoundCode, "", err))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderDetailResponse](InternalServerErrorCode, "", err))
+		return
+	}
+
+	total, _ := order.TotalPrice.Float64Value()
+	var shippingInfo ShippingAddress
+	err = json.Unmarshal(order.ShippingAddress, &shippingInfo)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderDetailResponse](InternalServerErrorCode, "", err))
 		return
 	}
 
-	orderDetailRow := getOrderDetailRows[0]
-	totalGet, _ := orderDetailRow.TotalPrice.Float64Value()
-	paymentAmount, _ := orderDetailRow.PaymentAmount.Float64Value()
+	resp := OrderDetailResponse{
+		ID:            order.ID,
+		Total:         total.Float64,
+		CustomerName:  order.CustomerName,
+		CustomerEmail: order.CustomerEmail,
+		PaymentInfo:   nil,
+		Status:        order.Status,
+		ShippingInfo:  shippingInfo,
+		CreatedAt:     order.CreatedAt.UTC(),
+		Products:      []OrderItemResponse{},
+	}
 
-	orderDetail := OrderDetailResponse{
-		ID:       orderDetailRow.ID,
-		Total:    totalGet.Float64,
-		Status:   orderDetailRow.Status,
-		Products: []OrderItemResponse{},
+	orderItemRows, err := sv.repo.GetOrderProducts(c, order.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderDetailResponse](InternalServerErrorCode, "", err))
+		return
 	}
-	if orderDetailRow.PaymentID.Valid {
-		orderDetail.PaymentInfo = PaymentInfo{
-			ID:            string(orderDetailRow.PaymentID.Bytes[:]),
-			PaymentAmount: paymentAmount.Float64,
-			PaymentMethod: string(orderDetailRow.PaymentMethod.PaymentMethod),
-			PaymentStatus: string(orderDetailRow.PaymentStatus.PaymentStatus),
-		}
-		if orderDetailRow.RefundID.Valid {
-			orderDetail.PaymentInfo.RefundID = &orderDetailRow.RefundID.String
-		}
-		if orderDetailRow.PaymentGateway.Valid {
-			orderDetail.PaymentInfo.PaymentGateWay = (*string)(&orderDetailRow.PaymentGateway.PaymentGateway)
+
+	paymentInfo, err := sv.repo.GetPaymentByOrderID(c, order.ID)
+
+	var apiErr *ApiError = nil
+
+	if err != nil {
+		log.Err(err).Msg("Order does not have payment info")
+		apiErr = &ApiError{
+			Code:    InternalServerErrorCode,
+			Details: "failed to get payment info",
+			Stack:   err.Error(),
 		}
 	}
-	for _, item := range getOrderDetailRows {
-		orderDetail.Products = append(orderDetail.Products, OrderItemResponse{
-			ID:       item.VariantID.String(),
-			Name:     item.ProductName,
-			Quantity: item.Quantity,
-			ImageUrl: &item.ImageUrl.String,
+	if err == nil {
+		resp.PaymentInfo = &PaymentInfo{
+			ID:             paymentInfo.ID.String(),
+			RefundID:       &paymentInfo.RefundID.String,
+			PaymentGateWay: (*string)(&paymentInfo.PaymentGateway.PaymentGateway),
+			PaymentMethod:  string(paymentInfo.PaymentMethod),
+			PaymentStatus:  string(paymentInfo.Status),
+		}
+	}
+
+	orderItems := make([]OrderItemResponse, 0, len(orderItemRows))
+
+	for _, item := range orderItemRows {
+		var attrSnapshot []CartItemAttribute
+		json.Unmarshal(item.AttributesSnapshot, &attrSnapshot)
+		lineTotal, _ := item.LineTotalSnapshot.Float64Value()
+		orderItems = append(orderItems, OrderItemResponse{
+			ID:                 item.VariantID.String(),
+			Name:               item.ProductName,
+			ImageUrl:           &item.ImageUrl.String,
+			LineTotal:          lineTotal.Float64,
+			AttributesSnapshot: attrSnapshot,
+			Quantity:           item.Quantity,
 		})
 	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(c, orderDetail, "success", nil, nil))
+	resp.Products = orderItems
+
+	c.JSON(http.StatusOK, createSuccessResponse(c, resp, "success", nil, apiErr))
 }
 
 // @Summary Cancel order

@@ -16,3 +16,11 @@ func GetImageName(originFileName string) string {
 func StandardizeDecimal(num float64) float64 {
 	return math.Floor(num*utils.MUL) / utils.EXP
 }
+
+func String(value string) *string {
+	return &value
+}
+
+func Bool(value bool) *bool {
+	return &value
+}

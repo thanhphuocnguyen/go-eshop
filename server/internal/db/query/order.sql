@@ -21,31 +21,23 @@ WHERE
     id = $1
 LIMIT 1;
 
--- name: GetOrderDetails :many
+
+-- name: GetOrderProducts :many
 SELECT
-    ord.*, 
-    oi.quantity, oi.price_per_unit_snapshot, oi.variant_sku_snapshot, oi.product_name_snapshot, oi.line_total_snapshot,
+    oi.*,
     oi.attributes_snapshot, oi.id as order_item_id,
-    p.name as product_name, p.id as variant_id,
-    u_addr.street, u_addr.ward, u_addr.district, u_addr.city, 
-    img.url as image_url,
-    pm.status as payment_status, pm.id as payment_id, pm.amount as payment_amount, pm.payment_method, pm.payment_gateway, pm.refund_id
+    p.name as product_name,
+    i.url as image_url
 FROM
-    orders ord
+    order_items oi
 JOIN
-    order_items oi ON oi.id = ord.id
+    product_variants pv ON oi.variant_id = pv.id
 JOIN
-    products p ON oi.variant_id = p.id
-JOIN
-    user_addresses u_addr ON ord.user_address_id = u_addr.user_address_id
-LEFT JOIN
-    payments pm ON ord.id = pm.id
-LEFT JOIN 
-    image_assignments ia ON p.id = ia.entity_id AND ia.entity_type = 'product'
-LEFT JOIN
-    images img ON img.id = ia.image_id
+    products p ON pv.product_id = p.id
+LEFT JOIN image_assignments AS ia ON ia.entity_id = pv.id AND ia.entity_type = 'variant'
+LEFT JOIN images AS i ON i.id = ia.image_id
 WHERE
-    ord.id = $1;
+    oi.order_id = $1;
 
 -- name: ListOrders :many
 SELECT

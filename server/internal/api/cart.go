@@ -472,6 +472,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 		}
 		if paramIdx == -1 {
 			itemParam := repository.CreateBulkOrderItemsParams{
+				ID:                   uuid.New(),
 				VariantID:            item.CartItem.VariantID,
 				Quantity:             item.CartItem.Quantity,
 				PricePerUnitSnapshot: item.Price,

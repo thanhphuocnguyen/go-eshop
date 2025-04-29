@@ -69,11 +69,11 @@ func (p *RedisTaskProcessor) ProcessSendOrderCreatedEmail(ctx context.Context, t
 		return fmt.Errorf("payment id mismatch: %w", asynq.SkipRetry)
 	}
 
-	orderItems, err := p.repo.GetOrderDetails(ctx, payload.OrderID)
+	order, err := p.repo.GetOrder(ctx, payload.OrderID)
 	if err != nil {
 		return fmt.Errorf("could not get order details: %w", asynq.SkipRetry)
 	}
-
+	orderItems, err := p.repo.GetOrderProducts(ctx, payload.OrderID)
 	items := make([]OrderCreatedItems, 0)
 
 	for _, item := range orderItems {
@@ -87,7 +87,7 @@ func (p *RedisTaskProcessor) ProcessSendOrderCreatedEmail(ctx context.Context, t
 		}
 	}
 
-	user, err := p.repo.GetUserByID(ctx, orderItems[0].CustomerID)
+	user, err := p.repo.GetUserByID(ctx, order.CustomerID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return fmt.Errorf("could not find user: %w", asynq.SkipRetry)
@@ -97,7 +97,7 @@ func (p *RedisTaskProcessor) ProcessSendOrderCreatedEmail(ctx context.Context, t
 
 	price, _ := payment.Amount.Float64Value()
 	emailData := OrderCreatedEmailData{
-		OrderID:  payload.OrderID,
+		OrderID:  order.ID,
 		Total:    price.Float64,
 		FullName: user.Fullname,
 		Items:    items,

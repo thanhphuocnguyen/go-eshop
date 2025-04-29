@@ -38,11 +38,11 @@ func (s *pgRepo) CreateOrderTx(ctx context.Context, arg CreateOrderTxArgs) (uuid
 
 		order, err := s.CreateOrder(ctx, params)
 
-		result = order.ID
 		if err != nil {
 			log.Error().Err(err).Msg("CreateOrder")
 			return err
 		}
+		result = order.ID
 
 		for i := range arg.CreateOrderItemParams {
 			arg.CreateOrderItemParams[i].OrderID = order.ID

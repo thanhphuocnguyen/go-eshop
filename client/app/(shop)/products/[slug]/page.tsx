@@ -74,7 +74,7 @@ async function ProductDetailPage({ params }: { params: { slug: string } }) {
           <div className='mt-6'>
             <h3 className='sr-only'>Description</h3>
             <div
-              className='text-base text-gray-700 space-y-6'
+              className='text-base text-gray-700 space-y-6 list-inside list-disc'
               dangerouslySetInnerHTML={{ __html: data.description }} // Use only if description is trusted HTML
               // Or just: <p className="text-base text-gray-700">{data.description}</p>
             />
@@ -141,6 +141,7 @@ async function ProductDetailPage({ params }: { params: { slug: string } }) {
 }
 
 export default ProductDetailPage;
+
 const details = [
   'Only the best materials',
   'Ethically and locally made',

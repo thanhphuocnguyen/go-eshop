@@ -2,7 +2,6 @@ import { Button } from '@headlessui/react';
 import React from 'react';
 import { VariantForm } from './VariantForm';
 import { useFieldArray, useFormContext } from 'react-hook-form';
-import { useAttributes } from '../../_lib/hooks';
 import { ProductModelForm } from '@/lib/definitions';
 import { PlusIcon } from '@heroicons/react/16/solid';
 import clsx from 'clsx';
@@ -13,11 +12,11 @@ import {
   DisclosurePanel,
   Transition,
 } from '@headlessui/react';
+import { useProductDetailFormContext } from '../_lib/contexts/ProductFormContext';
 
 export const VariantInfoForm: React.FC = ({}) => {
-  const { attributes } = useAttributes();
+  const { selectedAttributes } = useProductDetailFormContext();
   const { control, getValues } = useFormContext<ProductModelForm>();
-
   const { fields, append, remove } = useFieldArray({
     name: 'variants',
     keyName: 'key',
@@ -75,8 +74,8 @@ export const VariantInfoForm: React.FC = ({}) => {
                 <Button
                   onClick={() => {
                     append({
-                      attributes: attributes
-                        ? attributes.map((e) => ({
+                      attributes: selectedAttributes
+                        ? selectedAttributes.map((e) => ({
                             id: e.id,
                             name: e.name,
                             value_object: {

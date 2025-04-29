@@ -208,118 +208,67 @@ func (q *Queries) GetOrder(ctx context.Context, id uuid.UUID) (Order, error) {
 	return i, err
 }
 
-const getOrderDetails = `-- name: GetOrderDetails :many
+const getOrderProducts = `-- name: GetOrderProducts :many
 SELECT
-    ord.id, ord.customer_id, ord.customer_email, ord.customer_name, ord.customer_phone, ord.shipping_address, ord.total_price, ord.status, ord.confirmed_at, ord.delivered_at, ord.cancelled_at, ord.shipping_method, ord.refunded_at, ord.order_date, ord.updated_at, ord.created_at, 
-    oi.quantity, oi.price_per_unit_snapshot, oi.variant_sku_snapshot, oi.product_name_snapshot, oi.line_total_snapshot,
+    oi.id, oi.order_id, oi.variant_id, oi.quantity, oi.price_per_unit_snapshot, oi.line_total_snapshot, oi.product_name_snapshot, oi.variant_sku_snapshot, oi.attributes_snapshot, oi.created_at, oi.updated_at,
     oi.attributes_snapshot, oi.id as order_item_id,
-    p.name as product_name, p.id as variant_id,
-    u_addr.street, u_addr.ward, u_addr.district, u_addr.city, 
-    img.url as image_url,
-    pm.status as payment_status, pm.id as payment_id, pm.amount as payment_amount, pm.payment_method, pm.payment_gateway, pm.refund_id
+    p.name as product_name,
+    i.url as image_url
 FROM
-    orders ord
+    order_items oi
 JOIN
-    order_items oi ON oi.id = ord.id
+    product_variants pv ON oi.variant_id = pv.id
 JOIN
-    products p ON oi.variant_id = p.id
-JOIN
-    user_addresses u_addr ON ord.user_address_id = u_addr.user_address_id
-LEFT JOIN
-    payments pm ON ord.id = pm.id
-LEFT JOIN 
-    image_assignments ia ON p.id = ia.entity_id AND ia.entity_type = 'product'
-LEFT JOIN
-    images img ON img.id = ia.image_id
+    products p ON pv.product_id = p.id
+LEFT JOIN image_assignments AS ia ON ia.entity_id = pv.id AND ia.entity_type = 'variant'
+LEFT JOIN images AS i ON i.id = ia.image_id
 WHERE
-    ord.id = $1
+    oi.order_id = $1
 `
 
-type GetOrderDetailsRow struct {
-	ID                   uuid.UUID          `json:"id"`
-	CustomerID           uuid.UUID          `json:"customer_id"`
-	CustomerEmail        string             `json:"customer_email"`
-	CustomerName         string             `json:"customer_name"`
-	CustomerPhone        string             `json:"customer_phone"`
-	ShippingAddress      []byte             `json:"shipping_address"`
-	TotalPrice           pgtype.Numeric     `json:"total_price"`
-	Status               OrderStatus        `json:"status"`
-	ConfirmedAt          pgtype.Timestamptz `json:"confirmed_at"`
-	DeliveredAt          pgtype.Timestamptz `json:"delivered_at"`
-	CancelledAt          pgtype.Timestamptz `json:"cancelled_at"`
-	ShippingMethod       pgtype.Text        `json:"shipping_method"`
-	RefundedAt           pgtype.Timestamptz `json:"refunded_at"`
-	OrderDate            time.Time          `json:"order_date"`
-	UpdatedAt            time.Time          `json:"updated_at"`
-	CreatedAt            time.Time          `json:"created_at"`
-	Quantity             int16              `json:"quantity"`
-	PricePerUnitSnapshot pgtype.Numeric     `json:"price_per_unit_snapshot"`
-	VariantSkuSnapshot   string             `json:"variant_sku_snapshot"`
-	ProductNameSnapshot  string             `json:"product_name_snapshot"`
-	LineTotalSnapshot    pgtype.Numeric     `json:"line_total_snapshot"`
-	AttributesSnapshot   []byte             `json:"attributes_snapshot"`
-	OrderItemID          uuid.UUID          `json:"order_item_id"`
-	ProductName          string             `json:"product_name"`
-	VariantID            uuid.UUID          `json:"variant_id"`
-	Street               string             `json:"street"`
-	Ward                 pgtype.Text        `json:"ward"`
-	District             string             `json:"district"`
-	City                 string             `json:"city"`
-	ImageUrl             pgtype.Text        `json:"image_url"`
-	PaymentStatus        NullPaymentStatus  `json:"payment_status"`
-	PaymentID            pgtype.UUID        `json:"payment_id"`
-	PaymentAmount        pgtype.Numeric     `json:"payment_amount"`
-	PaymentMethod        NullPaymentMethod  `json:"payment_method"`
-	PaymentGateway       NullPaymentGateway `json:"payment_gateway"`
-	RefundID             pgtype.Text        `json:"refund_id"`
+type GetOrderProductsRow struct {
+	ID                   uuid.UUID      `json:"id"`
+	OrderID              uuid.UUID      `json:"order_id"`
+	VariantID            uuid.UUID      `json:"variant_id"`
+	Quantity             int16          `json:"quantity"`
+	PricePerUnitSnapshot pgtype.Numeric `json:"price_per_unit_snapshot"`
+	LineTotalSnapshot    pgtype.Numeric `json:"line_total_snapshot"`
+	ProductNameSnapshot  string         `json:"product_name_snapshot"`
+	VariantSkuSnapshot   string         `json:"variant_sku_snapshot"`
+	AttributesSnapshot   []byte         `json:"attributes_snapshot"`
+	CreatedAt            time.Time      `json:"created_at"`
+	UpdatedAt            time.Time      `json:"updated_at"`
+	AttributesSnapshot_2 []byte         `json:"attributes_snapshot_2"`
+	OrderItemID          uuid.UUID      `json:"order_item_id"`
+	ProductName          string         `json:"product_name"`
+	ImageUrl             pgtype.Text    `json:"image_url"`
 }
 
-func (q *Queries) GetOrderDetails(ctx context.Context, id uuid.UUID) ([]GetOrderDetailsRow, error) {
-	rows, err := q.db.Query(ctx, getOrderDetails, id)
+func (q *Queries) GetOrderProducts(ctx context.Context, orderID uuid.UUID) ([]GetOrderProductsRow, error) {
+	rows, err := q.db.Query(ctx, getOrderProducts, orderID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetOrderDetailsRow{}
+	items := []GetOrderProductsRow{}
 	for rows.Next() {
-		var i GetOrderDetailsRow
+		var i GetOrderProductsRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.CustomerID,
-			&i.CustomerEmail,
-			&i.CustomerName,
-			&i.CustomerPhone,
-			&i.ShippingAddress,
-			&i.TotalPrice,
-			&i.Status,
-			&i.ConfirmedAt,
-			&i.DeliveredAt,
-			&i.CancelledAt,
-			&i.ShippingMethod,
-			&i.RefundedAt,
-			&i.OrderDate,
-			&i.UpdatedAt,
-			&i.CreatedAt,
+			&i.OrderID,
+			&i.VariantID,
 			&i.Quantity,
 			&i.PricePerUnitSnapshot,
-			&i.VariantSkuSnapshot,
-			&i.ProductNameSnapshot,
 			&i.LineTotalSnapshot,
+			&i.ProductNameSnapshot,
+			&i.VariantSkuSnapshot,
 			&i.AttributesSnapshot,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.AttributesSnapshot_2,
 			&i.OrderItemID,
 			&i.ProductName,
-			&i.VariantID,
-			&i.Street,
-			&i.Ward,
-			&i.District,
-			&i.City,
 			&i.ImageUrl,
-			&i.PaymentStatus,
-			&i.PaymentID,
-			&i.PaymentAmount,
-			&i.PaymentMethod,
-			&i.PaymentGateway,
-			&i.RefundID,
 		); err != nil {
 			return nil, err
 		}
