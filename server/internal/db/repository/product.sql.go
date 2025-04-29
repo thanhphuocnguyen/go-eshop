@@ -19,7 +19,7 @@ type AddBulkProductsParams struct {
 	CollectionID pgtype.UUID `json:"collection_id"`
 	BrandID      pgtype.UUID `json:"brand_id"`
 	Name         string      `json:"name"`
-	Description  pgtype.Text `json:"description"`
+	Description  *string     `json:"description"`
 }
 
 const archiveProduct = `-- name: ArchiveProduct :exec
@@ -33,8 +33,8 @@ WHERE
 `
 
 type ArchiveProductParams struct {
-	IsActive pgtype.Bool `json:"is_active"`
-	ID       uuid.UUID   `json:"id"`
+	IsActive *bool     `json:"is_active"`
+	ID       uuid.UUID `json:"id"`
 }
 
 func (q *Queries) ArchiveProduct(ctx context.Context, arg ArchiveProductParams) error {
@@ -53,8 +53,8 @@ WHERE
 `
 
 type ArchiveProductVariantParams struct {
-	IsActive pgtype.Bool `json:"is_active"`
-	ID       uuid.UUID   `json:"id"`
+	IsActive *bool     `json:"is_active"`
+	ID       uuid.UUID `json:"id"`
 }
 
 func (q *Queries) ArchiveProductVariant(ctx context.Context, arg ArchiveProductVariantParams) error {
@@ -73,8 +73,8 @@ WHERE
 `
 
 type CountProductsParams struct {
-	IsActive pgtype.Bool `json:"is_active"`
-	Name     pgtype.Text `json:"name"`
+	IsActive *bool   `json:"is_active"`
+	Name     *string `json:"name"`
 }
 
 func (q *Queries) CountProducts(ctx context.Context, arg CountProductsParams) (int64, error) {
@@ -104,7 +104,7 @@ RETURNING id, name, description, base_price, base_sku, slug, is_active, category
 type CreateProductParams struct {
 	ID           uuid.UUID      `json:"id"`
 	Name         string         `json:"name"`
-	Description  pgtype.Text    `json:"description"`
+	Description  *string        `json:"description"`
 	BasePrice    pgtype.Numeric `json:"base_price"`
 	BaseSku      string         `json:"base_sku"`
 	Slug         string         `json:"slug"`
@@ -221,8 +221,8 @@ GROUP BY
 `
 
 type GetProductByIDParams struct {
-	ID       uuid.UUID   `json:"id"`
-	IsActive pgtype.Bool `json:"is_active"`
+	ID       uuid.UUID `json:"id"`
+	IsActive *bool     `json:"is_active"`
 }
 
 func (q *Queries) GetProductByID(ctx context.Context, arg GetProductByIDParams) (Product, error) {
@@ -268,24 +268,24 @@ ORDER BY
 `
 
 type GetProductDetailParams struct {
-	ID       uuid.UUID   `json:"id"`
-	IsActive pgtype.Bool `json:"is_active"`
+	ID       uuid.UUID `json:"id"`
+	IsActive *bool     `json:"is_active"`
 }
 
 type GetProductDetailRow struct {
 	ProductID      uuid.UUID      `json:"product_id"`
 	Name           string         `json:"name"`
-	Description    pgtype.Text    `json:"description"`
+	Description    *string        `json:"description"`
 	BasePrice      pgtype.Numeric `json:"base_price"`
 	BaseSku        string         `json:"base_sku"`
 	Slug           string         `json:"slug"`
 	UpdatedAt      time.Time      `json:"updated_at"`
 	CreatedAt      time.Time      `json:"created_at"`
-	IsActive       pgtype.Bool    `json:"is_active"`
+	IsActive       *bool          `json:"is_active"`
 	CategoryID     uuid.UUID      `json:"category_id"`
 	CategoryName   string         `json:"category_name"`
 	CollectionID   pgtype.UUID    `json:"collection_id"`
-	CollectionName pgtype.Text    `json:"collection_name"`
+	CollectionName *string        `json:"collection_name"`
 	BrandID        uuid.UUID      `json:"brand_id"`
 	BrandName      string         `json:"brand_name"`
 }
@@ -375,8 +375,8 @@ ORDER BY
 `
 
 type GetProductVariantsParams struct {
-	ProductID uuid.UUID   `json:"product_id"`
-	IsActive  pgtype.Bool `json:"is_active"`
+	ProductID uuid.UUID `json:"product_id"`
+	IsActive  *bool     `json:"is_active"`
 }
 
 type GetProductVariantsRow struct {
@@ -386,7 +386,7 @@ type GetProductVariantsRow struct {
 	Price            pgtype.Numeric `json:"price"`
 	Stock            int32          `json:"stock"`
 	Weight           pgtype.Numeric `json:"weight"`
-	IsActive         pgtype.Bool    `json:"is_active"`
+	IsActive         *bool          `json:"is_active"`
 	CreatedAt        time.Time      `json:"created_at"`
 	UpdatedAt        time.Time      `json:"updated_at"`
 	AttrID           int32          `json:"attr_id"`
@@ -394,7 +394,7 @@ type GetProductVariantsRow struct {
 	AttrValID        int32          `json:"attr_val_id"`
 	AttrValCode      string         `json:"attr_val_code"`
 	AttrDisplayOrder int16          `json:"attr_display_order"`
-	AttrValIsActive  pgtype.Bool    `json:"attr_val_is_active"`
+	AttrValIsActive  *bool          `json:"attr_val_is_active"`
 	AttrValName      string         `json:"attr_val_name"`
 }
 
@@ -452,27 +452,27 @@ LIMIT $2 OFFSET $3
 `
 
 type GetProductWithImageParams struct {
-	ID       uuid.UUID   `json:"id"`
-	Limit    int32       `json:"limit"`
-	Offset   int32       `json:"offset"`
-	IsActive pgtype.Bool `json:"is_active"`
+	ID       uuid.UUID `json:"id"`
+	Limit    int32     `json:"limit"`
+	Offset   int32     `json:"offset"`
+	IsActive *bool     `json:"is_active"`
 }
 
 type GetProductWithImageRow struct {
 	ID           uuid.UUID      `json:"id"`
 	Name         string         `json:"name"`
-	Description  pgtype.Text    `json:"description"`
+	Description  *string        `json:"description"`
 	BasePrice    pgtype.Numeric `json:"base_price"`
 	BaseSku      string         `json:"base_sku"`
 	Slug         string         `json:"slug"`
-	IsActive     pgtype.Bool    `json:"is_active"`
+	IsActive     *bool          `json:"is_active"`
 	CategoryID   pgtype.UUID    `json:"category_id"`
 	CollectionID pgtype.UUID    `json:"collection_id"`
 	BrandID      pgtype.UUID    `json:"brand_id"`
 	CreatedAt    time.Time      `json:"created_at"`
 	UpdatedAt    time.Time      `json:"updated_at"`
-	ImgID        pgtype.Int4    `json:"img_id"`
-	ImgUrl       pgtype.Text    `json:"img_url"`
+	ImgID        *int32         `json:"img_id"`
+	ImgUrl       *string        `json:"img_url"`
 }
 
 func (q *Queries) GetProductWithImage(ctx context.Context, arg GetProductWithImageParams) (GetProductWithImageRow, error) {
@@ -529,21 +529,21 @@ LIMIT $1 OFFSET $2
 `
 
 type GetProductsParams struct {
-	Limit    int32       `json:"limit"`
-	Offset   int32       `json:"offset"`
-	IsActive pgtype.Bool `json:"is_active"`
-	Name     pgtype.Text `json:"name"`
-	BaseSku  pgtype.Text `json:"base_sku"`
+	Limit    int32   `json:"limit"`
+	Offset   int32   `json:"offset"`
+	IsActive *bool   `json:"is_active"`
+	Name     *string `json:"name"`
+	BaseSku  *string `json:"base_sku"`
 }
 
 type GetProductsRow struct {
 	ID           uuid.UUID      `json:"id"`
 	Name         string         `json:"name"`
-	Description  pgtype.Text    `json:"description"`
+	Description  *string        `json:"description"`
 	BasePrice    pgtype.Numeric `json:"base_price"`
 	BaseSku      string         `json:"base_sku"`
 	Slug         string         `json:"slug"`
-	IsActive     pgtype.Bool    `json:"is_active"`
+	IsActive     *bool          `json:"is_active"`
 	CategoryID   pgtype.UUID    `json:"category_id"`
 	CollectionID pgtype.UUID    `json:"collection_id"`
 	BrandID      pgtype.UUID    `json:"brand_id"`
@@ -632,19 +632,19 @@ type GetProductsByBrandIDParams struct {
 	BrandID  pgtype.UUID `json:"brand_id"`
 	Limit    int32       `json:"limit"`
 	Offset   int32       `json:"offset"`
-	IsActive pgtype.Bool `json:"is_active"`
-	Name     pgtype.Text `json:"name"`
-	BaseSku  pgtype.Text `json:"base_sku"`
+	IsActive *bool       `json:"is_active"`
+	Name     *string     `json:"name"`
+	BaseSku  *string     `json:"base_sku"`
 }
 
 type GetProductsByBrandIDRow struct {
 	ID           uuid.UUID      `json:"id"`
 	Name         string         `json:"name"`
-	Description  pgtype.Text    `json:"description"`
+	Description  *string        `json:"description"`
 	BasePrice    pgtype.Numeric `json:"base_price"`
 	BaseSku      string         `json:"base_sku"`
 	Slug         string         `json:"slug"`
-	IsActive     pgtype.Bool    `json:"is_active"`
+	IsActive     *bool          `json:"is_active"`
 	CategoryID   pgtype.UUID    `json:"category_id"`
 	CollectionID pgtype.UUID    `json:"collection_id"`
 	BrandID      pgtype.UUID    `json:"brand_id"`
@@ -737,19 +737,19 @@ type GetProductsByCategoryIDParams struct {
 	CategoryID pgtype.UUID `json:"category_id"`
 	Limit      int32       `json:"limit"`
 	Offset     int32       `json:"offset"`
-	IsActive   pgtype.Bool `json:"is_active"`
-	Name       pgtype.Text `json:"name"`
-	BaseSku    pgtype.Text `json:"base_sku"`
+	IsActive   *bool       `json:"is_active"`
+	Name       *string     `json:"name"`
+	BaseSku    *string     `json:"base_sku"`
 }
 
 type GetProductsByCategoryIDRow struct {
 	ID           uuid.UUID      `json:"id"`
 	Name         string         `json:"name"`
-	Description  pgtype.Text    `json:"description"`
+	Description  *string        `json:"description"`
 	BasePrice    pgtype.Numeric `json:"base_price"`
 	BaseSku      string         `json:"base_sku"`
 	Slug         string         `json:"slug"`
-	IsActive     pgtype.Bool    `json:"is_active"`
+	IsActive     *bool          `json:"is_active"`
 	CategoryID   pgtype.UUID    `json:"category_id"`
 	CollectionID pgtype.UUID    `json:"collection_id"`
 	BrandID      pgtype.UUID    `json:"brand_id"`
@@ -830,19 +830,19 @@ type GetProductsByCollectionIDParams struct {
 	CollectionID pgtype.UUID `json:"collection_id"`
 	Limit        int32       `json:"limit"`
 	Offset       int32       `json:"offset"`
-	IsActive     pgtype.Bool `json:"is_active"`
-	Name         pgtype.Text `json:"name"`
-	BaseSku      pgtype.Text `json:"base_sku"`
+	IsActive     *bool       `json:"is_active"`
+	Name         *string     `json:"name"`
+	BaseSku      *string     `json:"base_sku"`
 }
 
 type GetProductsByCollectionIDRow struct {
 	ID           uuid.UUID      `json:"id"`
 	Name         string         `json:"name"`
-	Description  pgtype.Text    `json:"description"`
+	Description  *string        `json:"description"`
 	BasePrice    pgtype.Numeric `json:"base_price"`
 	BaseSku      string         `json:"base_sku"`
 	Slug         string         `json:"slug"`
-	IsActive     pgtype.Bool    `json:"is_active"`
+	IsActive     *bool          `json:"is_active"`
 	CategoryID   pgtype.UUID    `json:"category_id"`
 	CollectionID pgtype.UUID    `json:"collection_id"`
 	BrandID      pgtype.UUID    `json:"brand_id"`
@@ -914,15 +914,15 @@ RETURNING id, name, description, base_price, base_sku, slug, is_active, category
 `
 
 type UpdateProductParams struct {
-	Name         pgtype.Text    `json:"name"`
-	Description  pgtype.Text    `json:"description"`
+	Name         *string        `json:"name"`
+	Description  *string        `json:"description"`
 	BrandID      pgtype.UUID    `json:"brand_id"`
 	CollectionID pgtype.UUID    `json:"collection_id"`
 	CategoryID   pgtype.UUID    `json:"category_id"`
-	Slug         pgtype.Text    `json:"slug"`
+	Slug         *string        `json:"slug"`
 	BasePrice    pgtype.Numeric `json:"base_price"`
-	BaseSku      pgtype.Text    `json:"base_sku"`
-	IsActive     pgtype.Bool    `json:"is_active"`
+	BaseSku      *string        `json:"base_sku"`
+	IsActive     *bool          `json:"is_active"`
 	ID           uuid.UUID      `json:"id"`
 }
 
@@ -1005,11 +1005,11 @@ RETURNING id, product_id, sku, price, stock, weight, is_active, created_at, upda
 `
 
 type UpdateProductVariantParams struct {
-	Sku      pgtype.Text    `json:"sku"`
+	Sku      *string        `json:"sku"`
 	Price    pgtype.Numeric `json:"price"`
-	Stock    pgtype.Int4    `json:"stock"`
+	Stock    *int32         `json:"stock"`
 	Weight   pgtype.Numeric `json:"weight"`
-	IsActive pgtype.Bool    `json:"is_active"`
+	IsActive *bool          `json:"is_active"`
 	ID       uuid.UUID      `json:"id"`
 }
 

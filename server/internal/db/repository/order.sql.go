@@ -241,7 +241,7 @@ type GetOrderProductsRow struct {
 	AttributesSnapshot_2 []byte         `json:"attributes_snapshot_2"`
 	OrderItemID          uuid.UUID      `json:"order_item_id"`
 	ProductName          string         `json:"product_name"`
-	ImageUrl             pgtype.Text    `json:"image_url"`
+	ImageUrl             *string        `json:"image_url"`
 }
 
 func (q *Queries) GetOrderProducts(ctx context.Context, orderID uuid.UUID) ([]GetOrderProductsRow, error) {
@@ -371,7 +371,7 @@ type ListOrdersRow struct {
 	ConfirmedAt     pgtype.Timestamptz `json:"confirmed_at"`
 	DeliveredAt     pgtype.Timestamptz `json:"delivered_at"`
 	CancelledAt     pgtype.Timestamptz `json:"cancelled_at"`
-	ShippingMethod  pgtype.Text        `json:"shipping_method"`
+	ShippingMethod  *string            `json:"shipping_method"`
 	RefundedAt      pgtype.Timestamptz `json:"refunded_at"`
 	OrderDate       time.Time          `json:"order_date"`
 	UpdatedAt       time.Time          `json:"updated_at"`

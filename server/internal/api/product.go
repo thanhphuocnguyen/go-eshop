@@ -150,7 +150,7 @@ func (sv *Server) createProduct(c *gin.Context) {
 	}
 
 	createParams.BasePrice = utils.GetPgNumericFromFloat(req.Price)
-	createParams.Description = utils.GetPgTypeText(req.Description)
+	createParams.Description = &req.Description
 	createParams.Slug = req.Slug
 	createParams.BaseSku = req.Sku
 
@@ -176,7 +176,7 @@ func (sv *Server) createProduct(c *gin.Context) {
 	resp := ProductListModel{
 		ID:          product.ID.String(),
 		Name:        product.Name,
-		Description: product.Description.String,
+		Description: *product.Description,
 		Slug:        product.Slug,
 		Sku:         product.BaseSku,
 		CreatedAt:   product.CreatedAt.String(),
@@ -273,11 +273,11 @@ func (sv *Server) getProducts(c *gin.Context) {
 	dbParams.Offset = (queries.Page - 1) * queries.PageSize
 
 	if queries.Name != nil {
-		dbParams.Name = utils.GetPgTypeText(*queries.Name)
+		dbParams.Name = queries.Name
 	}
 
 	if queries.Sku != nil {
-		dbParams.BaseSku = utils.GetPgTypeText(*queries.Sku)
+		dbParams.BaseSku = queries.Sku
 	}
 
 	products, err := sv.repo.GetProducts(c, dbParams)
@@ -337,16 +337,16 @@ func (sv *Server) updateProduct(c *gin.Context) {
 	}
 
 	if req.Name != nil {
-		updateProductParam.Name = utils.GetPgTypeText(*req.Name)
+		updateProductParam.Name = req.Name
 	}
 	if req.Description != nil {
-		updateProductParam.Description = utils.GetPgTypeText(*req.Description)
+		updateProductParam.Description = req.Description
 	}
 	if req.Slug != nil {
-		updateProductParam.Slug = utils.GetPgTypeText(*req.Slug)
+		updateProductParam.Slug = req.Slug
 	}
 	if req.Sku != nil {
-		updateProductParam.BaseSku = utils.GetPgTypeText(*req.Sku)
+		updateProductParam.BaseSku = req.Sku
 	}
 	if req.CategoryID != nil {
 		updateProductParam.CategoryID = utils.GetPgTypeUUIDFromString(*req.CategoryID)
@@ -585,12 +585,12 @@ func mapToProductResponse(productRows []repository.GetProductDetailRow) ProductM
 		ID:            product.ProductID.String(),
 		Name:          product.Name,
 		BasePrice:     basePrice.Float64,
-		Description:   product.Description.String,
+		Description:   *product.Description,
 		BaseSku:       product.BaseSku,
 		Slug:          product.Slug,
 		UpdatedAt:     product.UpdatedAt.String(),
 		CreatedAt:     product.CreatedAt.String(),
-		IsActive:      product.IsActive.Bool,
+		IsActive:      *product.IsActive,
 		Variants:      make([]ProductVariantModel, 0),
 		ProductImages: make([]ProductImageModel, 0),
 		Brand: &GeneralCategoryResponse{
@@ -607,7 +607,7 @@ func mapToProductResponse(productRows []repository.GetProductDetailRow) ProductM
 		collectionID, _ := uuid.FromBytes(product.CollectionID.Bytes[:])
 		resp.Collection = &GeneralCategoryResponse{
 			ID:   collectionID.String(),
-			Name: product.CollectionName.String,
+			Name: *product.CollectionName,
 		}
 	}
 
@@ -646,7 +646,7 @@ func mapToVariantResp(variantRows []repository.GetProductVariantsRow) []ProductV
 					ID:           row.AttrValID,
 					Code:         row.AttrValCode,
 					Name:         &row.AttrValName,
-					IsActive:     &row.IsActive.Bool,
+					IsActive:     row.IsActive,
 					DisplayOrder: &row.AttrDisplayOrder,
 				},
 			})
@@ -657,7 +657,7 @@ func mapToVariantResp(variantRows []repository.GetProductVariantsRow) []ProductV
 				ID:       row.ID.String(),
 				Price:    price.Float64,
 				StockQty: row.Stock,
-				IsActive: row.IsActive.Bool,
+				IsActive: *row.IsActive,
 				Sku:      &row.Sku,
 				Attributes: []ProductAttributeDetail{
 					{
@@ -667,7 +667,7 @@ func mapToVariantResp(variantRows []repository.GetProductVariantsRow) []ProductV
 							ID:           row.AttrValID,
 							Code:         row.AttrValCode,
 							Name:         &row.AttrValName,
-							IsActive:     &row.IsActive.Bool,
+							IsActive:     row.IsActive,
 							DisplayOrder: &row.AttrDisplayOrder,
 						},
 					},
@@ -736,7 +736,7 @@ func mapToListProductResponse(productRow repository.GetProductsRow) ProductListM
 	product := ProductListModel{
 		ID:           productRow.ID.String(),
 		Name:         productRow.Name,
-		Description:  productRow.Description.String,
+		Description:  *productRow.Description,
 		Price:        price.Float64,
 		Sku:          productRow.BaseSku,
 		Slug:         productRow.Slug,

@@ -400,7 +400,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 			UserID:   user.ID,
 			Phone:    req.Address.Phone,
 			Street:   req.Address.Street,
-			Ward:     utils.GetPgTypeText(*req.Address.Ward),
+			Ward:     req.Address.Ward,
 			District: req.Address.District,
 			City:     req.Address.City,
 			Default:  false,
@@ -411,7 +411,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 		}
 		shippingAddr = ShippingAddress{
 			Street:   address.Street,
-			Ward:     address.Ward.String,
+			Ward:     *address.Ward,
 			District: address.District,
 			City:     address.City,
 			Phone:    address.Phone,
@@ -431,7 +431,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 		}
 		shippingAddr = ShippingAddress{
 			Street:   address.Street,
-			Ward:     address.Ward.String,
+			Ward:     *address.Ward,
 			District: address.District,
 			City:     address.City,
 			Phone:    address.Phone,
@@ -577,7 +577,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 	}
 
 	paymentIntent := checkoutResult.(*stripe.PaymentIntent)
-	createPaymentArgs.GatewayPaymentIntentID = utils.GetPgTypeText(paymentIntent.ID)
+	createPaymentArgs.GatewayPaymentIntentID = &paymentIntent.ID
 	checkoutResp.ClientSecret = &paymentIntent.ClientSecret
 
 	// create payment transaction
@@ -670,7 +670,7 @@ func mapToCartItemsResp(rows []repository.GetCartItemsRow) ([]CartItemResponse, 
 				Attributes: []CartItemAttribute{
 					attr,
 				},
-				ImageURL: &row.ImageUrl.String,
+				ImageURL: row.ImageUrl,
 			}
 			cartItemsResp = append(cartItemsResp, cartItem)
 			totalPrice += cartItem.Price * float64(cartItem.Quantity)

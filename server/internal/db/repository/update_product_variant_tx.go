@@ -69,10 +69,10 @@ func (s *pgRepo) UpdateProductVariantsTx(ctx context.Context, productID uuid.UUI
 				if variant.ID != nil {
 					updateVariantParams := UpdateProductVariantParams{
 						ID:  uuid.MustParse(*variant.ID),
-						Sku: utils.GetPgTypeText(sku),
+						Sku: &sku,
 					}
 					if variant.Stock != nil {
-						updateVariantParams.Stock = utils.GetPgTypeInt4(*variant.Stock)
+						updateVariantParams.Stock = variant.Stock
 					}
 					if variant.Weight != nil {
 						updateVariantParams.Weight = utils.GetPgNumericFromFloat(*variant.Weight)
@@ -82,7 +82,7 @@ func (s *pgRepo) UpdateProductVariantsTx(ctx context.Context, productID uuid.UUI
 					}
 
 					if variant.IsActive != nil {
-						updateVariantParams.IsActive = utils.GetPgTypeBool(*variant.IsActive)
+						updateVariantParams.IsActive = variant.IsActive
 					}
 
 					updated, err := q.UpdateProductVariant(ctx, updateVariantParams)

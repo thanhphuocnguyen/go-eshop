@@ -65,7 +65,7 @@ func (p *RedisTaskProcessor) ProcessSendOrderCreatedEmail(ctx context.Context, t
 
 		return fmt.Errorf("could not get payment transaction: %w", asynq.SkipRetry)
 	}
-	if payment.GatewayPaymentIntentID.String != payload.PaymentID {
+	if *payment.GatewayPaymentIntentID != payload.PaymentID {
 		return fmt.Errorf("payment id mismatch: %w", asynq.SkipRetry)
 	}
 

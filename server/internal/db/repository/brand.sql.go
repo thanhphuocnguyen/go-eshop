@@ -34,12 +34,12 @@ RETURNING id, name, image_url, image_id, description, slug, remarkable, display_
 `
 
 type CreateBrandParams struct {
-	ID          uuid.UUID   `json:"id"`
-	Name        string      `json:"name"`
-	Slug        string      `json:"slug"`
-	Description pgtype.Text `json:"description"`
-	ImageUrl    pgtype.Text `json:"image_url"`
-	ImageID     pgtype.Text `json:"image_id"`
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Slug        string    `json:"slug"`
+	Description *string   `json:"description"`
+	ImageUrl    *string   `json:"image_url"`
+	ImageID     *string   `json:"image_id"`
 }
 
 func (q *Queries) CreateBrand(ctx context.Context, arg CreateBrandParams) (Brand, error) {
@@ -168,21 +168,21 @@ type GetBrandsByIDsParams struct {
 type GetBrandsByIDsRow struct {
 	ID            uuid.UUID      `json:"id"`
 	Name          string         `json:"name"`
-	ImageUrl      pgtype.Text    `json:"image_url"`
-	ImageID       pgtype.Text    `json:"image_id"`
-	Description   pgtype.Text    `json:"description"`
+	ImageUrl      *string        `json:"image_url"`
+	ImageID       *string        `json:"image_id"`
+	Description   *string        `json:"description"`
 	Slug          string         `json:"slug"`
-	Remarkable    pgtype.Bool    `json:"remarkable"`
-	DisplayOrder  pgtype.Int4    `json:"display_order"`
+	Remarkable    *bool          `json:"remarkable"`
+	DisplayOrder  *int32         `json:"display_order"`
 	Published     bool           `json:"published"`
 	CreatedAt     time.Time      `json:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at"`
-	ProductName   pgtype.Text    `json:"product_name"`
+	ProductName   *string        `json:"product_name"`
 	ProductID     pgtype.UUID    `json:"product_id"`
-	Description_2 pgtype.Text    `json:"description_2"`
+	Description_2 *string        `json:"description_2"`
 	ProductPrice  pgtype.Numeric `json:"product_price"`
-	ProductSku    pgtype.Text    `json:"product_sku"`
-	ProductSlug   pgtype.Text    `json:"product_slug"`
+	ProductSku    *string        `json:"product_sku"`
+	ProductSlug   *string        `json:"product_slug"`
 }
 
 func (q *Queries) GetBrandsByIDs(ctx context.Context, arg GetBrandsByIDsParams) ([]GetBrandsByIDsRow, error) {
@@ -239,14 +239,14 @@ RETURNING id, name, image_url, image_id, description, slug, remarkable, display_
 `
 
 type UpdateBrandWithParams struct {
-	ID          uuid.UUID   `json:"id"`
-	Name        pgtype.Text `json:"name"`
-	ImageUrl    pgtype.Text `json:"image_url"`
-	ImageID     pgtype.Text `json:"image_id"`
-	Description pgtype.Text `json:"description"`
-	Remarkable  pgtype.Bool `json:"remarkable"`
-	Slug        pgtype.Text `json:"slug"`
-	Published   pgtype.Bool `json:"published"`
+	ID          uuid.UUID `json:"id"`
+	Name        *string   `json:"name"`
+	ImageUrl    *string   `json:"image_url"`
+	ImageID     *string   `json:"image_id"`
+	Description *string   `json:"description"`
+	Remarkable  *bool     `json:"remarkable"`
+	Slug        *string   `json:"slug"`
+	Published   *bool     `json:"published"`
 }
 
 func (q *Queries) UpdateBrandWith(ctx context.Context, arg UpdateBrandWithParams) (Brand, error) {

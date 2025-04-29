@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
 // ------------------------------ API Models ------------------------------
@@ -149,15 +148,15 @@ func (sv *Server) getAttributeByIDHandler(c *gin.Context) {
 	}
 
 	for i := 0; i < len(attributeRows); i++ {
-		if !attributeRows[i].AttributeValueID.Valid {
+		if attributeRows[i].AttributeValueID == nil {
 			continue
 		}
 		attributeResp.Values = append(attributeResp.Values, AttributeValue{
-			ID:           attributeRows[i].AttributeValueID.Int32,
-			Code:         attributeRows[i].AttrValCode.String,
-			Name:         &attributeRows[i].AttrValName.String,
-			IsActive:     &attributeRows[i].AttributeValueIsActive.Bool,
-			DisplayOrder: &attributeRows[i].DisplayOrder.Int16,
+			ID:           *attributeRows[i].AttributeValueID,
+			Code:         *attributeRows[i].AttrValCode,
+			Name:         attributeRows[i].AttrValName,
+			IsActive:     attributeRows[i].AttributeValueIsActive,
+			DisplayOrder: attributeRows[i].DisplayOrder,
 		})
 	}
 
@@ -202,22 +201,22 @@ func (sv *Server) getAttributesHandler(c *gin.Context) {
 				CreatedAt: attrVal.CreatedAt.String(),
 				Values:    []AttributeValue{},
 			})
-			if attrVal.AttributeValueID.Valid {
+			if attrVal.AttributeValueID != nil {
 				attributeResp[len(attributeResp)-1].Values = append(attributeResp[len(attributeResp)-1].Values, AttributeValue{
-					ID:           attrVal.AttributeValueID.Int32,
-					Code:         attrVal.AttrValCode.String,
-					Name:         &attrVal.AttrValName.String,
-					DisplayOrder: &attrVal.DisplayOrder.Int16,
-					IsActive:     &attrVal.AttributeValueIsActive.Bool,
+					ID:           *attrVal.AttributeValueID,
+					Code:         *attrVal.AttrValCode,
+					Name:         attrVal.AttrValName,
+					DisplayOrder: attrVal.DisplayOrder,
+					IsActive:     attrVal.AttributeValueIsActive,
 				})
 			}
-		} else if attrVal.AttributeValueID.Valid {
+		} else if attrVal.AttributeValueID != nil {
 			attributeResp[len(attributeResp)-1].Values = append(attributeResp[len(attributeResp)-1].Values, AttributeValue{
-				ID:           attrVal.AttributeValueID.Int32,
-				Code:         attrVal.AttrValCode.String,
-				Name:         &attrVal.AttrValName.String,
-				IsActive:     &attrVal.AttributeValueIsActive.Bool,
-				DisplayOrder: &attrVal.DisplayOrder.Int16,
+				ID:           *attrVal.AttributeValueID,
+				Code:         *attrVal.AttrValCode,
+				Name:         attrVal.AttrValName,
+				IsActive:     attrVal.AttributeValueIsActive,
+				DisplayOrder: attrVal.DisplayOrder,
 			})
 		}
 	}
@@ -279,7 +278,7 @@ func (sv *Server) updateAttributeHandler(c *gin.Context) {
 			ID:           value.ID,
 			Code:         value.Code,
 			Name:         &value.Name,
-			IsActive:     &value.IsActive.Bool,
+			IsActive:     value.IsActive,
 			DisplayOrder: &value.DisplayOrder,
 		}
 	}
@@ -293,13 +292,13 @@ func (sv *Server) updateAttributeHandler(c *gin.Context) {
 					ID: *value.ID,
 				}
 				if value.Code != "" {
-					params.Code = utils.GetPgTypeText(value.Code)
+					params.Code = &value.Code
 				}
 				if value.Name != nil {
-					params.Name = utils.GetPgTypeText(*value.Name)
+					params.Name = value.Name
 				}
 				if value.DisplayOrder != nil {
-					params.DisplayOrder = utils.GetPgTypeInt2(*value.DisplayOrder)
+					params.DisplayOrder = value.DisplayOrder
 				}
 				updated, err := sv.repo.UpdateAttributeValue(c, params)
 				if err != nil {
@@ -311,7 +310,7 @@ func (sv *Server) updateAttributeHandler(c *gin.Context) {
 					ID:           updated.ID,
 					Code:         updated.Code,
 					Name:         &updated.Name,
-					IsActive:     &updated.IsActive.Bool,
+					IsActive:     updated.IsActive,
 					DisplayOrder: &updated.DisplayOrder,
 				})
 			}
@@ -335,7 +334,7 @@ func (sv *Server) updateAttributeHandler(c *gin.Context) {
 				ID:           newAttr.ID,
 				Code:         newAttr.Code,
 				Name:         &newAttr.Name,
-				IsActive:     &newAttr.IsActive.Bool,
+				IsActive:     newAttr.IsActive,
 				DisplayOrder: &newAttr.DisplayOrder,
 			})
 		}

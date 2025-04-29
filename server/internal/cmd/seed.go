@@ -156,7 +156,7 @@ func seedProducts(ctx context.Context, repo repository.Repository) {
 		params := repository.CreateProductParams{
 			ID:          uuid.New(),
 			Name:        product.Name,
-			Description: utils.GetPgTypeText(product.Description),
+			Description: &product.Description,
 			BasePrice:   utils.GetPgNumericFromFloat(product.Price),
 			BaseSku:     product.Sku,
 			Slug:        product.Name,
@@ -204,7 +204,7 @@ func seedCategories(ctx context.Context, repo repository.Repository) {
 	for i, Categories := range Categories {
 		params[i] = repository.SeedCategoriesParams{
 			Name:        Categories.Name,
-			Description: utils.GetPgTypeText(Categories.Description),
+			Description: &Categories.Description,
 			Slug:        Categories.Name,
 		}
 	}
@@ -328,7 +328,7 @@ func seedUserAddresses(ctx context.Context, repo repository.Repository, userIDs 
 			UserID:   userIDs[idx],
 			Phone:    address.Phone,
 			Street:   address.Street,
-			Ward:     utils.GetPgTypeText(address.Ward),
+			Ward:     &address.Ward,
 			District: address.District,
 			City:     address.City,
 		}

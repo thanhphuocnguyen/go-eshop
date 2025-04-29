@@ -162,12 +162,12 @@ type GetAttributeByIDRow struct {
 	ID                      int32              `json:"id"`
 	Name                    string             `json:"name"`
 	CreatedAt               time.Time          `json:"created_at"`
-	AttrValName             pgtype.Text        `json:"attr_val_name"`
-	AttributeValueID        pgtype.Int4        `json:"attribute_value_id"`
-	AttributeValueIsActive  pgtype.Bool        `json:"attribute_value_is_active"`
-	AttrValCode             pgtype.Text        `json:"attr_val_code"`
+	AttrValName             *string            `json:"attr_val_name"`
+	AttributeValueID        *int32             `json:"attribute_value_id"`
+	AttributeValueIsActive  *bool              `json:"attribute_value_is_active"`
+	AttrValCode             *string            `json:"attr_val_code"`
 	AttributeValueCreatedAt pgtype.Timestamptz `json:"attribute_value_created_at"`
-	DisplayOrder            pgtype.Int2        `json:"display_order"`
+	DisplayOrder            *int16             `json:"display_order"`
 }
 
 func (q *Queries) GetAttributeByID(ctx context.Context, id int32) ([]GetAttributeByIDRow, error) {
@@ -337,12 +337,12 @@ type GetAttributesRow struct {
 	ID                      int32              `json:"id"`
 	Name                    string             `json:"name"`
 	CreatedAt               time.Time          `json:"created_at"`
-	AttrValName             pgtype.Text        `json:"attr_val_name"`
-	AttributeValueID        pgtype.Int4        `json:"attribute_value_id"`
-	AttributeValueIsActive  pgtype.Bool        `json:"attribute_value_is_active"`
-	AttrValCode             pgtype.Text        `json:"attr_val_code"`
+	AttrValName             *string            `json:"attr_val_name"`
+	AttributeValueID        *int32             `json:"attribute_value_id"`
+	AttributeValueIsActive  *bool              `json:"attribute_value_is_active"`
+	AttrValCode             *string            `json:"attr_val_code"`
 	AttributeValueCreatedAt pgtype.Timestamptz `json:"attribute_value_created_at"`
-	DisplayOrder            pgtype.Int2        `json:"display_order"`
+	DisplayOrder            *int16             `json:"display_order"`
 }
 
 func (q *Queries) GetAttributes(ctx context.Context, ids []int32) ([]GetAttributesRow, error) {
@@ -439,11 +439,11 @@ RETURNING id, attribute_id, name, code, is_active, display_order, created_at
 `
 
 type UpdateAttributeValueParams struct {
-	ID           int32       `json:"id"`
-	Code         pgtype.Text `json:"code"`
-	IsActive     pgtype.Bool `json:"is_active"`
-	Name         pgtype.Text `json:"name"`
-	DisplayOrder pgtype.Int2 `json:"display_order"`
+	ID           int32   `json:"id"`
+	Code         *string `json:"code"`
+	IsActive     *bool   `json:"is_active"`
+	Name         *string `json:"name"`
+	DisplayOrder *int16  `json:"display_order"`
 }
 
 func (q *Queries) UpdateAttributeValue(ctx context.Context, arg UpdateAttributeValueParams) (AttributeValue, error) {

@@ -230,7 +230,7 @@ func (sv *Server) orderDetail(c *gin.Context) {
 	if err == nil {
 		resp.PaymentInfo = &PaymentInfo{
 			ID:             paymentInfo.ID.String(),
-			RefundID:       &paymentInfo.RefundID.String,
+			RefundID:       paymentInfo.RefundID,
 			PaymentGateWay: (*string)(&paymentInfo.PaymentGateway.PaymentGateway),
 			PaymentMethod:  string(paymentInfo.PaymentMethod),
 			PaymentStatus:  string(paymentInfo.Status),
@@ -246,7 +246,7 @@ func (sv *Server) orderDetail(c *gin.Context) {
 		orderItems = append(orderItems, OrderItemResponse{
 			ID:                 item.VariantID.String(),
 			Name:               item.ProductName,
-			ImageUrl:           &item.ImageUrl.String,
+			ImageUrl:           item.ImageUrl,
 			LineTotal:          lineTotal.Float64,
 			AttributesSnapshot: attrSnapshot,
 			Quantity:           item.Quantity,

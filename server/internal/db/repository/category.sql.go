@@ -32,12 +32,12 @@ RETURNING id, name, description, image_url, image_id, published, remarkable, slu
 `
 
 type CreateCategoryParams struct {
-	ID          uuid.UUID   `json:"id"`
-	Name        string      `json:"name"`
-	Slug        string      `json:"slug"`
-	Description pgtype.Text `json:"description"`
-	ImageUrl    pgtype.Text `json:"image_url"`
-	ImageID     pgtype.Text `json:"image_id"`
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Slug        string    `json:"slug"`
+	Description *string   `json:"description"`
+	ImageUrl    *string   `json:"image_url"`
+	ImageID     *string   `json:"image_id"`
 }
 
 func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) (Category, error) {
@@ -85,9 +85,9 @@ OFFSET $2
 `
 
 type GetCategoriesParams struct {
-	Limit     int32       `json:"limit"`
-	Offset    int32       `json:"offset"`
-	Published pgtype.Bool `json:"published"`
+	Limit     int32 `json:"limit"`
+	Offset    int32 `json:"offset"`
+	Published *bool `json:"published"`
 }
 
 func (q *Queries) GetCategories(ctx context.Context, arg GetCategoriesParams) ([]Category, error) {
@@ -178,8 +178,8 @@ WHERE
 type GetCategoryProductsByIDRow struct {
 	Category           Category    `json:"category"`
 	ID                 pgtype.UUID `json:"id"`
-	ProductName        pgtype.Text `json:"product_name"`
-	ProductDescription pgtype.Text `json:"product_description"`
+	ProductName        *string     `json:"product_name"`
+	ProductDescription *string     `json:"product_description"`
 }
 
 func (q *Queries) GetCategoryProductsByID(ctx context.Context, id uuid.UUID) ([]GetCategoryProductsByIDRow, error) {
@@ -218,11 +218,11 @@ func (q *Queries) GetCategoryProductsByID(ctx context.Context, id uuid.UUID) ([]
 }
 
 type SeedCategoriesParams struct {
-	Name        string      `json:"name"`
-	Slug        string      `json:"slug"`
-	Description pgtype.Text `json:"description"`
-	ImageUrl    pgtype.Text `json:"image_url"`
-	ImageID     pgtype.Text `json:"image_id"`
+	Name        string  `json:"name"`
+	Slug        string  `json:"slug"`
+	Description *string `json:"description"`
+	ImageUrl    *string `json:"image_url"`
+	ImageID     *string `json:"image_id"`
 }
 
 const updateCategory = `-- name: UpdateCategory :one
@@ -243,14 +243,14 @@ RETURNING id, name, description, image_url, image_id, published, remarkable, slu
 `
 
 type UpdateCategoryParams struct {
-	ID          uuid.UUID   `json:"id"`
-	Name        pgtype.Text `json:"name"`
-	Slug        pgtype.Text `json:"slug"`
-	Description pgtype.Text `json:"description"`
-	ImageID     pgtype.Text `json:"image_id"`
-	ImageUrl    pgtype.Text `json:"image_url"`
-	Remarkable  pgtype.Bool `json:"remarkable"`
-	Published   pgtype.Bool `json:"published"`
+	ID          uuid.UUID `json:"id"`
+	Name        *string   `json:"name"`
+	Slug        *string   `json:"slug"`
+	Description *string   `json:"description"`
+	ImageID     *string   `json:"image_id"`
+	ImageUrl    *string   `json:"image_url"`
+	Remarkable  *bool     `json:"remarkable"`
+	Published   *bool     `json:"published"`
 }
 
 func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error) {

@@ -11,7 +11,6 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	repository "github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 )
 
@@ -109,7 +108,7 @@ func (sv *Server) registerHandler(c *gin.Context) {
 		Default:  true,
 	}
 	if req.Address.Ward != nil {
-		createAddressArgs.Ward = utils.GetPgTypeText(*req.Address.Ward)
+		createAddressArgs.Ward = req.Address.Ward
 	}
 	createdAddress, err := sv.repo.CreateAddress(c, createAddressArgs)
 
@@ -126,8 +125,8 @@ func (sv *Server) registerHandler(c *gin.Context) {
 	}
 
 	ward := ""
-	if createdAddress.Ward.Valid {
-		ward = createdAddress.Ward.String
+	if createdAddress.Ward != nil {
+		ward = *createdAddress.Ward
 	}
 
 	userResp := &UserResponse{

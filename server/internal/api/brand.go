@@ -60,7 +60,7 @@ func (sv *Server) createBrandHandler(c *gin.Context) {
 	}
 
 	if req.Description != nil {
-		params.Description = utils.GetPgTypeText(*req.Description)
+		params.Description = req.Description
 	}
 	if req.Image != nil {
 		fileName, fileID, err := sv.uploadService.UploadFile(c, req.Image)
@@ -68,8 +68,8 @@ func (sv *Server) createBrandHandler(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[BrandResponse](UploadFileCode, "error when upload image", err))
 			return
 		}
-		params.ImageUrl = utils.GetPgTypeText(fileName)
-		params.ImageID = utils.GetPgTypeText(fileID)
+		params.ImageUrl = &fileName
+		params.ImageID = &fileID
 	}
 
 	col, err := sv.repo.CreateBrand(c, params)
@@ -125,9 +125,9 @@ func (sv *Server) getBrandsHandler(c *gin.Context) {
 		resp = append(resp, BrandResponse{
 			ID:          row.ID,
 			Name:        row.Name,
-			Description: &row.Description.String,
+			Description: row.Description,
 			Slug:        row.Slug,
-			ImageUrl:    &row.ImageUrl.String,
+			ImageUrl:    row.ImageUrl,
 		})
 	}
 
@@ -176,13 +176,13 @@ func (sv *Server) getBrandByIDHandler(c *gin.Context) {
 
 	colResp := CategoryResponse{
 		ID:          result.ID.String(),
-		Description: &result.Description.String,
+		Description: result.Description,
 		Slug:        result.Slug,
 		Published:   result.Published,
-		Remarkable:  result.Remarkable.Bool,
+		Remarkable:  *result.Remarkable,
 		CreatedAt:   result.CreatedAt.Format("2006-01-02 15:04:05"),
 		UpdatedAt:   result.UpdatedAt.Format("2006-01-02 15:04:05"),
-		ImageUrl:    &result.ImageUrl.String,
+		ImageUrl:    result.ImageUrl,
 		Products:    nil,
 		Name:        result.Name,
 	}
@@ -241,7 +241,7 @@ func (sv *Server) getProductsByBrandHandler(c *gin.Context) {
 		products = append(products, ProductListModel{
 			ID:          p.ID.String(),
 			Name:        p.Name,
-			Description: p.Description.String,
+			Description: *p.Description,
 			Price:       price.Float64,
 			Slug:        p.Slug,
 			Sku:         p.BaseSku,
@@ -288,7 +288,7 @@ func (sv *Server) updateBrand(c *gin.Context) {
 
 	updateParam := repository.UpdateBrandWithParams{
 		ID:   brand.ID,
-		Name: utils.GetPgTypeText(*req.Name),
+		Name: req.Name,
 	}
 	if req.Image != nil {
 		fileName, fileID, err := sv.uploadService.UploadFile(c, req.Image)
@@ -297,23 +297,23 @@ func (sv *Server) updateBrand(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[BrandResponse](UploadFileCode, "", err))
 			return
 		}
-		updateParam.ImageUrl = utils.GetPgTypeText(fileName)
-		updateParam.ImageID = utils.GetPgTypeText(fileID)
+		updateParam.ImageUrl = &fileName
+		updateParam.ImageID = &fileID
 	}
 
 	if req.Slug != nil {
-		updateParam.Slug = utils.GetPgTypeText(*req.Slug)
+		updateParam.Slug = req.Slug
 	}
 	if req.Description != nil {
-		updateParam.Description = utils.GetPgTypeText(*req.Description)
+		updateParam.Description = req.Description
 	}
 
 	if req.Remarkable != nil {
-		updateParam.Remarkable = utils.GetPgTypeBool(*req.Remarkable)
+		updateParam.Remarkable = req.Remarkable
 	}
 
 	if req.Published != nil {
-		updateParam.Published = utils.GetPgTypeBool(*req.Published)
+		updateParam.Published = req.Published
 	}
 
 	col, err := sv.repo.UpdateBrandWith(c, updateParam)

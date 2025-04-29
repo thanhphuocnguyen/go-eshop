@@ -49,13 +49,13 @@ VALUES
 `
 
 type CreateAddressParams struct {
-	UserID   uuid.UUID   `json:"user_id"`
-	Phone    string      `json:"phone"`
-	Street   string      `json:"street"`
-	Ward     pgtype.Text `json:"ward"`
-	District string      `json:"district"`
-	City     string      `json:"city"`
-	Default  bool        `json:"default"`
+	UserID   uuid.UUID `json:"user_id"`
+	Phone    string    `json:"phone"`
+	Street   string    `json:"street"`
+	Ward     *string   `json:"ward"`
+	District string    `json:"district"`
+	City     string    `json:"city"`
+	Default  bool      `json:"default"`
 }
 
 // User Address Queries
@@ -486,13 +486,13 @@ func (q *Queries) ResetPrimaryAddress(ctx context.Context, userID uuid.UUID) err
 }
 
 type SeedAddressesParams struct {
-	UserID   uuid.UUID   `json:"user_id"`
-	Phone    string      `json:"phone"`
-	Street   string      `json:"street"`
-	Ward     pgtype.Text `json:"ward"`
-	District string      `json:"district"`
-	City     string      `json:"city"`
-	Default  bool        `json:"default"`
+	UserID   uuid.UUID `json:"user_id"`
+	Phone    string    `json:"phone"`
+	Street   string    `json:"street"`
+	Ward     *string   `json:"ward"`
+	District string    `json:"district"`
+	City     string    `json:"city"`
+	Default  bool      `json:"default"`
 }
 
 type SeedUsersParams struct {
@@ -541,14 +541,14 @@ RETURNING id, user_id, phone, street, ward, district, city, "default", deleted, 
 `
 
 type UpdateAddressParams struct {
-	Phone    pgtype.Text `json:"phone"`
-	Street   pgtype.Text `json:"street"`
-	Ward     pgtype.Text `json:"ward"`
-	District pgtype.Text `json:"district"`
-	City     pgtype.Text `json:"city"`
-	Default  pgtype.Bool `json:"default"`
-	ID       int64       `json:"id"`
-	UserID   uuid.UUID   `json:"user_id"`
+	Phone    *string   `json:"phone"`
+	Street   *string   `json:"street"`
+	Ward     *string   `json:"ward"`
+	District *string   `json:"district"`
+	City     *string   `json:"city"`
+	Default  *bool     `json:"default"`
+	ID       int64     `json:"id"`
+	UserID   uuid.UUID `json:"user_id"`
 }
 
 func (q *Queries) UpdateAddress(ctx context.Context, arg UpdateAddressParams) (UserAddress, error) {
@@ -598,13 +598,13 @@ RETURNING id, email, username, fullname, role, verified_email, verified_phone, c
 `
 
 type UpdateUserParams struct {
-	Email             pgtype.Text        `json:"email"`
-	Fullname          pgtype.Text        `json:"fullname"`
+	Email             *string            `json:"email"`
+	Fullname          *string            `json:"fullname"`
 	Role              NullUserRole       `json:"role"`
-	Phone             pgtype.Text        `json:"phone"`
-	VerifiedEmail     pgtype.Bool        `json:"verified_email"`
-	VerifiedPhone     pgtype.Bool        `json:"verified_phone"`
-	HashedPassword    pgtype.Text        `json:"hashed_password"`
+	Phone             *string            `json:"phone"`
+	VerifiedEmail     *bool              `json:"verified_email"`
+	VerifiedPhone     *bool              `json:"verified_phone"`
+	HashedPassword    *string            `json:"hashed_password"`
 	PasswordChangedAt pgtype.Timestamptz `json:"password_changed_at"`
 	UpdatedAt         time.Time          `json:"updated_at"`
 	ID                uuid.UUID          `json:"id"`

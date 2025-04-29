@@ -78,7 +78,7 @@ func (sv *Server) addCategoryHandler(c *gin.Context) {
 	}
 
 	if req.Description != nil {
-		params.Description = utils.GetPgTypeText(*req.Description)
+		params.Description = req.Description
 	}
 
 	if req.Image != nil {
@@ -87,8 +87,8 @@ func (sv *Server) addCategoryHandler(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](UploadFileCode, "", err))
 			return
 		}
-		params.ImageID = utils.GetPgTypeText(imageID)
-		params.ImageUrl = utils.GetPgTypeText(imageURL)
+		params.ImageID = &imageID
+		params.ImageUrl = &imageURL
 	}
 
 	col, err := sv.repo.CreateCategory(c, params)
@@ -103,9 +103,9 @@ func (sv *Server) addCategoryHandler(c *gin.Context) {
 		Published:   col.Published,
 		CreatedAt:   col.CreatedAt.String(),
 		UpdatedAt:   col.UpdatedAt.String(),
-		Description: &col.Description.String,
-		Remarkable:  col.Remarkable.Bool,
-		ImageUrl:    &col.ImageUrl.String,
+		Description: col.Description,
+		Remarkable:  *col.Remarkable,
+		ImageUrl:    col.ImageUrl,
 	}
 
 	c.JSON(http.StatusCreated, createSuccessResponse(c, resp, "", nil, nil))
@@ -157,9 +157,9 @@ func (sv *Server) getCategories(c *gin.Context) {
 			Published:   category.Published,
 			CreatedAt:   category.CreatedAt.String(),
 			UpdatedAt:   category.UpdatedAt.String(),
-			Description: &category.Description.String,
-			Remarkable:  category.Remarkable.Bool,
-			ImageUrl:    &category.ImageUrl.String,
+			Description: category.Description,
+			Remarkable:  *category.Remarkable,
+			ImageUrl:    category.ImageUrl,
 		}
 	}
 	c.JSON(http.StatusOK, createSuccessResponse(
@@ -257,7 +257,7 @@ func (sv *Server) getProductsByCategory(c *gin.Context) {
 			Slug:         product.Slug,
 			CreatedAt:    product.CreatedAt.String(),
 			UpdatedAt:    product.UpdatedAt.String(),
-			Description:  product.Description.String,
+			Description:  *product.Description,
 			Price:        price.Float64,
 			VariantCount: int32(product.VariantCount),
 			Sku:          product.BaseSku,
@@ -309,23 +309,23 @@ func (sv *Server) updateCategory(c *gin.Context) {
 	}
 
 	if req.Name != nil {
-		updateParam.Name = utils.GetPgTypeText(*req.Name)
+		updateParam.Name = req.Name
 	}
 
 	if req.Slug != nil {
-		updateParam.Slug = utils.GetPgTypeText(*req.Slug)
+		updateParam.Slug = req.Slug
 	}
 
 	if req.Description != nil {
-		updateParam.Description = utils.GetPgTypeText(*req.Description)
+		updateParam.Description = req.Description
 	}
 
 	if req.Remarkable != nil {
-		updateParam.Remarkable = utils.GetPgTypeBool(*req.Remarkable)
+		updateParam.Remarkable = req.Remarkable
 	}
 
 	if req.Published != nil {
-		updateParam.Published = utils.GetPgTypeBool(*req.Published)
+		updateParam.Published = req.Published
 	}
 
 	imageID, imageURL := "", ""
@@ -335,8 +335,8 @@ func (sv *Server) updateCategory(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](UploadFileCode, "", err))
 			return
 		}
-		updateParam.ImageID = utils.GetPgTypeText(imageID)
-		updateParam.ImageUrl = utils.GetPgTypeText(imageURL)
+		updateParam.ImageID = &imageID
+		updateParam.ImageUrl = &imageURL
 	}
 
 	col, err := sv.repo.UpdateCategory(c, updateParam)

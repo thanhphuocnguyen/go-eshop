@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
 )
 
@@ -30,7 +29,7 @@ func (pg *pgRepo) RefundOrderTx(ctx context.Context, args RefundOrderTxArgs) (er
 
 			// refund payment from gateway if it's not refunded yet
 			if args.RefundPaymentFromGateway != nil {
-				refundID, err := args.RefundPaymentFromGateway(payment.GatewayPaymentIntentID.String, payment.PaymentGateway.PaymentGateway)
+				refundID, err := args.RefundPaymentFromGateway(*payment.GatewayPaymentIntentID, payment.PaymentGateway.PaymentGateway)
 				if err != nil {
 					log.Error().Err(err).Msg("RefundPaymentFromGateway")
 					return err
@@ -43,10 +42,7 @@ func (pg *pgRepo) RefundOrderTx(ctx context.Context, args RefundOrderTxArgs) (er
 					},
 				}
 				if refundID != "" {
-					updateParams.RefundID = pgtype.Text{
-						String: refundID,
-						Valid:  true,
-					}
+					updateParams.RefundID = &refundID
 				}
 				err = q.UpdatePayment(ctx, updateParams)
 				if err != nil {

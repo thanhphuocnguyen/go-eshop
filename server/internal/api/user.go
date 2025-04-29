@@ -8,10 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	repository "github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 )
 
@@ -71,7 +69,7 @@ func mapAddressToAddressResponse(address repository.UserAddress) AddressResponse
 	return AddressResponse{
 		Phone:    address.Phone,
 		Street:   address.Street,
-		Ward:     &address.Ward.String,
+		Ward:     address.Ward,
 		District: address.District,
 		City:     address.City,
 		Default:  address.Default,
@@ -114,21 +112,22 @@ func (sv *Server) updateUser(c *gin.Context) {
 	arg := repository.UpdateUserParams{
 		ID: req.UserID,
 	}
+	boolVal := false
 	if req.Email != nil {
-		arg.Email = utils.GetPgTypeText(*req.Email)
+		arg.Email = req.Email
 		if user.Email != *req.Email {
-			arg.VerifiedEmail = utils.GetPgTypeBool(false)
+			arg.VerifiedEmail = &boolVal
 		}
 	}
 
 	if req.FullName != nil {
-		arg.Fullname = utils.GetPgTypeText(*req.FullName)
+		arg.Fullname = req.FullName
 	}
 
 	if req.Phone != nil {
-		arg.Phone = utils.GetPgTypeText(*req.Phone)
+		arg.Phone = req.Phone
 		if user.Phone != *req.Phone {
-			arg.VerifiedPhone = utils.GetPgTypeBool(false)
+			arg.VerifiedPhone = &boolVal
 		}
 	}
 
@@ -315,13 +314,10 @@ func (sv *Server) verifyEmailHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[bool]("internal_server_error", "", err))
 		return
 	}
-
+	boolVal := true
 	_, err = sv.repo.UpdateUser(c, repository.UpdateUserParams{
-		ID: verifyEmail.UserID,
-		VerifiedEmail: pgtype.Bool{
-			Bool:  true,
-			Valid: true,
-		},
+		ID:            verifyEmail.UserID,
+		VerifiedEmail: &boolVal,
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[bool]("internal_server_error", "", err))

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"mime"
 	"net/http"
 	"strings"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
 // ------------------------------------------ Request and Response ------------------------------------------
@@ -142,11 +142,13 @@ func (sv *Server) uploadProductImages(c *gin.Context) {
 			return
 		}
 
+		mimeType := mime.TypeByExtension(file.Filename)
+
 		img, err := sv.repo.CreateImage(c, repository.CreateImageParams{
 			ExternalID: id,
 			Url:        url,
-			MimeType:   utils.GetPgTypeText(file.Header.Get("Content-Type")),
-			FileSize:   utils.GetPgTypeInt8(file.Size),
+			MimeType:   &mimeType,
+			FileSize:   &file.Size,
 		})
 
 		createImageAssignmentReq := make([]repository.CreateBulkImageAssignmentsParams, 0)
@@ -188,8 +190,8 @@ func (sv *Server) uploadProductImages(c *gin.Context) {
 			ID:         img.ID,
 			ExternalID: img.ExternalID,
 			Url:        img.Url,
-			MimeType:   img.MimeType.String,
-			FileSize:   img.FileSize.Int64,
+			MimeType:   *img.MimeType,
+			FileSize:   *img.FileSize,
 		}
 	}
 	c.JSON(http.StatusCreated, createSuccessResponse(c, images, "", nil, nil))
@@ -227,8 +229,8 @@ func (sv *Server) getImages(c *gin.Context) {
 			ID:          image.ID,
 			ExternalID:  image.ExternalID,
 			Url:         image.Url,
-			MimeType:    image.MimeType.String,
-			FileSize:    image.FileSize.Int64,
+			MimeType:    *image.MimeType,
+			FileSize:    *image.FileSize,
 			Assignments: nil,
 		}
 

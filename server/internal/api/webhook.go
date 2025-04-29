@@ -44,7 +44,7 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 		}
 		log.Info().Interface("evt type", evt.Type).Msg("Received stripe event")
 
-		payment, err := server.repo.GetPaymentByPaymentIntentID(c, utils.GetPgTypeText(paymentIntent.ID))
+		payment, err := server.repo.GetPaymentByPaymentIntentID(c, &paymentIntent.ID)
 		if err != nil {
 			if errors.Is(err, repository.ErrRecordNotFound) {
 				c.JSON(http.StatusNotFound, createErrorResponse[bool]("payment_not_found", "", err))
@@ -75,8 +75,8 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 				Amount:                 payment.Amount,
 				Status:                 repository.PaymentStatusSuccess,
 				GatewayTransactionID:   payment.GatewayPaymentIntentID,
-				GatewayResponseCode:    utils.GetPgTypeText(evt.LastResponse.Status),
-				GatewayResponseMessage: utils.GetPgTypeText(string(evt.LastResponse.RawJSON)),
+				GatewayResponseCode:    &evt.LastResponse.Status,
+				GatewayResponseMessage: evt.LastResponse.RawJSON,
 			})
 			updateTransactionStatus.Status.PaymentStatus = repository.PaymentStatusSuccess
 		case stripe.EventTypePaymentIntentCanceled:
@@ -86,8 +86,8 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 				Amount:                 payment.Amount,
 				Status:                 repository.PaymentStatusCancelled,
 				GatewayTransactionID:   payment.GatewayPaymentIntentID,
-				GatewayResponseCode:    utils.GetPgTypeText(evt.LastResponse.Status),
-				GatewayResponseMessage: utils.GetPgTypeText(string(evt.LastResponse.RawJSON)),
+				GatewayResponseCode:    &evt.LastResponse.Status,
+				GatewayResponseMessage: evt.LastResponse.RawJSON,
 			})
 			updateTransactionStatus.Status.PaymentStatus = repository.PaymentStatusCancelled
 		case stripe.EventTypePaymentIntentPaymentFailed:
@@ -98,12 +98,12 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 				Amount:                 payment.Amount,
 				Status:                 repository.PaymentStatusFailed,
 				GatewayTransactionID:   payment.GatewayPaymentIntentID,
-				GatewayResponseCode:    utils.GetPgTypeText(evt.LastResponse.Status),
-				GatewayResponseMessage: utils.GetPgTypeText(string(evt.LastResponse.RawJSON)),
+				GatewayResponseCode:    &evt.LastResponse.Status,
+				GatewayResponseMessage: evt.LastResponse.RawJSON,
 			})
 			updateTransactionStatus.Status.PaymentStatus = repository.PaymentStatusFailed
-			updateTransactionStatus.ErrorMessage = utils.GetPgTypeText(string(evt.LastResponse.RawJSON))
-			updateTransactionStatus.ErrorCode = utils.GetPgTypeText(evt.LastResponse.Status)
+			updateTransactionStatus.ErrorMessage = evt.LastResponse.RawJSON
+			updateTransactionStatus.ErrorCode = &evt.LastResponse.Status
 		}
 		updateTransactionStatus.UpdatedAt = utils.GetPgTypeTimestamp(time.Now())
 		err = server.repo.UpdatePayment(c, updateTransactionStatus)

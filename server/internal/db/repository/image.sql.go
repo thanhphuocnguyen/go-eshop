@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type CreateBulkImageAssignmentsParams struct {
@@ -26,14 +25,14 @@ INSERT INTO images (external_id, url, alt_text, caption, mime_type, file_size, w
 `
 
 type CreateImageParams struct {
-	ExternalID string      `json:"external_id"`
-	Url        string      `json:"url"`
-	AltText    pgtype.Text `json:"alt_text"`
-	Caption    pgtype.Text `json:"caption"`
-	MimeType   pgtype.Text `json:"mime_type"`
-	FileSize   pgtype.Int8 `json:"file_size"`
-	Width      pgtype.Int4 `json:"width"`
-	Height     pgtype.Int4 `json:"height"`
+	ExternalID string  `json:"external_id"`
+	Url        string  `json:"url"`
+	AltText    *string `json:"alt_text"`
+	Caption    *string `json:"caption"`
+	MimeType   *string `json:"mime_type"`
+	FileSize   *int64  `json:"file_size"`
+	Width      *int32  `json:"width"`
+	Height     *int32  `json:"height"`
 }
 
 func (q *Queries) CreateImage(ctx context.Context, arg CreateImageParams) (Image, error) {
@@ -142,24 +141,24 @@ WHERE external_id = $1 LIMIT 1
 `
 
 type GetImageFromExternalIDRow struct {
-	ID           int32       `json:"id"`
-	ExternalID   string      `json:"external_id"`
-	Url          string      `json:"url"`
-	AltText      pgtype.Text `json:"alt_text"`
-	Caption      pgtype.Text `json:"caption"`
-	MimeType     pgtype.Text `json:"mime_type"`
-	FileSize     pgtype.Int8 `json:"file_size"`
-	Width        pgtype.Int4 `json:"width"`
-	Height       pgtype.Int4 `json:"height"`
-	UploadedAt   time.Time   `json:"uploaded_at"`
-	UpdatedAt    time.Time   `json:"updated_at"`
-	ID_2         int32       `json:"id_2"`
-	ImageID      int32       `json:"image_id"`
-	EntityID     uuid.UUID   `json:"entity_id"`
-	EntityType   string      `json:"entity_type"`
-	DisplayOrder int16       `json:"display_order"`
-	Role         string      `json:"role"`
-	CreatedAt    time.Time   `json:"created_at"`
+	ID           int32     `json:"id"`
+	ExternalID   string    `json:"external_id"`
+	Url          string    `json:"url"`
+	AltText      *string   `json:"alt_text"`
+	Caption      *string   `json:"caption"`
+	MimeType     *string   `json:"mime_type"`
+	FileSize     *int64    `json:"file_size"`
+	Width        *int32    `json:"width"`
+	Height       *int32    `json:"height"`
+	UploadedAt   time.Time `json:"uploaded_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	ID_2         int32     `json:"id_2"`
+	ImageID      int32     `json:"image_id"`
+	EntityID     uuid.UUID `json:"entity_id"`
+	EntityType   string    `json:"entity_type"`
+	DisplayOrder int16     `json:"display_order"`
+	Role         string    `json:"role"`
+	CreatedAt    time.Time `json:"created_at"`
 }
 
 func (q *Queries) GetImageFromExternalID(ctx context.Context, externalID string) (GetImageFromExternalIDRow, error) {
@@ -200,24 +199,24 @@ type GetImageFromIDParams struct {
 }
 
 type GetImageFromIDRow struct {
-	ID           int32       `json:"id"`
-	ExternalID   string      `json:"external_id"`
-	Url          string      `json:"url"`
-	AltText      pgtype.Text `json:"alt_text"`
-	Caption      pgtype.Text `json:"caption"`
-	MimeType     pgtype.Text `json:"mime_type"`
-	FileSize     pgtype.Int8 `json:"file_size"`
-	Width        pgtype.Int4 `json:"width"`
-	Height       pgtype.Int4 `json:"height"`
-	UploadedAt   time.Time   `json:"uploaded_at"`
-	UpdatedAt    time.Time   `json:"updated_at"`
-	ID_2         int32       `json:"id_2"`
-	ImageID      int32       `json:"image_id"`
-	EntityID     uuid.UUID   `json:"entity_id"`
-	EntityType   string      `json:"entity_type"`
-	DisplayOrder int16       `json:"display_order"`
-	Role         string      `json:"role"`
-	CreatedAt    time.Time   `json:"created_at"`
+	ID           int32     `json:"id"`
+	ExternalID   string    `json:"external_id"`
+	Url          string    `json:"url"`
+	AltText      *string   `json:"alt_text"`
+	Caption      *string   `json:"caption"`
+	MimeType     *string   `json:"mime_type"`
+	FileSize     *int64    `json:"file_size"`
+	Width        *int32    `json:"width"`
+	Height       *int32    `json:"height"`
+	UploadedAt   time.Time `json:"uploaded_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	ID_2         int32     `json:"id_2"`
+	ImageID      int32     `json:"image_id"`
+	EntityID     uuid.UUID `json:"entity_id"`
+	EntityType   string    `json:"entity_type"`
+	DisplayOrder int16     `json:"display_order"`
+	Role         string    `json:"role"`
+	CreatedAt    time.Time `json:"created_at"`
 }
 
 func (q *Queries) GetImageFromID(ctx context.Context, arg GetImageFromIDParams) (GetImageFromIDRow, error) {
@@ -253,24 +252,24 @@ WHERE entity_id = $1 ORDER BY display_order
 `
 
 type GetImagesByEntityIDRow struct {
-	ID           int32       `json:"id"`
-	ImageID      int32       `json:"image_id"`
-	EntityID     uuid.UUID   `json:"entity_id"`
-	EntityType   string      `json:"entity_type"`
-	DisplayOrder int16       `json:"display_order"`
-	Role         string      `json:"role"`
-	CreatedAt    time.Time   `json:"created_at"`
-	ID_2         int32       `json:"id_2"`
-	ExternalID   string      `json:"external_id"`
-	Url          string      `json:"url"`
-	AltText      pgtype.Text `json:"alt_text"`
-	Caption      pgtype.Text `json:"caption"`
-	MimeType     pgtype.Text `json:"mime_type"`
-	FileSize     pgtype.Int8 `json:"file_size"`
-	Width        pgtype.Int4 `json:"width"`
-	Height       pgtype.Int4 `json:"height"`
-	UploadedAt   time.Time   `json:"uploaded_at"`
-	UpdatedAt    time.Time   `json:"updated_at"`
+	ID           int32     `json:"id"`
+	ImageID      int32     `json:"image_id"`
+	EntityID     uuid.UUID `json:"entity_id"`
+	EntityType   string    `json:"entity_type"`
+	DisplayOrder int16     `json:"display_order"`
+	Role         string    `json:"role"`
+	CreatedAt    time.Time `json:"created_at"`
+	ID_2         int32     `json:"id_2"`
+	ExternalID   string    `json:"external_id"`
+	Url          string    `json:"url"`
+	AltText      *string   `json:"alt_text"`
+	Caption      *string   `json:"caption"`
+	MimeType     *string   `json:"mime_type"`
+	FileSize     *int64    `json:"file_size"`
+	Width        *int32    `json:"width"`
+	Height       *int32    `json:"height"`
+	UploadedAt   time.Time `json:"uploaded_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 func (q *Queries) GetImagesByEntityID(ctx context.Context, entityID uuid.UUID) ([]GetImagesByEntityIDRow, error) {
@@ -319,24 +318,24 @@ WHERE entity_id = $1 LIMIT 1
 `
 
 type GetProductImageByEntityIDRow struct {
-	ID           int32       `json:"id"`
-	ImageID      int32       `json:"image_id"`
-	EntityID     uuid.UUID   `json:"entity_id"`
-	EntityType   string      `json:"entity_type"`
-	DisplayOrder int16       `json:"display_order"`
-	Role         string      `json:"role"`
-	CreatedAt    time.Time   `json:"created_at"`
-	ID_2         int32       `json:"id_2"`
-	ExternalID   string      `json:"external_id"`
-	Url          string      `json:"url"`
-	AltText      pgtype.Text `json:"alt_text"`
-	Caption      pgtype.Text `json:"caption"`
-	MimeType     pgtype.Text `json:"mime_type"`
-	FileSize     pgtype.Int8 `json:"file_size"`
-	Width        pgtype.Int4 `json:"width"`
-	Height       pgtype.Int4 `json:"height"`
-	UploadedAt   time.Time   `json:"uploaded_at"`
-	UpdatedAt    time.Time   `json:"updated_at"`
+	ID           int32     `json:"id"`
+	ImageID      int32     `json:"image_id"`
+	EntityID     uuid.UUID `json:"entity_id"`
+	EntityType   string    `json:"entity_type"`
+	DisplayOrder int16     `json:"display_order"`
+	Role         string    `json:"role"`
+	CreatedAt    time.Time `json:"created_at"`
+	ID_2         int32     `json:"id_2"`
+	ExternalID   string    `json:"external_id"`
+	Url          string    `json:"url"`
+	AltText      *string   `json:"alt_text"`
+	Caption      *string   `json:"caption"`
+	MimeType     *string   `json:"mime_type"`
+	FileSize     *int64    `json:"file_size"`
+	Width        *int32    `json:"width"`
+	Height       *int32    `json:"height"`
+	UploadedAt   time.Time `json:"uploaded_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 func (q *Queries) GetProductImageByEntityID(ctx context.Context, entityID uuid.UUID) (GetProductImageByEntityIDRow, error) {
@@ -386,19 +385,19 @@ WHERE entity_id = ANY($1::UUID[]) ORDER BY entity_id, display_order
 `
 
 type GetProductImagesAssignedRow struct {
-	ID           int32       `json:"id"`
-	ExternalID   string      `json:"external_id"`
-	Url          string      `json:"url"`
-	AltText      pgtype.Text `json:"alt_text"`
-	Caption      pgtype.Text `json:"caption"`
-	MimeType     pgtype.Text `json:"mime_type"`
-	FileSize     pgtype.Int8 `json:"file_size"`
-	Width        pgtype.Int4 `json:"width"`
-	Height       pgtype.Int4 `json:"height"`
-	EntityID     uuid.UUID   `json:"entity_id"`
-	EntityType   string      `json:"entity_type"`
-	DisplayOrder int16       `json:"display_order"`
-	Role         string      `json:"role"`
+	ID           int32     `json:"id"`
+	ExternalID   string    `json:"external_id"`
+	Url          string    `json:"url"`
+	AltText      *string   `json:"alt_text"`
+	Caption      *string   `json:"caption"`
+	MimeType     *string   `json:"mime_type"`
+	FileSize     *int64    `json:"file_size"`
+	Width        *int32    `json:"width"`
+	Height       *int32    `json:"height"`
+	EntityID     uuid.UUID `json:"entity_id"`
+	EntityType   string    `json:"entity_type"`
+	DisplayOrder int16     `json:"display_order"`
+	Role         string    `json:"role"`
 }
 
 func (q *Queries) GetProductImagesAssigned(ctx context.Context, entityIds []uuid.UUID) ([]GetProductImagesAssignedRow, error) {
@@ -444,9 +443,9 @@ WHERE id = $1
 `
 
 type UpdateProductImageParams struct {
-	ID         int32       `json:"id"`
-	Url        pgtype.Text `json:"url"`
-	ExternalID pgtype.Text `json:"external_id"`
+	ID         int32   `json:"id"`
+	Url        *string `json:"url"`
+	ExternalID *string `json:"external_id"`
 }
 
 func (q *Queries) UpdateProductImage(ctx context.Context, arg UpdateProductImageParams) error {
@@ -463,11 +462,11 @@ WHERE image_id = $1 AND entity_id = $2 AND entity_type = $3
 `
 
 type UpdateProductImageAssignmentParams struct {
-	ImageID      int32       `json:"image_id"`
-	EntityID     uuid.UUID   `json:"entity_id"`
-	EntityType   string      `json:"entity_type"`
-	DisplayOrder pgtype.Int2 `json:"display_order"`
-	Role         pgtype.Text `json:"role"`
+	ImageID      int32     `json:"image_id"`
+	EntityID     uuid.UUID `json:"entity_id"`
+	EntityType   string    `json:"entity_type"`
+	DisplayOrder *int16    `json:"display_order"`
+	Role         *string   `json:"role"`
 }
 
 func (q *Queries) UpdateProductImageAssignment(ctx context.Context, arg UpdateProductImageAssignmentParams) error {

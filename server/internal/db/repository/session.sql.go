@@ -116,9 +116,9 @@ RETURNING id, user_id, refresh_token, user_agent, client_ip, blocked, expired_at
 
 type UpdateSessionParams struct {
 	ID        uuid.UUID          `json:"id"`
-	UserAgent pgtype.Text        `json:"user_agent"`
-	ClientIp  pgtype.Text        `json:"client_ip"`
-	Blocked   pgtype.Bool        `json:"blocked"`
+	UserAgent *string            `json:"user_agent"`
+	ClientIp  *string            `json:"client_ip"`
+	Blocked   *bool              `json:"blocked"`
 	ExpiredAt pgtype.Timestamptz `json:"expired_at"`
 }
 

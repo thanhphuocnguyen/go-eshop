@@ -62,7 +62,7 @@ func (sv *Server) createCollection(c *gin.Context) {
 	}
 
 	if req.Description != nil {
-		createParams.Description = utils.GetPgTypeText(*req.Description)
+		createParams.Description = req.Description
 	}
 
 	if req.Image != nil {
@@ -72,8 +72,8 @@ func (sv *Server) createCollection(c *gin.Context) {
 			return
 		}
 
-		createParams.ImageID = utils.GetPgTypeText(ID)
-		createParams.ImageUrl = utils.GetPgTypeText(url)
+		createParams.ImageID = &ID
+		createParams.ImageUrl = &url
 	}
 
 	col, err := sv.repo.CreateCollection(c, createParams)
@@ -173,11 +173,11 @@ func (sv *Server) getCollectionByID(c *gin.Context) {
 	colResp := CategoryResponse{
 		ID:          firstRow.ID.String(),
 		Slug:        firstRow.Slug,
-		Description: &firstRow.Description.String,
+		Description: firstRow.Description,
 		Published:   firstRow.Published,
 		Name:        firstRow.Name,
-		Remarkable:  firstRow.Remarkable.Bool,
-		ImageUrl:    &firstRow.ImageUrl.String,
+		Remarkable:  *firstRow.Remarkable,
+		ImageUrl:    firstRow.ImageUrl,
 		CreatedAt:   firstRow.CreatedAt.Format("2006-01-02 15:04:05"),
 		UpdatedAt:   firstRow.UpdatedAt.Format("2006-01-02 15:04:05"),
 		Products:    products,
@@ -192,10 +192,10 @@ func (sv *Server) getCollectionByID(c *gin.Context) {
 			price, _ := row.ProductPrice.Float64Value()
 			productMode := ProductListModel{
 				ID:          productID.String(),
-				Name:        row.ProductName.String,
+				Name:        *row.ProductName,
 				Price:       price.Float64,
-				Sku:         row.ProductSku.String,
-				Description: row.Description.String,
+				Sku:         *row.ProductSku,
+				Description: *row.Description,
 			}
 			colResp.Products = append(colResp.Products, productMode)
 		}
@@ -245,7 +245,7 @@ func (sv *Server) getProductsByCollection(c *gin.Context) {
 			ImgUrl:      row.ImgUrl,
 			ImgID:       row.ImgID,
 			CreatedAt:   row.CreatedAt.Format("2006-01-02 15:04:05"),
-			Description: row.Description.String,
+			Description: *row.Description,
 		}
 		resp = append(resp, productMode)
 	}
@@ -292,10 +292,10 @@ func (sv *Server) updateCollection(c *gin.Context) {
 		ID: collection.ID,
 	}
 	if req.Name != nil {
-		updateParam.Name = utils.GetPgTypeText(*req.Name)
+		updateParam.Name = req.Name
 	}
 	if req.Description != nil {
-		updateParam.Description = utils.GetPgTypeText(*req.Description)
+		updateParam.Description = req.Description
 	}
 
 	if req.Image != nil {
@@ -305,16 +305,16 @@ func (sv *Server) updateCollection(c *gin.Context) {
 			return
 		}
 
-		updateParam.ImageUrl = utils.GetPgTypeText(url)
-		updateParam.ImageID = utils.GetPgTypeText(ID)
+		updateParam.ImageUrl = &url
+		updateParam.ImageID = &ID
 	}
 
 	if req.Published != nil {
-		updateParam.Published = utils.GetPgTypeBool(*req.Published)
+		updateParam.Published = req.Published
 	}
 
 	if req.Remarkable != nil {
-		updateParam.Remarkable = utils.GetPgTypeBool(*req.Remarkable)
+		updateParam.Remarkable = req.Remarkable
 	}
 
 	col, err := sv.repo.UpdateCollectionWith(c, updateParam)

@@ -34,12 +34,12 @@ RETURNING id, name, image_url, image_id, description, slug, remarkable, display_
 `
 
 type CreateCollectionParams struct {
-	ID          uuid.UUID   `json:"id"`
-	Name        string      `json:"name"`
-	Slug        string      `json:"slug"`
-	Description pgtype.Text `json:"description"`
-	ImageUrl    pgtype.Text `json:"image_url"`
-	ImageID     pgtype.Text `json:"image_id"`
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Slug        string    `json:"slug"`
+	Description *string   `json:"description"`
+	ImageUrl    *string   `json:"image_url"`
+	ImageID     *string   `json:"image_id"`
 }
 
 func (q *Queries) CreateCollection(ctx context.Context, arg CreateCollectionParams) (Collection, error) {
@@ -124,23 +124,23 @@ WHERE c.id = $1
 type GetCollectionByIDWithProductsRow struct {
 	ID                 uuid.UUID      `json:"id"`
 	Name               string         `json:"name"`
-	ImageUrl           pgtype.Text    `json:"image_url"`
-	ImageID            pgtype.Text    `json:"image_id"`
-	Description        pgtype.Text    `json:"description"`
+	ImageUrl           *string        `json:"image_url"`
+	ImageID            *string        `json:"image_id"`
+	Description        *string        `json:"description"`
 	Slug               string         `json:"slug"`
-	Remarkable         pgtype.Bool    `json:"remarkable"`
-	DisplayOrder       pgtype.Int4    `json:"display_order"`
+	Remarkable         *bool          `json:"remarkable"`
+	DisplayOrder       *int32         `json:"display_order"`
 	Published          bool           `json:"published"`
 	CreatedAt          time.Time      `json:"created_at"`
 	UpdatedAt          time.Time      `json:"updated_at"`
-	ProductName        pgtype.Text    `json:"product_name"`
+	ProductName        *string        `json:"product_name"`
 	ProductID          pgtype.UUID    `json:"product_id"`
-	ProductDescription pgtype.Text    `json:"product_description"`
+	ProductDescription *string        `json:"product_description"`
 	ProductPrice       pgtype.Numeric `json:"product_price"`
-	ProductSku         pgtype.Text    `json:"product_sku"`
-	ProductSlug        pgtype.Text    `json:"product_slug"`
-	ImageID_2          pgtype.Int4    `json:"image_id_2"`
-	ProductImageUrl    pgtype.Text    `json:"product_image_url"`
+	ProductSku         *string        `json:"product_sku"`
+	ProductSlug        *string        `json:"product_slug"`
+	ImageID_2          *int32         `json:"image_id_2"`
+	ProductImageUrl    *string        `json:"product_image_url"`
 }
 
 func (q *Queries) GetCollectionByIDWithProducts(ctx context.Context, id uuid.UUID) ([]GetCollectionByIDWithProductsRow, error) {
@@ -252,23 +252,23 @@ type GetCollectionsByIDsParams struct {
 type GetCollectionsByIDsRow struct {
 	ID            uuid.UUID      `json:"id"`
 	Name          string         `json:"name"`
-	ImageUrl      pgtype.Text    `json:"image_url"`
-	ImageID       pgtype.Text    `json:"image_id"`
-	Description   pgtype.Text    `json:"description"`
+	ImageUrl      *string        `json:"image_url"`
+	ImageID       *string        `json:"image_id"`
+	Description   *string        `json:"description"`
 	Slug          string         `json:"slug"`
-	Remarkable    pgtype.Bool    `json:"remarkable"`
-	DisplayOrder  pgtype.Int4    `json:"display_order"`
+	Remarkable    *bool          `json:"remarkable"`
+	DisplayOrder  *int32         `json:"display_order"`
 	Published     bool           `json:"published"`
 	CreatedAt     time.Time      `json:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at"`
-	ProductName   pgtype.Text    `json:"product_name"`
+	ProductName   *string        `json:"product_name"`
 	ID_2          pgtype.UUID    `json:"id_2"`
-	Description_2 pgtype.Text    `json:"description_2"`
+	Description_2 *string        `json:"description_2"`
 	ProductPrice  pgtype.Numeric `json:"product_price"`
-	ProductSku    pgtype.Text    `json:"product_sku"`
-	ProductSlug   pgtype.Text    `json:"product_slug"`
-	ImageID_2     pgtype.Int4    `json:"image_id_2"`
-	Url           pgtype.Text    `json:"url"`
+	ProductSku    *string        `json:"product_sku"`
+	ProductSlug   *string        `json:"product_slug"`
+	ImageID_2     *int32         `json:"image_id_2"`
+	Url           *string        `json:"url"`
 }
 
 func (q *Queries) GetCollectionsByIDs(ctx context.Context, arg GetCollectionsByIDsParams) ([]GetCollectionsByIDsRow, error) {
@@ -312,9 +312,9 @@ func (q *Queries) GetCollectionsByIDs(ctx context.Context, arg GetCollectionsByI
 }
 
 type SeedCollectionsParams struct {
-	Name        string      `json:"name"`
-	Description pgtype.Text `json:"description"`
-	ImageUrl    pgtype.Text `json:"image_url"`
+	Name        string  `json:"name"`
+	Description *string `json:"description"`
+	ImageUrl    *string `json:"image_url"`
 }
 
 const updateCollectionWith = `-- name: UpdateCollectionWith :one
@@ -333,14 +333,14 @@ RETURNING id, name, image_url, image_id, description, slug, remarkable, display_
 `
 
 type UpdateCollectionWithParams struct {
-	ID          uuid.UUID   `json:"id"`
-	Name        pgtype.Text `json:"name"`
-	ImageUrl    pgtype.Text `json:"image_url"`
-	ImageID     pgtype.Text `json:"image_id"`
-	Description pgtype.Text `json:"description"`
-	Remarkable  pgtype.Bool `json:"remarkable"`
-	Slug        pgtype.Text `json:"slug"`
-	Published   pgtype.Bool `json:"published"`
+	ID          uuid.UUID `json:"id"`
+	Name        *string   `json:"name"`
+	ImageUrl    *string   `json:"image_url"`
+	ImageID     *string   `json:"image_id"`
+	Description *string   `json:"description"`
+	Remarkable  *bool     `json:"remarkable"`
+	Slug        *string   `json:"slug"`
+	Published   *bool     `json:"published"`
 }
 
 func (q *Queries) UpdateCollectionWith(ctx context.Context, arg UpdateCollectionWithParams) (Collection, error) {

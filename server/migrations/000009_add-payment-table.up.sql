@@ -10,7 +10,7 @@ CREATE TABLE
         gateway_payment_intent_id VARCHAR, -- From the payment gateway, e.g., Stripe
         gateway_charge_id VARCHAR, -- From the payment gateway, e.g., Stripe
         error_code VARCHAR, -- From the payment gateway, e.g., Stripe
-        error_message VARCHAR, -- From the payment gateway, e.g., Stripe
+        error_message JSON, -- From the payment gateway, e.g., Stripe
         created_at TIMESTAMPTZ DEFAULT NOW (),
         updated_at TIMESTAMPTZ DEFAULT NOW ()
     );
@@ -23,7 +23,7 @@ CREATE TABLE
         status payment_status NOT NULL DEFAULT 'pending', -- Pending, Success, Failed
         gateway_transaction_id VARCHAR, -- From the payment gateway, e.g., Stripe
         gateway_response_code VARCHAR, -- From the payment gateway, e.g., Stripe
-        gateway_response_message VARCHAR, -- From the payment gateway, e.g., Stripe
+        gateway_response_message JSON, -- From the payment gateway, e.g., Stripe
         transaction_date TIMESTAMPTZ DEFAULT NOW (),
         created_at TIMESTAMPTZ DEFAULT NOW ()
     );

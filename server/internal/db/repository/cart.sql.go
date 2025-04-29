@@ -53,7 +53,7 @@ INSERT INTO carts (id, user_id, session_id) VALUES ($1, $2, $3) RETURNING id, us
 type CreateCartParams struct {
 	ID        uuid.UUID   `json:"id"`
 	UserID    pgtype.UUID `json:"user_id"`
-	SessionID pgtype.Text `json:"session_id"`
+	SessionID *string     `json:"session_id"`
 }
 
 func (q *Queries) CreateCart(ctx context.Context, arg CreateCartParams) (Cart, error) {
@@ -113,7 +113,7 @@ LIMIT 1
 
 type GetCartParams struct {
 	UserID    pgtype.UUID `json:"user_id"`
-	SessionID pgtype.Text `json:"session_id"`
+	SessionID *string     `json:"session_id"`
 }
 
 func (q *Queries) GetCart(ctx context.Context, arg GetCartParams) (Cart, error) {
@@ -210,8 +210,8 @@ type GetCartItemsRow struct {
 	AttrValName string         `json:"attr_val_name"`
 	AttrName    string         `json:"attr_name"`
 	AttrID      int32          `json:"attr_id"`
-	ImageID     pgtype.Int4    `json:"image_id"`
-	ImageUrl    pgtype.Text    `json:"image_url"`
+	ImageID     *int32         `json:"image_id"`
+	ImageUrl    *string        `json:"image_url"`
 }
 
 func (q *Queries) GetCartItems(ctx context.Context, cartID uuid.UUID) ([]GetCartItemsRow, error) {

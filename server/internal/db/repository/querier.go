@@ -8,7 +8,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
@@ -107,7 +106,7 @@ type Querier interface {
 	GetOrderProducts(ctx context.Context, orderID uuid.UUID) ([]GetOrderProductsRow, error)
 	GetPaymentByID(ctx context.Context, id uuid.UUID) (Payment, error)
 	GetPaymentByOrderID(ctx context.Context, orderID uuid.UUID) (Payment, error)
-	GetPaymentByPaymentIntentID(ctx context.Context, gatewayPaymentIntentID pgtype.Text) (Payment, error)
+	GetPaymentByPaymentIntentID(ctx context.Context, gatewayPaymentIntentID *string) (Payment, error)
 	GetPaymentTransactionByID(ctx context.Context, id uuid.UUID) (PaymentTransaction, error)
 	GetPaymentTransactionByPaymentID(ctx context.Context, paymentID uuid.UUID) (PaymentTransaction, error)
 	GetProductByID(ctx context.Context, arg GetProductByIDParams) (Product, error)
