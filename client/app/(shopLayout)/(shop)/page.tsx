@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Suspense } from 'react';
-import Loading from '../loading';
+import Loading from '../../loading';
 import CategoriesSection from './components/CategoriesSection';
 import CollectionsSection from './components/CollectionsSection';
 import { Metadata } from 'next';

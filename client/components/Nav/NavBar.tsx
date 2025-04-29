@@ -6,7 +6,7 @@ import CategorySection from './CategorySection';
 import AuthButtons from './AuthButtons';
 import { Suspense } from 'react';
 
-export default async function NavBar() {
+export default function NavBar() {
   return (
     <div className='bg-white sticky top-0 z-20'>
       <header className='relative bg-white'>

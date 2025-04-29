@@ -1,6 +1,6 @@
 import { apiFetch } from '@/lib/apis/api';
 import { API_PATHS } from '@/lib/constants/api';
-import { GenericResponse } from '@/lib/definitions';
+import { GenericResponse, OrderStatus } from '@/lib/definitions';
 import { OrderModel } from '@/lib/definitions/order';
 import { ArrowRightIcon } from '@heroicons/react/16/solid';
 import clsx from 'clsx';
@@ -10,6 +10,13 @@ import { cookies } from 'next/headers';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cache } from 'react';
+import dynamic from 'next/dynamic';
+
+// Import the client component with dynamic to avoid SSR issues
+const PaymentInfoSection = dynamic(
+  () => import('@/components/Payment/PaymentInfoSection'),
+  { ssr: true }
+);
 
 export const getOrderDetails = cache(async (slug: string) => {
   const cookieStorage = await cookies();
@@ -50,19 +57,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+const orderStatuses = [
+  [OrderStatus.Pending],
+  [OrderStatus.Confirm],
+  [OrderStatus.Delivering],
+  [OrderStatus.Delivered],
+];
 export default async function Page({ params }: Props) {
   const { slug } = await params;
   const { data: orderDetail } = await getOrderDetails(slug);
-  const orderStatuses = ['Order placed', 'Processing', 'Shipped', 'Delivered'];
-  if (!orderDetail.payment_info) {
-    orderStatuses.splice(1, 0, 'Pending payment');
-  }
-  const getPercentageByStatus = (status: string) => {
-    const index = orderStatuses.indexOf(status);
-    return (index / orderStatuses.length) * 100;
+
+  const getPercentageByStatus = (status: OrderStatus) => {
+    const index = orderStatuses.findIndex((e) => e.includes(status));
+    if (index === -1) {
+      return 0;
+    }
+    const ratio = index / orderStatuses.length;
+    return (ratio < 1 ? ratio + 0.1 : ratio) * 100;
   };
+
   return (
-    <div className='h-full container mx-auto py-10 px-8'>
+    <div className='h-full container mx-auto my-20'>
       <div className='flex justify-between items-end'>
         <div className='flex items-end'>
           <h1 className='text-3xl font-bold'>Order #{orderDetail.id}</h1>
@@ -82,8 +97,8 @@ export default async function Page({ params }: Props) {
         </div>
       </div>
 
-      <div className='mt-8 rounded-md border border-gray-300 shadow-md  flex flex-col gap-4'>
-        <div className='px-12 py-8'>
+      <div className='mt-8 py-12 rounded-md border border-gray-200 shadow-md flex flex-col gap-4'>
+        <div className='px-16'>
           <div className='flex gap-10'>
             <div className='w-1/2 flex flex-col gap-4'>
               {orderDetail.products.map((e) => (
@@ -138,39 +153,71 @@ export default async function Page({ params }: Props) {
           </div>
         </div>
         <hr />
-        <div className='px-6 pb-8'>
+        <div className='px-16'>
           <div className='font-semibold mb-3'>Shipped on March 23, 2021</div>
-          <div className='w-full bg-gray-200 rounded-full h-4 mb-4 dark:bg-gray-700'>
+          <div className='w-full bg-gray-200 rounded-full h-3 mb-4 dark:bg-gray-700'>
             <div
-              className='bg-sky-500 h-4 rounded-full dark:bg-blue-500'
-              style={{ width: `${orderStatuses.length / 100}%` }}
+              className='bg-sky-500 h-3 rounded-full dark:bg-blue-500'
+              style={{ width: `${getPercentageByStatus(orderDetail.status)}%` }}
             />
           </div>
           <div className='w-full flex justify-between'>
-            {orderStatuses.map((e, i) => (
-              <div
-                key={i}
-                className={clsx(
-                  'text-sm font-medium ',
-                  `w-1/${orderStatuses.length} text-center`
-                )}
-              >
-                {e}
-              </div>
-            ))}
+            <div
+              className={clsx(
+                'text-sm font-medium',
+                orderDetail.status === OrderStatus.Pending
+                  ? 'text-indigo-500'
+                  : ''
+              )}
+            >
+              Order placed
+            </div>
+            <div
+              className={clsx(
+                'text-sm font-medium',
+                orderDetail.status === OrderStatus.Confirm
+                  ? 'text-indigo-500'
+                  : ''
+              )}
+            >
+              Processing
+            </div>
+            <div
+              className={clsx(
+                'text-sm font-medium',
+                orderDetail.status === OrderStatus.Delivering
+                  ? 'text-indigo-500'
+                  : ''
+              )}
+            >
+              Shipped
+            </div>
+            <div
+              className={clsx(
+                'text-sm font-medium',
+                orderDetail.status === OrderStatus.Delivered
+                  ? 'text-indigo-500'
+                  : ''
+              )}
+            >
+              Delivered
+            </div>
           </div>
         </div>
       </div>
 
-      <div className='bg-gray-100 flex justify-between gap-12 w-full px-10 py-8 mt-10 shadow-md rounded-md'>
+      <div className='bg-gray-100 flex border border-gray-100 justify-between gap-12 w-full px-10 py-8 mt-12 shadow-md rounded-md'>
         <div className='w-1/2 flex px-8'>
           <div className='w-1/2'>
             <div className='font-semibold'>Billing address</div>
             <div className='mt-2'>In progress</div>
           </div>
           <div className='w-1/2'>
-            <div className='font-semibold'>Payment information</div>
-            <div className='mt-2'>Stripe</div>
+            <PaymentInfoSection
+              paymentInfo={orderDetail.payment_info || null}
+              orderId={orderDetail.id}
+              total={orderDetail.total}
+            />
           </div>
         </div>
         <div className='w-1/2 flex flex-col px-8 gap-4'>

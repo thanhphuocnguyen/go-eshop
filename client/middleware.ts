@@ -5,7 +5,7 @@ import { GenericResponse } from './lib/definitions';
 
 const AdminPath = '/admin';
 export async function middleware(request: NextRequest) {
-  const privatePaths = ['/dashboard', '/profile'];
+  const privatePaths = ['/profile', '/checkout', '/cart', '/orders'];
   const path = request.nextUrl.pathname;
 
   if (

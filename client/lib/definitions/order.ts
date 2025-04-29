@@ -1,7 +1,9 @@
+import { OrderStatus } from './common';
+
 export type OrderModel = {
   id: string;
   total: number;
-  status: string;
+  status: OrderStatus;
   customer_name: string;
   customer_email: string;
   payment_info: PaymentInfo;

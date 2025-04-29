@@ -29,7 +29,7 @@ const StyledModal: React.FC<StyledModalProps> = (props) => {
             <DialogTitle className='text-2xl font-bold text-center text-gray-800'>
               {props.title}
             </DialogTitle>
-            <Description>{props.children}</Description>
+            <Description as='div'>{props.children}</Description>
           </DialogPanel>
         </div>
       </div>
