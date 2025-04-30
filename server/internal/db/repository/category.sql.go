@@ -85,8 +85,8 @@ OFFSET $2
 `
 
 type GetCategoriesParams struct {
-	Limit     int32 `json:"limit"`
-	Offset    int32 `json:"offset"`
+	Limit     int64 `json:"limit"`
+	Offset    int64 `json:"offset"`
 	Published *bool `json:"published"`
 }
 
@@ -146,17 +146,6 @@ func (q *Queries) GetCategoryByID(ctx context.Context, id uuid.UUID) (Category, 
 		&i.UpdatedAt,
 	)
 	return i, err
-}
-
-const getCategoryMaxSortOrder = `-- name: GetCategoryMaxSortOrder :one
-SELECT COALESCE(MAX(sort_order)::smallint, 0) AS max_sort_order FROM categories
-`
-
-func (q *Queries) GetCategoryMaxSortOrder(ctx context.Context) (interface{}, error) {
-	row := q.db.QueryRow(ctx, getCategoryMaxSortOrder)
-	var max_sort_order interface{}
-	err := row.Scan(&max_sort_order)
-	return max_sort_order, err
 }
 
 const getCategoryProductsByID = `-- name: GetCategoryProductsByID :many

@@ -104,21 +104,6 @@ ORDER BY
     p.id
 LIMIT $1 OFFSET $2;
 
--- name: GetProductWithImage :one
-SELECT
-    products.*,
-    img.id AS img_id, img.url AS img_url
-FROM
-    products
-LEFT JOIN image_assignments AS ia ON products.id = img.external_id AND img.entity_type = 'product'
-LEFT JOIN images AS img ON img.id = ia.image_id
-WHERE
-    products.id = $1 AND
-    products.is_active = COALESCE(sqlc.narg('is_active'), false)
-ORDER BY
-    products.id, img.id
-LIMIT $2 OFFSET $3;
-
 -- name: GetProductsByCategoryID :many
 SELECT
     p.*,

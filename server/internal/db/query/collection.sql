@@ -39,7 +39,7 @@ FROM collections AS c
 LEFT JOIN products AS p ON c.id = p.collection_id
 LEFT JOIN image_assignments AS ia ON p.id = ia.entity_id AND ia.entity_type = 'product'
 LEFT JOIN images AS img ON img.id = ia.image_id
-WHERE c.id = ANY(sqlc.narg('ids')::int[])
+WHERE c.id = ANY(sqlc.narg('ids')::UUID[])
 GROUP BY c.id, p.id, img.id, img.url
 LIMIT $1 OFFSET $2;
 

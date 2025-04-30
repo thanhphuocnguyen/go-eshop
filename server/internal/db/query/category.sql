@@ -62,6 +62,3 @@ INSERT INTO categories
     (name, slug, description, image_url, image_id)
 VALUES
     ($1, $2, $3, $4, $5);
-
--- name: GetCategoryMaxSortOrder :one
-SELECT COALESCE(MAX(sort_order)::smallint, 0) AS max_sort_order FROM categories;

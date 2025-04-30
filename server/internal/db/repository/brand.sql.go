@@ -112,8 +112,8 @@ OFFSET $2
 `
 
 type GetBrandsParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Limit  int64 `json:"limit"`
+	Offset int64 `json:"offset"`
 }
 
 func (q *Queries) GetBrands(ctx context.Context, arg GetBrandsParams) ([]Brand, error) {
@@ -154,15 +154,15 @@ SELECT
     p.name as product_name, p.id as product_id, p.description, p.base_price as product_price, p.base_sku as product_sku, p.slug as product_slug
 FROM brands AS c
 LEFT JOIN products AS p ON p.brand_id = c.id
-WHERE c.id = ANY($3::int[])
+WHERE c.id = ANY($3::UUID[])
 GROUP BY c.id, p.id
 LIMIT $1 OFFSET $2
 `
 
 type GetBrandsByIDsParams struct {
-	Limit  int32   `json:"limit"`
-	Offset int32   `json:"offset"`
-	Ids    []int32 `json:"ids"`
+	Limit  int64       `json:"limit"`
+	Offset int64       `json:"offset"`
+	Ids    []uuid.UUID `json:"ids"`
 }
 
 type GetBrandsByIDsRow struct {

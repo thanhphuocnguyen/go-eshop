@@ -191,8 +191,8 @@ LIMIT $1 OFFSET $2
 `
 
 type GetCollectionsParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Limit  int64 `json:"limit"`
+	Offset int64 `json:"offset"`
 }
 
 func (q *Queries) GetCollections(ctx context.Context, arg GetCollectionsParams) ([]Collection, error) {
@@ -238,15 +238,15 @@ FROM collections AS c
 LEFT JOIN products AS p ON c.id = p.collection_id
 LEFT JOIN image_assignments AS ia ON p.id = ia.entity_id AND ia.entity_type = 'product'
 LEFT JOIN images AS img ON img.id = ia.image_id
-WHERE c.id = ANY($3::int[])
+WHERE c.id = ANY($3::UUID[])
 GROUP BY c.id, p.id, img.id, img.url
 LIMIT $1 OFFSET $2
 `
 
 type GetCollectionsByIDsParams struct {
-	Limit  int32   `json:"limit"`
-	Offset int32   `json:"offset"`
-	Ids    []int32 `json:"ids"`
+	Limit  int64       `json:"limit"`
+	Offset int64       `json:"offset"`
+	Ids    []uuid.UUID `json:"ids"`
 }
 
 type GetCollectionsByIDsRow struct {

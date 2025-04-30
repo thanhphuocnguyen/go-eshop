@@ -290,8 +290,8 @@ OFFSET $3
 
 type ListOrderItemsParams struct {
 	OrderID uuid.UUID `json:"order_id"`
-	Limit   int32     `json:"limit"`
-	Offset  int32     `json:"offset"`
+	Limit   int64     `json:"limit"`
+	Offset  int64     `json:"offset"`
 }
 
 func (q *Queries) ListOrderItems(ctx context.Context, arg ListOrderItemsParams) ([]OrderItem, error) {
@@ -346,8 +346,8 @@ OFFSET $2
 `
 
 type ListOrdersParams struct {
-	Limit      int32              `json:"limit"`
-	Offset     int32              `json:"offset"`
+	Limit      int64              `json:"limit"`
+	Offset     int64              `json:"offset"`
 	CustomerID pgtype.UUID        `json:"customer_id"`
 	Status     NullOrderStatus    `json:"status"`
 	StartDate  pgtype.Timestamptz `json:"start_date"`

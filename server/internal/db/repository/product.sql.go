@@ -435,73 +435,6 @@ func (q *Queries) GetProductVariants(ctx context.Context, arg GetProductVariants
 	return items, nil
 }
 
-const getProductWithImage = `-- name: GetProductWithImage :one
-SELECT
-    products.id, products.name, products.description, products.base_price, products.base_sku, products.slug, products.is_active, products.category_id, products.collection_id, products.brand_id, products.created_at, products.updated_at,
-    img.id AS img_id, img.url AS img_url
-FROM
-    products
-LEFT JOIN image_assignments AS ia ON products.id = img.external_id AND img.entity_type = 'product'
-LEFT JOIN images AS img ON img.id = ia.image_id
-WHERE
-    products.id = $1 AND
-    products.is_active = COALESCE($4, false)
-ORDER BY
-    products.id, img.id
-LIMIT $2 OFFSET $3
-`
-
-type GetProductWithImageParams struct {
-	ID       uuid.UUID `json:"id"`
-	Limit    int32     `json:"limit"`
-	Offset   int32     `json:"offset"`
-	IsActive *bool     `json:"is_active"`
-}
-
-type GetProductWithImageRow struct {
-	ID           uuid.UUID      `json:"id"`
-	Name         string         `json:"name"`
-	Description  *string        `json:"description"`
-	BasePrice    pgtype.Numeric `json:"base_price"`
-	BaseSku      string         `json:"base_sku"`
-	Slug         string         `json:"slug"`
-	IsActive     *bool          `json:"is_active"`
-	CategoryID   pgtype.UUID    `json:"category_id"`
-	CollectionID pgtype.UUID    `json:"collection_id"`
-	BrandID      pgtype.UUID    `json:"brand_id"`
-	CreatedAt    time.Time      `json:"created_at"`
-	UpdatedAt    time.Time      `json:"updated_at"`
-	ImgID        *int32         `json:"img_id"`
-	ImgUrl       *string        `json:"img_url"`
-}
-
-func (q *Queries) GetProductWithImage(ctx context.Context, arg GetProductWithImageParams) (GetProductWithImageRow, error) {
-	row := q.db.QueryRow(ctx, getProductWithImage,
-		arg.ID,
-		arg.Limit,
-		arg.Offset,
-		arg.IsActive,
-	)
-	var i GetProductWithImageRow
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Description,
-		&i.BasePrice,
-		&i.BaseSku,
-		&i.Slug,
-		&i.IsActive,
-		&i.CategoryID,
-		&i.CollectionID,
-		&i.BrandID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.ImgID,
-		&i.ImgUrl,
-	)
-	return i, err
-}
-
 const getProducts = `-- name: GetProducts :many
 SELECT
     p.id, p.name, p.description, p.base_price, p.base_sku, p.slug, p.is_active, p.category_id, p.collection_id, p.brand_id, p.created_at, p.updated_at,
@@ -529,8 +462,8 @@ LIMIT $1 OFFSET $2
 `
 
 type GetProductsParams struct {
-	Limit    int32   `json:"limit"`
-	Offset   int32   `json:"offset"`
+	Limit    int64   `json:"limit"`
+	Offset   int64   `json:"offset"`
 	IsActive *bool   `json:"is_active"`
 	Name     *string `json:"name"`
 	BaseSku  *string `json:"base_sku"`
@@ -630,8 +563,8 @@ OFFSET
 
 type GetProductsByBrandIDParams struct {
 	BrandID  pgtype.UUID `json:"brand_id"`
-	Limit    int32       `json:"limit"`
-	Offset   int32       `json:"offset"`
+	Limit    int64       `json:"limit"`
+	Offset   int64       `json:"offset"`
 	IsActive *bool       `json:"is_active"`
 	Name     *string     `json:"name"`
 	BaseSku  *string     `json:"base_sku"`
@@ -735,8 +668,8 @@ OFFSET
 
 type GetProductsByCategoryIDParams struct {
 	CategoryID pgtype.UUID `json:"category_id"`
-	Limit      int32       `json:"limit"`
-	Offset     int32       `json:"offset"`
+	Limit      int64       `json:"limit"`
+	Offset     int64       `json:"offset"`
 	IsActive   *bool       `json:"is_active"`
 	Name       *string     `json:"name"`
 	BaseSku    *string     `json:"base_sku"`
@@ -828,8 +761,8 @@ OFFSET $3
 
 type GetProductsByCollectionIDParams struct {
 	CollectionID pgtype.UUID `json:"collection_id"`
-	Limit        int32       `json:"limit"`
-	Offset       int32       `json:"offset"`
+	Limit        int64       `json:"limit"`
+	Offset       int64       `json:"offset"`
 	IsActive     *bool       `json:"is_active"`
 	Name         *string     `json:"name"`
 	BaseSku      *string     `json:"base_sku"`

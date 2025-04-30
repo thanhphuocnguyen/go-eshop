@@ -3,6 +3,10 @@ sql:
   - engine: "postgresql"
     queries: "./internal/db/query"
     schema: "./migrations"
+    database:
+      uri: "postgresql://postgres:postgres@localhost:5433/eshop?sslmode=disable"
+    rules:
+      - sqlc/db-prepare
     gen:
       go:
         package: "repository"
@@ -26,3 +30,20 @@ sql:
         emit_json_tags: true
         emit_empty_slices: true
         emit_pointers_for_null_types: true
+rules:
+- name: no-pg
+  message: "invalid engine: postgresql"
+  rule: |
+    config.engine == "postgresql"
+- name: no-delete
+  message: "don't use delete statements"
+  rule: |
+    query.sql.contains("DELETE")
+- name: only-one-param
+  message: "too many parameters"
+  rule: |
+    query.params.size() > 1
+- name: no-exec
+  message: "don't use exec"
+  rule: |
+    query.cmd == "exec"

@@ -16,7 +16,7 @@ SELECT
     p.name as product_name, p.id as product_id, p.description, p.base_price as product_price, p.base_sku as product_sku, p.slug as product_slug
 FROM brands AS c
 LEFT JOIN products AS p ON p.brand_id = c.id
-WHERE c.id = ANY(sqlc.narg('ids')::int[])
+WHERE c.id = ANY(sqlc.narg('ids')::UUID[])
 GROUP BY c.id, p.id
 LIMIT $1 OFFSET $2;
 

@@ -434,8 +434,8 @@ SELECT id, role, username, email, phone, fullname, hashed_password, verified_ema
 `
 
 type ListUsersParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Limit  int64 `json:"limit"`
+	Offset int64 `json:"offset"`
 }
 
 func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error) {
@@ -606,7 +606,7 @@ type UpdateUserParams struct {
 	VerifiedPhone     *bool              `json:"verified_phone"`
 	HashedPassword    *string            `json:"hashed_password"`
 	PasswordChangedAt pgtype.Timestamptz `json:"password_changed_at"`
-	UpdatedAt         time.Time          `json:"updated_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
 	ID                uuid.UUID          `json:"id"`
 }
 
