@@ -28,3 +28,16 @@ type UpdateProductVariantTxParams struct {
 type ProductTxResult struct {
 	ID uuid.UUID `json:"id"`
 }
+
+type AttributeDataSnapshot struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+type ShippingAddressSnapshot struct {
+	Street   string `json:"street" binding:"required"`
+	Ward     string `json:"ward" binding:"required"`
+	District string `json:"district" binding:"required"`
+	City     string `json:"city" binding:"required"`
+	Phone    string `json:"phone" binding:"required"`
+}

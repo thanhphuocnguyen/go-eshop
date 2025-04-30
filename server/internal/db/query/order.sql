@@ -16,7 +16,7 @@ RETURNING *;
 SELECT
     *
 FROM
-    orders ord
+    orders
 WHERE
     id = $1
 LIMIT 1;
@@ -25,7 +25,6 @@ LIMIT 1;
 -- name: GetOrderProducts :many
 SELECT
     oi.*,
-    oi.attributes_snapshot, oi.id as order_item_id,
     p.name as product_name,
     i.url as image_url
 FROM

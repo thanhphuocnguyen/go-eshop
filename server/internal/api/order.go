@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"time"
@@ -10,9 +9,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
-	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
 )
 
@@ -32,12 +31,12 @@ type OrderStatusRequest struct {
 }
 
 type OrderItemResponse struct {
-	ID                 string              `json:"id"`
-	Name               string              `json:"name"`
-	ImageUrl           *string             `json:"image_url"`
-	AttributesSnapshot []CartItemAttribute `json:"attribute_snapshot"`
-	LineTotal          float64             `json:"line_total"`
-	Quantity           int16               `json:"quantity"`
+	ID                 string                             `json:"id"`
+	Name               string                             `json:"name"`
+	ImageUrl           *string                            `json:"image_url"`
+	AttributesSnapshot []repository.AttributeDataSnapshot `json:"attribute_snapshot"`
+	LineTotal          float64                            `json:"line_total"`
+	Quantity           int16                              `json:"quantity"`
 }
 type PaymentInfo struct {
 	ID             string  `json:"id"`
@@ -49,15 +48,15 @@ type PaymentInfo struct {
 }
 
 type OrderDetailResponse struct {
-	ID            uuid.UUID              `json:"id"`
-	Total         float64                `json:"total"`
-	Status        repository.OrderStatus `json:"status"`
-	CustomerName  string                 `json:"customer_name"`
-	CustomerEmail string                 `json:"customer_email"`
-	PaymentInfo   *PaymentInfo           `json:"payment_info,omitempty"`
-	ShippingInfo  ShippingAddress        `json:"shipping_info"`
-	Products      []OrderItemResponse    `json:"products"`
-	CreatedAt     time.Time              `json:"created_at"`
+	ID            uuid.UUID                          `json:"id"`
+	Total         float64                            `json:"total"`
+	Status        repository.OrderStatus             `json:"status"`
+	CustomerName  string                             `json:"customer_name"`
+	CustomerEmail string                             `json:"customer_email"`
+	PaymentInfo   *PaymentInfo                       `json:"payment_info,omitempty"`
+	ShippingInfo  repository.ShippingAddressSnapshot `json:"shipping_info"`
+	Products      []OrderItemResponse                `json:"products"`
+	CreatedAt     time.Time                          `json:"created_at"`
 }
 type OrderListResponse struct {
 	ID            uuid.UUID                `json:"id"`
@@ -190,12 +189,7 @@ func (sv *Server) orderDetail(c *gin.Context) {
 	}
 
 	total, _ := order.TotalPrice.Float64Value()
-	var shippingInfo ShippingAddress
-	err = json.Unmarshal(order.ShippingAddress, &shippingInfo)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderDetailResponse](InternalServerErrorCode, "", err))
-		return
-	}
+	var shippingInfo repository.ShippingAddressSnapshot
 
 	resp := OrderDetailResponse{
 		ID:            order.ID,
@@ -240,8 +234,7 @@ func (sv *Server) orderDetail(c *gin.Context) {
 	orderItems := make([]OrderItemResponse, 0, len(orderItemRows))
 
 	for _, item := range orderItemRows {
-		var attrSnapshot []CartItemAttribute
-		json.Unmarshal(item.AttributesSnapshot, &attrSnapshot)
+		var attrSnapshot []repository.AttributeDataSnapshot
 		lineTotal, _ := item.LineTotalSnapshot.Float64Value()
 		orderItems = append(orderItems, OrderItemResponse{
 			ID:                 item.VariantID.String(),

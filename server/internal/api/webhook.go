@@ -36,6 +36,7 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 	case stripe.EventTypePaymentIntentSucceeded:
 	case stripe.EventTypePaymentIntentCanceled:
 	case stripe.EventTypePaymentIntentPaymentFailed:
+	case stripe.EventTypeChargeFailed:
 		var paymentIntent stripe.PaymentIntent
 		err := json.Unmarshal(evt.Data.Raw, &paymentIntent)
 		if err != nil {
@@ -58,6 +59,9 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 			Status: repository.NullPaymentStatus{
 				Valid: true,
 			},
+			GatewayChargeID: &paymentIntent.ID,
+			ErrorCode:       &evt.LastResponse.Status,
+			ErrorMessage:    evt.LastResponse.RawJSON,
 		}
 		createPaymentTransactionArg := repository.CreatePaymentTransactionParams{
 			ID:                     uuid.New(),

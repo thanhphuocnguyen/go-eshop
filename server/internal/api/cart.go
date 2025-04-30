@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"errors"
 	"math"
 	"net/http"
@@ -11,19 +10,14 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/stripe/stripe-go/v81"
-	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
 )
 
 type ProductVariantParam struct {
 	ID string `uri:"variant_id" binding:"required,uuid"`
-}
-
-type CartItemAttribute struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
 }
 
 type CartItemParam struct {
@@ -35,26 +29,18 @@ type OrderItemAttribute struct {
 	Value string `json:"value"`
 }
 
-type ShippingAddress struct {
-	Street   string `json:"street" binding:"required"`
-	Ward     string `json:"ward" binding:"required"`
-	District string `json:"district" binding:"required"`
-	City     string `json:"city" binding:"required"`
-	Phone    string `json:"phone" binding:"required"`
-}
-
 type CartItemResponse struct {
-	ID         string              `json:"id" binding:"required,uuid"`
-	ProductID  string              `json:"product_id" binding:"required,uuid"`
-	VariantID  string              `json:"variant_id" binding:"required,uuid"`
-	Name       string              `json:"name"`
-	Quantity   int16               `json:"quantity"`
-	Price      float64             `json:"price"`
-	Discount   int16               `json:"discount"`
-	StockQty   int32               `json:"stock"`
-	Sku        *string             `json:"sku,omitempty"`
-	ImageURL   *string             `json:"image_url,omitempty"`
-	Attributes []CartItemAttribute `json:"attributes"`
+	ID         string                             `json:"id" binding:"required,uuid"`
+	ProductID  string                             `json:"product_id" binding:"required,uuid"`
+	VariantID  string                             `json:"variant_id" binding:"required,uuid"`
+	Name       string                             `json:"name"`
+	Quantity   int16                              `json:"quantity"`
+	Price      float64                            `json:"price"`
+	Discount   int16                              `json:"discount"`
+	StockQty   int32                              `json:"stock"`
+	Sku        *string                            `json:"sku,omitempty"`
+	ImageURL   *string                            `json:"image_url,omitempty"`
+	Attributes []repository.AttributeDataSnapshot `json:"attributes"`
 }
 
 type CartDetailResponse struct {
@@ -389,7 +375,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", err))
 		return
 	}
-	var shippingAddr ShippingAddress
+	var shippingAddr repository.ShippingAddressSnapshot
 	if req.AddressID == nil {
 		// create new address
 		if req.Address == nil {
@@ -409,7 +395,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", err))
 			return
 		}
-		shippingAddr = ShippingAddress{
+		shippingAddr = repository.ShippingAddressSnapshot{
 			Street:   address.Street,
 			Ward:     *address.Ward,
 			District: address.District,
@@ -429,7 +415,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", err))
 			return
 		}
-		shippingAddr = ShippingAddress{
+		shippingAddr = repository.ShippingAddressSnapshot{
 			Street:   address.Street,
 			Ward:     *address.Ward,
 			District: address.District,
@@ -494,19 +480,10 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 		}
 	}
 
-	for i, param := range createOrderItemParams {
-		createOrderItemParams[i].AttributesSnapshot, _ = json.Marshal(attributeList[param.VariantID.String()])
-	}
-	shippingAddrMarshalled, err := json.Marshal(shippingAddr)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", err))
-		return
-	}
-
 	params := repository.CreateOrderTxArgs{
 		CartID:          cart.ID,
 		TotalPrice:      totalPrice,
-		ShippingAddress: shippingAddrMarshalled,
+		ShippingAddress: shippingAddr,
 		UserID:          authPayload.UserID,
 		CustomerInfo: repository.CustomerInfoTxArgs{
 			FullName: user.Fullname,
@@ -652,7 +629,7 @@ func mapToCartItemsResp(rows []repository.GetCartItemsRow) ([]CartItemResponse, 
 		}
 		if cartItemIdx == -1 {
 			price, _ := row.Price.Float64Value()
-			attr := CartItemAttribute{
+			attr := repository.AttributeDataSnapshot{
 				Name:  row.AttrName,
 				Value: row.AttrValName,
 			}
@@ -667,7 +644,7 @@ func mapToCartItemsResp(rows []repository.GetCartItemsRow) ([]CartItemResponse, 
 				// Discount:      row.Discount.Int16,
 				StockQty: row.StockQty,
 				Sku:      &row.Sku,
-				Attributes: []CartItemAttribute{
+				Attributes: []repository.AttributeDataSnapshot{
 					attr,
 				},
 				ImageURL: row.ImageUrl,
@@ -683,7 +660,7 @@ func mapToCartItemsResp(rows []repository.GetCartItemsRow) ([]CartItemResponse, 
 				}
 			}
 			if attrIdx == -1 {
-				attr := CartItemAttribute{
+				attr := repository.AttributeDataSnapshot{
 					Name:  row.AttrName,
 					Value: row.AttrValName,
 				}

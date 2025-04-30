@@ -20,7 +20,7 @@ type CreateOrderTxArgs struct {
 	CustomerInfo          CustomerInfoTxArgs
 	CreateOrderItemParams []CreateBulkOrderItemsParams
 	TotalPrice            float64
-	ShippingAddress       []byte
+	ShippingAddress       ShippingAddressSnapshot
 }
 
 func (s *pgRepo) CreateOrderTx(ctx context.Context, arg CreateOrderTxArgs) (uuid.UUID, error) {

@@ -12,9 +12,9 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/thanhphuocnguyen/go-eshop/config"
 	docs "github.com/thanhphuocnguyen/go-eshop/docs"
-	"github.com/thanhphuocnguyen/go-eshop/internal/auth"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/upload"
 )
