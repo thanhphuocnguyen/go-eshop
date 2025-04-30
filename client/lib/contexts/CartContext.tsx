@@ -137,3 +137,11 @@ export function CartContextProvider({
     </CartContext.Provider>
   );
 }
+
+export const useCartCtx = () => {
+  const context = React.useContext(CartContext);
+  if (context === undefined) {
+    throw new Error('useCartCtx must be used within a CartContextProvider');
+  }
+  return context;
+};

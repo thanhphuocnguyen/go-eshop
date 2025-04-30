@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"mime/multipart"
 	"net/http"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -32,16 +33,20 @@ type CreateCategoryRequest struct {
 }
 
 type CategoryResponse struct {
-	ID          string             `json:"id"`
-	Name        string             `json:"name"`
-	Description *string            `json:"description,omitempty"`
-	Slug        string             `json:"slug"`
-	Published   bool               `json:"published,omitempty"`
-	Remarkable  bool               `json:"remarkable,omitempty"`
-	CreatedAt   string             `json:"created_at,omitempty"`
-	UpdatedAt   string             `json:"updated_at,omitempty"`
-	ImageUrl    *string            `json:"image_url,omitempty"`
-	Products    []ProductListModel `json:"products,omitempty"`
+	ID          string  `json:"id"`
+	Name        string  `json:"name"`
+	Description *string `json:"description,omitempty"`
+	Slug        string  `json:"slug"`
+	Published   bool    `json:"published,omitempty"`
+	Remarkable  bool    `json:"remarkable,omitempty"`
+	CreatedAt   string  `json:"created_at,omitempty"`
+	UpdatedAt   string  `json:"updated_at,omitempty"`
+	ImageUrl    *string `json:"image_url,omitempty"`
+}
+
+type CategoryWithProductsResponse struct {
+	CategoryResponse `json:"category,inline"`
+	Products         []ProductListModel `json:"products"`
 }
 
 type getCategoryParams struct {
@@ -54,6 +59,116 @@ type CategoryProductRequest struct {
 }
 
 // ------------------------------------------ API Handlers ------------------------------------------
+
+// --- Public API ---
+
+// getCategoriesHandler retrieves a list of Categories.
+// @Summary Get a list of Categories
+// @Description Get a list of Categories
+// @ID get-Categories
+// @Accept json
+// @Produce json
+// @Param page query int false "Page number"
+// @Param page_size query int false "Page size"
+// @Success 200 {object} ApiResponse[CategoryResponse]
+// @Failure 400 {object} ApiResponse[CategoryResponse]
+// @Failure 500 {object} ApiResponse[CategoryResponse]
+// @Router /categories [get]
+func (sv *Server) getCategoriesHandler(c *gin.Context) {
+	var query PaginationQueryParams
+	if err := c.ShouldBindQuery(&query); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
+		return
+	}
+	params := repository.GetCategoriesParams{
+		Limit:  10,
+		Offset: 0,
+	}
+	params.Offset = (params.Limit) * int64(query.Page-1)
+	params.Limit = int64(query.PageSize)
+
+	categories, err := sv.repo.GetCategories(c, params)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
+		return
+	}
+
+	count, err := sv.repo.CountCategories(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
+		return
+	}
+
+	categoriesResp := make([]CategoryWithProductsResponse, len(categories))
+	var wg sync.WaitGroup
+	productChannel := make(chan []ProductListModel, len(categories))
+	for i, category := range categories {
+		wg.Add(1)
+		categoriesResp[i] = CategoryWithProductsResponse{
+			CategoryResponse: CategoryResponse{
+				ID:          category.ID.String(),
+				Name:        category.Name,
+				Slug:        category.Slug,
+				Published:   category.Published,
+				CreatedAt:   category.CreatedAt.String(),
+				UpdatedAt:   category.UpdatedAt.String(),
+				Description: category.Description,
+				Remarkable:  *category.Remarkable,
+				ImageUrl:    category.ImageUrl,
+			},
+			Products: []ProductListModel{},
+		}
+		go func() {
+			defer wg.Done()
+			prodByCategoryRows, err := sv.repo.GetProductsByCategoryID(c, repository.GetProductsByCategoryIDParams{
+				CategoryID: utils.GetPgTypeUUID(category.ID),
+				Limit:      10,
+				Offset:     0,
+			})
+			if err != nil {
+				productChannel <- []ProductListModel{}
+				return
+			}
+			productsResp := make([]ProductListModel, len(prodByCategoryRows))
+			for j, product := range prodByCategoryRows {
+				price, _ := product.BasePrice.Float64Value()
+				productsResp[j] = ProductListModel{
+					ID:           product.ID.String(),
+					Name:         product.Name,
+					Slug:         product.Slug,
+					CreatedAt:    product.CreatedAt.String(),
+					UpdatedAt:    product.UpdatedAt.String(),
+					Description:  *product.Description,
+					Price:        price.Float64,
+					VariantCount: int32(product.VariantCount),
+					Sku:          product.BaseSku,
+					ImgUrl:       product.ImgUrl,
+					ImgID:        product.ImgID,
+				}
+			}
+			productChannel <- productsResp
+		}()
+	}
+
+	wg.Wait()
+	close(productChannel)
+	i := 0
+
+	for products := range productChannel {
+		categoriesResp[i].Products = products
+		i++
+	}
+
+	c.JSON(http.StatusOK, createSuccessResponse(
+		c,
+		categoriesResp,
+		fmt.Sprintf("Total %d categories", count),
+		nil,
+		nil,
+	))
+}
+
+// --- Admin API ---
 // addCategoryHandler creates a new Category.
 // @Summary Create a new Category
 // @Description Create a new Category
@@ -111,7 +226,7 @@ func (sv *Server) addCategoryHandler(c *gin.Context) {
 	c.JSON(http.StatusCreated, createSuccessResponse(c, resp, "", nil, nil))
 }
 
-// getCategories retrieves a list of Categories.
+// getAdminCategoriesHandler retrieves a list of Categories.
 // @Summary Get a list of Categories
 // @Description Get a list of Categories
 // @ID get-Categories
@@ -123,7 +238,7 @@ func (sv *Server) addCategoryHandler(c *gin.Context) {
 // @Failure 400 {object} ApiResponse[CategoryResponse]
 // @Failure 500 {object} ApiResponse[CategoryResponse]
 // @Router /categories [get]
-func (sv *Server) getCategories(c *gin.Context) {
+func (sv *Server) getAdminCategoriesHandler(c *gin.Context) {
 	var query PaginationQueryParams
 	if err := c.ShouldBindQuery(&query); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
@@ -206,7 +321,19 @@ func (sv *Server) getCategoryByID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(c, result, "", nil, nil))
+	resp := CategoryResponse{
+		ID:          result.ID.String(),
+		Name:        result.Name,
+		Slug:        result.Slug,
+		Published:   result.Published,
+		CreatedAt:   result.CreatedAt.String(),
+		UpdatedAt:   result.UpdatedAt.String(),
+		Description: result.Description,
+		Remarkable:  *result.Remarkable,
+		ImageUrl:    result.ImageUrl,
+	}
+
+	c.JSON(http.StatusOK, createSuccessResponse(c, resp, "", nil, nil))
 }
 
 // getProductsByCategory retrieves a list of Products by Category ID.

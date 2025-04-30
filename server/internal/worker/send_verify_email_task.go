@@ -6,29 +6,13 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
-type PayloadVerifyEmail struct {
-	UserID uuid.UUID `json:"user_id"`
-}
-
-const (
-	VerifyEmailTaskType = "send_verify_email"
-)
-
-type VerifyEmailData struct {
-	UserID     uuid.UUID
-	Email      string
-	FullName   string
-	VerifyCode string
-}
-
-func (distributor *RedisTaskDistributor) SendVerifyEmail(ctx context.Context, payload *PayloadVerifyEmail, options ...asynq.Option) error {
+func (distributor *RedisTaskDistributor) SendVerifyAccountEmail(ctx context.Context, payload *PayloadVerifyEmail, options ...asynq.Option) error {
 	marshaled, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("could not marshal payload: %w", err)
@@ -62,21 +46,24 @@ func (processor *RedisTaskProcessor) ProcessSendVerifyEmail(ctx context.Context,
 		return fmt.Errorf("could not get user: %w", err)
 	}
 
-	verifyEmail, err := processor.repo.CreateVerifyEmail(ctx, repository.CreateVerifyEmailParams{
-		// ID:         user.UserID,
+	verifyCode := utils.RandomString(32)
+
+	_, err = processor.repo.CreateVerifyEmail(ctx, repository.CreateVerifyEmailParams{
+		UserID:     user.ID,
 		Email:      user.Email,
-		VerifyCode: utils.RandomString(32),
+		VerifyCode: verifyCode,
 	})
 
 	if err != nil {
 		return fmt.Errorf("could not create verify email: %w", err)
 	}
 
+	verifyLink := fmt.Sprintf("%s/verify-email?verify_code=%s", processor.cfg.HttpAddr, verifyCode)
 	emailData := VerifyEmailData{
 		UserID:     user.ID,
 		Email:      user.Email,
 		FullName:   user.Fullname,
-		VerifyCode: verifyEmail.VerifyCode,
+		VerifyLink: verifyLink,
 	}
 
 	body, err := utils.ParseHtmlTemplate("./pkg/mailer/templates/verify-email.html", emailData)

@@ -14,7 +14,7 @@
       "cwd": "${workspaceFolder}"
     },
     {
-      "name": "Launch Package",
+      "name": "Launch API",
       "type": "go",
       "request": "launch",
       "mode": "auto",
@@ -23,6 +23,19 @@
       "args": [
         // "--profile",
         "api"
+      ],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Launch Worker",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/cmd/web",
+      "envFile": "${workspaceFolder}/app.env",
+      "args": [
+        // "--profile",
+        "worker"
       ],
       "cwd": "${workspaceFolder}"
     },

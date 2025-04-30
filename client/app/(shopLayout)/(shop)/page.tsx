@@ -5,6 +5,9 @@ import Loading from '../../loading';
 import CategoriesSection from './components/CategoriesSection';
 import CollectionsSection from './components/CollectionsSection';
 import { Metadata } from 'next';
+import { apiFetch } from '@/lib/apis/api';
+import { PUBLIC_API_PATHS } from '@/lib/constants/api';
+import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
 
 export const metadata: Metadata = {
   title: 'Homepage',
@@ -13,6 +16,27 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
+  const { data, error } = await apiFetch<
+    GenericResponse<{
+      categories: GeneralCategoryModel[];
+      collections: GeneralCategoryModel[];
+    }>
+  >(PUBLIC_API_PATHS.HOME_PAGE_DATA, {
+    nextOptions: {
+      next: {
+        tags: ['home'],
+      },
+    },
+  });
+
+  if (error) {
+    return (
+      <div className='flex justify-center items-center p-8'>
+        <div className='animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600'></div>
+      </div>
+    );
+  }
+
   return (
     <div className='block relative mb-10'>
       <section className='new-arrival-ads'>
@@ -36,7 +60,7 @@ export default async function Home() {
       </section>
       <div className='px-10'>
         <Suspense fallback={<Loading />}>
-          <CategoriesSection />
+          <CategoriesSection categories={data.categories} />
         </Suspense>
         <section className='relative pt-24 h-[700px]'>
           <div className='relative h-full'>
@@ -70,9 +94,7 @@ export default async function Home() {
             </div>
           </div>
         </section>
-        <Suspense fallback={<Loading />}>
-          <CollectionsSection />
-        </Suspense>
+        <CollectionsSection collections={data.collections ?? []} />
 
         <section className='relative my-24 mb-40 h-[600px]'>
           <div className='h-full'>
@@ -91,7 +113,7 @@ export default async function Home() {
                 <p>
                   Endless tasks, limited hours, a single piece of paper. Not
                   really a haiku, but we&apos;re doing our best here. No kanban
-                  boards, burndown charts, or tangled flowcharts with our Focus
+                  boards, burn-down charts, or tangled flowcharts with our Focus
                   system. Just the undeniable urge to fill empty circles.
                 </p>
                 <Link className='p-3' href={'/collections/focus'}>

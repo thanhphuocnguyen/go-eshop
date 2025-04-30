@@ -1,22 +1,16 @@
 'use client';
-import { useAttributes } from '@/app/admin/_lib/hooks';
-import { useAppUser } from '@/lib/contexts/AppUserContext';
-import LoadingInline from '@/components/Common/Loadings/LoadingInline';
 import { AttributeDetailModel, VariantDetailModel } from '@/lib/definitions';
 import { Button } from '@headlessui/react';
 import clsx from 'clsx';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
+import { useCartCtx } from '@/lib/contexts/CartContext';
 
 interface AttributesSectionProps {
   variants: VariantDetailModel[];
 }
 const AttributesSection: React.FC<AttributesSectionProps> = ({ variants }) => {
-  const { updateCartItemQuantity } = useAppUser();
-
-  const { attributes, attributesLoading } = useAttributes([
-    ...new Set(variants.flatMap((e) => e.attributes.map((e) => e.id))),
-  ]);
+  const { updateCartItemQuantity } = useCartCtx();
 
   const [attributesData, setAttributesData] = useState<AttributeDetailModel[]>(
     []
@@ -80,18 +74,36 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({ variants }) => {
   };
 
   useEffect(() => {
-    if (attributes) {
+    if (variants) {
+      const attributes = variants.reduce((acc, variant) => {
+        variant.attributes.forEach((attribute) => {
+          const existingAttribute = acc.find(
+            (attr) => attr.id === attribute.id
+          );
+          if (existingAttribute) {
+            // If the attribute already exists, add the value if it doesn't exist
+            if (
+              !existingAttribute.values.some(
+                (value) => value.id === attribute.value_object.id
+              )
+            ) {
+              existingAttribute.values.push(attribute.value_object);
+            }
+          } else {
+            // If the attribute doesn't exist, create a new one
+            acc.push({
+              id: attribute.id,
+              name: attribute.name,
+              created_at: attribute.created_at,
+              values: [attribute.value_object],
+            });
+          }
+        });
+        return acc;
+      }, [] as AttributeDetailModel[]);
       setAttributesData([...attributes]);
     }
-  }, [attributes]);
-
-  if (attributesLoading) {
-    return (
-      <div className='flex items-center justify-center mt-10'>
-        <LoadingInline />
-      </div>
-    );
-  }
+  }, [variants]);
 
   return (
     <div className='flex flex-col gap-6 mt-10'>
@@ -251,12 +263,10 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({ variants }) => {
         type='button' // Change to type="submit" if this button submits the form
         onClick={handleAddToCart}
         disabled={
-          !attributes ||
-          Object.keys(selectedAttributeValues).length !== attributes?.length
+          Object.keys(selectedAttributeValues).length !== attributesData?.length
         } // Disable if no size is selected
         className={`mt-10 w-full flex items-center justify-center rounded-md border border-transparent px-8 py-3 text-base font-medium text-white ${
-          !attributes ||
-          Object.keys(selectedAttributeValues).length !== attributes?.length
+          Object.keys(selectedAttributeValues).length !== attributesData?.length
             ? 'bg-gray-400 cursor-not-allowed'
             : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
         }`}

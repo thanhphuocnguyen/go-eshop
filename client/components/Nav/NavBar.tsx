@@ -39,7 +39,7 @@ export default async function NavBar() {
                   <span className='sr-only'>Eshop</span>
                   <Image
                     alt=''
-                    src='/images/logo/logo.webp'
+                    src='/images/logos/logo.webp'
                     className='h-8 w-auto rounded-md'
                     width={50}
                     height={50}

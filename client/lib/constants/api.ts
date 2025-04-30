@@ -4,6 +4,7 @@ const _apiPaths = {
   REFRESH_TOKEN: 'auth/refresh-token',
   FORGOT_PASSWORD: 'auth/forgot-password',
   RESET_PASSWORD: 'auth/reset-password',
+  HOME_PAGE_DATA: 'homepage',
   CATEGORIES: 'categories',
   CATEGORY: 'categories/:slug',
   CATEGORY_PRODUCTS: 'categories/:slug/products',

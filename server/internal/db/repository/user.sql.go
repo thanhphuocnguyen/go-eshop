@@ -142,18 +142,18 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 }
 
 const createVerifyEmail = `-- name: CreateVerifyEmail :one
-INSERT INTO verify_emails (id, email, verify_code) VALUES ($1, $2, $3) RETURNING id, user_id, email, verify_code, is_used, created_at, expired_at
+INSERT INTO verify_emails (user_id, email, verify_code) VALUES ($1, $2, $3) RETURNING id, user_id, email, verify_code, is_used, created_at, expired_at
 `
 
 type CreateVerifyEmailParams struct {
-	ID         int32  `json:"id"`
-	Email      string `json:"email"`
-	VerifyCode string `json:"verify_code"`
+	UserID     uuid.UUID `json:"user_id"`
+	Email      string    `json:"email"`
+	VerifyCode string    `json:"verify_code"`
 }
 
 // Verification Token Queries
 func (q *Queries) CreateVerifyEmail(ctx context.Context, arg CreateVerifyEmailParams) (VerifyEmail, error) {
-	row := q.db.QueryRow(ctx, createVerifyEmail, arg.ID, arg.Email, arg.VerifyCode)
+	row := q.db.QueryRow(ctx, createVerifyEmail, arg.UserID, arg.Email, arg.VerifyCode)
 	var i VerifyEmail
 	err := row.Scan(
 		&i.ID,
@@ -386,17 +386,12 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 	return i, err
 }
 
-const getVerifyEmail = `-- name: GetVerifyEmail :one
-SELECT id, user_id, email, verify_code, is_used, created_at, expired_at FROM verify_emails WHERE id = $1 AND email = $2
+const getVerifyEmailByID = `-- name: GetVerifyEmailByID :one
+SELECT id, user_id, email, verify_code, is_used, created_at, expired_at FROM verify_emails WHERE id = $1
 `
 
-type GetVerifyEmailParams struct {
-	ID    int32  `json:"id"`
-	Email string `json:"email"`
-}
-
-func (q *Queries) GetVerifyEmail(ctx context.Context, arg GetVerifyEmailParams) (VerifyEmail, error) {
-	row := q.db.QueryRow(ctx, getVerifyEmail, arg.ID, arg.Email)
+func (q *Queries) GetVerifyEmailByID(ctx context.Context, id int32) (VerifyEmail, error) {
+	row := q.db.QueryRow(ctx, getVerifyEmailByID, id)
 	var i VerifyEmail
 	err := row.Scan(
 		&i.ID,
@@ -410,12 +405,12 @@ func (q *Queries) GetVerifyEmail(ctx context.Context, arg GetVerifyEmailParams) 
 	return i, err
 }
 
-const getVerifyEmailByID = `-- name: GetVerifyEmailByID :one
-SELECT id, user_id, email, verify_code, is_used, created_at, expired_at FROM verify_emails WHERE id = $1
+const getVerifyEmailByVerifyCode = `-- name: GetVerifyEmailByVerifyCode :one
+SELECT id, user_id, email, verify_code, is_used, created_at, expired_at FROM verify_emails WHERE verify_code = $1 AND expired_at > now() AND is_used = FALSE
 `
 
-func (q *Queries) GetVerifyEmailByID(ctx context.Context, id int32) (VerifyEmail, error) {
-	row := q.db.QueryRow(ctx, getVerifyEmailByID, id)
+func (q *Queries) GetVerifyEmailByVerifyCode(ctx context.Context, verifyCode string) (VerifyEmail, error) {
+	row := q.db.QueryRow(ctx, getVerifyEmailByVerifyCode, verifyCode)
 	var i VerifyEmail
 	err := row.Scan(
 		&i.ID,

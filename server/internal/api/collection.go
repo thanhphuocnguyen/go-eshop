@@ -189,17 +189,19 @@ func (sv *Server) getCollectionByID(c *gin.Context) {
 
 	firstRow := rows[0]
 	products := make([]ProductListModel, 0)
-	colResp := CategoryResponse{
-		ID:          firstRow.ID.String(),
-		Slug:        firstRow.Slug,
-		Description: firstRow.Description,
-		Published:   firstRow.Published,
-		Name:        firstRow.Name,
-		Remarkable:  *firstRow.Remarkable,
-		ImageUrl:    firstRow.ImageUrl,
-		CreatedAt:   firstRow.CreatedAt.Format("2006-01-02 15:04:05"),
-		UpdatedAt:   firstRow.UpdatedAt.Format("2006-01-02 15:04:05"),
-		Products:    products,
+	colResp := CategoryWithProductsResponse{
+		CategoryResponse: CategoryResponse{
+			ID:          firstRow.ID.String(),
+			Slug:        firstRow.Slug,
+			Description: firstRow.Description,
+			Published:   firstRow.Published,
+			Name:        firstRow.Name,
+			Remarkable:  *firstRow.Remarkable,
+			ImageUrl:    firstRow.ImageUrl,
+			CreatedAt:   firstRow.CreatedAt.Format("2006-01-02 15:04:05"),
+			UpdatedAt:   firstRow.UpdatedAt.Format("2006-01-02 15:04:05"),
+		},
+		Products: products,
 	}
 
 	for i, row := range rows {

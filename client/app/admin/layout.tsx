@@ -46,7 +46,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className='mb-4 p-3 rounded-md relative flex items-center gap-3 hover:bg-secondary'>
             <Image
               className='object-cover rounded-lg'
-              src='/images/logo/logo.webp'
+              src='/images/logos/logo.webp'
               alt='logo'
               width={40}
               height={40}

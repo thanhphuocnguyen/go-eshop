@@ -15,6 +15,10 @@ import {
 } from './_components';
 import { Metadata } from 'next';
 
+type Props = {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+};
 export const getProduct = cache(async (slug: string) => {
   const { data, error } = await apiFetch<GenericResponse<ProductDetailModel>>(
     PUBLIC_API_PATHS.PRODUCT_DETAIL.replace(':id', slug),
@@ -27,25 +31,25 @@ export const getProduct = cache(async (slug: string) => {
     }
   );
   if (error) {
-    throw new Error(error.details);
+    throw new Error(error.details, {
+      cause: error,
+    });
   }
   return data;
 });
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { slug: string };
-}): Promise<Metadata> {
-  const post = await getProduct(params.slug);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const post = await getProduct(slug);
   return {
     title: post.name,
     description: post.description,
   };
 }
 
-async function ProductDetailPage({ params }: { params: { slug: string } }) {
-  const data = await getProduct(params.slug);
+async function ProductDetailPage({ params }: Props) {
+  const { slug } = await params;
+  const data = await getProduct(slug);
 
   return (
     <div className='container mx-auto px-8 py-8'>

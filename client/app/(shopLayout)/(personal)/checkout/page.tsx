@@ -25,6 +25,7 @@ import { apiFetch } from '@/lib/apis/api';
 import { PUBLIC_API_PATHS } from '@/lib/constants/api';
 import { GenericResponse } from '@/lib/definitions';
 import { toast } from 'react-toastify';
+import { useCartCtx } from '@/lib/contexts/CartContext';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -49,7 +50,8 @@ export default function CheckoutPage() {
         terms_accepted: false,
       },
     });
-  const { cart, user } = useAppUser();
+  const { user } = useAppUser();
+  const { cart } = useCartCtx();
 
   const paymentMethod = useWatch({ control, name: 'payment_method' });
 
@@ -422,7 +424,7 @@ export default function CheckoutPage() {
                   <Image
                     fill
                     objectFit='contains'
-                    src={e.image_url ?? '/images/logo/logo.webp'}
+                    src={e.image_url ?? '/images/logos/logo.webp'}
                     alt='Product Image'
                     className='rounded-md border border-lime-300'
                   />

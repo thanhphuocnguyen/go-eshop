@@ -3,7 +3,7 @@ package api
 import (
 	"encoding/gob"
 	"net/http"
-	"time"
+	"sync"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -83,6 +83,7 @@ func (sv *Server) initializeRouter() {
 			ctx.JSON(http.StatusOK, gin.H{"status ": "ok"})
 		})
 
+		v1.GET("homepage", sv.getHomePageHandler)
 		v1.GET("verify-email", sv.verifyEmailHandler)
 
 		// Register API route groups
@@ -134,7 +135,10 @@ func (sv *Server) setupCORS() gin.HandlerFunc {
 func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 	admin := rg.Group("/admin", authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin))
 	{
-		admin.GET("list", sv.listUsers)
+		users := admin.Group("users")
+		{
+			users.GET("", sv.listUsers)
+		}
 		productGroup := admin.Group("products")
 		{
 			productGroup.POST("", sv.createProduct)
@@ -142,6 +146,7 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 			productGroup.PUT(":id/variants", sv.updateProductVariants)
 			productGroup.DELETE(":id", sv.removeProduct)
 		}
+
 		attributeGroup := admin.Group("attributes")
 		{
 			attributeGroup.POST("", sv.createAttribute)
@@ -159,7 +164,7 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 
 		categories := admin.Group("categories")
 		{
-			categories.GET("", sv.getCategories)
+			categories.GET("", sv.getAdminCategoriesHandler)
 			categories.POST("", sv.addCategoryHandler)
 			categories.PUT(":id", sv.updateCategory)
 			categories.DELETE(":id", sv.deleteCategory)
@@ -277,6 +282,7 @@ func (sv *Server) setupPaymentRoutes(rg *gin.RouterGroup) {
 func (sv *Server) setupCategoryRoutes(rg *gin.RouterGroup) {
 	category := rg.Group("categories")
 	{
+		category.GET("", sv.getCategoriesHandler)
 		category.GET(":id", sv.getCategoryByID)
 		category.GET(":id/products", sv.getProductsByCategory)
 	}
@@ -313,74 +319,81 @@ func (s *Server) Server(addr string) *http.Server {
 	}
 }
 
-// Response types - unchanged
-type ApiResponse[T any] struct {
-	Success    bool        `json:"success"`
-	Message    string      `json:"message"`
-	Data       *T          `json:"data,omitempty"`
-	Error      *ApiError   `json:"error,omitempty"`
-	Pagination *Pagination `json:"pagination,omitempty"`
-	Meta       *MetaInfo   `json:"meta"`
+type DashboardData struct {
+	Categories  []CategoryResponse   `json:"categories"`
+	Collections []CollectionResponse `json:"collections"`
 }
 
-// Error structure for detailed errors
-type ApiError struct {
-	Code    string `json:"code"`
-	Details string `json:"details"`
-	Stack   string `json:"stack,omitempty"` // Hide in production
-}
+func (s *Server) getHomePageHandler(ctx *gin.Context) {
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-// Pagination info (for paginated endpoints)
-type Pagination struct {
-	Total           int64 `json:"total"`
-	Page            int64 `json:"page"`
-	PageSize        int64 `json:"pageSize"`
-	TotalPages      int   `json:"totalPages"`
-	HasNextPage     bool  `json:"hasNextPage"`
-	HasPreviousPage bool  `json:"hasPreviousPage"`
-}
+	// Use channels to collect results
+	categoriesChan := make(chan []CategoryResponse, 1)
+	collectionsChan := make(chan []CollectionResponse, 1)
 
-// Meta info about the request
-type MetaInfo struct {
-	Timestamp string `json:"timestamp"`
-	RequestID string `json:"requestId"`
-	Path      string `json:"path"`
-	Method    string `json:"method"`
-}
+	// Fetch categories
+	go func() {
+		defer wg.Done()
+		categoryRows, err := s.repo.GetCategories(ctx, repository.GetCategoriesParams{
+			Limit:  5,
+			Offset: 0,
+		})
 
-type PaginationQueryParams struct {
-	Page     int64 `form:"page,default=1" binding:"omitempty,min=1"`
-	PageSize int64 `form:"page_size,default=20" binding:"omitempty,min=1,max=100"`
-}
+		if err != nil {
+			categoriesChan <- []CategoryResponse{}
+			return
+		}
+		categoryModel := make([]CategoryResponse, len(categoryRows))
+		for i, category := range categoryRows {
+			categoryModel[i] = CategoryResponse{
+				ID:          category.ID.String(),
+				Name:        category.Name,
+				Description: category.Description,
+				ImageUrl:    category.ImageUrl,
+				Slug:        category.Slug,
+			}
+		}
+		categoriesChan <- categoryModel
+	}()
 
-func createErrorResponse[T any](code string, msg string, err error) ApiResponse[T] {
-	return ApiResponse[T]{
-		Success: false,
-		Data:    nil,
-		Error: &ApiError{
-			Code:    code,
-			Details: msg,
-			Stack:   err.Error(),
-		},
+	// Fetch collections
+	go func() {
+		defer wg.Done()
+		collectionRows, err := s.repo.GetCollections(ctx, repository.GetCollectionsParams{
+			Limit:  5,
+			Offset: 0,
+		})
+
+		if err != nil {
+			collectionsChan <- []CollectionResponse{}
+			return
+		}
+		collectionModel := make([]CollectionResponse, len(collectionRows))
+		for i, collection := range collectionRows {
+			collectionModel[i] = CollectionResponse{
+				ID:          collection.ID.String(),
+				Name:        collection.Name,
+				Description: collection.Description,
+				ImageUrl:    collection.ImageUrl,
+				Slug:        collection.Slug,
+			}
+		}
+		collectionsChan <- collectionModel
+	}()
+
+	// Wait for all goroutines to finish
+	wg.Wait()
+
+	// Read the results from channels
+	categories := <-categoriesChan
+	collections := <-collectionsChan
+
+	// Create the response
+	response := DashboardData{
+		Categories:  categories,
+		Collections: collections,
 	}
-}
 
-func createSuccessResponse[T any](c *gin.Context, data T, message string, pagination *Pagination, err *ApiError) ApiResponse[T] {
-	resp := ApiResponse[T]{
-		Success:    true,
-		Message:    message,
-		Data:       &data,
-		Pagination: pagination,
-
-		Meta: &MetaInfo{
-			Timestamp: time.Now().Format(time.RFC3339),
-			RequestID: c.GetString("RequestID"),
-			Path:      c.FullPath(),
-			Method:    c.Request.Method,
-		},
-	}
-	if err != nil {
-		resp.Error = err
-	}
-	return resp
+	ctx.JSON(http.StatusOK, createSuccessResponse(ctx, response, "Get homepage data successfully", nil, nil))
 }

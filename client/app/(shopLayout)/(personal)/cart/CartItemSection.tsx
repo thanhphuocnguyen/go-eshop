@@ -1,15 +1,15 @@
 'use client';
 
-import { useAppUser } from '@/lib/contexts/AppUserContext';
 import LoadingInline from '@/components/Common/Loadings/LoadingInline';
 import { Button } from '@headlessui/react';
 import { CheckIcon, TrashIcon } from '@heroicons/react/16/solid';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useCartCtx } from '@/lib/contexts/CartContext';
 
 export const CartItemSection = () => {
   const { cart, cartLoading, updateCartItemQuantity, removeFromCart } =
-    useAppUser();
+    useCartCtx();
 
   if (cartLoading && !cart) {
     return (
@@ -18,9 +18,9 @@ export const CartItemSection = () => {
       </div>
     );
   }
-  if (!cart) {
+  if (!cart || !cart.cart_items.length) {
     return (
-      <div className='flex justify-center items-center h-screen'>
+      <div className='flex justify-center my-20 items-center h-full'>
         <div className='text-center'>
           <h1 className='text-2xl font-bold'>Your cart is empty</h1>
           <Link href='/shop' className='mt-4 text-indigo-600 hover:underline'>
@@ -120,6 +120,22 @@ export const CartItemSection = () => {
             )}
           </div>
         </div>
+      </div>
+
+      <div className='text-gray-400'>
+        Shipping and taxes will be calculated at checkout.
+      </div>
+      <Link
+        href={'/checkout'}
+        className='mt-4 w-full block text-center bg-indigo-600 text-white py-3 rounded-md'
+      >
+        Checkout
+      </Link>
+      <div className='mt-2'>
+        <span className='mr-2'>or</span>
+        <Link href='/shop' className='text-indigo-600'>
+          Continue Shopping
+        </Link>
       </div>
     </>
   );

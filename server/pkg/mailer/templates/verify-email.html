@@ -6,61 +6,114 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Confirm Your Email</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f9f9f9;
+            font-family: 'Poppins', Arial, sans-serif;
+            background-color: #f4f7fa;
             margin: 0;
             padding: 0;
+            color: #3a3a3a;
         }
 
         .email-container {
             max-width: 600px;
-            margin: 20px auto;
+            margin: 30px auto;
             background-color: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
             overflow: hidden;
         }
 
         .header {
-            background-color: #4CAF50;
+            background: linear-gradient(135deg, #4776E6 0%, #8E54E9 100%);
             color: #ffffff;
             text-align: center;
-            padding: 20px;
-            font-size: 24px;
+            padding: 30px 20px;
+            font-size: 26px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .logo-area {
+            margin-bottom: 15px;
+        }
+
+        .logo-area img {
+            max-height: 50px;
         }
 
         .content {
-            padding: 20px;
-            color: #333333;
-            line-height: 1.6;
+            padding: 30px 25px;
+            color: #444;
+            line-height: 1.7;
         }
 
         .content p {
-            margin: 0 0 15px;
+            margin: 0 0 18px;
+            font-size: 15px;
+        }
+
+        .greeting {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
         }
 
         .confirm-btn {
             display: inline-block;
-            background-color: #4CAF50;
+            background: linear-gradient(to right, #4776E6, #8E54E9);
             color: #ffffff;
             text-decoration: none;
-            padding: 12px 20px;
-            border-radius: 5px;
+            padding: 14px 30px;
+            border-radius: 50px;
             font-size: 16px;
-            margin-top: 20px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(71, 118, 230, 0.3);
         }
 
         .confirm-btn:hover {
-            background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(71, 118, 230, 0.4);
+        }
+
+        .divider {
+            height: 1px;
+            background-color: #eaeaea;
+            margin: 25px 0;
         }
 
         .footer {
             text-align: center;
-            padding: 15px;
-            background-color: #f1f1f1;
-            font-size: 12px;
-            color: #777777;
+            padding: 20px;
+            background-color: #f8fafc;
+            font-size: 13px;
+            color: #888;
+        }
+
+        .social-links {
+            margin: 15px 0;
+        }
+
+        .social-links a {
+            display: inline-block;
+            margin: 0 10px;
+            color: #6c757d;
+            text-decoration: none;
+        }
+
+        .help-text {
+            font-size: 13px;
+            color: #999;
+            margin-top: 15px;
         }
     </style>
 </head>
@@ -68,20 +121,38 @@
 <body>
     <div class="email-container">
         <div class="header">
-            Confirm Your Email
+            <div class="logo-area">
+                <!-- You can add your logo here -->
+                <!-- <img src="your-logo-url" alt="E-Shop Logo"> -->
+            </div>
+            Welcome to E-Shop!
         </div>
         <div class="content">
-            <p>Hi {{.FullName}},</p>
-            <p>Thank you for signing up with username: {{.Email}}! Please confirm your email address by clicking the button below:</p>
-            <p>
-                <a href="{{.VerifyLink}}" class="confirm-btn">Confirm Email</a>
-            </p>
-            <p>If you didn’t sign up for this account, you can safely ignore this email.</p>
-            <p>Thank you,</p>
-            <p>E-shop Team</p>
+            <p class="greeting">Hi {{.FullName}},</p>
+            <p>Thank you for joining E-Shop! We're excited to have you as part of our community. To get started, please verify your email address.</p>
+            
+            <div class="button-container">
+                <a href="{{.VerifyLink}}" class="confirm-btn">Verify My Email</a>
+            </div>
+            
+            <p>This link will expire in 24 hours. If you didn't create an account with {{.Email}}, you can safely ignore this email.</p>
+            
+            <div class="divider"></div>
+            
+            <p>Need help? Contact our support team at <a href="mailto:support@eshop.com" style="color: #4776E6; text-decoration: none;">support@eshop.com</a></p>
+            
+            <p>Happy shopping!</p>
+            <p>The E-Shop Team</p>
         </div>
         <div class="footer">
-            &copy; 2025 E-shop. All rights reserved.
+            <div class="social-links">
+                <!-- You can add your social media links here -->
+                <a href="#">Facebook</a> •
+                <a href="#">Twitter</a> •
+                <a href="#">Instagram</a>
+            </div>
+            <p>&copy; 2025 E-Shop. All rights reserved.</p>
+            <p class="help-text">This email was sent to {{.Email}} because you signed up for an E-Shop account.</p>
         </div>
     </div>
 </body>

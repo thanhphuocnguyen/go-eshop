@@ -6,49 +6,28 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
-type PayloadSendOrderCreatedEmailTask struct {
-	PaymentID string    `json:"payment_id"`
-	OrderID   uuid.UUID `json:"order_id"`
-}
-
-type OrderCreatedItems struct {
-	Name  string  `json:"name"`
-	Price float64 `json:"price"`
-	Qty   int     `json:"qty"`
-}
-type OrderCreatedEmailData struct {
-	OrderID  uuid.UUID           `json:"order_id"`
-	Total    float64             `json:"total"`
-	FullName string              `json:"full_name"`
-	Items    []OrderCreatedItems `json:"items"`
-}
-
 func (d *RedisTaskDistributor) SendOrderCreatedEmailTask(ctx context.Context, payload *PayloadSendOrderCreatedEmailTask, options ...asynq.Option) error {
 	marshaled, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("could not marshal payload: %w", err)
 	}
-
 	task := asynq.NewTask(OrderCreatedEmailTaskType, marshaled, options...)
 	info, err := d.client.EnqueueContext(ctx, task)
 	if err != nil {
 		return fmt.Errorf("could not enqueue task: %w", err)
 	}
-
 	log.Info().
 		Str("type", task.Type()).
-		Bytes("payload", task.Payload()).
+		RawJSON("payload", task.Payload()).
 		Str("queue", info.Queue).
 		Int("max_retry", info.MaxRetry).
-		Msg("task enqueued")
-
+		Msg("sent order created task!!")
 	return nil
 }
 
@@ -57,6 +36,7 @@ func (p *RedisTaskProcessor) ProcessSendOrderCreatedEmail(ctx context.Context, t
 	if err := json.Unmarshal(task.Payload(), &payload); err != nil {
 		return err
 	}
+
 	payment, err := p.repo.GetPaymentByOrderID(ctx, payload.OrderID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {

@@ -9,7 +9,7 @@ import (
 
 type TaskDistributor interface {
 	SendOrderCreatedEmailTask(ctx context.Context, payload *PayloadSendOrderCreatedEmailTask, options ...asynq.Option) error
-	SendVerifyEmail(ctx context.Context, payload *PayloadVerifyEmail, options ...asynq.Option) error
+	SendVerifyAccountEmail(ctx context.Context, payload *PayloadVerifyEmail, options ...asynq.Option) error
 	Shutdown() error
 }
 
@@ -24,7 +24,7 @@ func NewRedisTaskDistributor(redisOpt asynq.RedisClientOpt) TaskDistributor {
 		panic(err)
 	}
 
-	log.Info().Msg("Connected to Redis")
+	log.Info().Msg("Distributor connected to Redis!!!")
 	return &RedisTaskDistributor{client}
 }
 

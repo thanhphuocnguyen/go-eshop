@@ -207,9 +207,13 @@ func (sv *Server) getProductDetail(c *gin.Context) {
 	productRows, err := sv.repo.GetProductDetail(c, repository.GetProductDetailParams{
 		ID: productID,
 	})
-
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductModel](InternalServerErrorCode, "", err))
+		return
+	}
+
+	if len(productRows) == 0 {
+		c.JSON(http.StatusNotFound, createErrorResponse[ProductModel](NotFoundCode, "", errors.New("product not found")))
 		return
 	}
 
@@ -226,6 +230,7 @@ func (sv *Server) getProductDetail(c *gin.Context) {
 
 	entityIds := make([]uuid.UUID, 0)
 	idMap := make(map[uuid.UUID]bool)
+
 	for _, row := range variantRows {
 		if _, ok := idMap[row.ID]; !ok {
 			idMap[row.ID] = true
@@ -282,6 +287,7 @@ func (sv *Server) getProducts(c *gin.Context) {
 
 	products, err := sv.repo.GetProducts(c, dbParams)
 	if err != nil {
+
 		c.JSON(http.StatusInternalServerError, createErrorResponse[[]ProductListModel](InternalServerErrorCode, "Server error", err))
 		return
 	}

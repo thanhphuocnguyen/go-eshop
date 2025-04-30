@@ -13,27 +13,28 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = (props) => {
   const { name, image, priceFrom, priceTo, rating } = props;
   return (
-    <div className='w-full h-full flex flex-col max-w-sm bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700'>
+    <div className='w-full h-full p-3 flex flex-col max-w-sm bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700'>
       <Link
-        className='w-auto h-full relative'
+        className='h-60 w-full relative'
         href='/products/[id]'
         as={`/products/${props.ID}`}
       >
         <Image
-          className='p-4 m-auto rounded-t-lg object-contain'
           src={image || '/images/product-placeholder.webp'}
           alt='product image'
-          width={300}
-          height={220}
+          objectFit='cover'
+          className='rounded-t-lg'
+          sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
+          fill
         />
       </Link>
-      <div className='px-5 pb-5 align-bottom'>
+      <div className='p-3 align-bottom'>
         <Link href='/products/[id]' as={`/products/${props.ID}`}>
-          <h5 className='text-xl font-semibold tracking-tight text-gray-900 dark:text-white'>
+          <h5 className='text-xl mt-4 font-semibold tracking-tight text-gray-900 dark:text-white'>
             {name}
           </h5>
         </Link>
-        <div className='flex items-center mt-2.5 mb-5'>
+        <div className='flex items-center mt-2.5 mb-2'>
           <div className='flex items-center space-x-1 rtl:space-x-reverse'>
             <svg
               className='w-4 h-4 text-yellow-300'

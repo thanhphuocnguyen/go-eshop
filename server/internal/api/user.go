@@ -252,7 +252,7 @@ func (sv *Server) sendVerifyEmailHandler(c *gin.Context) {
 		return
 	}
 
-	err := sv.taskDistributor.SendVerifyEmail(
+	err := sv.taskDistributor.SendVerifyAccountEmail(
 		c,
 		&worker.PayloadVerifyEmail{
 			UserID: authPayload.UserID,

@@ -1,7 +1,6 @@
 import { Metadata } from 'next';
 import Image from 'next/image';
 import { CartItemSection } from './CartItemSection';
-import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Cart Review',
@@ -17,23 +16,7 @@ export default function CartPage() {
             Shopping Cart
           </h1>
           <hr />
-
           <CartItemSection />
-          <div className='text-gray-400'>
-            Shipping and taxes will be calculated at checkout.
-          </div>
-          <Link
-            href={'/checkout'}
-            className='mt-4 w-full block text-center bg-indigo-600 text-white py-3 rounded-md'
-          >
-            Checkout
-          </Link>
-          <div className='mt-2'>
-            <span className='mr-2'>or</span>
-            <Link href='/shop' className='text-indigo-600'>
-              Continue Shopping
-            </Link>
-          </div>
         </div>
       </div>
       <div className='border-t border-gray-300 m-auto w-full py-32 bg-gray-100 shadow-sm px-20 flex gap-16'>
@@ -97,15 +80,3 @@ export default function CartPage() {
     </div>
   );
 }
-
-//
-//
-
-//
-//
-
-//
-//
-
-//
-//

@@ -160,10 +160,10 @@ VALUES
 
 -- Verification Token Queries
 -- name: CreateVerifyEmail :one
-INSERT INTO verify_emails (id, email, verify_code) VALUES ($1, $2, $3) RETURNING *;
+INSERT INTO verify_emails (user_id, email, verify_code) VALUES ($1, $2, $3) RETURNING *;
 
--- name: GetVerifyEmail :one
-SELECT * FROM verify_emails WHERE id = $1 AND email = $2;
+-- name: GetVerifyEmailByVerifyCode :one
+SELECT * FROM verify_emails WHERE verify_code = $1 AND expired_at > now() AND is_used = FALSE;
 
 -- name: GetVerifyEmailByID :one
 SELECT * FROM verify_emails WHERE id = $1;

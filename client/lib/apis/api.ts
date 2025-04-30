@@ -105,7 +105,6 @@ export async function apiFetch<T = any>(
     method,
     headers: finalHeaders,
     body: body && !isFormData ? JSON.stringify(body) : (body as BodyInit),
-    // credentials: 'include',
     ...nextOptions,
   });
 

@@ -18,7 +18,6 @@ export async function middleware(request: NextRequest) {
   const accessToken = request.cookies.get('access_token')?.value;
   if (path.startsWith(AdminPath) && accessToken) {
     const decode = jwtDecode<JwtMode>(accessToken || '');
-    console.log({ decode });
     if (decode['role'] !== 'admin') {
       return NextResponse.redirect(new URL('/not-found', request.nextUrl));
     }

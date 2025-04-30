@@ -108,6 +108,7 @@ func (sv *Server) registerHandler(c *gin.Context) {
 		District: req.Address.District,
 		Default:  true,
 	}
+
 	if req.Address.Ward != nil {
 		createAddressArgs.Ward = req.Address.Ward
 	}
@@ -118,7 +119,14 @@ func (sv *Server) registerHandler(c *gin.Context) {
 		return
 	}
 
-	err = sv.taskDistributor.SendVerifyEmail(c, &worker.PayloadVerifyEmail{UserID: user.ID}, asynq.MaxRetry(3), asynq.ProcessIn(5*time.Second), asynq.Queue(worker.QueueCritical))
+	emailPayload := &worker.PayloadVerifyEmail{UserID: user.ID}
+	err = sv.taskDistributor.SendVerifyAccountEmail(
+		c,
+		emailPayload,
+		asynq.MaxRetry(3),
+		asynq.ProcessIn(5*time.Second),
+		asynq.Queue(worker.QueueDefault),
+	)
 
 	if err != nil {
 		createErrorResponse[UserResponse](ActivateUserCode, "Please verify your email address to activate your account", err)
@@ -302,4 +310,76 @@ func (sv *Server) refreshTokenHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK,
 		createSuccessResponse(c, RefreshTokenResponse{AccessToken: accessToken, AccessTokenExpiresAt: time.Now().Add(sv.config.AccessTokenDuration)}, "success", nil, nil))
+}
+
+// verifyAccountEmailHandler godoc
+// @Summary Verify account email
+// @Description Verify account email
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Param token query string true "Token"
+// @Success 200 {object} ApiResponse[UserResponse]
+// @Failure 400 {object} ApiResponse[UserResponse]
+// @Failure 500 {object} ApiResponse[UserResponse]
+// @Router /users/verify-email [get]
+func (sv *Server) verifyAccountEmailHandler(c *gin.Context) {
+	code := c.Query("verify_code")
+	if code == "" {
+		c.JSON(http.StatusBadRequest, createErrorResponse[UserResponse](InvalidBodyCode, "Token is required", nil))
+		return
+	}
+
+	verifyEmailRow, err := sv.repo.GetVerifyEmailByVerifyCode(c, code)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, createErrorResponse[UserResponse](NotFoundCode, "Token not found or expired", err))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", err))
+		return
+	}
+
+	user, err := sv.repo.GetUserByID(c, verifyEmailRow.UserID)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, createErrorResponse[UserResponse](NotFoundCode, "User not found", err))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", err))
+		return
+	}
+
+	if user.Email != verifyEmailRow.Email {
+		c.JSON(http.StatusBadRequest, createErrorResponse[UserResponse](InvalidTokenCode, "Email not match", nil))
+		return
+	}
+
+	if user.VerifiedEmail {
+		c.JSON(http.StatusBadRequest, createErrorResponse[UserResponse](InvalidTokenCode, "Email already verified", nil))
+		return
+	}
+
+	_, err = sv.repo.UpdateVerifyEmail(c, repository.UpdateVerifyEmailParams{
+		ID:         verifyEmailRow.ID,
+		VerifyCode: code,
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", err))
+		return
+	}
+
+	_, err = sv.repo.UpdateUser(c, repository.UpdateUserParams{
+		ID:            user.ID,
+		VerifiedEmail: Bool(true),
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", err))
+		return
+	}
+
+	c.JSON(http.StatusOK,
+		createSuccessResponse(c, UserResponse{ID: user.ID}, "success", nil, nil))
 }
