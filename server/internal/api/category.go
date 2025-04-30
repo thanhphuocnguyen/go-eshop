@@ -133,8 +133,8 @@ func (sv *Server) getCategories(c *gin.Context) {
 		Limit:  10,
 		Offset: 0,
 	}
-	params.Offset = (params.Limit) * (query.Page - 1)
-	params.Limit = query.PageSize
+	params.Offset = (params.Limit) * int64(query.Page-1)
+	params.Limit = int64(query.PageSize)
 
 	categories, err := sv.repo.GetCategories(c, params)
 	if err != nil {
@@ -239,8 +239,8 @@ func (sv *Server) getProductsByCategory(c *gin.Context) {
 		Limit:      10,
 		Offset:     0,
 	}
-	params.Offset = (params.Limit) * (query.Page - 1)
-	params.Limit = query.PageSize
+	params.Offset = (params.Limit) * int64(query.Page-1)
+	params.Limit = int64(query.PageSize)
 
 	products, err := sv.repo.GetProductsByCategoryID(c, params)
 	if err != nil {

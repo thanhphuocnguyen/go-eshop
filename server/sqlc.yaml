@@ -22,6 +22,7 @@ sql:
             type: "time.Time"
         - column: "order_items.attributes_snapshot"
           go_type:
+            slice: true
             type: "AttributeDataSnapshot"
         - column: "orders.shipping_address"
           go_type:
@@ -47,3 +48,15 @@ rules:
   message: "don't use exec"
   rule: |
     query.cmd == "exec"
+- name: postgresql-query-too-costly
+  message: "Query cost estimate is too high"
+  rule: "postgresql.explain.plan.total_cost > 1.0"
+- name: postgresql-no-seq-scan
+  message: "Query plan results in a sequential scan"
+  rule: "postgresql.explain.plan.node_type == 'Seq Scan'"
+- name: mysql-query-too-costly
+  message: "Query cost estimate is too high"
+  rule: "has(mysql.explain.query_block.cost_info) && double(mysql.explain.query_block.cost_info.query_cost) > 2.0"
+- name: mysql-must-use-primary-key
+  message: "Query plan doesn't use primary key"
+  rule: "has(mysql.explain.query_block.table.key) && mysql.explain.query_block.table.key != 'PRIMARY'"

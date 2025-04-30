@@ -30,8 +30,8 @@ type UserResponse struct {
 }
 
 type ListUserParams struct {
-	Page     int `form:"page" binding:"required,min=1"`
-	PageSize int `form:"page_size" binding:"required,min=1,max=100"`
+	Page     int64 `form:"page" binding:"required,min=1"`
+	PageSize int64 `form:"page_size" binding:"required,min=1,max=100"`
 }
 
 type UpdateUserRequest struct {
@@ -218,8 +218,8 @@ func (sv *Server) listUsers(c *gin.Context) {
 	}
 
 	users, err := sv.repo.ListUsers(c, repository.ListUsersParams{
-		Limit:  int32(queries.PageSize),
-		Offset: int32((queries.Page - 1) * queries.PageSize),
+		Limit:  queries.PageSize,
+		Offset: (queries.Page - 1) * queries.PageSize,
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[[]UserResponse]("internal_server_error", "", err))

@@ -90,7 +90,7 @@ type CancelOrderRequest struct {
 // @Failure 401 {object} ApiResponse[[]OrderListResponse]
 // @Failure 500 {object} ApiResponse[[]OrderListResponse]
 // @Router /order/list [get]
-func (sv *Server) orderList(c *gin.Context) {
+func (sv *Server) getOrdersHandler(c *gin.Context) {
 	tokenPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, createErrorResponse[[]OrderListResponse](UnauthorizedCode, "", errors.New("authorization payload is not provided")))
@@ -116,8 +116,8 @@ func (sv *Server) orderList(c *gin.Context) {
 		Offset: 1,
 	}
 
-	dbParams.Limit = orderListQuery.PageSize
-	dbParams.Offset = (orderListQuery.Page - 1) * orderListQuery.PageSize
+	dbParams.Limit = int64(orderListQuery.PageSize)
+	dbParams.Offset = int64(orderListQuery.Page-1) * int64(orderListQuery.PageSize)
 
 	if user.Role != repository.UserRoleAdmin {
 		dbParams.CustomerID = utils.GetPgTypeUUID(tokenPayload.UserID)
@@ -171,7 +171,7 @@ func (sv *Server) orderList(c *gin.Context) {
 // @Failure 401 {object} OrderDetailResponse
 // @Failure 500 {object} OrderDetailResponse
 // @Router /order/{order_id} [get]
-func (sv *Server) orderDetail(c *gin.Context) {
+func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 	var params OrderIDParams
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[OrderDetailResponse](InvalidBodyCode, "", err))

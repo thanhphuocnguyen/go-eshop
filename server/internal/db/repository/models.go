@@ -569,17 +569,17 @@ type Order struct {
 }
 
 type OrderItem struct {
-	ID                   uuid.UUID             `json:"id"`
-	OrderID              uuid.UUID             `json:"order_id"`
-	VariantID            uuid.UUID             `json:"variant_id"`
-	Quantity             int16                 `json:"quantity"`
-	PricePerUnitSnapshot pgtype.Numeric        `json:"price_per_unit_snapshot"`
-	LineTotalSnapshot    pgtype.Numeric        `json:"line_total_snapshot"`
-	ProductNameSnapshot  string                `json:"product_name_snapshot"`
-	VariantSkuSnapshot   string                `json:"variant_sku_snapshot"`
-	AttributesSnapshot   AttributeDataSnapshot `json:"attributes_snapshot"`
-	CreatedAt            time.Time             `json:"created_at"`
-	UpdatedAt            time.Time             `json:"updated_at"`
+	ID                   uuid.UUID               `json:"id"`
+	OrderID              uuid.UUID               `json:"order_id"`
+	VariantID            uuid.UUID               `json:"variant_id"`
+	Quantity             int16                   `json:"quantity"`
+	PricePerUnitSnapshot pgtype.Numeric          `json:"price_per_unit_snapshot"`
+	LineTotalSnapshot    pgtype.Numeric          `json:"line_total_snapshot"`
+	ProductNameSnapshot  string                  `json:"product_name_snapshot"`
+	VariantSkuSnapshot   string                  `json:"variant_sku_snapshot"`
+	AttributesSnapshot   []AttributeDataSnapshot `json:"attributes_snapshot"`
+	CreatedAt            time.Time               `json:"created_at"`
+	UpdatedAt            time.Time               `json:"updated_at"`
 }
 
 type Payment struct {

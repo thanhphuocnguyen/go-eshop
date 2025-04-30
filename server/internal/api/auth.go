@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	repository "github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
@@ -217,7 +218,7 @@ func (sv *Server) loginHandler(c *gin.Context) {
 		UserAgent:    c.GetHeader("User-Agent"),
 		ClientIp:     c.ClientIP(),
 		Blocked:      false,
-		ExpiredAt:    time.Now().Add(sv.config.RefreshTokenDuration),
+		ExpiredAt:    utils.GetPgTypeTimestamp(time.Now().Add(sv.config.RefreshTokenDuration)),
 	})
 
 	if err != nil {

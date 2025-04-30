@@ -109,8 +109,8 @@ func (sv *Server) getCollections(c *gin.Context) {
 		Offset: 0,
 	}
 
-	dbQueries.Limit = queries.PageSize
-	dbQueries.Offset = (queries.Page - 1) * queries.PageSize
+	dbQueries.Offset = int64(queries.Page-1) * int64(queries.PageSize)
+	dbQueries.Limit = int64(queries.PageSize)
 	rows, err := sv.repo.GetCollections(c, dbQueries)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[CollectionResponse](InternalServerErrorCode, "", err))
