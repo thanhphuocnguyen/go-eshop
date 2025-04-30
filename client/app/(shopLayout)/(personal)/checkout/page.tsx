@@ -17,12 +17,12 @@ import {
 } from './_lib/definitions';
 import Image from 'next/image';
 import { TrashIcon } from '@heroicons/react/24/solid';
-import { useAppUser } from '@/components/AppUserContext';
+import { useAppUser } from '@/lib/contexts/AppUserContext';
 import { useEffect, useState } from 'react';
 import { CheckIcon } from '@heroicons/react/24/outline';
 import { redirect, RedirectType, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/apis/api';
-import { API_PATHS } from '@/lib/constants/api';
+import { PUBLIC_API_PATHS } from '@/lib/constants/api';
 import { GenericResponse } from '@/lib/definitions';
 import { toast } from 'react-toastify';
 
@@ -122,7 +122,7 @@ export default function CheckoutPage() {
     // Save form data to session storage for the next step
     const { data, error } = await apiFetch<
       GenericResponse<CheckoutDataResponse>
-    >(API_PATHS.CHECKOUT, {
+    >(PUBLIC_API_PATHS.CHECKOUT, {
       method: 'POST',
       body: {
         ...body,

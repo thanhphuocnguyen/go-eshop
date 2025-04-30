@@ -1,5 +1,5 @@
 'use client';
-import { API_PATHS } from '@/lib/constants/api';
+import { ADMIN_API_PATHS } from '@/lib/constants/api';
 import React, { use } from 'react';
 import { toast } from 'react-toastify';
 import useSWR from 'swr';
@@ -23,7 +23,7 @@ export default function AdminBrandDetail({
 }) {
   const { slug } = use(params);
   const { data: brand, isLoading } = useSWR(
-    API_PATHS.BRAND.replace(':id', slug),
+    ADMIN_API_PATHS.BRAND.replace(':id', slug),
     async (url) => {
       const response = await apiFetch<GenericResponse<GeneralCategoryModel>>(
         url,
@@ -39,7 +39,7 @@ export default function AdminBrandDetail({
   );
 
   const { data: products, isLoading: isLoadingProducts } = useSWR(
-    API_PATHS.BRAND_PRODUCTS.replace(':id', slug),
+    ADMIN_API_PATHS.BRAND_PRODUCTS.replace(':id', slug),
     async (url) => {
       const response = await apiFetch<GenericResponse<CategoryProductModel[]>>(
         url,
@@ -56,7 +56,7 @@ export default function AdminBrandDetail({
 
   async function handleSave(data: FormData) {
     const response = await apiFetch<GenericResponse<GeneralCategoryModel>>(
-      API_PATHS.BRAND.replace(':id', slug),
+      ADMIN_API_PATHS.BRAND.replace(':id', slug),
       {
         method: 'PUT',
         body: data,

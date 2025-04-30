@@ -1,6 +1,6 @@
 'use client';
 import { useAttributes } from '@/app/admin/_lib/hooks';
-import { useAppUser } from '@/components/AppUserContext';
+import { useAppUser } from '@/lib/contexts/AppUserContext';
 import LoadingInline from '@/components/Common/Loadings/LoadingInline';
 import { AttributeDetailModel, VariantDetailModel } from '@/lib/definitions';
 import { Button } from '@headlessui/react';

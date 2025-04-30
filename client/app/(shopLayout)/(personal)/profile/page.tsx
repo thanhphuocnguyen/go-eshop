@@ -1,7 +1,7 @@
 'use client';
 
 import { apiFetch } from '@/lib/apis/api';
-import { API_PATHS } from '@/lib/constants/api';
+import { PUBLIC_API_PATHS } from '@/lib/constants/api';
 import { AddressModel, GenericResponse, UserModel } from '@/lib/definitions';
 import { TextField } from '@/components/FormFields';
 import { Button, Fieldset, Switch } from '@headlessui/react';
@@ -14,9 +14,9 @@ import useSWR from 'swr';
 import { z } from 'zod';
 import { PencilIcon, PlusCircleIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
-import Link from 'next/link';
 import { getCookie } from 'cookies-next';
 import AddressCard from './_components/AddressCard';
+import OrderHistoryTab from './_components/OrderHistoryTab';
 
 // Profile form schema
 const profileSchema = z.object({
@@ -57,7 +57,7 @@ export default function PersonalInfoPage() {
 
   // Fetch user data
   const { data, error, isLoading, mutate } = useSWR<GenericResponse<UserModel>>(
-    API_PATHS.USER,
+    PUBLIC_API_PATHS.USER,
     (url) =>
       apiFetch(url, {
         headers: {
@@ -119,7 +119,7 @@ export default function PersonalInfoPage() {
   const onProfileSubmit = async (data: ProfileFormValues) => {
     try {
       const response = await apiFetch<GenericResponse<UserModel>>(
-        API_PATHS.USER,
+        PUBLIC_API_PATHS.USER,
         {
           method: 'PATCH',
           headers: {
@@ -152,8 +152,8 @@ export default function PersonalInfoPage() {
   // Address submit handler
   const onAddressSubmit = async (body: AddressFormValues) => {
     const url = editAddressId
-      ? API_PATHS.USER_ADDRESS.replace(':id', editAddressId.toString())
-      : API_PATHS.USER_ADDRESSES;
+      ? PUBLIC_API_PATHS.USER_ADDRESS.replace(':id', editAddressId.toString())
+      : PUBLIC_API_PATHS.USER_ADDRESSES;
 
     const method = editAddressId ? 'PATCH' : 'POST';
 
@@ -192,7 +192,7 @@ export default function PersonalInfoPage() {
 
     try {
       const response = await apiFetch(
-        API_PATHS.USER_ADDRESS.replace(':id', addressId.toString()),
+        PUBLIC_API_PATHS.USER_ADDRESS.replace(':id', addressId.toString()),
         {
           method: 'DELETE',
           headers: {
@@ -219,7 +219,7 @@ export default function PersonalInfoPage() {
     setEditAddressId(address.id);
     setAddAddressMode(true);
     resetAddressForm({
-      street: address.address || '',
+      street: address.street || '',
       district: address.district || '',
       city: address.city || '',
       ward: address.ward || '',
@@ -230,7 +230,10 @@ export default function PersonalInfoPage() {
   // Set address as default handler
   const handleSetDefaultAddress = async (addressId: number) => {
     const response = await apiFetch<GenericResponse<boolean>>(
-      API_PATHS.USER_ADDRESS_DEFAULT.replace(':id', addressId.toString()),
+      PUBLIC_API_PATHS.USER_ADDRESS_DEFAULT.replace(
+        ':id',
+        addressId.toString()
+      ),
       {
         method: 'PATCH',
         headers: {
@@ -612,17 +615,12 @@ export default function PersonalInfoPage() {
           {/* Orders Tab */}
           {activeTab === 'orders' && (
             <div>
-              <h2 className='text-lg font-medium text-gray-900 mb-6'>
-                Order History
-              </h2>
-              <div>
-                <Link
-                  href='/orders'
-                  className='text-indigo-600 hover:text-indigo-800'
-                >
-                  View all orders
-                </Link>
+              <div className='flex justify-between items-center mb-6'>
+                <h2 className='text-lg font-medium text-gray-900'>
+                  Order History
+                </h2>
               </div>
+              <OrderHistoryTab />
             </div>
           )}
 

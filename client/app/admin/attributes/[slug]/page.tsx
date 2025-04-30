@@ -1,6 +1,6 @@
 'use client';
 
-import { API_PATHS } from '@/lib/constants/api';
+import { ADMIN_API_PATHS } from '@/lib/constants/api';
 import {
   GenericResponse,
   AttributeFormModel,
@@ -70,7 +70,7 @@ export default function Page({
   });
 
   const { data: attribute } = useSWR(
-    slug ? API_PATHS.ATTRIBUTE.replace(':id', slug) : null,
+    slug ? ADMIN_API_PATHS.ATTRIBUTE.replace(':id', slug) : null,
     async (url) => {
       const response = await apiFetch<GenericResponse<AttributeFormModel>>(
         url,
@@ -91,7 +91,7 @@ export default function Page({
     }));
 
     const response = await apiFetch<GenericResponse<AttributeFormModel>>(
-      API_PATHS.ATTRIBUTE.replace(':id', slug),
+      ADMIN_API_PATHS.ATTRIBUTE.replace(':id', slug),
       {
         method: 'PUT',
         body: data,

@@ -1,12 +1,12 @@
 import useSWR from 'swr';
 import { toast } from 'react-toastify';
 import { apiFetch } from '@/lib/apis/api';
-import { API_PATHS } from '@/lib/constants/api';
+import { ADMIN_API_PATHS } from '@/lib/constants/api';
 import { AttributeDetailModel, GenericResponse } from '@/lib/definitions';
 
 export function useAttributes(ids: number[] = [], productId?: number) {
   const { data, isLoading, error } = useSWR(
-    [API_PATHS.ATTRIBUTES, ids, productId],
+    [ADMIN_API_PATHS.ATTRIBUTES, ids, productId],
     ([url]) => {
       return apiFetch<GenericResponse<AttributeDetailModel[]>>(
         `${url}?ids[]=${ids.join(',')}`,

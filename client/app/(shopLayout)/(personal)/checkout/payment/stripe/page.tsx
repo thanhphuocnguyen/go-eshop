@@ -10,7 +10,7 @@ import {
   CreatePaymentIntentResponse,
   GenericResponse,
 } from '@/lib/definitions';
-import { API_PATHS } from '@/lib/constants/api';
+import { PUBLIC_API_PATHS } from '@/lib/constants/api';
 import { toast } from 'react-toastify';
 import { PaymentResponse } from '../../_lib/definitions';
 
@@ -34,7 +34,7 @@ export default function StripePage() {
     }
     setIsLoading(true);
     const { data, error } = await apiFetch<GenericResponse<PaymentResponse>>(
-      API_PATHS.PAYMENT_DETAIL.replace(':id', searchParams.get('payment_id')!)
+      PUBLIC_API_PATHS.PAYMENT_DETAIL.replace(':id', searchParams.get('payment_id')!)
     );
 
     if (error) {

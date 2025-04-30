@@ -103,6 +103,7 @@ type Querier interface {
 	GetImagesByEntityID(ctx context.Context, entityID uuid.UUID) ([]GetImagesByEntityIDRow, error)
 	GetOrder(ctx context.Context, id uuid.UUID) (Order, error)
 	GetOrderProducts(ctx context.Context, orderID uuid.UUID) ([]GetOrderProductsRow, error)
+	GetOrders(ctx context.Context, arg GetOrdersParams) ([]GetOrdersRow, error)
 	GetPaymentByID(ctx context.Context, id uuid.UUID) (Payment, error)
 	GetPaymentByOrderID(ctx context.Context, orderID uuid.UUID) (Payment, error)
 	GetPaymentByPaymentIntentID(ctx context.Context, gatewayPaymentIntentID *string) (Payment, error)
@@ -128,7 +129,6 @@ type Querier interface {
 	GetVerifyEmail(ctx context.Context, arg GetVerifyEmailParams) (VerifyEmail, error)
 	GetVerifyEmailByID(ctx context.Context, id int32) (VerifyEmail, error)
 	ListOrderItems(ctx context.Context, arg ListOrderItemsParams) ([]OrderItem, error)
-	ListOrders(ctx context.Context, arg ListOrdersParams) ([]ListOrdersRow, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	RemoveProductFromCart(ctx context.Context, arg RemoveProductFromCartParams) error
 	ResetPrimaryAddress(ctx context.Context, userID uuid.UUID) error

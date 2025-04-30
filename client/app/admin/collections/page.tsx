@@ -1,5 +1,5 @@
 'use client';
-import { API_PATHS } from '@/lib/constants/api';
+import { ADMIN_API_PATHS } from '@/lib/constants/api';
 import Link from 'next/link';
 import { Button } from '@headlessui/react';
 import dayjs from 'dayjs';
@@ -20,7 +20,7 @@ export default function Page() {
     isLoading,
     mutate,
   } = useSWR(
-    API_PATHS.COLLECTIONS,
+    ADMIN_API_PATHS.COLLECTIONS,
     (url) =>
       apiFetch<GenericResponse<GeneralCategoryModel[]>>(url, {}).then(
         (data) => data.data
@@ -35,7 +35,7 @@ export default function Page() {
   async function handleDelete() {
     if (selectedCollection) {
       const response = await apiFetch(
-        API_PATHS.COLLECTIONS + '/' + selectedCollection.id,
+        ADMIN_API_PATHS.COLLECTIONS + '/' + selectedCollection.id,
         {
           method: 'DELETE',
           headers: {

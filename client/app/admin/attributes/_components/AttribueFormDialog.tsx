@@ -1,5 +1,5 @@
 'use client';
-import { API_PATHS } from '@/lib/constants/api';
+import { ADMIN_API_PATHS } from '@/lib/constants/api';
 import {
   Button,
   Dialog,
@@ -66,7 +66,7 @@ export const AddNewDialog: React.FC<AddNewDialogProps> = ({
     };
 
     const resp = await apiFetch<GenericResponse<AttributeDetailModel>>(
-      API_PATHS.ATTRIBUTES,
+      ADMIN_API_PATHS.ATTRIBUTES,
       {
         method: 'POST',
         body: body,

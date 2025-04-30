@@ -87,11 +87,10 @@ func (sv *Server) initializeRouter() {
 
 		// Register API route groups
 		sv.setupAuthRoutes(v1)
+		sv.setupAdminRoutes(v1)
 		sv.setupUserRoutes(v1)
-		sv.setupModeratorRoutes(v1)
 		sv.setupProductRoutes(v1)
 		sv.setupImageRoutes(v1)
-		sv.setupAttributeRoutes(v1)
 		sv.setupCartRoutes(v1)
 		sv.setupOrderRoutes(v1)
 		sv.setupPaymentRoutes(v1)
@@ -132,6 +131,63 @@ func (sv *Server) setupCORS() gin.HandlerFunc {
 	})
 }
 
+func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
+	admin := rg.Group("/admin", authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin))
+	{
+		admin.GET("list", sv.listUsers)
+		productGroup := admin.Group("products")
+		{
+			productGroup.POST("", sv.createProduct)
+			productGroup.PUT(":id", sv.updateProduct)
+			productGroup.PUT(":id/variants", sv.updateProductVariants)
+			productGroup.DELETE(":id", sv.removeProduct)
+		}
+		attributeGroup := admin.Group("attributes")
+		{
+			attributeGroup.POST("", sv.createAttribute)
+			attributeGroup.GET("", sv.getAttributesHandler)
+			attributeGroup.GET(":id", sv.getAttributeByIDHandler)
+			attributeGroup.PUT(":id", sv.updateAttributeHandler)
+			attributeGroup.DELETE(":id", sv.deleteAttribute)
+		}
+
+		adminOrder := admin.Group("orders")
+		{
+			adminOrder.PUT(":id/refund", sv.refundOrder)
+			adminOrder.PUT(":id/status", sv.changeOrderStatus)
+		}
+
+		categories := admin.Group("categories")
+		{
+			categories.GET("", sv.getCategories)
+			categories.POST("", sv.addCategoryHandler)
+			categories.PUT(":id", sv.updateCategory)
+			categories.DELETE(":id", sv.deleteCategory)
+		}
+
+		brands := admin.Group("brands")
+		{
+
+			brands.GET("", sv.getBrandsHandler)
+			brands.GET(":id", sv.getBrandByIDHandler)
+			brands.GET(":id/products", sv.getProductsByBrandHandler)
+			brands.POST("", sv.createBrandHandler)
+			brands.PUT(":id", sv.updateBrand)
+			brands.DELETE(":id", sv.deleteBrand)
+		}
+
+		collections := admin.Group("collections")
+		{
+			collections.GET("", sv.getCollections)
+			collections.GET(":id/products", sv.getProductsByCollection)
+			collections.GET(":id", sv.getCollectionByID)
+			collections.POST("", sv.createCollection)
+			collections.PUT(":id", sv.updateCollection)
+			collections.DELETE(":id", sv.deleteCollection)
+		}
+	}
+}
+
 // Setup authentication routes
 func (sv *Server) setupAuthRoutes(rg *gin.RouterGroup) {
 	auth := rg.Group("/auth")
@@ -162,65 +218,23 @@ func (sv *Server) setupUserRoutes(rg *gin.RouterGroup) {
 	}
 }
 
-// Setup moderator-specific routes
-func (sv *Server) setupModeratorRoutes(rg *gin.RouterGroup) {
-	moderatorRoutes := rg.Group("/moderator",
-		authMiddleware(sv.tokenGenerator),
-		roleMiddleware(
-			sv.repo,
-			repository.UserRoleAdmin,
-			repository.UserRoleModerator))
-	{
-		moderatorRoutes.GET("list", sv.listUsers)
-	}
-}
-
 // Setup product-related routes
 func (sv *Server) setupProductRoutes(rg *gin.RouterGroup) {
 	product := rg.Group("products")
 	{
 		product.GET("", sv.getProducts)
 		product.GET(":id", sv.getProductDetail)
-		productAdmin := product.Use(authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin))
-		{
-			productAdmin.POST("", sv.createProduct)
-			productAdmin.PUT(":id", sv.updateProduct)
-			productAdmin.PUT(":id/variants", sv.updateProductVariants)
-			productAdmin.DELETE(":id", sv.removeProduct)
-		}
 	}
 }
 
 // Setup image-related routes
 func (sv *Server) setupImageRoutes(rg *gin.RouterGroup) {
-	images := rg.Group(
-		"images",
-		authMiddleware(sv.tokenGenerator),
-		roleMiddleware(sv.repo, repository.UserRoleAdmin, repository.UserRoleModerator))
+	images := rg.Group("images", authMiddleware(sv.tokenGenerator))
 	{
 		images.DELETE("remove-external/:public_id", sv.removeImageByPublicID)
 		images.GET("", sv.getImages)
 		images.POST("product/:entity_id", sv.uploadProductImages)
 		images.DELETE(":entity_id", sv.removeImage)
-	}
-}
-
-// Setup attribute-related routes
-func (sv *Server) setupAttributeRoutes(rg *gin.RouterGroup) {
-	attribute := rg.Group(
-		"attributes",
-		authMiddleware(sv.tokenGenerator),
-		roleMiddleware(sv.repo, repository.UserRoleAdmin))
-	{
-		// C
-		attribute.POST("", sv.createAttribute)
-		// R
-		attribute.GET("", sv.getAttributesHandler)
-		attribute.GET(":id", sv.getAttributeByIDHandler)
-		// U
-		attribute.PUT(":id", sv.updateAttributeHandler)
-		// D
-		attribute.DELETE(":id", sv.deleteAttribute)
 	}
 }
 
@@ -232,7 +246,6 @@ func (sv *Server) setupCartRoutes(rg *gin.RouterGroup) {
 		cart.GET("", sv.getCartHandler)
 		cart.POST("checkout", sv.checkoutHandler)
 		cart.PUT("clear", sv.clearCart)
-
 		cartItem := cart.Group("item")
 		cartItem.DELETE(":id", sv.removeCartItem)
 		cartItem.PUT(":id/quantity", sv.updateCartItemQtyHandler)
@@ -241,17 +254,11 @@ func (sv *Server) setupCartRoutes(rg *gin.RouterGroup) {
 
 // Setup order-related routes
 func (sv *Server) setupOrderRoutes(rg *gin.RouterGroup) {
-	order := rg.Group("/order", authMiddleware(sv.tokenGenerator))
+	order := rg.Group("/orders", authMiddleware(sv.tokenGenerator))
 	{
-		order.GET("list", sv.getOrdersHandler)
+		order.GET("", sv.getOrdersHandler)
 		order.GET(":id", sv.getOrderDetailHandler)
 		order.PUT(":id/cancel", sv.cancelOrder)
-
-		adminOrder := order.Group(
-			"",
-			roleMiddleware(sv.repo, repository.UserRoleAdmin, repository.UserRoleModerator))
-		adminOrder.PUT(":id/refund", sv.refundOrder)
-		adminOrder.PUT(":id/status", sv.changeOrderStatus)
 	}
 }
 
@@ -270,57 +277,24 @@ func (sv *Server) setupPaymentRoutes(rg *gin.RouterGroup) {
 func (sv *Server) setupCategoryRoutes(rg *gin.RouterGroup) {
 	category := rg.Group("categories")
 	{
-		category.GET("", sv.getCategories)
-		//TODO: category.GET("dashboard", sv.getCategoriesForDashboard)
 		category.GET(":id", sv.getCategoryByID)
 		category.GET(":id/products", sv.getProductsByCategory)
-
-		// Routes that require authentication
-		categoryAuthRoutes := category.Group("").Use(
-			authMiddleware(sv.tokenGenerator),
-			roleMiddleware(sv.repo, repository.UserRoleAdmin),
-		)
-		categoryAuthRoutes.POST("", sv.addCategoryHandler)
-		categoryAuthRoutes.PUT(":id", sv.updateCategory)
-		categoryAuthRoutes.DELETE(":id", sv.deleteCategory)
 	}
 }
 
 // Setup collection-related routes
 func (sv *Server) setupCollectionRoutes(rg *gin.RouterGroup) {
-	collection := rg.Group("collections")
+	collections := rg.Group("collections")
 	{
-		collection.GET("", sv.getCollections)
-		collection.GET(":id", sv.getCollectionByID)
-		collection.GET(":id/products", sv.getProductsByCollection)
-
-		// Routes that require authentication
-		collectionAuthRoutes := collection.Group("").Use(
-			authMiddleware(sv.tokenGenerator),
-			roleMiddleware(sv.repo, repository.UserRoleAdmin),
-		)
-		collectionAuthRoutes.POST("", sv.createCollection)
-		collectionAuthRoutes.PUT(":id", sv.updateCollection)
-		collectionAuthRoutes.DELETE(":id", sv.deleteCollection)
+		collections.GET("", sv.getShopCollectionsHandler)
 	}
 }
 
 // Setup brand-related routes
 func (sv *Server) setupBrandRoutes(rg *gin.RouterGroup) {
-	brand := rg.Group("brands")
+	brands := rg.Group("brands")
 	{
-		brand.GET("", sv.getBrandsHandler)
-		brand.GET(":id", sv.getBrandByIDHandler)
-		brand.GET(":id/products", sv.getProductsByBrandHandler)
-
-		// Routes that require authentication
-		brandAuthRoutes := brand.Group("").Use(
-			authMiddleware(sv.tokenGenerator),
-			roleMiddleware(sv.repo, repository.UserRoleAdmin),
-		)
-		brandAuthRoutes.POST("", sv.createBrandHandler)
-		brandAuthRoutes.PUT(":id", sv.updateBrand)
-		brandAuthRoutes.DELETE(":id", sv.deleteBrand)
+		brands.GET("", sv.getShopBrandsHandler)
 	}
 }
 

@@ -38,6 +38,25 @@ type CollectionResponse struct {
 }
 
 // ------------------------------------------ API Handlers ------------------------------------------
+
+// --- Public API ---
+// getShopCollectionsHandler retrieves a list of Collections.
+// @Summary Get a list of Collections
+// @Description Get a list of Collections
+// @ID get-Shop-Collections
+// @Accept json
+// @Produce json
+// @Param page query int false "Page number"
+// @Param page_size query int false "Page size"
+// @Success 200 {object} ApiResponse[CollectionResponse]
+// @Failure 400 {object} ApiResponse[CollectionResponse]
+// @Failure 500 {object} ApiResponse[CollectionResponse]
+// @Router /shop/collections [get]
+func (sv *Server) getShopCollectionsHandler(c *gin.Context) {
+}
+
+// --- Admin API ---
+
 // createCollection creates a new Collection.
 // @Summary Create a new Collection
 // @Description Create a new Collection

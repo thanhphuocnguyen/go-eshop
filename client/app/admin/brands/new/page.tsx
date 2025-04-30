@@ -6,13 +6,13 @@ import { CategoryEditForm } from '../../_components/CategoryEditForm';
 import { toast } from 'react-toastify';
 import { redirect } from 'next/navigation';
 import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
-import { API_PATHS } from '@/lib/constants/api';
+import { ADMIN_API_PATHS } from '@/lib/constants/api';
 import { apiFetch } from '@/lib/apis/api';
 
 export default function Page() {
   const handleSave = async (form: FormData) => {
     const response = await apiFetch<GenericResponse<GeneralCategoryModel>>(
-      API_PATHS.BRANDS,
+      ADMIN_API_PATHS.BRANDS,
       {
         method: 'POST',
         body: form,

@@ -1,5 +1,5 @@
 'use client';
-import { useAppUser } from '@/components/AppUserContext';
+import { useAppUser } from '@/lib/contexts/AppUserContext';
 import { ShoppingBagIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import Link from 'next/link';

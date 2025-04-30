@@ -20,7 +20,7 @@ import { useProductDetailFormContext } from '../_lib/contexts/ProductFormContext
 import { ProductInfoForm } from './ProductInfoForm';
 import { VariantInfoForm } from './VariantInfoForm';
 import { apiFetch } from '@/lib/apis/api';
-import { API_PATHS } from '@/lib/constants/api';
+import { ADMIN_API_PATHS } from '@/lib/constants/api';
 import { toast } from 'react-toastify';
 import { ConfirmDialog } from '@/components/Common/Dialogs/ConfirmDialog';
 
@@ -130,7 +130,7 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
     setIsDeleting(true);
     try {
       const { error } = await apiFetch<GenericResponse<unknown>>(
-        API_PATHS.PRODUCT_DETAIL.replace(':id', productDetail.id),
+        ADMIN_API_PATHS.PRODUCT_DETAIL.replace(':id', productDetail.id),
         {
           method: 'DELETE',
         }
@@ -290,7 +290,7 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
     });
 
     const { error, data } = await apiFetch<GenericResponse<unknown>>(
-      API_PATHS.PRODUCT_IMAGES_UPLOAD.replaceAll(':id', productId),
+      ADMIN_API_PATHS.PRODUCT_IMAGES_UPLOAD.replaceAll(':id', productId),
       {
         method: 'POST',
         body: productImageFormData,
@@ -313,8 +313,8 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
   ): Promise<string | undefined> {
     const { data, error } = await apiFetch<GenericResponse<{ id: string }>>(
       productDetail
-        ? API_PATHS.PRODUCT_DETAIL.replace(':id', productDetail.id)
-        : API_PATHS.PRODUCTS,
+        ? ADMIN_API_PATHS.PRODUCT_DETAIL.replace(':id', productDetail.id)
+        : ADMIN_API_PATHS.PRODUCTS,
       {
         method: productDetail ? 'PUT' : 'POST',
         body: {
@@ -365,7 +365,7 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
         updated_ids: string[];
         created_ids: string[];
       }>
-    >(API_PATHS.PRODUCT_VARIANTS.replace(':id', prodId), {
+    >(ADMIN_API_PATHS.PRODUCT_VARIANTS.replace(':id', prodId), {
       method: 'PUT',
       body: body,
     });

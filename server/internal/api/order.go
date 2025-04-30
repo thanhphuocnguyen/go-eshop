@@ -102,34 +102,20 @@ func (sv *Server) getOrdersHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, createErrorResponse[[]OrderListResponse](InvalidBodyCode, "", err))
 		return
 	}
-	user, err := sv.repo.GetUserByID(c, tokenPayload.UserID)
-	if err != nil {
-		if err == repository.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, createErrorResponse[[]OrderListResponse](NotFoundCode, "", err))
-		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[[]OrderListResponse](InternalServerErrorCode, "", err))
-		return
+
+	dbParams := repository.GetOrdersParams{
+		CustomerID: utils.GetPgTypeUUID(tokenPayload.UserID),
+		Limit:      orderListQuery.PageSize,
+		Offset:     (orderListQuery.Page - 1) * orderListQuery.PageSize,
 	}
 
-	dbParams := repository.ListOrdersParams{
-		Limit:  20,
-		Offset: 1,
-	}
-
-	dbParams.Limit = int64(orderListQuery.PageSize)
-	dbParams.Offset = int64(orderListQuery.Page-1) * int64(orderListQuery.PageSize)
-
-	if user.Role != repository.UserRoleAdmin {
-		dbParams.CustomerID = utils.GetPgTypeUUID(tokenPayload.UserID)
-	}
-
-	listOrderRows, err := sv.repo.ListOrders(c, dbParams)
+	fetchedOrderRows, err := sv.repo.GetOrders(c, dbParams)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[[]OrderListResponse](InternalServerErrorCode, "", err))
 		return
 	}
 
-	count, err := sv.repo.CountOrders(c, repository.CountOrdersParams{CustomerID: tokenPayload.UserID})
+	count, err := sv.repo.CountOrders(c, repository.CountOrdersParams{CustomerID: utils.GetPgTypeUUID(tokenPayload.UserID)})
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[[]OrderListResponse](InternalServerErrorCode, "", err))
@@ -137,7 +123,7 @@ func (sv *Server) getOrdersHandler(c *gin.Context) {
 	}
 
 	var orderResponses []OrderListResponse
-	for _, aggregated := range listOrderRows {
+	for _, aggregated := range fetchedOrderRows {
 		total, _ := aggregated.TotalPrice.Float64Value()
 		orderResponses = append(orderResponses, OrderListResponse{
 			ID:            aggregated.ID,

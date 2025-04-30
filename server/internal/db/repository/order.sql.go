@@ -19,14 +19,14 @@ SELECT
 FROM
     orders
 WHERE
-    customer_id = $1 AND
+    customer_id = COALESCE($1, customer_id) AND
     status = COALESCE($2, status) AND
     created_at >= COALESCE($3, created_at) AND
     created_at <= COALESCE($4, created_at)
 `
 
 type CountOrdersParams struct {
-	CustomerID uuid.UUID          `json:"customer_id"`
+	CustomerID pgtype.UUID        `json:"customer_id"`
 	Status     NullOrderStatus    `json:"status"`
 	StartDate  pgtype.Timestamptz `json:"start_date"`
 	EndDate    pgtype.Timestamptz `json:"end_date"`
@@ -275,6 +275,101 @@ func (q *Queries) GetOrderProducts(ctx context.Context, orderID uuid.UUID) ([]Ge
 	return items, nil
 }
 
+const getOrders = `-- name: GetOrders :many
+SELECT
+    o.id, o.customer_id, o.customer_email, o.customer_name, o.customer_phone, o.shipping_address, o.total_price, o.status, o.confirmed_at, o.delivered_at, o.cancelled_at, o.shipping_method, o.refunded_at, o.order_date, o.updated_at, o.created_at, pm.status as payment_status, COUNT(oi.id) as total_items
+FROM
+    orders o
+JOIN order_items oi ON o.id = oi.id
+LEFT JOIN payments pm ON o.id = pm.id
+WHERE
+    o.customer_id = COALESCE($3, o.customer_id) AND
+    o.status = COALESCE($4, o.status) AND
+    o.created_at >= COALESCE($5, o.created_at) AND
+    o.created_at <= COALESCE($6, o.created_at)
+GROUP BY o.id, pm.status
+ORDER BY
+    o.created_at DESC
+LIMIT $1
+OFFSET $2
+`
+
+type GetOrdersParams struct {
+	Limit      int64              `json:"limit"`
+	Offset     int64              `json:"offset"`
+	CustomerID pgtype.UUID        `json:"customer_id"`
+	Status     NullOrderStatus    `json:"status"`
+	StartDate  pgtype.Timestamptz `json:"start_date"`
+	EndDate    pgtype.Timestamptz `json:"end_date"`
+}
+
+type GetOrdersRow struct {
+	ID              uuid.UUID               `json:"id"`
+	CustomerID      uuid.UUID               `json:"customer_id"`
+	CustomerEmail   string                  `json:"customer_email"`
+	CustomerName    string                  `json:"customer_name"`
+	CustomerPhone   string                  `json:"customer_phone"`
+	ShippingAddress ShippingAddressSnapshot `json:"shipping_address"`
+	TotalPrice      pgtype.Numeric          `json:"total_price"`
+	Status          OrderStatus             `json:"status"`
+	ConfirmedAt     pgtype.Timestamptz      `json:"confirmed_at"`
+	DeliveredAt     pgtype.Timestamptz      `json:"delivered_at"`
+	CancelledAt     pgtype.Timestamptz      `json:"cancelled_at"`
+	ShippingMethod  *string                 `json:"shipping_method"`
+	RefundedAt      pgtype.Timestamptz      `json:"refunded_at"`
+	OrderDate       time.Time               `json:"order_date"`
+	UpdatedAt       time.Time               `json:"updated_at"`
+	CreatedAt       time.Time               `json:"created_at"`
+	PaymentStatus   NullPaymentStatus       `json:"payment_status"`
+	TotalItems      int64                   `json:"total_items"`
+}
+
+func (q *Queries) GetOrders(ctx context.Context, arg GetOrdersParams) ([]GetOrdersRow, error) {
+	rows, err := q.db.Query(ctx, getOrders,
+		arg.Limit,
+		arg.Offset,
+		arg.CustomerID,
+		arg.Status,
+		arg.StartDate,
+		arg.EndDate,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetOrdersRow{}
+	for rows.Next() {
+		var i GetOrdersRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CustomerID,
+			&i.CustomerEmail,
+			&i.CustomerName,
+			&i.CustomerPhone,
+			&i.ShippingAddress,
+			&i.TotalPrice,
+			&i.Status,
+			&i.ConfirmedAt,
+			&i.DeliveredAt,
+			&i.CancelledAt,
+			&i.ShippingMethod,
+			&i.RefundedAt,
+			&i.OrderDate,
+			&i.UpdatedAt,
+			&i.CreatedAt,
+			&i.PaymentStatus,
+			&i.TotalItems,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listOrderItems = `-- name: ListOrderItems :many
 SELECT
     id, order_id, variant_id, quantity, price_per_unit_snapshot, line_total_snapshot, product_name_snapshot, variant_sku_snapshot, attributes_snapshot, created_at, updated_at
@@ -315,101 +410,6 @@ func (q *Queries) ListOrderItems(ctx context.Context, arg ListOrderItemsParams) 
 			&i.AttributesSnapshot,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listOrders = `-- name: ListOrders :many
-SELECT
-    ord.id, ord.customer_id, ord.customer_email, ord.customer_name, ord.customer_phone, ord.shipping_address, ord.total_price, ord.status, ord.confirmed_at, ord.delivered_at, ord.cancelled_at, ord.shipping_method, ord.refunded_at, ord.order_date, ord.updated_at, ord.created_at, pm.status as payment_status, COUNT(oit.id) as total_items
-FROM
-    orders ord
-JOIN order_items oit ON ord.id = oit.id
-LEFT JOIN payments pm ON ord.id = pm.id
-WHERE
-    customer_id = COALESCE($3, customer_id) AND
-    ord.status = COALESCE($4, ord.status) AND
-    ord.created_at >= COALESCE($5, ord.created_at) AND
-    ord.created_at <= COALESCE($6, ord.created_at)
-GROUP BY ord.id, pm.status
-ORDER BY
-    ord.created_at DESC
-LIMIT $1
-OFFSET $2
-`
-
-type ListOrdersParams struct {
-	Limit      int64              `json:"limit"`
-	Offset     int64              `json:"offset"`
-	CustomerID pgtype.UUID        `json:"customer_id"`
-	Status     NullOrderStatus    `json:"status"`
-	StartDate  pgtype.Timestamptz `json:"start_date"`
-	EndDate    pgtype.Timestamptz `json:"end_date"`
-}
-
-type ListOrdersRow struct {
-	ID              uuid.UUID               `json:"id"`
-	CustomerID      uuid.UUID               `json:"customer_id"`
-	CustomerEmail   string                  `json:"customer_email"`
-	CustomerName    string                  `json:"customer_name"`
-	CustomerPhone   string                  `json:"customer_phone"`
-	ShippingAddress ShippingAddressSnapshot `json:"shipping_address"`
-	TotalPrice      pgtype.Numeric          `json:"total_price"`
-	Status          OrderStatus             `json:"status"`
-	ConfirmedAt     pgtype.Timestamptz      `json:"confirmed_at"`
-	DeliveredAt     pgtype.Timestamptz      `json:"delivered_at"`
-	CancelledAt     pgtype.Timestamptz      `json:"cancelled_at"`
-	ShippingMethod  *string                 `json:"shipping_method"`
-	RefundedAt      pgtype.Timestamptz      `json:"refunded_at"`
-	OrderDate       time.Time               `json:"order_date"`
-	UpdatedAt       time.Time               `json:"updated_at"`
-	CreatedAt       time.Time               `json:"created_at"`
-	PaymentStatus   NullPaymentStatus       `json:"payment_status"`
-	TotalItems      int64                   `json:"total_items"`
-}
-
-func (q *Queries) ListOrders(ctx context.Context, arg ListOrdersParams) ([]ListOrdersRow, error) {
-	rows, err := q.db.Query(ctx, listOrders,
-		arg.Limit,
-		arg.Offset,
-		arg.CustomerID,
-		arg.Status,
-		arg.StartDate,
-		arg.EndDate,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []ListOrdersRow{}
-	for rows.Next() {
-		var i ListOrdersRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.CustomerID,
-			&i.CustomerEmail,
-			&i.CustomerName,
-			&i.CustomerPhone,
-			&i.ShippingAddress,
-			&i.TotalPrice,
-			&i.Status,
-			&i.ConfirmedAt,
-			&i.DeliveredAt,
-			&i.CancelledAt,
-			&i.ShippingMethod,
-			&i.RefundedAt,
-			&i.OrderDate,
-			&i.UpdatedAt,
-			&i.CreatedAt,
-			&i.PaymentStatus,
-			&i.TotalItems,
 		); err != nil {
 			return nil, err
 		}

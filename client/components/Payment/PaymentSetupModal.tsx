@@ -7,7 +7,7 @@ import { redirect, useRouter } from 'next/navigation';
 import LoadingButton from '../Common/LoadingButton';
 import { toast } from 'react-toastify';
 import { Button } from '@headlessui/react';
-import { API_PATHS } from '@/lib/constants/api';
+import { PUBLIC_API_PATHS } from '@/lib/constants/api';
 import { GenericResponse } from '@/lib/definitions';
 
 interface PaymentSetupModalProps {
@@ -44,7 +44,7 @@ const PaymentSetupModal: React.FC<PaymentSetupModalProps> = ({
           client_secret: string;
           payment_id: string;
         }>
-      >(API_PATHS.PAYMENTS, {
+      >(PUBLIC_API_PATHS.PAYMENTS, {
         method: 'POST',
         body: {
           order_id: orderId,

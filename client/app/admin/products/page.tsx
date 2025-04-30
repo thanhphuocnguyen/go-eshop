@@ -1,7 +1,7 @@
 'use client';
 
 import Loading from '@/app/loading';
-import { API_PATHS } from '@/lib/constants/api';
+import { PUBLIC_API_PATHS } from '@/lib/constants/api';
 import { ProductListModel, GenericResponse } from '@/lib/definitions';
 import { Button } from '@headlessui/react';
 import Link from 'next/link';
@@ -26,7 +26,7 @@ export default function Page() {
   const [totalPages, setTotalPages] = useState(0);
 
   const { data, isLoading } = useSWR(
-    [API_PATHS.PRODUCTS, page, limit, search],
+    [PUBLIC_API_PATHS.PRODUCTS, page, limit, search],
     ([url, page, limit, search]) =>
       apiFetch<GenericResponse<ProductListModel[]>>(
         `${url}?page=${page}&limit=${limit}&search=${search}`,

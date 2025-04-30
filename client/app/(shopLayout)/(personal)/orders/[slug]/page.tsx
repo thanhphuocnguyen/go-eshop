@@ -1,5 +1,5 @@
 import { apiFetch } from '@/lib/apis/api';
-import { API_PATHS } from '@/lib/constants/api';
+import { PUBLIC_API_PATHS } from '@/lib/constants/api';
 import { GenericResponse, OrderStatus } from '@/lib/definitions';
 import { OrderModel } from '@/lib/definitions/order';
 import { ArrowRightIcon } from '@heroicons/react/16/solid';
@@ -21,7 +21,7 @@ const PaymentInfoSection = dynamic(
 export const getOrderDetails = cache(async (slug: string) => {
   const cookieStorage = await cookies();
   const order = await apiFetch<GenericResponse<OrderModel>>(
-    API_PATHS.ORDER_ITEM.replace(':id', slug),
+    PUBLIC_API_PATHS.ORDER_ITEM.replace(':id', slug),
     {
       authToken: cookieStorage.get('access_token')?.value,
       nextOptions: {

@@ -1,11 +1,11 @@
 import useSWR from 'swr';
-import { API_PATHS } from '../constants/api';
+import { PUBLIC_API_PATHS } from '../constants/api';
 import { apiFetch } from '../apis/api';
 import { GenericResponse, UserModel } from '../definitions';
 
 export const useUser = (accessToken?: string) => {
   const { data, isLoading, mutate } = useSWR(
-    accessToken ? [API_PATHS.USER, accessToken] : null,
+    accessToken ? [PUBLIC_API_PATHS.USER, accessToken] : null,
     ([url, accessToken]) =>
       apiFetch<GenericResponse<UserModel>>(url, {
         method: 'GET',

@@ -1,6 +1,6 @@
 'use client';
 
-import { API_PATHS } from '@/lib/constants/api';
+import { ADMIN_API_PATHS } from '@/lib/constants/api';
 import { use } from 'react';
 import { getCookie } from 'cookies-next';
 import { toast } from 'react-toastify';
@@ -21,7 +21,7 @@ export default function AdminCategoryDetail({
 }) {
   const { slug } = use(params);
   const { data: category, isLoading } = useSWR(
-    API_PATHS.CATEGORY.replaceAll(':id', slug),
+    ADMIN_API_PATHS.CATEGORY.replaceAll(':id', slug),
     async (url) => {
       const response = await apiFetch(url, {});
       return response.data;
@@ -39,7 +39,7 @@ export default function AdminCategoryDetail({
   );
 
   const { data: products, isLoading: isLoadingProducts } = useSWR(
-    API_PATHS.CATEGORY_PRODUCTS.replaceAll(':id', slug),
+    ADMIN_API_PATHS.CATEGORY_PRODUCTS.replaceAll(':id', slug),
     async (url) => {
       const response = await apiFetch<GenericResponse<CategoryProductModel[]>>(
         url,
@@ -60,7 +60,7 @@ export default function AdminCategoryDetail({
 
   async function handleSave(data: FormData) {
     const response = await apiFetch<GenericResponse<number>>(
-      API_PATHS.CATEGORY.replace(':id', slug),
+      ADMIN_API_PATHS.CATEGORY.replace(':id', slug),
       {
         method: 'PUT',
         headers: {

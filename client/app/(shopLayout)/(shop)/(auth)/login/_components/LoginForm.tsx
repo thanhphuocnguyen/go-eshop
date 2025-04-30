@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { apiFetch } from '@/lib/apis/api';
 import { GenericResponse, LoginResponse } from '@/lib/definitions';
-import { API_PATHS } from '@/lib/constants/api';
+import { PUBLIC_API_PATHS } from '@/lib/constants/api';
 import { useState } from 'react';
 import { setCookie } from 'cookies-next/client';
 import { jwtDecode } from 'jwt-decode';
@@ -92,7 +92,7 @@ export default function LoginFormComponent() {
 
   const onSubmit = async (data: LoginForm) => {
     const result = await apiFetch<GenericResponse<LoginResponse>>(
-      API_PATHS.LOGIN,
+      PUBLIC_API_PATHS.LOGIN,
       {
         method: 'POST',
         body: data,
@@ -112,17 +112,12 @@ export default function LoginFormComponent() {
     if (result.data) {
       // Decode the JWT token to get user information
       const decodedToken = jwtDecode<DecodedToken>(result.data.access_token);
-      
+
       // Set the access token in a cookie
       setCookie('access_token', result.data.access_token, {
         expires: new Date(result.data.access_token_expires_in),
       });
-      
-      // Set the refresh token in a cookie
-      setCookie('refresh_token', result.data.refresh_token, {
-        expires: new Date(result.data.refresh_token_expires_at),
-      });
-      
+
       // Store user information in cookies
       setCookie('user_id', decodedToken.user_id, {
         expires: new Date(result.data.access_token_expires_in),
@@ -132,6 +127,11 @@ export default function LoginFormComponent() {
       });
       setCookie('role', decodedToken.role, {
         expires: new Date(result.data.access_token_expires_in),
+      });
+
+      // Set the refresh token in a cookie
+      setCookie('refresh_token', result.data.refresh_token, {
+        expires: new Date(result.data.refresh_token_expires_at),
       });
 
       toast.success('Login successful!');

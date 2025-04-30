@@ -1,12 +1,12 @@
 import { apiFetch } from '@/lib/apis/api';
-import { API_PATHS } from '@/lib/constants/api';
+import { PUBLIC_API_PATHS } from '@/lib/constants/api';
 import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
 import Image from 'next/image';
 
 export default async function CollectionsSection() {
   const { data: collections } = await apiFetch<
     GenericResponse<GeneralCategoryModel[]>
-  >(`${API_PATHS.COLLECTIONS}?page=1&page_size=3`, {
+  >(`${PUBLIC_API_PATHS.COLLECTIONS}?page=1&page_size=3`, {
     method: 'GET',
     nextOptions: {
       next: {

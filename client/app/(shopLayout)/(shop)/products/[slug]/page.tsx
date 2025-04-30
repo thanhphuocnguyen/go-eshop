@@ -1,5 +1,5 @@
 import { apiFetch } from '@/lib/apis/api';
-import { API_PATHS } from '@/lib/constants/api';
+import { PUBLIC_API_PATHS } from '@/lib/constants/api';
 import { GenericResponse, ProductDetailModel } from '@/lib/definitions';
 import {
   CurrencyDollarIcon,
@@ -17,7 +17,7 @@ import { Metadata } from 'next';
 
 export const getProduct = cache(async (slug: string) => {
   const { data, error } = await apiFetch<GenericResponse<ProductDetailModel>>(
-    API_PATHS.PRODUCT_DETAIL.replace(':id', slug),
+    PUBLIC_API_PATHS.PRODUCT_DETAIL.replace(':id', slug),
     {
       nextOptions: {
         next: {

@@ -1,7 +1,7 @@
 'use client';
 
 import { apiFetch } from '@/lib/apis/api';
-import { API_PATHS } from '@/lib/constants/api';
+import { PUBLIC_API_PATHS } from '@/lib/constants/api';
 import { CategoryProductModel, GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
@@ -29,7 +29,7 @@ export default function CategoryDetailPage({
       try {
         // First fetch the category to get its ID
         const categoriesResponse = await apiFetch<GenericResponse<GeneralCategoryModel[]>>(
-          `${API_PATHS.CATEGORIES}?page=1&page_size=100`
+          `${PUBLIC_API_PATHS.CATEGORIES}?page=1&page_size=100`
         );
         
         if (categoriesResponse.data) {
@@ -40,7 +40,7 @@ export default function CategoryDetailPage({
             
             // Then fetch products for this category
             const productsResponse = await apiFetch<GenericResponse<CategoryProductModel[]>>(
-              API_PATHS.CATEGORY_PRODUCTS.replace(':id', foundCategory.id)
+              PUBLIC_API_PATHS.CATEGORY_PRODUCTS.replace(':id', foundCategory.id)
             );
             
             if (productsResponse.data) {

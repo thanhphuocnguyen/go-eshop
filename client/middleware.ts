@@ -1,18 +1,27 @@
-import { API_PATHS } from '@/lib/constants/api';
+import { PUBLIC_API_PATHS } from '@/lib/constants/api';
 import { RefreshTokenResponse } from '@/lib/definitions/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { GenericResponse } from './lib/definitions';
+import { jwtDecode, JwtPayload } from 'jwt-decode';
+
+type JwtMode = {
+  role: string;
+  username: string;
+  user_id: string;
+  id: string;
+} & JwtPayload;
 
 const AdminPath = '/admin';
 export async function middleware(request: NextRequest) {
   const privatePaths = ['/profile', '/checkout', '/cart', '/orders'];
   const path = request.nextUrl.pathname;
-
-  if (
-    path.startsWith(AdminPath) &&
-    request.cookies.get('role')?.value !== 'admin'
-  ) {
-    return NextResponse.redirect(new URL('/not-found', request.nextUrl));
+  const accessToken = request.cookies.get('access_token')?.value;
+  if (path.startsWith(AdminPath) && accessToken) {
+    const decode = jwtDecode<JwtMode>(accessToken || '');
+    console.log({ decode });
+    if (decode['role'] !== 'admin') {
+      return NextResponse.redirect(new URL('/not-found', request.nextUrl));
+    }
   }
   const isProtectedRoute = privatePaths.some((route) => path.startsWith(route));
 
@@ -29,7 +38,7 @@ export async function middleware(request: NextRequest) {
 
   const response = NextResponse.next();
   try {
-    const refreshResult = await fetch(API_PATHS.REFRESH_TOKEN, {
+    const refreshResult = await fetch(PUBLIC_API_PATHS.REFRESH_TOKEN, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${request.cookies.get('refresh_token')?.value}`,

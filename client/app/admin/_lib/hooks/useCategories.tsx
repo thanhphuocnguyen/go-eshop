@@ -1,12 +1,12 @@
 import { apiFetch } from '@/lib/apis/api';
-import { API_PATHS } from '@/lib/constants/api';
+import { ADMIN_API_PATHS } from '@/lib/constants/api';
 import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
 import { toast } from 'react-toastify';
 import useSWR from 'swr';
 
 export const useCategories = () => {
   const { data, error } = useSWR<GenericResponse<GeneralCategoryModel[]>>(
-    API_PATHS.CATEGORIES,
+    ADMIN_API_PATHS.CATEGORIES,
     (url) => apiFetch<GenericResponse<GeneralCategoryModel[]>>(url),
     {
       refreshInterval: 0,

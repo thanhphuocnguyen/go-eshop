@@ -36,6 +36,74 @@ type BrandResponse struct {
 }
 
 // ------------------------------------------ API Handlers ------------------------------------------
+
+// --- Public API ---
+// getShopBrandsHandler retrieves a list of Brands for the shop.
+// @Summary Get a list of Brands for the shop
+// @Description Get a list of Brands for the shop
+// @ID get-shop-Brands
+// @Accept json
+// @Produce json
+// @Param page query int false "Page number"
+// @Param page_size query int false "Page size"
+// @Success 200 {object} ApiResponse[BrandResponse]
+// @Failure 400 {object} ApiResponse[BrandResponse]
+// @Failure 500 {object} ApiResponse[BrandResponse]
+// @Router /shop/Brands [get]
+func (sv *Server) getShopBrandsHandler(c *gin.Context) {
+	var queries BrandsQueries
+	if err := c.ShouldBindQuery(&queries); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse[BrandResponse](InvalidBodyCode, "", err))
+		return
+	}
+	var dbQueries repository.GetBrandsParams = repository.GetBrandsParams{
+		Limit:  20,
+		Offset: 0,
+	}
+	dbQueries.Limit = queries.PageSize
+	dbQueries.Offset = (queries.Page - 1) * queries.PageSize
+
+	rows, err := sv.repo.GetBrands(c, dbQueries)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[BrandResponse](InternalServerErrorCode, "", err))
+		return
+	}
+
+	cnt, err := sv.repo.CountBrands(c)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[BrandResponse](InternalServerErrorCode, "", err))
+		return
+	}
+
+	resp := make([]BrandResponse, 0, len(rows))
+
+	for _, row := range rows {
+		resp = append(resp, BrandResponse{
+			ID:          row.ID,
+			Name:        row.Name,
+			Description: row.Description,
+			Slug:        row.Slug,
+			ImageUrl:    row.ImageUrl,
+		})
+	}
+
+	c.JSON(http.StatusOK, createSuccessResponse(
+		c,
+		resp,
+		"",
+		&Pagination{
+			Page:            queries.Page,
+			Total:           cnt,
+			PageSize:        queries.PageSize,
+			TotalPages:      int(cnt / int64(queries.PageSize)),
+			HasNextPage:     cnt > int64((queries.Page-1)*queries.PageSize+queries.PageSize),
+			HasPreviousPage: queries.Page > 1,
+		}, nil,
+	))
+}
+
+// --- Admin API ---
 // createBrandHandler creates a new Brand.
 // @Summary Create a new Brand
 // @Description Create a new Brand

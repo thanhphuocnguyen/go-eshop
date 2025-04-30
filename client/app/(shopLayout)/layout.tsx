@@ -1,7 +1,7 @@
 import Footer from '@/components/Footer';
 import NavBar from '@/components/Nav/NavBar';
-import { AppUserProvider } from '../../components/AppUserContext';
 import { JSX } from 'react';
+import { CartContextProvider } from '@/lib/contexts/CartContext';
 
 export default function Layout({
   children,
@@ -9,10 +9,14 @@ export default function Layout({
   children: React.ReactNode;
 }): JSX.Element {
   return (
-    <AppUserProvider>
-      <NavBar />
-      <div className='overflow-auto'>{children}</div>
+    <>
+      <CartContextProvider>
+        <div>
+          <NavBar />
+          <div className='overflow-auto'>{children}</div>
+        </div>
+      </CartContextProvider>
       <Footer />
-    </AppUserProvider>
+    </>
   );
 }

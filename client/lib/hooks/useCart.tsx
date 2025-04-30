@@ -1,5 +1,5 @@
 import useSWR from 'swr';
-import { API_PATHS } from '../constants/api';
+import { PUBLIC_API_PATHS } from '../constants/api';
 import { apiFetch } from '../apis/api';
 import { GenericResponse } from '../definitions';
 import { CartModel } from '../definitions/cart';
@@ -7,7 +7,7 @@ import { toast } from 'react-toastify';
 
 export const useCart = (userId?: string) => {
   const { data, isLoading, error, mutate } = useSWR(
-    userId ? [API_PATHS.CART, userId] : null,
+    userId ? [PUBLIC_API_PATHS.CART, userId] : null,
     ([url]) =>
       apiFetch<GenericResponse<CartModel>>(url, {
         method: 'GET',

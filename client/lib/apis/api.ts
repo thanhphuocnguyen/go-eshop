@@ -2,7 +2,7 @@
 // lib/api.ts
 import { getCookie, setCookie, deleteCookie } from 'cookies-next';
 
-import { API_PATHS } from '../constants/api';
+import { PUBLIC_API_PATHS } from '../constants/api';
 
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
@@ -46,7 +46,7 @@ async function refreshAccessToken(
   if (isRefreshing && refreshPromise) return refreshPromise;
 
   isRefreshing = true;
-  refreshPromise = fetch(API_PATHS.REFRESH_TOKEN, {
+  refreshPromise = fetch(PUBLIC_API_PATHS.REFRESH_TOKEN, {
     method: 'POST',
     // credentials: 'include',
     headers: {

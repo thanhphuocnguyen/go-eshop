@@ -1,12 +1,12 @@
 import { apiFetch } from '@/lib/apis/api';
-import { API_PATHS } from '@/lib/constants/api';
+import { ADMIN_API_PATHS } from '@/lib/constants/api';
 import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
 import { toast } from 'react-toastify';
 import useSWR from 'swr';
 
 export function useCollections() {
   const { data, error } = useSWR(
-    API_PATHS.COLLECTIONS,
+    ADMIN_API_PATHS.COLLECTIONS,
     (url) =>
       apiFetch<GenericResponse<GeneralCategoryModel[]>>(url, {}).then((res) => {
         if (res.error) {

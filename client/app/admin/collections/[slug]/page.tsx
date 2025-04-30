@@ -1,6 +1,6 @@
 'use client';
 
-import { API_PATHS } from '@/lib/constants/api';
+import { ADMIN_API_PATHS } from '@/lib/constants/api';
 import { use } from 'react';
 import { toast } from 'react-toastify';
 import Link from 'next/link';
@@ -24,7 +24,7 @@ export default function AdminCollectionDetail({
 }) {
   const { slug } = use(params);
   const { data: category, isLoading } = useSWR(
-    API_PATHS.COLLECTION.replace(':id', slug),
+    ADMIN_API_PATHS.COLLECTION.replace(':id', slug),
     async (url) => {
       const response = await apiFetch<GenericResponse<GeneralCategoryModel>>(
         url,
@@ -39,7 +39,7 @@ export default function AdminCollectionDetail({
   );
 
   const { data: products, isLoading: isLoadingProducts } = useSWR(
-    API_PATHS.COLLECTION_PRODUCTS.replace(':id', slug),
+    ADMIN_API_PATHS.COLLECTION_PRODUCTS.replace(':id', slug),
     async (url) => {
       const response = await apiFetch<GenericResponse<CategoryProductModel[]>>(
         url,
@@ -52,7 +52,7 @@ export default function AdminCollectionDetail({
 
   async function handleSave(data: FormData) {
     const response = await apiFetch<GenericResponse<number>>(
-      API_PATHS.COLLECTION.replace(':id', slug),
+      ADMIN_API_PATHS.COLLECTION.replace(':id', slug),
       {
         method: 'PUT',
         body: data,

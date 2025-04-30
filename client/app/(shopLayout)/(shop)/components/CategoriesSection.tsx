@@ -1,5 +1,5 @@
 import { apiFetch } from '@/lib/apis/api';
-import { API_PATHS } from '@/lib/constants/api';
+import { PUBLIC_API_PATHS } from '@/lib/constants/api';
 import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
@@ -7,7 +7,7 @@ import Link from 'next/link';
 
 export default async function CategoriesSection() {
   const { data } = await apiFetch<GenericResponse<GeneralCategoryModel[]>>(
-    `${API_PATHS.CATEGORIES}?page=1&page_size=5`,
+    `${PUBLIC_API_PATHS.CATEGORIES}?page=1&page_size=5`,
     {
       method: 'GET',
       nextOptions: {

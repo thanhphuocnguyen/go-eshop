@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Loading from '@/app/loading';
-import { API_PATHS } from '@/lib/constants/api';
+import { ADMIN_API_PATHS } from '@/lib/constants/api';
 import { GenericResponse, AttributeDetailModel } from '@/lib/definitions';
 import { AddNewDialog } from './_components/AttribueFormDialog';
 import { ConfirmDialog } from '@/components/Common/Dialogs/ConfirmDialog';
@@ -20,7 +20,7 @@ export default function Page() {
 
   const fetchAttributes = async () => {
     const response = await apiFetch<GenericResponse<AttributeDetailModel[]>>(
-      API_PATHS.ATTRIBUTES,
+      ADMIN_API_PATHS.ATTRIBUTES,
       {
         nextOptions: {
           next: {
@@ -40,7 +40,7 @@ export default function Page() {
   const handleDelete = async () => {
     if (selectedAttribute?.id) {
       const response = await apiFetch<GenericResponse<AttributeDetailModel[]>>(
-        API_PATHS.ATTRIBUTE.replace(':id', selectedAttribute.id.toString()),
+        ADMIN_API_PATHS.ATTRIBUTE.replace(':id', selectedAttribute.id.toString()),
         {
           method: 'DELETE',
         }

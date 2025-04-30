@@ -1,7 +1,7 @@
 'use client';
 
 import { apiFetch } from '@/lib/apis/api';
-import { API_PATHS } from '@/lib/constants/api';
+import { PUBLIC_API_PATHS } from '@/lib/constants/api';
 import { CategoryProductModel, GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -20,7 +20,7 @@ export default function CategoryPage() {
     async function fetchCategories() {
       try {
         const { data } = await apiFetch<GenericResponse<GeneralCategoryModel[]>>(
-          `${API_PATHS.CATEGORIES}?page=1&page_size=10`
+          `${PUBLIC_API_PATHS.CATEGORIES}?page=1&page_size=10`
         );
         
         if (data) {
@@ -52,7 +52,7 @@ export default function CategoryPage() {
   async function fetchProductsByCategory(categoryId: string) {
     try {
       const { data } = await apiFetch<GenericResponse<CategoryProductModel[]>>(
-        API_PATHS.CATEGORY_PRODUCTS.replace(':id', categoryId)
+        PUBLIC_API_PATHS.CATEGORY_PRODUCTS.replace(':id', categoryId)
       );
       
       if (data) {

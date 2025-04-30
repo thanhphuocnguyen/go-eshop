@@ -3,7 +3,7 @@
 import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
 import { useEffect, useState } from 'react';
 
-import { API_PATHS } from '@/lib/constants/api';
+import { ADMIN_API_PATHS } from '@/lib/constants/api';
 import { Button } from '@headlessui/react';
 import Link from 'next/link';
 import { ConfirmDialog } from '@/components/Common/Dialogs/ConfirmDialog';
@@ -21,7 +21,7 @@ export default function Page() {
   async function handleDelete() {
     if (selectedCategory) {
       const response = await apiFetch(
-        API_PATHS.CATEGORIES + '/' + selectedCategory.id,
+        ADMIN_API_PATHS.CATEGORIES + '/' + selectedCategory.id,
         {
           method: 'DELETE',
           headers: {
@@ -49,7 +49,7 @@ export default function Page() {
       setLoading(true);
       const { data, error } = await apiFetch<
         GenericResponse<GeneralCategoryModel[]>
-      >(API_PATHS.CATEGORIES, {
+      >(ADMIN_API_PATHS.CATEGORIES, {
         nextOptions: {
           next: {
             tags: ['categories'],

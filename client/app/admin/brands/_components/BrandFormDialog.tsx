@@ -1,4 +1,4 @@
-import { API_PATHS } from '@/lib/constants/api';
+import { ADMIN_API_PATHS } from '@/lib/constants/api';
 import {
   GenericResponse,
   BrandFormSchema,
@@ -17,7 +17,6 @@ import {
 } from '@headlessui/react';
 import clsx from 'clsx';
 import React from 'react';
-import { getCookie } from 'cookies-next';
 import { toast } from 'react-toastify';
 import { apiFetch } from '@/lib/apis/api';
 
@@ -64,7 +63,7 @@ export const BrandFormDialog: React.FC<BrandFormDialogProps> = ({
       image_url,
       slug,
     };
-    const response = await apiFetch(API_PATHS.BRANDS, {
+    const response = await apiFetch(ADMIN_API_PATHS.BRANDS, {
       method: 'POST',
       body,
     });
