@@ -307,7 +307,7 @@ func (sv *Server) getProducts(c *gin.Context) {
 		Total:           productCnt,
 		Page:            queries.Page,
 		PageSize:        queries.PageSize,
-		TotalPages:      int((productCnt + int64(queries.PageSize) - 1) / int64(queries.PageSize)),
+		TotalPages:      (productCnt + queries.PageSize - 1) / queries.PageSize,
 		HasNextPage:     int(queries.Page*queries.PageSize) < int(productCnt),
 		HasPreviousPage: queries.Page > 1,
 	}, nil))

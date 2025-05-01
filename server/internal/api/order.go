@@ -139,7 +139,7 @@ func (sv *Server) getOrdersHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, createSuccessResponse(c, orderResponses, "success", &Pagination{
 		Total: count, Page: orderListQuery.Page,
 		PageSize:        orderListQuery.PageSize,
-		TotalPages:      int(count / int64(orderListQuery.PageSize)),
+		TotalPages:      count / int64(orderListQuery.PageSize),
 		HasNextPage:     count > int64(orderListQuery.PageSize),
 		HasPreviousPage: orderListQuery.Page > 1,
 	}, nil))

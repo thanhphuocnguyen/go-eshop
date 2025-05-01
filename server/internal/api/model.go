@@ -32,7 +32,7 @@ type Pagination struct {
 	Total           int64 `json:"total"`
 	Page            int64 `json:"page"`
 	PageSize        int64 `json:"pageSize"`
-	TotalPages      int   `json:"totalPages"`
+	TotalPages      int64 `json:"totalPages"`
 	HasNextPage     bool  `json:"hasNextPage"`
 	HasPreviousPage bool  `json:"hasPreviousPage"`
 }

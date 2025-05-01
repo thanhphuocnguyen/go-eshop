@@ -150,7 +150,7 @@ func (sv *Server) getCollections(c *gin.Context) {
 			Page:            queries.Page,
 			PageSize:        queries.PageSize,
 			Total:           cnt,
-			TotalPages:      int(cnt / int64(queries.PageSize)),
+			TotalPages:      cnt / int64(queries.PageSize),
 			HasNextPage:     cnt > int64(queries.Page*queries.PageSize),
 			HasPreviousPage: queries.Page > 1,
 		}, nil,

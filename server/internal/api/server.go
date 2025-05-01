@@ -140,7 +140,7 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 	{
 		users := admin.Group("users")
 		{
-			users.GET("", sv.listUsers)
+			users.GET("", sv.getUsersHandler)
 		}
 		productGroup := admin.Group("products")
 		{
@@ -210,7 +210,7 @@ func (sv *Server) setupAuthRoutes(rg *gin.RouterGroup) {
 func (sv *Server) setupUserRoutes(rg *gin.RouterGroup) {
 	user := rg.Group("/user", authMiddleware(sv.tokenGenerator))
 	{
-		user.GET("", sv.getUser)
+		user.GET("", sv.getUserHandler)
 		user.PATCH("", sv.updateUser)
 		user.POST("send-verify-email", sv.sendVerifyEmailHandler)
 

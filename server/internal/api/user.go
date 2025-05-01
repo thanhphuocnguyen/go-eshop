@@ -29,11 +29,6 @@ type UserResponse struct {
 	UpdatedAt         string              `json:"updated_at,omitempty"`
 }
 
-type ListUserParams struct {
-	Page     int64 `form:"page" binding:"required,min=1"`
-	PageSize int64 `form:"page_size" binding:"required,min=1,max=100"`
-}
-
 type UpdateUserRequest struct {
 	UserID   uuid.UUID `json:"user_id" binding:"required,uuid"`
 	FullName *string   `json:"fullname,omitempty" binding:"omitempty,min=3,max=32"`
@@ -139,7 +134,7 @@ func (sv *Server) updateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, createSuccessResponse(c, updatedUser, "", nil, nil))
 }
 
-// getUser godoc
+// getUserHandler godoc
 // @Summary Get user info
 // @Description Get user info
 // @Tags users
@@ -149,7 +144,7 @@ func (sv *Server) updateUser(c *gin.Context) {
 // @Failure 404 {object} ApiResponse[UserResponse]
 // @Failure 500 {object} ApiResponse[UserResponse]
 // @Router /users [get]
-func (sv *Server) getUser(c *gin.Context) {
+func (sv *Server) getUserHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", errors.New("authorization payload is not provided")))
@@ -182,7 +177,7 @@ func (sv *Server) getUser(c *gin.Context) {
 	c.JSON(http.StatusOK, createSuccessResponse(c, userResp, "", nil, nil))
 }
 
-// listUsers godoc
+// getUsersHandler godoc
 // @Summary List users
 // @Description List users
 // @Tags users
@@ -193,26 +188,10 @@ func (sv *Server) getUser(c *gin.Context) {
 // @Success 200 {object} ApiResponse[[]UserResponse]
 // @Failure 500 {object} ApiResponse[[]UserResponse]
 // @Router /users/list [get]
-func (sv *Server) listUsers(c *gin.Context) {
-	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[[]UserResponse](InternalServerErrorCode, "", errors.New("authorization payload is not provided")))
-		return
-	}
-	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[[]UserResponse](InternalServerErrorCode, "", err))
-		return
-	}
-
-	if user.Role != repository.UserRoleAdmin {
-		c.JSON(http.StatusUnauthorized, createErrorResponse[[]UserResponse](UnauthorizedCode, "", errors.New("user is not admin")))
-		return
-	}
-
-	var queries ListUserParams
-	if err := c.ShouldBindUri(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[[]UserResponse](InvalidEmailCode, "", err))
+func (sv *Server) getUsersHandler(c *gin.Context) {
+	var queries PaginationQueryParams
+	if err := c.ShouldBindQuery(&queries); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse[[]UserResponse](InvalidBodyCode, "", err))
 		return
 	}
 
@@ -220,6 +199,13 @@ func (sv *Server) listUsers(c *gin.Context) {
 		Limit:  queries.PageSize,
 		Offset: (queries.Page - 1) * queries.PageSize,
 	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[[]UserResponse](InternalServerErrorCode, "", err))
+		return
+	}
+
+	total, err := sv.repo.CountUsers(c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[[]UserResponse](InternalServerErrorCode, "", err))
 		return
@@ -227,21 +213,17 @@ func (sv *Server) listUsers(c *gin.Context) {
 
 	userResp := make([]UserResponse, 0)
 	for _, user := range users {
-		userAddress, err := sv.repo.GetAddresses(c, user.ID)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[[]UserResponse](InternalServerErrorCode, "", err))
-			return
-		}
-
-		addressResp := make([]AddressResponse, 0)
-		for _, address := range userAddress {
-			addressResp = append(addressResp, mapAddressToAddressResponse(address))
-		}
 		userResp = append(userResp, mapToUserResponse(user))
-		userResp[len(userResp)-1].Addresses = addressResp
 	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(c, userResp, "", nil, nil))
+	c.JSON(http.StatusOK, createSuccessResponse(c, userResp, "", &Pagination{
+		Total:           int64(len(userResp)),
+		Page:            queries.Page,
+		PageSize:        queries.PageSize,
+		TotalPages:      total / queries.PageSize,
+		HasNextPage:     len(userResp) > int(queries.PageSize),
+		HasPreviousPage: queries.Page > 1,
+	}, nil))
 }
 
 func (sv *Server) sendVerifyEmailHandler(c *gin.Context) {

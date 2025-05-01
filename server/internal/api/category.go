@@ -285,7 +285,7 @@ func (sv *Server) getAdminCategoriesHandler(c *gin.Context) {
 			Page:            query.Page,
 			PageSize:        query.PageSize,
 			Total:           count,
-			TotalPages:      int(count / int64(query.PageSize)),
+			TotalPages:      count / int64(query.PageSize),
 			HasNextPage:     count > int64(query.Page*query.PageSize),
 			HasPreviousPage: query.Page > 1,
 		}, nil,
