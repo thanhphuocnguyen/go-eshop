@@ -11,7 +11,7 @@ import { KeyedMutator } from 'swr';
 interface AppUserContextType {
   isLoading: boolean;
   user: UserModel | undefined;
-  mutateUser?: KeyedMutator<UserModel>;
+  mutateUser: KeyedMutator<UserModel>;
 }
 
 const AppUserContext = createContext<AppUserContextType | undefined>(undefined);

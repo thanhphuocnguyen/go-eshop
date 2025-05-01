@@ -15,7 +15,7 @@ import { GenericResponse, LoginResponse } from '@/lib/definitions';
 import { PUBLIC_API_PATHS } from '@/lib/constants/api';
 import { useState } from 'react';
 import { setCookie } from 'cookies-next/client';
-import { jwtDecode } from 'jwt-decode';
+import { useAppUser } from '@/lib/contexts/AppUserContext';
 
 // Login form schema
 const loginSchema = z
@@ -44,16 +44,9 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 type LoginMethod = 'email' | 'username';
 
-// Interface for the decoded JWT token
-interface DecodedToken {
-  user_id: string;
-  username: string;
-  role: string;
-  exp: number;
-}
-
 export default function LoginFormComponent() {
   const router = useRouter();
+  const { mutateUser } = useAppUser();
   const [loginMethod, setLoginMethod] = useState<LoginMethod>('email');
 
   const form = useForm<LoginForm>({
@@ -110,22 +103,7 @@ export default function LoginFormComponent() {
     }
 
     if (result.data) {
-      // Decode the JWT token to get user information
-      const decodedToken = jwtDecode<DecodedToken>(result.data.access_token);
-
-      // Set the access token in a cookie
       setCookie('access_token', result.data.access_token, {
-        expires: new Date(result.data.access_token_expires_in),
-      });
-
-      // Store user information in cookies
-      setCookie('user_id', decodedToken.user_id, {
-        expires: new Date(result.data.access_token_expires_in),
-      });
-      setCookie('username', decodedToken.username, {
-        expires: new Date(result.data.access_token_expires_in),
-      });
-      setCookie('role', decodedToken.role, {
         expires: new Date(result.data.access_token_expires_in),
       });
 
@@ -133,7 +111,7 @@ export default function LoginFormComponent() {
       setCookie('refresh_token', result.data.refresh_token, {
         expires: new Date(result.data.refresh_token_expires_at),
       });
-
+      mutateUser?.();
       toast.success('Login successful!');
       router.refresh();
       router.push('/');

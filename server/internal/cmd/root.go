@@ -77,8 +77,9 @@ func Execute(ctx context.Context) int {
 		},
 	}
 
-	rootCmd.PersistentFlags().StringVarP(&cfg.HttpAddr, "http-addr", "a", cfg.HttpAddr, "HTTP address")
-	rootCmd.PersistentFlags().BoolVarP(&profile, "profile", "p", false, "enable profiling")
+	rootCmd.PersistentFlags().StringVarP(&cfg.Domain, "domain", "d", cfg.Domain, "HTTP domain")
+	rootCmd.PersistentFlags().StringVarP(&cfg.Port, "port", "p", cfg.Port, "HTTP port")
+	rootCmd.PersistentFlags().BoolVarP(&profile, "profile", "", false, "enable profiling")
 
 	rootCmd.AddCommand(apiCmd(ctx, cfg))
 	rootCmd.AddCommand(workerCmd(ctx, cfg))
@@ -115,10 +116,10 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			server := api.Server(cfg.HttpAddr)
+			server := api.Server(fmt.Sprintf(":%s", cfg.Port))
 
 			go func() {
-				log.Info().Str("addr", fmt.Sprintf("http://%s", cfg.HttpAddr)).Msg("API server started")
+				log.Info().Str("addr", fmt.Sprintf("http://%s:%s", cfg.Domain, cfg.Port)).Msg("API server started")
 				_ = server.ListenAndServe()
 			}()
 

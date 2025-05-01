@@ -7,7 +7,8 @@ import (
 )
 
 type Config struct {
-	HttpAddr             string        `mapstructure:"HTTP_ADDR"`
+	Domain               string        `mapstructure:"DOMAIN"`
+	Port                 string        `mapstructure:"PORT"`
 	DbUrl                string        `mapstructure:"DB_URL"`
 	MaxPoolSize          int           `mapstructure:"MAX_POOL_SIZE"`
 	MigrationPath        string        `mapstructure:"MIGRATION_PATH"`

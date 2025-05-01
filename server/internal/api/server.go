@@ -67,6 +67,9 @@ func (sv *Server) initializeRouter() {
 	// Setup environment mode
 	sv.setupEnvironmentMode(router)
 
+	// Load HTML templates
+	router.LoadHTMLGlob("templates/*")
+
 	// Setup CORS
 	router.Use(sv.setupCORS())
 
@@ -75,6 +78,7 @@ func (sv *Server) initializeRouter() {
 
 	router.Static("/assets", "./assets")
 
+	router.GET("verify-email", sv.verifyEmailHandler)
 	// Setup API routes
 	v1 := router.Group("/api/v1")
 	{
@@ -84,7 +88,6 @@ func (sv *Server) initializeRouter() {
 		})
 
 		v1.GET("homepage", sv.getHomePageHandler)
-		v1.GET("verify-email", sv.verifyEmailHandler)
 
 		// Register API route groups
 		sv.setupAuthRoutes(v1)
@@ -200,8 +203,6 @@ func (sv *Server) setupAuthRoutes(rg *gin.RouterGroup) {
 		auth.POST("register", sv.registerHandler)
 		auth.POST("login", sv.loginHandler)
 		auth.POST("refresh-token", sv.refreshTokenHandler)
-		authRoutes := auth.Use(authMiddleware(sv.tokenGenerator))
-		authRoutes.POST("send-verify-email", sv.sendVerifyEmailHandler)
 	}
 }
 
@@ -211,6 +212,7 @@ func (sv *Server) setupUserRoutes(rg *gin.RouterGroup) {
 	{
 		user.GET("", sv.getUser)
 		user.PATCH("", sv.updateUser)
+		user.POST("send-verify-email", sv.sendVerifyEmailHandler)
 
 		userAddress := user.Group("addresses")
 		{
