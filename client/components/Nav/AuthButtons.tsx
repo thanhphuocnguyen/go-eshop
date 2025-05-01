@@ -11,17 +11,14 @@ import React from 'react';
 import { useAppUser } from '../../lib/contexts/AppUserContext';
 
 const AuthButtons: React.FC<{ isLogin: boolean }> = ({ isLogin }) => {
-  const { user, mutateUser } = useAppUser();
+  const { user, mutateUser, setIsLoggedIn } = useAppUser();
   const logout = () => {
     mutateUser?.(undefined, {
       revalidate: false,
     });
+    setIsLoggedIn(false);
     deleteCookie('access_token');
-    deleteCookie('user_id');
-    deleteCookie('role');
     deleteCookie('refresh_token');
-    deleteCookie('username');
-
     redirect('/login');
   };
 

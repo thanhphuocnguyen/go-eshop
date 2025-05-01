@@ -168,30 +168,32 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 		categories := admin.Group("categories")
 		{
 			categories.GET("", sv.getAdminCategoriesHandler)
+			categories.GET(":id", sv.getCategoryByID)
 			categories.POST("", sv.addCategoryHandler)
 			categories.PUT(":id", sv.updateCategory)
 			categories.DELETE(":id", sv.deleteCategory)
+			categories.GET(":id/products", sv.getProductsByCategory)
 		}
 
 		brands := admin.Group("brands")
 		{
 
 			brands.GET("", sv.getBrandsHandler)
-			brands.GET(":id", sv.getBrandByIDHandler)
-			brands.GET(":id/products", sv.getProductsByBrandHandler)
 			brands.POST("", sv.createBrandHandler)
+			brands.GET(":id", sv.getBrandByIDHandler)
 			brands.PUT(":id", sv.updateBrand)
 			brands.DELETE(":id", sv.deleteBrand)
+			brands.GET(":id/products", sv.getProductsByBrandHandler)
 		}
 
 		collections := admin.Group("collections")
 		{
 			collections.GET("", sv.getCollections)
-			collections.GET(":id/products", sv.getProductsByCollection)
-			collections.GET(":id", sv.getCollectionByID)
 			collections.POST("", sv.createCollection)
+			collections.GET(":id", sv.getCollectionByID)
 			collections.PUT(":id", sv.updateCollection)
 			collections.DELETE(":id", sv.deleteCollection)
+			collections.GET(":id/products", sv.getProductsByCollection)
 		}
 	}
 }
@@ -285,8 +287,6 @@ func (sv *Server) setupCategoryRoutes(rg *gin.RouterGroup) {
 	category := rg.Group("categories")
 	{
 		category.GET("", sv.getCategoriesHandler)
-		category.GET(":id", sv.getCategoryByID)
-		category.GET(":id/products", sv.getProductsByCategory)
 	}
 }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
   BellIcon,
   CircleStackIcon,
@@ -11,6 +11,8 @@ import {
   RectangleStackIcon,
   ShoppingCartIcon,
   UsersIcon,
+  UserCircleIcon,
+  ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline';
 import './admin.css';
 import Image from 'next/image';
@@ -19,25 +21,18 @@ import clsx from 'clsx';
 import { redirect, usePathname } from 'next/navigation';
 import { ChevronUpIcon } from '@heroicons/react/16/solid';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import { CookieValueTypes, deleteCookie, getCookie } from 'cookies-next';
+import { deleteCookie } from 'cookies-next';
+import { useAppUser } from '@/lib/contexts/AppUserContext';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
+  const { user } = useAppUser();
   const logout = async () => {
     deleteCookie('access_token');
     deleteCookie('refresh_token');
-    deleteCookie('session_id');
-    deleteCookie('user_role');
-    deleteCookie('user_id');
-    deleteCookie('user_name');
     redirect('/login');
   };
 
   const pathname = usePathname();
-  const [fullName, setFullName] = React.useState<string | null>(null);
-
-  useEffect(() => {
-    setFullName((getCookie('user_name') as CookieValueTypes) ?? '');
-  }, []);
 
   return (
     <div className='flex h-screen'>
@@ -75,54 +70,67 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <main className='w-5/6 block bg-white'>
         <section className='flex items-center h-[60px] p-3 border-b shadow-sm text-black justify-end'>
           <div className='flex items-center gap-3'>
-            <div>
-              <BellIcon height={20} width={20} />
+            <div className='relative'>
+              <button className='p-2 hover:bg-gray-100 rounded-full transition-colors'>
+                <BellIcon height={20} width={20} className='text-gray-600' />
+              </button>
+              <span className='absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center'>2</span>
             </div>
-            <div className='border-l h-10 border-gray-600' />
-            <Menu as={'section'}>
-              <MenuButton
-                className={
-                  'w-52 justify-between flex gap-2 hover:bg-gray-200 rounded-md items-center p-2'
-                }
-              >
-                {({ active }) => (
+            <div className='border-l h-10 border-gray-300' />
+            <Menu as={'section'} className="relative">
+              <MenuButton className="account-button">
+                {({ open }) => (
                   <>
-                    <div className='inline-flex items-center gap-1'>
-                      <div className='h-8 w-8 rounded-full bg-gray-600'></div>
-                      <span className='text-md text-ellipsis font-semibold'>
-                        {fullName ?? ''}
+                    <div className="account-avatar">
+                      {user?.fullname ? (
+                        <span className="font-medium">
+                          {user.fullname.charAt(0).toUpperCase()}
+                        </span>
+                      ) : (
+                        <UserCircleIcon height={16} width={16} />
+                      )}
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <span className="text-sm font-semibold truncate max-w-[120px]">
+                        {user?.fullname || 'User'}
+                      </span>
+                      <span className="text-xs text-gray-500 truncate max-w-[120px]">
+                        {user?.email || 'user@example.com'}
                       </span>
                     </div>
-                    <span
+                    <ChevronUpIcon 
+                      height={16} 
+                      width={16} 
                       className={clsx(
-                        'transition-all',
-                        active ? 'transform rotate-180' : 'transform rotate-0'
-                      )}
-                    >
-                      <ChevronUpIcon height={20} width={20} />
-                    </span>
+                        'text-gray-500 transition-transform duration-200 menu-transition',
+                        open ? 'rotate-180' : 'rotate-0'
+                      )} 
+                    />
                   </>
                 )}
               </MenuButton>
-              <MenuItems
-                anchor='bottom'
-                className={'bg-white shadow-lg rounded-lg w-52'}
-              >
+              <MenuItems className="menu-dropdown absolute right-0 w-56 mt-2">
                 <MenuItem>
-                  <Link
-                    href={'/profile'}
-                    className='block w-full text-left font-semibold p-3 cursor-pointer data-[focus]:bg-green-500 border-b'
-                  >
-                    Profile
-                  </Link>
+                  {({ active }) => (
+                    <Link
+                      href="/profile"
+                      className={clsx('menu-item group', active && 'bg-green-100 text-green-700')}
+                    >
+                      <UserCircleIcon height={18} width={18} />
+                      My Profile
+                    </Link>
+                  )}
                 </MenuItem>
                 <MenuItem>
-                  <button
-                    onClick={logout}
-                    className='block w-full text-left font-semibold p-3 cursor-pointer data-[focus]:bg-green-500'
-                  >
-                    Logout
-                  </button>
+                  {({ active }) => (
+                    <button
+                      onClick={logout}
+                      className={clsx('menu-item group', active && 'bg-green-100 text-green-700')}
+                    >
+                      <ArrowRightOnRectangleIcon height={18} width={18} />
+                      Sign Out
+                    </button>
+                  )}
                 </MenuItem>
               </MenuItems>
             </Menu>

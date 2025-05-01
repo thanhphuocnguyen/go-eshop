@@ -34,7 +34,7 @@ export default function Page() {
     }
   };
   return (
-    <div className=''>
+    <div className='h-full overflow-auto my-auto'>  
       <Link
         href='/admin/brands'
         className='flex space-x-2 items-center hover:underline text-blue-400'

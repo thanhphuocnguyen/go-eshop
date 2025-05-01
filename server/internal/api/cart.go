@@ -195,7 +195,7 @@ func (sv *Server) getCartHandler(c *gin.Context) {
 // @Description add a product to the cart
 // @Tags carts
 // @Accept json
-// @Param input body PutCartItemReq true "Add product to cart input"
+// @Param input body UpdateCartItemQtyReq true "Add product to cart input"
 // @Produce json
 // @Success 200 {object} ApiResponse[uuid.UUID]
 // @Failure 400 {object} ApiResponse[uuid.UUID]

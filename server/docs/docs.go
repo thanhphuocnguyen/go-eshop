@@ -447,6 +447,56 @@ const docTemplate = `{
                 }
             }
         },
+        "/address/{id}/default": {
+            "put": {
+                "description": "Set default address",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "address"
+                ],
+                "summary": "Set default address",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Address ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-bool"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
         "/attributes": {
             "get": {
                 "description": "Get all attributes",
@@ -710,7 +760,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/cart/checkout": {
+        "/cart/checkoutHandler": {
             "post": {
                 "description": "update product items in the cart",
                 "consumes": [
@@ -835,52 +885,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/cart/item/{id}/quantity": {
-            "put": {
-                "description": "update product items in the cart",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "carts"
-                ],
-                "summary": "Update product items in the cart",
-                "parameters": [
-                    {
-                        "description": "Update cart items input",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.updateCartItemRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-bool"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-bool"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-bool"
-                        }
-                    }
-                }
-            }
-        },
         "/cart/item/{variant_id}": {
             "post": {
                 "description": "add a product to the cart",
@@ -901,7 +905,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.PutCartItemReq"
+                            "$ref": "#/definitions/api.UpdateCartItemQtyReq"
                         }
                     }
                 ],
@@ -2018,14 +2022,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/payment/{order_id}": {
+        "/payment/{id}": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get payment transaction by order ID",
+                "description": "Get payment  by order ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -2035,12 +2039,12 @@ const docTemplate = `{
                 "tags": [
                     "payment"
                 ],
-                "summary": "Get payment transaction by order ID",
+                "summary": "Get payment  by order ID",
                 "parameters": [
                     {
                         "type": "integer",
                         "description": "Order ID",
-                        "name": "order_id",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     }
@@ -2382,6 +2386,100 @@ const docTemplate = `{
                         "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/shop/Brands": {
+            "get": {
+                "description": "Get a list of Brands for the shop",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get a list of Brands for the shop",
+                "operationId": "get-shop-Brands",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-api_BrandResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-api_BrandResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-api_BrandResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/shop/collections": {
+            "get": {
+                "description": "Get a list of Collections",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get a list of Collections",
+                "operationId": "get-Shop-Collections",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-api_CollectionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-api_CollectionResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-api_CollectionResponse"
                         }
                     }
                 }
@@ -2747,13 +2845,33 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "api.Address": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string"
+                },
+                "district": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "street": {
+                    "type": "string"
+                },
+                "ward": {
+                    "type": "string"
+                }
+            }
+        },
         "api.AddressResponse": {
             "type": "object",
             "properties": {
-                "address": {
+                "city": {
                     "type": "string"
                 },
-                "city": {
+                "created_at": {
                     "type": "string"
                 },
                 "default": {
@@ -2766,6 +2884,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "phone": {
+                    "type": "string"
+                },
+                "street": {
                     "type": "string"
                 },
                 "ward": {
@@ -3384,11 +3505,11 @@ const docTemplate = `{
         "api.AttributeValue": {
             "type": "object",
             "properties": {
+                "code": {
+                    "type": "string"
+                },
                 "display_order": {
                     "type": "integer"
-                },
-                "display_value": {
-                    "type": "string"
                 },
                 "id": {
                     "type": "integer"
@@ -3396,7 +3517,7 @@ const docTemplate = `{
                 "is_active": {
                     "type": "boolean"
                 },
-                "value": {
+                "name": {
                     "type": "string"
                 }
             }
@@ -3404,20 +3525,20 @@ const docTemplate = `{
         "api.AttributeValueRequest": {
             "type": "object",
             "required": [
-                "value"
+                "code"
             ],
             "properties": {
+                "code": {
+                    "type": "string"
+                },
                 "display_order": {
                     "type": "integer",
                     "minimum": 0
                 },
-                "display_value": {
-                    "type": "string"
-                },
                 "is_active": {
                     "type": "boolean"
                 },
-                "value": {
+                "name": {
                     "type": "string"
                 }
             }
@@ -3465,17 +3586,6 @@ const docTemplate = `{
                 }
             }
         },
-        "api.CartItemAttribute": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "value": {
-                    "type": "string"
-                }
-            }
-        },
         "api.CartItemResponse": {
             "type": "object",
             "required": [
@@ -3487,7 +3597,7 @@ const docTemplate = `{
                 "attributes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.CartItemAttribute"
+                        "$ref": "#/definitions/repository.AttributeDataSnapshot"
                     }
                 },
                 "discount": {
@@ -3540,12 +3650,6 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "products": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/api.ProductListModel"
-                    }
-                },
                 "published": {
                     "type": "boolean"
                 },
@@ -3563,37 +3667,52 @@ const docTemplate = `{
         "api.CheckoutRequest": {
             "type": "object",
             "required": [
-                "address_id",
-                "payment_gateway"
+                "payment_method"
             ],
             "properties": {
+                "address": {
+                    "$ref": "#/definitions/api.Address"
+                },
                 "address_id": {
                     "type": "integer"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
                 },
                 "payment_gateway": {
                     "type": "string",
                     "enum": [
-                        "stripe",
-                        "paypal",
-                        "visa",
-                        "mastercard",
-                        "apple_pay",
-                        "google_pay",
-                        "postpaid",
-                        "momo",
-                        "zalo_pay",
-                        "vn_pay"
+                        "stripe"
                     ]
+                },
+                "payment_method": {
+                    "type": "string",
+                    "enum": [
+                        "code",
+                        "stripe"
+                    ]
+                },
+                "payment_receipt_email": {
+                    "type": "string"
                 }
             }
         },
         "api.CheckoutResponse": {
             "type": "object",
             "properties": {
+                "client_secret": {
+                    "type": "string"
+                },
                 "order_id": {
                     "type": "string"
                 },
                 "payment_id": {
+                    "type": "string"
+                },
+                "payment_intent_id": {
                     "type": "string"
                 }
             }
@@ -3654,7 +3773,8 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "ward": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 100
                 }
             }
         },
@@ -3684,7 +3804,7 @@ const docTemplate = `{
             "properties": {
                 "description": {
                     "type": "string",
-                    "maxLength": 255
+                    "maxLength": 1000
                 },
                 "display_order": {
                     "type": "integer"
@@ -3814,9 +3934,6 @@ const docTemplate = `{
                 },
                 "session_id": {
                     "type": "string"
-                },
-                "user": {
-                    "$ref": "#/definitions/api.UserResponse"
                 }
             }
         },
@@ -3840,6 +3957,15 @@ const docTemplate = `{
         "api.OrderDetailResponse": {
             "type": "object",
             "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "customer_email": {
+                    "type": "string"
+                },
+                "customer_name": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -3852,6 +3978,9 @@ const docTemplate = `{
                         "$ref": "#/definitions/api.OrderItemResponse"
                     }
                 },
+                "shipping_info": {
+                    "$ref": "#/definitions/repository.ShippingAddressSnapshot"
+                },
                 "status": {
                     "$ref": "#/definitions/repository.OrderStatus"
                 },
@@ -3863,11 +3992,20 @@ const docTemplate = `{
         "api.OrderItemResponse": {
             "type": "object",
             "properties": {
+                "attribute_snapshot": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/repository.AttributeDataSnapshot"
+                    }
+                },
                 "id": {
                     "type": "string"
                 },
                 "image_url": {
                     "type": "string"
+                },
+                "line_total": {
+                    "type": "number"
                 },
                 "name": {
                     "type": "string"
@@ -3952,16 +4090,19 @@ const docTemplate = `{
         "api.PaymentRequest": {
             "type": "object",
             "required": [
-                "cart_id",
-                "gateway"
+                "order_id",
+                "payment_method"
             ],
             "properties": {
-                "cart_id": {
-                    "type": "integer",
-                    "minimum": 1
-                },
-                "gateway": {
+                "order_id": {
                     "type": "string"
+                },
+                "payment_method": {
+                    "type": "string",
+                    "enum": [
+                        "cod",
+                        "stripe"
+                    ]
                 }
             }
         },
@@ -3972,11 +4113,11 @@ const docTemplate = `{
                 "gateway": {
                     "$ref": "#/definitions/repository.PaymentGateway"
                 },
+                "id": {
+                    "type": "string"
+                },
                 "status": {
                     "$ref": "#/definitions/repository.PaymentStatus"
-                },
-                "transaction_id": {
-                    "type": "string"
                 }
             }
         },
@@ -4015,21 +4156,6 @@ const docTemplate = `{
                 },
                 "variant_count": {
                     "type": "integer"
-                }
-            }
-        },
-        "api.PutCartItemReq": {
-            "type": "object",
-            "required": [
-                "quantity",
-                "variant_id"
-            ],
-            "properties": {
-                "quantity": {
-                    "type": "integer"
-                },
-                "variant_id": {
-                    "type": "string"
                 }
             }
         },
@@ -4091,9 +4217,6 @@ const docTemplate = `{
                 "address_1": {
                     "type": "string"
                 },
-                "address_2": {
-                    "type": "string"
-                },
                 "city": {
                     "type": "string"
                 },
@@ -4131,15 +4254,15 @@ const docTemplate = `{
         "api.UpdateAttributeValueRequest": {
             "type": "object",
             "required": [
-                "value"
+                "code"
             ],
             "properties": {
+                "code": {
+                    "type": "string"
+                },
                 "display_order": {
                     "type": "integer",
                     "minimum": 0
-                },
-                "display_value": {
-                    "type": "string"
                 },
                 "id": {
                     "type": "integer"
@@ -4147,8 +4270,19 @@ const docTemplate = `{
                 "is_active": {
                     "type": "boolean"
                 },
-                "value": {
+                "name": {
                     "type": "string"
+                }
+            }
+        },
+        "api.UpdateCartItemQtyReq": {
+            "type": "object",
+            "required": [
+                "quantity"
+            ],
+            "properties": {
+                "quantity": {
+                    "type": "integer"
                 }
             }
         },
@@ -4157,7 +4291,7 @@ const docTemplate = `{
             "properties": {
                 "description": {
                     "type": "string",
-                    "maxLength": 255
+                    "maxLength": 1000
                 },
                 "display_order": {
                     "type": "integer"
@@ -4261,8 +4395,10 @@ const docTemplate = `{
                     "maxLength": 32,
                     "minLength": 3
                 },
-                "role": {
-                    "$ref": "#/definitions/repository.UserRole"
+                "phone": {
+                    "type": "string",
+                    "maxLength": 15,
+                    "minLength": 8
                 },
                 "user_id": {
                     "type": "string"
@@ -4313,17 +4449,6 @@ const docTemplate = `{
                 }
             }
         },
-        "api.updateCartItemRequest": {
-            "type": "object",
-            "required": [
-                "quantity"
-            ],
-            "properties": {
-                "quantity": {
-                    "type": "integer"
-                }
-            }
-        },
         "gin.H": {
             "type": "object",
             "additionalProperties": {}
@@ -4339,6 +4464,17 @@ const docTemplate = `{
                 },
                 "size": {
                     "type": "integer"
+                }
+            }
+        },
+        "repository.AttributeDataSnapshot": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
                 }
             }
         },
@@ -4401,7 +4537,6 @@ const docTemplate = `{
                 "visa",
                 "mastercard",
                 "apple_pay",
-                "google_pay",
                 "postpaid",
                 "momo",
                 "zalo_pay",
@@ -4413,7 +4548,6 @@ const docTemplate = `{
                 "PaymentGatewayVisa",
                 "PaymentGatewayMastercard",
                 "PaymentGatewayApplePay",
-                "PaymentGatewayGooglePay",
                 "PaymentGatewayPostpaid",
                 "PaymentGatewayMomo",
                 "PaymentGatewayZaloPay",
@@ -4452,6 +4586,33 @@ const docTemplate = `{
                 },
                 "value_id": {
                     "type": "integer"
+                }
+            }
+        },
+        "repository.ShippingAddressSnapshot": {
+            "type": "object",
+            "required": [
+                "city",
+                "district",
+                "phone",
+                "street",
+                "ward"
+            ],
+            "properties": {
+                "city": {
+                    "type": "string"
+                },
+                "district": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "street": {
+                    "type": "string"
+                },
+                "ward": {
+                    "type": "string"
                 }
             }
         },

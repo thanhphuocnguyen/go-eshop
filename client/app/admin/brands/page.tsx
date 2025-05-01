@@ -10,7 +10,7 @@ export default function Page() {
   const { brands, isLoading } = useBrands();
   if (isLoading) return <div>Loading...</div>;
   return (
-    <div className='h-full'>
+    <div className='h-full overflow-auto my-auto'>
       <div className='flex justify-between pt-4 pb-8'>
         <h2 className='text-lg font-bold'>Brands</h2>
         <Button

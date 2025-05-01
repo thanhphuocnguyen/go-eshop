@@ -131,13 +131,13 @@ func (sv *Server) createBrandHandler(c *gin.Context) {
 		params.Description = req.Description
 	}
 	if req.Image != nil {
-		fileName, fileID, err := sv.uploadService.UploadFile(c, req.Image)
+		publicID, imgUrl, err := sv.uploadService.UploadFile(c, req.Image)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[BrandResponse](UploadFileCode, "error when upload image", err))
 			return
 		}
-		params.ImageUrl = &fileName
-		params.ImageID = &fileID
+		params.ImageUrl = &imgUrl
+		params.ImageID = &publicID
 	}
 
 	col, err := sv.repo.CreateBrand(c, params)
@@ -249,10 +249,10 @@ func (sv *Server) getBrandByIDHandler(c *gin.Context) {
 			Description: result.Description,
 			Slug:        result.Slug,
 			Published:   result.Published,
-			Remarkable:  *result.Remarkable,
 			CreatedAt:   result.CreatedAt.Format("2006-01-02 15:04:05"),
 			UpdatedAt:   result.UpdatedAt.Format("2006-01-02 15:04:05"),
 			ImageUrl:    result.ImageUrl,
+			Remarkable:  *result.Remarkable,
 		},
 		Products: nil,
 	}
@@ -360,15 +360,27 @@ func (sv *Server) updateBrand(c *gin.Context) {
 		ID:   brand.ID,
 		Name: req.Name,
 	}
+	oldImageID := brand.ImageID
+
 	if req.Image != nil {
-		fileName, fileID, err := sv.uploadService.UploadFile(c, req.Image)
+		imgID, imgUrl, err := sv.uploadService.UploadFile(c, req.Image)
 		if err != nil {
 			log.Error().Err(err).Interface("value", req.Image.Header).Msg("error when upload image")
 			c.JSON(http.StatusInternalServerError, createErrorResponse[BrandResponse](UploadFileCode, "", err))
 			return
 		}
-		updateParam.ImageUrl = &fileName
-		updateParam.ImageID = &fileID
+		updateParam.ImageUrl = &imgUrl
+		updateParam.ImageID = &imgID
+	}
+
+	if oldImageID != nil {
+		errMsg, err := sv.uploadService.RemoveFile(c, *oldImageID)
+		if err != nil {
+			log.Error().Err(err).Msg("error when remove old image")
+			c.JSON(http.StatusInternalServerError, createErrorResponse[BrandResponse](UploadFileCode, errMsg, err))
+			return
+		}
+		log.Info().Msgf("old image %s removed", *oldImageID)
 	}
 
 	if req.Slug != nil {

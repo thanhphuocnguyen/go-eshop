@@ -1,10 +1,23 @@
 basePath: /api/v1
 definitions:
+  api.Address:
+    properties:
+      city:
+        type: string
+      district:
+        type: string
+      phone:
+        type: string
+      street:
+        type: string
+      ward:
+        type: string
+    type: object
   api.AddressResponse:
     properties:
-      address:
-        type: string
       city:
+        type: string
+      created_at:
         type: string
       default:
         type: boolean
@@ -13,6 +26,8 @@ definitions:
       id:
         type: integer
       phone:
+        type: string
+      street:
         type: string
       ward:
         type: string
@@ -416,30 +431,30 @@ definitions:
     type: object
   api.AttributeValue:
     properties:
+      code:
+        type: string
       display_order:
         type: integer
-      display_value:
-        type: string
       id:
         type: integer
       is_active:
         type: boolean
-      value:
+      name:
         type: string
     type: object
   api.AttributeValueRequest:
     properties:
+      code:
+        type: string
       display_order:
         minimum: 0
         type: integer
-      display_value:
-        type: string
       is_active:
         type: boolean
-      value:
+      name:
         type: string
     required:
-    - value
+    - code
     type: object
   api.BrandResponse:
     properties:
@@ -469,18 +484,11 @@ definitions:
       updated_at:
         type: string
     type: object
-  api.CartItemAttribute:
-    properties:
-      name:
-        type: string
-      value:
-        type: string
-    type: object
   api.CartItemResponse:
     properties:
       attributes:
         items:
-          $ref: '#/definitions/api.CartItemAttribute'
+          $ref: '#/definitions/repository.AttributeDataSnapshot'
         type: array
       discount:
         type: integer
@@ -519,10 +527,6 @@ definitions:
         type: string
       name:
         type: string
-      products:
-        items:
-          $ref: '#/definitions/api.ProductListModel'
-        type: array
       published:
         type: boolean
       remarkable:
@@ -534,30 +538,37 @@ definitions:
     type: object
   api.CheckoutRequest:
     properties:
+      address:
+        $ref: '#/definitions/api.Address'
       address_id:
         type: integer
+      email:
+        type: string
+      full_name:
+        type: string
       payment_gateway:
         enum:
         - stripe
-        - paypal
-        - visa
-        - mastercard
-        - apple_pay
-        - google_pay
-        - postpaid
-        - momo
-        - zalo_pay
-        - vn_pay
+        type: string
+      payment_method:
+        enum:
+        - code
+        - stripe
+        type: string
+      payment_receipt_email:
         type: string
     required:
-    - address_id
-    - payment_gateway
+    - payment_method
     type: object
   api.CheckoutResponse:
     properties:
+      client_secret:
+        type: string
       order_id:
         type: string
       payment_id:
+        type: string
+      payment_intent_id:
         type: string
     type: object
   api.CollectionResponse:
@@ -594,6 +605,7 @@ definitions:
       street:
         type: string
       ward:
+        maxLength: 100
         type: string
     required:
     - city
@@ -615,7 +627,7 @@ definitions:
   api.CreateCategoryRequest:
     properties:
       description:
-        maxLength: 255
+        maxLength: 1000
         type: string
       display_order:
         type: integer
@@ -710,8 +722,6 @@ definitions:
         type: string
       session_id:
         type: string
-      user:
-        $ref: '#/definitions/api.UserResponse'
     type: object
   api.MetaInfo:
     properties:
@@ -726,6 +736,12 @@ definitions:
     type: object
   api.OrderDetailResponse:
     properties:
+      created_at:
+        type: string
+      customer_email:
+        type: string
+      customer_name:
+        type: string
       id:
         type: string
       payment_info:
@@ -734,6 +750,8 @@ definitions:
         items:
           $ref: '#/definitions/api.OrderItemResponse'
         type: array
+      shipping_info:
+        $ref: '#/definitions/repository.ShippingAddressSnapshot'
       status:
         $ref: '#/definitions/repository.OrderStatus'
       total:
@@ -741,10 +759,16 @@ definitions:
     type: object
   api.OrderItemResponse:
     properties:
+      attribute_snapshot:
+        items:
+          $ref: '#/definitions/repository.AttributeDataSnapshot'
+        type: array
       id:
         type: string
       image_url:
         type: string
+      line_total:
+        type: number
       name:
         type: string
       quantity:
@@ -799,24 +823,26 @@ definitions:
     type: object
   api.PaymentRequest:
     properties:
-      cart_id:
-        minimum: 1
-        type: integer
-      gateway:
+      order_id:
+        type: string
+      payment_method:
+        enum:
+        - cod
+        - stripe
         type: string
     required:
-    - cart_id
-    - gateway
+    - order_id
+    - payment_method
     type: object
   api.PaymentResponse:
     properties:
       details: {}
       gateway:
         $ref: '#/definitions/repository.PaymentGateway'
+      id:
+        type: string
       status:
         $ref: '#/definitions/repository.PaymentStatus'
-      transaction_id:
-        type: string
     type: object
   api.ProductListModel:
     properties:
@@ -842,16 +868,6 @@ definitions:
         type: string
       variant_count:
         type: integer
-    type: object
-  api.PutCartItemReq:
-    properties:
-      quantity:
-        type: integer
-      variant_id:
-        type: string
-    required:
-    - quantity
-    - variant_id
     type: object
   api.RefreshTokenResponse:
     properties:
@@ -896,8 +912,6 @@ definitions:
     properties:
       address_1:
         type: string
-      address_2:
-        type: string
       city:
         type: string
       district:
@@ -922,24 +936,31 @@ definitions:
     type: object
   api.UpdateAttributeValueRequest:
     properties:
+      code:
+        type: string
       display_order:
         minimum: 0
         type: integer
-      display_value:
-        type: string
       id:
         type: integer
       is_active:
         type: boolean
-      value:
+      name:
         type: string
     required:
-    - value
+    - code
+    type: object
+  api.UpdateCartItemQtyReq:
+    properties:
+      quantity:
+        type: integer
+    required:
+    - quantity
     type: object
   api.UpdateCategoryRequest:
     properties:
       description:
-        maxLength: 255
+        maxLength: 1000
         type: string
       display_order:
         type: integer
@@ -1010,8 +1031,10 @@ definitions:
         maxLength: 32
         minLength: 3
         type: string
-      role:
-        $ref: '#/definitions/repository.UserRole'
+      phone:
+        maxLength: 15
+        minLength: 8
+        type: string
       user_id:
         type: string
     required:
@@ -1046,13 +1069,6 @@ definitions:
       verified_phone:
         type: boolean
     type: object
-  api.updateCartItemRequest:
-    properties:
-      quantity:
-        type: integer
-    required:
-    - quantity
-    type: object
   gin.H:
     additionalProperties: {}
     type: object
@@ -1064,6 +1080,13 @@ definitions:
         $ref: '#/definitions/textproto.MIMEHeader'
       size:
         type: integer
+    type: object
+  repository.AttributeDataSnapshot:
+    properties:
+      name:
+        type: string
+      value:
+        type: string
     type: object
   repository.CreateProductVariantTxParams:
     properties:
@@ -1111,7 +1134,6 @@ definitions:
     - visa
     - mastercard
     - apple_pay
-    - google_pay
     - postpaid
     - momo
     - zalo_pay
@@ -1123,7 +1145,6 @@ definitions:
     - PaymentGatewayVisa
     - PaymentGatewayMastercard
     - PaymentGatewayApplePay
-    - PaymentGatewayGooglePay
     - PaymentGatewayPostpaid
     - PaymentGatewayMomo
     - PaymentGatewayZaloPay
@@ -1154,6 +1175,25 @@ definitions:
     required:
     - id
     - value_id
+    type: object
+  repository.ShippingAddressSnapshot:
+    properties:
+      city:
+        type: string
+      district:
+        type: string
+      phone:
+        type: string
+      street:
+        type: string
+      ward:
+        type: string
+    required:
+    - city
+    - district
+    - phone
+    - street
+    - ward
     type: object
   repository.UpdateUserRow:
     properties:
@@ -1485,6 +1525,39 @@ paths:
       summary: Update an address
       tags:
       - address
+  /address/{id}/default:
+    put:
+      consumes:
+      - application/json
+      description: Set default address
+      parameters:
+      - description: Address ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gin.H'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Set default address
+      tags:
+      - address
   /attributes:
     get:
       consumes:
@@ -1659,7 +1732,7 @@ paths:
       summary: Create a new cart
       tags:
       - carts
-  /cart/checkout:
+  /cart/checkoutHandler:
     post:
       consumes:
       - application/json
@@ -1741,36 +1814,6 @@ paths:
       summary: Remove a product from the cart
       tags:
       - carts
-  /cart/item/{id}/quantity:
-    put:
-      consumes:
-      - application/json
-      description: update product items in the cart
-      parameters:
-      - description: Update cart items input
-        in: body
-        name: input
-        required: true
-        schema:
-          $ref: '#/definitions/api.updateCartItemRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
-      summary: Update product items in the cart
-      tags:
-      - carts
   /cart/item/{variant_id}:
     post:
       consumes:
@@ -1782,7 +1825,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/api.PutCartItemReq'
+          $ref: '#/definitions/api.UpdateCartItemQtyReq'
       produces:
       - application/json
       responses:
@@ -2518,15 +2561,15 @@ paths:
       summary: Initiate payment
       tags:
       - payment
-  /payment/{order_id}:
+  /payment/{id}:
     get:
       consumes:
       - application/json
-      description: Get payment transaction by order ID
+      description: Get payment  by order ID
       parameters:
       - description: Order ID
         in: path
-        name: order_id
+        name: id
         required: true
         type: integer
       produces:
@@ -2558,7 +2601,7 @@ paths:
             $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
       security:
       - BearerAuth: []
-      summary: Get payment transaction by order ID
+      summary: Get payment  by order ID
       tags:
       - payment
   /payment/{payment_id}:
@@ -2760,6 +2803,68 @@ paths:
       summary: Update a product by ID
       tags:
       - products
+  /shop/Brands:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of Brands for the shop
+      operationId: get-shop-Brands
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+      summary: Get a list of Brands for the shop
+  /shop/collections:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of Collections
+      operationId: get-Shop-Collections
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
+      summary: Get a list of Collections
   /users:
     get:
       consumes:

@@ -46,7 +46,7 @@ type LoginMethod = 'email' | 'username';
 
 export default function LoginFormComponent() {
   const router = useRouter();
-  const { mutateUser } = useAppUser();
+  const { setIsLoggedIn } = useAppUser();
   const [loginMethod, setLoginMethod] = useState<LoginMethod>('email');
 
   const form = useForm<LoginForm>({
@@ -111,7 +111,7 @@ export default function LoginFormComponent() {
       setCookie('refresh_token', result.data.refresh_token, {
         expires: new Date(result.data.refresh_token_expires_at),
       });
-      mutateUser?.();
+      setIsLoggedIn(true);
       toast.success('Login successful!');
       router.refresh();
       router.push('/');

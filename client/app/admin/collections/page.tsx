@@ -1,4 +1,5 @@
 'use client';
+
 import { ADMIN_API_PATHS } from '@/lib/constants/api';
 import Link from 'next/link';
 import { Button } from '@headlessui/react';

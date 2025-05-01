@@ -9,6 +9,7 @@ import {
   GeneralCategoryModel,
   GenericResponse,
   CategoryProductModel,
+  CategoryListResponse,
 } from '@/lib/definitions';
 import Loading from '@/app/loading';
 import { CategoryEditForm } from '../../_components/CategoryEditForm';
@@ -25,7 +26,7 @@ export default function AdminBrandDetail({
   const { data: brand, isLoading } = useSWR(
     ADMIN_API_PATHS.BRAND.replace(':id', slug),
     async (url) => {
-      const response = await apiFetch<GenericResponse<GeneralCategoryModel>>(
+      const response = await apiFetch<GenericResponse<CategoryListResponse>>(
         url,
         {}
       );
@@ -77,7 +78,7 @@ export default function AdminBrandDetail({
   }
 
   return (
-    <div>
+    <div className='h-full overflow-auto my-auto'>
       <Link
         href='/admin/brands'
         className='flex space-x-2 items-center hover:underline text-blue-400'
@@ -86,7 +87,7 @@ export default function AdminBrandDetail({
         <span className='text-blue-500'>Back to brands</span>
       </Link>
       <CategoryEditForm
-        data={brand}
+        data={brand?.category}
         handleSave={handleSave}
         title='Brand Detail'
       />
