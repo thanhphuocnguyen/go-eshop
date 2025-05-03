@@ -64,10 +64,6 @@ SELECT
     a.id as attr_id, a.name as attr_name,
     av.id as attr_val_id, av.code as attr_val_code, av.display_order as attr_display_order, 
     av.is_active as attr_val_is_active, av.name as attr_val_name
-    -- img.id AS img_id, img.url AS img_url, img.alt_text AS img_alt, 
-    -- img.caption AS img_cap, img.mime_type AS img_mime_type, img.file_size AS image_size, 
-    -- img.width AS img_w, img.height AS img_h, img.external_id AS img_external_id,
-    -- ia.display_order AS img_assignment_display_order, ia.role AS img_assignment_role
 FROM
     product_variants AS v
 JOIN variant_attribute_values as vav ON v.id = vav.variant_id
@@ -83,7 +79,7 @@ ORDER BY
 SELECT
     p.*,
     first_img.id AS img_id, first_img.url AS img_url,
-    COUNT(v.id) AS variant_count
+    COUNT(v.id) AS variant_count, MIN(v.price)::DECIMAL AS min_price, MAX(v.price)::DECIMAL AS max_price
 FROM products as p
 LEFT JOIN product_variants as v ON p.id = v.product_id
 LEFT JOIN LATERAL (
@@ -108,7 +104,7 @@ LIMIT $1 OFFSET $2;
 SELECT
     p.*,
     first_img.id AS img_id, first_img.url AS img_url,
-    COUNT(v.id) AS variant_count
+    COUNT(v.id) AS variant_count, MIN(v.price)::DECIMAL AS min_price, MAX(v.price)::DECIMAL AS max_price
 FROM
     products AS p
 LEFT JOIN product_variants as v ON p.id = v.product_id
@@ -137,8 +133,10 @@ OFFSET
 -- name: GetProductsByCollectionID :many
 SELECT
     p.*,
-    first_img.id AS img_id, first_img.url AS img_url
+    first_img.id AS img_id, first_img.url AS img_url,
+    COUNT(v.id) AS variant_count, MIN(v.price)::DECIMAL AS min_price, MAX(v.price)::DECIMAL AS max_price
 FROM products AS p
+LEFT JOIN product_variants as v ON p.id = v.product_id
 LEFT JOIN LATERAL (
     SELECT img.id, img.url
     FROM image_assignments as ia
@@ -148,10 +146,12 @@ LEFT JOIN LATERAL (
     LIMIT 1
 ) AS first_img ON true
 WHERE
-    p.is_active = COALESCE(sqlc.narg('is_active'), is_active) AND
-    p.name ILIKE COALESCE(sqlc.narg('name'), name) AND
-    p.base_sku ILIKE COALESCE(sqlc.narg('base_sku'), base_sku) AND
+    p.is_active = COALESCE(sqlc.narg('is_active'), p.is_active) AND
+    p.name ILIKE COALESCE(sqlc.narg('name'), p.name) AND
+    p.base_sku ILIKE COALESCE(sqlc.narg('base_sku'), p.base_sku) AND
     p.collection_id = $1
+GROUP BY
+    p.id, first_img.id, first_img.url
 ORDER BY p.id
 LIMIT $2
 OFFSET $3;

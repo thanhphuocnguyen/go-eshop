@@ -1,4 +1,2 @@
-export * from './DataTable/TableCell';
-export * from './DataTable/TableCellHead';
-export * from './DataTable/TableRow';
-export * from './DataTable/DataTable';
+export { default as AdminNavbar } from './AdminNavbar';
+export { default as AdminSidebar } from './AdminSidebar';

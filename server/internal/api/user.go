@@ -286,20 +286,18 @@ func (sv *Server) verifyEmailHandler(c *gin.Context) {
 		return
 	}
 
-	_, err = sv.repo.UpdateVerifyEmail(c, repository.UpdateVerifyEmailParams{
-		ID:         verifyEmail.ID,
-		VerifyCode: query.VerifyCode,
+	// Create a transaction to ensure both operations succeed or fail together
+	err = sv.repo.VerifyEmailTx(c, repository.VerifyEmailTxArgs{
+		VerifyEmail: verifyEmail,
+		VerifyCode:  query.VerifyCode,
 	})
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 		return
 	}
-	boolVal := true
-	updatedUser, err := sv.repo.UpdateUser(c, repository.UpdateUserParams{
-		ID:            verifyEmail.UserID,
-		VerifiedEmail: &boolVal,
-	})
+
+	user, err := sv.repo.GetUserByID(c, verifyEmail.UserID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 		return
@@ -308,7 +306,7 @@ func (sv *Server) verifyEmailHandler(c *gin.Context) {
 	// Render HTML success page
 	c.Header("Content-Type", "text/html")
 	c.HTML(http.StatusOK, "verification-success.html", gin.H{
-		"username": updatedUser.Username,
-		"email":    updatedUser.Email,
+		"username": user.Username,
+		"email":    user.Email,
 	})
 }

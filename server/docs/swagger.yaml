@@ -147,21 +147,6 @@ definitions:
       success:
         type: boolean
     type: object
-  api.ApiResponse-api_ImageResponse:
-    properties:
-      data:
-        $ref: '#/definitions/api.ImageResponse'
-      error:
-        $ref: '#/definitions/api.ApiError'
-      message:
-        type: string
-      meta:
-        $ref: '#/definitions/api.MetaInfo'
-      pagination:
-        $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
-    type: object
   api.ApiResponse-api_LoginResponse:
     properties:
       data:
@@ -527,6 +512,10 @@ definitions:
         type: string
       name:
         type: string
+      products:
+        items:
+          $ref: '#/definitions/api.ProductListModel'
+        type: array
       published:
         type: boolean
       remarkable:
@@ -1703,10 +1692,26 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/api.ApiResponse-api_CartDetailResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gin.H'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/gin.H'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CartDetailResponse'
+            $ref: '#/definitions/gin.H'
       summary: Get cart details by user ID
       tags:
       - cart
@@ -1724,11 +1729,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CartDetailResponse'
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gin.H'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/gin.H'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CartDetailResponse'
+            $ref: '#/definitions/gin.H'
       summary: Create a new cart
       tags:
       - carts
@@ -1754,11 +1771,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CheckoutResponse'
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gin.H'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/gin.H'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CheckoutResponse'
+            $ref: '#/definitions/gin.H'
       summary: Update product items in the cart
       tags:
       - carts
@@ -1777,11 +1806,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gin.H'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/gin.H'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/gin.H'
       summary: Clear the cart
       tags:
       - carts
@@ -1806,11 +1847,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-string'
+            $ref: '#/definitions/gin.H'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gin.H'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/gin.H'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-string'
+            $ref: '#/definitions/gin.H'
       summary: Remove a product from the cart
       tags:
       - carts
@@ -1836,11 +1889,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-uuid_UUID'
+            $ref: '#/definitions/gin.H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-uuid_UUID'
+            $ref: '#/definitions/gin.H'
       summary: Add a product to the cart
       tags:
       - carts
@@ -1869,11 +1922,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/gin.H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/gin.H'
       summary: Get a list of Categories
     post:
       consumes:
@@ -1897,11 +1950,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/gin.H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/gin.H'
       summary: Create a new Category
   /categories/{id}:
     delete:
@@ -1925,11 +1978,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/gin.H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/gin.H'
       summary: Delete a Category
     get:
       consumes:
@@ -1952,15 +2005,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/gin.H'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/gin.H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/gin.H'
       summary: Get a Category by ID
     put:
       consumes:
@@ -1989,11 +2042,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/gin.H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/gin.H'
       summary: Update a Category
   /categories/{id}/products:
     get:
@@ -2025,11 +2078,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
+            $ref: '#/definitions/gin.H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
+            $ref: '#/definitions/gin.H'
       summary: Get a list of Products by Category ID
   /collections:
     get:
@@ -2056,11 +2109,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
+            $ref: '#/definitions/gin.H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
+            $ref: '#/definitions/gin.H'
       summary: Get a list of Collections
     post:
       consumes:
@@ -2084,11 +2137,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
+            $ref: '#/definitions/gin.H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
+            $ref: '#/definitions/gin.H'
       summary: Create a new Collection
   /collections/{id}:
     delete:
@@ -2112,11 +2165,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/gin.H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/gin.H'
       summary: Delete a Collection
     get:
       consumes:
@@ -2139,15 +2192,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/gin.H'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/gin.H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/gin.H'
       summary: Get a Collection by ID
     put:
       consumes:
@@ -2176,11 +2229,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
+            $ref: '#/definitions/gin.H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
+            $ref: '#/definitions/gin.H'
       summary: Update a Collection
   /collections/{id}/products:
     get:
@@ -2204,15 +2257,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_ProductListModel'
+            $ref: '#/definitions/gin.H'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_ProductListModel'
+            $ref: '#/definitions/gin.H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_ProductListModel'
+            $ref: '#/definitions/gin.H'
       summary: Get a list of Products by Collection ID
   /images/{publicID}:
     delete:
@@ -2235,11 +2288,11 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/gin.H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/gin.H'
       summary: Remove a product by external ID
       tags:
       - images
@@ -2264,11 +2317,11 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/gin.H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/gin.H'
       summary: Remove a product image by ID
       tags:
       - images
@@ -2292,11 +2345,11 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_ImageResponse'
+            $ref: '#/definitions/gin.H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_ImageResponse'
+            $ref: '#/definitions/gin.H'
       summary: Get list of product image by ID
       tags:
       - images
@@ -2325,11 +2378,11 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_ImageResponse'
+            $ref: '#/definitions/gin.H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_ImageResponse'
+            $ref: '#/definitions/gin.H'
       summary: Upload product images
       tags:
       - images
@@ -2859,11 +2912,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
+            $ref: '#/definitions/gin.H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
+            $ref: '#/definitions/gin.H'
       summary: Get a list of Collections
   /users:
     get:

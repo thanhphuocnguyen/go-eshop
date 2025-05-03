@@ -1,5 +1,3 @@
-import { CategoryProductModel } from './product';
-
 export type GeneralCategoryModel = {
   id: string;
   name: string;
@@ -10,11 +8,7 @@ export type GeneralCategoryModel = {
   remarkable: boolean;
   created_at: Date;
   updated_at: Date;
-};
-
-export type CategoryListResponse = {
-  category: GeneralCategoryModel;
-  products: CategoryProductModel[];
+  products?: ProductCategory[];
 };
 
 export type ProductCategory = {

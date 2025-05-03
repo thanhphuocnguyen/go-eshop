@@ -195,6 +195,13 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 			collections.DELETE(":id", sv.deleteCollection)
 			collections.GET(":id/products", sv.getProductsByCollection)
 		}
+
+		images := admin.Group("images")
+		{
+			productImages := images.Group("products")
+			productImages.POST(":entity_id", sv.uploadProductImagesHandler)
+			productImages.DELETE(":entity_id", sv.removeImage)
+		}
 	}
 }
 
@@ -241,9 +248,7 @@ func (sv *Server) setupImageRoutes(rg *gin.RouterGroup) {
 	images := rg.Group("images", authMiddleware(sv.tokenGenerator))
 	{
 		images.DELETE("remove-external/:public_id", sv.removeImageByPublicID)
-		images.GET("", sv.getImages)
-		images.POST("product/:entity_id", sv.uploadProductImages)
-		images.DELETE(":entity_id", sv.removeImage)
+		images.GET("", sv.getProductImagesHandler)
 	}
 }
 

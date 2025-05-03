@@ -31,7 +31,6 @@ const _apiPaths = {
   COLLECTION: 'collections/:slug',
   COLLECTION_PRODUCTS: 'collections/:slug/products',
   PRODUCT_IMAGES_UPLOAD: 'images/product/:id',
-  PRODUCT_VARIANT_IMAGE_UPLOAD: 'images/product-variant/:id',
 } as const;
 
 const _adminPaths = {
@@ -49,8 +48,7 @@ const _adminPaths = {
   COLLECTIONS: 'collections',
   COLLECTION: 'collections/:id',
   COLLECTION_PRODUCTS: 'collections/:id/products',
-  PRODUCT_IMAGES_UPLOAD: 'images/product/:id',
-  PRODUCT_VARIANT_IMAGE_UPLOAD: 'images/product-variant/:id',
+  PRODUCT_IMAGES_UPLOAD: 'images/products/:id',
   USERS: 'users',
   USER: 'users/:id',
   UPDATE_USER_ROLE: 'users/:id/role',

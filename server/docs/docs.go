@@ -718,10 +718,34 @@ const docTemplate = `{
                             "$ref": "#/definitions/api.ApiResponse-api_CartDetailResponse"
                         }
                     },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CartDetailResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -748,13 +772,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CartDetailResponse"
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CartDetailResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -794,13 +836,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CheckoutResponse"
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CheckoutResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -829,13 +889,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-bool"
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-bool"
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -873,13 +951,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-string"
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-string"
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -919,13 +1015,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-uuid_UUID"
+                            "$ref": "#/definitions/gin.H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-uuid_UUID"
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -966,13 +1062,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -1008,13 +1104,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -1050,19 +1146,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -1105,13 +1201,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -1145,13 +1241,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-bool"
+                            "$ref": "#/definitions/gin.H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-bool"
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -1199,13 +1295,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_ProductListModel"
+                            "$ref": "#/definitions/gin.H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_ProductListModel"
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -1246,13 +1342,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CollectionResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CollectionResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -1288,13 +1384,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CollectionResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CollectionResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -1330,19 +1426,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -1385,13 +1481,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CollectionResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CollectionResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -1425,13 +1521,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-bool"
+                            "$ref": "#/definitions/gin.H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-bool"
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -1467,19 +1563,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-array_api_ProductListModel"
+                            "$ref": "#/definitions/gin.H"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-array_api_ProductListModel"
+                            "$ref": "#/definitions/gin.H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-array_api_ProductListModel"
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -1517,13 +1613,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_ImageResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_ImageResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -1566,13 +1662,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-array_api_ImageResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-array_api_ImageResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -1608,13 +1704,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-bool"
+                            "$ref": "#/definitions/gin.H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-bool"
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -1652,13 +1748,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-bool"
+                            "$ref": "#/definitions/gin.H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-bool"
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -2473,13 +2569,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CollectionResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CollectionResponse"
+                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -3070,29 +3166,6 @@ const docTemplate = `{
                 }
             }
         },
-        "api.ApiResponse-api_ImageResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/api.ImageResponse"
-                },
-                "error": {
-                    "$ref": "#/definitions/api.ApiError"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
-                },
-                "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
-                },
-                "success": {
-                    "type": "boolean"
-                }
-            }
-        },
         "api.ApiResponse-api_LoginResponse": {
             "type": "object",
             "properties": {
@@ -3649,6 +3722,12 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "products": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.ProductListModel"
+                    }
                 },
                 "published": {
                     "type": "boolean"

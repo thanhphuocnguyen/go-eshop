@@ -242,19 +242,17 @@ func (sv *Server) getBrandByIDHandler(c *gin.Context) {
 		return
 	}
 
-	colResp := CategoryWithProductsResponse{
-		CategoryResponse: CategoryResponse{
-			ID:          result.ID.String(),
-			Name:        result.Name,
-			Description: result.Description,
-			Slug:        result.Slug,
-			Published:   result.Published,
-			CreatedAt:   result.CreatedAt.Format("2006-01-02 15:04:05"),
-			UpdatedAt:   result.UpdatedAt.Format("2006-01-02 15:04:05"),
-			ImageUrl:    result.ImageUrl,
-			Remarkable:  *result.Remarkable,
-		},
-		Products: nil,
+	colResp := CategoryResponse{
+		ID:          result.ID.String(),
+		Name:        result.Name,
+		Description: result.Description,
+		Slug:        result.Slug,
+		Published:   result.Published,
+		CreatedAt:   result.CreatedAt.Format("2006-01-02 15:04:05"),
+		UpdatedAt:   result.UpdatedAt.Format("2006-01-02 15:04:05"),
+		ImageUrl:    result.ImageUrl,
+		Remarkable:  *result.Remarkable,
+		Products:    nil,
 	}
 	c.JSON(http.StatusOK, createSuccessResponse(c, colResp, "", nil, nil))
 }

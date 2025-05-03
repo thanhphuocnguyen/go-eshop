@@ -49,8 +49,8 @@ type CollectionResponse struct {
 // @Param page query int false "Page number"
 // @Param page_size query int false "Page size"
 // @Success 200 {object} ApiResponse[CollectionResponse]
-// @Failure 400 {object} ApiResponse[CollectionResponse]
-// @Failure 500 {object} ApiResponse[CollectionResponse]
+// @Failure 400 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /shop/collections [get]
 func (sv *Server) getShopCollectionsHandler(c *gin.Context) {
 }
@@ -65,8 +65,8 @@ func (sv *Server) getShopCollectionsHandler(c *gin.Context) {
 // @Produce json
 // @Param request body CreateCategoryRequest true "Collection info"
 // @Success 201 {object} ApiResponse[CollectionResponse]
-// @Failure 400 {object} ApiResponse[CollectionResponse]
-// @Failure 500 {object} ApiResponse[CollectionResponse]
+// @Failure 400 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /collections [post]
 func (sv *Server) createCollection(c *gin.Context) {
 	var req CreateCategoryRequest
@@ -113,8 +113,8 @@ func (sv *Server) createCollection(c *gin.Context) {
 // @Param page query int false "Page number"
 // @Param page_size query int false "Page size"
 // @Success 200 {object} ApiResponse[CollectionResponse]
-// @Failure 400 {object} ApiResponse[CollectionResponse]
-// @Failure 500 {object} ApiResponse[CollectionResponse]
+// @Failure 400 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /collections [get]
 func (sv *Server) getCollections(c *gin.Context) {
 	var queries getCollectionsQueries
@@ -166,9 +166,9 @@ func (sv *Server) getCollections(c *gin.Context) {
 // @Produce json
 // @Param id path int true "Collection ID"
 // @Success 200 {object} ApiResponse[CategoryResponse]
-// @Failure 400 {object} ApiResponse[CategoryResponse]
-// @Failure 404 {object} ApiResponse[CategoryResponse]
-// @Failure 500 {object} ApiResponse[CategoryResponse]
+// @Failure 400 {object} gin.H
+// @Failure 404 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /collections/{id} [get]
 func (sv *Server) getCollectionByID(c *gin.Context) {
 	var param getCollectionParams
@@ -189,19 +189,17 @@ func (sv *Server) getCollectionByID(c *gin.Context) {
 
 	firstRow := rows[0]
 	products := make([]ProductListModel, 0)
-	colResp := CategoryWithProductsResponse{
-		CategoryResponse: CategoryResponse{
-			ID:          firstRow.ID.String(),
-			Slug:        firstRow.Slug,
-			Description: firstRow.Description,
-			Published:   firstRow.Published,
-			Name:        firstRow.Name,
-			Remarkable:  *firstRow.Remarkable,
-			ImageUrl:    firstRow.ImageUrl,
-			CreatedAt:   firstRow.CreatedAt.Format("2006-01-02 15:04:05"),
-			UpdatedAt:   firstRow.UpdatedAt.Format("2006-01-02 15:04:05"),
-		},
-		Products: products,
+	colResp := CategoryResponse{
+		ID:          firstRow.ID.String(),
+		Slug:        firstRow.Slug,
+		Description: firstRow.Description,
+		Published:   firstRow.Published,
+		Name:        firstRow.Name,
+		Remarkable:  *firstRow.Remarkable,
+		ImageUrl:    firstRow.ImageUrl,
+		CreatedAt:   firstRow.CreatedAt.Format("2006-01-02 15:04:05"),
+		UpdatedAt:   firstRow.UpdatedAt.Format("2006-01-02 15:04:05"),
+		Products:    products,
 	}
 
 	for i, row := range rows {
@@ -232,9 +230,9 @@ func (sv *Server) getCollectionByID(c *gin.Context) {
 // @Produce json
 // @Param id path int true "Collection ID"
 // @Success 200 {object} ApiResponse[[]ProductListModel]
-// @Failure 400 {object} ApiResponse[[]ProductListModel]
-// @Failure 404 {object} ApiResponse[[]ProductListModel]
-// @Failure 500 {object} ApiResponse[[]ProductListModel]
+// @Failure 400 {object} gin.H
+// @Failure 404 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /collections/{id}/products [get]
 func (sv *Server) getProductsByCollection(c *gin.Context) {
 	var param getCollectionParams
@@ -283,8 +281,8 @@ func (sv *Server) getProductsByCollection(c *gin.Context) {
 // @Param id path int true "Collection ID"
 // @Param request body CreateCategoryRequest true "Collection info"
 // @Success 200 {object} ApiResponse[CollectionResponse]
-// @Failure 400 {object} ApiResponse[CollectionResponse]
-// @Failure 500 {object} ApiResponse[CollectionResponse]
+// @Failure 400 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /collections/{id} [put]
 func (sv *Server) updateCollection(c *gin.Context) {
 	var param getCollectionParams
@@ -356,8 +354,8 @@ func (sv *Server) updateCollection(c *gin.Context) {
 // @Produce json
 // @Param id path int true "Collection ID"
 // @Success 204 {object} ApiResponse[bool]
-// @Failure 400 {object} ApiResponse[bool]
-// @Failure 500 {object} ApiResponse[bool]
+// @Failure 400 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /collections/{id} [delete]
 func (sv *Server) deleteCollection(c *gin.Context) {
 	var colID getCollectionParams
@@ -382,5 +380,5 @@ func (sv *Server) deleteCollection(c *gin.Context) {
 		return
 	}
 	message := fmt.Sprintf("Collection with ID %s deleted", colID.ID)
-	c.JSON(http.StatusOK, createSuccessResponse[bool](c, true, message, nil, nil))
+	c.JSON(http.StatusOK, createSuccessResponse(c, true, message, nil, nil))
 }

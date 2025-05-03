@@ -14,6 +14,7 @@ import {
   ProductFormSchema,
   ProductModelForm,
   VariantModelForm,
+  UploadImageResponseModel,
 } from '@/lib/definitions';
 
 import { useProductDetailFormContext } from '../_lib/contexts/ProductFormContext';
@@ -23,10 +24,11 @@ import { apiFetch } from '@/lib/apis/api';
 import { ADMIN_API_PATHS } from '@/lib/constants/api';
 import { toast } from 'react-toastify';
 import { ConfirmDialog } from '@/components/Common/Dialogs/ConfirmDialog';
+import { KeyedMutator } from 'swr';
 
 interface ProductEditFormProps {
   productDetail?: ProductDetailModel;
-  mutate?: () => void;
+  mutate?: KeyedMutator<ProductDetailModel>;
 }
 
 export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
@@ -92,38 +94,6 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
     formState: { isDirty, isSubmitting, dirtyFields },
   } = productForm;
 
-  useEffect(() => {
-    if (productDetail) {
-      reset(
-        {
-          variants: productDetail.variants,
-          product_info: {
-            category: productDetail.category,
-            brand: productDetail.brand,
-            collection: productDetail.collection,
-            description: productDetail.description,
-            name: productDetail.name,
-            price: productDetail.price,
-            sku: productDetail.sku,
-            is_active: productDetail.is_active,
-            slug: productDetail.slug,
-            images: productDetail.product_images.map((image) => ({
-              id: image.id,
-              url: image.url,
-              role: image.role,
-              assignments: image.assignments.map(
-                (assignment) => assignment.entity_id
-              ),
-            })),
-          },
-        },
-        {
-          keepDirty: false,
-        }
-      );
-    }
-  }, [productDetail, reset]);
-
   const handleDeleteProduct = async () => {
     if (!productDetail?.id) return;
 
@@ -150,6 +120,34 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
       setShowDeleteConfirm(false);
     }
   };
+
+  useEffect(() => {
+    if (productDetail) {
+      reset({
+        variants: productDetail.variants,
+        product_info: {
+          category: productDetail.category,
+          brand: productDetail.brand,
+          collection: productDetail.collection,
+          description: productDetail.description,
+          name: productDetail.name,
+          price: productDetail.price,
+          sku: productDetail.sku,
+          is_active: productDetail.is_active,
+          slug: productDetail.slug,
+          images: productDetail.product_images.map((image) => ({
+            id: image.id,
+            url: image.url,
+            role: image.role,
+            assignments: image.assignments.map(
+              (assignment) => assignment.entity_id
+            ),
+          })),
+        },
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productDetail]);
 
   return (
     <div className='h-full px-6 py-3 overflow-auto'>
@@ -235,6 +233,7 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
       />
     </div>
   );
+
   async function submitHandler(data: ProductModelForm) {
     console.log(data);
     let productID = productDetail?.id;
@@ -242,7 +241,6 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
     let isAllSuccess = true;
     if (dirtyFields.product_info) {
       const rs = await onSubmitProductDetail(productData);
-      // Success handling
       productID = rs;
       isAllSuccess &&= !!rs;
     }
@@ -269,8 +267,9 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
       redirect(`/admin/products/${productID}`);
     }
     if (isAllSuccess && mutate) {
-      mutate();
+      await mutate();
     }
+    reset();
   }
 
   async function onUploadImages(productId: string) {
@@ -289,13 +288,12 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
       }
     });
 
-    const { error, data } = await apiFetch<GenericResponse<unknown>>(
-      ADMIN_API_PATHS.PRODUCT_IMAGES_UPLOAD.replaceAll(':id', productId),
-      {
-        method: 'POST',
-        body: productImageFormData,
-      }
-    );
+    const { error, data } = await apiFetch<
+      GenericResponse<UploadImageResponseModel>
+    >(ADMIN_API_PATHS.PRODUCT_IMAGES_UPLOAD.replaceAll(':id', productId), {
+      method: 'POST',
+      body: productImageFormData,
+    });
 
     if (error) {
       toast.error('Failed to upload images');

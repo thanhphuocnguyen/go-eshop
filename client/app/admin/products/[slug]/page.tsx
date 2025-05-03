@@ -24,6 +24,14 @@ export default function ProductFormEditPage({
     );
   }
 
+  if (!productDetail) {
+    return (
+      <div className='flex justify-center items-center h-full'>
+        <div className='text-lg font-bold'>Product not found</div>
+      </div>
+    );
+  }
+
   return (
     <div className='h-full overflow-hidden'>
       <ProductDetailFormProvider>

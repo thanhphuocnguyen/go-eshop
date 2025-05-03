@@ -48,12 +48,16 @@ func (s *pgRepo) UpdateProductImagesTx(ctx context.Context, arg []UpdateProdImag
 				// Create new image assignments
 				createBulkImgAssignmentParams := make([]CreateBulkImageAssignmentsParams, 0)
 				for _, variantID := range image.VariantIDs {
-					createBulkImgAssignmentParams = append(createBulkImgAssignmentParams, CreateBulkImageAssignmentsParams{
+					createImgAssignmentParams := CreateBulkImageAssignmentsParams{
 						ImageID:      image.ImageID,
 						EntityID:     variantID,
 						EntityType:   VariantEntityType,
 						DisplayOrder: 1,
-					})
+					}
+					if image.Role != nil {
+						createImgAssignmentParams.Role = *image.Role
+					}
+					createBulkImgAssignmentParams = append(createBulkImgAssignmentParams, createImgAssignmentParams)
 				}
 				_, err = q.CreateBulkImageAssignments(ctx, createBulkImgAssignmentParams)
 				if err != nil {

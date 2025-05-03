@@ -33,20 +33,16 @@ type CreateCategoryRequest struct {
 }
 
 type CategoryResponse struct {
-	ID          string  `json:"id"`
-	Name        string  `json:"name"`
-	Description *string `json:"description,omitempty"`
-	Slug        string  `json:"slug"`
-	Published   bool    `json:"published,omitempty"`
-	Remarkable  bool    `json:"remarkable,omitempty"`
-	CreatedAt   string  `json:"created_at,omitempty"`
-	UpdatedAt   string  `json:"updated_at,omitempty"`
-	ImageUrl    *string `json:"image_url,omitempty"`
-}
-
-type CategoryWithProductsResponse struct {
-	CategoryResponse `json:"category,inline"`
-	Products         []ProductListModel `json:"products"`
+	ID          string             `json:"id"`
+	Name        string             `json:"name"`
+	Description *string            `json:"description,omitempty"`
+	Slug        string             `json:"slug"`
+	Published   bool               `json:"published,omitempty"`
+	Remarkable  bool               `json:"remarkable,omitempty"`
+	CreatedAt   string             `json:"created_at,omitempty"`
+	UpdatedAt   string             `json:"updated_at,omitempty"`
+	ImageUrl    *string            `json:"image_url,omitempty"`
+	Products    []ProductListModel `json:"products,omitempty"`
 }
 
 type getCategoryParams struct {
@@ -71,8 +67,8 @@ type CategoryProductRequest struct {
 // @Param page query int false "Page number"
 // @Param page_size query int false "Page size"
 // @Success 200 {object} ApiResponse[CategoryResponse]
-// @Failure 400 {object} ApiResponse[CategoryResponse]
-// @Failure 500 {object} ApiResponse[CategoryResponse]
+// @Failure 400 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /categories [get]
 func (sv *Server) getCategoriesHandler(c *gin.Context) {
 	var query PaginationQueryParams
@@ -99,24 +95,22 @@ func (sv *Server) getCategoriesHandler(c *gin.Context) {
 		return
 	}
 
-	categoriesResp := make([]CategoryWithProductsResponse, len(categories))
+	categoriesResp := make([]CategoryResponse, len(categories))
 	var wg sync.WaitGroup
 	productChannel := make(chan []ProductListModel, len(categories))
 	for i, category := range categories {
 		wg.Add(1)
-		categoriesResp[i] = CategoryWithProductsResponse{
-			CategoryResponse: CategoryResponse{
-				ID:          category.ID.String(),
-				Name:        category.Name,
-				Slug:        category.Slug,
-				Published:   category.Published,
-				CreatedAt:   category.CreatedAt.String(),
-				UpdatedAt:   category.UpdatedAt.String(),
-				Description: category.Description,
-				Remarkable:  *category.Remarkable,
-				ImageUrl:    category.ImageUrl,
-			},
-			Products: []ProductListModel{},
+		categoriesResp[i] = CategoryResponse{
+			ID:          category.ID.String(),
+			Name:        category.Name,
+			Slug:        category.Slug,
+			Published:   category.Published,
+			CreatedAt:   category.CreatedAt.String(),
+			UpdatedAt:   category.UpdatedAt.String(),
+			Description: category.Description,
+			Remarkable:  *category.Remarkable,
+			ImageUrl:    category.ImageUrl,
+			Products:    []ProductListModel{},
 		}
 		go func() {
 			defer wg.Done()
@@ -177,8 +171,8 @@ func (sv *Server) getCategoriesHandler(c *gin.Context) {
 // @Produce json
 // @Param request body CreateCategoryRequest true "Category request"
 // @Success 201 {object} ApiResponse[CategoryResponse]
-// @Failure 400 {object} ApiResponse[CategoryResponse]
-// @Failure 500 {object} ApiResponse[CategoryResponse]
+// @Failure 400 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /categories [post]
 func (sv *Server) addCategoryHandler(c *gin.Context) {
 	var req CreateCategoryRequest
@@ -235,8 +229,8 @@ func (sv *Server) addCategoryHandler(c *gin.Context) {
 // @Param page query int false "Page number"
 // @Param page_size query int false "Page size"
 // @Success 200 {object} ApiResponse[CategoryResponse]
-// @Failure 400 {object} ApiResponse[CategoryResponse]
-// @Failure 500 {object} ApiResponse[CategoryResponse]
+// @Failure 400 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /categories [get]
 func (sv *Server) getAdminCategoriesHandler(c *gin.Context) {
 	var query PaginationQueryParams
@@ -300,9 +294,9 @@ func (sv *Server) getAdminCategoriesHandler(c *gin.Context) {
 // @Produce json
 // @Param id path int true "Category ID"
 // @Success 200 {object} ApiResponse[CategoryResponse]
-// @Failure 400 {object} ApiResponse[CategoryResponse]
-// @Failure 404 {object} ApiResponse[CategoryResponse]
-// @Failure 500 {object} ApiResponse[CategoryResponse]
+// @Failure 400 {object} gin.H
+// @Failure 404 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /categories/{id} [get]
 func (sv *Server) getCategoryByID(c *gin.Context) {
 	var param getCategoryParams
@@ -346,8 +340,8 @@ func (sv *Server) getCategoryByID(c *gin.Context) {
 // @Param page query int false "Page number"
 // @Param page_size query int false "Page size"
 // @Success 200 {object} ApiResponse[[]ProductListModel]
-// @Failure 400 {object} ApiResponse[ProductListModel]
-// @Failure 500 {object} ApiResponse[ProductListModel]
+// @Failure 400 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /categories/{id}/products [get]
 func (sv *Server) getProductsByCategory(c *gin.Context) {
 	var param getCategoryParams
@@ -405,8 +399,8 @@ func (sv *Server) getProductsByCategory(c *gin.Context) {
 // @Param id path int true "Category ID"
 // @Param request body UpdateCategoryRequest true "Category request"
 // @Success 200 {object} ApiResponse[CategoryResponse]
-// @Failure 400 {object} ApiResponse[CategoryResponse]
-// @Failure 500 {object} ApiResponse[CategoryResponse]
+// @Failure 400 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /categories/{id} [put]
 func (sv *Server) updateCategory(c *gin.Context) {
 	var param getCategoryParams
@@ -484,8 +478,8 @@ func (sv *Server) updateCategory(c *gin.Context) {
 // @Produce json
 // @Param id path int true "Category ID"
 // @Success 204 {object} ApiResponse[bool]
-// @Failure 400 {object} ApiResponse[bool]
-// @Failure 500 {object} ApiResponse[bool]
+// @Failure 400 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /categories/{id} [delete]
 func (sv *Server) deleteCategory(c *gin.Context) {
 	var colID getCategoryParams

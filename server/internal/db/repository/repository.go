@@ -19,6 +19,7 @@ type Repository interface {
 	SetPrimaryAddressTx(ctx context.Context, arg SetPrimaryAddressTxArgs) error
 	CancelOrderTx(ctx context.Context, params CancelOrderTxArgs) (Order, error)
 	RefundOrderTx(ctx context.Context, params RefundOrderTxArgs) error
+	VerifyEmailTx(ctx context.Context, arg VerifyEmailTxArgs) error
 	QueryRaw(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error)
 	UpdateProductVariantsTx(ctx context.Context, productID uuid.UUID, arg UpdateProdVariantsTxArgs) (UpdateProductVariantsTxResult, error)
 	UpdateProductImagesTx(ctx context.Context, arg []UpdateProdImagesTxArgs) (err error)

@@ -85,8 +85,11 @@ type CheckoutResponse struct {
 // @Accept json
 // @Produce json
 // @Success 200 {object} ApiResponse[CartDetailResponse]
-// @Failure 400 {object} ApiResponse[CartDetailResponse]
-// @Failure 500 {object} ApiResponse[CartDetailResponse]
+// @Failure 400 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Failure 404 {object} gin.H
+// @Failure 403 {object} gin.H
+// @Failure 401 {object} gin.H
 // @Router /cart [post]
 func (sv *Server) createCart(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
@@ -137,7 +140,11 @@ func (sv *Server) createCart(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Success 200 {object} ApiResponse[CartDetailResponse]
-// @Failure 500 {object} ApiResponse[CartDetailResponse]
+// @Failure 500 {object} gin.H
+// @Failure 400 {object} gin.H
+// @Failure 404 {object} gin.H
+// @Failure 403 {object} gin.H
+// @Failure 401 {object} gin.H
 // @Router /cart [get]
 func (sv *Server) getCartHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
@@ -198,8 +205,8 @@ func (sv *Server) getCartHandler(c *gin.Context) {
 // @Param input body UpdateCartItemQtyReq true "Add product to cart input"
 // @Produce json
 // @Success 200 {object} ApiResponse[uuid.UUID]
-// @Failure 400 {object} ApiResponse[uuid.UUID]
-// @Failure 500 {object} ApiResponse[uuid.UUID]
+// @Failure 400 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /cart/item/{variant_id} [post]
 func (sv *Server) updateCartItemQtyHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
@@ -283,8 +290,11 @@ func (sv *Server) updateCartItemQtyHandler(c *gin.Context) {
 // @Param id path int true "Product ID"
 // @Produce json
 // @Success 200 {object} ApiResponse[string]
-// @Failure 400 {object} ApiResponse[string]
-// @Failure 500 {object} ApiResponse[string]
+// @Failure 400 {object} gin.H
+// @Failure 404 {object} gin.H
+// @Failure 403 {object} gin.H
+// @Failure 401 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /cart/item/{id} [delete]
 func (sv *Server) removeCartItem(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
@@ -337,8 +347,11 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 // @Param input body CheckoutRequest true "Checkout input"
 // @Produce json
 // @Success 200 {object} ApiResponse[CheckoutResponse]
-// @Failure 400 {object} ApiResponse[CheckoutResponse]
-// @Failure 500 {object} ApiResponse[CheckoutResponse]
+// @Failure 400 {object} gin.H
+// @Failure 404 {object} gin.H
+// @Failure 403 {object} gin.H
+// @Failure 401 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /cart/checkoutHandler [post]
 func (sv *Server) checkoutHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
@@ -576,8 +589,11 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Success 200 {object} ApiResponse[bool]
-// @Failure 400 {object} ApiResponse[bool]
-// @Failure 500 {object} ApiResponse[bool]
+// @Failure 400 {object} gin.H
+// @Failure 404 {object} gin.H
+// @Failure 403 {object} gin.H
+// @Failure 401 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /cart/clear [put]
 func (sv *Server) clearCart(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)

@@ -7,6 +7,7 @@ import (
 	"mime"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -59,10 +60,10 @@ type ImageResponse struct {
 // @Param files formData file true "Image file"
 // @Produce json
 // @Success 200 {object} ApiResponse[[]ImageResponse]
-// @Failure 404 {object} ApiResponse[[]ImageResponse]
-// @Failure 500 {object} ApiResponse[[]ImageResponse]
+// @Failure 404 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /images/product/{product_id} [post]
-func (sv *Server) uploadProductImages(c *gin.Context) {
+func (sv *Server) uploadProductImagesHandler(c *gin.Context) {
 	var param EntityIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](InvalidBodyCode, "", err))
@@ -133,67 +134,79 @@ func (sv *Server) uploadProductImages(c *gin.Context) {
 		return
 	}
 
-	images := make([]ImageResponse, len(files))
-
+	images := make([]ImageResponse, 0)
+	imagesChan := make(chan ImageResponse, len(files))
+	var wg sync.WaitGroup
 	for i, file := range files {
-		id, url, err := sv.uploadService.UploadFile(c, file)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[[]ImageResponse](UploadFileCode, "upload to server failed", err))
-			return
-		}
+		wg.Add(1)
 
-		mimeType := mime.TypeByExtension(file.Filename)
-
-		img, err := sv.repo.CreateImage(c, repository.CreateImageParams{
-			ExternalID: id,
-			Url:        url,
-			MimeType:   &mimeType,
-			FileSize:   &file.Size,
-		})
-
-		createImageAssignmentReq := make([]repository.CreateBulkImageAssignmentsParams, 0)
-		createImageAssignmentReq = append(createImageAssignmentReq, repository.CreateBulkImageAssignmentsParams{
-			ImageID:      img.ID,
-			EntityID:     existingProduct.ID,
-			EntityType:   repository.ProductEntityType,
-			DisplayOrder: int16(i) + 1,
-			Role:         strings.ToLower(roles[i]),
-		})
-
-		for _, assignment := range assignmentsList[i] {
-			if assignment == "" {
-				continue
-			}
-
-			variantID, err := uuid.Parse(assignment)
+		go func() {
+			defer wg.Done()
+			id, url, err := sv.uploadService.UploadFile(c, file)
 			if err != nil {
-				c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](InternalServerErrorCode, "", errors.New("invalid variant id")))
-
+				c.JSON(http.StatusInternalServerError, createErrorResponse[[]ImageResponse](UploadFileCode, "upload to server failed", err))
 				return
 			}
 
+			mimeType := mime.TypeByExtension(file.Filename)
+
+			img, err := sv.repo.CreateImage(c, repository.CreateImageParams{
+				ExternalID: id,
+				Url:        url,
+				MimeType:   &mimeType,
+				FileSize:   &file.Size,
+			})
+
+			createImageAssignmentReq := make([]repository.CreateBulkImageAssignmentsParams, 0)
 			createImageAssignmentReq = append(createImageAssignmentReq, repository.CreateBulkImageAssignmentsParams{
 				ImageID:      img.ID,
-				EntityID:     variantID,
-				EntityType:   repository.VariantEntityType,
+				EntityID:     existingProduct.ID,
+				EntityType:   repository.ProductEntityType,
 				DisplayOrder: int16(i) + 1,
-				Role:         repository.GalleryRole,
+				Role:         strings.ToLower(roles[i]),
 			})
-		}
-		_, err = sv.repo.CreateBulkImageAssignments(c, createImageAssignmentReq)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[[]ImageResponse](InternalServerErrorCode, "save image info to db failed", err))
-			return
-		}
 
-		images[i] = ImageResponse{
-			ID:         img.ID,
-			ExternalID: img.ExternalID,
-			Url:        img.Url,
-			MimeType:   *img.MimeType,
-			FileSize:   *img.FileSize,
-		}
+			for _, assignment := range assignmentsList[i] {
+				if assignment == "" {
+					continue
+				}
+
+				variantID, err := uuid.Parse(assignment)
+				if err != nil {
+					c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](InternalServerErrorCode, "", errors.New("invalid variant id")))
+
+					return
+				}
+
+				createImageAssignmentReq = append(createImageAssignmentReq, repository.CreateBulkImageAssignmentsParams{
+					ImageID:      img.ID,
+					EntityID:     variantID,
+					EntityType:   repository.VariantEntityType,
+					DisplayOrder: int16(i) + 1,
+					Role:         repository.GalleryRole,
+				})
+			}
+			_, err = sv.repo.CreateBulkImageAssignments(c, createImageAssignmentReq)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, createErrorResponse[[]ImageResponse](InternalServerErrorCode, "save image info to db failed", err))
+				return
+			}
+
+			imagesChan <- ImageResponse{
+				ID:         img.ID,
+				ExternalID: img.ExternalID,
+				Url:        img.Url,
+				MimeType:   *img.MimeType,
+				FileSize:   *img.FileSize,
+			}
+		}()
 	}
+	wg.Wait()
+	close(imagesChan)
+	for img := range imagesChan {
+		images = append(images, img)
+	}
+
 	c.JSON(http.StatusCreated, createSuccessResponse(c, images, "", nil, nil))
 
 }
@@ -206,10 +219,10 @@ func (sv *Server) uploadProductImages(c *gin.Context) {
 // @Param product_id path int true "Product ID"
 // @Produce json
 // @Success 200 {object} ApiResponse[[]ImageResponse]
-// @Failure 404 {object} ApiResponse[ImageResponse]
-// @Failure 500 {object} ApiResponse[ImageResponse]
+// @Failure 404 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /images/product/{product_id} [get]
-func (sv *Server) getImages(c *gin.Context) {
+func (sv *Server) getProductImagesHandler(c *gin.Context) {
 	var param EntityIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[ImageResponse](InvalidBodyCode, "", err))
@@ -246,8 +259,8 @@ func (sv *Server) getImages(c *gin.Context) {
 // @Param product_id path int true "Product ID"
 // @Produce json
 // @Success 200 {object} ApiResponse[bool]
-// @Failure 404 {object} ApiResponse[bool]
-// @Failure 500 {object} ApiResponse[bool]
+// @Failure 404 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /images/product/{product_id} [delete]
 func (sv *Server) removeImage(c *gin.Context) {
 	_, ok := c.MustGet(authorizationPayload).(*auth.Payload)
@@ -296,8 +309,8 @@ func (sv *Server) removeImage(c *gin.Context) {
 // @Param publicID path int true "Product ID"
 // @Produce json
 // @Success 200 {object} ApiResponse[bool]
-// @Failure 404 {object} ApiResponse[bool]
-// @Failure 500 {object} ApiResponse[bool]
+// @Failure 404 {object} gin.H
+// @Failure 500 {object} gin.H
 // @Router /images/{publicID} [delete]
 func (sv *Server) removeImageByPublicID(c *gin.Context) {
 	_, ok := c.MustGet(authorizationPayload).(*auth.Payload)

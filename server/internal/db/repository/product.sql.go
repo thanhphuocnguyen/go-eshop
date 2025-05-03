@@ -358,10 +358,6 @@ SELECT
     a.id as attr_id, a.name as attr_name,
     av.id as attr_val_id, av.code as attr_val_code, av.display_order as attr_display_order, 
     av.is_active as attr_val_is_active, av.name as attr_val_name
-    -- img.id AS img_id, img.url AS img_url, img.alt_text AS img_alt, 
-    -- img.caption AS img_cap, img.mime_type AS img_mime_type, img.file_size AS image_size, 
-    -- img.width AS img_w, img.height AS img_h, img.external_id AS img_external_id,
-    -- ia.display_order AS img_assignment_display_order, ia.role AS img_assignment_role
 FROM
     product_variants AS v
 JOIN variant_attribute_values as vav ON v.id = vav.variant_id
@@ -439,7 +435,7 @@ const getProducts = `-- name: GetProducts :many
 SELECT
     p.id, p.name, p.description, p.base_price, p.base_sku, p.slug, p.is_active, p.category_id, p.collection_id, p.brand_id, p.created_at, p.updated_at,
     first_img.id AS img_id, first_img.url AS img_url,
-    COUNT(v.id) AS variant_count
+    COUNT(v.id) AS variant_count, MIN(v.price)::DECIMAL AS min_price, MAX(v.price)::DECIMAL AS max_price
 FROM products as p
 LEFT JOIN product_variants as v ON p.id = v.product_id
 LEFT JOIN LATERAL (
@@ -485,6 +481,8 @@ type GetProductsRow struct {
 	ImgID        int32          `json:"img_id"`
 	ImgUrl       string         `json:"img_url"`
 	VariantCount int64          `json:"variant_count"`
+	MinPrice     pgtype.Numeric `json:"min_price"`
+	MaxPrice     pgtype.Numeric `json:"max_price"`
 }
 
 func (q *Queries) GetProducts(ctx context.Context, arg GetProductsParams) ([]GetProductsRow, error) {
@@ -518,6 +516,8 @@ func (q *Queries) GetProducts(ctx context.Context, arg GetProductsParams) ([]Get
 			&i.ImgID,
 			&i.ImgUrl,
 			&i.VariantCount,
+			&i.MinPrice,
+			&i.MaxPrice,
 		); err != nil {
 			return nil, err
 		}
@@ -639,7 +639,7 @@ const getProductsByCategoryID = `-- name: GetProductsByCategoryID :many
 SELECT
     p.id, p.name, p.description, p.base_price, p.base_sku, p.slug, p.is_active, p.category_id, p.collection_id, p.brand_id, p.created_at, p.updated_at,
     first_img.id AS img_id, first_img.url AS img_url,
-    COUNT(v.id) AS variant_count
+    COUNT(v.id) AS variant_count, MIN(v.price)::DECIMAL AS min_price, MAX(v.price)::DECIMAL AS max_price
 FROM
     products AS p
 LEFT JOIN product_variants as v ON p.id = v.product_id
@@ -691,6 +691,8 @@ type GetProductsByCategoryIDRow struct {
 	ImgID        int32          `json:"img_id"`
 	ImgUrl       string         `json:"img_url"`
 	VariantCount int64          `json:"variant_count"`
+	MinPrice     pgtype.Numeric `json:"min_price"`
+	MaxPrice     pgtype.Numeric `json:"max_price"`
 }
 
 func (q *Queries) GetProductsByCategoryID(ctx context.Context, arg GetProductsByCategoryIDParams) ([]GetProductsByCategoryIDRow, error) {
@@ -725,6 +727,8 @@ func (q *Queries) GetProductsByCategoryID(ctx context.Context, arg GetProductsBy
 			&i.ImgID,
 			&i.ImgUrl,
 			&i.VariantCount,
+			&i.MinPrice,
+			&i.MaxPrice,
 		); err != nil {
 			return nil, err
 		}
@@ -739,8 +743,10 @@ func (q *Queries) GetProductsByCategoryID(ctx context.Context, arg GetProductsBy
 const getProductsByCollectionID = `-- name: GetProductsByCollectionID :many
 SELECT
     p.id, p.name, p.description, p.base_price, p.base_sku, p.slug, p.is_active, p.category_id, p.collection_id, p.brand_id, p.created_at, p.updated_at,
-    first_img.id AS img_id, first_img.url AS img_url
+    first_img.id AS img_id, first_img.url AS img_url,
+    COUNT(v.id) AS variant_count, MIN(v.price)::DECIMAL AS min_price, MAX(v.price)::DECIMAL AS max_price
 FROM products AS p
+LEFT JOIN product_variants as v ON p.id = v.product_id
 LEFT JOIN LATERAL (
     SELECT img.id, img.url
     FROM image_assignments as ia
@@ -750,10 +756,12 @@ LEFT JOIN LATERAL (
     LIMIT 1
 ) AS first_img ON true
 WHERE
-    p.is_active = COALESCE($4, is_active) AND
-    p.name ILIKE COALESCE($5, name) AND
-    p.base_sku ILIKE COALESCE($6, base_sku) AND
+    p.is_active = COALESCE($4, p.is_active) AND
+    p.name ILIKE COALESCE($5, p.name) AND
+    p.base_sku ILIKE COALESCE($6, p.base_sku) AND
     p.collection_id = $1
+GROUP BY
+    p.id, first_img.id, first_img.url
 ORDER BY p.id
 LIMIT $2
 OFFSET $3
@@ -783,6 +791,9 @@ type GetProductsByCollectionIDRow struct {
 	UpdatedAt    time.Time      `json:"updated_at"`
 	ImgID        int32          `json:"img_id"`
 	ImgUrl       string         `json:"img_url"`
+	VariantCount int64          `json:"variant_count"`
+	MinPrice     pgtype.Numeric `json:"min_price"`
+	MaxPrice     pgtype.Numeric `json:"max_price"`
 }
 
 func (q *Queries) GetProductsByCollectionID(ctx context.Context, arg GetProductsByCollectionIDParams) ([]GetProductsByCollectionIDRow, error) {
@@ -816,6 +827,9 @@ func (q *Queries) GetProductsByCollectionID(ctx context.Context, arg GetProducts
 			&i.UpdatedAt,
 			&i.ImgID,
 			&i.ImgUrl,
+			&i.VariantCount,
+			&i.MinPrice,
+			&i.MaxPrice,
 		); err != nil {
 			return nil, err
 		}

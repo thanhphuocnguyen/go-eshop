@@ -63,6 +63,8 @@ services:
         context: .
         dockerfile: Dockerfile-mailhog
     container_name: eshop-mailhog
+    volumes:
+      - ./volumes/mailhog/volume:/maildir
     ports:
       - 1025:1025
       - 8025:8025

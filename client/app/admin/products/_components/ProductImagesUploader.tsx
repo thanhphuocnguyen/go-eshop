@@ -34,10 +34,10 @@ export const ProductImagesUploader: React.FC<ProductImagesUploaderProps> = (
 ) => {
   const { productDetail } = props;
   const { setValue, control } = useFormContext<ProductModelForm>();
+
   const productImages = useWatch({
     control,
     name: 'product_info.images',
-    defaultValue: [],
   });
 
   const { tempProductImages, setTempProductImages } =
