@@ -1,18 +1,38 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Suspense } from 'react';
-import Loading from '../../loading';
 import CategoriesSection from './components/CategoriesSection';
 import CollectionsSection from './components/CollectionsSection';
 import { Metadata } from 'next';
 import { apiFetch } from '@/lib/apis/api';
 import { PUBLIC_API_PATHS } from '@/lib/constants/api';
 import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
+import { ArrowRightIcon } from '@heroicons/react/24/outline';
 
 export const metadata: Metadata = {
   title: 'Homepage',
   description:
     'Welcome to our homepage! Explore our latest products and collections.',
+};
+
+// No data placeholder component
+const NoDataPlaceholder = ({ type }: { type: string }) => {
+  return (
+    <div className='flex flex-col items-center justify-center py-10 bg-gray-50 rounded-lg border border-gray-200'>
+      <Image
+        src='/images/not-found.webp'
+        alt='No data available'
+        width={120}
+        height={120}
+        className='mb-4 opacity-60'
+      />
+      <h3 className='text-xl font-medium text-gray-700'>No {type} Available</h3>
+      <p className='text-gray-500 text-center mt-2'>
+        {type === 'Categories'
+          ? 'Categories will be displayed here when they become available.'
+          : 'Collections will be displayed here when they become available.'}
+      </p>
+    </div>
+  );
 };
 
 export default async function Home() {
@@ -59,9 +79,25 @@ export default async function Home() {
         </div>
       </section>
       <div className='px-10'>
-        <Suspense fallback={<Loading />}>
+        {data.categories && data.categories.length > 0 ? (
           <CategoriesSection categories={data.categories} />
-        </Suspense>
+        ) : (
+          <div className='pt-24'>
+            <div className='flex justify-between mb-2'>
+              <h4 className='font-bold text-2xl'>Shop by Category</h4>
+              <Link
+                href={'/categories'}
+                className='text-blue-500 flex space-x-2 items-center'
+              >
+                <span>Browse All Categories</span>
+                <span>
+                  <ArrowRightIcon className='size-4' />
+                </span>
+              </Link>
+            </div>
+            <NoDataPlaceholder type='Categories' />
+          </div>
+        )}
         <section className='relative pt-24 h-[700px]'>
           <div className='relative h-full'>
             <div className='relative w-full h-full'>
@@ -94,8 +130,13 @@ export default async function Home() {
             </div>
           </div>
         </section>
-        <CollectionsSection collections={data.collections ?? []} />
-
+        {data.collections && data.collections.length > 0 ? (
+          <CollectionsSection collections={data.collections} />
+        ) : (
+          <div className='pt-20 pb-10'>
+            <NoDataPlaceholder type='Collections' />
+          </div>
+        )}
         <section className='relative my-24 mb-40 h-[600px]'>
           <div className='h-full'>
             <div className='relative h-full rounded-md'>

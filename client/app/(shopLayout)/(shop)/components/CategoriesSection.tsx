@@ -25,20 +25,22 @@ export default function CategoriesSection({
       {categories?.length ? (
         <div className='h-[500px] grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4'>
           {categories.map((e) => (
-            <div className='relative bg-white rounded-md shadow-md' key={e.id}>
-              <h2 className='text-xl font-bold absolute bottom-5 text-white text-center left-0 right-0 mx-auto z-10 '>
-                {e.name}
-              </h2>
-              {
-                <Image
-                  fill
-                  alt='product-image'
-                  className='object-cover rounded-md'
-                  src={e.image_url ?? '/images/product-placeholder.webp'}
-                />
-              }
-              <div className='absolute z-0 h-1/2 opacity-45 inset-x-0 bottom-0 bg-gradient-to-t from-slate-600 via-white to-transparent rounded-md'></div>
-            </div>
+            <Link href={`/categories/${e.slug}`} key={e.id} className="block w-full h-full">
+              <div className='relative bg-white rounded-md shadow-md h-full'>
+                <h2 className='text-xl font-bold absolute bottom-5 text-white text-center left-0 right-0 mx-auto z-10 '>
+                  {e.name}
+                </h2>
+                {
+                  <Image
+                    fill
+                    alt='product-image'
+                    className='object-cover rounded-md'
+                    src={e.image_url ?? '/images/product-placeholder.webp'}
+                  />
+                }
+                <div className='absolute z-0 h-1/2 opacity-45 inset-x-0 bottom-0 bg-gradient-to-t from-slate-600 via-white to-transparent rounded-md'></div>
+              </div>
+            </Link>
           ))}
         </div>
       ) : null}
