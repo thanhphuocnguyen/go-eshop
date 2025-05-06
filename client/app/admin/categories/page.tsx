@@ -114,6 +114,7 @@ export default function Page() {
                     <div className='h-10 w-10 relative'>
                       <Image
                         src={category.image_url}
+                        sizes='100%'
                         alt={category.name}
                         fill
                         className='object-cover rounded'

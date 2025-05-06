@@ -235,7 +235,6 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
   );
 
   async function submitHandler(data: ProductModelForm) {
-    console.log(data);
     let productID = productDetail?.id;
     const { variants, ...productData } = data;
     let isAllSuccess = true;

@@ -23,6 +23,8 @@ services:
       - "5433:5432"
     networks:
       - eshop-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d eshop -U postgres"]
       interval: 10s
@@ -73,3 +75,7 @@ services:
 networks:
   eshop-network:
     driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local

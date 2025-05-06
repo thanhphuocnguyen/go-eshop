@@ -11,8 +11,8 @@ CREATE TABLE
         category_id UUID REFERENCES categories (id) ON DELETE SET NULL,
         collection_id UUID REFERENCES collections (id) ON DELETE SET NULL,
         brand_id UUID REFERENCES brands (id) ON DELETE SET NULL,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW ()
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
 -- Create Products variants table
@@ -25,8 +25,8 @@ CREATE TABLE
         stock INT NOT NULL DEFAULT 0,
         weight DECIMAL(10, 2),
         is_active BOOLEAN DEFAULT TRUE,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW ()
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
 -- Create variant_attributes table

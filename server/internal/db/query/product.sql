@@ -43,10 +43,6 @@ SELECT
     c.id AS category_id, c.name AS category_name,
     cl.id AS collection_id, cl.name AS collection_name,
     b.id AS brand_id, b.name AS brand_name
-    -- img.id AS img_id, img.url AS img_url, img.alt_text AS img_alt, 
-    -- img.caption AS img_cap, img.mime_type AS img_mime_type, img.file_size AS image_size, 
-    -- img.width AS img_w, img.height AS img_h, img.external_id AS img_external_id,
-    -- ia.display_order AS img_assignment_display_order, ia.role AS img_assignment_role
 FROM
     products p
 JOIN categories as c ON p.category_id = c.id
@@ -92,12 +88,15 @@ LEFT JOIN LATERAL (
 ) AS first_img ON true
 WHERE
     p.is_active = COALESCE(sqlc.narg('is_active'), p.is_active) AND
-    p.name ILIKE COALESCE(sqlc.narg('name'), p.name) AND
-    p.base_sku ILIKE COALESCE(sqlc.narg('base_sku'), p.base_sku)
+    (p.name ILIKE COALESCE(sqlc.narg('search'), p.name) OR p.base_sku ILIKE COALESCE(sqlc.narg('search'), p.base_sku) OR p.description ILIKE COALESCE(sqlc.narg('search'), p.description))
+    AND p.category_id = COALESCE(sqlc.narg('category_id'), p.category_id)
+    AND p.collection_id = COALESCE(sqlc.narg('collection_id'), p.collection_id)
+    AND p.brand_id = COALESCE(sqlc.narg('brand_id'), p.brand_id)
+    AND p.slug ILIKE COALESCE(sqlc.narg('slug'), p.slug)
 GROUP BY
     p.id, first_img.id, first_img.url
 ORDER BY
-    p.id
+    @orderBy::text
 LIMIT $1 OFFSET $2;
 
 -- name: GetProductsByCategoryID :many
@@ -121,6 +120,37 @@ WHERE
     p.name ILIKE COALESCE(sqlc.narg('name'), name) AND
     p.base_sku ILIKE COALESCE(sqlc.narg('base_sku'), base_sku) AND
     p.category_id = $1
+GROUP BY
+    p.id, first_img.id, first_img.url
+ORDER BY
+    p.id
+LIMIT
+    $2
+OFFSET
+    $3;
+
+-- name: GetCategoryProducts :many
+SELECT
+    p.*,
+    first_img.id AS img_id, first_img.url AS img_url,
+    COUNT(v.id) AS variant_count, MIN(v.price)::DECIMAL AS min_price, MAX(v.price)::DECIMAL AS max_price
+FROM
+    products AS p
+JOIN categories as c ON p.category_id = c.id
+LEFT JOIN product_variants as v ON p.id = v.product_id
+LEFT JOIN LATERAL (
+    SELECT img.id, img.url
+    FROM image_assignments as ia
+    JOIN images as img ON img.id = ia.image_id
+    WHERE ia.entity_id = p.id AND ia.entity_type = 'product'
+    ORDER BY ia.display_order ASC, ia.id ASC
+    LIMIT 1
+) AS first_img ON true
+WHERE
+    p.is_active = COALESCE(sqlc.narg('is_active'), p.is_active) AND
+    p.name ILIKE COALESCE(sqlc.narg('name'), p.name) AND
+    p.base_sku ILIKE COALESCE(sqlc.narg('base_sku'), p.base_sku) AND
+    (c.slug = COALESCE(sqlc.narg('category_slug'), c.slug) OR c.id = COALESCE(sqlc.narg('category_id'), c.id))
 GROUP BY
     p.id, first_img.id, first_img.url
 ORDER BY

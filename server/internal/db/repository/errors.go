@@ -12,6 +12,7 @@ const (
 	UniqueViolation     = "23505"
 	Timeout             = "57014"
 	DeadLock            = "40P01"
+	RecordNotFound      = "42P01"
 )
 
 var ErrRecordNotFound = pgx.ErrNoRows
@@ -19,6 +20,7 @@ var ErrForeignKeyViolation = &pgconn.PgError{Code: ForeignKeyViolation}
 var ErrUniqueViolation = &pgconn.PgError{Code: UniqueViolation}
 var ErrTimeout = &pgconn.PgError{Code: Timeout}
 var ErrDeadlockDetected = &pgconn.PgError{Code: DeadLock}
+var ErrRecordNotFoundPgx = &pgconn.PgError{Code: RecordNotFound}
 var ErrInvalidPrice = errors.New("invalid price")
 
 func ErrorCode(err error) string {

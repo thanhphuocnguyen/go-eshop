@@ -305,7 +305,7 @@ func (sv *Server) verifyEmailHandler(c *gin.Context) {
 
 	// Render HTML success page
 	c.Header("Content-Type", "text/html")
-	c.HTML(http.StatusOK, "verification-success.html", gin.H{
+	c.HTML(http.StatusOK, "./static/templates/verification-success.html", gin.H{
 		"username": user.Username,
 		"email":    user.Email,
 	})

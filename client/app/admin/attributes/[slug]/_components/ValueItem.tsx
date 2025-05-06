@@ -19,15 +19,10 @@ const ValueItem: React.FC<ValueItemProps> = ({ idx, id, remove }) => {
   const { register, control } = useFormContext<AttributeFormModel>();
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id });
-  const [style, setStyle] = React.useState({});
-
-  React.useEffect(() => {
-    const style = {
-      transform: CSS.Transform.toString(transform),
-      transition,
-    };
-    setStyle(style);
-  }, [transform, transition]);
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
 
   return (
     <li

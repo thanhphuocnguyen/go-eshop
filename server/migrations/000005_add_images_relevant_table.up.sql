@@ -13,8 +13,8 @@ CREATE TABLE
         file_size BIGINT,
         width INT,
         height INT,
-        uploaded_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW ()
+        uploaded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
 -- Create image_assignments table
@@ -29,7 +29,7 @@ CREATE TABLE
             AND display_order <= 32767
         ),
         role VARCHAR(50) NOT NULL, -- e.g., 'product', 'category', etc.
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         UNIQUE (entity_id, entity_type, image_id)
     );
 

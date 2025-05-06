@@ -51,6 +51,7 @@ func (s *pgRepo) UpdateProductImagesTx(ctx context.Context, arg []UpdateProdImag
 					createImgAssignmentParams := CreateBulkImageAssignmentsParams{
 						ImageID:      image.ImageID,
 						EntityID:     variantID,
+						Role:         "gallery",
 						EntityType:   VariantEntityType,
 						DisplayOrder: 1,
 					}

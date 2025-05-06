@@ -92,6 +92,7 @@ type Querier interface {
 	GetCartItemsForOrder(ctx context.Context, cartID uuid.UUID) ([]GetCartItemsForOrderRow, error)
 	GetCategories(ctx context.Context, arg GetCategoriesParams) ([]Category, error)
 	GetCategoryByID(ctx context.Context, id uuid.UUID) (Category, error)
+	GetCategoryProducts(ctx context.Context, arg GetCategoryProductsParams) ([]GetCategoryProductsRow, error)
 	GetCategoryProductsByID(ctx context.Context, id uuid.UUID) ([]GetCategoryProductsByIDRow, error)
 	GetCollectionByID(ctx context.Context, id uuid.UUID) (Collection, error)
 	GetCollectionByIDWithProducts(ctx context.Context, id uuid.UUID) ([]GetCollectionByIDWithProductsRow, error)

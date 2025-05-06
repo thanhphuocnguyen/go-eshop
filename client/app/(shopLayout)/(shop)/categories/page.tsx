@@ -1,55 +1,28 @@
-'use client';
-
-import { apiFetch } from '@/lib/apis/api';
 import { PUBLIC_API_PATHS } from '@/lib/constants/api';
-import { CategoryListResponse, GenericResponse } from '@/lib/definitions';
+import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import CategoryProductSkeleton from '@/components/Product/CategoryProductSkeleton';
 import ProductCard from '@/components/Product/ProductCard';
 import { ArrowRightIcon } from '@heroicons/react/16/solid';
+import { apiFetch } from '@/lib/apis/api';
 
-export default function CategoryPage() {
-  const [categories, setCategories] = useState<CategoryListResponse[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Fetch all categories
-  useEffect(() => {
-    async function fetchCategories() {
-      try {
-        const { data } = await apiFetch<
-          GenericResponse<CategoryListResponse[]>
-        >(`${PUBLIC_API_PATHS.CATEGORIES}?page=1&page_size=10`);
-
-        if (data) {
-          setCategories(data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch categories:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchCategories();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className='container mx-auto px-4 py-8'>
-        <h1 className='text-3xl font-bold mb-8'>Categories</h1>
-        <div className='space-y-12'>
-          {[1, 2, 3].map((i) => (
-            <div key={i} className='animate-pulse'>
-              <div className='h-8 bg-gray-200 rounded w-1/4 mb-6'></div>
-              <CategoryProductSkeleton />
-            </div>
-          ))}
-        </div>
-      </div>
+async function getCategories() {
+  try {
+    // Using apiFetch utility instead of native fetch
+    const result = await apiFetch<GenericResponse<GeneralCategoryModel[]>>(
+      `${PUBLIC_API_PATHS.CATEGORIES}?page=1&page_size=10`
     );
+    
+    return result.data || [];
+  } catch (error) {
+    console.error('Failed to fetch categories:', error);
+    return [];
   }
+}
 
+export default async function CategoryPage() {
+  // Server component with async data fetching
+  const categories = await getCategories();
+  
   return (
     <div className='container mx-auto px-4 py-8'>
       <div className='mb-8'>
@@ -60,16 +33,16 @@ export default function CategoryPage() {
       <div className='space-y-12'>
         {categories.map((item) => (
           <div
-            key={item.category.id}
+            key={item.id}
             className='pb-8 border-b border-gray-200 last:border-0'
           >
             <div className='mb-4'>
               <div className='flex items-baseline mb-2 justify-between gap-2'>
                 <h2 className='text-2xl font-bold text-gray-800'>
-                  {item.category.name}
+                  {item.name}
                 </h2>
                 <Link
-                  href={`/categories/${item.category.slug}`}
+                  href={`/categories/${item.slug}`}
                   className='text-indigo-600 flex items-center text-base font-medium hover:underline'
                 >
                   View all
@@ -79,21 +52,19 @@ export default function CategoryPage() {
                 </Link>
               </div>
               <p className='text-gray-600 line-clamp-2'>
-                {item.category.description}
+                {item.description}
               </p>
             </div>
 
             <>
-              {item.products.length > 0 ? (
+              {item.products && item.products.length > 0 ? (
                 <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6'>
                   {item.products.slice(0, 5).map((product) => (
                     <ProductCard
                       key={product.id}
-                      ID={product.id}
+                      ID={parseInt(product.id)}
                       name={product.name}
-                      image={product.image_url}
-                      priceFrom={product.price_from}
-                      priceTo={product.price_to}
+                      image={product.image_url || ''}
                       rating={4.5}
                     />
                   ))}
@@ -104,7 +75,6 @@ export default function CategoryPage() {
                 </p>
               )}
             </>
-            {/* )} */}
           </div>
         ))}
 

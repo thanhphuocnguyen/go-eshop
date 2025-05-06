@@ -5,7 +5,7 @@ import { PUBLIC_API_PATHS } from '@/lib/constants/api';
 import { ProductListModel, GenericResponse } from '@/lib/definitions';
 import { Button } from '@headlessui/react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useSWR from 'swr';
 
 import dayjs from 'dayjs';
@@ -16,20 +16,21 @@ import {
   ChevronRightIcon,
   MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
+import { useDebounce } from '@/lib/hooks/useDebounce';
 
 export default function Page() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  const debouncedSearch = useDebounce(searchInput, 500); // 500ms delay
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
   const { data, isLoading } = useSWR(
-    [PUBLIC_API_PATHS.PRODUCTS, page, limit, search],
+    [PUBLIC_API_PATHS.PRODUCTS, page, limit, debouncedSearch],
     ([url, page, limit, search]) =>
       apiFetch<GenericResponse<ProductListModel[]>>(
-        `${url}?page=${page}&limit=${limit}&search=${search}`,
+        `${url}?page=${page}&page_size=${limit}&search=${search}`,
         {}
       ).then((response) => {
         // Store pagination data
@@ -59,11 +60,9 @@ export default function Page() {
     }
   };
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSearch(searchInput);
-    setPage(1); // Reset to first page when searching
-  };
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
 
   const handleLimitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setLimit(Number(e.target.value));
@@ -73,7 +72,7 @@ export default function Page() {
   if (isLoading) return <Loading />;
 
   return (
-    <div className='h-full'>
+    <div className='h-full overflow-auto'>
       <div className='flex justify-between items-center pt-4 pb-8'>
         <h2 className='text-2xl font-semibold text-primary'>Product List</h2>
         <Button
@@ -87,7 +86,7 @@ export default function Page() {
 
       {/* Search Filter */}
       <div className='mb-6'>
-        <form onSubmit={handleSearch} className='flex gap-2'>
+        <div className='flex gap-2'>
           <div className='relative flex-grow'>
             <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
               <MagnifyingGlassIcon className='w-5 h-5 text-gray-500' />
@@ -100,13 +99,7 @@ export default function Page() {
               onChange={(e) => setSearchInput(e.target.value)}
             />
           </div>
-          <Button
-            type='submit'
-            className='text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5'
-          >
-            Search
-          </Button>
-        </form>
+        </div>
       </div>
 
       <div className='relative overflow-x-auto shadow-md sm:rounded-lg'>

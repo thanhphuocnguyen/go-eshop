@@ -57,7 +57,7 @@ func (sv *Server) getShopCollectionsHandler(c *gin.Context) {
 
 // --- Admin API ---
 
-// createCollection creates a new Collection.
+// addCollectionHandler creates a new Collection.
 // @Summary Create a new Collection
 // @Description Create a new Collection
 // @ID create-Collection
@@ -68,7 +68,7 @@ func (sv *Server) getShopCollectionsHandler(c *gin.Context) {
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /collections [post]
-func (sv *Server) createCollection(c *gin.Context) {
+func (sv *Server) addCollectionHandler(c *gin.Context) {
 	var req CreateCategoryRequest
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CollectionResponse](InvalidBodyCode, "", err))
@@ -104,7 +104,7 @@ func (sv *Server) createCollection(c *gin.Context) {
 	c.JSON(http.StatusCreated, createSuccessResponse(c, col, "collection", nil, nil))
 }
 
-// getCollections retrieves a list of Collections.
+// getCollectionsHandler retrieves a list of Collections.
 // @Summary Get a list of Collections
 // @Description Get a list of Collections
 // @ID get-Collections
@@ -116,7 +116,7 @@ func (sv *Server) createCollection(c *gin.Context) {
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /collections [get]
-func (sv *Server) getCollections(c *gin.Context) {
+func (sv *Server) getCollectionsHandler(c *gin.Context) {
 	var queries getCollectionsQueries
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CollectionResponse](InvalidBodyCode, "", err))
@@ -158,7 +158,7 @@ func (sv *Server) getCollections(c *gin.Context) {
 
 }
 
-// getCollectionByID retrieves a Collection by its ID.
+// getCollectionByIDHandler retrieves a Collection by its ID.
 // @Summary Get a Collection by ID
 // @Description Get a Collection by ID
 // @ID get-Collection-by-id
@@ -170,7 +170,7 @@ func (sv *Server) getCollections(c *gin.Context) {
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /collections/{id} [get]
-func (sv *Server) getCollectionByID(c *gin.Context) {
+func (sv *Server) getCollectionByIDHandler(c *gin.Context) {
 	var param getCollectionParams
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
@@ -222,7 +222,7 @@ func (sv *Server) getCollectionByID(c *gin.Context) {
 	c.JSON(http.StatusOK, createSuccessResponse(c, colResp, "collection", nil, nil))
 }
 
-// getProductsByCollection retrieves a list of Products by Collection ID.
+// getProductsByCollectionHandler retrieves a list of Products by Collection ID.
 // @Summary Get a list of Products by Collection ID
 // @Description Get a list of Products by Collection ID
 // @ID get-Products-by-Collection
@@ -234,7 +234,7 @@ func (sv *Server) getCollectionByID(c *gin.Context) {
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /collections/{id}/products [get]
-func (sv *Server) getProductsByCollection(c *gin.Context) {
+func (sv *Server) getProductsByCollectionHandler(c *gin.Context) {
 	var param getCollectionParams
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[[]ProductListModel](InvalidBodyCode, "", err))
@@ -272,7 +272,7 @@ func (sv *Server) getProductsByCollection(c *gin.Context) {
 	c.JSON(http.StatusOK, createSuccessResponse(c, rows, "products", nil, nil))
 }
 
-// updateCollection updates a Collection.
+// updateCollectionHandler updates a Collection.
 // @Summary Update a Collection
 // @Description Update a Collection
 // @ID update-Collection
@@ -284,7 +284,7 @@ func (sv *Server) getProductsByCollection(c *gin.Context) {
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /collections/{id} [put]
-func (sv *Server) updateCollection(c *gin.Context) {
+func (sv *Server) updateCollectionHandler(c *gin.Context) {
 	var param getCollectionParams
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CollectionResponse](InvalidBodyCode, "", err))
@@ -297,7 +297,8 @@ func (sv *Server) updateCollection(c *gin.Context) {
 	}
 
 	collection, err := sv.repo.GetCollectionByID(c, uuid.MustParse(param.ID))
-
+	oldImageID := collection.ImageID
+	oldImageUrl := collection.ImageUrl
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, createErrorResponse[CollectionResponse](NotFoundCode, "", fmt.Errorf("collection with ID %s not found", param.ID)))
@@ -326,6 +327,14 @@ func (sv *Server) updateCollection(c *gin.Context) {
 
 		updateParam.ImageUrl = &url
 		updateParam.ImageID = &ID
+	}
+
+	// Delete old image
+	if oldImageID != nil && oldImageUrl != nil {
+		if msg, err := sv.uploadService.RemoveFile(c, *oldImageID); err != nil {
+			c.JSON(http.StatusInternalServerError, createErrorResponse[CollectionResponse](InternalServerErrorCode, msg, err))
+			return
+		}
 	}
 
 	if req.Published != nil {

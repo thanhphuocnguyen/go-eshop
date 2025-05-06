@@ -114,7 +114,7 @@ export const ProductFormSchema = z.object({
       })
       .array(),
   }),
-  variants: z.array(VariantFormSchema).min(1),
+  variants: z.array(VariantFormSchema),
 });
 
 export type ProductModelForm = z.infer<typeof ProductFormSchema>;

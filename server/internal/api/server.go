@@ -188,12 +188,12 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 
 		collections := admin.Group("collections")
 		{
-			collections.GET("", sv.getCollections)
-			collections.POST("", sv.createCollection)
-			collections.GET(":id", sv.getCollectionByID)
-			collections.PUT(":id", sv.updateCollection)
+			collections.GET("", sv.getCollectionsHandler)
+			collections.POST("", sv.addCollectionHandler)
+			collections.GET(":id", sv.getCollectionByIDHandler)
+			collections.PUT(":id", sv.updateCollectionHandler)
 			collections.DELETE(":id", sv.deleteCollection)
-			collections.GET(":id/products", sv.getProductsByCollection)
+			collections.GET(":id/products", sv.getProductsByCollectionHandler)
 		}
 
 		images := admin.Group("images")
@@ -238,8 +238,8 @@ func (sv *Server) setupUserRoutes(rg *gin.RouterGroup) {
 func (sv *Server) setupProductRoutes(rg *gin.RouterGroup) {
 	product := rg.Group("products")
 	{
-		product.GET("", sv.getProducts)
-		product.GET(":id", sv.getProductDetail)
+		product.GET("", sv.getProductsHandler)
+		product.GET(":id", sv.getProductDetailHandler)
 	}
 }
 
@@ -292,6 +292,7 @@ func (sv *Server) setupCategoryRoutes(rg *gin.RouterGroup) {
 	category := rg.Group("categories")
 	{
 		category.GET("", sv.getCategoriesHandler)
+		category.GET(":slug", sv.getCategoryProductsBySlug)
 	}
 }
 

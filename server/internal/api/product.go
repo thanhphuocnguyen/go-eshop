@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -15,9 +16,9 @@ import (
 )
 
 type ProductQueries struct {
-	PaginationQueryParams
-	Name *string `form:"name" binding:"omitempty,min=3,max=100"`
-	Sku  *string `form:"sku" binding:"omitempty,alphanum"`
+	Page     int64  `form:"page,default=1" binding:"omitempty,min=1"`
+	PageSize int64  `form:"page_size,default=20" binding:"omitempty,min=1,max=100"`
+	Search   string `form:"search" binding:"omitempty,max=1000"`
 }
 
 type ProductAttributeDetail struct {
@@ -197,7 +198,7 @@ func (sv *Server) createProduct(c *gin.Context) {
 // @Failure 404 {object} ApiResponse[ProductListModel]
 // @Failure 500 {object} ApiResponse[ProductListModel]
 // @Router /products/{product_id} [get]
-func (sv *Server) getProductDetail(c *gin.Context) {
+func (sv *Server) getProductDetailHandler(c *gin.Context) {
 	var params ProductParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[ProductModel](InvalidBodyCode, "", err))
@@ -262,7 +263,7 @@ func (sv *Server) getProductDetail(c *gin.Context) {
 // @Failure 404 {object} ApiResponse[ProductListModel]
 // @Failure 500 {object} ApiResponse[ProductListModel]
 // @Router /products [get]
-func (sv *Server) getProducts(c *gin.Context) {
+func (sv *Server) getProductsHandler(c *gin.Context) {
 	var queries ProductQueries
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[[]ProductListModel](InvalidBodyCode, "", err))
@@ -270,19 +271,16 @@ func (sv *Server) getProducts(c *gin.Context) {
 	}
 
 	dbParams := repository.GetProductsParams{
-		Limit:  20,
-		Offset: 0,
+		Limit:  queries.PageSize,
+		Offset: (queries.Page - 1) * queries.PageSize,
 	}
 
-	dbParams.Limit = queries.PageSize
-	dbParams.Offset = (queries.Page - 1) * queries.PageSize
-
-	if queries.Name != nil {
-		dbParams.Name = queries.Name
-	}
-
-	if queries.Sku != nil {
-		dbParams.BaseSku = queries.Sku
+	if queries.Search != "" {
+		queries.Search = strings.ReplaceAll(queries.Search, " ", "%")
+		queries.Search = strings.ReplaceAll(queries.Search, ",", "%")
+		queries.Search = strings.ReplaceAll(queries.Search, ":", "%")
+		queries.Search = "%" + queries.Search + "%"
+		dbParams.Search = &queries.Search
 	}
 
 	products, err := sv.repo.GetProducts(c, dbParams)
@@ -702,10 +700,8 @@ func mapToProductImages(productID uuid.UUID, imageRows []repository.GetProductIm
 				ID:           row.ID,
 				EntityID:     row.EntityID.String(),
 				EntityType:   row.EntityType,
+				Role:         row.Role,
 				DisplayOrder: row.DisplayOrder,
-			}
-			if row.EntityID.String() == productID.String() {
-				image.Role = row.Role
 			}
 			if row.EntityID.String() != productID.String() {
 				// If the image already exists, append the assignment to the existing image
@@ -717,11 +713,10 @@ func mapToProductImages(productID uuid.UUID, imageRows []repository.GetProductIm
 				ID:                 row.ID,
 				Url:                row.Url,
 				ExternalID:         row.ExternalID,
+				Role:               row.Role,
 				VariantAssignments: make([]ImageAssignment, 0),
 			}
-			if row.EntityID.String() == productID.String() {
-				image.Role = row.Role
-			}
+
 			if row.EntityID.String() != productID.String() {
 				image.VariantAssignments = append(image.VariantAssignments, ImageAssignment{
 					ID:           row.ID,

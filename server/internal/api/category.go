@@ -50,6 +50,10 @@ type getCategoryParams struct {
 	ProductID  *string `json:"product_id,omitempty"`
 }
 
+type CategorySlugParam struct {
+	CategorySlug string `uri:"slug" binding:"required"`
+}
+
 type CategoryProductRequest struct {
 	SortOrder int16 `json:"sort_order,omitempty"`
 }
@@ -151,6 +155,77 @@ func (sv *Server) getCategoriesHandler(c *gin.Context) {
 	for products := range productChannel {
 		categoriesResp[i].Products = products
 		i++
+	}
+
+	c.JSON(http.StatusOK, createSuccessResponse(
+		c,
+		categoriesResp,
+		fmt.Sprintf("Total %d categories", count),
+		nil,
+		nil,
+	))
+}
+
+// getCategoryProductsBySlug retrieves a list of Products by Category Slug.
+// @Summary Get a list of Products by Category Slug
+// @Description Get a list of Products by Category Slug
+// @ID get-Products-by-Category-Slug
+// @Accept json
+// @Produce json
+// @Param slug path int true "Category Slug"
+// @Param page query int false "Page number"
+// @Param page_size query int false "Page size"
+// @Success 200 {object} ApiResponse[CategoryResponse]
+// @Failure 400 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /categories/slug/{slug} [get]
+func (sv *Server) getCategoryProductsBySlug(c *gin.Context) {
+	var param CategorySlugParam
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
+		return
+	}
+	var query PaginationQueryParams
+	if err := c.ShouldBindQuery(&query); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
+		return
+	}
+
+	params := repository.GetCategoryProductsParams{
+		CategorySlug: &param.CategorySlug,
+		Limit:        (query.Page - 1) * query.PageSize,
+		Offset:       query.PageSize,
+	}
+
+	categories, err := sv.repo.GetCategoryProducts(c, params)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
+		return
+	}
+
+	count, err := sv.repo.CountCategories(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
+		return
+	}
+
+	categoriesResp := make([]ProductListModel, len(categories))
+
+	for i, category := range categories {
+		price, _ := category.BasePrice.Float64Value()
+		categoriesResp[i] = ProductListModel{
+			ID:           category.ID.String(),
+			Name:         category.Name,
+			Slug:         category.Slug,
+			CreatedAt:    category.CreatedAt.String(),
+			UpdatedAt:    category.UpdatedAt.String(),
+			Description:  *category.Description,
+			Price:        price.Float64,
+			VariantCount: int32(category.VariantCount),
+			Sku:          category.BaseSku,
+			ImgUrl:       category.ImgUrl,
+			ImgID:        category.ImgID,
+		}
 	}
 
 	c.JSON(http.StatusOK, createSuccessResponse(
@@ -415,7 +490,8 @@ func (sv *Server) updateCategory(c *gin.Context) {
 	}
 
 	category, err := sv.repo.GetCategoryByID(c, uuid.MustParse(param.CategoryID))
-
+	oldImageID := category.ImageID
+	oldImageURL := category.ImageUrl
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, createErrorResponse[CategoryResponse](NotFoundCode, "", fmt.Errorf("category with ID %s not found", param.CategoryID)))
@@ -458,6 +534,15 @@ func (sv *Server) updateCategory(c *gin.Context) {
 		}
 		updateParam.ImageID = &imageID
 		updateParam.ImageUrl = &imageURL
+	}
+
+	// remove old image
+	if oldImageID != nil && oldImageURL != nil {
+		msg, err := sv.uploadService.RemoveFile(c, *oldImageID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](UploadFileCode, msg, err))
+			return
+		}
 	}
 
 	col, err := sv.repo.UpdateCategory(c, updateParam)

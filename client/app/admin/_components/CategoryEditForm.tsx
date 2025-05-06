@@ -159,10 +159,11 @@ export const CategoryEditForm: React.FC<CategoryEditFormProps> = ({
             className='relative h-full shadow-md shadow-lime-500 text-sm/6 font-medium text-gray-600'
           >
             <Image
-              className='rounded-sm object-contain'
+              className='rounded-sm object-contain h-auto w-auto'
               width={150}
               height={150}
               alt='Category Image'
+              priority
               src={
                 base64 || data?.image_url || '/images/product-placeholder.webp'
               }

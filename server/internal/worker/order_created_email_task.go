@@ -83,7 +83,7 @@ func (p *RedisTaskProcessor) ProcessSendOrderCreatedEmail(ctx context.Context, t
 		Items:    items,
 	}
 
-	body, err := utils.ParseHtmlTemplate("./pkg/mailer/templates/order-created.html", emailData)
+	body, err := utils.ParseHtmlTemplate("./static/templates/order-created.html", emailData)
 
 	if err != nil {
 		log.Err(err).Msg("could not parse html template")
