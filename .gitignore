@@ -1,2 +1,17 @@
 .DS_Store
 /tmp
+
+tmp/
+*.env
+*.envrc
+dump.rdb
+cpu.pprof
+mem.pprof
+block.pprof
+assets
+/web
+/seed
+/migrate
+.DS_Store
+*.log
+__debug_bin
