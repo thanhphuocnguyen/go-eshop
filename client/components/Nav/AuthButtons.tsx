@@ -2,7 +2,7 @@
 
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { ChevronDownIcon, UserIcon } from '@heroicons/react/16/solid';
-import { ArrowUpTrayIcon } from '@heroicons/react/24/outline';
+import { ArrowUpTrayIcon, ShoppingBagIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { deleteCookie } from 'cookies-next/client';
 import Link from 'next/link';
@@ -70,6 +70,15 @@ const AuthButtons: React.FC<{ isLogin: boolean }> = ({ isLogin }) => {
                 <kbd className='ml-auto hidden font-sans text-xs text-gray-400 group-hover:inline'>
                   ⌘E
                 </kbd>
+              </Link>
+            </MenuItem>
+            <MenuItem>
+              <Link
+                href='/orders'
+                className='group flex w-full items-center gap-2.5 rounded-md py-2 px-3 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-150'
+              >
+                <ShoppingBagIcon className='size-5 text-indigo-500' />
+                Orders
               </Link>
             </MenuItem>
             <MenuItem>

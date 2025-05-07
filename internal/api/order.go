@@ -29,6 +29,7 @@ type OrderIDParams struct {
 
 type OrderStatusRequest struct {
 	Status string `json:"status" binding:"required,oneof=pending confirmed delivering delivered completed"`
+	Reason string `json:"reason,omitempty"`
 }
 
 type OrderItemResponse struct {
@@ -67,6 +68,8 @@ type OrderListResponse struct {
 	TotalItems    int32                    `json:"total_items"`
 	Status        repository.OrderStatus   `json:"status"`
 	PaymentStatus repository.PaymentStatus `json:"payment_status"`
+	CustomerName  string                   `json:"customer_name"`
+	CustomerEmail string                   `json:"customer_email"`
 	CreatedAt     time.Time                `json:"created_at"`
 	UpdatedAt     time.Time                `json:"updated_at"`
 }
@@ -85,8 +88,10 @@ type CancelOrderRequest struct {
 // @Tags orders
 // @Accept json
 // @Produce json
-// @Param limit query int false "Limit"
-// @Param offset query int false "Offset"
+// @Param page query int false "Page number"
+// @Param page_size query int false "Page size"
+// @Param status query string false "Filter by status"
+// @Param payment_status query string false "Filter by payment status"
 // @Security BearerAuth
 // @Success 200 {object} ApiResponse[[]OrderListResponse]
 // @Failure 400 {object} ApiResponse[[]OrderListResponse]
@@ -245,14 +250,13 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 	orderItems := make([]OrderItemResponse, 0, len(orderItemRows))
 
 	for _, item := range orderItemRows {
-		var attrSnapshot []repository.AttributeDataSnapshot
 		lineTotal, _ := item.LineTotalSnapshot.Float64Value()
 		orderItems = append(orderItems, OrderItemResponse{
 			ID:                 item.VariantID.String(),
 			Name:               item.ProductName,
 			ImageUrl:           item.ImageUrl,
 			LineTotal:          lineTotal.Float64,
-			AttributesSnapshot: attrSnapshot,
+			AttributesSnapshot: item.AttributesSnapshot,
 			Quantity:           item.Quantity,
 		})
 	}
@@ -423,7 +427,6 @@ func (sv *Server) changeOrderStatus(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](InternalServerErrorCode, "", err))
 		return
 	}
-
 	c.JSON(http.StatusOK, createSuccessResponse(c, rs, "success", nil, nil))
 }
 
@@ -476,9 +479,6 @@ func (sv *Server) refundOrder(c *gin.Context) {
 		reason = payment.RefundReasonByFraudulent
 		amountRefund = order.TotalPrice.Int.Int64()
 	case "requested_by_customer":
-		reason = payment.RefundReasonRequestedByCustomer
-		amountRefund = order.TotalPrice.Int.Int64() * 90 / 100
-	default:
 		amountRefund = order.TotalPrice.Int.Int64() * 90 / 100
 		reason = payment.RefundReasonRequestedByCustomer
 	}
@@ -506,4 +506,117 @@ func (sv *Server) refundOrder(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, createSuccessResponse(c, order, "success", nil, nil))
+}
+
+// --- Admin API ---
+
+// @Summary Get all orders (Admin endpoint)
+// @Description Get all orders with pagination and filtering
+// @Tags admin
+// @Accept json
+// @Produce json
+// @Param page query int false "Page number"
+// @Param page_size query int false "Page size"
+// @Param status query string false "Filter by status"
+// @Security BearerAuth
+// @Success 200 {object} ApiResponse[[]OrderListResponse]
+// @Failure 401 {object} ApiResponse[[]OrderListResponse]
+// @Failure 403 {object} ApiResponse[[]OrderListResponse]
+// @Failure 500 {object} ApiResponse[[]OrderListResponse]
+// @Router /admin/orders [get]
+func (sv *Server) getAdminOrdersHandler(c *gin.Context) {
+	var orderListQuery OrderListQuery
+	if err := c.ShouldBindQuery(&orderListQuery); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse[[]OrderListResponse](InvalidBodyCode, "", err))
+		return
+	}
+
+	dbParams := repository.GetOrdersParams{
+		Limit:  orderListQuery.PageSize,
+		Offset: (orderListQuery.Page - 1) * orderListQuery.PageSize,
+	}
+
+	if orderListQuery.Status != "" {
+		dbParams.Status = repository.NullOrderStatus{
+			OrderStatus: repository.OrderStatus(orderListQuery.Status),
+			Valid:       true,
+		}
+	}
+
+	if orderListQuery.PaymentStatus != "" {
+		dbParams.PaymentStatus = repository.NullPaymentStatus{
+			PaymentStatus: repository.PaymentStatus(orderListQuery.PaymentStatus),
+			Valid:         true,
+		}
+	}
+
+	fetchedOrderRows, err := sv.repo.GetOrders(c, dbParams)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[[]OrderListResponse](InternalServerErrorCode, "", err))
+		return
+	}
+
+	countParams := repository.CountOrdersParams{}
+	if orderListQuery.Status != "" {
+		countParams.Status = repository.NullOrderStatus{
+			OrderStatus: repository.OrderStatus(orderListQuery.Status),
+			Valid:       true,
+		}
+	}
+
+	if orderListQuery.PaymentStatus != "" {
+		countParams.PaymentStatus = repository.NullPaymentStatus{
+			PaymentStatus: repository.PaymentStatus(orderListQuery.PaymentStatus),
+			Valid:         true,
+		}
+	}
+
+	count, err := sv.repo.CountOrders(c, countParams)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[[]OrderListResponse](InternalServerErrorCode, "", err))
+		return
+	}
+
+	var orderResponses []OrderListResponse
+	for _, aggregated := range fetchedOrderRows {
+		total, _ := aggregated.TotalPrice.Float64Value()
+		orderResponses = append(orderResponses, OrderListResponse{
+			ID:            aggregated.ID,
+			Total:         total.Float64,
+			TotalItems:    int32(aggregated.TotalItems),
+			Status:        aggregated.Status,
+			CustomerName:  aggregated.CustomerName,
+			CustomerEmail: aggregated.CustomerEmail,
+			PaymentStatus: aggregated.PaymentStatus.PaymentStatus,
+			CreatedAt:     aggregated.CreatedAt.UTC(),
+			UpdatedAt:     aggregated.UpdatedAt.UTC(),
+		})
+	}
+
+	c.JSON(http.StatusOK, createSuccessResponse(c, orderResponses, "success", &Pagination{
+		Total:           count,
+		Page:            orderListQuery.Page,
+		PageSize:        orderListQuery.PageSize,
+		TotalPages:      (count + orderListQuery.PageSize - 1) / orderListQuery.PageSize,
+		HasNextPage:     count > int64(orderListQuery.Page*orderListQuery.PageSize),
+		HasPreviousPage: orderListQuery.Page > 1,
+	}, nil))
+}
+
+// @Summary Get order details by ID (Admin endpoint)
+// @Description Get detailed information about an order by its ID
+// @Tags admin
+// @Accept json
+// @Produce json
+// @Param id path string true "Order ID"
+// @Security BearerAuth
+// @Success 200 {object} ApiResponse[OrderDetailResponse]
+// @Failure 401 {object} ApiResponse[OrderDetailResponse]
+// @Failure 403 {object} ApiResponse[OrderDetailResponse]
+// @Failure 404 {object} ApiResponse[OrderDetailResponse]
+// @Failure 500 {object} ApiResponse[OrderDetailResponse]
+// @Router /admin/orders/{id} [get]
+func (sv *Server) getAdminOrderDetailHandler(c *gin.Context) {
+	// Reuse the existing order detail handler since admin has access to all orders
+	sv.getOrderDetailHandler(c)
 }

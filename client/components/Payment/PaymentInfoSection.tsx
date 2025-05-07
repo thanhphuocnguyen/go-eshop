@@ -29,7 +29,7 @@ const PaymentInfoSection: React.FC<PaymentInfoSectionProps> = ({
         payment_id: paymentInfo.intent_id,
         client_secret: paymentInfo.client_secret,
         payment_intent_id: paymentInfo.intent_id,
-        total_amount: paymentInfo.amount,
+        total_price: paymentInfo.amount,
       };
       sessionStorage.setItem('checkoutData', JSON.stringify(checkoutData));
 

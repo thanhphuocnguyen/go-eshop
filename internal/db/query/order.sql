@@ -49,7 +49,8 @@ WHERE
     o.customer_id = COALESCE(sqlc.narg('customer_id'), o.customer_id) AND
     o.status = COALESCE(sqlc.narg('status'), o.status) AND
     o.created_at >= COALESCE(sqlc.narg('start_date'), o.created_at) AND
-    o.created_at <= COALESCE(sqlc.narg('end_date'), o.created_at)
+    o.created_at <= COALESCE(sqlc.narg('end_date'), o.created_at) AND
+    pm.status = COALESCE(sqlc.narg('payment_status'), pm.status)
 GROUP BY o.id, pm.status
 ORDER BY
     o.created_at DESC
@@ -105,8 +106,10 @@ SELECT
     COUNT(*)
 FROM
     orders
+LEFT JOIN payments p ON orders.id = p.id
 WHERE
+    orders.status = COALESCE(sqlc.narg('status'), orders.status) AND
     customer_id = COALESCE(sqlc.narg('customer_id'), customer_id) AND
-    status = COALESCE(sqlc.narg('status'), status) AND
-    created_at >= COALESCE(sqlc.narg('start_date'), created_at) AND
-    created_at <= COALESCE(sqlc.narg('end_date'), created_at);
+    p.status = COALESCE(sqlc.narg('payment_status'), p.status) AND
+    orders.created_at >= COALESCE(sqlc.narg('start_date'), orders.created_at) AND
+    orders.created_at <= COALESCE(sqlc.narg('end_date'), orders.created_at);

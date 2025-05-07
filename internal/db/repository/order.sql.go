@@ -18,24 +18,28 @@ SELECT
     COUNT(*)
 FROM
     orders
+LEFT JOIN payments p ON orders.id = p.id
 WHERE
-    customer_id = COALESCE($1, customer_id) AND
-    status = COALESCE($2, status) AND
-    created_at >= COALESCE($3, created_at) AND
-    created_at <= COALESCE($4, created_at)
+    orders.status = COALESCE($1, orders.status) AND
+    customer_id = COALESCE($2, customer_id) AND
+    p.status = COALESCE($3, p.status) AND
+    orders.created_at >= COALESCE($4, orders.created_at) AND
+    orders.created_at <= COALESCE($5, orders.created_at)
 `
 
 type CountOrdersParams struct {
-	CustomerID pgtype.UUID        `json:"customer_id"`
-	Status     NullOrderStatus    `json:"status"`
-	StartDate  pgtype.Timestamptz `json:"start_date"`
-	EndDate    pgtype.Timestamptz `json:"end_date"`
+	Status        NullOrderStatus    `json:"status"`
+	CustomerID    pgtype.UUID        `json:"customer_id"`
+	PaymentStatus NullPaymentStatus  `json:"payment_status"`
+	StartDate     pgtype.Timestamptz `json:"start_date"`
+	EndDate       pgtype.Timestamptz `json:"end_date"`
 }
 
 func (q *Queries) CountOrders(ctx context.Context, arg CountOrdersParams) (int64, error) {
 	row := q.db.QueryRow(ctx, countOrders,
-		arg.CustomerID,
 		arg.Status,
+		arg.CustomerID,
+		arg.PaymentStatus,
 		arg.StartDate,
 		arg.EndDate,
 	)
@@ -286,7 +290,8 @@ WHERE
     o.customer_id = COALESCE($3, o.customer_id) AND
     o.status = COALESCE($4, o.status) AND
     o.created_at >= COALESCE($5, o.created_at) AND
-    o.created_at <= COALESCE($6, o.created_at)
+    o.created_at <= COALESCE($6, o.created_at) AND
+    pm.status = COALESCE($7, pm.status)
 GROUP BY o.id, pm.status
 ORDER BY
     o.created_at DESC
@@ -295,12 +300,13 @@ OFFSET $2
 `
 
 type GetOrdersParams struct {
-	Limit      int64              `json:"limit"`
-	Offset     int64              `json:"offset"`
-	CustomerID pgtype.UUID        `json:"customer_id"`
-	Status     NullOrderStatus    `json:"status"`
-	StartDate  pgtype.Timestamptz `json:"start_date"`
-	EndDate    pgtype.Timestamptz `json:"end_date"`
+	Limit         int64              `json:"limit"`
+	Offset        int64              `json:"offset"`
+	CustomerID    pgtype.UUID        `json:"customer_id"`
+	Status        NullOrderStatus    `json:"status"`
+	StartDate     pgtype.Timestamptz `json:"start_date"`
+	EndDate       pgtype.Timestamptz `json:"end_date"`
+	PaymentStatus NullPaymentStatus  `json:"payment_status"`
 }
 
 type GetOrdersRow struct {
@@ -332,6 +338,7 @@ func (q *Queries) GetOrders(ctx context.Context, arg GetOrdersParams) ([]GetOrde
 		arg.Status,
 		arg.StartDate,
 		arg.EndDate,
+		arg.PaymentStatus,
 	)
 	if err != nil {
 		return nil, err

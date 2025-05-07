@@ -455,6 +455,133 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/orders": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all orders with pagination and filtering",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Get all orders (Admin endpoint)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by status",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-array_api_OrderListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-array_api_OrderListResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-array_api_OrderListResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-array_api_OrderListResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/orders/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get detailed information about an order by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Get order details by ID (Admin endpoint)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Order ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-api_OrderDetailResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-api_OrderDetailResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-api_OrderDetailResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-api_OrderDetailResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-api_OrderDetailResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/attributes": {
             "get": {
                 "description": "Get all attributes",
@@ -1745,14 +1872,26 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Limit",
-                        "name": "limit",
+                        "description": "Page number",
+                        "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Offset",
-                        "name": "offset",
+                        "description": "Page size",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by status",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by payment status",
+                        "name": "payment_status",
                         "in": "query"
                     }
                 ],
@@ -3130,6 +3269,29 @@ const docTemplate = `{
                 }
             }
         },
+        "api.ApiResponse-api_OrderDetailResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/api.OrderDetailResponse"
+                },
+                "error": {
+                    "$ref": "#/definitions/api.ApiError"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/api.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/api.Pagination"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
         "api.ApiResponse-api_OrderListResponse": {
             "type": "object",
             "properties": {
@@ -4047,6 +4209,12 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "created_at": {
+                    "type": "string"
+                },
+                "customer_email": {
+                    "type": "string"
+                },
+                "customer_name": {
                     "type": "string"
                 },
                 "id": {

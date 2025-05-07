@@ -162,6 +162,8 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 
 		adminOrder := admin.Group("orders")
 		{
+			adminOrder.GET("", sv.getAdminOrdersHandler)
+			adminOrder.GET(":id", sv.getAdminOrderDetailHandler)
 			adminOrder.PUT(":id/refund", sv.refundOrder)
 			adminOrder.PUT(":id/status", sv.changeOrderStatus)
 		}

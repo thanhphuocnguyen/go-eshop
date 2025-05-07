@@ -46,20 +46,6 @@ services:
       DB_URL: postgres://postgres:postgres@postgres:5432/eshop?sslmode=disable
     networks:
       - eshop-network
-  worker:
-    build: .
-    container_name: eshop-worker
-    command: ["./web", "worker"]
-    depends_on:
-      postgres:
-          condition: service_healthy
-      redis:
-          condition: service_healthy
-    environment:
-      REDIS_URL: redis:6379
-      DB_URL: postgres://postgres:postgres@postgres:5432/eshop?sslmode=disable
-    networks:
-      - eshop-network
   mailhog:
     build:
         context: .

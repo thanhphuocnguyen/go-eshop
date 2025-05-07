@@ -147,6 +147,21 @@ definitions:
       success:
         type: boolean
     type: object
+  api.ApiResponse-api_OrderDetailResponse:
+    properties:
+      data:
+        $ref: '#/definitions/api.OrderDetailResponse'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
   api.ApiResponse-api_OrderListResponse:
     properties:
       data:
@@ -757,6 +772,10 @@ definitions:
   api.OrderListResponse:
     properties:
       created_at:
+        type: string
+      customer_email:
+        type: string
+      customer_name:
         type: string
       id:
         type: string
@@ -1523,6 +1542,87 @@ paths:
       summary: Set default address
       tags:
       - address
+  /admin/orders:
+    get:
+      consumes:
+      - application/json
+      description: Get all orders with pagination and filtering
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-array_api_OrderListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ApiResponse-array_api_OrderListResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/api.ApiResponse-array_api_OrderListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-array_api_OrderListResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all orders (Admin endpoint)
+      tags:
+      - admin
+  /admin/orders/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about an order by its ID
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_OrderDetailResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_OrderDetailResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_OrderDetailResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_OrderDetailResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_OrderDetailResponse'
+      security:
+      - BearerAuth: []
+      summary: Get order details by ID (Admin endpoint)
+      tags:
+      - admin
   /attributes:
     get:
       consumes:
@@ -2518,14 +2618,22 @@ paths:
       - application/json
       description: List orders of the current user
       parameters:
-      - description: Limit
+      - description: Page number
         in: query
-        name: limit
+        name: page
         type: integer
-      - description: Offset
+      - description: Page size
         in: query
-        name: offset
+        name: page_size
         type: integer
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
+      - description: Filter by payment status
+        in: query
+        name: payment_status
+        type: string
       produces:
       - application/json
       responses:

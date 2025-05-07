@@ -1,4 +1,4 @@
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, ShoppingBagIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import Link from 'next/link';
 import CartSection from './CartSection';
@@ -9,6 +9,7 @@ import { cookies } from 'next/headers';
 
 export default async function NavBar() {
   const cookieStorage = await cookies();
+  const isLoggedIn = !!cookieStorage.get('access_token');
 
   return (
     <div className='bg-white sticky top-0 z-20'>
@@ -77,11 +78,25 @@ export default async function NavBar() {
                     />
                   </a>
                 </div>
+                
+                {/* Orders - only shown when logged in */}
+                {isLoggedIn && (
+                  <div className='hidden lg:flex lg:ml-6'>
+                    <Link
+                      href='/orders'
+                      className='flex items-center p-2 text-gray-700 hover:text-indigo-600'
+                    >
+                      <ShoppingBagIcon className='size-6 mr-1' />
+                      <span className='text-sm font-medium'>Orders</span>
+                    </Link>
+                  </div>
+                )}
+                
                 <CartSection />
                 <div className='hidden lg:flex lg:flex-1 lg:items-center lg:justify-end lg:space-x-6'>
                   <Suspense>
                     <AuthButtons
-                      isLogin={!!cookieStorage.get('access_token')}
+                      isLogin={isLoggedIn}
                     />
                   </Suspense>
                 </div>
