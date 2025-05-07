@@ -12,11 +12,14 @@ import {
   DisclosurePanel,
   Transition,
 } from '@headlessui/react';
-import { useProductDetailFormContext } from '../_lib/contexts/ProductFormContext';
+import { useAttributes } from '../../_lib/hooks';
 
-export const VariantInfoForm: React.FC = ({}) => {
-  const { selectedAttributes } = useProductDetailFormContext();
+export const VariantInfoForm: React.FC<{
+  selectedAttributes: number[];
+}> = ({ selectedAttributes }) => {
   const { control, getValues } = useFormContext<ProductModelForm>();
+  const { attributes } = useAttributes();
+
   const { fields, append, remove } = useFieldArray({
     name: 'variants',
     keyName: 'key',
@@ -61,6 +64,7 @@ export const VariantInfoForm: React.FC = ({}) => {
                       className='border border-gray-200 rounded-lg p-4 bg-white'
                     >
                       <VariantForm
+                        selectedAttributes={selectedAttributes}
                         index={index}
                         item={item}
                         onRemove={() => {
@@ -71,29 +75,36 @@ export const VariantInfoForm: React.FC = ({}) => {
                   ))}
                 </div>
 
-                <Button
-                  onClick={() => {
-                    append({
-                      attributes: selectedAttributes
-                        ? selectedAttributes.map((e) => ({
-                            id: e.id,
-                            name: e.name,
-                            value_object: {
-                              id: -1,
-                            },
-                          }))
-                        : [],
-                      price: getValues('product_info.price'),
-                      stock_qty: 0,
-                      weight: undefined,
-                      is_active: true,
-                    });
-                  }}
-                  className={clsx('btn btn-primary flex gap-2')}
-                >
-                  <PlusIcon className='size-6' />
-                  Add Variant
-                </Button>
+                {attributes && (
+                  <Button
+                    onClick={() => {
+                      append({
+                        attributes: selectedAttributes
+                          ? selectedAttributes.map((e) => {
+                              const attribute = attributes.find(
+                                (attr) => attr.id === e
+                              )!;
+                              return {
+                                id: attribute.id,
+                                name: attribute.name,
+                                value_object: {
+                                  id: -1,
+                                },
+                              };
+                            })
+                          : [],
+                        price: getValues('product_info.price'),
+                        stock_qty: 0,
+                        weight: undefined,
+                        is_active: true,
+                      });
+                    }}
+                    className={clsx('btn btn-primary flex gap-2')}
+                  >
+                    <PlusIcon className='size-6' />
+                    Add Variant
+                  </Button>
+                )}
               </DisclosurePanel>
             </Transition>
           </div>

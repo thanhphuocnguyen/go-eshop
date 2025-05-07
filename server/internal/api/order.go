@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
+	"github.com/stripe/stripe-go/v81"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
@@ -39,12 +40,14 @@ type OrderItemResponse struct {
 	Quantity           int16                              `json:"quantity"`
 }
 type PaymentInfo struct {
-	ID             string  `json:"id"`
-	RefundID       *string `json:"refund_id"`
-	PaymentAmount  float64 `json:"payment_amount"`
-	PaymentGateWay *string `json:"payment_gateway"`
-	PaymentMethod  string  `json:"payment_method"`
-	PaymentStatus  string  `json:"payment_status"`
+	ID           string  `json:"id"`
+	RefundID     *string `json:"refund_id"`
+	Amount       float64 `json:"amount"`
+	IntendID     *string `json:"intent_id"`
+	ClientSecret *string `json:"client_secret"`
+	GateWay      *string `json:"gateway"`
+	Method       string  `json:"method"`
+	Status       string  `json:"status"`
 }
 
 type OrderDetailResponse struct {
@@ -175,7 +178,6 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 	}
 
 	total, _ := order.TotalPrice.Float64Value()
-	var shippingInfo repository.ShippingAddressSnapshot
 
 	resp := OrderDetailResponse{
 		ID:            order.ID,
@@ -184,7 +186,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 		CustomerEmail: order.CustomerEmail,
 		PaymentInfo:   nil,
 		Status:        order.Status,
-		ShippingInfo:  shippingInfo,
+		ShippingInfo:  order.ShippingAddress,
 		CreatedAt:     order.CreatedAt.UTC(),
 		Products:      []OrderItemResponse{},
 	}
@@ -208,12 +210,35 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 		}
 	}
 	if err == nil {
+		amount, _ := paymentInfo.Amount.Float64Value()
 		resp.PaymentInfo = &PaymentInfo{
-			ID:             paymentInfo.ID.String(),
-			RefundID:       paymentInfo.RefundID,
-			PaymentGateWay: (*string)(&paymentInfo.PaymentGateway.PaymentGateway),
-			PaymentMethod:  string(paymentInfo.PaymentMethod),
-			PaymentStatus:  string(paymentInfo.Status),
+			ID:       paymentInfo.ID.String(),
+			RefundID: paymentInfo.RefundID,
+			GateWay:  (*string)(&paymentInfo.PaymentGateway.PaymentGateway),
+			Method:   string(paymentInfo.PaymentMethod),
+			Status:   string(paymentInfo.Status),
+			Amount:   amount.Float64,
+		}
+		if paymentInfo.GatewayPaymentIntentID != nil && paymentInfo.PaymentMethod == repository.PaymentMethodStripe {
+			resp.PaymentInfo.IntendID = paymentInfo.GatewayPaymentIntentID
+			stripeInstance, err := payment.NewStripePayment(sv.config.StripeSecretKey)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
+				return
+			}
+			sv.paymentCtx.SetStrategy(stripeInstance)
+			paymentDetail, err := sv.paymentCtx.GetPaymentObject(*paymentInfo.GatewayPaymentIntentID)
+			if err != nil {
+				log.Err(err).Msg("failed to get payment intent")
+				apiErr = &ApiError{
+					Code:    InternalServerErrorCode,
+					Details: "failed to get payment intent",
+					Stack:   err.Error(),
+				}
+			} else {
+				stripeObject, _ := paymentDetail.(*stripe.PaymentIntent)
+				resp.PaymentInfo.ClientSecret = &stripeObject.ClientSecret
+			}
 		}
 	}
 

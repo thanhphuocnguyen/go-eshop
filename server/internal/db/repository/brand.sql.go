@@ -102,6 +102,32 @@ func (q *Queries) GetBrandByID(ctx context.Context, id uuid.UUID) (Brand, error)
 	return i, err
 }
 
+const getBrandBySlug = `-- name: GetBrandBySlug :one
+SELECT c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at
+FROM brands c
+WHERE c.slug = $1
+LIMIT 1
+`
+
+func (q *Queries) GetBrandBySlug(ctx context.Context, slug string) (Brand, error) {
+	row := q.db.QueryRow(ctx, getBrandBySlug, slug)
+	var i Brand
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.ImageUrl,
+		&i.ImageID,
+		&i.Description,
+		&i.Slug,
+		&i.Remarkable,
+		&i.DisplayOrder,
+		&i.Published,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getBrands = `-- name: GetBrands :many
 SELECT
     c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at

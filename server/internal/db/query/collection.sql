@@ -11,6 +11,12 @@ FROM collections c
 WHERE c.id = $1
 LIMIT 1;
 
+-- name: GetCollectionBySlug :one
+SELECT c.*
+FROM collections c
+WHERE c.slug = $1
+LIMIT 1;
+
 -- name: GetCollectionByIDWithProducts :many
 SELECT 
     c.*,

@@ -3,7 +3,9 @@ CREATE TABLE
     products (
         id UUID PRIMARY KEY,
         name VARCHAR NOT NULL,
-        description TEXT,
+        description TEXT NOT NULL,
+        short_description VARCHAR(1000),
+        attributes INTEGER[],
         base_price DECIMAL(10, 2),
         base_sku VARCHAR(100) UNIQUE NOT NULL,
         slug VARCHAR UNIQUE NOT NULL,
@@ -20,6 +22,7 @@ CREATE TABLE
     product_variants (
         id UUID PRIMARY KEY,
         product_id UUID NOT NULL REFERENCES products (id) ON DELETE CASCADE,
+        description VARCHAR(1000),
         sku VARCHAR(100) UNIQUE NOT NULL,
         price DECIMAL(10, 2) NOT NULL,
         stock INT NOT NULL DEFAULT 0,

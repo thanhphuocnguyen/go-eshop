@@ -8,12 +8,7 @@ import { ArrowLeftCircleIcon } from '@heroicons/react/24/outline';
 import { CategoryEditForm } from '../../_components/CategoryEditForm';
 import useSWR from 'swr';
 import Loading from '@/app/loading';
-import {
-  CategoryProductModel,
-  GeneralCategoryModel,
-  GenericResponse,
-} from '@/lib/definitions';
-import LoadingInline from '@/components/Common/Loadings/LoadingInline';
+import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
 import CategoryProductList from '../../_components/CategoryProductList';
 import { apiFetch } from '@/lib/apis/api';
 
@@ -38,18 +33,6 @@ export default function AdminCollectionDetail({
     }
   );
 
-  const { data: products, isLoading: isLoadingProducts } = useSWR(
-    ADMIN_API_PATHS.COLLECTION_PRODUCTS.replace(':id', slug),
-    async (url) => {
-      const response = await apiFetch<GenericResponse<CategoryProductModel[]>>(
-        url,
-        {}
-      );
-
-      return response.data;
-    }
-  );
-
   async function handleSave(data: FormData) {
     const response = await apiFetch<GenericResponse<number>>(
       ADMIN_API_PATHS.COLLECTION.replace(':id', slug),
@@ -70,7 +53,7 @@ export default function AdminCollectionDetail({
   }
 
   return (
-    <div>
+    <div className='flex flex-col h-full w-full'>
       <Link
         href='/admin/collections'
         className='flex space-x-2 items-center hover:underline text-blue-400'
@@ -83,11 +66,7 @@ export default function AdminCollectionDetail({
         handleSave={handleSave}
         title='Collection Detail'
       />
-      {isLoadingProducts ? (
-        <LoadingInline />
-      ) : (
-        <CategoryProductList products={products ?? []} />
-      )}
+      <CategoryProductList products={category?.products ?? []} />
     </div>
   );
 }

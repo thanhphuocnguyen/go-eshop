@@ -47,6 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
 
   const { data, error } = await getOrderDetails(slug);
+  console.log(data);
   if (error && !data) {
     throw new Error(error.stack);
   }
@@ -120,7 +121,7 @@ export default async function Page({ params }: Props) {
                       ${e.line_total}
                     </div>
                     <div className='flex gap-3'>
-                      {e.attribute_snapshot.map((e) => (
+                      {e?.attribute_snapshot?.map((e) => (
                         <div className='text-sm text-indigo-400' key={e.name}>
                           <span className='font-medium'>{e.name}: </span>
                           <span>{e.value}</span>

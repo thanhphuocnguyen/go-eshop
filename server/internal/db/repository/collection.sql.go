@@ -183,6 +183,32 @@ func (q *Queries) GetCollectionByIDWithProducts(ctx context.Context, id uuid.UUI
 	return items, nil
 }
 
+const getCollectionBySlug = `-- name: GetCollectionBySlug :one
+SELECT c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at
+FROM collections c
+WHERE c.slug = $1
+LIMIT 1
+`
+
+func (q *Queries) GetCollectionBySlug(ctx context.Context, slug string) (Collection, error) {
+	row := q.db.QueryRow(ctx, getCollectionBySlug, slug)
+	var i Collection
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.ImageUrl,
+		&i.ImageID,
+		&i.Description,
+		&i.Slug,
+		&i.Remarkable,
+		&i.DisplayOrder,
+		&i.Published,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getCollections = `-- name: GetCollections :many
 SELECT 
     c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at

@@ -15,6 +15,5 @@ export type ProductCategory = {
   id: string;
   name: string;
   image_url?: string;
-  description: string;
-  slug: string;
+  variant_count: number;
 };

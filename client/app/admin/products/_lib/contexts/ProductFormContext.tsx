@@ -1,5 +1,4 @@
-import { AttributeDetailModel } from '@/lib/definitions';
-import React, { useState } from 'react';
+import React from 'react';
 
 // Define types for variant images with variant assignments
 export type VariantImage = {
@@ -12,10 +11,6 @@ export type VariantImage = {
 const ProductDetailFormContext = React.createContext<{
   tempProductImages: VariantImage[];
   setTempProductImages: React.Dispatch<React.SetStateAction<VariantImage[]>>;
-  selectedAttributes: AttributeDetailModel[];
-  setSelectedAttributes: React.Dispatch<
-    React.SetStateAction<AttributeDetailModel[]>
-  >;
 } | null>(null);
 
 export const useProductDetailFormContext = () => {
@@ -34,17 +29,12 @@ export const ProductDetailFormProvider: React.FC<{
   const [tempProductImages, setTempProductImages] = React.useState<
     VariantImage[]
   >([]);
-  const [selectedAttributes, setSelectedAttributes] = useState<
-    AttributeDetailModel[]
-  >([]);
 
   return (
     <ProductDetailFormContext.Provider
       value={{
         tempProductImages,
         setTempProductImages,
-        selectedAttributes,
-        setSelectedAttributes,
       }}
     >
       {children}

@@ -160,7 +160,7 @@ export default function CheckoutPage() {
     }
 
     if (data) {
-      sessionStorage.setItem('checkoutData', JSON.stringify(body));
+      sessionStorage.setItem('checkoutData', JSON.stringify(data));
       // If Stripe is selected, redirect to the Stripe payment page
       if (body.payment_method === 'stripe') {
         if (!data.client_secret || !data.payment_id) {

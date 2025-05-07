@@ -37,6 +37,8 @@ export type ShippingInfoModel = {
 export type PaymentInfo = {
   method: string;
   status: string;
+  intent_id: string;
+  client_secret?: string;
   transaction_id: string;
   amount: number;
 };

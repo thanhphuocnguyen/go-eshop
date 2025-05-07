@@ -7,16 +7,17 @@ import { ProductModelForm, VariantModelForm } from '@/lib/definitions';
 import { TextField } from '@/components/FormFields';
 import { StyledComboBoxController } from '@/components/FormFields/StyledComboBoxController';
 import { useAttributes } from '../../_lib/hooks/useAttributes';
-import { useProductDetailFormContext } from '../_lib/contexts/ProductFormContext';
 
 interface AttributeFormProps {
   index: number;
   item: VariantModelForm;
+  selectedAttributes: number[];
   onRemove: (index: number) => void;
 }
 export const VariantForm: React.FC<AttributeFormProps> = ({
   index,
   item,
+  selectedAttributes,
   onRemove,
 }) => {
   const {
@@ -25,7 +26,6 @@ export const VariantForm: React.FC<AttributeFormProps> = ({
     setValue,
     formState: { errors },
   } = useFormContext<ProductModelForm>();
-  const { selectedAttributes } = useProductDetailFormContext();
   const { attributes } = useAttributes();
 
   const isActive = useWatch({
@@ -84,28 +84,29 @@ export const VariantForm: React.FC<AttributeFormProps> = ({
 
       <div className='px-2 pt-2 pb-0'>
         <div className='grid grid-cols-5 gap-x-3'>
-          {selectedAttributes?.map((attribute, idx) =>
-            attribute ? (
+          {selectedAttributes?.map((attribute, idx) => {
+            const attr = attributes?.find((e) => e.id === attribute);
+            return attribute ? (
               <StyledComboBoxController
                 control={control}
-                key={attribute.id}
+                key={attribute}
                 error={
                   errors.variants?.[index]?.attributes?.[idx]?.value_object?.id
                     ?.message
                 }
                 getDisplayValue={(attrOpt) =>
-                  attribute.name.toLowerCase().startsWith('color')
+                  attr && attr.name.toLowerCase().startsWith('color')
                     ? attrOpt?.name
                     : attrOpt.code
                 }
                 name={`variants.${index}.attributes.${idx}.value_object`}
-                label={attribute.name}
+                label={attr?.name ?? ''}
                 options={
-                  attributes?.find((e) => e.id === attribute.id)?.values ?? []
+                  attributes?.find((e) => e.id === attr?.id)?.values ?? []
                 }
               />
-            ) : null
-          )}
+            ) : null;
+          })}
           <TextField
             {...register(`variants.${index}.price`)}
             label='Price'

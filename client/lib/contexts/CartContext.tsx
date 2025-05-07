@@ -99,7 +99,10 @@ export function CartContextProvider({
           revalidate: false,
         }
       );
-      toast.success('Item quantity updated successfully');
+      toast.success(<div>Item quantity updated successfully</div>, {
+        closeButton: true,
+        autoClose: 2000,
+      });
       if (!cartItem) {
         mutateCart();
       }

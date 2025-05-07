@@ -148,6 +148,32 @@ func (q *Queries) GetCategoryByID(ctx context.Context, id uuid.UUID) (Category, 
 	return i, err
 }
 
+const getCategoryBySlug = `-- name: GetCategoryBySlug :one
+SELECT c.id, c.name, c.description, c.image_url, c.image_id, c.published, c.remarkable, c.slug, c.display_order, c.created_at, c.updated_at
+FROM categories c
+WHERE c.slug = $1
+LIMIT 1
+`
+
+func (q *Queries) GetCategoryBySlug(ctx context.Context, slug string) (Category, error) {
+	row := q.db.QueryRow(ctx, getCategoryBySlug, slug)
+	var i Category
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.ImageUrl,
+		&i.ImageID,
+		&i.Published,
+		&i.Remarkable,
+		&i.Slug,
+		&i.DisplayOrder,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getCategoryProductsByID = `-- name: GetCategoryProductsByID :many
 SELECT
     c.id, c.name, c.description, c.image_url, c.image_id, c.published, c.remarkable, c.slug, c.display_order, c.created_at, c.updated_at,

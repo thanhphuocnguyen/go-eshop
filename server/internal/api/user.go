@@ -73,7 +73,7 @@ func mapAddressToAddressResponse(address repository.UserAddress) AddressResponse
 
 // ------------------------------ Handlers ------------------------------
 
-// updateUser godoc
+// updateUserHandler godoc
 // @Summary Update user info
 // @Description Update user info
 // @Tags users
@@ -85,7 +85,7 @@ func mapAddressToAddressResponse(address repository.UserAddress) AddressResponse
 // @Failure 401 {object} ApiResponse[repository.UpdateUserRow]
 // @Failure 500 {object} ApiResponse[repository.UpdateUserRow]
 // @Router /users/{id} [patch]
-func (sv *Server) updateUser(c *gin.Context) {
+func (sv *Server) updateUserHandler(c *gin.Context) {
 	var req UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[repository.UpdateUserRow](InvalidEmailCode, "", err))
@@ -305,7 +305,7 @@ func (sv *Server) verifyEmailHandler(c *gin.Context) {
 
 	// Render HTML success page
 	c.Header("Content-Type", "text/html")
-	c.HTML(http.StatusOK, "./static/templates/verification-success.html", gin.H{
+	c.HTML(http.StatusOK, "verification-success.html", gin.H{
 		"username": user.Username,
 		"email":    user.Email,
 	})

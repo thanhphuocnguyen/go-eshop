@@ -1,18 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe, StripeError } from '@stripe/stripe-js';
 import StripeCheckoutForm from './StripeCheckoutForm';
 import { apiFetch } from '@/lib/apis/api';
-import {
-  CreatePaymentIntentResponse,
-  GenericResponse,
-} from '@/lib/definitions';
+import { GenericResponse } from '@/lib/definitions';
 import { PUBLIC_API_PATHS } from '@/lib/constants/api';
 import { toast } from 'react-toastify';
-import { PaymentResponse } from '../../_lib/definitions';
+import { CheckoutDataResponse, PaymentResponse } from '../../_lib/definitions';
 
 // Initialize Stripe - replace with your publishable key
 // In a real application, you would fetch this from an environment variable
@@ -21,20 +18,15 @@ const stripePromise = loadStripe(
 );
 
 export default function StripePage() {
-  const searchParams = useSearchParams();
   const [totalPrice, setTotalPrice] = useState(0);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  async function getPaymentById() {
-    if (searchParams.get('payment_id') === null) {
-      router.push('/checkout');
-      return;
-    }
+  async function getPaymentById(paymentId: string) {
     setIsLoading(true);
     const { data, error } = await apiFetch<GenericResponse<PaymentResponse>>(
-      PUBLIC_API_PATHS.PAYMENT_DETAIL.replace(':id', searchParams.get('payment_id')!)
+      PUBLIC_API_PATHS.PAYMENT_DETAIL.replace(':id', paymentId)
     );
 
     if (error) {
@@ -57,12 +49,17 @@ export default function StripePage() {
     const storedData = sessionStorage.getItem('checkoutData');
 
     if (!storedData) {
-      getPaymentById();
+      redirect('/orders');
     } else {
-      const parsedData = JSON.parse(storedData) as CreatePaymentIntentResponse;
-      setClientSecret(parsedData.client_secret);
+      const parsedData = JSON.parse(storedData) as CheckoutDataResponse;
+      if (parsedData.client_secret) {
+        setClientSecret(parsedData.client_secret);
+      } else if (parsedData.payment_id) {
+        getPaymentById(parsedData.payment_id);
+      } else {
+        redirect('/profiles/orders');
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handlePaymentSuccess = () => {

@@ -9,8 +9,7 @@ import { ArrowLeftCircleIcon } from '@heroicons/react/24/outline';
 import { CategoryEditForm } from '../../_components/CategoryEditForm';
 import useSWR from 'swr';
 import Loading from '@/app/loading';
-import { GenericResponse, CategoryProductModel } from '@/lib/definitions';
-import LoadingInline from '@/components/Common/Loadings/LoadingInline';
+import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
 import CategoryProductList from '../../_components/CategoryProductList';
 import { apiFetch } from '@/lib/apis/api';
 
@@ -23,7 +22,10 @@ export default function AdminCategoryDetail({
   const { data: category, isLoading } = useSWR(
     ADMIN_API_PATHS.CATEGORY.replaceAll(':id', slug),
     async (url) => {
-      const response = await apiFetch(url, {});
+      const response = await apiFetch<GenericResponse<GeneralCategoryModel>>(
+        url,
+        {}
+      );
       return response.data;
     },
     {
@@ -35,26 +37,6 @@ export default function AdminCategoryDetail({
           </div>
         );
       },
-    }
-  );
-
-  const { data: products, isLoading: isLoadingProducts } = useSWR(
-    ADMIN_API_PATHS.CATEGORY_PRODUCTS.replaceAll(':id', slug),
-    async (url) => {
-      const response = await apiFetch<GenericResponse<CategoryProductModel[]>>(
-        url,
-        {}
-      );
-      if (response.error) {
-        toast.error(
-          <div>
-            Failed to fetch category products:
-            <div>{JSON.stringify(response.error)}</div>
-          </div>
-        );
-        return [];
-      }
-      return response.data;
     }
   );
 
@@ -99,11 +81,8 @@ export default function AdminCategoryDetail({
         handleSave={handleSave}
         title='Category Detail'
       />
-      {isLoadingProducts ? (
-        <LoadingInline />
-      ) : (
-        <CategoryProductList products={products ?? []} />
-      )}
+
+      <CategoryProductList products={category?.products ?? []} />
     </div>
   );
 }

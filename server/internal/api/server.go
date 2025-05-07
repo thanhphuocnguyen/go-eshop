@@ -68,7 +68,7 @@ func (sv *Server) initializeRouter() {
 	sv.setupEnvironmentMode(router)
 
 	// Load HTML templates
-	router.LoadHTMLGlob("templates/*")
+	router.LoadHTMLGlob("static/templates/*")
 
 	// Setup CORS
 	router.Use(sv.setupCORS())
@@ -142,6 +142,7 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 		{
 			users.GET("", sv.getUsersHandler)
 		}
+
 		productGroup := admin.Group("products")
 		{
 			productGroup.POST("", sv.createProduct)
@@ -172,7 +173,6 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 			categories.POST("", sv.addCategoryHandler)
 			categories.PUT(":id", sv.updateCategory)
 			categories.DELETE(":id", sv.deleteCategory)
-			categories.GET(":id/products", sv.getProductsByCategory)
 		}
 
 		brands := admin.Group("brands")
@@ -183,7 +183,6 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 			brands.GET(":id", sv.getBrandByIDHandler)
 			brands.PUT(":id", sv.updateBrand)
 			brands.DELETE(":id", sv.deleteBrand)
-			brands.GET(":id/products", sv.getProductsByBrandHandler)
 		}
 
 		collections := admin.Group("collections")
@@ -193,7 +192,6 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 			collections.GET(":id", sv.getCollectionByIDHandler)
 			collections.PUT(":id", sv.updateCollectionHandler)
 			collections.DELETE(":id", sv.deleteCollection)
-			collections.GET(":id/products", sv.getProductsByCollectionHandler)
 		}
 
 		images := admin.Group("images")
@@ -220,7 +218,7 @@ func (sv *Server) setupUserRoutes(rg *gin.RouterGroup) {
 	user := rg.Group("/user", authMiddleware(sv.tokenGenerator))
 	{
 		user.GET("", sv.getUserHandler)
-		user.PATCH("", sv.updateUser)
+		user.PATCH("", sv.updateUserHandler)
 		user.POST("send-verify-email", sv.sendVerifyEmailHandler)
 
 		userAddress := user.Group("addresses")
@@ -292,7 +290,7 @@ func (sv *Server) setupCategoryRoutes(rg *gin.RouterGroup) {
 	category := rg.Group("categories")
 	{
 		category.GET("", sv.getCategoriesHandler)
-		category.GET(":slug", sv.getCategoryProductsBySlug)
+		category.GET(":slug", sv.getCategoryBySlug)
 	}
 }
 

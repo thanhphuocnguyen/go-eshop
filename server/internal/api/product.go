@@ -16,9 +16,12 @@ import (
 )
 
 type ProductQueries struct {
-	Page     int64  `form:"page,default=1" binding:"omitempty,min=1"`
-	PageSize int64  `form:"page_size,default=20" binding:"omitempty,min=1,max=100"`
-	Search   string `form:"search" binding:"omitempty,max=1000"`
+	Page         int64   `form:"page,default=1" binding:"omitempty,min=1"`
+	PageSize     int64   `form:"page_size,default=20" binding:"omitempty,min=1,max=100"`
+	Search       *string `form:"search" binding:"omitempty,max=1000"`
+	CategoryID   *string `form:"category_id" binding:"omitempty,uuid"`
+	BrandID      *string `form:"brand_id" binding:"omitempty,uuid"`
+	CollectionID *string `form:"collection_id" binding:"omitempty,uuid"`
 }
 
 type ProductAttributeDetail struct {
@@ -53,15 +56,17 @@ type ProductVariantModel struct {
 }
 
 type CreateProductReq struct {
-	Name         string                                    `json:"name" binding:"required,min=3,max=100"`
-	Description  string                                    `json:"description" binding:"omitempty,min=6,max=5000"`
-	Price        float64                                   `json:"price" binding:"required,gt=0"`
-	Sku          string                                    `json:"sku" binding:"required"`
-	Slug         string                                    `json:"slug" binding:"omitempty"`
-	CategoryID   string                                    `json:"category_id,omitempty" binding:"omitempty,uuid"`
-	BrandID      string                                    `json:"brand_id,omitempty" binding:"omitempty,uuid"`
-	CollectionID *string                                   `json:"collection_id,omitempty" binding:"omitempty,uuid"`
-	Variants     []repository.CreateProductVariantTxParams `json:"variants,omitempty"`
+	Name             string                                    `json:"name" binding:"required,min=3,max=100"`
+	Description      string                                    `json:"description" binding:"omitempty,min=6,max=5000"`
+	ShortDescription *string                                   `json:"short_description" binding:"omitempty,max=2000"`
+	Price            float64                                   `json:"price" binding:"required,gt=0"`
+	Sku              string                                    `json:"sku" binding:"required"`
+	Slug             string                                    `json:"slug" binding:"omitempty"`
+	CategoryID       string                                    `json:"category_id,omitempty" binding:"omitempty,uuid"`
+	BrandID          string                                    `json:"brand_id,omitempty" binding:"omitempty,uuid"`
+	CollectionID     *string                                   `json:"collection_id,omitempty" binding:"omitempty,uuid"`
+	Attributes       []int32                                   `json:"attributes" binding:"min=1"`
+	Variants         []repository.CreateProductVariantTxParams `json:"variants,omitempty"`
 }
 type UpdateProductImageAssignments struct {
 	ID           int32  `json:"id"`
@@ -77,16 +82,18 @@ type UpdateProductImages struct {
 }
 
 type UpdateProductReq struct {
-	Name         *string               `json:"name" binding:"omitempty,min=3,max=100"`
-	Description  *string               `json:"description" binding:"omitempty,min=6,max=5000"`
-	Price        *float64              `json:"price" binding:"omitempty,gt=0"`
-	Sku          *string               `json:"sku" binding:"omitempty"`
-	Slug         *string               `json:"slug" binding:"omitempty"`
-	Stock        *int32                `json:"stock" binding:"omitempty,gt=0"`
-	CategoryID   *string               `json:"category_id,omitempty" binding:"omitempty,uuid"`
-	BrandID      *string               `json:"brand_id,omitempty" binding:"omitempty,uuid"`
-	CollectionID *string               `json:"collection_id,omitempty" binding:"omitempty,uuid"`
-	Images       []UpdateProductImages `json:"images" binding:"omitempty,dive"`
+	Name             *string               `json:"name" binding:"omitempty,min=3,max=100"`
+	Description      *string               `json:"description" binding:"omitempty,min=6,max=5000"`
+	ShortDescription *string               `json:"short_description" binding:"omitempty,max=2000"`
+	Price            *float64              `json:"price" binding:"omitempty,gt=0"`
+	Sku              *string               `json:"sku" binding:"omitempty"`
+	Slug             *string               `json:"slug" binding:"omitempty"`
+	Stock            *int32                `json:"stock" binding:"omitempty,gt=0"`
+	CategoryID       *string               `json:"category_id,omitempty" binding:"omitempty,uuid"`
+	BrandID          *string               `json:"brand_id,omitempty" binding:"omitempty,uuid"`
+	CollectionID     *string               `json:"collection_id,omitempty" binding:"omitempty,uuid"`
+	Attributes       []int32               `json:"attributes" binding:"omitempty"`
+	Images           []UpdateProductImages `json:"images" binding:"omitempty,dive"`
 }
 
 type GeneralCategoryResponse struct {
@@ -95,20 +102,22 @@ type GeneralCategoryResponse struct {
 }
 
 type ProductModel struct {
-	ID            string                   `json:"id"`
-	Name          string                   `json:"name"`
-	Description   string                   `json:"description"`
-	BasePrice     float64                  `json:"price,omitzero"`
-	BaseSku       string                   `json:"sku"`
-	UpdatedAt     string                   `json:"updated_at"`
-	IsActive      bool                     `json:"is_active"`
-	Slug          string                   `json:"slug"`
-	CreatedAt     string                   `json:"created_at"`
-	Variants      []ProductVariantModel    `json:"variants"`
-	ProductImages []ProductImageModel      `json:"product_images"`
-	Collection    *GeneralCategoryResponse `json:"collection,omitempty"`
-	Brand         *GeneralCategoryResponse `json:"brand,omitempty"`
-	Category      *GeneralCategoryResponse `json:"category,omitempty"`
+	ID               string                   `json:"id"`
+	Name             string                   `json:"name"`
+	Description      string                   `json:"description"`
+	ShortDescription *string                  `json:"short_description"`
+	Attributes       []int32                  `json:"attributes"`
+	BasePrice        float64                  `json:"price,omitzero"`
+	BaseSku          string                   `json:"sku"`
+	UpdatedAt        string                   `json:"updated_at"`
+	IsActive         bool                     `json:"is_active"`
+	Slug             string                   `json:"slug"`
+	CreatedAt        string                   `json:"created_at"`
+	Variants         []ProductVariantModel    `json:"variants"`
+	ProductImages    []ProductImageModel      `json:"product_images"`
+	Collection       *GeneralCategoryResponse `json:"collection,omitempty"`
+	Brand            *GeneralCategoryResponse `json:"brand,omitempty"`
+	Category         *GeneralCategoryResponse `json:"category,omitempty"`
 }
 
 type ProductListModel struct {
@@ -116,7 +125,8 @@ type ProductListModel struct {
 	Name         string  `json:"name"`
 	Description  string  `json:"description"`
 	VariantCount int32   `json:"variant_count,omitzero"`
-	Price        float64 `json:"price,omitzero"`
+	MinPrice     float64 `json:"min_price,omitzero"`
+	MaxPrice     float64 `json:"max_price,omitzero"`
 	Slug         string  `json:"slug,omitempty"`
 	Sku          string  `json:"sku"`
 	ImgUrl       string  `json:"image_url,omitempty"`
@@ -146,12 +156,14 @@ func (sv *Server) createProduct(c *gin.Context) {
 	}
 
 	createParams := repository.CreateProductParams{
-		ID:   uuid.New(),
-		Name: req.Name,
+		ID:          uuid.New(),
+		Name:        req.Name,
+		Attributes:  req.Attributes,
+		Description: req.Description,
 	}
 
 	createParams.BasePrice = utils.GetPgNumericFromFloat(req.Price)
-	createParams.Description = &req.Description
+	createParams.ShortDescription = req.ShortDescription
 	createParams.Slug = req.Slug
 	createParams.BaseSku = req.Sku
 
@@ -177,7 +189,7 @@ func (sv *Server) createProduct(c *gin.Context) {
 	resp := ProductListModel{
 		ID:          product.ID.String(),
 		Name:        product.Name,
-		Description: *product.Description,
+		Description: product.Description,
 		Slug:        product.Slug,
 		Sku:         product.BaseSku,
 		CreatedAt:   product.CreatedAt.String(),
@@ -275,12 +287,13 @@ func (sv *Server) getProductsHandler(c *gin.Context) {
 		Offset: (queries.Page - 1) * queries.PageSize,
 	}
 
-	if queries.Search != "" {
-		queries.Search = strings.ReplaceAll(queries.Search, " ", "%")
-		queries.Search = strings.ReplaceAll(queries.Search, ",", "%")
-		queries.Search = strings.ReplaceAll(queries.Search, ":", "%")
-		queries.Search = "%" + queries.Search + "%"
-		dbParams.Search = &queries.Search
+	if queries.Search != nil {
+		search := *queries.Search
+		search = strings.ReplaceAll(search, " ", "%")
+		search = strings.ReplaceAll(search, ",", "%")
+		search = strings.ReplaceAll(search, ":", "%")
+		search = "%" + search + "%"
+		dbParams.Search = &search
 	}
 
 	products, err := sv.repo.GetProducts(c, dbParams)
@@ -346,6 +359,9 @@ func (sv *Server) updateProduct(c *gin.Context) {
 	if req.Description != nil {
 		updateProductParam.Description = req.Description
 	}
+	if req.ShortDescription != nil {
+		updateProductParam.ShortDescription = req.ShortDescription
+	}
 	if req.Slug != nil {
 		updateProductParam.Slug = req.Slug
 	}
@@ -363,6 +379,9 @@ func (sv *Server) updateProduct(c *gin.Context) {
 	}
 	if req.Price != nil {
 		updateProductParam.BasePrice = utils.GetPgNumericFromFloat(*req.Price)
+	}
+	if len(req.Attributes) > 0 {
+		updateProductParam.Attributes = req.Attributes
 	}
 
 	product, err := sv.repo.UpdateProduct(c, updateProductParam)
@@ -586,17 +605,19 @@ func mapToProductResponse(productRows []repository.GetProductDetailRow) ProductM
 	product := productRows[0]
 	basePrice, _ := product.BasePrice.Float64Value()
 	resp := ProductModel{
-		ID:            product.ProductID.String(),
-		Name:          product.Name,
-		BasePrice:     basePrice.Float64,
-		Description:   *product.Description,
-		BaseSku:       product.BaseSku,
-		Slug:          product.Slug,
-		UpdatedAt:     product.UpdatedAt.String(),
-		CreatedAt:     product.CreatedAt.String(),
-		IsActive:      *product.IsActive,
-		Variants:      make([]ProductVariantModel, 0),
-		ProductImages: make([]ProductImageModel, 0),
+		ID:               product.ProductID.String(),
+		Name:             product.Name,
+		BasePrice:        basePrice.Float64,
+		ShortDescription: product.ShortDescription,
+		Attributes:       product.Attributes,
+		Description:      product.Description,
+		BaseSku:          product.BaseSku,
+		Slug:             product.Slug,
+		UpdatedAt:        product.UpdatedAt.String(),
+		CreatedAt:        product.CreatedAt.String(),
+		IsActive:         *product.IsActive,
+		Variants:         make([]ProductVariantModel, 0),
+		ProductImages:    make([]ProductImageModel, 0),
 		Brand: &GeneralCategoryResponse{
 			ID:   product.BrandID.String(),
 			Name: product.BrandName,
@@ -733,12 +754,14 @@ func mapToProductImages(productID uuid.UUID, imageRows []repository.GetProductIm
 }
 
 func mapToListProductResponse(productRow repository.GetProductsRow) ProductListModel {
-	price, _ := productRow.BasePrice.Float64Value()
+	minPrice, _ := productRow.MinPrice.Float64Value()
+	maxPrice, _ := productRow.MaxPrice.Float64Value()
 	product := ProductListModel{
 		ID:           productRow.ID.String(),
 		Name:         productRow.Name,
-		Description:  *productRow.Description,
-		Price:        price.Float64,
+		Description:  productRow.Description,
+		MinPrice:     minPrice.Float64,
+		MaxPrice:     maxPrice.Float64,
 		Sku:          productRow.BaseSku,
 		Slug:         productRow.Slug,
 		ImgUrl:       productRow.ImgUrl,

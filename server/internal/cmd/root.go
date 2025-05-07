@@ -82,7 +82,6 @@ func Execute(ctx context.Context) int {
 	rootCmd.PersistentFlags().BoolVarP(&profile, "profile", "", false, "enable profiling")
 
 	rootCmd.AddCommand(apiCmd(ctx, cfg))
-	rootCmd.AddCommand(workerCmd(ctx, cfg))
 
 	if err = rootCmd.Execute(); err != nil {
 		log.Error().Err(err).Msg("failed to execute command")
@@ -97,7 +96,7 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 		Args:  cobra.ExactArgs(0),
 		Short: "Run Gin Gonic API server",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			repo, err := repository.GetPostgresInstance(ctx, cfg)
+			pgRepo, err := repository.GetPostgresInstance(ctx, cfg)
 			if err != nil {
 				return err
 			}
@@ -110,65 +109,45 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 
 			taskDistributor := worker.NewRedisTaskDistributor(redisCfg)
 			uploadService := upload.NewCloudinaryUploadService(cfg)
+			mailer := mailer.NewEmailSender(cfg.SmtpUsername, cfg.SmtpPassword, cfg.Env)
 			paymentCtx := &payment.PaymentContext{}
+			taskProcessor := worker.NewRedisTaskProcessor(redisCfg, pgRepo, mailer, cfg)
 
-			api, err := api.NewAPI(cfg, repo, taskDistributor, uploadService, paymentCtx)
+			api, err := api.NewAPI(cfg, pgRepo, taskDistributor, uploadService, paymentCtx)
 			if err != nil {
 				return err
 			}
-			server := api.Server(fmt.Sprintf(":%s", cfg.Port))
 
+			server := api.Server(fmt.Sprintf(":%s", cfg.Port))
 			go func() {
 				log.Info().Str("addr", fmt.Sprintf("http://%s:%s", cfg.Domain, cfg.Port)).Msg("API server started")
 				_ = server.ListenAndServe()
 			}()
 
+			go func() {
+				log.Info().Msg("Starting task distributor")
+				err = taskProcessor.Start()
+				if err != nil {
+					log.Error().Err(err).Msg("task processor stopped")
+				}
+			}()
+
 			<-ctx.Done()
 
+			log.Info().Msg("Shutting down API server")
 			_ = server.Shutdown(ctx)
-			log.Info().Msg("API server shutdown")
+
+			log.Info().Msg("Shutting down task distributor")
 			_ = taskDistributor.Shutdown()
-			log.Info().Msg("Task distributor shutdown")
-			repo.Close()
-			log.Info().Msg("Postgres instance closed")
-			return nil
-		},
-	}
 
-	return cmd
-}
-
-func workerCmd(ctx context.Context, cfg config.Config) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "worker",
-		Args:  cobra.ExactArgs(0),
-		Short: "Run the asynq worker to process tasks",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			pgDB, err := repository.GetPostgresInstance(ctx, cfg)
-			if err != nil {
-				log.Error().Err(err).Msg("failed to connect to postgres")
-				return err
-			}
-			mailer := mailer.NewEmailSender(cfg.SmtpUsername, cfg.SmtpPassword, cfg.Env)
-			redisCfg := asynq.RedisClientOpt{
-				Addr: cfg.RedisUrl,
-			}
-
-			distributor := worker.NewRedisTaskProcessor(redisCfg, pgDB, mailer, cfg)
-
-			err = distributor.Start()
-			if err != nil {
-				log.Error().Err(err).Msg("failed to start task processor")
-				return err
-			}
-
-			log.Info().Msg("task processor started")
-			<-ctx.Done()
 			log.Info().Msg("shutting down task processor")
-			distributor.Shutdown()
+			taskProcessor.Shutdown()
 
+			log.Info().Msg("Shutting down pgRepo")
+			pgRepo.Close()
 			return nil
 		},
 	}
+
 	return cmd
 }

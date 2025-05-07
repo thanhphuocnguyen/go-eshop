@@ -11,6 +11,12 @@ FROM categories c
 WHERE c.id = $1
 LIMIT 1;
 
+-- name: GetCategoryBySlug :one
+SELECT c.*
+FROM categories c
+WHERE c.slug = $1
+LIMIT 1;
+
 -- name: GetCategoryProductsByID :many
 SELECT
     sqlc.embed(c),

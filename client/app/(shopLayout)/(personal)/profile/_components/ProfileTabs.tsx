@@ -1,38 +1,45 @@
 'use client';
 
 import clsx from 'clsx';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
-type TabType = 'profile' | 'addresses' | 'orders' | 'security';
-
-interface ProfileTabsProps {
-  activeTab: TabType;
-  setActiveTab: (tab: TabType) => void;
-}
-
-export default function ProfileTabs({ activeTab, setActiveTab }: ProfileTabsProps) {
+export default function ProfileTabs() {
+  const pathname = usePathname();
+  
   const tabs = [
-    { id: 'profile', label: 'Personal Info' },
-    { id: 'addresses', label: 'Addresses' },
-    { id: 'orders', label: 'Orders' },
-    { id: 'security', label: 'Security' },
+    { id: 'profile', path: '/profile', label: 'Personal Info' },
+    { id: 'addresses', path: '/profile/addresses', label: 'Addresses' },
+    { id: 'orders', path: '/profile/orders', label: 'Orders' },
+    { id: 'security', path: '/profile/security', label: 'Security' },
   ] as const;
+
+  const isTabActive = (tabPath: string) => {
+    if (tabPath === '/profile' && pathname === '/profile') {
+      return true;
+    }
+    if (tabPath !== '/profile' && pathname.startsWith(tabPath)) {
+      return true;
+    }
+    return false;
+  };
 
   return (
     <div className="border-b border-gray-200">
       <nav className="flex -mb-px">
         {tabs.map((tab) => (
-          <button
+          <Link
             key={tab.id}
-            onClick={() => setActiveTab(tab.id as TabType)}
+            href={tab.path}
             className={clsx(
               'w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm',
-              activeTab === tab.id
+              isTabActive(tab.path)
                 ? 'border-indigo-500 text-indigo-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             )}
           >
             {tab.label}
-          </button>
+          </Link>
         ))}
       </nav>
     </div>

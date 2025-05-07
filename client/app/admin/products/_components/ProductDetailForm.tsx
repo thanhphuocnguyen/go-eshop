@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import React, { useEffect, useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, useForm, useWatch } from 'react-hook-form';
 import { Button, Fieldset, Legend } from '@headlessui/react';
 import { redirect, useRouter } from 'next/navigation';
 import clsx from 'clsx';
@@ -48,6 +48,7 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
           variants: productDetail.variants,
           product_info: {
             category: productDetail.category,
+            attributes: productDetail.attributes,
             brand: productDetail.brand,
             collection: productDetail.collection,
             description: productDetail.description,
@@ -77,6 +78,7 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
               id: '',
               name: '',
             },
+            attributes: [],
             collection: null,
             description: '',
             name: '',
@@ -91,8 +93,15 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
 
   const {
     reset,
+    control,
     formState: { isDirty, isSubmitting, dirtyFields },
   } = productForm;
+
+  const selectedAttributes = useWatch({
+    control,
+    name: 'product_info.attributes',
+    defaultValue: [],
+  });
 
   const handleDeleteProduct = async () => {
     if (!productDetail?.id) return;
@@ -129,8 +138,10 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
           category: productDetail.category,
           brand: productDetail.brand,
           collection: productDetail.collection,
+          attributes: productDetail.attributes,
           description: productDetail.description,
           name: productDetail.name,
+          short_description: productDetail.short_description,
           price: productDetail.price,
           sku: productDetail.sku,
           is_active: productDetail.is_active,
@@ -210,6 +221,18 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
 
           {/* Combined Product Details and Variants Section */}
           <div className='bg-white rounded-lg shadow-md p-6'>
+            {/* Product Description Header */}
+            <div className='mb-4'>
+              <h2 className='text-xl font-semibold text-gray-700'>
+                Product Details
+              </h2>
+              <p className='text-gray-500 mt-1'>
+                {productDetail
+                  ? 'Edit your product information, variants, and images below.'
+                  : 'Fill in the details to create a new product in your inventory.'}
+              </p>
+            </div>
+
             <div className='mb-6'>
               <ProductInfoForm productDetail={productDetail} />
             </div>
@@ -217,7 +240,7 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
             {/* Product Images */}
             <hr className='my-8' />
             {/* Product Variants */}
-            <VariantInfoForm />
+            <VariantInfoForm selectedAttributes={selectedAttributes} />
           </div>
         </Fieldset>
       </FormProvider>
@@ -317,6 +340,7 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
         body: {
           ...payload.product_info,
           collection_id: payload.product_info.collection?.id || null,
+          attributes: payload.product_info.attributes,
           brand_id: payload.product_info.brand?.id || null,
           category_id: payload.product_info.category?.id || null,
         },

@@ -43,7 +43,7 @@ SELECT
     o.*, pm.status as payment_status, COUNT(oi.id) as total_items
 FROM
     orders o
-JOIN order_items oi ON o.id = oi.id
+LEFT JOIN order_items oi ON o.id = oi.id
 LEFT JOIN payments pm ON o.id = pm.id
 WHERE
     o.customer_id = COALESCE(sqlc.narg('customer_id'), o.customer_id) AND

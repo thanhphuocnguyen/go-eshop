@@ -10,15 +10,10 @@ import { useCollections } from '../../_lib/hooks/useCollections';
 import { useBrands } from '../../_lib/hooks/useBrands';
 import { useAttributes } from '../../_lib/hooks/useAttributes';
 import { useCategories } from '../../_lib/hooks/useCategories';
-import {
-  AttributeDetailModel,
-  ProductDetailModel,
-  ProductModelForm,
-} from '@/lib/definitions';
+import { ProductDetailModel, ProductModelForm } from '@/lib/definitions';
 import { useFormContext } from 'react-hook-form';
 import clsx from 'clsx';
 import { ProductImagesUploader } from './ProductImagesUploader';
-import { useProductDetailFormContext } from '../_lib/contexts/ProductFormContext';
 
 export const ProductInfoForm: React.FC<{
   productDetail?: ProductDetailModel;
@@ -27,9 +22,6 @@ export const ProductInfoForm: React.FC<{
   const { collections, isLoading: collectionLoading } = useCollections();
   const { brands, isLoading: brandsLoading } = useBrands();
   const { attributes, attributesLoading } = useAttributes();
-
-  const { selectedAttributes, setSelectedAttributes } =
-    useProductDetailFormContext();
 
   const { register, control, watch, formState, setValue } =
     useFormContext<ProductModelForm>();
@@ -51,17 +43,6 @@ export const ProductInfoForm: React.FC<{
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [brands]);
-
-  useEffect(() => {
-    if (productDetail && attributes) {
-      const attrIds = new Set(
-        productDetail.variants.map((v) => v.attributes.map((a) => a.id)).flat()
-      );
-      const selected = attributes.filter((a) => attrIds.has(a.id));
-      setSelectedAttributes(selected);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [attributes, productDetail]);
 
   return (
     <>
@@ -131,16 +112,31 @@ export const ProductInfoForm: React.FC<{
             <LoadingSpinner />
           </div>
         ) : attributes ? (
-          <StyledMultipleComboBox<AttributeDetailModel>
+          <StyledMultipleComboBox<{
+            id: number;
+            name: string;
+          }>
             label='Select an attribute'
             setSelected={(values) => {
-              setSelectedAttributes(values);
+              setValue(
+                'product_info.attributes',
+                values.map((e) => e.id),
+                {
+                  shouldDirty: false,
+                }
+              );
             }}
             options={attributes}
             getDisplayValue={(option) => {
               return option?.name || '';
             }}
-            selected={selectedAttributes}
+            selected={watch('product_info.attributes', []).map((e) => {
+              const attribute = attributes.find((a) => a.id === e)!;
+              return {
+                id: attribute.id,
+                name: attribute.name,
+              };
+            })}
           />
         ) : null}
         {/* Category, Collections, Brand */}
@@ -201,6 +197,17 @@ export const ProductInfoForm: React.FC<{
           />
         )}
       </div>
+      {/* Short Description */}
+      <Field className='w-full mb-4'>
+        <TextField
+          label='Short Description'
+          {...register('product_info.short_description')}
+          placeholder='Enter short product description...'
+          type='text'
+          error={formState.errors.product_info?.short_description?.message}
+          className='w-full'
+        />
+      </Field>
       {/* Description */}
       <Field className='w-full'>
         <Label className='font-semibold'>Description</Label>

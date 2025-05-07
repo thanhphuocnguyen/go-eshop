@@ -150,7 +150,10 @@ export default function Page() {
                 >
                   {product.name}
                 </th>
-                <td className='px-6 py-4'>${product.price.toFixed(2)}</td>
+                <td className='px-6 py-4'>
+                  ${product.min_price.toFixed(2)} - $
+                  {product.max_price.toFixed(2)}
+                </td>
                 <td className='px-6 py-4'>{product.sku}</td>
                 <td className='px-6 py-4'>
                   {product.created_at &&

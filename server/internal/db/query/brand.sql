@@ -10,6 +10,12 @@ SELECT c.*
 FROM brands c 
 WHERE c.id = $1 LIMIT 1;
 
+-- name: GetBrandBySlug :one
+SELECT c.*
+FROM brands c
+WHERE c.slug = $1
+LIMIT 1;
+
 -- name: GetBrandsByIDs :many
 SELECT 
     c.*, 

@@ -9,6 +9,7 @@ import { toast } from 'react-toastify';
 import { Button } from '@headlessui/react';
 import { PUBLIC_API_PATHS } from '@/lib/constants/api';
 import { GenericResponse } from '@/lib/definitions';
+import { CheckoutDataResponse } from '@/app/(shopLayout)/(personal)/checkout/_lib/definitions';
 
 interface PaymentSetupModalProps {
   orderId: string;
@@ -40,10 +41,7 @@ const PaymentSetupModal: React.FC<PaymentSetupModalProps> = ({
     setIsLoading(true);
     try {
       const response = await apiFetch<
-        GenericResponse<{
-          client_secret: string;
-          payment_id: string;
-        }>
+        GenericResponse<Partial<CheckoutDataResponse>>
       >(PUBLIC_API_PATHS.PAYMENTS, {
         method: 'POST',
         body: {
@@ -63,13 +61,11 @@ const PaymentSetupModal: React.FC<PaymentSetupModalProps> = ({
           'checkoutData',
           JSON.stringify({
             order_id: orderId,
-            total,
-            payment_method: selectedMethod,
-          })
+            client_secret: response.data.client_secret,
+            payment_intent_id: response.data.payment_id,
+          } as CheckoutDataResponse)
         );
-        redirect(
-          `/checkout/payment/stripe?payment_id=${response.data.payment_id}`
-        );
+        redirect(`/checkout/payment/stripe`);
       } else {
         // For COD, just refresh the page to show updated payment info
         toast.success('Payment method set to Cash On Delivery');

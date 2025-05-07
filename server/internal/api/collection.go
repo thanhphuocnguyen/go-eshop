@@ -188,7 +188,6 @@ func (sv *Server) getCollectionByIDHandler(c *gin.Context) {
 	}
 
 	firstRow := rows[0]
-	products := make([]ProductListModel, 0)
 	colResp := CategoryResponse{
 		ID:          firstRow.ID.String(),
 		Slug:        firstRow.Slug,
@@ -199,77 +198,30 @@ func (sv *Server) getCollectionByIDHandler(c *gin.Context) {
 		ImageUrl:    firstRow.ImageUrl,
 		CreatedAt:   firstRow.CreatedAt.Format("2006-01-02 15:04:05"),
 		UpdatedAt:   firstRow.UpdatedAt.Format("2006-01-02 15:04:05"),
-		Products:    products,
+		Products:    []CategoryLinkedProduct{},
 	}
 
-	for i, row := range rows {
-		if !row.ProductID.Valid {
-			continue
-		}
-		if i == 0 || row.ProductID != rows[i-1].ProductID {
-			productID, _ := uuid.FromBytes(row.ProductID.Bytes[:])
-			price, _ := row.ProductPrice.Float64Value()
-			productMode := ProductListModel{
-				ID:          productID.String(),
-				Name:        *row.ProductName,
-				Price:       price.Float64,
-				Sku:         *row.ProductSku,
-				Description: *row.Description,
-			}
-			colResp.Products = append(colResp.Products, productMode)
-		}
-	}
-	c.JSON(http.StatusOK, createSuccessResponse(c, colResp, "collection", nil, nil))
-}
-
-// getProductsByCollectionHandler retrieves a list of Products by Collection ID.
-// @Summary Get a list of Products by Collection ID
-// @Description Get a list of Products by Collection ID
-// @ID get-Products-by-Collection
-// @Accept json
-// @Produce json
-// @Param id path int true "Collection ID"
-// @Success 200 {object} ApiResponse[[]ProductListModel]
-// @Failure 400 {object} gin.H
-// @Failure 404 {object} gin.H
-// @Failure 500 {object} gin.H
-// @Router /collections/{id}/products [get]
-func (sv *Server) getProductsByCollectionHandler(c *gin.Context) {
-	var param getCollectionParams
-	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[[]ProductListModel](InvalidBodyCode, "", err))
-		return
-	}
-	arg := repository.GetProductsByCollectionIDParams{
+	getProductsParams := repository.GetLinkedProductsByCategoryParams{
 		CollectionID: utils.GetPgTypeUUID(uuid.MustParse(param.ID)),
-		Limit:        20,
+		Limit:        200,
 		Offset:       0,
 	}
 
-	rows, err := sv.repo.GetProductsByCollectionID(c, arg)
+	productRows, err := sv.repo.GetLinkedProductsByCategory(c, getProductsParams)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[[]ProductListModel](InternalServerErrorCode, "", err))
 		return
 	}
-
-	resp := make([]ProductListModel, 0)
-	for _, row := range rows {
-		price, _ := row.BasePrice.Float64Value()
-		productMode := ProductListModel{
-			ID:          row.ID.String(),
-			Name:        row.Name,
-			Price:       price.Float64,
-			Sku:         row.BaseSku,
-			Slug:        row.Slug,
-			ImgUrl:      row.ImgUrl,
-			ImgID:       row.ImgID,
-			CreatedAt:   row.CreatedAt.Format("2006-01-02 15:04:05"),
-			Description: *row.Description,
-		}
-		resp = append(resp, productMode)
+	for _, row := range productRows {
+		colResp.Products = append(colResp.Products, CategoryLinkedProduct{
+			ID:           row.ID.String(),
+			Name:         row.Name,
+			VariantCount: int32(row.VariantCount),
+			ImageUrl:     &row.ImgUrl,
+		})
 	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(c, rows, "products", nil, nil))
+	c.JSON(http.StatusOK, createSuccessResponse(c, colResp, "collection", nil, nil))
 }
 
 // updateCollectionHandler updates a Collection.

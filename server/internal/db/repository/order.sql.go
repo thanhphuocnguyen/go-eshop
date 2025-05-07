@@ -280,7 +280,7 @@ SELECT
     o.id, o.customer_id, o.customer_email, o.customer_name, o.customer_phone, o.shipping_address, o.total_price, o.status, o.confirmed_at, o.delivered_at, o.cancelled_at, o.shipping_method, o.refunded_at, o.order_date, o.updated_at, o.created_at, pm.status as payment_status, COUNT(oi.id) as total_items
 FROM
     orders o
-JOIN order_items oi ON o.id = oi.id
+LEFT JOIN order_items oi ON o.id = oi.id
 LEFT JOIN payments pm ON o.id = pm.id
 WHERE
     o.customer_id = COALESCE($3, o.customer_id) AND

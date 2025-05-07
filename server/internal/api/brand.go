@@ -252,71 +252,31 @@ func (sv *Server) getBrandByIDHandler(c *gin.Context) {
 		UpdatedAt:   result.UpdatedAt.Format("2006-01-02 15:04:05"),
 		ImageUrl:    result.ImageUrl,
 		Remarkable:  *result.Remarkable,
-		Products:    nil,
-	}
-	c.JSON(http.StatusOK, createSuccessResponse(c, colResp, "", nil, nil))
-}
-
-// getProductsByBrandHandler retrieves a list of products in a Brand.
-// @Summary Get a list of products in a Brand
-// @Description Get a list of products in a Brand
-// @ID get-Brand-products
-// @Accept json
-// @Produce json
-// @Param id path int true "Brand ID"
-// @Success 200 {object} ApiResponse[[]ProductListModel]
-// @Failure 400 {object} ApiResponse[[]ProductListModel]
-// @Failure 500 {object} ApiResponse[[]ProductListModel]
-// @Router /Brand/{id}/products [get]
-func (sv *Server) getProductsByBrandHandler(c *gin.Context) {
-	var param BrandParams
-	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[[]ProductListModel](InvalidBodyCode, "", err))
-		return
-	}
-	var queries PaginationQueryParams
-	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[[]ProductListModel](InvalidBodyCode, "", err))
-		return
-	}
-	_, err := sv.repo.GetBrandByID(c, uuid.MustParse(param.ID))
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[[]ProductListModel](NotFoundCode, "", fmt.Errorf("brand with ID %s not found", param.ID)))
-			return
-		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[[]ProductListModel](InternalServerErrorCode, "", err))
-		return
+		Products:    []CategoryLinkedProduct{},
 	}
 
-	getProductsParams := repository.GetProductsByBrandIDParams{
+	getProductsParams := repository.GetLinkedProductsByCategoryParams{
 		BrandID: utils.GetPgTypeUUID(uuid.MustParse(param.ID)),
-		Limit:   20,
+		Limit:   200,
 		Offset:  0,
 	}
 
-	getProductsParams.Limit = queries.PageSize
-	getProductsParams.Offset = (queries.Page - 1) * queries.PageSize
-
-	productRows, err := sv.repo.GetProductsByBrandID(c, getProductsParams)
+	productRows, err := sv.repo.GetLinkedProductsByCategory(c, getProductsParams)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[[]ProductListModel](InternalServerErrorCode, "", err))
 		return
 	}
-	products := []ProductListModel{}
-	for _, p := range productRows {
-		price, _ := p.BasePrice.Float64Value()
-		products = append(products, ProductListModel{
-			ID:          p.ID.String(),
-			Name:        p.Name,
-			Description: *p.Description,
-			Price:       price.Float64,
-			Slug:        p.Slug,
-			Sku:         p.BaseSku,
+
+	for _, row := range productRows {
+		colResp.Products = append(colResp.Products, CategoryLinkedProduct{
+			ID:           row.ID.String(),
+			Name:         row.Name,
+			VariantCount: int32(row.VariantCount),
+			ImageUrl:     &row.ImgUrl,
 		})
 	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(c, products, "", nil, nil))
+	c.JSON(http.StatusOK, createSuccessResponse(c, colResp, "", nil, nil))
 }
 
 // updateBrand updates a Brand.

@@ -1,15 +1,15 @@
 -- name: CreateProduct :one
 INSERT INTO products 
-    (id, name, description, base_price, base_sku, slug, brand_id, collection_id, category_id) 
+    (id, name, description, short_description, base_price, base_sku, slug, attributes, brand_id, collection_id, category_id) 
 VALUES 
-    ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 RETURNING *;
 
 -- name: CreateProductVariant :one
 INSERT INTO product_variants
-    (id, product_id, sku, price, stock, weight)
+    (id, product_id, description, sku, price, stock, weight)
 VALUES
-    ($1, $2, $3, $4, $5, $6)
+    ($1, $2, $3, $4, $5, $6, $7)
 RETURNING *;
 
 -- name: CreateBulkProductVariants :copyfrom
@@ -39,7 +39,9 @@ WHERE
 
 -- name: GetProductDetail :many
 SELECT
-    p.id as product_id, p.name, p.description, p.base_price, p.base_sku, p.slug, p.updated_at, p.created_at, p.is_active,
+    p.id as product_id, p.name, p.description, p.base_price,
+    p.base_sku, p.slug, p.updated_at, p.created_at, p.is_active,
+    p.short_description, p.attributes,
     c.id AS category_id, c.name AS category_name,
     cl.id AS collection_id, cl.name AS collection_name,
     b.id AS brand_id, b.name AS brand_name
@@ -99,11 +101,9 @@ ORDER BY
     @orderBy::text
 LIMIT $1 OFFSET $2;
 
--- name: GetProductsByCategoryID :many
+-- name: GetLinkedProductsByCategory :many
 SELECT
-    p.*,
-    first_img.id AS img_id, first_img.url AS img_url,
-    COUNT(v.id) AS variant_count, MIN(v.price)::DECIMAL AS min_price, MAX(v.price)::DECIMAL AS max_price
+    p.id, p.name, p.short_description, first_img.id AS img_id, first_img.url AS img_url, COUNT(v.id) AS variant_count
 FROM
     products AS p
 LEFT JOIN product_variants as v ON p.id = v.product_id
@@ -116,100 +116,11 @@ LEFT JOIN LATERAL (
     LIMIT 1
 ) AS first_img ON true
 WHERE
-    p.is_active = COALESCE(sqlc.narg('is_active'), p.is_active) AND
-    p.name ILIKE COALESCE(sqlc.narg('name'), name) AND
-    p.base_sku ILIKE COALESCE(sqlc.narg('base_sku'), base_sku) AND
-    p.category_id = $1
+    p.collection_id = COALESCE(sqlc.narg('collection_id'), p.collection_id) AND
+    p.category_id = COALESCE(sqlc.narg('category_id'), p.category_id) AND
+    p.brand_id = COALESCE(sqlc.narg('brand_id'), p.brand_id)
 GROUP BY
     p.id, first_img.id, first_img.url
-ORDER BY
-    p.id
-LIMIT
-    $2
-OFFSET
-    $3;
-
--- name: GetCategoryProducts :many
-SELECT
-    p.*,
-    first_img.id AS img_id, first_img.url AS img_url,
-    COUNT(v.id) AS variant_count, MIN(v.price)::DECIMAL AS min_price, MAX(v.price)::DECIMAL AS max_price
-FROM
-    products AS p
-JOIN categories as c ON p.category_id = c.id
-LEFT JOIN product_variants as v ON p.id = v.product_id
-LEFT JOIN LATERAL (
-    SELECT img.id, img.url
-    FROM image_assignments as ia
-    JOIN images as img ON img.id = ia.image_id
-    WHERE ia.entity_id = p.id AND ia.entity_type = 'product'
-    ORDER BY ia.display_order ASC, ia.id ASC
-    LIMIT 1
-) AS first_img ON true
-WHERE
-    p.is_active = COALESCE(sqlc.narg('is_active'), p.is_active) AND
-    p.name ILIKE COALESCE(sqlc.narg('name'), p.name) AND
-    p.base_sku ILIKE COALESCE(sqlc.narg('base_sku'), p.base_sku) AND
-    (c.slug = COALESCE(sqlc.narg('category_slug'), c.slug) OR c.id = COALESCE(sqlc.narg('category_id'), c.id))
-GROUP BY
-    p.id, first_img.id, first_img.url
-ORDER BY
-    p.id
-LIMIT
-    $2
-OFFSET
-    $3;
-
--- name: GetProductsByCollectionID :many
-SELECT
-    p.*,
-    first_img.id AS img_id, first_img.url AS img_url,
-    COUNT(v.id) AS variant_count, MIN(v.price)::DECIMAL AS min_price, MAX(v.price)::DECIMAL AS max_price
-FROM products AS p
-LEFT JOIN product_variants as v ON p.id = v.product_id
-LEFT JOIN LATERAL (
-    SELECT img.id, img.url
-    FROM image_assignments as ia
-    JOIN images as img ON img.id = ia.image_id
-    WHERE ia.entity_id = p.id AND ia.entity_type = 'product'
-    ORDER BY ia.display_order ASC, ia.id ASC
-    LIMIT 1
-) AS first_img ON true
-WHERE
-    p.is_active = COALESCE(sqlc.narg('is_active'), p.is_active) AND
-    p.name ILIKE COALESCE(sqlc.narg('name'), p.name) AND
-    p.base_sku ILIKE COALESCE(sqlc.narg('base_sku'), p.base_sku) AND
-    p.collection_id = $1
-GROUP BY
-    p.id, first_img.id, first_img.url
-ORDER BY p.id
-LIMIT $2
-OFFSET $3;
-
--- name: GetProductsByBrandID :many
-SELECT
-    p.*,
-    img.id AS img_id,
-    img.url AS img_url,
-    MIN(p.base_price)::DECIMAL AS min_price,
-    MAX(p.base_price)::DECIMAL AS max_price,
-    MAX(p.base_price)::SMALLINT AS discount
-FROM products AS p
-LEFT JOIN LATERAL (
-    SELECT img.id, img.url
-    FROM image_assignments as ia
-    JOIN images as img ON img.id = ia.image_id
-    WHERE ia.entity_id = p.id AND ia.entity_type = 'product'
-    ORDER BY ia.display_order ASC, ia.id ASC
-    LIMIT 1
-) AS img ON true
-WHERE
-    p.is_active = COALESCE(sqlc.narg('is_active'), is_active) AND
-    p.name ILIKE COALESCE(sqlc.narg('name'), name) AND
-    p.base_sku ILIKE COALESCE(sqlc.narg('base_sku'), base_sku) AND
-    p.brand_id = $1
-GROUP BY
-    p.id, img.id, img.url
 ORDER BY
     p.id
 LIMIT
@@ -224,7 +135,10 @@ FROM
     products
 WHERE
     is_active = COALESCE(sqlc.narg('is_active'), is_active) AND
-    name ILIKE COALESCE(sqlc.narg('name'), name);
+    name ILIKE COALESCE(sqlc.narg('name'), name)
+    AND category_id = COALESCE(sqlc.narg('category_id'), category_id)
+    AND collection_id = COALESCE(sqlc.narg('collection_id'), collection_id)
+    AND brand_id = COALESCE(sqlc.narg('brand_id'), brand_id);
 
 -- name: UpdateProduct :one
 UPDATE
@@ -232,7 +146,9 @@ UPDATE
 SET
     name = coalesce(sqlc.narg('name'), name),
     description = coalesce(sqlc.narg('description'), description),
+    short_description = coalesce(sqlc.narg('short_description'), short_description),
     brand_id = coalesce(sqlc.narg('brand_id'), brand_id),
+    attributes = coalesce(sqlc.narg('attributes'), attributes),
     collection_id = coalesce(sqlc.narg('collection_id'), collection_id),
     category_id = coalesce(sqlc.narg('category_id'), category_id),
     slug = coalesce(sqlc.narg('slug'), slug),

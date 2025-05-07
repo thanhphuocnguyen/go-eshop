@@ -37,6 +37,7 @@ export type CheckoutDataResponse = {
   order_id: string;
   payment_id?: string;
   client_secret?: string;
+  payment_intent_id?: string;
 };
 
 export type PaymentResponse = {

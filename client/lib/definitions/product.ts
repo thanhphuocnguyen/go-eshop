@@ -9,7 +9,8 @@ export type ProductListModel = {
   variant_count: number;
   slug: string;
   image_url: string;
-  price: number;
+  min_price: number;
+  max_price: number;
   sku: string;
   created_at: Date;
   updated_at: Date;
@@ -97,6 +98,8 @@ export const ProductFormSchema = z.object({
   product_info: z.object({
     name: z.string().min(3).max(100),
     description: z.string().min(10).max(5000),
+    short_description: z.string().optional(),
+    attributes: z.number().array(),
     price: z.coerce.number().gt(0),
     sku: z.string().nonempty(),
     slug: z.string().nonempty(),
@@ -184,6 +187,8 @@ export type ProductDetailModel = {
   id: string;
   name: string;
   description: string;
+  short_description: string;
+  attributes: number[];
   slug: string;
   is_active: boolean;
   price: number;

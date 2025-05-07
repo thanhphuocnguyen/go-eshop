@@ -32,7 +32,14 @@ type CreateCategoryRequest struct {
 	Image        *multipart.FileHeader `form:"image" binding:"omitempty"`
 }
 
-type CategoryResponse struct {
+type CategoryLinkedProduct struct {
+	ID           string  `json:"id"`
+	Name         string  `json:"name"`
+	VariantCount int32   `json:"variant_count"`
+	ImageUrl     *string `json:"image_url,omitempty"`
+}
+
+type CategoryListResponse struct {
 	ID          string             `json:"id"`
 	Name        string             `json:"name"`
 	Description *string            `json:"description,omitempty"`
@@ -42,7 +49,20 @@ type CategoryResponse struct {
 	CreatedAt   string             `json:"created_at,omitempty"`
 	UpdatedAt   string             `json:"updated_at,omitempty"`
 	ImageUrl    *string            `json:"image_url,omitempty"`
-	Products    []ProductListModel `json:"products,omitempty"`
+	Products    []ProductListModel `json:"products"`
+}
+
+type CategoryResponse struct {
+	ID          string                  `json:"id"`
+	Name        string                  `json:"name"`
+	Description *string                 `json:"description,omitempty"`
+	Slug        string                  `json:"slug"`
+	Published   bool                    `json:"published,omitempty"`
+	Remarkable  bool                    `json:"remarkable,omitempty"`
+	CreatedAt   string                  `json:"created_at,omitempty"`
+	UpdatedAt   string                  `json:"updated_at,omitempty"`
+	ImageUrl    *string                 `json:"image_url,omitempty"`
+	Products    []CategoryLinkedProduct `json:"products"`
 }
 
 type getCategoryParams struct {
@@ -99,12 +119,12 @@ func (sv *Server) getCategoriesHandler(c *gin.Context) {
 		return
 	}
 
-	categoriesResp := make([]CategoryResponse, len(categories))
+	categoriesResp := make([]CategoryListResponse, len(categories))
 	var wg sync.WaitGroup
 	productChannel := make(chan []ProductListModel, len(categories))
 	for i, category := range categories {
 		wg.Add(1)
-		categoriesResp[i] = CategoryResponse{
+		categoriesResp[i] = CategoryListResponse{
 			ID:          category.ID.String(),
 			Name:        category.Name,
 			Slug:        category.Slug,
@@ -118,7 +138,7 @@ func (sv *Server) getCategoriesHandler(c *gin.Context) {
 		}
 		go func() {
 			defer wg.Done()
-			prodByCategoryRows, err := sv.repo.GetProductsByCategoryID(c, repository.GetProductsByCategoryIDParams{
+			prodByCategoryRows, err := sv.repo.GetProducts(c, repository.GetProductsParams{
 				CategoryID: utils.GetPgTypeUUID(category.ID),
 				Limit:      10,
 				Offset:     0,
@@ -129,15 +149,17 @@ func (sv *Server) getCategoriesHandler(c *gin.Context) {
 			}
 			productsResp := make([]ProductListModel, len(prodByCategoryRows))
 			for j, product := range prodByCategoryRows {
-				price, _ := product.BasePrice.Float64Value()
+				minPrice, _ := product.MinPrice.Float64Value()
+				price, _ := product.MinPrice.Float64Value()
 				productsResp[j] = ProductListModel{
 					ID:           product.ID.String(),
 					Name:         product.Name,
 					Slug:         product.Slug,
 					CreatedAt:    product.CreatedAt.String(),
 					UpdatedAt:    product.UpdatedAt.String(),
-					Description:  *product.Description,
-					Price:        price.Float64,
+					Description:  product.Description,
+					MinPrice:     minPrice.Float64,
+					MaxPrice:     price.Float64,
 					VariantCount: int32(product.VariantCount),
 					Sku:          product.BaseSku,
 					ImgUrl:       product.ImgUrl,
@@ -166,7 +188,7 @@ func (sv *Server) getCategoriesHandler(c *gin.Context) {
 	))
 }
 
-// getCategoryProductsBySlug retrieves a list of Products by Category Slug.
+// getCategoryBySlug retrieves a list of Products by Category Slug.
 // @Summary Get a list of Products by Category Slug
 // @Description Get a list of Products by Category Slug
 // @ID get-Products-by-Category-Slug
@@ -179,7 +201,7 @@ func (sv *Server) getCategoriesHandler(c *gin.Context) {
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /categories/slug/{slug} [get]
-func (sv *Server) getCategoryProductsBySlug(c *gin.Context) {
+func (sv *Server) getCategoryBySlug(c *gin.Context) {
 	var param CategorySlugParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
@@ -191,48 +213,122 @@ func (sv *Server) getCategoryProductsBySlug(c *gin.Context) {
 		return
 	}
 
-	params := repository.GetCategoryProductsParams{
-		CategorySlug: &param.CategorySlug,
-		Limit:        (query.Page - 1) * query.PageSize,
-		Offset:       query.PageSize,
-	}
-
-	categories, err := sv.repo.GetCategoryProducts(c, params)
+	category, err := sv.repo.GetCategoryBySlug(c, param.CategorySlug)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
-		return
-	}
-
-	count, err := sv.repo.CountCategories(c)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
-		return
-	}
-
-	categoriesResp := make([]ProductListModel, len(categories))
-
-	for i, category := range categories {
-		price, _ := category.BasePrice.Float64Value()
-		categoriesResp[i] = ProductListModel{
-			ID:           category.ID.String(),
-			Name:         category.Name,
-			Slug:         category.Slug,
-			CreatedAt:    category.CreatedAt.String(),
-			UpdatedAt:    category.UpdatedAt.String(),
-			Description:  *category.Description,
-			Price:        price.Float64,
-			VariantCount: int32(category.VariantCount),
-			Sku:          category.BaseSku,
-			ImgUrl:       category.ImgUrl,
-			ImgID:        category.ImgID,
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, createErrorResponse[CategoryResponse](NotFoundCode, "", fmt.Errorf("category with slug %s not found", param.CategorySlug)))
+			return
 		}
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
+		return
 	}
 
 	c.JSON(http.StatusOK, createSuccessResponse(
 		c,
-		categoriesResp,
-		fmt.Sprintf("Total %d categories", count),
+		CategoryResponse{
+			ID:          category.ID.String(),
+			Name:        category.Name,
+			Description: category.Description,
+			Slug:        category.Slug,
+			ImageUrl:    category.ImageUrl,
+			CreatedAt:   category.CreatedAt.String(),
+		},
+		"",
 		nil,
+		nil,
+	))
+}
+
+// getProductsByCategoryID retrieves a list of Products by Category ID.
+// @Summary Get a list of Products by Category ID
+// @Description Get a list of Products by Category ID
+// @ID get-Products-by-Category-ID
+// @Accept json
+// @Produce json
+// @Param id path int true "Category ID"
+// @Param page query int false "Page number"
+// @Param page_size query int false "Page size"
+// @Success 200 {object} ApiResponse[ProductListModel]
+// @Failure 400 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /categories/{id}/products [get]
+func (sv *Server) getProductsByCategoryID(c *gin.Context) {
+	var param getCategoryParams
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](InvalidBodyCode, "", err))
+		return
+	}
+	var query PaginationQueryParams
+	if err := c.ShouldBindQuery(&query); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](InvalidBodyCode, "", err))
+		return
+	}
+
+	category, err := sv.repo.GetCategoryByID(c, uuid.MustParse(param.CategoryID))
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, createErrorResponse[ProductListModel](NotFoundCode, "", fmt.Errorf("category with ID %s not found", param.CategoryID)))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](InternalServerErrorCode, "", err))
+		return
+	}
+
+	params := repository.GetProductsParams{
+		CategoryID: utils.GetPgTypeUUID(category.ID),
+		Limit:      10,
+		Offset:     0,
+	}
+	params.Offset = (params.Limit) * int64(query.Page-1)
+	params.Limit = int64(query.PageSize)
+
+	productRows, err := sv.repo.GetProducts(c, params)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](InternalServerErrorCode, "", err))
+		return
+	}
+
+	count, err := sv.repo.CountProducts(c, repository.CountProductsParams{
+		CategoryID: utils.GetPgTypeUUID(category.ID),
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](InternalServerErrorCode, "", err))
+		return
+	}
+
+	productResp := make([]ProductListModel, len(productRows))
+
+	for i, product := range productRows {
+		minP, _ := product.MinPrice.Float64Value()
+		maxP, _ := product.MinPrice.Float64Value()
+		productResp[i] = ProductListModel{
+			ID:           product.ID.String(),
+			Name:         product.Name,
+			Description:  product.Description,
+			Sku:          product.BaseSku,
+			MinPrice:     minP.Float64,
+			MaxPrice:     maxP.Float64,
+			ImgUrl:       product.ImgUrl,
+			ImgID:        product.ImgID,
+			Slug:         product.Slug,
+			CreatedAt:    product.CreatedAt.String(),
+			UpdatedAt:    product.UpdatedAt.String(),
+			VariantCount: int32(product.VariantCount),
+		}
+	}
+	c.JSON(http.StatusOK, createSuccessResponse(
+		c,
+		productResp,
+		fmt.Sprintf("Total %d products", count),
+		&Pagination{
+			Page:            query.Page,
+			PageSize:        query.PageSize,
+			Total:           count,
+			TotalPages:      count / int64(query.PageSize),
+			HasNextPage:     count > int64(query.Page*query.PageSize),
+			HasPreviousPage: query.Page > 1,
+		},
 		nil,
 	))
 }
@@ -402,67 +498,28 @@ func (sv *Server) getCategoryByID(c *gin.Context) {
 		ImageUrl:    result.ImageUrl,
 	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(c, resp, "", nil, nil))
-}
-
-// getProductsByCategory retrieves a list of Products by Category ID.
-// @Summary Get a list of Products by Category ID
-// @Description Get a list of Products by Category ID
-// @ID get-Products-by-Category
-// @Accept json
-// @Produce json
-// @Param id path int true "Category ID"
-// @Param page query int false "Page number"
-// @Param page_size query int false "Page size"
-// @Success 200 {object} ApiResponse[[]ProductListModel]
-// @Failure 400 {object} gin.H
-// @Failure 500 {object} gin.H
-// @Router /categories/{id}/products [get]
-func (sv *Server) getProductsByCategory(c *gin.Context) {
-	var param getCategoryParams
-	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](InvalidBodyCode, "", err))
-		return
-	}
-	var query PaginationQueryParams
-	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](InvalidBodyCode, "", err))
-		return
-	}
-
-	params := repository.GetProductsByCategoryIDParams{
+	getProductsParams := repository.GetLinkedProductsByCategoryParams{
 		CategoryID: utils.GetPgTypeUUID(uuid.MustParse(param.CategoryID)),
-		Limit:      10,
+		Limit:      200,
 		Offset:     0,
 	}
-	params.Offset = (params.Limit) * int64(query.Page-1)
-	params.Limit = int64(query.PageSize)
 
-	products, err := sv.repo.GetProductsByCategoryID(c, params)
+	productRows, err := sv.repo.GetLinkedProductsByCategory(c, getProductsParams)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[[]ProductListModel](InternalServerErrorCode, "", err))
 		return
 	}
 
-	productsResp := make([]ProductListModel, len(products))
-	for i, product := range products {
-		price, _ := product.BasePrice.Float64Value()
-		productsResp[i] = ProductListModel{
-			ID:           product.ID.String(),
-			Name:         product.Name,
-			Slug:         product.Slug,
-			CreatedAt:    product.CreatedAt.String(),
-			UpdatedAt:    product.UpdatedAt.String(),
-			Description:  *product.Description,
-			Price:        price.Float64,
-			VariantCount: int32(product.VariantCount),
-			Sku:          product.BaseSku,
-			ImgUrl:       product.ImgUrl,
-			ImgID:        product.ImgID,
-		}
+	for _, row := range productRows {
+		resp.Products = append(resp.Products, CategoryLinkedProduct{
+			ID:           row.ID.String(),
+			Name:         row.Name,
+			VariantCount: int32(row.VariantCount),
+			ImageUrl:     &row.ImgUrl,
+		})
 	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(c, productsResp, "", nil, nil))
+	c.JSON(http.StatusOK, createSuccessResponse(c, resp, "", nil, nil))
 }
 
 // updateCategory updates a Category.

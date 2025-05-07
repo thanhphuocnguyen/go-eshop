@@ -457,7 +457,6 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 
 	// create order
 	createOrderItemParams := make([]repository.CreateBulkOrderItemsParams, 0)
-	attributeList := make(map[string][]OrderItemAttribute)
 	var totalPrice float64
 
 	for _, item := range cartItemRows {
@@ -478,18 +477,20 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 				VariantSkuSnapshot:   item.Sku,
 				ProductNameSnapshot:  item.ProductName,
 				LineTotalSnapshot:    utils.GetPgNumericFromFloat(float64(item.CartItem.Quantity) * price.Float64),
+				AttributesSnapshot: []repository.AttributeDataSnapshot{{
+					Name:  item.AttrName,
+					Value: item.AttrValCode,
+				}},
 			}
 			createOrderItemParams = append(createOrderItemParams, itemParam)
-			attributeList[item.VariantID.String()] = []OrderItemAttribute{{
-				Name:  item.AttrName,
-				Value: item.AttrValCode,
-			}}
 			totalPrice += price.Float64 * float64(item.CartItem.Quantity)
 		} else {
-			attributeList[item.VariantID.String()] = append(attributeList[item.VariantID.String()], OrderItemAttribute{
-				Name:  item.AttrName,
-				Value: item.AttrValCode,
-			})
+			createOrderItemParams[paramIdx].AttributesSnapshot = append(
+				createOrderItemParams[paramIdx].AttributesSnapshot,
+				repository.AttributeDataSnapshot{
+					Name:  item.AttrName,
+					Value: item.AttrValCode,
+				})
 		}
 	}
 

@@ -611,30 +611,33 @@ type PaymentTransaction struct {
 }
 
 type Product struct {
-	ID           uuid.UUID      `json:"id"`
-	Name         string         `json:"name"`
-	Description  *string        `json:"description"`
-	BasePrice    pgtype.Numeric `json:"base_price"`
-	BaseSku      string         `json:"base_sku"`
-	Slug         string         `json:"slug"`
-	IsActive     *bool          `json:"is_active"`
-	CategoryID   pgtype.UUID    `json:"category_id"`
-	CollectionID pgtype.UUID    `json:"collection_id"`
-	BrandID      pgtype.UUID    `json:"brand_id"`
-	CreatedAt    time.Time      `json:"created_at"`
-	UpdatedAt    time.Time      `json:"updated_at"`
+	ID               uuid.UUID      `json:"id"`
+	Name             string         `json:"name"`
+	Description      string         `json:"description"`
+	ShortDescription *string        `json:"short_description"`
+	Attributes       []int32        `json:"attributes"`
+	BasePrice        pgtype.Numeric `json:"base_price"`
+	BaseSku          string         `json:"base_sku"`
+	Slug             string         `json:"slug"`
+	IsActive         *bool          `json:"is_active"`
+	CategoryID       pgtype.UUID    `json:"category_id"`
+	CollectionID     pgtype.UUID    `json:"collection_id"`
+	BrandID          pgtype.UUID    `json:"brand_id"`
+	CreatedAt        time.Time      `json:"created_at"`
+	UpdatedAt        time.Time      `json:"updated_at"`
 }
 
 type ProductVariant struct {
-	ID        uuid.UUID      `json:"id"`
-	ProductID uuid.UUID      `json:"product_id"`
-	Sku       string         `json:"sku"`
-	Price     pgtype.Numeric `json:"price"`
-	Stock     int32          `json:"stock"`
-	Weight    pgtype.Numeric `json:"weight"`
-	IsActive  *bool          `json:"is_active"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
+	ID          uuid.UUID      `json:"id"`
+	ProductID   uuid.UUID      `json:"product_id"`
+	Description *string        `json:"description"`
+	Sku         string         `json:"sku"`
+	Price       pgtype.Numeric `json:"price"`
+	Stock       int32          `json:"stock"`
+	Weight      pgtype.Numeric `json:"weight"`
+	IsActive    *bool          `json:"is_active"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
 }
 
 type Session struct {

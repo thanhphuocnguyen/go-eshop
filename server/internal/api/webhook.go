@@ -51,7 +51,7 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 				c.JSON(http.StatusNotFound, createErrorResponse[bool]("payment_not_found", "", err))
 				return
 			}
-			c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
+			c.JSON(http.StatusBadRequest, createErrorResponse[bool](InternalServerErrorCode, "", err))
 			return
 		}
 		updateTransactionStatus := repository.UpdatePaymentParams{
@@ -97,7 +97,7 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 		updateTransactionStatus.UpdatedAt = utils.GetPgTypeTimestamp(time.Now())
 		err = server.repo.UpdatePayment(c, updateTransactionStatus)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
+			c.JSON(http.StatusBadRequest, createErrorResponse[bool](InternalServerErrorCode, "", err))
 			return
 		}
 	default:
