@@ -23,7 +23,7 @@ export default function AddressCard({
         <div className='flex-1'>
           <div className='flex items-center mb-2'>
             <h3 className='text-md font-medium text-gray-900'>
-              {address.address || 'Address'}
+              {address.street || 'Address'}
             </h3>
             {address.default && (
               <span className='ml-2 inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-green-100 text-green-800'>
@@ -32,7 +32,7 @@ export default function AddressCard({
             )}
           </div>
           <div className='text-sm text-gray-500 flex flex-col gap-4'>
-            <p>{address.address}</p>
+            <p>{address.street}</p>
             <p>{address.city}</p>
             <p className='mt-1'>Phone: {address.phone || 'N/A'}</p>
           </div>

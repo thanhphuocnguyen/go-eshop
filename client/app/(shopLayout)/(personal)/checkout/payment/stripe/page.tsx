@@ -39,7 +39,7 @@ export default function StripePage() {
 
     if (data.details) {
       setClientSecret(data.details.client_secret);
-      setTotalPrice(data.details.amount / 100);
+      setTotalPrice(data.details.amount);
     }
     setIsLoading(false);
   }
@@ -53,6 +53,7 @@ export default function StripePage() {
     } else {
       const parsedData = JSON.parse(storedData) as CheckoutDataResponse;
       if (parsedData.client_secret) {
+        setTotalPrice(parsedData.total_amount);
         setClientSecret(parsedData.client_secret);
       } else if (parsedData.payment_id) {
         getPaymentById(parsedData.payment_id);

@@ -24,3 +24,6 @@ func String(value string) *string {
 func Bool(value bool) *bool {
 	return &value
 }
+func StringPtr(value string) *string {
+	return &value
+}

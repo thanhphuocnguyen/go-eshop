@@ -61,7 +61,7 @@ SET
     gateway_charge_id = COALESCE(sqlc.narg(gateway_charge_id), gateway_charge_id),
     error_code = COALESCE(sqlc.narg(error_code), error_code),
     error_message = COALESCE(sqlc.narg(error_message), error_message),
-    updated_at = COALESCE(sqlc.narg(updated_at), updated_at)
+    updated_at = NOW()
 WHERE
     id = $1;
 

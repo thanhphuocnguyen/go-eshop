@@ -28,7 +28,7 @@ CREATE TABLE
         "line_total_snapshot" DECIMAL(10, 2) NOT NULL,
         "product_name_snapshot" VARCHAR(255) NOT NULL,
         "variant_sku_snapshot" VARCHAR(100) NOT NULL,
-        "attributes_snapshot" JSONB,
+        "attributes_snapshot" JSONB NOT NULL,
         "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );

@@ -106,7 +106,7 @@ type CreatePaymentTransactionParams struct {
 	Status                 PaymentStatus  `json:"status"`
 	GatewayTransactionID   *string        `json:"gateway_transaction_id"`
 	GatewayResponseCode    *string        `json:"gateway_response_code"`
-	GatewayResponseMessage []byte         `json:"gateway_response_message"`
+	GatewayResponseMessage *string        `json:"gateway_response_message"`
 }
 
 // Payment Transactions --
@@ -319,7 +319,7 @@ SET
     gateway_charge_id = COALESCE($8, gateway_charge_id),
     error_code = COALESCE($9, error_code),
     error_message = COALESCE($10, error_message),
-    updated_at = COALESCE($11, updated_at)
+    updated_at = NOW()
 WHERE
     id = $1
 `
@@ -334,8 +334,7 @@ type UpdatePaymentParams struct {
 	GatewayPaymentIntentID *string            `json:"gateway_payment_intent_id"`
 	GatewayChargeID        *string            `json:"gateway_charge_id"`
 	ErrorCode              *string            `json:"error_code"`
-	ErrorMessage           []byte             `json:"error_message"`
-	UpdatedAt              pgtype.Timestamptz `json:"updated_at"`
+	ErrorMessage           *string            `json:"error_message"`
 }
 
 func (q *Queries) UpdatePayment(ctx context.Context, arg UpdatePaymentParams) error {
@@ -350,7 +349,6 @@ func (q *Queries) UpdatePayment(ctx context.Context, arg UpdatePaymentParams) er
 		arg.GatewayChargeID,
 		arg.ErrorCode,
 		arg.ErrorMessage,
-		arg.UpdatedAt,
 	)
 	return err
 }
@@ -374,7 +372,7 @@ type UpdatePaymentTransactionParams struct {
 	Status                 NullPaymentStatus `json:"status"`
 	GatewayTransactionID   *string           `json:"gateway_transaction_id"`
 	GatewayResponseCode    *string           `json:"gateway_response_code"`
-	GatewayResponseMessage []byte            `json:"gateway_response_message"`
+	GatewayResponseMessage *string           `json:"gateway_response_message"`
 }
 
 func (q *Queries) UpdatePaymentTransaction(ctx context.Context, arg UpdatePaymentTransactionParams) error {

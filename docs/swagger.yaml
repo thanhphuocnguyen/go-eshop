@@ -117,21 +117,6 @@ definitions:
       success:
         type: boolean
     type: object
-  api.ApiResponse-api_CheckoutResponse:
-    properties:
-      data:
-        $ref: '#/definitions/api.CheckoutResponse'
-      error:
-        $ref: '#/definitions/api.ApiError'
-      message:
-        type: string
-      meta:
-        $ref: '#/definitions/api.MetaInfo'
-      pagination:
-        $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
-    type: object
   api.ApiResponse-api_CollectionResponse:
     properties:
       data:
@@ -305,23 +290,6 @@ definitions:
       success:
         type: boolean
     type: object
-  api.ApiResponse-array_api_ProductListModel:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/api.ProductListModel'
-        type: array
-      error:
-        $ref: '#/definitions/api.ApiError'
-      message:
-        type: string
-      meta:
-        $ref: '#/definitions/api.MetaInfo'
-      pagination:
-        $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
-    type: object
   api.ApiResponse-array_api_UserResponse:
     properties:
       data:
@@ -343,6 +311,21 @@ definitions:
     properties:
       data:
         type: boolean
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-gin_H:
+    properties:
+      data:
+        $ref: '#/definitions/gin.H'
       error:
         $ref: '#/definitions/api.ApiError'
       message:
@@ -500,6 +483,17 @@ definitions:
     - product_id
     - variant_id
     type: object
+  api.CategoryLinkedProduct:
+    properties:
+      id:
+        type: string
+      image_url:
+        type: string
+      name:
+        type: string
+      variant_count:
+        type: integer
+    type: object
   api.CategoryResponse:
     properties:
       created_at:
@@ -514,7 +508,7 @@ definitions:
         type: string
       products:
         items:
-          $ref: '#/definitions/api.ProductListModel'
+          $ref: '#/definitions/api.CategoryLinkedProduct'
         type: array
       published:
         type: boolean
@@ -548,17 +542,6 @@ definitions:
         type: string
     required:
     - payment_method
-    type: object
-  api.CheckoutResponse:
-    properties:
-      client_secret:
-        type: string
-      order_id:
-        type: string
-      payment_id:
-        type: string
-      payment_intent_id:
-        type: string
     type: object
   api.CollectionResponse:
     properties:
@@ -636,6 +619,11 @@ definitions:
     type: object
   api.CreateProductReq:
     properties:
+      attributes:
+        items:
+          type: integer
+        minItems: 1
+        type: array
       brand_id:
         type: string
       category_id:
@@ -652,6 +640,9 @@ definitions:
         type: string
       price:
         type: number
+      short_description:
+        maxLength: 2000
+        type: string
       sku:
         type: string
       slug:
@@ -797,17 +788,21 @@ definitions:
     type: object
   api.PaymentInfo:
     properties:
+      amount:
+        type: number
+      client_secret:
+        type: string
+      gateway:
+        type: string
       id:
         type: string
-      payment_amount:
-        type: number
-      payment_gateway:
+      intent_id:
         type: string
-      payment_method:
-        type: string
-      payment_status:
+      method:
         type: string
       refund_id:
+        type: string
+      status:
         type: string
     type: object
   api.PaymentRequest:
@@ -845,10 +840,12 @@ definitions:
         type: integer
       image_url:
         type: string
+      max_price:
+        type: number
+      min_price:
+        type: number
       name:
         type: string
-      price:
-        type: number
       sku:
         type: string
       slug:
@@ -983,6 +980,10 @@ definitions:
     type: object
   api.UpdateProductReq:
     properties:
+      attributes:
+        items:
+          type: integer
+        type: array
       brand_id:
         type: string
       category_id:
@@ -1003,6 +1004,9 @@ definitions:
         type: string
       price:
         type: number
+      short_description:
+        maxLength: 2000
+        type: string
       sku:
         type: string
       slug:
@@ -1227,34 +1231,6 @@ info:
   description: This is a sample server for a simple e-commerce API.
   title: E-Commerce API
 paths:
-  /Brand/{id}/products:
-    get:
-      consumes:
-      - application/json
-      description: Get a list of products in a Brand
-      operationId: get-Brand-products
-      parameters:
-      - description: Brand ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_ProductListModel'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_ProductListModel'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_ProductListModel'
-      summary: Get a list of products in a Brand
   /Brands:
     get:
       consumes:
@@ -1767,7 +1743,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CheckoutResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "400":
           description: Bad Request
           schema:
@@ -2053,7 +2029,7 @@ paths:
       consumes:
       - application/json
       description: Get a list of Products by Category ID
-      operationId: get-Products-by-Category
+      operationId: get-Products-by-Category-ID
       parameters:
       - description: Category ID
         in: path
@@ -2074,7 +2050,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_ProductListModel'
+            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
         "400":
           description: Bad Request
           schema:
@@ -2084,6 +2060,42 @@ paths:
           schema:
             $ref: '#/definitions/gin.H'
       summary: Get a list of Products by Category ID
+  /categories/slug/{slug}:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of Products by Category Slug
+      operationId: get-Products-by-Category-Slug
+      parameters:
+      - description: Category Slug
+        in: path
+        name: slug
+        required: true
+        type: integer
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get a list of Products by Category Slug
   /collections:
     get:
       consumes:
@@ -2235,38 +2247,6 @@ paths:
           schema:
             $ref: '#/definitions/gin.H'
       summary: Update a Collection
-  /collections/{id}/products:
-    get:
-      consumes:
-      - application/json
-      description: Get a list of Products by Collection ID
-      operationId: get-Products-by-Collection
-      parameters:
-      - description: Collection ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_ProductListModel'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/gin.H'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/gin.H'
-      summary: Get a list of Products by Collection ID
   /images/{publicID}:
     delete:
       consumes:

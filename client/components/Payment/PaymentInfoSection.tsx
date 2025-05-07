@@ -28,10 +28,11 @@ const PaymentInfoSection: React.FC<PaymentInfoSectionProps> = ({
         order_id: orderId,
         payment_id: paymentInfo.intent_id,
         client_secret: paymentInfo.client_secret,
-        payment_intent_id: paymentInfo.intent_id
+        payment_intent_id: paymentInfo.intent_id,
+        total_amount: paymentInfo.amount,
       };
       sessionStorage.setItem('checkoutData', JSON.stringify(checkoutData));
-      
+
       // Navigate to Stripe payment page
       router.push('/checkout/payment/stripe');
     }
@@ -56,12 +57,13 @@ const PaymentInfoSection: React.FC<PaymentInfoSectionProps> = ({
       ) : (
         <div className='mt-2 text-sm text-gray-600'>
           <div>
-            Method:{' '}
-            <span className='font-medium'>{paymentInfo.method}</span>
+            Method: <span className='font-medium'>{paymentInfo.method}</span>
           </div>
           <div>
             Status:{' '}
-            <span className={`font-medium ${paymentInfo.status === 'pending' ? 'text-yellow-600' : paymentInfo.status === 'success' ? 'text-green-600' : ''}`}>
+            <span
+              className={`font-medium ${paymentInfo.status === 'pending' ? 'text-yellow-600' : paymentInfo.status === 'success' ? 'text-green-600' : ''}`}
+            >
               {paymentInfo.status}
             </span>
           </div>
@@ -71,16 +73,17 @@ const PaymentInfoSection: React.FC<PaymentInfoSectionProps> = ({
               <span className='font-medium'>{paymentInfo.intent_id}</span>
             </div>
           )}
-          
-          {paymentInfo.method === 'stripe' && paymentInfo.status === 'pending' && (
-            <button
-              onClick={handleContinuePayment}
-              className='mt-3 flex items-center gap-1 px-3 py-1.5 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 transition duration-150'
-            >
-              <CreditCardIcon className='w-4 h-4' />
-              <span>Continue Payment</span>
-            </button>
-          )}
+
+          {paymentInfo.method === 'stripe' &&
+            paymentInfo.status === 'pending' && (
+              <button
+                onClick={handleContinuePayment}
+                className='mt-3 flex items-center gap-1 px-3 py-1.5 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 transition duration-150'
+              >
+                <CreditCardIcon className='w-4 h-4' />
+                <span>Continue Payment</span>
+              </button>
+            )}
         </div>
       )}
 

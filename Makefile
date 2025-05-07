@@ -38,10 +38,7 @@ build-server:
 	go build ./cmd/web
 serve-server:
 	@echo "Running application..."
-	go run ./cmd/web api
-serve-worker:
-	@echo "Running worker..."
-	go run ./cmd/web worker
+	go run ./cmd/web api && stripe listen --forward-to localhost:4000/webhook/v1/stripe
 gen-sqlc:
 	@echo "Generating sqlc..."
 	sqlc generate
@@ -49,5 +46,4 @@ gen-swagger:
 	@echo "Generating swagger..."
 	swag init -d internal/api -g server.go --parseInternal --parseDependency
 
-.PHONY: create-migration migrate-up migrate-up-1 migrate-down migrate-down-1 migrate-drop 
-	build-migrate build-server serve-server gen-sqlc gen-swagger build-seed serve-worker
+.PHONY: create-migration migrate-up migrate-up-1 migrate-down migrate-down-1 migrate-drop build-migrate build-server serve-server gen-sqlc gen-swagger build-seed serve-worker goto-migration force-migration migrate-version

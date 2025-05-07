@@ -593,7 +593,7 @@ type Payment struct {
 	GatewayPaymentIntentID *string            `json:"gateway_payment_intent_id"`
 	GatewayChargeID        *string            `json:"gateway_charge_id"`
 	ErrorCode              *string            `json:"error_code"`
-	ErrorMessage           []byte             `json:"error_message"`
+	ErrorMessage           *string            `json:"error_message"`
 	CreatedAt              pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt              pgtype.Timestamptz `json:"updated_at"`
 }
@@ -605,7 +605,7 @@ type PaymentTransaction struct {
 	Status                 PaymentStatus      `json:"status"`
 	GatewayTransactionID   *string            `json:"gateway_transaction_id"`
 	GatewayResponseCode    *string            `json:"gateway_response_code"`
-	GatewayResponseMessage []byte             `json:"gateway_response_message"`
+	GatewayResponseMessage *string            `json:"gateway_response_message"`
 	TransactionDate        pgtype.Timestamptz `json:"transaction_date"`
 	CreatedAt              pgtype.Timestamptz `json:"created_at"`
 }

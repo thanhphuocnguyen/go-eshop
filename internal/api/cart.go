@@ -74,6 +74,7 @@ type CheckoutResponse struct {
 	PaymentID       string    `json:"payment_id"`
 	PaymentIntentID *string   `json:"payment_intent_id,omitempty"`
 	ClientSecret    *string   `json:"client_secret,omitempty"`
+	TotalPrice      float64   `json:"total_price"`
 }
 
 // ------------------------------ Handlers ------------------------------
@@ -346,7 +347,7 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 // @Accept json
 // @Param input body CheckoutRequest true "Checkout input"
 // @Produce json
-// @Success 200 {object} ApiResponse[CheckoutResponse]
+// @Success 200 {object} ApiResponse[gin.H]
 // @Failure 400 {object} gin.H
 // @Failure 404 {object} gin.H
 // @Failure 403 {object} gin.H
@@ -356,23 +357,23 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 func (sv *Server) checkoutHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusBadRequest, createErrorResponse[CheckoutResponse](InvalidBodyCode, "", errors.New("user not found")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[gin.H](InvalidBodyCode, "", errors.New("user not found")))
 		return
 	}
 
 	var req CheckoutRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[CheckoutResponse](InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[gin.H](InvalidBodyCode, "", err))
 		return
 	}
 
 	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[CheckoutResponse](NotFoundCode, "", errors.New("user not found")))
+			c.JSON(http.StatusNotFound, createErrorResponse[gin.H](NotFoundCode, "", errors.New("user not found")))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -382,17 +383,17 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", errors.New("cart not found")))
+			c.JSON(http.StatusNotFound, createErrorResponse[gin.H](InternalServerErrorCode, "", errors.New("cart not found")))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
 		return
 	}
 	var shippingAddr repository.ShippingAddressSnapshot
 	if req.AddressID == nil {
 		// create new address
 		if req.Address == nil {
-			c.JSON(http.StatusBadRequest, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", errors.New("address not found")))
+			c.JSON(http.StatusBadRequest, createErrorResponse[gin.H](InternalServerErrorCode, "", errors.New("address not found")))
 			return
 		}
 		address, err := sv.repo.CreateAddress(c, repository.CreateAddressParams{
@@ -405,7 +406,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 			Default:  false,
 		})
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
 			return
 		}
 		shippingAddr = repository.ShippingAddressSnapshot{
@@ -422,10 +423,10 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 		})
 		if err != nil {
 			if errors.Is(err, repository.ErrRecordNotFound) {
-				c.JSON(http.StatusNotFound, createErrorResponse[CheckoutResponse](NotFoundCode, "", errors.New("address not found")))
+				c.JSON(http.StatusNotFound, createErrorResponse[gin.H](NotFoundCode, "", errors.New("address not found")))
 				return
 			}
-			c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
 			return
 		}
 		shippingAddr = repository.ShippingAddressSnapshot{
@@ -440,11 +441,11 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 		cartUserId, err := uuid.FromBytes(cart.UserID.Bytes[:])
 		if err != nil {
 			log.Error().Err(err).Msg("GetCart")
-			c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
 			return
 		}
 		if cartUserId.String() != authPayload.UserID.String() {
-			c.JSON(http.StatusForbidden, createErrorResponse[CheckoutResponse](PermissionDeniedCode, "", errors.New("you are not allowed to access this cart")))
+			c.JSON(http.StatusForbidden, createErrorResponse[gin.H](PermissionDeniedCode, "", errors.New("you are not allowed to access this cart")))
 			return
 		}
 	}
@@ -517,7 +518,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 
 	orderID, err := sv.repo.CreateOrderTx(c, params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
 		return
 	}
 	createPaymentArgs := repository.CreatePaymentParams{
@@ -535,12 +536,12 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 
 		stripeInstance, err := payment.NewStripePayment(sv.config.StripeSecretKey)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
 			return
 		}
 		sv.paymentCtx.SetStrategy(stripeInstance)
 	default:
-		c.JSON(http.StatusBadRequest, createErrorResponse[CheckoutResponse](InvalidBodyCode, "", errors.New("payment gateway not supported")))
+		c.JSON(http.StatusBadRequest, createErrorResponse[gin.H](InvalidBodyCode, "", errors.New("payment gateway not supported")))
 		return
 	}
 
@@ -570,11 +571,11 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 	paymentIntent := checkoutResult.(*stripe.PaymentIntent)
 	createPaymentArgs.GatewayPaymentIntentID = &paymentIntent.ID
 	checkoutResp.ClientSecret = &paymentIntent.ClientSecret
-
+	checkoutResp.TotalPrice = float64(paymentIntent.Amount) / 100
 	// create payment transaction
 	payment, err := sv.repo.CreatePayment(c, createPaymentArgs)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CheckoutResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
 		return
 	}
 

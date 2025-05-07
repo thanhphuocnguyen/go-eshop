@@ -35,6 +35,7 @@ export type CheckoutFormProps = {
 
 export type CheckoutDataResponse = {
   order_id: string;
+  total_amount: number;
   payment_id?: string;
   client_secret?: string;
   payment_intent_id?: string;
