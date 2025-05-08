@@ -51,6 +51,10 @@ const _adminPaths = {
   USERS: 'users',
   USER: 'users/:id',
   UPDATE_USER_ROLE: 'users/:id/role',
+  ORDERS: 'orders',
+  ORDER_DETAIL: 'orders/:id',
+  ORDER_DETAIL_STATUS: 'orders/:id/status',
+  ORDER_DETAIL_TRACKING: 'orders/:id/tracking',
 } as const;
 
 const attachBasePath = {

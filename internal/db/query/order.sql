@@ -40,20 +40,20 @@ WHERE
 
 -- name: GetOrders :many
 SELECT
-    o.*, pm.status as payment_status, COUNT(oi.id) as total_items
+    ord.*, pm.status as payment_status, COUNT(oi.id) as total_items
 FROM
-    orders o
-LEFT JOIN order_items oi ON o.id = oi.id
-LEFT JOIN payments pm ON o.id = pm.id
+    orders ord
+LEFT JOIN order_items oi ON ord.id = oi.id
+LEFT JOIN payments pm ON ord.id = pm.order_id
 WHERE
-    o.customer_id = COALESCE(sqlc.narg('customer_id'), o.customer_id) AND
-    o.status = COALESCE(sqlc.narg('status'), o.status) AND
-    o.created_at >= COALESCE(sqlc.narg('start_date'), o.created_at) AND
-    o.created_at <= COALESCE(sqlc.narg('end_date'), o.created_at) AND
+    ord.customer_id = COALESCE(sqlc.narg('customer_id'), ord.customer_id) AND
+    ord.status = COALESCE(sqlc.narg('status'), ord.status) AND
+    ord.created_at >= COALESCE(sqlc.narg('start_date'), ord.created_at) AND
+    ord.created_at <= COALESCE(sqlc.narg('end_date'), ord.created_at) AND
     pm.status = COALESCE(sqlc.narg('payment_status'), pm.status)
-GROUP BY o.id, pm.status
+GROUP BY ord.id, pm.status
 ORDER BY
-    o.created_at DESC
+    ord.created_at DESC
 LIMIT $1
 OFFSET $2;
 
@@ -105,11 +105,11 @@ OFFSET $3;
 SELECT
     COUNT(*)
 FROM
-    orders
-LEFT JOIN payments p ON orders.id = p.id
+    orders ord
+LEFT JOIN payments p ON ord.id = p.order_id
 WHERE
-    orders.status = COALESCE(sqlc.narg('status'), orders.status) AND
+    ord.status = COALESCE(sqlc.narg('status'), ord.status) AND
     customer_id = COALESCE(sqlc.narg('customer_id'), customer_id) AND
     p.status = COALESCE(sqlc.narg('payment_status'), p.status) AND
-    orders.created_at >= COALESCE(sqlc.narg('start_date'), orders.created_at) AND
-    orders.created_at <= COALESCE(sqlc.narg('end_date'), orders.created_at);
+    ord.created_at >= COALESCE(sqlc.narg('start_date'), ord.created_at) AND
+    ord.created_at <= COALESCE(sqlc.narg('end_date'), ord.created_at);

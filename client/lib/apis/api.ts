@@ -13,7 +13,33 @@ type RequestOptions = {
   retryOnUnauthorized?: boolean;
   req?: any; // For SSR cookie access
   res?: any;
+  queryParams?: Record<string, any>; // Added queryParams option
 };
+
+// Helper function to serialize query parameters
+function serializeQueryParams(params: Record<string, any>): string {
+  if (!params || Object.keys(params).length === 0) return '';
+  
+  const searchParams = new URLSearchParams();
+  
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === null || value === undefined) return;
+    
+    if (Array.isArray(value)) {
+      value.forEach(item => {
+        if (item !== null && item !== undefined) {
+          searchParams.append(`${key}[]`, String(item));
+        }
+      });
+    } else if (typeof value === 'object') {
+      searchParams.append(key, JSON.stringify(value));
+    } else {
+      searchParams.append(key, String(value));
+    }
+  });
+  
+  return searchParams.toString();
+}
 
 let isRefreshing = false;
 let refreshPromise: Promise<string | null> | null = null;
@@ -86,11 +112,19 @@ export async function apiFetch<T = any>(
     retryOnUnauthorized = true,
     req,
     res,
+    queryParams,
   }: RequestOptions = {}
 ): Promise<T> {
-  const fullUrl = endpoint.startsWith('http')
+  // Build the URL with query parameters if provided
+  let fullUrl = endpoint.startsWith('http')
     ? endpoint
     : `${process.env.NEXT_PUBLIC_API_BASE_URL || ''}${endpoint}`;
+
+  // Append query parameters if they exist
+  if (queryParams && Object.keys(queryParams).length > 0) {
+    const queryString = serializeQueryParams(queryParams);
+    fullUrl += fullUrl.includes('?') ? `&${queryString}` : `?${queryString}`;
+  }
 
   const isFormData = body instanceof FormData;
 

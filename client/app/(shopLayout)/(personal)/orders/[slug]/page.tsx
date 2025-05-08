@@ -2,7 +2,13 @@ import { apiFetch } from '@/lib/apis/api';
 import { PUBLIC_API_PATHS } from '@/lib/constants/api';
 import { GenericResponse, OrderStatus } from '@/lib/definitions';
 import { OrderModel } from '@/lib/definitions/order';
-import { ArrowRightIcon } from '@heroicons/react/16/solid';
+import { ArrowRightIcon, ArrowLeftIcon } from '@heroicons/react/16/solid';
+import {
+  CheckCircleIcon,
+  TruckIcon,
+  ClockIcon,
+  ShoppingBagIcon,
+} from '@heroicons/react/24/solid';
 import clsx from 'clsx';
 import dayjs from 'dayjs';
 import { Metadata } from 'next';
@@ -47,9 +53,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
 
   const { data, error } = await getOrderDetails(slug);
-  console.log(data);
   if (error && !data) {
-    throw new Error(error.stack);
+    throw new Error(error.details);
   }
 
   return {
@@ -58,27 +63,48 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-const orderStatuses = [
-  [OrderStatus.Pending],
-  [OrderStatus.Confirm],
-  [OrderStatus.Delivering],
-  [OrderStatus.Delivered],
+// Define the main order progression steps
+const orderProgressSteps = [
+  { status: OrderStatus.Pending, label: 'Order placed', icon: ShoppingBagIcon },
+  { status: OrderStatus.Confirmed, label: 'Processing', icon: ClockIcon },
+  { status: OrderStatus.Delivering, label: 'Shipped', icon: TruckIcon },
+  { status: OrderStatus.Delivered, label: 'Delivered', icon: CheckCircleIcon },
 ];
+
 export default async function Page({ params }: Props) {
   const { slug } = await params;
   const { data: orderDetail } = await getOrderDetails(slug);
-
-  const getPercentageByStatus = (status: OrderStatus) => {
-    const index = orderStatuses.findIndex((e) => e.includes(status));
-    if (index === -1) {
-      return 0;
-    }
-    const ratio = index / orderStatuses.length;
-    return (ratio < 1 ? ratio + 0.1 : ratio) * 100;
+  console.log(orderDetail);
+  // Find the current step index based on status
+  const getCurrentStepIndex = (status: OrderStatus): number => {
+    // Special handling for Completed, Cancelled, and Refunded
+    if (status === OrderStatus.Completed) return orderProgressSteps.length - 1;
+    if (status === OrderStatus.Cancelled || status === OrderStatus.Refunded)
+      return -1;
+    const index = orderProgressSteps.findIndex(
+      (step) => step.status === status
+    );
+    console.log({ index });
+    return index >= 0 ? index : 0;
   };
+
+  const currentStepIndex = getCurrentStepIndex(orderDetail.status);
+
+  const isSpecialStatus =
+    orderDetail.status === OrderStatus.Cancelled ||
+    orderDetail.status === OrderStatus.Refunded;
 
   return (
     <div className='h-full container mx-auto my-20'>
+      <div className='mb-6'>
+        <Link
+          href='/orders'
+          className='inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-md hover:bg-indigo-100 transition-colors'
+        >
+          <ArrowLeftIcon className='w-4 h-4' />
+          Back to Orders
+        </Link>
+      </div>
       <div className='flex justify-between items-end'>
         <div className='flex items-end'>
           <h1 className='text-3xl font-bold'>Order #{orderDetail.id}</h1>
@@ -155,55 +181,80 @@ export default async function Page({ params }: Props) {
         </div>
         <hr />
         <div className='px-16'>
-          <div className='font-semibold mb-3'>Shipped on March 23, 2021</div>
-          <div className='w-full bg-gray-200 rounded-full h-3 mb-4 dark:bg-gray-700'>
-            <div
-              className='bg-sky-500 h-3 rounded-full dark:bg-blue-500'
-              style={{ width: `${getPercentageByStatus(orderDetail.status)}%` }}
-            />
+          <div className='font-semibold mb-3'>
+            {isSpecialStatus ? (
+              <span
+                className={clsx(
+                  'px-3 py-1 text-sm font-medium rounded-full',
+                  orderDetail.status === OrderStatus.Cancelled
+                    ? 'bg-red-100 text-red-800'
+                    : 'bg-orange-100 text-orange-800'
+                )}
+              >
+                Order {orderDetail.status}
+              </span>
+            ) : (
+              <span>
+                Last update:{' '}
+                {dayjs(orderDetail.created_at).format('MMMM DD, YYYY')}
+              </span>
+            )}
           </div>
-          <div className='w-full flex justify-between'>
-            <div
-              className={clsx(
-                'text-sm font-medium',
-                orderDetail.status === OrderStatus.Pending
-                  ? 'text-indigo-500'
-                  : ''
-              )}
-            >
-              Order placed
+
+          {/* Progress tracking section */}
+          {!isSpecialStatus && (
+            <div className='mb-2'>
+              <div className='relative mb-8'>
+                {/* Progress bar */}
+                <div className='w-full bg-gray-200 h-1 absolute top-4'>
+                  <div
+                    className='bg-indigo-500 h-1 transition-all duration-500'
+                    style={{
+                      width: `${currentStepIndex >= 0 ? (100 * currentStepIndex) / (orderProgressSteps.length - 1) : 0}%`,
+                    }}
+                  />
+                </div>
+
+                {/* Step indicators */}
+                <div className='flex justify-between relative z-10'>
+                  {orderProgressSteps.map((step, index) => {
+                    const isActive = currentStepIndex >= index;
+                    const isCurrent = currentStepIndex === index;
+
+                    return (
+                      <div
+                        key={step.status}
+                        className='flex flex-col items-center'
+                      >
+                        <div
+                          className={clsx(
+                            'rounded-full p-2 w-8 h-8 flex items-center justify-center',
+                            isActive
+                              ? 'bg-indigo-500 text-white'
+                              : 'bg-gray-200 text-gray-500'
+                          )}
+                        >
+                          <step.icon className='w-4 h-4' />
+                        </div>
+                        <div
+                          className={clsx(
+                            'mt-2 text-sm font-medium text-center',
+                            isCurrent
+                              ? 'text-indigo-600'
+                              : isActive
+                                ? 'text-indigo-500'
+                                : 'text-gray-500'
+                          )}
+                        >
+                          {step.label}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-            <div
-              className={clsx(
-                'text-sm font-medium',
-                orderDetail.status === OrderStatus.Confirm
-                  ? 'text-indigo-500'
-                  : ''
-              )}
-            >
-              Processing
-            </div>
-            <div
-              className={clsx(
-                'text-sm font-medium',
-                orderDetail.status === OrderStatus.Delivering
-                  ? 'text-indigo-500'
-                  : ''
-              )}
-            >
-              Shipped
-            </div>
-            <div
-              className={clsx(
-                'text-sm font-medium',
-                orderDetail.status === OrderStatus.Delivered
-                  ? 'text-indigo-500'
-                  : ''
-              )}
-            >
-              Delivered
-            </div>
-          </div>
+          )}
         </div>
       </div>
 

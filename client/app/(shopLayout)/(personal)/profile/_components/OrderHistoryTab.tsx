@@ -23,7 +23,7 @@ const getStatusBadgeColor = (status: OrderStatus) => {
   switch (status) {
     case OrderStatus.Pending:
       return 'bg-yellow-100 text-yellow-800';
-    case OrderStatus.Confirm:
+    case OrderStatus.Confirmed:
       return 'bg-blue-100 text-blue-800';
     case OrderStatus.Delivering:
       return 'bg-purple-100 text-purple-800';

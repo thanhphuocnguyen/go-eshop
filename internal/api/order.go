@@ -19,8 +19,8 @@ import (
 // ---------------------------------------------- API Models ----------------------------------------------
 type OrderListQuery struct {
 	PaginationQueryParams
-	Status        string `form:"status"`
-	PaymentStatus string `form:"payment_status"`
+	Status        *string `form:"status,omitempty" binding:"omitempty,oneof=pending confirmed delivering delivered completed cancelled refunded"`
+	PaymentStatus *string `form:"payment_status,omitempty" binding:"omitempty,oneof=pending succeeded failed cancelled refunded"`
 }
 
 type OrderIDParams struct {
@@ -36,7 +36,7 @@ type OrderItemResponse struct {
 	ID                 string                             `json:"id"`
 	Name               string                             `json:"name"`
 	ImageUrl           *string                            `json:"image_url"`
-	AttributesSnapshot []repository.AttributeDataSnapshot `json:"attribute_snapshot"`
+	AttributesSnapshot []repository.AttributeDataSnapshot `json:"attributes_snapshot"`
 	LineTotal          float64                            `json:"line_total"`
 	Quantity           int16                              `json:"quantity"`
 }
@@ -112,9 +112,9 @@ func (sv *Server) getOrdersHandler(c *gin.Context) {
 	}
 
 	dbParams := repository.GetOrdersParams{
-		CustomerID: utils.GetPgTypeUUID(tokenPayload.UserID),
-		Limit:      orderListQuery.PageSize,
-		Offset:     (orderListQuery.Page - 1) * orderListQuery.PageSize,
+		// CustomerID: utils.GetPgTypeUUID(tokenPayload.UserID),
+		Limit:  orderListQuery.PageSize,
+		Offset: (orderListQuery.Page - 1) * orderListQuery.PageSize,
 	}
 
 	fetchedOrderRows, err := sv.repo.GetOrders(c, dbParams)
@@ -224,7 +224,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 			Status:   string(paymentInfo.Status),
 			Amount:   amount.Float64,
 		}
-		if paymentInfo.GatewayPaymentIntentID != nil && paymentInfo.PaymentMethod == repository.PaymentMethodStripe {
+		if paymentInfo.Status == repository.PaymentStatusPending && paymentInfo.GatewayPaymentIntentID != nil && paymentInfo.PaymentMethod == repository.PaymentMethodStripe {
 			resp.PaymentInfo.IntendID = paymentInfo.GatewayPaymentIntentID
 			stripeInstance, err := payment.NewStripePayment(sv.config.StripeSecretKey)
 			if err != nil {
@@ -536,16 +536,16 @@ func (sv *Server) getAdminOrdersHandler(c *gin.Context) {
 		Offset: (orderListQuery.Page - 1) * orderListQuery.PageSize,
 	}
 
-	if orderListQuery.Status != "" {
+	if orderListQuery.Status != nil {
 		dbParams.Status = repository.NullOrderStatus{
-			OrderStatus: repository.OrderStatus(orderListQuery.Status),
+			OrderStatus: repository.OrderStatus(*orderListQuery.Status),
 			Valid:       true,
 		}
 	}
 
-	if orderListQuery.PaymentStatus != "" {
+	if orderListQuery.PaymentStatus != nil {
 		dbParams.PaymentStatus = repository.NullPaymentStatus{
-			PaymentStatus: repository.PaymentStatus(orderListQuery.PaymentStatus),
+			PaymentStatus: repository.PaymentStatus(*orderListQuery.PaymentStatus),
 			Valid:         true,
 		}
 	}
@@ -557,16 +557,16 @@ func (sv *Server) getAdminOrdersHandler(c *gin.Context) {
 	}
 
 	countParams := repository.CountOrdersParams{}
-	if orderListQuery.Status != "" {
+	if orderListQuery.Status != nil {
 		countParams.Status = repository.NullOrderStatus{
-			OrderStatus: repository.OrderStatus(orderListQuery.Status),
+			OrderStatus: repository.OrderStatus(*orderListQuery.Status),
 			Valid:       true,
 		}
 	}
 
-	if orderListQuery.PaymentStatus != "" {
+	if orderListQuery.PaymentStatus != nil {
 		countParams.PaymentStatus = repository.NullPaymentStatus{
-			PaymentStatus: repository.PaymentStatus(orderListQuery.PaymentStatus),
+			PaymentStatus: repository.PaymentStatus(*orderListQuery.PaymentStatus),
 			Valid:         true,
 		}
 	}

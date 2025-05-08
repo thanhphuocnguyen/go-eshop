@@ -7,7 +7,7 @@ export const BaseOptionSchema = z.object({
 
 export enum OrderStatus {
   Pending = 'pending',
-  Confirm = 'confirm',
+  Confirmed = 'confirmed',
   Delivering = 'delivering',
   Delivered = 'delivered',
   Cancelled = 'cancelled',
