@@ -21,6 +21,7 @@ const _apiPaths = {
   CHECKOUT: 'cart/checkout',
   ORDERS: 'orders',
   ORDER_ITEM: 'orders/:id',
+  RECEIVED_ORDER_ITEM: 'orders/:id/confirm-received',
   PAYMENTS: 'payments',
   PAYMENT_DETAIL: 'payments/:id',
   BRANDS: 'brands',

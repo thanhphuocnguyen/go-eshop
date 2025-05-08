@@ -100,6 +100,7 @@ func (ns NullCartStatus) Value() (driver.Value, error) {
 type EntityType string
 
 const (
+	EntityTypeRating        EntityType = "rating"
 	EntityTypeProduct        EntityType = "product"
 	EntityTypeProductVariant EntityType = "product_variant"
 	EntityTypeCategory       EntityType = "category"
@@ -550,22 +551,30 @@ type ImageAssignment struct {
 }
 
 type Order struct {
-	ID              uuid.UUID               `json:"id"`
-	CustomerID      uuid.UUID               `json:"customer_id"`
-	CustomerEmail   string                  `json:"customer_email"`
-	CustomerName    string                  `json:"customer_name"`
-	CustomerPhone   string                  `json:"customer_phone"`
-	ShippingAddress ShippingAddressSnapshot `json:"shipping_address"`
-	TotalPrice      pgtype.Numeric          `json:"total_price"`
-	Status          OrderStatus             `json:"status"`
-	ConfirmedAt     pgtype.Timestamptz      `json:"confirmed_at"`
-	DeliveredAt     pgtype.Timestamptz      `json:"delivered_at"`
-	CancelledAt     pgtype.Timestamptz      `json:"cancelled_at"`
-	ShippingMethod  *string                 `json:"shipping_method"`
-	RefundedAt      pgtype.Timestamptz      `json:"refunded_at"`
-	OrderDate       time.Time               `json:"order_date"`
-	UpdatedAt       time.Time               `json:"updated_at"`
-	CreatedAt       time.Time               `json:"created_at"`
+	ID                    uuid.UUID               `json:"id"`
+	CustomerID            uuid.UUID               `json:"customer_id"`
+	CustomerEmail         string                  `json:"customer_email"`
+	CustomerName          string                  `json:"customer_name"`
+	CustomerPhone         string                  `json:"customer_phone"`
+	ShippingAddress       ShippingAddressSnapshot `json:"shipping_address"`
+	TotalPrice            pgtype.Numeric          `json:"total_price"`
+	Status                OrderStatus             `json:"status"`
+	ConfirmedAt           pgtype.Timestamptz      `json:"confirmed_at"`
+	DeliveredAt           pgtype.Timestamptz      `json:"delivered_at"`
+	CancelledAt           pgtype.Timestamptz      `json:"cancelled_at"`
+	ShippingMethod        *string                 `json:"shipping_method"`
+	RefundedAt            pgtype.Timestamptz      `json:"refunded_at"`
+	OrderDate             time.Time               `json:"order_date"`
+	UpdatedAt             time.Time               `json:"updated_at"`
+	CreatedAt             time.Time               `json:"created_at"`
+	ShippingMethodID      pgtype.UUID             `json:"shipping_method_id"`
+	ShippingRateID        pgtype.UUID             `json:"shipping_rate_id"`
+	ShippingCost          pgtype.Numeric          `json:"shipping_cost"`
+	EstimatedDeliveryDate pgtype.Timestamptz      `json:"estimated_delivery_date"`
+	TrackingNumber        *string                 `json:"tracking_number"`
+	TrackingUrl           *string                 `json:"tracking_url"`
+	ShippingProvider      *string                 `json:"shipping_provider"`
+	ShippingNotes         *string                 `json:"shipping_notes"`
 }
 
 type OrderItem struct {
@@ -625,6 +634,30 @@ type Product struct {
 	BrandID          pgtype.UUID    `json:"brand_id"`
 	CreatedAt        time.Time      `json:"created_at"`
 	UpdatedAt        time.Time      `json:"updated_at"`
+	AvgRating        pgtype.Numeric `json:"avg_rating"`
+	RatingCount      int32          `json:"rating_count"`
+	OneStarCount     int32          `json:"one_star_count"`
+	TwoStarCount     int32          `json:"two_star_count"`
+	ThreeStarCount   int32          `json:"three_star_count"`
+	FourStarCount    int32          `json:"four_star_count"`
+	FiveStarCount    int32          `json:"five_star_count"`
+}
+
+type ProductRating struct {
+	ID               uuid.UUID      `json:"id"`
+	ProductID        uuid.UUID      `json:"product_id"`
+	UserID           uuid.UUID      `json:"user_id"`
+	OrderItemID      pgtype.UUID    `json:"order_item_id"`
+	Rating           pgtype.Numeric `json:"rating"`
+	ReviewTitle      *string        `json:"review_title"`
+	ReviewContent    *string        `json:"review_content"`
+	VerifiedPurchase bool           `json:"verified_purchase"`
+	IsVisible        bool           `json:"is_visible"`
+	IsApproved       bool           `json:"is_approved"`
+	HelpfulVotes     int32          `json:"helpful_votes"`
+	UnhelpfulVotes   int32          `json:"unhelpful_votes"`
+	CreatedAt        time.Time      `json:"created_at"`
+	UpdatedAt        time.Time      `json:"updated_at"`
 }
 
 type ProductVariant struct {
@@ -640,6 +673,25 @@ type ProductVariant struct {
 	UpdatedAt   time.Time      `json:"updated_at"`
 }
 
+type RatingReply struct {
+	ID        uuid.UUID `json:"id"`
+	RatingID  uuid.UUID `json:"rating_id"`
+	ReplyBy   uuid.UUID `json:"reply_by"`
+	Content   string    `json:"content"`
+	IsVisible bool      `json:"is_visible"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type RatingVote struct {
+	ID        int32     `json:"id"`
+	RatingID  uuid.UUID `json:"rating_id"`
+	UserID    uuid.UUID `json:"user_id"`
+	IsHelpful bool      `json:"is_helpful"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 type Session struct {
 	ID           uuid.UUID `json:"id"`
 	UserID       uuid.UUID `json:"user_id"`
@@ -649,6 +701,79 @@ type Session struct {
 	Blocked      bool      `json:"blocked"`
 	ExpiredAt    time.Time `json:"expired_at"`
 	CreatedAt    time.Time `json:"created_at"`
+}
+
+type Shipment struct {
+	ID               uuid.UUID          `json:"id"`
+	OrderID          uuid.UUID          `json:"order_id"`
+	Status           string             `json:"status"`
+	ShippedAt        pgtype.Timestamptz `json:"shipped_at"`
+	DeliveredAt      pgtype.Timestamptz `json:"delivered_at"`
+	TrackingNumber   *string            `json:"tracking_number"`
+	TrackingUrl      *string            `json:"tracking_url"`
+	ShippingProvider *string            `json:"shipping_provider"`
+	ShippingNotes    *string            `json:"shipping_notes"`
+	CreatedAt        time.Time          `json:"created_at"`
+	UpdatedAt        time.Time          `json:"updated_at"`
+}
+
+type ShipmentItem struct {
+	ID          uuid.UUID `json:"id"`
+	ShipmentID  uuid.UUID `json:"shipment_id"`
+	OrderItemID uuid.UUID `json:"order_item_id"`
+	Quantity    int32     `json:"quantity"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type ShippingMethod struct {
+	ID                    uuid.UUID `json:"id"`
+	Name                  string    `json:"name"`
+	Description           *string   `json:"description"`
+	IsActive              bool      `json:"is_active"`
+	RequiresAddress       bool      `json:"requires_address"`
+	EstimatedDeliveryTime *string   `json:"estimated_delivery_time"`
+	IconUrl               *string   `json:"icon_url"`
+	CreatedAt             time.Time `json:"created_at"`
+	UpdatedAt             time.Time `json:"updated_at"`
+}
+
+type ShippingRate struct {
+	ID                    uuid.UUID      `json:"id"`
+	ShippingMethodID      uuid.UUID      `json:"shipping_method_id"`
+	ShippingZoneID        uuid.UUID      `json:"shipping_zone_id"`
+	Name                  string         `json:"name"`
+	BaseRate              pgtype.Numeric `json:"base_rate"`
+	MinOrderAmount        pgtype.Numeric `json:"min_order_amount"`
+	MaxOrderAmount        pgtype.Numeric `json:"max_order_amount"`
+	FreeShippingThreshold pgtype.Numeric `json:"free_shipping_threshold"`
+	IsActive              bool           `json:"is_active"`
+	CreatedAt             time.Time      `json:"created_at"`
+	UpdatedAt             time.Time      `json:"updated_at"`
+}
+
+type ShippingRateCondition struct {
+	ID             uuid.UUID      `json:"id"`
+	ShippingRateID uuid.UUID      `json:"shipping_rate_id"`
+	ConditionType  string         `json:"condition_type"`
+	MinValue       pgtype.Numeric `json:"min_value"`
+	MaxValue       pgtype.Numeric `json:"max_value"`
+	AdditionalFee  pgtype.Numeric `json:"additional_fee"`
+	CategoryIds    []uuid.UUID    `json:"category_ids"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+}
+
+type ShippingZone struct {
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Description *string   `json:"description"`
+	Countries   []string  `json:"countries"`
+	States      []string  `json:"states"`
+	ZipCodes    []string  `json:"zip_codes"`
+	IsActive    bool      `json:"is_active"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 type User struct {

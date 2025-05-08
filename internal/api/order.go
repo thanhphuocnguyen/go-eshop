@@ -266,6 +266,63 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, createSuccessResponse(c, resp, "success", nil, apiErr))
 }
 
+// @Summary confirm received order payment info
+// @Description confirm received order payment info
+// @Tags orders
+// @Accept json
+// @Produce json
+// @Param id path int true "Order ID"
+// @Security BearerAuth
+// @Success 200 {object} ApiResponse[bool]
+// @Failure 400 {object} ApiResponse[gin.H]
+// @Failure 401 {object} ApiResponse[gin.H]
+// @Failure 500 {object} ApiResponse[gin.H]
+// @Router /order/{order_id}/confirm-received [put]
+func (sv *Server) confirmOrderPayment(c *gin.Context) {
+	tokenPayload, _ := c.MustGet(authorizationPayload).(*auth.Payload)
+	var params OrderIDParams
+	if err := c.ShouldBindUri(&params); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse[gin.H](InvalidBodyCode, "", err))
+		return
+	}
+	order, err := sv.repo.GetOrder(c, uuid.MustParse(params.ID))
+	if err != nil {
+		if err == repository.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, createErrorResponse[gin.H](NotFoundCode, "", err))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
+		return
+	}
+	if order.CustomerID != tokenPayload.UserID {
+		c.JSON(http.StatusForbidden, createErrorResponse[gin.H](PermissionDeniedCode, "", errors.New("You do not have permission to access this order")))
+		return
+	}
+	if order.Status != repository.OrderStatusDelivered {
+		c.JSON(http.StatusBadRequest, createErrorResponse[gin.H](InvalidPaymentCode, "", errors.New("order cannot be confirmed")))
+		return
+	}
+
+	orderUpdateParams := repository.UpdateOrderParams{
+		ID: order.ID,
+		Status: repository.NullOrderStatus{
+			OrderStatus: repository.OrderStatusCompleted,
+			Valid:       true,
+		},
+		ConfirmedAt: pgtype.Timestamptz{
+			Time:  time.Now(),
+			Valid: true,
+		},
+	}
+	_, err = sv.repo.UpdateOrder(c, orderUpdateParams)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
+		return
+	}
+	c.JSON(http.StatusOK, createSuccessResponse(c, true, "success", nil, nil))
+}
+
+// @Router /order/{order_id}/confirm_payment [put]
 // @Summary Cancel order
 // @Description Cancel order by order ID
 // @Tags orders

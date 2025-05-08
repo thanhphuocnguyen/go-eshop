@@ -103,6 +103,7 @@ func (sv *Server) createAddressHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, createErrorResponse[AddressResponse](InvalidBodyCode, "", fmt.Errorf("maximum number of addresses reached")))
 		return
 	}
+
 	payload := repository.CreateAddressParams{
 		Phone:    req.Phone,
 		UserID:   authPayload.UserID,

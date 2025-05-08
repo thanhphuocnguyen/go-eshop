@@ -150,15 +150,15 @@ func (sv *Server) uploadProductImagesHandler(c *gin.Context) {
 
 			mimeType := mime.TypeByExtension(file.Filename)
 
-			img, err := sv.repo.CreateImage(c, repository.CreateImageParams{
+			img, err := sv.repo.InsertImage(c, repository.InsertImageParams{
 				ExternalID: id,
 				Url:        url,
 				MimeType:   &mimeType,
 				FileSize:   &file.Size,
 			})
 
-			createImageAssignmentReq := make([]repository.CreateBulkImageAssignmentsParams, 0)
-			createImageAssignmentReq = append(createImageAssignmentReq, repository.CreateBulkImageAssignmentsParams{
+			createImageAssignmentReq := make([]repository.InsertBulkImageAssignmentsParams, 0)
+			createImageAssignmentReq = append(createImageAssignmentReq, repository.InsertBulkImageAssignmentsParams{
 				ImageID:      img.ID,
 				EntityID:     existingProduct.ID,
 				EntityType:   repository.ProductEntityType,
@@ -178,7 +178,7 @@ func (sv *Server) uploadProductImagesHandler(c *gin.Context) {
 					return
 				}
 
-				createImageAssignmentReq = append(createImageAssignmentReq, repository.CreateBulkImageAssignmentsParams{
+				createImageAssignmentReq = append(createImageAssignmentReq, repository.InsertBulkImageAssignmentsParams{
 					ImageID:      img.ID,
 					EntityID:     variantID,
 					EntityType:   repository.VariantEntityType,
@@ -186,7 +186,7 @@ func (sv *Server) uploadProductImagesHandler(c *gin.Context) {
 					Role:         repository.GalleryRole,
 				})
 			}
-			_, err = sv.repo.CreateBulkImageAssignments(c, createImageAssignmentReq)
+			_, err = sv.repo.InsertBulkImageAssignments(c, createImageAssignmentReq)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, createErrorResponse[[]ImageResponse](InternalServerErrorCode, "save image info to db failed", err))
 				return

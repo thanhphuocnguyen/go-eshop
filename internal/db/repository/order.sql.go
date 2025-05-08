@@ -72,7 +72,7 @@ INSERT INTO orders (
 )
 VALUES 
     ($1,$2,$3,$4, $5, $6, $7)
-RETURNING id, customer_id, customer_email, customer_name, customer_phone, shipping_address, total_price, status, confirmed_at, delivered_at, cancelled_at, shipping_method, refunded_at, order_date, updated_at, created_at
+RETURNING id, customer_id, customer_email, customer_name, customer_phone, shipping_address, total_price, status, confirmed_at, delivered_at, cancelled_at, shipping_method, refunded_at, order_date, updated_at, created_at, shipping_method_id, shipping_rate_id, shipping_cost, estimated_delivery_date, tracking_number, tracking_url, shipping_provider, shipping_notes
 `
 
 type CreateOrderParams struct {
@@ -113,6 +113,14 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 		&i.OrderDate,
 		&i.UpdatedAt,
 		&i.CreatedAt,
+		&i.ShippingMethodID,
+		&i.ShippingRateID,
+		&i.ShippingCost,
+		&i.EstimatedDeliveryDate,
+		&i.TrackingNumber,
+		&i.TrackingUrl,
+		&i.ShippingProvider,
+		&i.ShippingNotes,
 	)
 	return i, err
 }
@@ -180,7 +188,7 @@ func (q *Queries) DeleteOrder(ctx context.Context, id uuid.UUID) error {
 
 const getOrder = `-- name: GetOrder :one
 SELECT
-    id, customer_id, customer_email, customer_name, customer_phone, shipping_address, total_price, status, confirmed_at, delivered_at, cancelled_at, shipping_method, refunded_at, order_date, updated_at, created_at
+    id, customer_id, customer_email, customer_name, customer_phone, shipping_address, total_price, status, confirmed_at, delivered_at, cancelled_at, shipping_method, refunded_at, order_date, updated_at, created_at, shipping_method_id, shipping_rate_id, shipping_cost, estimated_delivery_date, tracking_number, tracking_url, shipping_provider, shipping_notes
 FROM
     orders
 WHERE
@@ -208,6 +216,55 @@ func (q *Queries) GetOrder(ctx context.Context, id uuid.UUID) (Order, error) {
 		&i.OrderDate,
 		&i.UpdatedAt,
 		&i.CreatedAt,
+		&i.ShippingMethodID,
+		&i.ShippingRateID,
+		&i.ShippingCost,
+		&i.EstimatedDeliveryDate,
+		&i.TrackingNumber,
+		&i.TrackingUrl,
+		&i.ShippingProvider,
+		&i.ShippingNotes,
+	)
+	return i, err
+}
+
+const getOrderItemByID = `-- name: GetOrderItemByID :one
+SELECT
+    oi.id as order_item_id,
+    o.id as order_id,
+    p.id as product_id,
+    pv.id as variant_id,
+    o.customer_id
+FROM
+    order_items oi
+JOIN
+    product_variants pv ON oi.variant_id = pv.id
+JOIN
+    products p ON pv.product_id = p.id
+JOIN
+    orders o ON oi.order_id = o.id
+WHERE
+    oi.id = $1
+LIMIT 1
+`
+
+type GetOrderItemByIDRow struct {
+	OrderItemID uuid.UUID `json:"order_item_id"`
+	OrderID     uuid.UUID `json:"order_id"`
+	ProductID   uuid.UUID `json:"product_id"`
+	VariantID   uuid.UUID `json:"variant_id"`
+	CustomerID  uuid.UUID `json:"customer_id"`
+}
+
+func (q *Queries) GetOrderItemByID(ctx context.Context, id uuid.UUID) (GetOrderItemByIDRow, error) {
+	row := q.db.QueryRow(ctx, getOrderItemByID, id)
+	var i GetOrderItemByIDRow
+	err := row.Scan(
+		&i.OrderItemID,
+		&i.OrderID,
+		&i.ProductID,
+		&i.VariantID,
+		&i.CustomerID,
 	)
 	return i, err
 }
@@ -281,7 +338,7 @@ func (q *Queries) GetOrderProducts(ctx context.Context, orderID uuid.UUID) ([]Ge
 
 const getOrders = `-- name: GetOrders :many
 SELECT
-    ord.id, ord.customer_id, ord.customer_email, ord.customer_name, ord.customer_phone, ord.shipping_address, ord.total_price, ord.status, ord.confirmed_at, ord.delivered_at, ord.cancelled_at, ord.shipping_method, ord.refunded_at, ord.order_date, ord.updated_at, ord.created_at, pm.status as payment_status, COUNT(oi.id) as total_items
+    ord.id, ord.customer_id, ord.customer_email, ord.customer_name, ord.customer_phone, ord.shipping_address, ord.total_price, ord.status, ord.confirmed_at, ord.delivered_at, ord.cancelled_at, ord.shipping_method, ord.refunded_at, ord.order_date, ord.updated_at, ord.created_at, ord.shipping_method_id, ord.shipping_rate_id, ord.shipping_cost, ord.estimated_delivery_date, ord.tracking_number, ord.tracking_url, ord.shipping_provider, ord.shipping_notes, pm.status as payment_status, COUNT(oi.id) as total_items
 FROM
     orders ord
 LEFT JOIN order_items oi ON ord.id = oi.id
@@ -310,24 +367,32 @@ type GetOrdersParams struct {
 }
 
 type GetOrdersRow struct {
-	ID              uuid.UUID               `json:"id"`
-	CustomerID      uuid.UUID               `json:"customer_id"`
-	CustomerEmail   string                  `json:"customer_email"`
-	CustomerName    string                  `json:"customer_name"`
-	CustomerPhone   string                  `json:"customer_phone"`
-	ShippingAddress ShippingAddressSnapshot `json:"shipping_address"`
-	TotalPrice      pgtype.Numeric          `json:"total_price"`
-	Status          OrderStatus             `json:"status"`
-	ConfirmedAt     pgtype.Timestamptz      `json:"confirmed_at"`
-	DeliveredAt     pgtype.Timestamptz      `json:"delivered_at"`
-	CancelledAt     pgtype.Timestamptz      `json:"cancelled_at"`
-	ShippingMethod  *string                 `json:"shipping_method"`
-	RefundedAt      pgtype.Timestamptz      `json:"refunded_at"`
-	OrderDate       time.Time               `json:"order_date"`
-	UpdatedAt       time.Time               `json:"updated_at"`
-	CreatedAt       time.Time               `json:"created_at"`
-	PaymentStatus   NullPaymentStatus       `json:"payment_status"`
-	TotalItems      int64                   `json:"total_items"`
+	ID                    uuid.UUID               `json:"id"`
+	CustomerID            uuid.UUID               `json:"customer_id"`
+	CustomerEmail         string                  `json:"customer_email"`
+	CustomerName          string                  `json:"customer_name"`
+	CustomerPhone         string                  `json:"customer_phone"`
+	ShippingAddress       ShippingAddressSnapshot `json:"shipping_address"`
+	TotalPrice            pgtype.Numeric          `json:"total_price"`
+	Status                OrderStatus             `json:"status"`
+	ConfirmedAt           pgtype.Timestamptz      `json:"confirmed_at"`
+	DeliveredAt           pgtype.Timestamptz      `json:"delivered_at"`
+	CancelledAt           pgtype.Timestamptz      `json:"cancelled_at"`
+	ShippingMethod        *string                 `json:"shipping_method"`
+	RefundedAt            pgtype.Timestamptz      `json:"refunded_at"`
+	OrderDate             time.Time               `json:"order_date"`
+	UpdatedAt             time.Time               `json:"updated_at"`
+	CreatedAt             time.Time               `json:"created_at"`
+	ShippingMethodID      pgtype.UUID             `json:"shipping_method_id"`
+	ShippingRateID        pgtype.UUID             `json:"shipping_rate_id"`
+	ShippingCost          pgtype.Numeric          `json:"shipping_cost"`
+	EstimatedDeliveryDate pgtype.Timestamptz      `json:"estimated_delivery_date"`
+	TrackingNumber        *string                 `json:"tracking_number"`
+	TrackingUrl           *string                 `json:"tracking_url"`
+	ShippingProvider      *string                 `json:"shipping_provider"`
+	ShippingNotes         *string                 `json:"shipping_notes"`
+	PaymentStatus         NullPaymentStatus       `json:"payment_status"`
+	TotalItems            int64                   `json:"total_items"`
 }
 
 func (q *Queries) GetOrders(ctx context.Context, arg GetOrdersParams) ([]GetOrdersRow, error) {
@@ -364,6 +429,14 @@ func (q *Queries) GetOrders(ctx context.Context, arg GetOrdersParams) ([]GetOrde
 			&i.OrderDate,
 			&i.UpdatedAt,
 			&i.CreatedAt,
+			&i.ShippingMethodID,
+			&i.ShippingRateID,
+			&i.ShippingCost,
+			&i.EstimatedDeliveryDate,
+			&i.TrackingNumber,
+			&i.TrackingUrl,
+			&i.ShippingProvider,
+			&i.ShippingNotes,
 			&i.PaymentStatus,
 			&i.TotalItems,
 		); err != nil {
@@ -439,7 +512,7 @@ SET
     updated_at = now()
 WHERE
     id = $5
-RETURNING id, customer_id, customer_email, customer_name, customer_phone, shipping_address, total_price, status, confirmed_at, delivered_at, cancelled_at, shipping_method, refunded_at, order_date, updated_at, created_at
+RETURNING id, customer_id, customer_email, customer_name, customer_phone, shipping_address, total_price, status, confirmed_at, delivered_at, cancelled_at, shipping_method, refunded_at, order_date, updated_at, created_at, shipping_method_id, shipping_rate_id, shipping_cost, estimated_delivery_date, tracking_number, tracking_url, shipping_provider, shipping_notes
 `
 
 type UpdateOrderParams struct {
@@ -476,6 +549,14 @@ func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order
 		&i.OrderDate,
 		&i.UpdatedAt,
 		&i.CreatedAt,
+		&i.ShippingMethodID,
+		&i.ShippingRateID,
+		&i.ShippingCost,
+		&i.EstimatedDeliveryDate,
+		&i.TrackingNumber,
+		&i.TrackingUrl,
+		&i.ShippingProvider,
+		&i.ShippingNotes,
 	)
 	return i, err
 }

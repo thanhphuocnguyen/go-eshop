@@ -12,90 +12,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type CreateBulkImageAssignmentsParams struct {
-	ImageID      int32     `json:"image_id"`
-	EntityID     uuid.UUID `json:"entity_id"`
-	EntityType   string    `json:"entity_type"`
-	DisplayOrder int16     `json:"display_order"`
-	Role         string    `json:"role"`
-}
-
-const createImage = `-- name: CreateImage :one
-INSERT INTO images (external_id, url, alt_text, caption, mime_type, file_size, width, height) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, external_id, url, alt_text, caption, mime_type, file_size, width, height, uploaded_at, updated_at
-`
-
-type CreateImageParams struct {
-	ExternalID string  `json:"external_id"`
-	Url        string  `json:"url"`
-	AltText    *string `json:"alt_text"`
-	Caption    *string `json:"caption"`
-	MimeType   *string `json:"mime_type"`
-	FileSize   *int64  `json:"file_size"`
-	Width      *int32  `json:"width"`
-	Height     *int32  `json:"height"`
-}
-
-func (q *Queries) CreateImage(ctx context.Context, arg CreateImageParams) (Image, error) {
-	row := q.db.QueryRow(ctx, createImage,
-		arg.ExternalID,
-		arg.Url,
-		arg.AltText,
-		arg.Caption,
-		arg.MimeType,
-		arg.FileSize,
-		arg.Width,
-		arg.Height,
-	)
-	var i Image
-	err := row.Scan(
-		&i.ID,
-		&i.ExternalID,
-		&i.Url,
-		&i.AltText,
-		&i.Caption,
-		&i.MimeType,
-		&i.FileSize,
-		&i.Width,
-		&i.Height,
-		&i.UploadedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const createImageAssignment = `-- name: CreateImageAssignment :one
-INSERT INTO image_assignments (image_id, entity_id, entity_type, display_order, role) VALUES ($1, $2, $3, $4, $5) RETURNING id, image_id, entity_id, entity_type, display_order, role, created_at
-`
-
-type CreateImageAssignmentParams struct {
-	ImageID      int32     `json:"image_id"`
-	EntityID     uuid.UUID `json:"entity_id"`
-	EntityType   string    `json:"entity_type"`
-	DisplayOrder int16     `json:"display_order"`
-	Role         string    `json:"role"`
-}
-
-func (q *Queries) CreateImageAssignment(ctx context.Context, arg CreateImageAssignmentParams) (ImageAssignment, error) {
-	row := q.db.QueryRow(ctx, createImageAssignment,
-		arg.ImageID,
-		arg.EntityID,
-		arg.EntityType,
-		arg.DisplayOrder,
-		arg.Role,
-	)
-	var i ImageAssignment
-	err := row.Scan(
-		&i.ID,
-		&i.ImageID,
-		&i.EntityID,
-		&i.EntityType,
-		&i.DisplayOrder,
-		&i.Role,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
 const deleteImageAssignments = `-- name: DeleteImageAssignments :exec
 DELETE FROM image_assignments WHERE image_id = $1 AND entity_type = $2
 `
@@ -432,6 +348,101 @@ func (q *Queries) GetProductImagesAssigned(ctx context.Context, entityIds []uuid
 		return nil, err
 	}
 	return items, nil
+}
+
+type InsertBulkImageAssignmentsParams struct {
+	ImageID      int32     `json:"image_id"`
+	EntityID     uuid.UUID `json:"entity_id"`
+	EntityType   string    `json:"entity_type"`
+	DisplayOrder int16     `json:"display_order"`
+	Role         string    `json:"role"`
+}
+
+type InsertBulkImagesParams struct {
+	ExternalID string  `json:"external_id"`
+	Url        string  `json:"url"`
+	AltText    *string `json:"alt_text"`
+	Caption    *string `json:"caption"`
+	MimeType   *string `json:"mime_type"`
+	FileSize   *int64  `json:"file_size"`
+	Width      *int32  `json:"width"`
+	Height     *int32  `json:"height"`
+}
+
+const insertImage = `-- name: InsertImage :one
+INSERT INTO images (external_id, url, alt_text, caption, mime_type, file_size, width, height) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, external_id, url, alt_text, caption, mime_type, file_size, width, height, uploaded_at, updated_at
+`
+
+type InsertImageParams struct {
+	ExternalID string  `json:"external_id"`
+	Url        string  `json:"url"`
+	AltText    *string `json:"alt_text"`
+	Caption    *string `json:"caption"`
+	MimeType   *string `json:"mime_type"`
+	FileSize   *int64  `json:"file_size"`
+	Width      *int32  `json:"width"`
+	Height     *int32  `json:"height"`
+}
+
+func (q *Queries) InsertImage(ctx context.Context, arg InsertImageParams) (Image, error) {
+	row := q.db.QueryRow(ctx, insertImage,
+		arg.ExternalID,
+		arg.Url,
+		arg.AltText,
+		arg.Caption,
+		arg.MimeType,
+		arg.FileSize,
+		arg.Width,
+		arg.Height,
+	)
+	var i Image
+	err := row.Scan(
+		&i.ID,
+		&i.ExternalID,
+		&i.Url,
+		&i.AltText,
+		&i.Caption,
+		&i.MimeType,
+		&i.FileSize,
+		&i.Width,
+		&i.Height,
+		&i.UploadedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const insertImageAssignment = `-- name: InsertImageAssignment :one
+INSERT INTO image_assignments (image_id, entity_id, entity_type, display_order, role) VALUES ($1, $2, $3, $4, $5) RETURNING id, image_id, entity_id, entity_type, display_order, role, created_at
+`
+
+type InsertImageAssignmentParams struct {
+	ImageID      int32     `json:"image_id"`
+	EntityID     uuid.UUID `json:"entity_id"`
+	EntityType   string    `json:"entity_type"`
+	DisplayOrder int16     `json:"display_order"`
+	Role         string    `json:"role"`
+}
+
+func (q *Queries) InsertImageAssignment(ctx context.Context, arg InsertImageAssignmentParams) (ImageAssignment, error) {
+	row := q.db.QueryRow(ctx, insertImageAssignment,
+		arg.ImageID,
+		arg.EntityID,
+		arg.EntityType,
+		arg.DisplayOrder,
+		arg.Role,
+	)
+	var i ImageAssignment
+	err := row.Scan(
+		&i.ID,
+		&i.ImageID,
+		&i.EntityID,
+		&i.EntityType,
+		&i.DisplayOrder,
+		&i.Role,
+		&i.CreatedAt,
+	)
+	return i, err
 }
 
 const updateProductImage = `-- name: UpdateProductImage :exec

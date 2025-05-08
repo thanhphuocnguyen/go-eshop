@@ -101,6 +101,7 @@ func (sv *Server) initializeRouter() {
 		sv.setupCategoryRoutes(v1)
 		sv.setupCollectionRoutes(v1)
 		sv.setupBrandRoutes(v1)
+		sv.setupRatingRoutes(v1)
 	}
 
 	// Setup webhook routes
@@ -202,6 +203,14 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 			productImages.POST(":entity_id", sv.uploadProductImagesHandler)
 			productImages.DELETE(":entity_id", sv.removeImage)
 		}
+
+		ratings := admin.Group("ratings")
+		{
+			ratings.DELETE(":id", sv.deleteRatingHandler)
+			ratings.POST(":id/approve", sv.approveRatingHandler)
+			ratings.POST(":id/ban", sv.banUserRatingHandler)
+		}
+
 	}
 }
 
@@ -240,6 +249,7 @@ func (sv *Server) setupProductRoutes(rg *gin.RouterGroup) {
 	{
 		product.GET("", sv.getProductsHandler)
 		product.GET(":id", sv.getProductDetailHandler)
+		product.GET(":id/ratings", sv.getProductRatingsHandler)
 	}
 }
 
@@ -272,6 +282,7 @@ func (sv *Server) setupOrderRoutes(rg *gin.RouterGroup) {
 	{
 		order.GET("", sv.getOrdersHandler)
 		order.GET(":id", sv.getOrderDetailHandler)
+		order.PUT(":id/confirm-received", sv.confirmOrderPayment)
 		order.PUT(":id/cancel", sv.cancelOrder)
 	}
 }
@@ -309,6 +320,16 @@ func (sv *Server) setupBrandRoutes(rg *gin.RouterGroup) {
 	brands := rg.Group("brands")
 	{
 		brands.GET("", sv.getShopBrandsHandler)
+	}
+}
+
+// Setup brand-related routes
+func (sv *Server) setupRatingRoutes(rg *gin.RouterGroup) {
+	ratings := rg.Group("ratings", authMiddleware(sv.tokenGenerator))
+	{
+		ratings.POST("", sv.postRatingHandler)
+		ratings.POST("helpful", sv.postRatingHelpfulHandler)
+		ratings.POST(":id/reply", sv.postReplyRatingHandler)
 	}
 }
 
@@ -352,6 +373,7 @@ func (s *Server) getHomePageHandler(ctx *gin.Context) {
 			categoriesChan <- []CategoryResponse{}
 			return
 		}
+
 		categoryModel := make([]CategoryResponse, len(categoryRows))
 		for i, category := range categoryRows {
 			categoryModel[i] = CategoryResponse{
@@ -362,6 +384,7 @@ func (s *Server) getHomePageHandler(ctx *gin.Context) {
 				Slug:        category.Slug,
 			}
 		}
+
 		categoriesChan <- categoryModel
 	}()
 
@@ -377,6 +400,7 @@ func (s *Server) getHomePageHandler(ctx *gin.Context) {
 			collectionsChan <- []CollectionResponse{}
 			return
 		}
+
 		collectionModel := make([]CollectionResponse, len(collectionRows))
 		for i, collection := range collectionRows {
 			collectionModel[i] = CollectionResponse{
@@ -387,6 +411,7 @@ func (s *Server) getHomePageHandler(ctx *gin.Context) {
 				Slug:        collection.Slug,
 			}
 		}
+
 		collectionsChan <- collectionModel
 	}()
 

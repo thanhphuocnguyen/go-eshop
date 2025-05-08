@@ -27,3 +27,19 @@ func Bool(value bool) *bool {
 func StringPtr(value string) *string {
 	return &value
 }
+func Int32Ptr(value int32) *int32 {
+	return &value
+}
+func Int64Ptr(value int64) *int64 {
+	return &value
+}
+
+func CalculateTotalPages(total int64, pageSize int64) int64 {
+	if total == 0 {
+		return 0
+	}
+	if total%pageSize == 0 {
+		return total / pageSize
+	}
+	return total/pageSize + 1
+}

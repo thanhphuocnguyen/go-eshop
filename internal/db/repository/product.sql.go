@@ -110,7 +110,7 @@ INSERT INTO products
     (id, name, description, short_description, base_price, base_sku, slug, attributes, brand_id, collection_id, category_id) 
 VALUES 
     ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-RETURNING id, name, description, short_description, attributes, base_price, base_sku, slug, is_active, category_id, collection_id, brand_id, created_at, updated_at
+RETURNING id, name, description, short_description, attributes, base_price, base_sku, slug, is_active, category_id, collection_id, brand_id, created_at, updated_at, avg_rating, rating_count, one_star_count, two_star_count, three_star_count, four_star_count, five_star_count
 `
 
 type CreateProductParams struct {
@@ -157,6 +157,13 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		&i.BrandID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.AvgRating,
+		&i.RatingCount,
+		&i.OneStarCount,
+		&i.TwoStarCount,
+		&i.ThreeStarCount,
+		&i.FourStarCount,
+		&i.FiveStarCount,
 	)
 	return i, err
 }
@@ -309,7 +316,7 @@ func (q *Queries) GetLinkedProductsByCategory(ctx context.Context, arg GetLinked
 
 const getProductByID = `-- name: GetProductByID :one
 SELECT
-    products.id, products.name, products.description, products.short_description, products.attributes, products.base_price, products.base_sku, products.slug, products.is_active, products.category_id, products.collection_id, products.brand_id, products.created_at, products.updated_at
+    products.id, products.name, products.description, products.short_description, products.attributes, products.base_price, products.base_sku, products.slug, products.is_active, products.category_id, products.collection_id, products.brand_id, products.created_at, products.updated_at, products.avg_rating, products.rating_count, products.one_star_count, products.two_star_count, products.three_star_count, products.four_star_count, products.five_star_count
 FROM
     products
 WHERE
@@ -342,6 +349,13 @@ func (q *Queries) GetProductByID(ctx context.Context, arg GetProductByIDParams) 
 		&i.BrandID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.AvgRating,
+		&i.RatingCount,
+		&i.OneStarCount,
+		&i.TwoStarCount,
+		&i.ThreeStarCount,
+		&i.FourStarCount,
+		&i.FiveStarCount,
 	)
 	return i, err
 }
@@ -351,6 +365,8 @@ SELECT
     p.id as product_id, p.name, p.description, p.base_price,
     p.base_sku, p.slug, p.updated_at, p.created_at, p.is_active,
     p.short_description, p.attributes,
+    p.rating_count, p.one_star_count, p.two_star_count,
+    p.three_star_count, p.four_star_count, p.five_star_count,
     c.id AS category_id, c.name AS category_name,
     cl.id AS collection_id, cl.name AS collection_name,
     b.id AS brand_id, b.name AS brand_name
@@ -383,6 +399,12 @@ type GetProductDetailRow struct {
 	IsActive         *bool          `json:"is_active"`
 	ShortDescription *string        `json:"short_description"`
 	Attributes       []int32        `json:"attributes"`
+	RatingCount      int32          `json:"rating_count"`
+	OneStarCount     int32          `json:"one_star_count"`
+	TwoStarCount     int32          `json:"two_star_count"`
+	ThreeStarCount   int32          `json:"three_star_count"`
+	FourStarCount    int32          `json:"four_star_count"`
+	FiveStarCount    int32          `json:"five_star_count"`
 	CategoryID       uuid.UUID      `json:"category_id"`
 	CategoryName     string         `json:"category_name"`
 	CollectionID     pgtype.UUID    `json:"collection_id"`
@@ -412,6 +434,12 @@ func (q *Queries) GetProductDetail(ctx context.Context, arg GetProductDetailPara
 			&i.IsActive,
 			&i.ShortDescription,
 			&i.Attributes,
+			&i.RatingCount,
+			&i.OneStarCount,
+			&i.TwoStarCount,
+			&i.ThreeStarCount,
+			&i.FourStarCount,
+			&i.FiveStarCount,
 			&i.CategoryID,
 			&i.CategoryName,
 			&i.CollectionID,
@@ -539,7 +567,7 @@ func (q *Queries) GetProductVariants(ctx context.Context, arg GetProductVariants
 
 const getProducts = `-- name: GetProducts :many
 SELECT
-    p.id, p.name, p.description, p.short_description, p.attributes, p.base_price, p.base_sku, p.slug, p.is_active, p.category_id, p.collection_id, p.brand_id, p.created_at, p.updated_at,
+    p.id, p.name, p.description, p.short_description, p.attributes, p.base_price, p.base_sku, p.slug, p.is_active, p.category_id, p.collection_id, p.brand_id, p.created_at, p.updated_at, p.avg_rating, p.rating_count, p.one_star_count, p.two_star_count, p.three_star_count, p.four_star_count, p.five_star_count,
     first_img.id AS img_id, first_img.url AS img_url,
     COUNT(v.id) AS variant_count, MIN(v.price)::DECIMAL AS min_price, MAX(v.price)::DECIMAL AS max_price
 FROM products as p
@@ -593,6 +621,13 @@ type GetProductsRow struct {
 	BrandID          pgtype.UUID    `json:"brand_id"`
 	CreatedAt        time.Time      `json:"created_at"`
 	UpdatedAt        time.Time      `json:"updated_at"`
+	AvgRating        pgtype.Numeric `json:"avg_rating"`
+	RatingCount      int32          `json:"rating_count"`
+	OneStarCount     int32          `json:"one_star_count"`
+	TwoStarCount     int32          `json:"two_star_count"`
+	ThreeStarCount   int32          `json:"three_star_count"`
+	FourStarCount    int32          `json:"four_star_count"`
+	FiveStarCount    int32          `json:"five_star_count"`
 	ImgID            int32          `json:"img_id"`
 	ImgUrl           string         `json:"img_url"`
 	VariantCount     int64          `json:"variant_count"`
@@ -634,6 +669,13 @@ func (q *Queries) GetProducts(ctx context.Context, arg GetProductsParams) ([]Get
 			&i.BrandID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.AvgRating,
+			&i.RatingCount,
+			&i.OneStarCount,
+			&i.TwoStarCount,
+			&i.ThreeStarCount,
+			&i.FourStarCount,
+			&i.FiveStarCount,
 			&i.ImgID,
 			&i.ImgUrl,
 			&i.VariantCount,
@@ -668,7 +710,7 @@ SET
     updated_at = NOW()
 WHERE
     id = $12
-RETURNING id, name, description, short_description, attributes, base_price, base_sku, slug, is_active, category_id, collection_id, brand_id, created_at, updated_at
+RETURNING id, name, description, short_description, attributes, base_price, base_sku, slug, is_active, category_id, collection_id, brand_id, created_at, updated_at, avg_rating, rating_count, one_star_count, two_star_count, three_star_count, four_star_count, five_star_count
 `
 
 type UpdateProductParams struct {
@@ -717,6 +759,13 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		&i.BrandID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.AvgRating,
+		&i.RatingCount,
+		&i.OneStarCount,
+		&i.TwoStarCount,
+		&i.ThreeStarCount,
+		&i.FourStarCount,
+		&i.FiveStarCount,
 	)
 	return i, err
 }

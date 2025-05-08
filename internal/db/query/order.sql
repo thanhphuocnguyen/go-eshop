@@ -89,6 +89,25 @@ INSERT INTO
 VALUES
     ($1, $2, $3, $4, $5, $6, $7, $8, $9);
 
+-- name: GetOrderItemByID :one
+SELECT
+    oi.id as order_item_id,
+    o.id as order_id,
+    p.id as product_id,
+    pv.id as variant_id,
+    o.customer_id
+FROM
+    order_items oi
+JOIN
+    product_variants pv ON oi.variant_id = pv.id
+JOIN
+    products p ON pv.product_id = p.id
+JOIN
+    orders o ON oi.order_id = o.id
+WHERE
+    oi.id = $1
+LIMIT 1;
+
 -- name: ListOrderItems :many
 SELECT
     *

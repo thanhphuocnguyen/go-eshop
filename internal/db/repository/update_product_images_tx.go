@@ -46,9 +46,9 @@ func (s *pgRepo) UpdateProductImagesTx(ctx context.Context, arg []UpdateProdImag
 			// If there are no variant IDs, we can return early
 			if len(image.VariantIDs) > 0 {
 				// Create new image assignments
-				createBulkImgAssignmentParams := make([]CreateBulkImageAssignmentsParams, 0)
+				createBulkImgAssignmentParams := make([]InsertBulkImageAssignmentsParams, 0)
 				for _, variantID := range image.VariantIDs {
-					createImgAssignmentParams := CreateBulkImageAssignmentsParams{
+					createImgAssignmentParams := InsertBulkImageAssignmentsParams{
 						ImageID:      image.ImageID,
 						EntityID:     variantID,
 						Role:         "gallery",
@@ -60,7 +60,7 @@ func (s *pgRepo) UpdateProductImagesTx(ctx context.Context, arg []UpdateProdImag
 					}
 					createBulkImgAssignmentParams = append(createBulkImgAssignmentParams, createImgAssignmentParams)
 				}
-				_, err = q.CreateBulkImageAssignments(ctx, createBulkImgAssignmentParams)
+				_, err = q.InsertBulkImageAssignments(ctx, createBulkImgAssignmentParams)
 				if err != nil {
 					log.Error().Err(err).Msg("Failed to create bulk image assignments")
 					return

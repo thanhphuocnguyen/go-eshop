@@ -97,6 +97,26 @@ export default function AdminOrdersPage() {
     }
   };
 
+  // Get color based on payment status
+  const getPaymentStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'success':
+        return 'bg-green-500 text-white';
+      case 'failed':
+        return 'bg-red-500 text-white';
+      case 'refunded':
+        return 'bg-purple-100 text-purple-800';
+      case 'cancelled':
+        return 'bg-gray-300 text-gray-800';
+      case 'authorized':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   // Render the orders list
   const renderOrdersList = () => {
     if (loading && orders.length === 0) {
@@ -180,14 +200,14 @@ export default function AdminOrdersPage() {
                   <span
                     className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}
                   >
-                    {order.status}
+                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                   </span>
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap'>
                   <span
-                    className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.payment_status)}`}
+                    className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getPaymentStatusColor(order.payment_status)}`}
                   >
-                    {order.payment_status}
+                    {order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1)}
                   </span>
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
@@ -242,7 +262,7 @@ export default function AdminOrdersPage() {
   const renderFilterControls = () => {
     return (
       <div className='mb-4 p-4 bg-white rounded-lg shadow-sm'>
-        <div className='flex flex-wrap items-center gap-4'>
+        <div className='flex flex-wrap items-center justify-center gap-4'>
           <div>
             <label
               htmlFor='statusFilter'

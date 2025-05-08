@@ -1,9 +1,11 @@
--- name: CreateImage :one
+-- name: InsertImage :one
 INSERT INTO images (external_id, url, alt_text, caption, mime_type, file_size, width, height) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *;
+-- name: InsertBulkImages :copyfrom
+INSERT INTO images (external_id, url, alt_text, caption, mime_type, file_size, width, height) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
 
--- name: CreateImageAssignment :one
+-- name: InsertImageAssignment :one
 INSERT INTO image_assignments (image_id, entity_id, entity_type, display_order, role) VALUES ($1, $2, $3, $4, $5) RETURNING *;
--- name: CreateBulkImageAssignments :copyfrom
+-- name: InsertBulkImageAssignments :copyfrom
 INSERT INTO image_assignments (image_id, entity_id, entity_type, display_order, role) VALUES ($1, $2, $3, $4, $5);
 
 -- name: GetImagesByEntityID :many

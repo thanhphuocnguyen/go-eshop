@@ -24,6 +24,15 @@ const PaymentInfoSection = dynamic(
   { ssr: true }
 );
 
+const ConfirmOrderButton = dynamic(
+  () => import('././_components/ConfirmOrderButton'),
+  { ssr: true }
+);
+
+const OrderItemRating = dynamic(() => import('././_components/OrderItemRating'), {
+  ssr: true,
+});
+
 export const getOrderDetails = cache(async (slug: string) => {
   const cookieStorage = await cookies();
   const order = await apiFetch<GenericResponse<OrderModel>>(
@@ -154,6 +163,16 @@ export default async function Page({ params }: Props) {
                         </div>
                       ))}
                     </div>
+
+                    {/* Display rating component for completed orders */}
+                    {orderDetail.status === OrderStatus.Completed && (
+                      <div className='mt-2'>
+                        <OrderItemRating
+                          orderId={orderDetail.id}
+                          productId={e.id}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -253,6 +272,13 @@ export default async function Page({ params }: Props) {
                   })}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Confirm received button for delivered orders */}
+          {orderDetail.status === OrderStatus.Delivered && (
+            <div className='mt-6 flex justify-center'>
+              <ConfirmOrderButton orderId={orderDetail.id} />
             </div>
           )}
         </div>

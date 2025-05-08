@@ -42,6 +42,8 @@ SELECT
     p.id as product_id, p.name, p.description, p.base_price,
     p.base_sku, p.slug, p.updated_at, p.created_at, p.is_active,
     p.short_description, p.attributes,
+    p.rating_count, p.one_star_count, p.two_star_count,
+    p.three_star_count, p.four_star_count, p.five_star_count,
     c.id AS category_id, c.name AS category_name,
     cl.id AS collection_id, cl.name AS collection_name,
     b.id AS brand_id, b.name AS brand_name

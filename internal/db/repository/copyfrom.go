@@ -78,42 +78,6 @@ func (q *Queries) AddBulkProducts(ctx context.Context, arg []AddBulkProductsPara
 	return q.db.CopyFrom(ctx, []string{"products"}, []string{"id", "category_id", "collection_id", "brand_id", "name", "description"}, &iteratorForAddBulkProducts{rows: arg})
 }
 
-// iteratorForCreateBulkImageAssignments implements pgx.CopyFromSource.
-type iteratorForCreateBulkImageAssignments struct {
-	rows                 []CreateBulkImageAssignmentsParams
-	skippedFirstNextCall bool
-}
-
-func (r *iteratorForCreateBulkImageAssignments) Next() bool {
-	if len(r.rows) == 0 {
-		return false
-	}
-	if !r.skippedFirstNextCall {
-		r.skippedFirstNextCall = true
-		return true
-	}
-	r.rows = r.rows[1:]
-	return len(r.rows) > 0
-}
-
-func (r iteratorForCreateBulkImageAssignments) Values() ([]interface{}, error) {
-	return []interface{}{
-		r.rows[0].ImageID,
-		r.rows[0].EntityID,
-		r.rows[0].EntityType,
-		r.rows[0].DisplayOrder,
-		r.rows[0].Role,
-	}, nil
-}
-
-func (r iteratorForCreateBulkImageAssignments) Err() error {
-	return nil
-}
-
-func (q *Queries) CreateBulkImageAssignments(ctx context.Context, arg []CreateBulkImageAssignmentsParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"image_assignments"}, []string{"image_id", "entity_id", "entity_type", "display_order", "role"}, &iteratorForCreateBulkImageAssignments{rows: arg})
-}
-
 // iteratorForCreateBulkOrderItems implements pgx.CopyFromSource.
 type iteratorForCreateBulkOrderItems struct {
 	rows                 []CreateBulkOrderItemsParams
@@ -222,6 +186,81 @@ func (r iteratorForCreateBulkProductVariants) Err() error {
 
 func (q *Queries) CreateBulkProductVariants(ctx context.Context, arg []CreateBulkProductVariantsParams) (int64, error) {
 	return q.db.CopyFrom(ctx, []string{"product_variants"}, []string{"id", "product_id", "sku", "price", "stock", "weight"}, &iteratorForCreateBulkProductVariants{rows: arg})
+}
+
+// iteratorForInsertBulkImageAssignments implements pgx.CopyFromSource.
+type iteratorForInsertBulkImageAssignments struct {
+	rows                 []InsertBulkImageAssignmentsParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForInsertBulkImageAssignments) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForInsertBulkImageAssignments) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].ImageID,
+		r.rows[0].EntityID,
+		r.rows[0].EntityType,
+		r.rows[0].DisplayOrder,
+		r.rows[0].Role,
+	}, nil
+}
+
+func (r iteratorForInsertBulkImageAssignments) Err() error {
+	return nil
+}
+
+func (q *Queries) InsertBulkImageAssignments(ctx context.Context, arg []InsertBulkImageAssignmentsParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"image_assignments"}, []string{"image_id", "entity_id", "entity_type", "display_order", "role"}, &iteratorForInsertBulkImageAssignments{rows: arg})
+}
+
+// iteratorForInsertBulkImages implements pgx.CopyFromSource.
+type iteratorForInsertBulkImages struct {
+	rows                 []InsertBulkImagesParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForInsertBulkImages) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForInsertBulkImages) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].ExternalID,
+		r.rows[0].Url,
+		r.rows[0].AltText,
+		r.rows[0].Caption,
+		r.rows[0].MimeType,
+		r.rows[0].FileSize,
+		r.rows[0].Width,
+		r.rows[0].Height,
+	}, nil
+}
+
+func (r iteratorForInsertBulkImages) Err() error {
+	return nil
+}
+
+func (q *Queries) InsertBulkImages(ctx context.Context, arg []InsertBulkImagesParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"images"}, []string{"external_id", "url", "alt_text", "caption", "mime_type", "file_size", "width", "height"}, &iteratorForInsertBulkImages{rows: arg})
 }
 
 // iteratorForSeedAddresses implements pgx.CopyFromSource.
