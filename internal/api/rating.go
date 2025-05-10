@@ -102,7 +102,7 @@ func (s *Server) postRatingHandler(c *gin.Context) {
 				}
 				assignments[i] = repository.InsertImageAssignmentParams{
 					EntityID:   rating.ID,
-					EntityType: string(repository.EntityTypeRating),
+					EntityType: string(repository.ImageRoleGallery),
 					Role:       string(repository.ImageRoleGallery),
 				}
 			}(i, file)

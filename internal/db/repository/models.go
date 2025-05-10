@@ -100,7 +100,6 @@ func (ns NullCartStatus) Value() (driver.Value, error) {
 type EntityType string
 
 const (
-	EntityTypeRating        EntityType = "rating"
 	EntityTypeProduct        EntityType = "product"
 	EntityTypeProductVariant EntityType = "product_variant"
 	EntityTypeCategory       EntityType = "category"
@@ -507,6 +506,45 @@ type Collection struct {
 	UpdatedAt    time.Time `json:"updated_at"`
 }
 
+type Discount struct {
+	ID                uuid.UUID          `json:"id"`
+	Code              string             `json:"code"`
+	Description       *string            `json:"description"`
+	DiscountType      string             `json:"discount_type"`
+	DiscountValue     pgtype.Numeric     `json:"discount_value"`
+	MinPurchaseAmount pgtype.Numeric     `json:"min_purchase_amount"`
+	MaxDiscountAmount pgtype.Numeric     `json:"max_discount_amount"`
+	UsageLimit        *int32             `json:"usage_limit"`
+	UsedCount         *int32             `json:"used_count"`
+	IsActive          *bool              `json:"is_active"`
+	StartsAt          time.Time          `json:"starts_at"`
+	ExpiresAt         time.Time          `json:"expires_at"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt         pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type DiscountCategory struct {
+	ID         uuid.UUID          `json:"id"`
+	DiscountID uuid.UUID          `json:"discount_id"`
+	CategoryID uuid.UUID          `json:"category_id"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+}
+
+type DiscountProduct struct {
+	ID         uuid.UUID          `json:"id"`
+	DiscountID uuid.UUID          `json:"discount_id"`
+	ProductID  uuid.UUID          `json:"product_id"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+}
+
+type DiscountUser struct {
+	ID         uuid.UUID          `json:"id"`
+	DiscountID uuid.UUID          `json:"discount_id"`
+	UserID     uuid.UUID          `json:"user_id"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+}
+
 type FeaturedProduct struct {
 	ID         int32       `json:"id"`
 	FeaturedID *int32      `json:"featured_id"`
@@ -577,6 +615,14 @@ type Order struct {
 	ShippingNotes         *string                 `json:"shipping_notes"`
 }
 
+type OrderDiscount struct {
+	ID             uuid.UUID          `json:"id"`
+	OrderID        uuid.UUID          `json:"order_id"`
+	DiscountID     uuid.UUID          `json:"discount_id"`
+	DiscountAmount pgtype.Numeric     `json:"discount_amount"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+}
+
 type OrderItem struct {
 	ID                   uuid.UUID               `json:"id"`
 	OrderID              uuid.UUID               `json:"order_id"`
@@ -589,6 +635,7 @@ type OrderItem struct {
 	AttributesSnapshot   []AttributeDataSnapshot `json:"attributes_snapshot"`
 	CreatedAt            time.Time               `json:"created_at"`
 	UpdatedAt            time.Time               `json:"updated_at"`
+	DiscountedPrice      pgtype.Numeric          `json:"discounted_price"`
 }
 
 type Payment struct {

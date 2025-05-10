@@ -37,7 +37,7 @@ func (p *RedisTaskProcessor) ProcessSendOrderCreatedEmail(ctx context.Context, t
 		return err
 	}
 
-	payment, err := p.repo.GetPaymentByOrderID(ctx, payload.OrderID)
+	payment, err := p.repo.GetPaymentByID(ctx, payload.PaymentID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return fmt.Errorf("could not find payment transaction: %w", asynq.SkipRetry)
@@ -45,15 +45,12 @@ func (p *RedisTaskProcessor) ProcessSendOrderCreatedEmail(ctx context.Context, t
 
 		return fmt.Errorf("could not get payment transaction: %w", asynq.SkipRetry)
 	}
-	if *payment.GatewayPaymentIntentID != payload.PaymentID {
-		return fmt.Errorf("payment id mismatch: %w", asynq.SkipRetry)
-	}
 
-	order, err := p.repo.GetOrder(ctx, payload.OrderID)
+	order, err := p.repo.GetOrder(ctx, payment.OrderID)
 	if err != nil {
 		return fmt.Errorf("could not get order details: %w", asynq.SkipRetry)
 	}
-	orderItems, err := p.repo.GetOrderProducts(ctx, payload.OrderID)
+	orderItems, err := p.repo.GetOrderProducts(ctx, payment.OrderID)
 	items := make([]OrderCreatedItems, 0)
 
 	for _, item := range orderItems {
@@ -89,7 +86,7 @@ func (p *RedisTaskProcessor) ProcessSendOrderCreatedEmail(ctx context.Context, t
 		log.Err(err).Msg("could not parse html template")
 	}
 
-	err = p.mailer.Send("Verify Email", body, []string{user.Email}, nil, nil, nil)
+	err = p.mailer.Send("Order Confirmation - #"+order.ID.String(), body, []string{user.Email}, nil, nil, nil)
 	if err != nil {
 		return fmt.Errorf("could not send email: %w", err)
 	}

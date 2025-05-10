@@ -1,7 +1,22 @@
 package cache
 
+import (
+	"context"
+	"time"
+)
+
 type Cache interface {
-	Set(key string, value interface{}) error
-	Get(key string) (string, error)
-	Delete(key string) error
+	Set(c context.Context, key string, value interface{}, expireIn *time.Duration) error
+	Get(c context.Context, key string, value interface{}) error
+	Delete(c context.Context, key string) error
 }
+
+var DEFAULT_EXPIRATION time.Duration = 5 * time.Minute
+
+const (
+	USER_KEY_PREFIX             = "user:"
+	PRODUCT_KEY_PREFIX          = "product:"
+	ORDER_KEY_PREFIX            = "order:"
+	ORDER_ITEM_KEY_PREFIX       = "order_item:"
+	PRODUCT_CATEGORY_KEY_PREFIX = "product_category:"
+)

@@ -7,32 +7,38 @@
     <title>Order Confirmation</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f9f9f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
             margin: 0;
             padding: 0;
+            color: #333333;
         }
 
         .email-container {
             max-width: 600px;
             margin: 20px auto;
             background-color: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
             overflow: hidden;
         }
 
         .header {
-            background-color: #ff6f61;
+            background-color: #4a6cf7;
             color: #ffffff;
             text-align: center;
-            padding: 20px;
-            font-size: 24px;
+            padding: 25px 20px;
+            font-size: 26px;
+            font-weight: 600;
+        }
+        
+        .logo {
+            margin-bottom: 10px;
         }
 
         .content {
-            padding: 20px;
-            color: #333333;
+            padding: 30px 25px;
+            color: #444444;
             line-height: 1.6;
         }
 
@@ -78,21 +84,32 @@
             Order Confirmation
         </div>
         <div class="content">
-            <p>Hi {{.FullName}},</p>
-            <p>Thank you for your order! We're excited to let you know that your order has been successfully placed.</p>
-            <p><strong>Order ID:</strong> %s</p>
+            <p>Hi <strong>{{.FullName}}</strong>,</p>
+            <p>Thank you for your order! We're excited to let you know that your order has been successfully placed and is now being processed.</p>
+            <p><strong>Order ID:</strong> #{{.OrderID}}</p>
             <div class="order-details">
-                <h3>Your Order Details</h3>
+                <h3>Order Summary</h3>
                 <ul>
                     {{range .Items}}
-                        <li>{{.Name}} - {{.Qty}} x ${{.Price}}</li>
+                        <li>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span><strong>{{.Name}}</strong> (Qty: {{.Qty}})</span>
+                                <span>${{printf "%.2f" .Price}}</span>
+                            </div>
+                        </li>
                     {{end}}
                 </ul>
-                <p><strong>Total Price:</strong> ${{.Total}}</p>
-                <p><strong>Estimated Delivery:</strong> {{.EstimatedDelivery}}</p>
+                <p style="text-align: right; font-weight: bold; font-size: 18px; margin-top: 15px; border-top: 2px solid #eaeaea; padding-top: 10px;">
+                    Total: ${{printf "%.2f" .Total}}
+                </p>
+                <p><strong>Estimated Delivery:</strong> 3-5 business days</p>
             </div>
-            <p>If you have any questions about your order, feel free to contact us.</p>
+            <div style="margin: 30px 0; padding: 15px; background-color: #f0f7ff; border-left: 4px solid #4a6cf7; border-radius: 4px;">
+                <p style="margin: 0;"><strong>Need help with your order?</strong></p>
+                <p style="margin: 5px 0 0;">Feel free to contact our customer support team at <a href="mailto:support@eshop.com" style="color: #4a6cf7;">support@eshop.com</a> or call us at (123) 456-7890.</p>
+            </div>
             <p>Thank you for shopping with us!</p>
+            <p>The E-Shop Team</p>
         </div>
         <div class="footer">
             &copy; 2025 E-Shop Inc. All rights reserved.

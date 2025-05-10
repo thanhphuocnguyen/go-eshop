@@ -11,6 +11,7 @@ import (
 	repository "github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/cache"
 )
 
 // ------------------------------ Structs ------------------------------
@@ -150,6 +151,12 @@ func (sv *Server) getUserHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", errors.New("authorization payload is not provided")))
 		return
 	}
+	var userResp UserResponse
+	err := sv.cacheService.Get(c, cache.USER_KEY_PREFIX+authPayload.UserID.String(), &userResp)
+	if err == nil {
+		c.JSON(http.StatusOK, createSuccessResponse(c, userResp, "", nil, nil))
+		return
+	}
 
 	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
 	if err != nil {
@@ -171,8 +178,9 @@ func (sv *Server) getUserHandler(c *gin.Context) {
 	for _, address := range userAddress {
 		addressResp = append(addressResp, mapAddressToAddressResponse(address))
 	}
-	userResp := mapToUserResponse(user)
+	userResp = mapToUserResponse(user)
 	userResp.Addresses = addressResp
+	sv.cacheService.Set(c, cache.USER_KEY_PREFIX+authPayload.UserID.String(), userResp, &cache.DEFAULT_EXPIRATION)
 
 	c.JSON(http.StatusOK, createSuccessResponse(c, userResp, "", nil, nil))
 }

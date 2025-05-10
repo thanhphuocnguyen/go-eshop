@@ -130,7 +130,7 @@ INSERT INTO
     order_items (id, order_id, variant_id, quantity, price_per_unit_snapshot, variant_sku_snapshot, product_name_snapshot, line_total_snapshot, attributes_snapshot)
 VALUES
     ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING id, order_id, variant_id, quantity, price_per_unit_snapshot, line_total_snapshot, product_name_snapshot, variant_sku_snapshot, attributes_snapshot, created_at, updated_at
+RETURNING id, order_id, variant_id, quantity, price_per_unit_snapshot, line_total_snapshot, product_name_snapshot, variant_sku_snapshot, attributes_snapshot, created_at, updated_at, discounted_price
 `
 
 type CreateOrderItemParams struct {
@@ -170,6 +170,7 @@ func (q *Queries) CreateOrderItem(ctx context.Context, arg CreateOrderItemParams
 		&i.AttributesSnapshot,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DiscountedPrice,
 	)
 	return i, err
 }
@@ -271,7 +272,7 @@ func (q *Queries) GetOrderItemByID(ctx context.Context, id uuid.UUID) (GetOrderI
 
 const getOrderProducts = `-- name: GetOrderProducts :many
 SELECT
-    oi.id, oi.order_id, oi.variant_id, oi.quantity, oi.price_per_unit_snapshot, oi.line_total_snapshot, oi.product_name_snapshot, oi.variant_sku_snapshot, oi.attributes_snapshot, oi.created_at, oi.updated_at,
+    oi.id, oi.order_id, oi.variant_id, oi.quantity, oi.price_per_unit_snapshot, oi.line_total_snapshot, oi.product_name_snapshot, oi.variant_sku_snapshot, oi.attributes_snapshot, oi.created_at, oi.updated_at, oi.discounted_price,
     p.name as product_name,
     i.url as image_url
 FROM
@@ -298,6 +299,7 @@ type GetOrderProductsRow struct {
 	AttributesSnapshot   []AttributeDataSnapshot `json:"attributes_snapshot"`
 	CreatedAt            time.Time               `json:"created_at"`
 	UpdatedAt            time.Time               `json:"updated_at"`
+	DiscountedPrice      pgtype.Numeric          `json:"discounted_price"`
 	ProductName          string                  `json:"product_name"`
 	ImageUrl             *string                 `json:"image_url"`
 }
@@ -323,6 +325,7 @@ func (q *Queries) GetOrderProducts(ctx context.Context, orderID uuid.UUID) ([]Ge
 			&i.AttributesSnapshot,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.DiscountedPrice,
 			&i.ProductName,
 			&i.ImageUrl,
 		); err != nil {
@@ -452,7 +455,7 @@ func (q *Queries) GetOrders(ctx context.Context, arg GetOrdersParams) ([]GetOrde
 
 const listOrderItems = `-- name: ListOrderItems :many
 SELECT
-    id, order_id, variant_id, quantity, price_per_unit_snapshot, line_total_snapshot, product_name_snapshot, variant_sku_snapshot, attributes_snapshot, created_at, updated_at
+    id, order_id, variant_id, quantity, price_per_unit_snapshot, line_total_snapshot, product_name_snapshot, variant_sku_snapshot, attributes_snapshot, created_at, updated_at, discounted_price
 FROM
     order_items
 WHERE
@@ -490,6 +493,7 @@ func (q *Queries) ListOrderItems(ctx context.Context, arg ListOrderItemsParams) 
 			&i.AttributesSnapshot,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.DiscountedPrice,
 		); err != nil {
 			return nil, err
 		}

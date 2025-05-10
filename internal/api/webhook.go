@@ -84,12 +84,11 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 			}
 			server.taskDistributor.SendOrderCreatedEmailTask(c,
 				&worker.PayloadSendOrderCreatedEmailTask{
-					PaymentID: payment.ID.String(),
-					OrderID:   payment.OrderID,
+					PaymentID: payment.ID,
 				},
-				asynq.MaxRetry(3),
-				asynq.Queue("email"),
-				asynq.ProcessIn(time.Second*5))
+				asynq.MaxRetry(10),
+				asynq.ProcessIn(time.Second*3),
+				asynq.Queue(worker.QueueDefault))
 		case stripe.EventTypePaymentIntentCanceled:
 			updateTransactionStatus.Status = repository.NullPaymentStatus{
 				PaymentStatus: repository.PaymentStatusCancelled,

@@ -208,7 +208,6 @@ func (sv *Server) uploadProductImagesHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, createSuccessResponse(c, images, "", nil, nil))
-
 }
 
 // @Summary Get list of product image by ID

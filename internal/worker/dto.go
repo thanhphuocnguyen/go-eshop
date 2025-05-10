@@ -14,8 +14,7 @@ type VerifyEmailData struct {
 }
 
 type PayloadSendOrderCreatedEmailTask struct {
-	PaymentID string    `json:"payment_id"`
-	OrderID   uuid.UUID `json:"order_id"`
+	PaymentID uuid.UUID `json:"payment_id"`
 }
 
 type OrderCreatedItems struct {

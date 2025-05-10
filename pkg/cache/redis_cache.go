@@ -1,48 +1,54 @@
 package cache
 
 import (
-	"github.com/eko/gocache/lib/v4/cache"
-	"github.com/eko/gocache/lib/v4/marshaler"
-	"github.com/eko/gocache/lib/v4/metrics"
-	redis_store "github.com/eko/gocache/store/redis/v4"
-	"github.com/redis/go-redis/v9"
+	"context"
+	"time"
+
+	"github.com/go-redis/cache/v8"
+	"github.com/go-redis/redis/v8"
 	"github.com/thanhphuocnguyen/go-eshop/config"
 )
 
 type RedisCache struct {
-	marshal *marshaler.Marshaler
+	Storage *cache.Cache
 }
 
 // Delete implements Cache.
-func (r *RedisCache) Delete(key string) error {
-	panic("unimplemented")
+func (r *RedisCache) Delete(c context.Context, key string) error {
+	return r.Storage.Delete(c, key)
 }
 
 // Get implements Cache.
-func (r *RedisCache) Get(key string) (string, error) {
-	panic("unimplemented")
+func (r *RedisCache) Get(c context.Context, key string, value interface{}) error {
+	return r.Storage.Get(c, key, value)
 }
 
 // Set implements Cache.
-func (r *RedisCache) Set(key string, value interface{}) error {
-	panic("unimplemented")
+func (r *RedisCache) Set(c context.Context, key string, value interface{}, expireIn *time.Duration) error {
+	if expireIn == nil {
+		expireIn = &DEFAULT_EXPIRATION
+	}
+	return r.Storage.Set(&cache.Item{
+		Ctx:   c,
+		Key:   key,
+		Value: value,
+		TTL:   *expireIn,
+	})
 }
 
 func NewRedisCache(cfg config.Config) Cache {
-	redisStore := redis_store.NewRedis(redis.NewClient(&redis.Options{
-		Addr: cfg.RedisUrl,
-	}))
-	promMetrics := metrics.NewPrometheus("my-test-app")
+	ring := redis.NewRing(&redis.RingOptions{
+		Addrs: map[string]string{
+			"api_cache_server": cfg.RedisUrl,
+		},
+	})
 
-	// Initialize metric cache
-	cacheManager := cache.NewMetric[any](
-		promMetrics,
-		cache.New[any](redisStore),
-	)
-
-	marshal := marshaler.New(cacheManager)
+	storage := cache.New(&cache.Options{
+		Redis:      ring,
+		LocalCache: cache.NewTinyLFU(1000, time.Minute),
+	})
 
 	return &RedisCache{
-		marshal,
+		storage,
 	}
 }

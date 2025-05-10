@@ -156,7 +156,7 @@ export const CategoryEditForm: React.FC<CategoryEditFormProps> = ({
         <div className='flex-2'>
           <Label
             title='Upload image'
-            className='relative h-full shadow-md shadow-lime-500 text-sm/6 font-medium text-gray-600'
+            className='relative h-full w-40 shadow-md shadow-lime-500 text-sm/6 font-medium text-gray-600'
           >
             <Image
               className='rounded-sm object-contain h-auto w-auto'

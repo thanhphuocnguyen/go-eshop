@@ -39,8 +39,9 @@ func NewRedisTaskProcessor(
 	server := asynq.NewServer(redisOtp, asynq.Config{
 		Concurrency: 10,
 		Queues: map[string]int{
-			QueueCritical: 4,
-			QueueDefault:  5,
+			QueueCritical: 10,
+			QueueDefault:  20,
+			QueueLow:      50,
 		},
 		Logger: logger,
 		HealthCheckFunc: func(err error) {

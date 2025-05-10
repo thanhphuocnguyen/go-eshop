@@ -15,6 +15,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/cache"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/upload"
 )
@@ -29,17 +30,19 @@ import (
 // @host      localhost:4000
 type Server struct {
 	config          config.Config
+	router          *gin.Engine
 	repo            repository.Repository
-	taskDistributor worker.TaskDistributor
 	tokenGenerator  auth.TokenGenerator
 	uploadService   upload.UploadService
-	router          *gin.Engine
 	paymentCtx      *payment.PaymentContext
+	cacheService    cache.Cache
+	taskDistributor worker.TaskDistributor
 }
 
 func NewAPI(
 	cfg config.Config,
 	repo repository.Repository,
+	cacheService cache.Cache,
 	taskDistributor worker.TaskDistributor,
 	uploadService upload.UploadService,
 	paymentCtx *payment.PaymentContext,
@@ -54,6 +57,7 @@ func NewAPI(
 		config:          cfg,
 		taskDistributor: taskDistributor,
 		uploadService:   uploadService,
+		cacheService:    cacheService,
 		paymentCtx:      paymentCtx,
 	}
 	server.initializeRouter()

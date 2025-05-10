@@ -21,6 +21,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/api"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/cache"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/mailer"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/upload"
@@ -112,8 +113,8 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 			mailer := mailer.NewEmailSender(cfg.SmtpUsername, cfg.SmtpPassword, cfg.Env)
 			paymentCtx := &payment.PaymentContext{}
 			taskProcessor := worker.NewRedisTaskProcessor(redisCfg, pgRepo, mailer, cfg)
-
-			api, err := api.NewAPI(cfg, pgRepo, taskDistributor, uploadService, paymentCtx)
+			cacheService := cache.NewRedisCache(cfg)
+			api, err := api.NewAPI(cfg, pgRepo, cacheService, taskDistributor, uploadService, paymentCtx)
 			if err != nil {
 				return err
 			}
