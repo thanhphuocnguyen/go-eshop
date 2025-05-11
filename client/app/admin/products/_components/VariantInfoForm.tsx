@@ -15,7 +15,7 @@ import {
 import { useAttributes } from '../../_lib/hooks';
 
 export const VariantInfoForm: React.FC<{
-  selectedAttributes: number[];
+  selectedAttributes: string[];
 }> = ({ selectedAttributes }) => {
   const { control, getValues } = useFormContext<ProductModelForm>();
   const { attributes } = useAttributes();
@@ -88,7 +88,7 @@ export const VariantInfoForm: React.FC<{
                                 id: attribute.id,
                                 name: attribute.name,
                                 value_object: {
-                                  id: -1,
+                                  id: undefined,
                                 },
                               };
                             })

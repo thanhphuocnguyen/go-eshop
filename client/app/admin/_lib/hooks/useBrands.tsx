@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import useSWR from 'swr';
 
 export function useBrands() {
-  const { data, error } = useSWR(
+  const { data, error, mutate } = useSWR(
     ADMIN_API_PATHS.BRANDS,
     (url) =>
       apiFetch<GenericResponse<GeneralCategoryModel[]>>(url, {
@@ -28,5 +28,6 @@ export function useBrands() {
     brands: data?.data,
     isLoading: !error && !data,
     isError: error,
+    mutate,
   };
 }

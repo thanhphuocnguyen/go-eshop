@@ -17,11 +17,11 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({ variants }) => {
   );
 
   const [selectedAttributeValues, setSelectedAttributeValues] = useState<
-    Record<number, number>
+    Record<string, string>
   >({});
 
   // This function checks if selecting a specific attribute value would lead to a valid variant
-  const isValueAvailable = (attributeId: number, valueId: number): boolean => {
+  const isValueAvailable = (attributeId: string, valueId: string): boolean => {
     // Create a potential selection by keeping existing selections and adding/updating this one
     const potentialSelection = {
       ...selectedAttributeValues,
@@ -29,9 +29,9 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({ variants }) => {
     };
 
     // Get all other attributes that have been selected
-    const selectedAttributes = Object.keys(potentialSelection)
-      .map(Number)
-      .filter((id) => id !== attributeId); // Exclude the current attribute
+    const selectedAttributes = Object.keys(potentialSelection).filter(
+      (id) => id !== attributeId
+    ); // Exclude the current attribute
 
     // Check if there's at least one variant that would be valid with this selection
     return variants.some((variant) => {

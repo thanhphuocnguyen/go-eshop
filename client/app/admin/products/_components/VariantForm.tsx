@@ -11,7 +11,7 @@ import { useAttributes } from '../../_lib/hooks/useAttributes';
 interface AttributeFormProps {
   index: number;
   item: VariantModelForm;
-  selectedAttributes: number[];
+  selectedAttributes: string[];
   onRemove: (index: number) => void;
 }
 export const VariantForm: React.FC<AttributeFormProps> = ({

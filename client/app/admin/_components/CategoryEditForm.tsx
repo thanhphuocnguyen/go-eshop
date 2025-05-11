@@ -8,9 +8,9 @@ import {
   Legend,
 } from '@headlessui/react';
 import clsx from 'clsx';
-import Image from 'next/image';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { z } from 'zod';
+import ImageUploader from '@/components/ImageUploader';
 
 interface CategoryEditFormProps {
   data?: GeneralCategoryModel;
@@ -30,7 +30,6 @@ export const CategoryEditForm: React.FC<CategoryEditFormProps> = ({
   data,
   handleSave,
 }) => {
-  const [base64, setBase64] = React.useState<string | null>(null);
   const [file, setFile] = React.useState<File | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [state, setState] = React.useState<{
@@ -57,16 +56,6 @@ export const CategoryEditForm: React.FC<CategoryEditFormProps> = ({
     await handleSave(formData);
     setIsLoading(false);
   };
-
-  useEffect(() => {
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setBase64(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  }, [file]);
 
   return (
     <Fieldset
@@ -154,33 +143,19 @@ export const CategoryEditForm: React.FC<CategoryEditFormProps> = ({
         </div>
 
         <div className='flex-2'>
-          <Label
-            title='Upload image'
-            className='relative h-full w-40 shadow-md shadow-lime-500 text-sm/6 font-medium text-gray-600'
-          >
-            <Image
-              className='rounded-sm object-contain h-auto w-auto'
-              width={150}
-              height={150}
-              alt='Category Image'
-              priority
-              src={
-                base64 || data?.image_url || '/images/product-placeholder.webp'
-              }
-            />
-            <Input
-              type='file'
-              className={
-                'absolute cursor-pointer inset-0 w-full h-full opacity-0'
-              }
-              id='image'
-              name='image'
-              accept='image/*'
-              onChange={(e) => {
-                setFile(e.target?.files?.[0] ?? null);
-              }}
-            />
-          </Label>
+          <ImageUploader
+            defaultImage={data?.image_url}
+            name='image'
+            label='Upload image'
+            onChange={(newFile) => {
+              setFile(newFile);
+            }}
+            className='w-40 h-auto'
+            width={150}
+            height={150}
+            maxFileSizeMB={2.5}
+            aspectRatio={1}
+          />
         </div>
       </div>
     </Fieldset>

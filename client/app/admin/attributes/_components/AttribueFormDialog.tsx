@@ -138,14 +138,14 @@ export const AddNewDialog: React.FC<AddNewDialogProps> = ({
                     {newValues.map((value) => (
                       <span
                         className='rounded-2xl flex gap-2 items-center text-sm text-white px-3 py-2 bg-tertiary'
-                        key={value.value}
+                        key={value.name}
                       >
-                        {value.value}
+                        {value.name}
                         <button
                           title='Remove'
                           onClick={() => {
                             setNewValues(
-                              newValues.filter((e) => e.value !== value.value)
+                              newValues.filter((e) => e.name !== value.name)
                             );
                           }}
                           className='text-button-danger cursor-pointer'
@@ -165,7 +165,7 @@ export const AddNewDialog: React.FC<AddNewDialogProps> = ({
                             e.preventDefault();
                             const value = e.currentTarget.value;
                             if (value) {
-                              setNewValues([...newValues, { value: value }]);
+                              setNewValues([...newValues, { name: value }]);
                               e.currentTarget.value = '';
                             }
                           }

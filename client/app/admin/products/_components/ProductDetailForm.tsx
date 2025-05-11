@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import React, { useEffect, useState } from 'react';
-import { Form, FormProvider, useForm, useWatch } from 'react-hook-form';
+import { FormProvider, useForm, useWatch } from 'react-hook-form';
 import { Button, Fieldset, Legend } from '@headlessui/react';
 import { redirect, useRouter } from 'next/navigation';
 import clsx from 'clsx';

@@ -69,9 +69,12 @@ export const AttributeFormSchema = BaseAttributeFormSchema.extend({
 export const ProductVariantAttributeFormSchema = BaseAttributeFormSchema.extend(
   {
     value_object: BaseAttributeValueFormSchema.extend({
-      id: z.string().uuid({
-        message: 'Value is required',
-      }),
+      id: z
+        .string()
+        .uuid({
+          message: 'Value is required',
+        })
+        .optional(),
     }),
   }
 );
@@ -99,7 +102,7 @@ export const ProductFormSchema = z.object({
     name: z.string().min(3).max(100),
     description: z.string().min(10).max(5000),
     short_description: z.string().optional(),
-    attributes: z.number().array(),
+    attributes: z.string().uuid().array(),
     price: z.coerce.number().gt(0),
     sku: z.string().nonempty(),
     slug: z.string().nonempty(),
@@ -109,7 +112,7 @@ export const ProductFormSchema = z.object({
     collection: BaseOptionSchema.nullish(),
     images: z
       .object({
-        id: z.number().optional(),
+        id: z.string().uuid().optional(),
         url: z.string(),
         role: z.string().nullish(),
         assignments: z.string().array(),
@@ -176,7 +179,7 @@ export type AssignmentImageModel = {
 };
 
 export type ProductImageModel = {
-  id: number;
+  id: string;
   external_id: string;
   url: string;
   role: string;
@@ -188,7 +191,7 @@ export type ProductDetailModel = {
   name: string;
   description: string;
   short_description: string;
-  attributes: number[];
+  attributes: string[];
   slug: string;
   is_active: boolean;
   price: number;
