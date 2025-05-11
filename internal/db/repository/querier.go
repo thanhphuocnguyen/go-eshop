@@ -8,18 +8,13 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
 	AddBulkAttributes(ctx context.Context, name []string) (int64, error)
 	AddBulkProducts(ctx context.Context, arg []AddBulkProductsParams) (int64, error)
-	AddDiscountToCategory(ctx context.Context, arg AddDiscountToCategoryParams) (DiscountCategory, error)
-	AddDiscountToProduct(ctx context.Context, arg AddDiscountToProductParams) (DiscountProduct, error)
-	AddDiscountToUser(ctx context.Context, arg AddDiscountToUserParams) (DiscountUser, error)
 	ArchiveProduct(ctx context.Context, arg ArchiveProductParams) error
 	ArchiveProductVariant(ctx context.Context, arg ArchiveProductVariantParams) error
-	AssociateDiscountWithOrder(ctx context.Context, arg AssociateDiscountWithOrderParams) (OrderDiscount, error)
 	CheckoutCart(ctx context.Context, arg CheckoutCartParams) error
 	ClearCart(ctx context.Context, id uuid.UUID) error
 	CountAddresses(ctx context.Context) (int64, error)
@@ -46,7 +41,6 @@ type Querier interface {
 	CreateCartItem(ctx context.Context, arg CreateCartItemParams) (CartItem, error)
 	CreateCategory(ctx context.Context, arg CreateCategoryParams) (Category, error)
 	CreateCollection(ctx context.Context, arg CreateCollectionParams) (Collection, error)
-	CreateDiscount(ctx context.Context, arg CreateDiscountParams) (Discount, error)
 	CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error)
 	CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (OrderItem, error)
 	CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payment, error)
@@ -61,8 +55,8 @@ type Querier interface {
 	// Verification Token Queries
 	CreateVerifyEmail(ctx context.Context, arg CreateVerifyEmailParams) (VerifyEmail, error)
 	DeleteAddress(ctx context.Context, arg DeleteAddressParams) error
-	DeleteAttribute(ctx context.Context, id int32) error
-	DeleteAttributeValue(ctx context.Context, id int32) error
+	DeleteAttribute(ctx context.Context, id uuid.UUID) error
+	DeleteAttributeValue(ctx context.Context, id uuid.UUID) error
 	DeleteBrand(ctx context.Context, id uuid.UUID) error
 	DeleteCategory(ctx context.Context, id uuid.UUID) error
 	DeleteCollection(ctx context.Context, id uuid.UUID) error
@@ -71,27 +65,24 @@ type Querier interface {
 	DeletePayment(ctx context.Context, id uuid.UUID) error
 	DeletePaymentTransaction(ctx context.Context, id uuid.UUID) error
 	DeleteProduct(ctx context.Context, id uuid.UUID) error
-	DeleteProductImage(ctx context.Context, id int32) error
+	DeleteProductImage(ctx context.Context, id uuid.UUID) error
 	DeleteProductImageAssignment(ctx context.Context, arg DeleteProductImageAssignmentParams) error
 	DeleteProductRating(ctx context.Context, id uuid.UUID) error
 	DeleteProductVariant(ctx context.Context, id uuid.UUID) error
 	DeleteProductVariantAttributes(ctx context.Context, variantID uuid.UUID) error
 	DeleteRatingReplies(ctx context.Context, id uuid.UUID) error
-	DeleteRatingVotes(ctx context.Context, id int32) error
+	DeleteRatingVotes(ctx context.Context, id uuid.UUID) error
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	GetAddress(ctx context.Context, arg GetAddressParams) (UserAddress, error)
 	GetAddresses(ctx context.Context, userID uuid.UUID) ([]UserAddress, error)
-	GetAttrValuesByAttrIDs(ctx context.Context, ids []int32) ([]AttributeValue, error)
-	GetAttributeByID(ctx context.Context, id int32) ([]GetAttributeByIDRow, error)
-	GetAttributeByIDs(ctx context.Context, ids []int32) ([]Attribute, error)
+	GetAttrValuesByAttrIDs(ctx context.Context, ids []uuid.UUID) ([]AttributeValue, error)
+	GetAttributeByID(ctx context.Context, id uuid.UUID) ([]GetAttributeByIDRow, error)
+	GetAttributeByIDs(ctx context.Context, ids []uuid.UUID) ([]Attribute, error)
 	GetAttributeByName(ctx context.Context, name string) (Attribute, error)
-	GetAttributeValueByID(ctx context.Context, id int32) (AttributeValue, error)
-	GetAttributeValues(ctx context.Context, attributeID int32) ([]AttributeValue, error)
-	GetAttributeValuesByIDs(ctx context.Context, ids []int32) ([]AttributeValue, error)
-	GetAttributes(ctx context.Context, ids []int32) ([]GetAttributesRow, error)
-	GetAvailableDiscountsForCategory(ctx context.Context, arg GetAvailableDiscountsForCategoryParams) ([]Discount, error)
-	GetAvailableDiscountsForProduct(ctx context.Context, arg GetAvailableDiscountsForProductParams) ([]Discount, error)
-	GetAvailableDiscountsForUser(ctx context.Context, arg GetAvailableDiscountsForUserParams) ([]Discount, error)
+	GetAttributeValueByID(ctx context.Context, id uuid.UUID) (AttributeValue, error)
+	GetAttributeValues(ctx context.Context, attributeID uuid.UUID) ([]AttributeValue, error)
+	GetAttributeValuesByIDs(ctx context.Context, ids []uuid.UUID) ([]AttributeValue, error)
+	GetAttributes(ctx context.Context, ids []uuid.UUID) ([]GetAttributesRow, error)
 	GetBrandByID(ctx context.Context, id uuid.UUID) (Brand, error)
 	GetBrandBySlug(ctx context.Context, slug string) (Brand, error)
 	GetBrands(ctx context.Context, arg GetBrandsParams) ([]Brand, error)
@@ -102,7 +93,6 @@ type Querier interface {
 	GetCartItems(ctx context.Context, cartID uuid.UUID) ([]GetCartItemsRow, error)
 	GetCartItemsForOrder(ctx context.Context, cartID uuid.UUID) ([]GetCartItemsForOrderRow, error)
 	GetCategories(ctx context.Context, arg GetCategoriesParams) ([]Category, error)
-	GetCategoriesForDiscount(ctx context.Context, arg GetCategoriesForDiscountParams) ([]Category, error)
 	GetCategoryByID(ctx context.Context, id uuid.UUID) (Category, error)
 	GetCategoryBySlug(ctx context.Context, slug string) (Category, error)
 	GetCategoryProductsByID(ctx context.Context, id uuid.UUID) ([]GetCategoryProductsByIDRow, error)
@@ -112,10 +102,6 @@ type Querier interface {
 	GetCollections(ctx context.Context, arg GetCollectionsParams) ([]Collection, error)
 	GetCollectionsByIDs(ctx context.Context, arg GetCollectionsByIDsParams) ([]GetCollectionsByIDsRow, error)
 	GetDefaultAddress(ctx context.Context, userID uuid.UUID) (UserAddress, error)
-	GetDiscountAmount(ctx context.Context, arg GetDiscountAmountParams) (pgtype.Numeric, error)
-	GetDiscountByCode(ctx context.Context, code string) (Discount, error)
-	GetDiscountByID(ctx context.Context, id uuid.UUID) (Discount, error)
-	GetDiscountsForOrder(ctx context.Context, orderID uuid.UUID) ([]Discount, error)
 	GetImageFromExternalID(ctx context.Context, externalID string) (GetImageFromExternalIDRow, error)
 	GetImageFromID(ctx context.Context, arg GetImageFromIDParams) (GetImageFromIDRow, error)
 	GetImagesByEntityID(ctx context.Context, entityID uuid.UUID) ([]GetImagesByEntityIDRow, error)
@@ -142,11 +128,10 @@ type Querier interface {
 	GetProductVariantByID(ctx context.Context, id uuid.UUID) (ProductVariant, error)
 	GetProductVariants(ctx context.Context, arg GetProductVariantsParams) ([]GetProductVariantsRow, error)
 	GetProducts(ctx context.Context, arg GetProductsParams) ([]GetProductsRow, error)
-	GetProductsForDiscount(ctx context.Context, arg GetProductsForDiscountParams) ([]Product, error)
 	GetRatingReplies(ctx context.Context, id uuid.UUID) (RatingReply, error)
 	GetRatingRepliesByRatingID(ctx context.Context, ratingID uuid.UUID) ([]GetRatingRepliesByRatingIDRow, error)
 	GetRatingRepliesByUserID(ctx context.Context, replyBy uuid.UUID) ([]GetRatingRepliesByUserIDRow, error)
-	GetRatingVotes(ctx context.Context, id int32) (RatingVote, error)
+	GetRatingVotes(ctx context.Context, id uuid.UUID) (RatingVote, error)
 	GetRatingVotesByRatingID(ctx context.Context, ratingID uuid.UUID) ([]RatingVote, error)
 	GetRatingVotesByUserID(ctx context.Context, userID uuid.UUID) ([]RatingVote, error)
 	GetRatingVotesCount(ctx context.Context, ratingID uuid.UUID) (int64, error)
@@ -156,10 +141,8 @@ type Querier interface {
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
-	GetUsersForDiscount(ctx context.Context, arg GetUsersForDiscountParams) ([]User, error)
-	GetVerifyEmailByID(ctx context.Context, id int32) (VerifyEmail, error)
+	GetVerifyEmailByID(ctx context.Context, id uuid.UUID) (VerifyEmail, error)
 	GetVerifyEmailByVerifyCode(ctx context.Context, verifyCode string) (VerifyEmail, error)
-	IncrementDiscountUsage(ctx context.Context, id uuid.UUID) (Discount, error)
 	InsertBulkImageAssignments(ctx context.Context, arg []InsertBulkImageAssignmentsParams) (int64, error)
 	InsertBulkImages(ctx context.Context, arg []InsertBulkImagesParams) (int64, error)
 	InsertImage(ctx context.Context, arg InsertImageParams) (Image, error)
@@ -167,13 +150,8 @@ type Querier interface {
 	InsertProductRating(ctx context.Context, arg InsertProductRatingParams) (ProductRating, error)
 	InsertRatingReply(ctx context.Context, arg InsertRatingReplyParams) (RatingReply, error)
 	InsertRatingVotes(ctx context.Context, arg InsertRatingVotesParams) (RatingVote, error)
-	ListActiveDiscounts(ctx context.Context, arg ListActiveDiscountsParams) ([]Discount, error)
-	ListAllDiscounts(ctx context.Context, arg ListAllDiscountsParams) ([]Discount, error)
 	ListOrderItems(ctx context.Context, arg ListOrderItemsParams) ([]OrderItem, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
-	RemoveDiscountFromCategory(ctx context.Context, arg RemoveDiscountFromCategoryParams) error
-	RemoveDiscountFromProduct(ctx context.Context, arg RemoveDiscountFromProductParams) error
-	RemoveDiscountFromUser(ctx context.Context, arg RemoveDiscountFromUserParams) error
 	RemoveProductFromCart(ctx context.Context, arg RemoveProductFromCartParams) error
 	ResetPrimaryAddress(ctx context.Context, userID uuid.UUID) error
 	SeedAddresses(ctx context.Context, arg []SeedAddressesParams) (int64, error)
@@ -181,7 +159,6 @@ type Querier interface {
 	SeedCollections(ctx context.Context, arg []SeedCollectionsParams) (int64, error)
 	SeedUsers(ctx context.Context, arg []SeedUsersParams) (int64, error)
 	SetPrimaryAddress(ctx context.Context, arg SetPrimaryAddressParams) error
-	SoftDeleteDiscount(ctx context.Context, id uuid.UUID) error
 	UpdateAddress(ctx context.Context, arg UpdateAddressParams) (UserAddress, error)
 	UpdateAttribute(ctx context.Context, arg UpdateAttributeParams) (Attribute, error)
 	UpdateAttributeValue(ctx context.Context, arg UpdateAttributeValueParams) (AttributeValue, error)
@@ -190,9 +167,7 @@ type Querier interface {
 	UpdateCartTimestamp(ctx context.Context, id uuid.UUID) error
 	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error)
 	UpdateCollectionWith(ctx context.Context, arg UpdateCollectionWithParams) (Collection, error)
-	UpdateDiscount(ctx context.Context, arg UpdateDiscountParams) (Discount, error)
 	UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order, error)
-	UpdateOrderTotal(ctx context.Context, arg UpdateOrderTotalParams) (Order, error)
 	UpdatePayment(ctx context.Context, arg UpdatePaymentParams) error
 	UpdatePaymentTransaction(ctx context.Context, arg UpdatePaymentTransactionParams) error
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)

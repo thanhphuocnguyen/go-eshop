@@ -8,7 +8,7 @@ import (
 )
 
 type SetPrimaryAddressTxArgs struct {
-	NewPrimaryID int64     `json:"new_primary_id"`
+	NewPrimaryID uuid.UUID `json:"new_primary_id"`
 	UserID       uuid.UUID `json:"user_id"`
 }
 

@@ -158,7 +158,7 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 
 		attributeGroup := admin.Group("attributes")
 		{
-			attributeGroup.POST("", sv.createAttribute)
+			attributeGroup.POST("", sv.createAttributeHandler)
 			attributeGroup.GET("", sv.getAttributesHandler)
 			attributeGroup.GET(":id", sv.getAttributeByIDHandler)
 			attributeGroup.PUT(":id", sv.updateAttributeHandler)
@@ -178,7 +178,7 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 			categories.GET("", sv.getAdminCategoriesHandler)
 			categories.GET(":id", sv.getCategoryByID)
 			categories.POST("", sv.addCategoryHandler)
-			categories.PUT(":id", sv.updateCategory)
+			categories.PUT(":id", sv.updateCategoryHandler)
 			categories.DELETE(":id", sv.deleteCategory)
 		}
 

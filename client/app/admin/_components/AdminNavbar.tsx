@@ -1,5 +1,4 @@
 'use client';
-
 import React from 'react';
 import {
   BellIcon,
@@ -9,20 +8,20 @@ import {
 import { ChevronUpIcon } from '@heroicons/react/16/solid';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { deleteCookie } from 'cookies-next';
-import { redirect } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import Link from 'next/link';
-import { useAppUser } from '@/lib/contexts/AppUserContext';
+import { UserModel } from '@/lib/definitions';
 
-export default function AdminNavbar() {
-  const { user } = useAppUser();
-  
+export default function AdminNavbar({ user }: { user: UserModel }) {
+  const router = useRouter();
   const logout = async () => {
     deleteCookie('access_token');
     deleteCookie('refresh_token');
+    router.refresh();
     redirect('/login');
   };
-  
+
   return (
     <section className='flex items-center h-[60px] p-3 border-b shadow-sm text-black justify-end'>
       <div className='flex items-center gap-3'>

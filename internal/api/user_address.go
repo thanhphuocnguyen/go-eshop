@@ -7,13 +7,14 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
 
 // ------------------------------ Params ------------------------------
 type GetAddressParams struct {
-	ID int64 `uri:"id" binding:"required,min=1"`
+	ID string `uri:"id" binding:"required,uuid"`
 }
 
 type CreateAddressReq struct {
@@ -43,7 +44,7 @@ type Address struct {
 	City     string  `json:"city"`
 }
 type AddressResponse struct {
-	ID        int64     `json:"id"`
+	ID        string    `json:"id"`
 	Default   bool      `json:"default"`
 	CreatedAt time.Time `json:"created_at"`
 	Phone     string    `json:"phone"`
@@ -56,7 +57,7 @@ type AddressResponse struct {
 // ------------------------------ Mapper ------------------------------
 func mapAddressResponse(address repository.UserAddress) AddressResponse {
 	return AddressResponse{
-		ID:        address.ID,
+		ID:        address.ID.String(),
 		Default:   address.Default,
 		CreatedAt: address.CreatedAt,
 		Phone:     address.Phone,
@@ -198,7 +199,7 @@ func (sv *Server) updateAddressHandlers(c *gin.Context) {
 	}
 
 	_, err := sv.repo.GetAddress(c, repository.GetAddressParams{
-		ID:     param.ID,
+		ID:     uuid.MustParse(param.ID),
 		UserID: authPayload.UserID,
 	})
 	if err != nil {
@@ -211,7 +212,7 @@ func (sv *Server) updateAddressHandlers(c *gin.Context) {
 	}
 
 	payload := repository.UpdateAddressParams{
-		ID:     param.ID,
+		ID:     uuid.MustParse(param.ID),
 		UserID: authPayload.UserID,
 	}
 
@@ -238,7 +239,7 @@ func (sv *Server) updateAddressHandlers(c *gin.Context) {
 	if input.IsDefault != nil {
 		if *input.IsDefault {
 			err := sv.repo.SetPrimaryAddressTx(c, repository.SetPrimaryAddressTxArgs{
-				NewPrimaryID: param.ID,
+				NewPrimaryID: uuid.MustParse(param.ID),
 				UserID:       authPayload.UserID,
 			})
 			if err != nil {
@@ -282,7 +283,7 @@ func (sv *Server) removeAddressHandlers(c *gin.Context) {
 	}
 
 	address, err := sv.repo.GetAddress(c, repository.GetAddressParams{
-		ID:     param.ID,
+		ID:     uuid.MustParse(param.ID),
 		UserID: authPayload.UserID,
 	})
 
@@ -301,7 +302,7 @@ func (sv *Server) removeAddressHandlers(c *gin.Context) {
 	}
 
 	err = sv.repo.DeleteAddress(c, repository.DeleteAddressParams{
-		ID:     param.ID,
+		ID:     uuid.MustParse(param.ID),
 		UserID: authPayload.UserID,
 	})
 	if err != nil {
@@ -340,7 +341,7 @@ func (sv *Server) setDefaultAddressHandler(c *gin.Context) {
 	}
 
 	address, err := sv.repo.GetAddress(c, repository.GetAddressParams{
-		ID:     param.ID,
+		ID:     uuid.MustParse(param.ID),
 		UserID: authPayload.UserID,
 	})
 
@@ -359,7 +360,7 @@ func (sv *Server) setDefaultAddressHandler(c *gin.Context) {
 	}
 
 	err = sv.repo.SetPrimaryAddressTx(c, repository.SetPrimaryAddressTxArgs{
-		NewPrimaryID: param.ID,
+		NewPrimaryID: uuid.MustParse(param.ID),
 		UserID:       authPayload.UserID,
 	})
 	if err != nil {

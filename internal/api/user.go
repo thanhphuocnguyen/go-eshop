@@ -68,7 +68,7 @@ func mapAddressToAddressResponse(address repository.UserAddress) AddressResponse
 		District: address.District,
 		City:     address.City,
 		Default:  address.Default,
-		ID:       address.ID,
+		ID:       address.ID.String(),
 	}
 }
 

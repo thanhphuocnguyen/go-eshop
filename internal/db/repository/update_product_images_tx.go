@@ -8,7 +8,7 @@ import (
 )
 
 type UpdateProdImagesTxArgs struct {
-	ImageID    int32       `json:"image_id"`
+	ImageID    string      `json:"image_id"`
 	EntityID   uuid.UUID   `json:"entity_id"`
 	EntityType string      `json:"entity_type"`
 	Role       *string     `json:"role"`
@@ -21,7 +21,7 @@ func (s *pgRepo) UpdateProductImagesTx(ctx context.Context, arg []UpdateProdImag
 			if image.Role != nil {
 				var defaultDisplayOrder int16 = 1
 				err = q.UpdateProductImageAssignment(ctx, UpdateProductImageAssignmentParams{
-					ImageID:      image.ImageID,
+					ImageID:      uuid.MustParse(image.ImageID),
 					EntityID:     image.EntityID,
 					EntityType:   image.EntityType,
 					DisplayOrder: &defaultDisplayOrder,
@@ -34,7 +34,7 @@ func (s *pgRepo) UpdateProductImagesTx(ctx context.Context, arg []UpdateProdImag
 			}
 			// Remove all old image assignments
 			err = q.DeleteImageAssignments(ctx, DeleteImageAssignmentsParams{
-				ImageID:    image.ImageID,
+				ImageID:    uuid.MustParse(image.ImageID),
 				EntityType: VariantEntityType,
 			})
 
@@ -49,7 +49,7 @@ func (s *pgRepo) UpdateProductImagesTx(ctx context.Context, arg []UpdateProdImag
 				createBulkImgAssignmentParams := make([]InsertBulkImageAssignmentsParams, 0)
 				for _, variantID := range image.VariantIDs {
 					createImgAssignmentParams := InsertBulkImageAssignmentsParams{
-						ImageID:      image.ImageID,
+						ImageID:      uuid.MustParse(image.ImageID),
 						EntityID:     variantID,
 						Role:         "gallery",
 						EntityType:   VariantEntityType,

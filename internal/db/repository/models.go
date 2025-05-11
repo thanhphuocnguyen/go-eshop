@@ -156,13 +156,6 @@ const (
 	ImageRoleLogo       ImageRole = "logo"
 	ImageRoleIcon       ImageRole = "icon"
 	ImageRoleBackground ImageRole = "background"
-	ImageRoleProduct    ImageRole = "product"
-	ImageRoleCategory   ImageRole = "category"
-	ImageRoleBrand      ImageRole = "brand"
-	ImageRoleUser       ImageRole = "user"
-	ImageRoleOrder      ImageRole = "order"
-	ImageRoleCart       ImageRole = "cart"
-	ImageRolePayment    ImageRole = "payment"
 )
 
 func (e *ImageRole) Scan(src interface{}) error {
@@ -432,14 +425,14 @@ func (ns NullUserRole) Value() (driver.Value, error) {
 }
 
 type Attribute struct {
-	ID        int32     `json:"id"`
+	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
 type AttributeValue struct {
-	ID           int32     `json:"id"`
-	AttributeID  int32     `json:"attribute_id"`
+	ID           uuid.UUID `json:"id"`
+	AttributeID  uuid.UUID `json:"attribute_id"`
 	Name         string    `json:"name"`
 	Code         string    `json:"code"`
 	IsActive     *bool     `json:"is_active"`
@@ -546,14 +539,14 @@ type DiscountUser struct {
 }
 
 type FeaturedProduct struct {
-	ID         int32       `json:"id"`
-	FeaturedID *int32      `json:"featured_id"`
+	ID         uuid.UUID   `json:"id"`
+	FeaturedID pgtype.UUID `json:"featured_id"`
 	ProductID  pgtype.UUID `json:"product_id"`
 	SortOrder  int16       `json:"sort_order"`
 }
 
 type FeaturedSection struct {
-	ID          int32     `json:"id"`
+	ID          uuid.UUID `json:"id"`
 	Name        string    `json:"name"`
 	Slug        string    `json:"slug"`
 	ImageUrl    *string   `json:"image_url"`
@@ -565,7 +558,7 @@ type FeaturedSection struct {
 }
 
 type Image struct {
-	ID         int32     `json:"id"`
+	ID         uuid.UUID `json:"id"`
 	ExternalID string    `json:"external_id"`
 	Url        string    `json:"url"`
 	AltText    *string   `json:"alt_text"`
@@ -579,8 +572,8 @@ type Image struct {
 }
 
 type ImageAssignment struct {
-	ID           int32     `json:"id"`
-	ImageID      int32     `json:"image_id"`
+	ID           uuid.UUID `json:"id"`
+	ImageID      uuid.UUID `json:"image_id"`
 	EntityID     uuid.UUID `json:"entity_id"`
 	EntityType   string    `json:"entity_type"`
 	DisplayOrder int16     `json:"display_order"`
@@ -671,7 +664,7 @@ type Product struct {
 	Name             string         `json:"name"`
 	Description      string         `json:"description"`
 	ShortDescription *string        `json:"short_description"`
-	Attributes       []int32        `json:"attributes"`
+	Attributes       []uuid.UUID    `json:"attributes"`
 	BasePrice        pgtype.Numeric `json:"base_price"`
 	BaseSku          string         `json:"base_sku"`
 	Slug             string         `json:"slug"`
@@ -731,7 +724,7 @@ type RatingReply struct {
 }
 
 type RatingVote struct {
-	ID        int32     `json:"id"`
+	ID        uuid.UUID `json:"id"`
 	RatingID  uuid.UUID `json:"rating_id"`
 	UserID    uuid.UUID `json:"user_id"`
 	IsHelpful bool      `json:"is_helpful"`
@@ -839,7 +832,7 @@ type User struct {
 }
 
 type UserAddress struct {
-	ID        int64     `json:"id"`
+	ID        uuid.UUID `json:"id"`
 	UserID    uuid.UUID `json:"user_id"`
 	Phone     string    `json:"phone"`
 	Street    string    `json:"street"`
@@ -853,7 +846,7 @@ type UserAddress struct {
 }
 
 type UserPaymentInfo struct {
-	ID             int32              `json:"id"`
+	ID             uuid.UUID          `json:"id"`
 	UserID         pgtype.UUID        `json:"user_id"`
 	CardNumber     string             `json:"card_number"`
 	CardholderName string             `json:"cardholder_name"`
@@ -866,11 +859,11 @@ type UserPaymentInfo struct {
 
 type VariantAttributeValue struct {
 	VariantID        uuid.UUID `json:"variant_id"`
-	AttributeValueID int32     `json:"attribute_value_id"`
+	AttributeValueID uuid.UUID `json:"attribute_value_id"`
 }
 
 type VerifyEmail struct {
-	ID         int32     `json:"id"`
+	ID         uuid.UUID `json:"id"`
 	UserID     uuid.UUID `json:"user_id"`
 	Email      string    `json:"email"`
 	VerifyCode string    `json:"verify_code"`

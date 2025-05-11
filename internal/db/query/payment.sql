@@ -1,7 +1,6 @@
 -- name: CreatePayment :one
 INSERT INTO
     payments (
-        id,
         order_id,
         amount,
         payment_method,
@@ -16,8 +15,7 @@ VALUES
         $3,
         $4,
         $5,
-        $6,
-        $7
+        $6
     )
 RETURNING *;
 
@@ -75,7 +73,6 @@ WHERE
 -- name: CreatePaymentTransaction :one
 INSERT INTO
     payment_transactions (
-        id,
         payment_id,
         amount,
         status,
@@ -90,8 +87,7 @@ VALUES
         $3,
         $4,
         $5,
-        $6,
-        $7
+        $6
     )
 RETURNING *;
 

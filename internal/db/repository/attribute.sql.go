@@ -40,10 +40,10 @@ INSERT INTO attribute_values (attribute_id, "name", code, display_order) VALUES 
 `
 
 type CreateAttributeValueParams struct {
-	AttributeID  int32  `json:"attribute_id"`
-	Name         string `json:"name"`
-	Code         string `json:"code"`
-	DisplayOrder int16  `json:"display_order"`
+	AttributeID  uuid.UUID `json:"attribute_id"`
+	Name         string    `json:"name"`
+	Code         string    `json:"code"`
+	DisplayOrder int16     `json:"display_order"`
 }
 
 // Attribute values
@@ -69,7 +69,7 @@ func (q *Queries) CreateAttributeValue(ctx context.Context, arg CreateAttributeV
 
 type CreateBulkProductVariantAttributeParams struct {
 	VariantID        uuid.UUID `json:"variant_id"`
-	AttributeValueID int32     `json:"attribute_value_id"`
+	AttributeValueID uuid.UUID `json:"attribute_value_id"`
 }
 
 const createProductVariantAttribute = `-- name: CreateProductVariantAttribute :one
@@ -78,7 +78,7 @@ INSERT INTO variant_attribute_values (variant_id, attribute_value_id) VALUES ($1
 
 type CreateProductVariantAttributeParams struct {
 	VariantID        uuid.UUID `json:"variant_id"`
-	AttributeValueID int32     `json:"attribute_value_id"`
+	AttributeValueID uuid.UUID `json:"attribute_value_id"`
 }
 
 // Product Variant attributes
@@ -93,7 +93,7 @@ const deleteAttribute = `-- name: DeleteAttribute :exec
 DELETE FROM attributes WHERE id = $1
 `
 
-func (q *Queries) DeleteAttribute(ctx context.Context, id int32) error {
+func (q *Queries) DeleteAttribute(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteAttribute, id)
 	return err
 }
@@ -102,7 +102,7 @@ const deleteAttributeValue = `-- name: DeleteAttributeValue :exec
 DELETE FROM attribute_values WHERE id = $1
 `
 
-func (q *Queries) DeleteAttributeValue(ctx context.Context, id int32) error {
+func (q *Queries) DeleteAttributeValue(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteAttributeValue, id)
 	return err
 }
@@ -117,10 +117,10 @@ func (q *Queries) DeleteProductVariantAttributes(ctx context.Context, variantID 
 }
 
 const getAttrValuesByAttrIDs = `-- name: GetAttrValuesByAttrIDs :many
-SELECT id, attribute_id, name, code, is_active, display_order, created_at FROM attribute_values WHERE attribute_id = ANY($1::int[]) ORDER BY attribute_values.id
+SELECT id, attribute_id, name, code, is_active, display_order, created_at FROM attribute_values WHERE attribute_id = ANY($1::uuid[]) ORDER BY attribute_values.id
 `
 
-func (q *Queries) GetAttrValuesByAttrIDs(ctx context.Context, ids []int32) ([]AttributeValue, error) {
+func (q *Queries) GetAttrValuesByAttrIDs(ctx context.Context, ids []uuid.UUID) ([]AttributeValue, error) {
 	rows, err := q.db.Query(ctx, getAttrValuesByAttrIDs, ids)
 	if err != nil {
 		return nil, err
@@ -159,18 +159,18 @@ ORDER BY a.id, av.display_order
 `
 
 type GetAttributeByIDRow struct {
-	ID                      int32              `json:"id"`
+	ID                      uuid.UUID          `json:"id"`
 	Name                    string             `json:"name"`
 	CreatedAt               time.Time          `json:"created_at"`
 	AttrValName             *string            `json:"attr_val_name"`
-	AttributeValueID        *int32             `json:"attribute_value_id"`
+	AttributeValueID        pgtype.UUID        `json:"attribute_value_id"`
 	AttributeValueIsActive  *bool              `json:"attribute_value_is_active"`
 	AttrValCode             *string            `json:"attr_val_code"`
 	AttributeValueCreatedAt pgtype.Timestamptz `json:"attribute_value_created_at"`
 	DisplayOrder            *int16             `json:"display_order"`
 }
 
-func (q *Queries) GetAttributeByID(ctx context.Context, id int32) ([]GetAttributeByIDRow, error) {
+func (q *Queries) GetAttributeByID(ctx context.Context, id uuid.UUID) ([]GetAttributeByIDRow, error) {
 	rows, err := q.db.Query(ctx, getAttributeByID, id)
 	if err != nil {
 		return nil, err
@@ -201,10 +201,10 @@ func (q *Queries) GetAttributeByID(ctx context.Context, id int32) ([]GetAttribut
 }
 
 const getAttributeByIDs = `-- name: GetAttributeByIDs :many
-SELECT id, name, created_at FROM attributes WHERE id = ANY($1::int[]) ORDER BY attributes.id
+SELECT id, name, created_at FROM attributes WHERE id = ANY($1::uuid[]) ORDER BY attributes.id
 `
 
-func (q *Queries) GetAttributeByIDs(ctx context.Context, ids []int32) ([]Attribute, error) {
+func (q *Queries) GetAttributeByIDs(ctx context.Context, ids []uuid.UUID) ([]Attribute, error) {
 	rows, err := q.db.Query(ctx, getAttributeByIDs, ids)
 	if err != nil {
 		return nil, err
@@ -239,7 +239,7 @@ const getAttributeValueByID = `-- name: GetAttributeValueByID :one
 SELECT id, attribute_id, name, code, is_active, display_order, created_at FROM attribute_values WHERE id = $1
 `
 
-func (q *Queries) GetAttributeValueByID(ctx context.Context, id int32) (AttributeValue, error) {
+func (q *Queries) GetAttributeValueByID(ctx context.Context, id uuid.UUID) (AttributeValue, error) {
 	row := q.db.QueryRow(ctx, getAttributeValueByID, id)
 	var i AttributeValue
 	err := row.Scan(
@@ -258,7 +258,7 @@ const getAttributeValues = `-- name: GetAttributeValues :many
 SELECT id, attribute_id, name, code, is_active, display_order, created_at FROM attribute_values WHERE attribute_id = $1 ORDER BY attribute_values.id
 `
 
-func (q *Queries) GetAttributeValues(ctx context.Context, attributeID int32) ([]AttributeValue, error) {
+func (q *Queries) GetAttributeValues(ctx context.Context, attributeID uuid.UUID) ([]AttributeValue, error) {
 	rows, err := q.db.Query(ctx, getAttributeValues, attributeID)
 	if err != nil {
 		return nil, err
@@ -287,10 +287,10 @@ func (q *Queries) GetAttributeValues(ctx context.Context, attributeID int32) ([]
 }
 
 const getAttributeValuesByIDs = `-- name: GetAttributeValuesByIDs :many
-SELECT id, attribute_id, name, code, is_active, display_order, created_at FROM attribute_values WHERE id = ANY($1::int[]) ORDER BY attribute_values.id
+SELECT id, attribute_id, name, code, is_active, display_order, created_at FROM attribute_values WHERE id = ANY($1::uuid[]) ORDER BY attribute_values.id
 `
 
-func (q *Queries) GetAttributeValuesByIDs(ctx context.Context, ids []int32) ([]AttributeValue, error) {
+func (q *Queries) GetAttributeValuesByIDs(ctx context.Context, ids []uuid.UUID) ([]AttributeValue, error) {
 	rows, err := q.db.Query(ctx, getAttributeValuesByIDs, ids)
 	if err != nil {
 		return nil, err
@@ -327,25 +327,25 @@ FROM attributes as a
 LEFT JOIN attribute_values as av ON a.id = av.attribute_id
 WHERE 
     CASE 
-        WHEN array_length($1::int[], 1) > 0 THEN a.id = ANY($1::int[])
+        WHEN array_length($1::uuid[], 1) > 0 THEN a.id = ANY($1::uuid[])
         ELSE true
     END
 ORDER BY a.id, av.display_order
 `
 
 type GetAttributesRow struct {
-	ID                      int32              `json:"id"`
+	ID                      uuid.UUID          `json:"id"`
 	Name                    string             `json:"name"`
 	CreatedAt               time.Time          `json:"created_at"`
 	AttrValName             *string            `json:"attr_val_name"`
-	AttributeValueID        *int32             `json:"attribute_value_id"`
+	AttributeValueID        pgtype.UUID        `json:"attribute_value_id"`
 	AttributeValueIsActive  *bool              `json:"attribute_value_is_active"`
 	AttrValCode             *string            `json:"attr_val_code"`
 	AttributeValueCreatedAt pgtype.Timestamptz `json:"attribute_value_created_at"`
 	DisplayOrder            *int16             `json:"display_order"`
 }
 
-func (q *Queries) GetAttributes(ctx context.Context, ids []int32) ([]GetAttributesRow, error) {
+func (q *Queries) GetAttributes(ctx context.Context, ids []uuid.UUID) ([]GetAttributesRow, error) {
 	rows, err := q.db.Query(ctx, getAttributes, ids)
 	if err != nil {
 		return nil, err
@@ -415,8 +415,8 @@ UPDATE attributes SET name = $1 WHERE id = $2 RETURNING id, name, created_at
 `
 
 type UpdateAttributeParams struct {
-	Name string `json:"name"`
-	ID   int32  `json:"id"`
+	Name string    `json:"name"`
+	ID   uuid.UUID `json:"id"`
 }
 
 func (q *Queries) UpdateAttribute(ctx context.Context, arg UpdateAttributeParams) (Attribute, error) {
@@ -439,11 +439,11 @@ RETURNING id, attribute_id, name, code, is_active, display_order, created_at
 `
 
 type UpdateAttributeValueParams struct {
-	ID           int32   `json:"id"`
-	Code         *string `json:"code"`
-	IsActive     *bool   `json:"is_active"`
-	Name         *string `json:"name"`
-	DisplayOrder *int16  `json:"display_order"`
+	ID           uuid.UUID `json:"id"`
+	Code         *string   `json:"code"`
+	IsActive     *bool     `json:"is_active"`
+	Name         *string   `json:"name"`
+	DisplayOrder *int16    `json:"display_order"`
 }
 
 func (q *Queries) UpdateAttributeValue(ctx context.Context, arg UpdateAttributeValueParams) (AttributeValue, error) {

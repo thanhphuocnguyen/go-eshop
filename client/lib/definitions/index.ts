@@ -21,6 +21,7 @@ export * from './image';
 export interface GenericResponse<T> {
   data: T;
   error?: {
+    code: string;
     details: string;
   };
   pagination?: {

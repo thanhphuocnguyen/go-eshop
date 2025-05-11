@@ -1,16 +1,17 @@
 import Footer from '@/components/Footer';
 import NavBar from '@/components/Nav/NavBar';
-import { JSX } from 'react';
+import { getUserCache } from '@/lib/cache/user';
 import { CartContextProvider } from '@/lib/contexts/CartContext';
 
-export default function Layout({
+export default async function Layout({
   children,
 }: {
   children: React.ReactNode;
-}): JSX.Element {
+}) {
+  const user = await getUserCache();
   return (
     <>
-      <CartContextProvider>
+      <CartContextProvider user={user}>
         <div>
           <NavBar />
           <div className='overflow-auto'>{children}</div>

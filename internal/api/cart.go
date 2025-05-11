@@ -62,7 +62,7 @@ type GetCartItemParam struct {
 type CheckoutRequest struct {
 	PaymentMethod      string   `json:"payment_method" binding:"required,oneof=code stripe"`
 	PaymentGateway     *string  `json:"payment_gateway" binding:"omitempty,oneof=stripe"`
-	AddressID          *int64   `json:"address_id" binding:"omitempty"`
+	AddressID          *string  `json:"address_id" binding:"omitempty,uuid"`
 	Email              *string  `json:"email" binding:"omitempty,email"`
 	FullName           *string  `json:"full_name" binding:"omitempty"`
 	Address            *Address `json:"address" binding:"omitempty"`
@@ -116,7 +116,6 @@ func (sv *Server) createCart(c *gin.Context) {
 	}
 
 	newCart, err := sv.repo.CreateCart(c, repository.CreateCartParams{
-		ID:     uuid.New(),
 		UserID: utils.GetPgTypeUUID(user.ID),
 	})
 	if err != nil {
@@ -160,7 +159,6 @@ func (sv *Server) getCartHandler(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			cart, err := sv.repo.CreateCart(c, repository.CreateCartParams{
-				ID:     uuid.New(),
 				UserID: utils.GetPgTypeUUID(authPayload.UserID),
 			})
 			if err != nil {
@@ -418,7 +416,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 		}
 	} else {
 		address, err := sv.repo.GetAddress(c, repository.GetAddressParams{
-			ID:     *req.AddressID,
+			ID:     uuid.MustParse(*req.AddressID),
 			UserID: user.ID,
 		})
 		if err != nil {
@@ -471,7 +469,6 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 		}
 		if paramIdx == -1 {
 			itemParam := repository.CreateBulkOrderItemsParams{
-				ID:                   uuid.New(),
 				VariantID:            item.CartItem.VariantID,
 				Quantity:             item.CartItem.Quantity,
 				PricePerUnitSnapshot: item.Price,
@@ -522,7 +519,6 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 		return
 	}
 	createPaymentArgs := repository.CreatePaymentParams{
-		ID:      uuid.New(),
 		OrderID: orderID,
 		Amount:  utils.GetPgNumericFromFloat(totalPrice),
 	}

@@ -122,7 +122,6 @@ func (sv *Server) createBrandHandler(c *gin.Context) {
 		return
 	}
 	params := repository.CreateBrandParams{
-		ID:   uuid.New(),
 		Name: req.Name,
 		Slug: req.Slug,
 	}

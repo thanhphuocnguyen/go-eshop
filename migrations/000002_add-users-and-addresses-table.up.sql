@@ -1,6 +1,6 @@
 CREATE TABLE
     "users" (
-        "id" UUID NOT NULL PRIMARY KEY,
+        "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         "role" user_role NOT NULL DEFAULT 'user',
         "username" VARCHAR UNIQUE NOT NULL,
         "email" VARCHAR UNIQUE NOT NULL,
@@ -19,7 +19,7 @@ CREATE TABLE
 
 CREATE TABLE
     "user_addresses" (
-        "id" BIGSERIAL PRIMARY KEY,
+        "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         "user_id" UUID NOT NULL REFERENCES "users" ("id") ON DELETE CASCADE,
         "phone" VARCHAR(20) NOT NULL CHECK (
             char_length(phone) >= 10
@@ -37,7 +37,7 @@ CREATE TABLE
 
 CREATE TABLE
     verify_emails (
-        id SERIAL PRIMARY KEY,
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
         email VARCHAR(255) NOT NULL,
         verify_code VARCHAR(255) NOT NULL,
@@ -48,7 +48,7 @@ CREATE TABLE
 
 CREATE TABLE
     "sessions" (
-        "id" UUID NOT NULL PRIMARY KEY,
+        "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         "user_id" UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
         "refresh_token" VARCHAR NOT NULL,
         "user_agent" VARCHAR NOT NULL,
@@ -60,7 +60,7 @@ CREATE TABLE
 
 CREATE TABLE
     user_payment_infos (
-        "id" SERIAL PRIMARY KEY,
+        "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         "user_id" UUID REFERENCES users (id) ON DELETE CASCADE,
         "card_number" VARCHAR(16) NOT NULL,
         "cardholder_name" VARCHAR(100) NOT NULL,

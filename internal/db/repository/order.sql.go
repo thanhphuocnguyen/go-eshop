@@ -49,7 +49,6 @@ func (q *Queries) CountOrders(ctx context.Context, arg CountOrdersParams) (int64
 }
 
 type CreateBulkOrderItemsParams struct {
-	ID                   uuid.UUID               `json:"id"`
 	OrderID              uuid.UUID               `json:"order_id"`
 	VariantID            uuid.UUID               `json:"variant_id"`
 	Quantity             int16                   `json:"quantity"`
@@ -62,7 +61,6 @@ type CreateBulkOrderItemsParams struct {
 
 const createOrder = `-- name: CreateOrder :one
 INSERT INTO orders (
-    id,
     customer_id,
     customer_email,
     customer_name,
@@ -71,12 +69,11 @@ INSERT INTO orders (
     shipping_address
 )
 VALUES 
-    ($1,$2,$3,$4, $5, $6, $7)
+    ($1, $2, $3, $4,  $5, $6)
 RETURNING id, customer_id, customer_email, customer_name, customer_phone, shipping_address, total_price, status, confirmed_at, delivered_at, cancelled_at, shipping_method, refunded_at, order_date, updated_at, created_at, shipping_method_id, shipping_rate_id, shipping_cost, estimated_delivery_date, tracking_number, tracking_url, shipping_provider, shipping_notes
 `
 
 type CreateOrderParams struct {
-	ID              uuid.UUID               `json:"id"`
 	CustomerID      uuid.UUID               `json:"customer_id"`
 	CustomerEmail   string                  `json:"customer_email"`
 	CustomerName    string                  `json:"customer_name"`
@@ -87,7 +84,6 @@ type CreateOrderParams struct {
 
 func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {
 	row := q.db.QueryRow(ctx, createOrder,
-		arg.ID,
 		arg.CustomerID,
 		arg.CustomerEmail,
 		arg.CustomerName,
@@ -127,14 +123,13 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 
 const createOrderItem = `-- name: CreateOrderItem :one
 INSERT INTO
-    order_items (id, order_id, variant_id, quantity, price_per_unit_snapshot, variant_sku_snapshot, product_name_snapshot, line_total_snapshot, attributes_snapshot)
+    order_items (order_id, variant_id, quantity, price_per_unit_snapshot, variant_sku_snapshot, product_name_snapshot, line_total_snapshot, attributes_snapshot)
 VALUES
-    ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    ($1, $2, $3, $4, $5, $6, $7, $8)
 RETURNING id, order_id, variant_id, quantity, price_per_unit_snapshot, line_total_snapshot, product_name_snapshot, variant_sku_snapshot, attributes_snapshot, created_at, updated_at, discounted_price
 `
 
 type CreateOrderItemParams struct {
-	ID                   uuid.UUID               `json:"id"`
 	OrderID              uuid.UUID               `json:"order_id"`
 	VariantID            uuid.UUID               `json:"variant_id"`
 	Quantity             int16                   `json:"quantity"`
@@ -147,7 +142,6 @@ type CreateOrderItemParams struct {
 
 func (q *Queries) CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (OrderItem, error) {
 	row := q.db.QueryRow(ctx, createOrderItem,
-		arg.ID,
 		arg.OrderID,
 		arg.VariantID,
 		arg.Quantity,

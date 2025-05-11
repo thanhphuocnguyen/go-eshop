@@ -81,7 +81,6 @@ func (sv *Server) registerHandler(c *gin.Context) {
 	}
 
 	arg := repository.CreateUserParams{
-		ID:             uuid.New(),
 		Username:       req.Username,
 		HashedPassword: hashedPassword,
 		Fullname:       req.FullName,
@@ -149,7 +148,7 @@ func (sv *Server) registerHandler(c *gin.Context) {
 		UpdatedAt:     user.UpdatedAt.String(),
 		FullName:      user.Fullname,
 		Addresses: []AddressResponse{{
-			ID:        createdAddress.ID,
+			ID:        createdAddress.ID.String(),
 			Phone:     createdAddress.Phone,
 			Street:    createdAddress.Street,
 			Ward:      &ward,
@@ -220,7 +219,6 @@ func (sv *Server) loginHandler(c *gin.Context) {
 	}
 
 	session, err := sv.repo.CreateSession(c, repository.CreateSessionParams{
-		ID:           rfPayload.ID,
 		UserID:       user.ID,
 		RefreshToken: refreshToken,
 		UserAgent:    c.GetHeader("User-Agent"),

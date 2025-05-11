@@ -1,12 +1,11 @@
 'use client';
 import React, { useCallback, useState } from 'react';
-import { CartModel, GenericResponse } from '../definitions';
+import { CartModel, GenericResponse, UserModel } from '../definitions';
 import { useCart } from '../hooks';
 import { getCookie } from 'cookies-next';
 import { apiFetch } from '../apis/api';
 import { PUBLIC_API_PATHS } from '../constants/api';
 import { toast } from 'react-toastify';
-import { useAppUser } from './AppUserContext';
 
 interface CartContextType {
   cart: CartModel | undefined;
@@ -23,13 +22,14 @@ export const CartContext = React.createContext<CartContextType | undefined>(
 );
 
 export function CartContextProvider({
+  user,
   children,
 }: {
+  user: UserModel | null;
   children: React.ReactNode;
 }) {
   const [isLoading, setIsLoading] = useState(false);
 
-  const { user } = useAppUser();
   // Load user from cookies if available
   const { cart, mutateCart, cartLoading } = useCart(user?.id);
 

@@ -22,7 +22,7 @@ type PublicIDParam struct {
 type RemoveImageParams struct {
 	ID        string  `uri:"id" binding:"required,uuid"`
 	VariantID *string `uri:"id" binding:"omitempty,uuid"`
-	ImageID   int32   `uri:"image_id" binding:"required"`
+	ImageID   string  `uri:"image_id" binding:"required,uuid"`
 }
 
 type AssignmentRequest struct {
@@ -34,14 +34,14 @@ type EntityIDParam struct {
 }
 
 type ProductVariantImageModel struct {
-	ID        string    `json:"id"`
-	VariantID uuid.UUID `json:"variant_id,omitempty"`
-	ImageUrl  string    `json:"image_url"`
-	ImageID   string    `json:"image_id"`
+	ID        string `json:"id"`
+	VariantID string `json:"variant_id,omitempty"`
+	ImageUrl  string `json:"image_url"`
+	ImageID   string `json:"image_id"`
 }
 
 type ImageResponse struct {
-	ID          int32    `json:"id"`
+	ID          string   `json:"id"`
 	ExternalID  string   `json:"external_id"`
 	Url         string   `json:"url"`
 	MimeType    string   `json:"mime_type,omitempty"`
@@ -193,7 +193,7 @@ func (sv *Server) uploadProductImagesHandler(c *gin.Context) {
 			}
 
 			imagesChan <- ImageResponse{
-				ID:         img.ID,
+				ID:         img.ID.String(),
 				ExternalID: img.ExternalID,
 				Url:        img.Url,
 				MimeType:   *img.MimeType,
@@ -238,7 +238,7 @@ func (sv *Server) getProductImagesHandler(c *gin.Context) {
 	resp := make([]ImageResponse, len(images))
 	for i, image := range images {
 		resp[i] = ImageResponse{
-			ID:          image.ID,
+			ID:          image.ID.String(),
 			ExternalID:  image.ExternalID,
 			Url:         image.Url,
 			MimeType:    *image.MimeType,
@@ -275,7 +275,7 @@ func (sv *Server) removeImage(c *gin.Context) {
 	}
 
 	image, err := sv.repo.GetImageFromID(c, repository.GetImageFromIDParams{
-		ID:         params.ImageID,
+		ID:         uuid.MustParse(params.ImageID),
 		EntityType: repository.ProductEntityType,
 	})
 	if err != nil {

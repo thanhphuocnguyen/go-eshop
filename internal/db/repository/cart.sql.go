@@ -47,17 +47,16 @@ func (q *Queries) CountCartItems(ctx context.Context, id uuid.UUID) (int64, erro
 }
 
 const createCart = `-- name: CreateCart :one
-INSERT INTO carts (id, user_id, session_id) VALUES ($1, $2, $3) RETURNING id, user_id, session_id, order_id, updated_at, created_at
+INSERT INTO carts (user_id, session_id) VALUES ($1, $2) RETURNING id, user_id, session_id, order_id, updated_at, created_at
 `
 
 type CreateCartParams struct {
-	ID        uuid.UUID   `json:"id"`
 	UserID    pgtype.UUID `json:"user_id"`
 	SessionID *string     `json:"session_id"`
 }
 
 func (q *Queries) CreateCart(ctx context.Context, arg CreateCartParams) (Cart, error) {
-	row := q.db.QueryRow(ctx, createCart, arg.ID, arg.UserID, arg.SessionID)
+	row := q.db.QueryRow(ctx, createCart, arg.UserID, arg.SessionID)
 	var i Cart
 	err := row.Scan(
 		&i.ID,
@@ -205,12 +204,12 @@ type GetCartItemsRow struct {
 	ProductName string         `json:"product_name"`
 	CartItemID  uuid.UUID      `json:"cart_item_id"`
 	Quantity    int16          `json:"quantity"`
-	AttrValID   int32          `json:"attr_val_id"`
+	AttrValID   uuid.UUID      `json:"attr_val_id"`
 	AttrValCode string         `json:"attr_val_code"`
 	AttrValName string         `json:"attr_val_name"`
 	AttrName    string         `json:"attr_name"`
-	AttrID      int32          `json:"attr_id"`
-	ImageID     *int32         `json:"image_id"`
+	AttrID      uuid.UUID      `json:"attr_id"`
+	ImageID     pgtype.UUID    `json:"image_id"`
 	ImageUrl    *string        `json:"image_url"`
 }
 

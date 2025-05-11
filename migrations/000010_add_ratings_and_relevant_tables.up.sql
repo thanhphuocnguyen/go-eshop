@@ -1,7 +1,7 @@
 -- Create product_ratings table
 CREATE TABLE
     product_ratings (
-        id UUID PRIMARY KEY,
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
         user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         order_item_id UUID REFERENCES order_items(id) ON DELETE SET NULL,
@@ -21,7 +21,7 @@ CREATE TABLE
 -- Create rating_votes table to track user votes on reviews
 CREATE TABLE
     rating_votes (
-        id SERIAL PRIMARY KEY,
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         rating_id UUID NOT NULL REFERENCES product_ratings(id) ON DELETE CASCADE,
         user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         is_helpful BOOLEAN NOT NULL,
@@ -33,7 +33,7 @@ CREATE TABLE
 -- Create rating_replies table for store/admin responses to reviews
 CREATE TABLE
     rating_replies (
-        id UUID PRIMARY KEY,
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         rating_id UUID NOT NULL REFERENCES product_ratings(id) ON DELETE CASCADE,
         reply_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         content TEXT NOT NULL,

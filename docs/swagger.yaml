@@ -754,7 +754,7 @@ definitions:
     type: object
   api.OrderItemResponse:
     properties:
-      attribute_snapshot:
+      attributes_snapshot:
         items:
           $ref: '#/definitions/repository.AttributeDataSnapshot'
         type: array
@@ -1271,11 +1271,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "500":
           description: Internal Server Error
           schema:
@@ -1303,11 +1303,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
       summary: Create a new Brand
   /Brands/{id}:
     delete:
@@ -1331,11 +1331,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
       summary: Delete a Brand
     get:
       consumes:
@@ -1358,11 +1358,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
       summary: Get a Brand by ID
     put:
       consumes:
@@ -1623,6 +1623,114 @@ paths:
       summary: Get order details by ID (Admin endpoint)
       tags:
       - admin
+  /admin/ratings/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a product rating by ID
+      parameters:
+      - description: Rating ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+      security:
+      - BearerAuth: []
+      summary: Delete a rating
+      tags:
+      - admin
+      - ratings
+  /admin/ratings/{id}/approve:
+    post:
+      consumes:
+      - application/json
+      description: Approve a product rating by ID
+      parameters:
+      - description: Rating ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+      security:
+      - BearerAuth: []
+      summary: Approve a rating
+      tags:
+      - admin
+      - ratings
+  /admin/ratings/{id}/ban:
+    post:
+      consumes:
+      - application/json
+      description: Ban a user from rating by setting their rating to invisible
+      parameters:
+      - description: Rating ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+      security:
+      - BearerAuth: []
+      summary: Ban a user from rating
+      tags:
+      - admin
+      - ratings
   /attributes:
     get:
       consumes:
@@ -2536,6 +2644,76 @@ paths:
       summary: Cancel order
       tags:
       - orders
+  /order/{order_id}/confirm-received:
+    put:
+      consumes:
+      - application/json
+      description: confirm received order payment info
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+      security:
+      - BearerAuth: []
+      summary: confirm received order payment info
+      tags:
+      - orders
+  /order/{order_id}/confirm_payment:
+    put:
+      consumes:
+      - application/json
+      description: Cancel order by order ID
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
+      security:
+      - BearerAuth: []
+      summary: Cancel order
+      tags:
+      - orders
   /order/{order_id}/refund:
     put:
       consumes:
@@ -2969,11 +3147,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
       summary: Get a list of Brands for the shop
   /shop/collections:
     get:

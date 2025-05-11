@@ -27,7 +27,6 @@ func (s *pgRepo) CreateOrderTx(ctx context.Context, arg CreateOrderTxArgs) (uuid
 	var result uuid.UUID
 	err := s.execTx(ctx, func(q *Queries) (err error) {
 		params := CreateOrderParams{
-			ID:              uuid.New(),
 			CustomerID:      arg.UserID,
 			ShippingAddress: arg.ShippingAddress,
 			TotalPrice:      utils.GetPgNumericFromFloat(arg.TotalPrice),

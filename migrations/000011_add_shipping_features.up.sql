@@ -1,7 +1,7 @@
 -- Create shipping_methods table
 CREATE TABLE
     shipping_methods (
-        id UUID PRIMARY KEY,
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         name VARCHAR(100) NOT NULL,
         description TEXT,
         is_active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -15,7 +15,7 @@ CREATE TABLE
 -- Create shipping_zones table to handle geographical regions
 CREATE TABLE
     shipping_zones (
-        id UUID PRIMARY KEY,
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         name VARCHAR(100) NOT NULL,
         description TEXT,
         countries TEXT[] NOT NULL,
@@ -29,7 +29,7 @@ CREATE TABLE
 -- Create shipping_rates table for pricing
 CREATE TABLE
     shipping_rates (
-        id UUID PRIMARY KEY,
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         shipping_method_id UUID NOT NULL REFERENCES shipping_methods(id) ON DELETE CASCADE,
         shipping_zone_id UUID NOT NULL REFERENCES shipping_zones(id) ON DELETE CASCADE,
         name VARCHAR(100) NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE
 -- Create shipping_rate_conditions table for special pricing rules
 CREATE TABLE
     shipping_rate_conditions (
-        id UUID PRIMARY KEY,
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         shipping_rate_id UUID NOT NULL REFERENCES shipping_rates(id) ON DELETE CASCADE,
         condition_type VARCHAR(50) NOT NULL, -- e.g., 'weight_range', 'item_count', 'product_category'
         min_value DECIMAL(10, 2),
@@ -71,7 +71,7 @@ ADD COLUMN shipping_notes TEXT;
 -- Create a table to track shipment status
 CREATE TABLE
     shipments (
-        id UUID PRIMARY KEY,
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
         status VARCHAR(50) NOT NULL DEFAULT 'pending', -- 'pending', 'processing', 'shipped', 'delivered', 'failed'
         shipped_at TIMESTAMPTZ,
@@ -87,7 +87,7 @@ CREATE TABLE
 -- Create table for shipment items
 CREATE TABLE
     shipment_items (
-        id UUID PRIMARY KEY,
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         shipment_id UUID NOT NULL REFERENCES shipments(id) ON DELETE CASCADE,
         order_item_id UUID NOT NULL REFERENCES order_items(id) ON DELETE CASCADE,
         quantity INT NOT NULL,

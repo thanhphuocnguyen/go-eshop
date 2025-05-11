@@ -63,7 +63,6 @@ func (s *Server) postRatingHandler(c *gin.Context) {
 		return
 	}
 	rating, err := s.repo.InsertProductRating(c, repository.InsertProductRatingParams{
-		ID:               uuid.New(),
 		ProductID:        orderItem.ProductID,
 		UserID:           auth.UserID,
 		OrderItemID:      utils.GetPgTypeUUID(orderItem.OrderItemID),
@@ -195,7 +194,6 @@ func (s *Server) postReplyRatingHandler(c *gin.Context) {
 	}
 
 	reply, err := s.repo.InsertRatingReply(c, repository.InsertRatingReplyParams{
-		ID:       uuid.New(),
 		RatingID: rating.ID,
 		ReplyBy:  auth.UserID,
 		Content:  req.Content,

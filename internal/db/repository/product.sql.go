@@ -14,7 +14,6 @@ import (
 )
 
 type AddBulkProductsParams struct {
-	ID           uuid.UUID   `json:"id"`
 	CategoryID   pgtype.UUID `json:"category_id"`
 	CollectionID pgtype.UUID `json:"collection_id"`
 	BrandID      pgtype.UUID `json:"brand_id"`
@@ -97,7 +96,6 @@ func (q *Queries) CountProducts(ctx context.Context, arg CountProductsParams) (i
 }
 
 type CreateBulkProductVariantsParams struct {
-	ID        uuid.UUID      `json:"id"`
 	ProductID uuid.UUID      `json:"product_id"`
 	Sku       string         `json:"sku"`
 	Price     pgtype.Numeric `json:"price"`
@@ -107,21 +105,20 @@ type CreateBulkProductVariantsParams struct {
 
 const createProduct = `-- name: CreateProduct :one
 INSERT INTO products 
-    (id, name, description, short_description, base_price, base_sku, slug, attributes, brand_id, collection_id, category_id) 
+    (name, description, short_description, base_price, base_sku, slug, attributes, brand_id, collection_id, category_id) 
 VALUES 
-    ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+    ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 RETURNING id, name, description, short_description, attributes, base_price, base_sku, slug, is_active, category_id, collection_id, brand_id, created_at, updated_at, avg_rating, rating_count, one_star_count, two_star_count, three_star_count, four_star_count, five_star_count
 `
 
 type CreateProductParams struct {
-	ID               uuid.UUID      `json:"id"`
 	Name             string         `json:"name"`
 	Description      string         `json:"description"`
 	ShortDescription *string        `json:"short_description"`
 	BasePrice        pgtype.Numeric `json:"base_price"`
 	BaseSku          string         `json:"base_sku"`
 	Slug             string         `json:"slug"`
-	Attributes       []int32        `json:"attributes"`
+	Attributes       []uuid.UUID    `json:"attributes"`
 	BrandID          pgtype.UUID    `json:"brand_id"`
 	CollectionID     pgtype.UUID    `json:"collection_id"`
 	CategoryID       pgtype.UUID    `json:"category_id"`
@@ -129,7 +126,6 @@ type CreateProductParams struct {
 
 func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error) {
 	row := q.db.QueryRow(ctx, createProduct,
-		arg.ID,
 		arg.Name,
 		arg.Description,
 		arg.ShortDescription,
@@ -170,14 +166,13 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 
 const createProductVariant = `-- name: CreateProductVariant :one
 INSERT INTO product_variants
-    (id, product_id, description, sku, price, stock, weight)
+    (product_id, description, sku, price, stock, weight)
 VALUES
-    ($1, $2, $3, $4, $5, $6, $7)
+    ($1, $2, $3, $4, $5, $6)
 RETURNING id, product_id, description, sku, price, stock, weight, is_active, created_at, updated_at
 `
 
 type CreateProductVariantParams struct {
-	ID          uuid.UUID      `json:"id"`
 	ProductID   uuid.UUID      `json:"product_id"`
 	Description *string        `json:"description"`
 	Sku         string         `json:"sku"`
@@ -188,7 +183,6 @@ type CreateProductVariantParams struct {
 
 func (q *Queries) CreateProductVariant(ctx context.Context, arg CreateProductVariantParams) (ProductVariant, error) {
 	row := q.db.QueryRow(ctx, createProductVariant,
-		arg.ID,
 		arg.ProductID,
 		arg.Description,
 		arg.Sku,
@@ -276,7 +270,7 @@ type GetLinkedProductsByCategoryRow struct {
 	ID               uuid.UUID `json:"id"`
 	Name             string    `json:"name"`
 	ShortDescription *string   `json:"short_description"`
-	ImgID            int32     `json:"img_id"`
+	ImgID            uuid.UUID `json:"img_id"`
 	ImgUrl           string    `json:"img_url"`
 	VariantCount     int64     `json:"variant_count"`
 }
@@ -398,7 +392,7 @@ type GetProductDetailRow struct {
 	CreatedAt        time.Time      `json:"created_at"`
 	IsActive         *bool          `json:"is_active"`
 	ShortDescription *string        `json:"short_description"`
-	Attributes       []int32        `json:"attributes"`
+	Attributes       []uuid.UUID    `json:"attributes"`
 	RatingCount      int32          `json:"rating_count"`
 	OneStarCount     int32          `json:"one_star_count"`
 	TwoStarCount     int32          `json:"two_star_count"`
@@ -518,9 +512,9 @@ type GetProductVariantsRow struct {
 	IsActive         *bool          `json:"is_active"`
 	CreatedAt        time.Time      `json:"created_at"`
 	UpdatedAt        time.Time      `json:"updated_at"`
-	AttrID           int32          `json:"attr_id"`
+	AttrID           uuid.UUID      `json:"attr_id"`
 	AttrName         string         `json:"attr_name"`
-	AttrValID        int32          `json:"attr_val_id"`
+	AttrValID        uuid.UUID      `json:"attr_val_id"`
 	AttrValCode      string         `json:"attr_val_code"`
 	AttrDisplayOrder int16          `json:"attr_display_order"`
 	AttrValIsActive  *bool          `json:"attr_val_is_active"`
@@ -611,7 +605,7 @@ type GetProductsRow struct {
 	Name             string         `json:"name"`
 	Description      string         `json:"description"`
 	ShortDescription *string        `json:"short_description"`
-	Attributes       []int32        `json:"attributes"`
+	Attributes       []uuid.UUID    `json:"attributes"`
 	BasePrice        pgtype.Numeric `json:"base_price"`
 	BaseSku          string         `json:"base_sku"`
 	Slug             string         `json:"slug"`
@@ -628,7 +622,7 @@ type GetProductsRow struct {
 	ThreeStarCount   int32          `json:"three_star_count"`
 	FourStarCount    int32          `json:"four_star_count"`
 	FiveStarCount    int32          `json:"five_star_count"`
-	ImgID            int32          `json:"img_id"`
+	ImgID            uuid.UUID      `json:"img_id"`
 	ImgUrl           string         `json:"img_url"`
 	VariantCount     int64          `json:"variant_count"`
 	MinPrice         pgtype.Numeric `json:"min_price"`
@@ -718,7 +712,7 @@ type UpdateProductParams struct {
 	Description      *string        `json:"description"`
 	ShortDescription *string        `json:"short_description"`
 	BrandID          pgtype.UUID    `json:"brand_id"`
-	Attributes       []int32        `json:"attributes"`
+	Attributes       []uuid.UUID    `json:"attributes"`
 	CollectionID     pgtype.UUID    `json:"collection_id"`
 	CategoryID       pgtype.UUID    `json:"category_id"`
 	Slug             *string        `json:"slug"`

@@ -14,7 +14,6 @@ import (
 
 const createSession = `-- name: CreateSession :one
 INSERT INTO sessions (
-    id,
     user_id,
     refresh_token,
     user_agent,
@@ -22,12 +21,11 @@ INSERT INTO sessions (
     blocked,
     expired_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7
+    $1, $2, $3, $4, $5, $6
 ) RETURNING id, user_id, refresh_token, user_agent, client_ip, blocked, expired_at, created_at
 `
 
 type CreateSessionParams struct {
-	ID           uuid.UUID          `json:"id"`
 	UserID       uuid.UUID          `json:"user_id"`
 	RefreshToken string             `json:"refresh_token"`
 	UserAgent    string             `json:"user_agent"`
@@ -38,7 +36,6 @@ type CreateSessionParams struct {
 
 func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error) {
 	row := q.db.QueryRow(ctx, createSession,
-		arg.ID,
 		arg.UserID,
 		arg.RefreshToken,
 		arg.UserAgent,

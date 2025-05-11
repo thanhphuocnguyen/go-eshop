@@ -4,7 +4,6 @@ import './globals.css';
 import 'react-multi-carousel/lib/styles.css';
 import ClientToastContainer from '@/components/Common/ToastContainer';
 import clsx from 'clsx';
-import { AppUserProvider } from '@/lib/contexts/AppUserContext';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -15,7 +14,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -23,9 +22,7 @@ export default async function RootLayout({
   return (
     <html lang='en'>
       <body className={clsx(inter.className)}>
-        <main className='main'>
-          <AppUserProvider>{children}</AppUserProvider>
-        </main>
+        <main className='main'>{children}</main>
         <ClientToastContainer />
       </body>
     </html>

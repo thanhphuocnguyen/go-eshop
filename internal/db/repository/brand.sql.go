@@ -27,24 +27,22 @@ func (q *Queries) CountBrands(ctx context.Context) (int64, error) {
 
 const createBrand = `-- name: CreateBrand :one
 INSERT INTO brands 
-    (id, name, slug, description, image_url, image_id)
+    (name, slug, description, image_url, image_id)
 VALUES 
-    ($1, $2, $3, $4, $5, $6)
+    ($1, $2, $3, $4, $5)
 RETURNING id, name, image_url, image_id, description, slug, remarkable, display_order, published, created_at, updated_at
 `
 
 type CreateBrandParams struct {
-	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	Slug        string    `json:"slug"`
-	Description *string   `json:"description"`
-	ImageUrl    *string   `json:"image_url"`
-	ImageID     *string   `json:"image_id"`
+	Name        string  `json:"name"`
+	Slug        string  `json:"slug"`
+	Description *string `json:"description"`
+	ImageUrl    *string `json:"image_url"`
+	ImageID     *string `json:"image_id"`
 }
 
 func (q *Queries) CreateBrand(ctx context.Context, arg CreateBrandParams) (Brand, error) {
 	row := q.db.QueryRow(ctx, createBrand,
-		arg.ID,
 		arg.Name,
 		arg.Slug,
 		arg.Description,

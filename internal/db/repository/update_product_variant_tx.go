@@ -31,19 +31,24 @@ func (s *pgRepo) UpdateProductVariantsTx(ctx context.Context, productID uuid.UUI
 			rs.UpdatedIDs = make([]uuid.UUID, 0)
 			rs.CreatedIDs = make([]uuid.UUID, 0)
 			// get all attribute values
-			attrValMp := make(map[int32]bool)
-			attrValueIds := make([]int32, 0)
+			attrValMp := make(map[string]bool)
+			attrValueIds := make([]uuid.UUID, 0)
 			for _, variant := range arg.Variants {
 				for _, attr := range variant.Attributes {
 					if attrValMp[attr.ValueID] {
 						continue
 					}
-					attrValueIds = append(attrValueIds, attr.ValueID)
+					id, parseErr := uuid.Parse(attr.ValueID)
+					if parseErr != nil {
+						log.Error().Err(parseErr).Msgf("Parse UUID from %s", attr.ValueID)
+						return parseErr
+					}
+					attrValueIds = append(attrValueIds, id)
 					attrValMp[attr.ValueID] = true
 				}
 			}
 
-			attributeValueMp := make(map[int32]AttributeValue)
+			attributeValueMp := make(map[string]AttributeValue)
 			attributeValueRows, err := q.GetAttributeValuesByIDs(ctx, attrValueIds)
 
 			if err != nil {
@@ -51,8 +56,8 @@ func (s *pgRepo) UpdateProductVariantsTx(ctx context.Context, productID uuid.UUI
 				return err
 			}
 			for _, attributeValue := range attributeValueRows {
-				if _, ok := attributeValueMp[attributeValue.ID]; !ok {
-					attributeValueMp[attributeValue.ID] = attributeValue
+				if _, ok := attributeValueMp[attributeValue.ID.String()]; !ok {
+					attributeValueMp[attributeValue.ID.String()] = attributeValue
 				}
 			}
 			for i, variant := range arg.Variants {
@@ -104,7 +109,7 @@ func (s *pgRepo) UpdateProductVariantsTx(ctx context.Context, productID uuid.UUI
 						for _, attr := range variant.Attributes {
 							createBulkProductVariantAttributesParam = append(createBulkProductVariantAttributesParam, CreateBulkProductVariantAttributeParams{
 								VariantID:        updated.ID,
-								AttributeValueID: attr.ValueID,
+								AttributeValueID: uuid.MustParse(attr.ValueID),
 							})
 						}
 						_, err = q.CreateBulkProductVariantAttribute(ctx, createBulkProductVariantAttributesParam)
@@ -115,7 +120,6 @@ func (s *pgRepo) UpdateProductVariantsTx(ctx context.Context, productID uuid.UUI
 					}
 				} else {
 					createVariantParams := CreateProductVariantParams{
-						ID:        uuid.New(),
 						ProductID: product.ID,
 						Sku:       sku,
 					}
@@ -143,7 +147,7 @@ func (s *pgRepo) UpdateProductVariantsTx(ctx context.Context, productID uuid.UUI
 						for i, attr := range variant.Attributes {
 							createBulkProductVariantAttributesParam[i] = CreateBulkProductVariantAttributeParams{
 								VariantID:        created.ID,
-								AttributeValueID: attr.ValueID,
+								AttributeValueID: uuid.MustParse(attr.ValueID),
 							}
 						}
 

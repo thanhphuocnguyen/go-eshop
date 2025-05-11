@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
 	"github.com/stripe/stripe-go/v81"
@@ -125,7 +124,6 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 			return
 		}
 		var createPaymentTransactionArg = repository.CreatePaymentTransactionParams{
-			ID:                     uuid.New(),
 			PaymentID:              payment.ID,
 			Amount:                 utils.GetPgNumericFromFloat((float64(piAmount) / 100)),
 			GatewayTransactionID:   id,

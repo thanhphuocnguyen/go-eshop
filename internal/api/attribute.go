@@ -5,16 +5,17 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 )
 
 // ------------------------------ API Models ------------------------------
 type AttributeValue struct {
-	ID           int32   `json:"id"`
-	Code         string  `json:"code"`
-	Name         *string `json:"name"`
-	IsActive     *bool   `json:"is_active"`
-	DisplayOrder *int16  `json:"display_order"`
+	ID           uuid.UUID `json:"id"`
+	Code         string    `json:"code"`
+	Name         *string   `json:"name"`
+	IsActive     *bool     `json:"is_active"`
+	DisplayOrder *int16    `json:"display_order"`
 }
 
 type AttributeValueRequest struct {
@@ -25,12 +26,12 @@ type AttributeValueRequest struct {
 }
 
 type UpdateAttributeValueRequest struct {
-	ID                    *int32 `json:"id" binding:"omitempty"`
+	ID                    *string `json:"id" binding:"omitempty,uuid"`
 	AttributeValueRequest `json:",inline"`
 }
 
 type AttributeResponse struct {
-	ID        int32            `json:"id"`
+	ID        uuid.UUID        `json:"id"`
 	Name      string           `json:"name"`
 	Values    []AttributeValue `json:"values,omitempty"`
 	CreatedAt string           `json:"created_at"`
@@ -48,11 +49,11 @@ type UpdateAttributeRequest struct {
 }
 
 type AttributeParam struct {
-	ID int32 `uri:"id" binding:"required"`
+	ID string `uri:"id" binding:"required,uuid"`
 }
 
 type GetAttributesQuery struct {
-	IDs []int32 `form:"ids" binding:"omitempty"`
+	IDs []uuid.UUID `form:"ids" binding:"omitempty"`
 }
 
 // ------------------------------ API Handlers ------------------------------
@@ -67,7 +68,7 @@ type GetAttributesQuery struct {
 // @Failure 400 {object} ApiResponse[AttributeResponse]
 // @Failure 500 {object} ApiResponse[AttributeResponse]
 // @Router /attributes [post]
-func (sv *Server) createAttribute(c *gin.Context) {
+func (sv *Server) createAttributeHandler(c *gin.Context) {
 	var params CreateAttributeRequest
 	if err := c.ShouldBindJSON(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[AttributeResponse](InvalidBodyCode, "", err))
@@ -98,7 +99,6 @@ func (sv *Server) createAttribute(c *gin.Context) {
 			}
 
 			attributeValues = append(attributeValues, AttributeValue{
-				ID:   value.ID,
 				Code: value.Code,
 				Name: &value.Name,
 			})
@@ -133,7 +133,7 @@ func (sv *Server) getAttributeByIDHandler(c *gin.Context) {
 		return
 	}
 
-	attributeRows, err := sv.repo.GetAttributeByID(c, attributeParam.ID)
+	attributeRows, err := sv.repo.GetAttributeByID(c, uuid.MustParse(attributeParam.ID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[AttributeResponse](InternalServerErrorCode, "", err))
 		return
@@ -148,13 +148,14 @@ func (sv *Server) getAttributeByIDHandler(c *gin.Context) {
 	}
 
 	for i := 0; i < len(attributeRows); i++ {
-		if attributeRows[i].AttributeValueID == nil {
+		if !attributeRows[i].AttributeValueID.Valid {
 			continue
 		}
+		id, _ := uuid.FromBytes(attributeRows[i].AttributeValueID.Bytes[:])
 		attributeResp.Values = append(attributeResp.Values, AttributeValue{
-			ID:           *attributeRows[i].AttributeValueID,
-			Code:         *attributeRows[i].AttrValCode,
+			ID:           id,
 			Name:         attributeRows[i].AttrValName,
+			Code:         *attributeRows[i].AttrValCode,
 			IsActive:     attributeRows[i].AttributeValueIsActive,
 			DisplayOrder: attributeRows[i].DisplayOrder,
 		})
@@ -201,18 +202,20 @@ func (sv *Server) getAttributesHandler(c *gin.Context) {
 				CreatedAt: attrVal.CreatedAt.String(),
 				Values:    []AttributeValue{},
 			})
-			if attrVal.AttributeValueID != nil {
+			if attrVal.AttributeValueID.Valid {
+				id, _ := uuid.FromBytes(attrVal.AttributeValueID.Bytes[:])
 				attributeResp[len(attributeResp)-1].Values = append(attributeResp[len(attributeResp)-1].Values, AttributeValue{
-					ID:           *attrVal.AttributeValueID,
+					ID:           id,
 					Code:         *attrVal.AttrValCode,
 					Name:         attrVal.AttrValName,
 					DisplayOrder: attrVal.DisplayOrder,
 					IsActive:     attrVal.AttributeValueIsActive,
 				})
 			}
-		} else if attrVal.AttributeValueID != nil {
+		} else if attrVal.AttributeValueID.Valid {
+			id, _ := uuid.FromBytes(attrVal.AttributeValueID.Bytes[:])
 			attributeResp[len(attributeResp)-1].Values = append(attributeResp[len(attributeResp)-1].Values, AttributeValue{
-				ID:           *attrVal.AttributeValueID,
+				ID:           id,
 				Code:         *attrVal.AttrValCode,
 				Name:         attrVal.AttrValName,
 				IsActive:     attrVal.AttributeValueIsActive,
@@ -248,7 +251,7 @@ func (sv *Server) updateAttributeHandler(c *gin.Context) {
 		return
 	}
 
-	existingAttributeRows, err := sv.repo.GetAttributeByID(c, param.ID)
+	existingAttributeRows, err := sv.repo.GetAttributeByID(c, uuid.MustParse(param.ID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[AttributeResponse](InternalServerErrorCode, "", err))
 		return
@@ -272,9 +275,9 @@ func (sv *Server) updateAttributeHandler(c *gin.Context) {
 		return
 	}
 
-	currentAttributeValuesMap := make(map[int32]AttributeValue)
+	currentAttributeValuesMap := make(map[string]AttributeValue)
 	for _, value := range currentAttributeValues {
-		currentAttributeValuesMap[value.ID] = AttributeValue{
+		currentAttributeValuesMap[value.ID.String()] = AttributeValue{
 			ID:           value.ID,
 			Code:         value.Code,
 			Name:         &value.Name,
@@ -289,7 +292,7 @@ func (sv *Server) updateAttributeHandler(c *gin.Context) {
 		if value.ID != nil {
 			if _, ok := currentAttributeValuesMap[*value.ID]; ok {
 				params := repository.UpdateAttributeValueParams{
-					ID: *value.ID,
+					ID: uuid.MustParse(*value.ID),
 				}
 				if value.Code != "" {
 					params.Code = &value.Code
@@ -341,7 +344,7 @@ func (sv *Server) updateAttributeHandler(c *gin.Context) {
 	}
 
 	for id := range currentAttributeValuesMap {
-		err := sv.repo.DeleteAttributeValue(c, id)
+		err := sv.repo.DeleteAttributeValue(c, uuid.MustParse(id))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[AttributeResponse](InternalServerErrorCode, "", err))
 			return
@@ -374,7 +377,7 @@ func (sv *Server) deleteAttribute(c *gin.Context) {
 		return
 	}
 
-	attribute, err := sv.repo.GetAttributeByID(c, params.ID)
+	attribute, err := sv.repo.GetAttributeByID(c, uuid.MustParse(params.ID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, createErrorResponse[bool](NotFoundCode, "", err))

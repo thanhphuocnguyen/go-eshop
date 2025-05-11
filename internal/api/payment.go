@@ -111,7 +111,6 @@ func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
 	total, _ := ord.TotalPrice.Float64Value()
 	// create new payment
 	createPaymentParams := repository.CreatePaymentParams{
-		ID:            uuid.New(),
 		OrderID:       ord.ID,
 		Amount:        utils.GetPgNumericFromFloat(total.Float64),
 		PaymentMethod: repository.PaymentMethod(req.PaymentMethod),

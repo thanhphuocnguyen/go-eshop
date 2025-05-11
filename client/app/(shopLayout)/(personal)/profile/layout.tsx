@@ -1,24 +1,20 @@
-'use client';
-
-import { useAppUser } from '@/lib/contexts/AppUserContext';
+import { getUserCache } from '@/lib/cache/user';
 import ProfileHeader from './_components/ProfileHeader';
 import ProfileTabs from './_components/ProfileTabs';
 
-export default function ProfileLayout({
+export default async function ProfileLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isLoading } = useAppUser();
-
-  if (isLoading) {
+  const user = await getUserCache();
+  if (!user) {
     return (
-      <div className='flex items-center justify-center h-screen'>
-        <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500'></div>
+      <div className='h-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8'>
+        Please login to view your profile.
       </div>
     );
   }
-
   return (
     <div className='h-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8'>
       <div className='bg-white shadow rounded-lg'>

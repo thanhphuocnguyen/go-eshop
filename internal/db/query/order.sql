@@ -1,6 +1,5 @@
 -- name: CreateOrder :one
 INSERT INTO orders (
-    id,
     customer_id,
     customer_email,
     customer_name,
@@ -9,7 +8,7 @@ INSERT INTO orders (
     shipping_address
 )
 VALUES 
-    ($1,$2,$3,$4, $5, $6, $7)
+    ($1, $2, $3, $4,  $5, $6)
 RETURNING *;
 
 -- name: GetOrder :one
@@ -78,16 +77,16 @@ WHERE
 
 -- name: CreateOrderItem :one
 INSERT INTO
-    order_items (id, order_id, variant_id, quantity, price_per_unit_snapshot, variant_sku_snapshot, product_name_snapshot, line_total_snapshot, attributes_snapshot)
+    order_items (order_id, variant_id, quantity, price_per_unit_snapshot, variant_sku_snapshot, product_name_snapshot, line_total_snapshot, attributes_snapshot)
 VALUES
-    ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    ($1, $2, $3, $4, $5, $6, $7, $8)
 RETURNING *;
 
 -- name: CreateBulkOrderItems :copyfrom
 INSERT INTO
-    order_items (id, order_id, variant_id, quantity, price_per_unit_snapshot, variant_sku_snapshot, product_name_snapshot, line_total_snapshot, attributes_snapshot)
+    order_items (order_id, variant_id, quantity, price_per_unit_snapshot, variant_sku_snapshot, product_name_snapshot, line_total_snapshot, attributes_snapshot)
 VALUES
-    ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+    ($1, $2, $3, $4, $5, $6, $7, $8);
 
 -- name: GetOrderItemByID :one
 SELECT

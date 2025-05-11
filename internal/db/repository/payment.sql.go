@@ -15,7 +15,6 @@ import (
 const createPayment = `-- name: CreatePayment :one
 INSERT INTO
     payments (
-        id,
         order_id,
         amount,
         payment_method,
@@ -30,14 +29,12 @@ VALUES
         $3,
         $4,
         $5,
-        $6,
-        $7
+        $6
     )
 RETURNING id, order_id, amount, status, payment_method, payment_gateway, refund_id, gateway_payment_intent_id, gateway_charge_id, error_code, error_message, created_at, updated_at
 `
 
 type CreatePaymentParams struct {
-	ID                     uuid.UUID          `json:"id"`
 	OrderID                uuid.UUID          `json:"order_id"`
 	Amount                 pgtype.Numeric     `json:"amount"`
 	PaymentMethod          PaymentMethod      `json:"payment_method"`
@@ -48,7 +45,6 @@ type CreatePaymentParams struct {
 
 func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payment, error) {
 	row := q.db.QueryRow(ctx, createPayment,
-		arg.ID,
 		arg.OrderID,
 		arg.Amount,
 		arg.PaymentMethod,
@@ -78,7 +74,6 @@ func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) (P
 const createPaymentTransaction = `-- name: CreatePaymentTransaction :one
 INSERT INTO
     payment_transactions (
-        id,
         payment_id,
         amount,
         status,
@@ -93,14 +88,12 @@ VALUES
         $3,
         $4,
         $5,
-        $6,
-        $7
+        $6
     )
 RETURNING id, payment_id, amount, status, gateway_transaction_id, gateway_response_code, gateway_response_message, transaction_date, created_at
 `
 
 type CreatePaymentTransactionParams struct {
-	ID                     uuid.UUID      `json:"id"`
 	PaymentID              uuid.UUID      `json:"payment_id"`
 	Amount                 pgtype.Numeric `json:"amount"`
 	Status                 PaymentStatus  `json:"status"`
@@ -112,7 +105,6 @@ type CreatePaymentTransactionParams struct {
 // Payment Transactions --
 func (q *Queries) CreatePaymentTransaction(ctx context.Context, arg CreatePaymentTransactionParams) (PaymentTransaction, error) {
 	row := q.db.QueryRow(ctx, createPaymentTransaction,
-		arg.ID,
 		arg.PaymentID,
 		arg.Amount,
 		arg.Status,

@@ -55,14 +55,7 @@ CREATE TYPE "image_role" AS ENUM (
   'cover',
   'logo',
   'icon',
-  'background',
-  'product',
-  'category',
-  'brand',
-  'user',
-  'order',
-  'cart',
-  'payment'
+  'background'
 );
 
 CREATE TYPE "entity_type" AS ENUM (

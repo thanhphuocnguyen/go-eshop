@@ -22,7 +22,7 @@ FROM attributes as a
 LEFT JOIN attribute_values as av ON a.id = av.attribute_id
 WHERE 
     CASE 
-        WHEN array_length(sqlc.arg(ids)::int[], 1) > 0 THEN a.id = ANY(sqlc.arg(ids)::int[])
+        WHEN array_length(sqlc.arg(ids)::uuid[], 1) > 0 THEN a.id = ANY(sqlc.arg(ids)::uuid[])
         ELSE true
     END
 ORDER BY a.id, av.display_order;
@@ -31,7 +31,7 @@ ORDER BY a.id, av.display_order;
 SELECT * FROM attributes WHERE name = $1 LIMIT 1;
 
 -- name: GetAttributeByIDs :many
-SELECT * FROM attributes WHERE id = ANY(sqlc.arg(ids)::int[]) ORDER BY attributes.id;
+SELECT * FROM attributes WHERE id = ANY(sqlc.arg(ids)::uuid[]) ORDER BY attributes.id;
 
 -- name: UpdateAttribute :one
 UPDATE attributes SET name = $1 WHERE id = $2 RETURNING *;
@@ -53,10 +53,10 @@ SELECT * FROM attribute_values WHERE id = $1;
 SELECT * FROM attribute_values WHERE attribute_id = $1 ORDER BY attribute_values.id;
 
 -- name: GetAttributeValuesByIDs :many
-SELECT * FROM attribute_values WHERE id = ANY(sqlc.arg(ids)::int[]) ORDER BY attribute_values.id;
+SELECT * FROM attribute_values WHERE id = ANY(sqlc.arg(ids)::uuid[]) ORDER BY attribute_values.id;
 
 -- name: GetAttrValuesByAttrIDs :many
-SELECT * FROM attribute_values WHERE attribute_id = ANY(sqlc.arg(ids)::int[]) ORDER BY attribute_values.id;
+SELECT * FROM attribute_values WHERE attribute_id = ANY(sqlc.arg(ids)::uuid[]) ORDER BY attribute_values.id;
 
 -- name: UpdateAttributeValue :one
 UPDATE 

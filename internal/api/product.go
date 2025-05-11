@@ -25,13 +25,13 @@ type ProductQueries struct {
 }
 
 type ProductAttributeDetail struct {
-	ID          int32          `json:"id"`
+	ID          string         `json:"id"`
 	Name        string         `json:"name"`
 	ValueObject AttributeValue `json:"value_object"`
 }
 
 type ImageAssignment struct {
-	ID           int32  `json:"id"`
+	ID           string `json:"id"`
 	EntityID     string `json:"entity_id"`
 	EntityType   string `json:"entity_type"`
 	DisplayOrder int16  `json:"display_order"`
@@ -39,7 +39,7 @@ type ImageAssignment struct {
 }
 
 type ProductImageModel struct {
-	ID                 int32             `json:"id"`
+	ID                 string            `json:"id"`
 	Url                string            `json:"url"`
 	ExternalID         string            `json:"external_id"`
 	Role               string            `json:"role"`
@@ -65,7 +65,7 @@ type CreateProductReq struct {
 	CategoryID       string                                    `json:"category_id,omitempty" binding:"omitempty,uuid"`
 	BrandID          string                                    `json:"brand_id,omitempty" binding:"omitempty,uuid"`
 	CollectionID     *string                                   `json:"collection_id,omitempty" binding:"omitempty,uuid"`
-	Attributes       []int32                                   `json:"attributes" binding:"min=1"`
+	Attributes       []string                                  `json:"attributes" binding:"min=1"`
 	Variants         []repository.CreateProductVariantTxParams `json:"variants,omitempty"`
 }
 type UpdateProductImageAssignments struct {
@@ -75,7 +75,7 @@ type UpdateProductImageAssignments struct {
 }
 
 type UpdateProductImages struct {
-	ID          int32    `json:"id"`
+	ID          string   `json:"id"`
 	Role        *string  `json:"role"`
 	IsRemoved   *bool    `json:"omitempty,is_removed"`
 	Assignments []string `json:"assignments,omitempty"`
@@ -92,7 +92,7 @@ type UpdateProductReq struct {
 	CategoryID       *string               `json:"category_id,omitempty" binding:"omitempty,uuid"`
 	BrandID          *string               `json:"brand_id,omitempty" binding:"omitempty,uuid"`
 	CollectionID     *string               `json:"collection_id,omitempty" binding:"omitempty,uuid"`
-	Attributes       []int32               `json:"attributes" binding:"omitempty"`
+	Attributes       []string              `json:"attributes" binding:"omitempty"`
 	Images           []UpdateProductImages `json:"images" binding:"omitempty,dive"`
 }
 
@@ -106,7 +106,7 @@ type ProductModel struct {
 	Name             string                   `json:"name"`
 	Description      string                   `json:"description"`
 	ShortDescription *string                  `json:"short_description"`
-	Attributes       []int32                  `json:"attributes"`
+	Attributes       []string                 `json:"attributes"`
 	BasePrice        float64                  `json:"price,omitzero"`
 	BaseSku          string                   `json:"sku"`
 	UpdatedAt        string                   `json:"updated_at"`
@@ -124,13 +124,13 @@ type ProductListModel struct {
 	ID           string  `json:"id"`
 	Name         string  `json:"name"`
 	Description  string  `json:"description"`
-	VariantCount int32   `json:"variant_count,omitzero"`
+	VariantCount int64   `json:"variant_count,omitzero"`
 	MinPrice     float64 `json:"min_price,omitzero"`
 	MaxPrice     float64 `json:"max_price,omitzero"`
 	Slug         string  `json:"slug,omitempty"`
 	Sku          string  `json:"sku"`
 	ImgUrl       string  `json:"image_url,omitempty"`
-	ImgID        int32   `json:"image_id,omitempty"`
+	ImgID        string  `json:"image_id,omitempty"`
 	CreatedAt    string  `json:"created_at,omitempty"`
 	UpdatedAt    string  `json:"updated_at,omitempty"`
 }
@@ -154,11 +154,13 @@ func (sv *Server) createProduct(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](InvalidBodyCode, "", err))
 		return
 	}
-
+	attributes := make([]uuid.UUID, len(req.Attributes))
+	for i, attr := range req.Attributes {
+		attributes[i] = uuid.MustParse(attr)
+	}
 	createParams := repository.CreateProductParams{
-		ID:          uuid.New(),
 		Name:        req.Name,
-		Attributes:  req.Attributes,
+		Attributes:  attributes,
 		Description: req.Description,
 	}
 
@@ -381,7 +383,11 @@ func (sv *Server) updateProduct(c *gin.Context) {
 		updateProductParam.BasePrice = utils.GetPgNumericFromFloat(*req.Price)
 	}
 	if len(req.Attributes) > 0 {
-		updateProductParam.Attributes = req.Attributes
+		attributes := make([]uuid.UUID, len(req.Attributes))
+		for i, attr := range req.Attributes {
+			attributes[i] = uuid.MustParse(attr)
+		}
+		updateProductParam.Attributes = attributes
 	}
 
 	product, err := sv.repo.UpdateProduct(c, updateProductParam)
@@ -400,7 +406,7 @@ func (sv *Server) updateProduct(c *gin.Context) {
 			if image.IsRemoved != nil && *image.IsRemoved {
 				errGroup.Go(func() (err error) {
 					img, err := sv.repo.GetImageFromID(c, repository.GetImageFromIDParams{
-						ID:         image.ID,
+						ID:         uuid.MustParse(image.ID),
 						EntityType: repository.ProductEntityType,
 					})
 
@@ -419,7 +425,7 @@ func (sv *Server) updateProduct(c *gin.Context) {
 					}
 
 					// Remove image from product
-					err = sv.repo.DeleteProductImage(c, image.ID)
+					err = sv.repo.DeleteProductImage(c, uuid.MustParse(image.ID))
 					if err != nil {
 						if errors.Is(err, repository.ErrRecordNotFound) {
 							c.JSON(http.StatusNotFound, createErrorResponse[ProductListModel](NotFoundCode, "", err))
@@ -604,12 +610,17 @@ func mapToProductResponse(productRows []repository.GetProductDetailRow) ProductM
 	}
 	product := productRows[0]
 	basePrice, _ := product.BasePrice.Float64Value()
+	attributes := make([]string, len(product.Attributes))
+	for i, attr := range product.Attributes {
+		attributes[i] = attr.String()
+	}
+
 	resp := ProductModel{
 		ID:               product.ProductID.String(),
 		Name:             product.Name,
 		BasePrice:        basePrice.Float64,
 		ShortDescription: product.ShortDescription,
-		Attributes:       product.Attributes,
+		Attributes:       attributes,
 		Description:      product.Description,
 		BaseSku:          product.BaseSku,
 		Slug:             product.Slug,
@@ -653,7 +664,7 @@ func mapToVariantResp(variantRows []repository.GetProductVariantsRow) []ProductV
 			// If the variant already exists, append the attribute to the existing variant
 			attrIdx := -1
 			for j, a := range variants[variantIdx].Attributes {
-				if a.ID == row.AttrID {
+				if a.ID == row.AttrID.String() {
 					attrIdx = j
 					break
 				}
@@ -665,7 +676,7 @@ func mapToVariantResp(variantRows []repository.GetProductVariantsRow) []ProductV
 			}
 
 			variants[variantIdx].Attributes = append(variants[variantIdx].Attributes, ProductAttributeDetail{
-				ID:   row.AttrID,
+				ID:   row.AttrID.String(),
 				Name: row.AttrName,
 				ValueObject: AttributeValue{
 					ID:           row.AttrValID,
@@ -686,7 +697,7 @@ func mapToVariantResp(variantRows []repository.GetProductVariantsRow) []ProductV
 				Sku:      &row.Sku,
 				Attributes: []ProductAttributeDetail{
 					{
-						ID:   row.AttrID,
+						ID:   row.AttrID.String(),
 						Name: row.AttrName,
 						ValueObject: AttributeValue{
 							ID:           row.AttrValID,
@@ -711,14 +722,14 @@ func mapToProductImages(productID uuid.UUID, imageRows []repository.GetProductIm
 	for _, row := range imageRows {
 		existingImageIdx := -1
 		for i, image := range images {
-			if image.ID == row.ID {
+			if image.ID == row.ID.String() {
 				existingImageIdx = i
 				break
 			}
 		}
 		if existingImageIdx != -1 {
 			image := ImageAssignment{
-				ID:           row.ID,
+				ID:           row.ID.String(),
 				EntityID:     row.EntityID.String(),
 				EntityType:   row.EntityType,
 				Role:         row.Role,
@@ -731,7 +742,7 @@ func mapToProductImages(productID uuid.UUID, imageRows []repository.GetProductIm
 		} else {
 			// If the image does not exist, add it to the list of images
 			image := ProductImageModel{
-				ID:                 row.ID,
+				ID:                 row.ID.String(),
 				Url:                row.Url,
 				ExternalID:         row.ExternalID,
 				Role:               row.Role,
@@ -740,7 +751,7 @@ func mapToProductImages(productID uuid.UUID, imageRows []repository.GetProductIm
 
 			if row.EntityID.String() != productID.String() {
 				image.VariantAssignments = append(image.VariantAssignments, ImageAssignment{
-					ID:           row.ID,
+					ID:           row.ID.String(),
 					EntityID:     row.EntityID.String(),
 					EntityType:   row.EntityType,
 					Role:         row.Role,
@@ -765,8 +776,8 @@ func mapToListProductResponse(productRow repository.GetProductsRow) ProductListM
 		Sku:          productRow.BaseSku,
 		Slug:         productRow.Slug,
 		ImgUrl:       productRow.ImgUrl,
-		ImgID:        productRow.ImgID,
-		VariantCount: int32(productRow.VariantCount),
+		ImgID:        productRow.ImgID.String(),
+		VariantCount: productRow.VariantCount,
 		CreatedAt:    productRow.CreatedAt.String(),
 		UpdatedAt:    productRow.UpdatedAt.String(),
 	}

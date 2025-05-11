@@ -81,7 +81,6 @@ type CategoryProductRequest struct {
 // ------------------------------------------ API Handlers ------------------------------------------
 
 // --- Public API ---
-
 // getCategoriesHandler retrieves a list of Categories.
 // @Summary Get a list of Categories
 // @Description Get a list of Categories
@@ -160,10 +159,10 @@ func (sv *Server) getCategoriesHandler(c *gin.Context) {
 					Description:  product.Description,
 					MinPrice:     minPrice.Float64,
 					MaxPrice:     price.Float64,
-					VariantCount: int32(product.VariantCount),
+					VariantCount: product.VariantCount,
 					Sku:          product.BaseSku,
 					ImgUrl:       product.ImgUrl,
-					ImgID:        product.ImgID,
+					ImgID:        product.ImgID.String(),
 				}
 			}
 			productChannel <- productsResp
@@ -310,11 +309,11 @@ func (sv *Server) getProductsByCategoryID(c *gin.Context) {
 			MinPrice:     minP.Float64,
 			MaxPrice:     maxP.Float64,
 			ImgUrl:       product.ImgUrl,
-			ImgID:        product.ImgID,
+			ImgID:        product.ImgID.String(),
 			Slug:         product.Slug,
 			CreatedAt:    product.CreatedAt.String(),
 			UpdatedAt:    product.UpdatedAt.String(),
-			VariantCount: int32(product.VariantCount),
+			VariantCount: product.VariantCount,
 		}
 	}
 	c.JSON(http.StatusOK, createSuccessResponse(
@@ -352,7 +351,6 @@ func (sv *Server) addCategoryHandler(c *gin.Context) {
 		return
 	}
 	params := repository.CreateCategoryParams{
-		ID:   uuid.New(),
 		Name: req.Name,
 		Slug: req.Slug,
 	}
@@ -522,7 +520,7 @@ func (sv *Server) getCategoryByID(c *gin.Context) {
 	c.JSON(http.StatusOK, createSuccessResponse(c, resp, "", nil, nil))
 }
 
-// updateCategory updates a Category.
+// updateCategoryHandler updates a Category.
 // @Summary Update a Category
 // @Description Update a Category
 // @ID update-Category
@@ -534,7 +532,7 @@ func (sv *Server) getCategoryByID(c *gin.Context) {
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /categories/{id} [put]
-func (sv *Server) updateCategory(c *gin.Context) {
+func (sv *Server) updateCategoryHandler(c *gin.Context) {
 	var param getCategoryParams
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
@@ -581,6 +579,18 @@ func (sv *Server) updateCategory(c *gin.Context) {
 	if req.Published != nil {
 		updateParam.Published = req.Published
 	}
+	msg := ""
+	var apiErr *ApiError
+	// remove old image
+	if oldImageID != nil && oldImageURL != nil {
+		msg, err = sv.uploadService.RemoveFile(c, *oldImageID)
+		if err != nil {
+			apiErr = &ApiError{
+				Code:    UploadFileCode,
+				Details: "Failed to remove old image",
+				Stack:   err.Error()}
+		}
+	}
 
 	imageID, imageURL := "", ""
 	if req.Image != nil {
@@ -592,16 +602,6 @@ func (sv *Server) updateCategory(c *gin.Context) {
 		updateParam.ImageID = &imageID
 		updateParam.ImageUrl = &imageURL
 	}
-
-	// remove old image
-	if oldImageID != nil && oldImageURL != nil {
-		msg, err := sv.uploadService.RemoveFile(c, *oldImageID)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](UploadFileCode, msg, err))
-			return
-		}
-	}
-
 	col, err := sv.repo.UpdateCategory(c, updateParam)
 
 	if err != nil {
@@ -609,7 +609,7 @@ func (sv *Server) updateCategory(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(c, col, "", nil, nil))
+	c.JSON(http.StatusOK, createSuccessResponse(c, col, msg, nil, apiErr))
 }
 
 // deleteCategory delete a Category.

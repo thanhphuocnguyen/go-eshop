@@ -1,6 +1,6 @@
 CREATE TABLE
     "carts" (
-        "id" UUID NOT NULL PRIMARY KEY,
+        "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         "user_id" UUID REFERENCES "users" ("id") ON DELETE CASCADE,
         "session_id" VARCHAR(255),
         "order_id" UUID REFERENCES "orders" ("id") ON DELETE SET NULL,
@@ -10,7 +10,7 @@ CREATE TABLE
 
 CREATE TABLE
     cart_items (
-        id UUID PRIMARY KEY,
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         cart_id UUID NOT NULL REFERENCES "carts" ("id") ON DELETE CASCADE,
         variant_id UUID NOT NULL REFERENCES "product_variants" ("id") ON DELETE CASCADE,
         quantity smallint NOT NULL DEFAULT 1 CHECK ("quantity" > 0),

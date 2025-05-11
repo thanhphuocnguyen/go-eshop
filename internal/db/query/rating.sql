@@ -1,5 +1,5 @@
 -- name: InsertProductRating :one
-INSERT INTO product_ratings (id,product_id,user_id,order_item_id,rating,review_title,review_content,verified_purchase) VALUES ($1, $2, $3, $4, $5,$6,$7,$8) RETURNING *;
+INSERT INTO product_ratings (product_id,user_id,order_item_id,rating,review_title,review_content,verified_purchase) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
 
 -- name: UpdateProductRating :one
 UPDATE product_ratings SET 
@@ -70,7 +70,7 @@ SELECT COUNT(*) FROM rating_votes WHERE rating_id = $1 AND is_helpful = TRUE;
 SELECT COUNT(*) FROM rating_votes WHERE user_id = $1 AND is_helpful = TRUE;
 
 -- name: InsertRatingReply :one
-INSERT INTO rating_replies (id, rating_id, reply_by, content) VALUES ($1, $2, $3, $4) RETURNING *;
+INSERT INTO rating_replies (rating_id, reply_by, content) VALUES ($1, $2, $3) RETURNING *;
 
 -- name: UpdateRatingReplies :one
 UPDATE rating_replies SET 

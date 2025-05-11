@@ -1,6 +1,6 @@
 CREATE TABLE
     "categories" (
-        "id" UUID PRIMARY KEY,
+        "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         "name" VARCHAR UNIQUE NOT NULL,
         "description" TEXT,
         "image_url" TEXT,
@@ -15,7 +15,7 @@ CREATE TABLE
 
 CREATE TABLE
     collections (
-        "id" UUID PRIMARY KEY,
+        "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         "name" VARCHAR(255) UNIQUE NOT NULL,
         "image_url" TEXT,
         "image_id" VARCHAR,
@@ -30,7 +30,7 @@ CREATE TABLE
 
 CREATE TABLE
     brands (
-        "id" UUID PRIMARY KEY,
+        "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         "name" VARCHAR(255) UNIQUE NOT NULL,
         "image_url" TEXT,
         "image_id" VARCHAR,

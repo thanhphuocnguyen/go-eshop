@@ -75,7 +75,6 @@ func (sv *Server) addCollectionHandler(c *gin.Context) {
 		return
 	}
 	createParams := repository.CreateCollectionParams{
-		ID:   uuid.New(),
 		Name: req.Name,
 		Slug: req.Slug,
 	}

@@ -12,7 +12,7 @@ import { toast } from 'react-toastify';
 import { PencilIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
 import { getCookie } from 'cookies-next';
 import { z } from 'zod';
-import { KeyedMutator } from 'swr';
+import { useRouter } from 'next/navigation';
 
 // Profile form schema
 const profileSchema = z.object({
@@ -28,14 +28,11 @@ const profileSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
 interface PersonalInfoTabProps {
-  userData: UserModel | undefined;
-  mutate: KeyedMutator<UserModel>;
+  userData: UserModel | null;
 }
 
-export default function PersonalInfoTab({
-  userData,
-  mutate,
-}: PersonalInfoTabProps) {
+export default function PersonalInfoTab({ userData }: PersonalInfoTabProps) {
+  const router = useRouter();
   const [editMode, setEditMode] = useState(false);
   const [isSendingVerification, setIsSendingVerification] = useState(false);
 
@@ -89,8 +86,7 @@ export default function PersonalInfoTab({
         toast.error('Failed to update profile: ' + response.error.details);
         return;
       }
-
-      await mutate();
+      router.refresh();
       toast.success('Profile updated successfully');
       setEditMode(false);
     } catch (error) {

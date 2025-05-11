@@ -17,7 +17,6 @@ import {
 } from './_lib/definitions';
 import Image from 'next/image';
 import { TrashIcon } from '@heroicons/react/24/solid';
-import { useAppUser } from '@/lib/contexts/AppUserContext';
 import { useEffect, useState } from 'react';
 import { CheckIcon } from '@heroicons/react/24/outline';
 import { redirect, RedirectType, useRouter } from 'next/navigation';
@@ -26,8 +25,10 @@ import { PUBLIC_API_PATHS } from '@/lib/constants/api';
 import { GenericResponse } from '@/lib/definitions';
 import { toast } from 'react-toastify';
 import { useCartCtx } from '@/lib/contexts/CartContext';
+import { getUserCache } from '@/lib/cache/user';
 
-export default function CheckoutPage() {
+export default async function CheckoutPage() {
+  const user = await getUserCache();
   const router = useRouter();
   const [isNewAddress, setIsNewAddress] = useState(true);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(
@@ -50,7 +51,6 @@ export default function CheckoutPage() {
         terms_accepted: false,
       },
     });
-  const { user } = useAppUser();
   const { cart } = useCartCtx();
 
   const paymentMethod = useWatch({ control, name: 'payment_method' });

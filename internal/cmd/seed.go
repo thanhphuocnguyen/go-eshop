@@ -154,7 +154,6 @@ func seedProducts(ctx context.Context, repo repository.Repository) {
 	log.Info().Int("product count: %d", len(products))
 	for _, product := range products {
 		params := repository.CreateProductParams{
-			ID:          uuid.New(),
 			Name:        product.Name,
 			Description: product.Description,
 			BasePrice:   utils.GetPgNumericFromFloat(product.Price),
@@ -249,7 +248,6 @@ func seedUsers(ctx context.Context, pg repository.Repository) {
 		usrID := uuid.New()
 		userIDs[i] = usrID
 		params[i] = repository.SeedUsersParams{
-			ID:             usrID,
 			Email:          user.Email,
 			Username:       user.Username,
 			Phone:          user.Phone,

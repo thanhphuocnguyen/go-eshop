@@ -15,7 +15,6 @@ import { GenericResponse, LoginResponse } from '@/lib/definitions';
 import { PUBLIC_API_PATHS } from '@/lib/constants/api';
 import { useState } from 'react';
 import { setCookie } from 'cookies-next/client';
-import { useAppUser } from '@/lib/contexts/AppUserContext';
 
 // Login form schema
 const loginSchema = z
@@ -46,7 +45,6 @@ type LoginMethod = 'email' | 'username';
 
 export default function LoginFormComponent() {
   const router = useRouter();
-  const { setIsLoggedIn } = useAppUser();
   const [loginMethod, setLoginMethod] = useState<LoginMethod>('email');
 
   const form = useForm<LoginForm>({
@@ -111,7 +109,7 @@ export default function LoginFormComponent() {
       setCookie('refresh_token', result.data.refresh_token, {
         expires: new Date(result.data.refresh_token_expires_at),
       });
-      setIsLoggedIn(true);
+
       toast.success('Login successful!');
       router.refresh();
       router.push('/');

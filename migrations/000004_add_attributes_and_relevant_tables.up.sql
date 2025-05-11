@@ -1,7 +1,7 @@
 -- Create attributes table
 CREATE TABLE
     attributes (
-        id SERIAL PRIMARY KEY,
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         "name" VARCHAR(100) UNIQUE NOT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW ()
     );
@@ -9,8 +9,8 @@ CREATE TABLE
 -- Create attribute_values table
 CREATE TABLE
     attribute_values (
-        id SERIAL PRIMARY KEY,
-        attribute_id INT NOT NULL REFERENCES attributes (id) ON DELETE CASCADE,
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        attribute_id UUID NOT NULL REFERENCES attributes (id) ON DELETE CASCADE,
         "name" VARCHAR NOT NULL UNIQUE,
         code VARCHAR NOT NULL UNIQUE,
         is_active BOOLEAN DEFAULT TRUE,

@@ -6,17 +6,15 @@ import { ArrowUpTrayIcon, ShoppingBagIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { deleteCookie } from 'cookies-next/client';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
 import React from 'react';
-import { useAppUser } from '../../lib/contexts/AppUserContext';
+import { UserModel } from '@/lib/definitions';
 
-const AuthButtons: React.FC<{ isLogin: boolean }> = ({ isLogin }) => {
-  const { user, mutateUser, setIsLoggedIn } = useAppUser();
+const AuthButtons: React.FC<{ user: UserModel | null }> = ({ user }) => {
+  const router = useRouter();
+
   const logout = () => {
-    mutateUser?.(undefined, {
-      revalidate: false,
-    });
-    setIsLoggedIn(false);
+    router.refresh();
     deleteCookie('access_token');
     deleteCookie('refresh_token');
     redirect('/login');
@@ -24,7 +22,7 @@ const AuthButtons: React.FC<{ isLogin: boolean }> = ({ isLogin }) => {
 
   return (
     <>
-      {isLogin ? (
+      {user ? (
         <Menu>
           <MenuButton className='inline-flex items-center gap-2 rounded-md bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-md hover:bg-indigo-700 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2'>
             {({ active }) => (

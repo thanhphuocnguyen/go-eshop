@@ -27,24 +27,22 @@ func (q *Queries) CountCollections(ctx context.Context) (int64, error) {
 
 const createCollection = `-- name: CreateCollection :one
 INSERT INTO collections 
-    (id, name, slug, description, image_url, image_id)
+    (name, slug, description, image_url, image_id)
 VALUES 
-    ($1, $2, $3, $4, $5, $6)
+    ($1, $2, $3, $4, $5)
 RETURNING id, name, image_url, image_id, description, slug, remarkable, display_order, published, created_at, updated_at
 `
 
 type CreateCollectionParams struct {
-	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	Slug        string    `json:"slug"`
-	Description *string   `json:"description"`
-	ImageUrl    *string   `json:"image_url"`
-	ImageID     *string   `json:"image_id"`
+	Name        string  `json:"name"`
+	Slug        string  `json:"slug"`
+	Description *string `json:"description"`
+	ImageUrl    *string `json:"image_url"`
+	ImageID     *string `json:"image_id"`
 }
 
 func (q *Queries) CreateCollection(ctx context.Context, arg CreateCollectionParams) (Collection, error) {
 	row := q.db.QueryRow(ctx, createCollection,
-		arg.ID,
 		arg.Name,
 		arg.Slug,
 		arg.Description,
@@ -139,7 +137,7 @@ type GetCollectionByIDWithProductsRow struct {
 	ProductPrice       pgtype.Numeric `json:"product_price"`
 	ProductSku         *string        `json:"product_sku"`
 	ProductSlug        *string        `json:"product_slug"`
-	ImageID_2          *int32         `json:"image_id_2"`
+	ImageID_2          pgtype.UUID    `json:"image_id_2"`
 	ProductImageUrl    *string        `json:"product_image_url"`
 }
 
@@ -293,7 +291,7 @@ type GetCollectionsByIDsRow struct {
 	ProductPrice  pgtype.Numeric `json:"product_price"`
 	ProductSku    *string        `json:"product_sku"`
 	ProductSlug   *string        `json:"product_slug"`
-	ImageID_2     *int32         `json:"image_id_2"`
+	ImageID_2     pgtype.UUID    `json:"image_id_2"`
 	Url           *string        `json:"url"`
 }
 

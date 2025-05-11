@@ -1,6 +1,6 @@
 CREATE TABLE
     payments (
-        id UUID PRIMARY KEY,
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         order_id UUID NOT NULL REFERENCES orders (id) ON DELETE CASCADE,
         amount DECIMAL(10, 2) NOT NULL,
         status payment_status NOT NULL DEFAULT 'pending', -- Pending, Success, Failed
@@ -17,7 +17,7 @@ CREATE TABLE
 
 CREATE TABLE
     payment_transactions (
-        id UUID PRIMARY KEY,
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         payment_id UUID NOT NULL REFERENCES payments (id) ON DELETE CASCADE,
         amount DECIMAL(10, 2) NOT NULL,
         status payment_status NOT NULL DEFAULT 'pending', -- Pending, Success, Failed

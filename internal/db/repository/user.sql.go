@@ -88,20 +88,19 @@ func (q *Queries) CreateAddress(ctx context.Context, arg CreateAddressParams) (U
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO
-    users (id,email,username,phone,fullname,hashed_password,role)
+    users (email, username, phone, fullname, hashed_password,role)
 VALUES
-    ($1,$2,$3,$4,$5,$6,$7)
+    ($1, $2, $3, $4, $5, $6)
 RETURNING id, email, username, fullname, role, verified_email, verified_phone, created_at, updated_at
 `
 
 type CreateUserParams struct {
-	ID             uuid.UUID `json:"id"`
-	Email          string    `json:"email"`
-	Username       string    `json:"username"`
-	Phone          string    `json:"phone"`
-	Fullname       string    `json:"fullname"`
-	HashedPassword string    `json:"hashed_password"`
-	Role           UserRole  `json:"role"`
+	Email          string   `json:"email"`
+	Username       string   `json:"username"`
+	Phone          string   `json:"phone"`
+	Fullname       string   `json:"fullname"`
+	HashedPassword string   `json:"hashed_password"`
+	Role           UserRole `json:"role"`
 }
 
 type CreateUserRow struct {
@@ -118,7 +117,6 @@ type CreateUserRow struct {
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
 	row := q.db.QueryRow(ctx, createUser,
-		arg.ID,
 		arg.Email,
 		arg.Username,
 		arg.Phone,
@@ -178,7 +176,7 @@ WHERE
 `
 
 type DeleteAddressParams struct {
-	ID     int64     `json:"id"`
+	ID     uuid.UUID `json:"id"`
 	UserID uuid.UUID `json:"user_id"`
 }
 
@@ -207,7 +205,7 @@ LIMIT 1
 `
 
 type GetAddressParams struct {
-	ID     int64     `json:"id"`
+	ID     uuid.UUID `json:"id"`
 	UserID uuid.UUID `json:"user_id"`
 }
 
@@ -390,7 +388,7 @@ const getVerifyEmailByID = `-- name: GetVerifyEmailByID :one
 SELECT id, user_id, email, verify_code, is_used, created_at, expired_at FROM verify_emails WHERE id = $1
 `
 
-func (q *Queries) GetVerifyEmailByID(ctx context.Context, id int32) (VerifyEmail, error) {
+func (q *Queries) GetVerifyEmailByID(ctx context.Context, id uuid.UUID) (VerifyEmail, error) {
 	row := q.db.QueryRow(ctx, getVerifyEmailByID, id)
 	var i VerifyEmail
 	err := row.Scan(
@@ -491,13 +489,12 @@ type SeedAddressesParams struct {
 }
 
 type SeedUsersParams struct {
-	ID             uuid.UUID `json:"id"`
-	Email          string    `json:"email"`
-	Username       string    `json:"username"`
-	Phone          string    `json:"phone"`
-	Fullname       string    `json:"fullname"`
-	HashedPassword string    `json:"hashed_password"`
-	Role           UserRole  `json:"role"`
+	Email          string   `json:"email"`
+	Username       string   `json:"username"`
+	Phone          string   `json:"phone"`
+	Fullname       string   `json:"fullname"`
+	HashedPassword string   `json:"hashed_password"`
+	Role           UserRole `json:"role"`
 }
 
 const setPrimaryAddress = `-- name: SetPrimaryAddress :exec
@@ -511,7 +508,7 @@ WHERE
 
 type SetPrimaryAddressParams struct {
 	Default bool      `json:"default"`
-	ID      int64     `json:"id"`
+	ID      uuid.UUID `json:"id"`
 	UserID  uuid.UUID `json:"user_id"`
 }
 
@@ -542,7 +539,7 @@ type UpdateAddressParams struct {
 	District *string   `json:"district"`
 	City     *string   `json:"city"`
 	Default  *bool     `json:"default"`
-	ID       int64     `json:"id"`
+	ID       uuid.UUID `json:"id"`
 	UserID   uuid.UUID `json:"user_id"`
 }
 
@@ -653,8 +650,8 @@ RETURNING id, user_id, email, verify_code, is_used, created_at, expired_at
 `
 
 type UpdateVerifyEmailParams struct {
-	ID         int32  `json:"id"`
-	VerifyCode string `json:"verify_code"`
+	ID         uuid.UUID `json:"id"`
+	VerifyCode string    `json:"verify_code"`
 }
 
 func (q *Queries) UpdateVerifyEmail(ctx context.Context, arg UpdateVerifyEmailParams) (VerifyEmail, error) {

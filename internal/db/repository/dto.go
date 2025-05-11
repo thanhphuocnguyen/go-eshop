@@ -3,9 +3,8 @@ package repository
 import "github.com/google/uuid"
 
 type ProductAttributesTxParam struct {
-	// AttributeID int32 `json:"attribute_id" binding:"required"`
-	ID      int32 `json:"id" binding:"required"`
-	ValueID int32 `json:"value_id" binding:"required"`
+	ID      string `json:"id" binding:"required,uuid"`
+	ValueID string `json:"value_id" binding:"required,uuid"`
 }
 
 type CreateProductVariantTxParams struct {

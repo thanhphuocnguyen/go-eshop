@@ -1,22 +1,22 @@
 -- name: CreateProduct :one
 INSERT INTO products 
-    (id, name, description, short_description, base_price, base_sku, slug, attributes, brand_id, collection_id, category_id) 
+    (name, description, short_description, base_price, base_sku, slug, attributes, brand_id, collection_id, category_id) 
 VALUES 
-    ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+    ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 RETURNING *;
 
 -- name: CreateProductVariant :one
 INSERT INTO product_variants
-    (id, product_id, description, sku, price, stock, weight)
+    (product_id, description, sku, price, stock, weight)
 VALUES
-    ($1, $2, $3, $4, $5, $6, $7)
+    ($1, $2, $3, $4, $5, $6)
 RETURNING *;
 
 -- name: CreateBulkProductVariants :copyfrom
 INSERT INTO product_variants 
-    (id, product_id, sku, price, stock, weight) 
+    (product_id, sku, price, stock, weight) 
 VALUES 
-    ($1, $2, $3, $4, $5, $6);
+    ($1, $2, $3, $4, $5);
 
 -- name: GetProductByID :one
 SELECT
@@ -207,7 +207,7 @@ WHERE
     id = $2;
 
 -- name: AddBulkProducts :copyfrom
-INSERT INTO products (id, category_id, collection_id, brand_id, name, description) VALUES ($1, $2, $3, $4, $5, $6);
+INSERT INTO products (category_id, collection_id, brand_id, name, description) VALUES ($1, $2, $3, $4, $5);
 
 -- name: UpdateProductStock :one
 UPDATE

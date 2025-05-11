@@ -124,7 +124,9 @@ export default function Page({
       <Fieldset
         as='form'
         className='w-full'
-        onSubmit={handleSubmit(submitHandler)}
+        onSubmit={handleSubmit(submitHandler, (err) => {
+          console.log(err);
+        })}
       >
         <FormProvider {...form}>
           <div className='flex justify-between mb-5'>

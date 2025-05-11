@@ -25,24 +25,22 @@ func (q *Queries) CountCategories(ctx context.Context) (int64, error) {
 
 const createCategory = `-- name: CreateCategory :one
 INSERT INTO categories
-    (id, name, slug, description, image_url, image_id)
+    (name, slug, description, image_url, image_id)
 VALUES
-    ($1, $2, $3, $4, $5, $6)
+    ($1, $2, $3, $4, $5)
 RETURNING id, name, description, image_url, image_id, published, remarkable, slug, display_order, created_at, updated_at
 `
 
 type CreateCategoryParams struct {
-	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	Slug        string    `json:"slug"`
-	Description *string   `json:"description"`
-	ImageUrl    *string   `json:"image_url"`
-	ImageID     *string   `json:"image_id"`
+	Name        string  `json:"name"`
+	Slug        string  `json:"slug"`
+	Description *string `json:"description"`
+	ImageUrl    *string `json:"image_url"`
+	ImageID     *string `json:"image_id"`
 }
 
 func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) (Category, error) {
 	row := q.db.QueryRow(ctx, createCategory,
-		arg.ID,
 		arg.Name,
 		arg.Slug,
 		arg.Description,

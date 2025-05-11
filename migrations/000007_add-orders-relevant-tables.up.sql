@@ -1,6 +1,6 @@
 CREATE TABLE
     "orders" (
-        "id" UUID NOT NULL PRIMARY KEY,
+        "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         "customer_id" UUID NOT NULL REFERENCES "users" ("id"),
         "customer_email" VARCHAR(255) NOT NULL,
         "customer_name" VARCHAR(255) NOT NULL,
@@ -20,7 +20,7 @@ CREATE TABLE
 
 CREATE TABLE
     "order_items" (
-        "id" UUID PRIMARY KEY,
+        "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         "order_id" UUID NOT NULL REFERENCES "orders" ("id") ON DELETE CASCADE,
         "variant_id" UUID NOT NULL REFERENCES "product_variants" ("id") ON DELETE CASCADE,
         "quantity" SMALLINT NOT NULL DEFAULT 1,

@@ -1,5 +1,5 @@
 -- name: CreateCart :one
-INSERT INTO carts (id, user_id, session_id) VALUES ($1, $2, $3) RETURNING *;
+INSERT INTO carts (user_id, session_id) VALUES ($1, $2) RETURNING *;
 
 -- name: GetCart :one
 SELECT *

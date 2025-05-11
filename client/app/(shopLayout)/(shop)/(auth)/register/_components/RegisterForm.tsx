@@ -48,7 +48,7 @@ export default function RegisterFormComponent() {
       if (data) {
         toast.success('Registration successful! Please sign in.');
         router.refresh();
-        router.push('/');
+        router.push('/login');
       }
 
       // Optionally auto-login after registration

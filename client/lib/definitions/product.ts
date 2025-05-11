@@ -58,7 +58,7 @@ export const BaseAttributeFormSchema = z.object({
 
 export const AttributeFormSchema = BaseAttributeFormSchema.extend({
   values: BaseAttributeValueFormSchema.extend({
-    id: z.number().optional(),
+    id: z.string().optional(),
   })
     .array()
     .min(1, {
@@ -69,7 +69,7 @@ export const AttributeFormSchema = BaseAttributeFormSchema.extend({
 export const ProductVariantAttributeFormSchema = BaseAttributeFormSchema.extend(
   {
     value_object: BaseAttributeValueFormSchema.extend({
-      id: z.number().min(1, {
+      id: z.string().uuid({
         message: 'Value is required',
       }),
     }),
@@ -77,7 +77,7 @@ export const ProductVariantAttributeFormSchema = BaseAttributeFormSchema.extend(
 );
 
 export const VariantFormSchema = z.object({
-  id: z.string().optional(),
+  id: z.string().uuid().optional(),
   price: z.coerce.number().gt(0),
   stock_qty: z.coerce.number().gte(0),
   sku: z.string().optional().readonly(),
@@ -90,7 +90,7 @@ export const VariantFormSchema = z.object({
     .nullish(),
   is_active: z.boolean(),
   attributes: ProductVariantAttributeFormSchema.extend({
-    id: z.number().optional(),
+    id: z.string().uuid().optional(),
   }).array(),
 });
 
@@ -132,7 +132,7 @@ export type AttributeValueFormModel = z.infer<
 >;
 
 export type AttributeValueDetailModel = {
-  id: number;
+  id: string;
   name: string;
   code: string;
   display_order: number;
@@ -142,7 +142,7 @@ export type AttributeValueDetailModel = {
 };
 
 export type AttributeDetailModel = {
-  id: number;
+  id: string;
   name: string;
   values: AttributeValueDetailModel[];
   created_at: Date;

@@ -45,7 +45,7 @@ const deleteRatingVotes = `-- name: DeleteRatingVotes :exec
 DELETE FROM rating_votes WHERE id = $1
 `
 
-func (q *Queries) DeleteRatingVotes(ctx context.Context, id int32) error {
+func (q *Queries) DeleteRatingVotes(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteRatingVotes, id)
 	return err
 }
@@ -328,7 +328,7 @@ const getRatingVotes = `-- name: GetRatingVotes :one
 SELECT id, rating_id, user_id, is_helpful, created_at, updated_at FROM rating_votes WHERE id = $1
 `
 
-func (q *Queries) GetRatingVotes(ctx context.Context, id int32) (RatingVote, error) {
+func (q *Queries) GetRatingVotes(ctx context.Context, id uuid.UUID) (RatingVote, error) {
 	row := q.db.QueryRow(ctx, getRatingVotes, id)
 	var i RatingVote
 	err := row.Scan(
@@ -427,11 +427,10 @@ func (q *Queries) GetRatingVotesCountByUserID(ctx context.Context, userID uuid.U
 }
 
 const insertProductRating = `-- name: InsertProductRating :one
-INSERT INTO product_ratings (id,product_id,user_id,order_item_id,rating,review_title,review_content,verified_purchase) VALUES ($1, $2, $3, $4, $5,$6,$7,$8) RETURNING id, product_id, user_id, order_item_id, rating, review_title, review_content, verified_purchase, is_visible, is_approved, helpful_votes, unhelpful_votes, created_at, updated_at
+INSERT INTO product_ratings (product_id,user_id,order_item_id,rating,review_title,review_content,verified_purchase) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, product_id, user_id, order_item_id, rating, review_title, review_content, verified_purchase, is_visible, is_approved, helpful_votes, unhelpful_votes, created_at, updated_at
 `
 
 type InsertProductRatingParams struct {
-	ID               uuid.UUID      `json:"id"`
 	ProductID        uuid.UUID      `json:"product_id"`
 	UserID           uuid.UUID      `json:"user_id"`
 	OrderItemID      pgtype.UUID    `json:"order_item_id"`
@@ -443,7 +442,6 @@ type InsertProductRatingParams struct {
 
 func (q *Queries) InsertProductRating(ctx context.Context, arg InsertProductRatingParams) (ProductRating, error) {
 	row := q.db.QueryRow(ctx, insertProductRating,
-		arg.ID,
 		arg.ProductID,
 		arg.UserID,
 		arg.OrderItemID,
@@ -473,23 +471,17 @@ func (q *Queries) InsertProductRating(ctx context.Context, arg InsertProductRati
 }
 
 const insertRatingReply = `-- name: InsertRatingReply :one
-INSERT INTO rating_replies (id, rating_id, reply_by, content) VALUES ($1, $2, $3, $4) RETURNING id, rating_id, reply_by, content, is_visible, created_at, updated_at
+INSERT INTO rating_replies (rating_id, reply_by, content) VALUES ($1, $2, $3) RETURNING id, rating_id, reply_by, content, is_visible, created_at, updated_at
 `
 
 type InsertRatingReplyParams struct {
-	ID       uuid.UUID `json:"id"`
 	RatingID uuid.UUID `json:"rating_id"`
 	ReplyBy  uuid.UUID `json:"reply_by"`
 	Content  string    `json:"content"`
 }
 
 func (q *Queries) InsertRatingReply(ctx context.Context, arg InsertRatingReplyParams) (RatingReply, error) {
-	row := q.db.QueryRow(ctx, insertRatingReply,
-		arg.ID,
-		arg.RatingID,
-		arg.ReplyBy,
-		arg.Content,
-	)
+	row := q.db.QueryRow(ctx, insertRatingReply, arg.RatingID, arg.ReplyBy, arg.Content)
 	var i RatingReply
 	err := row.Scan(
 		&i.ID,
@@ -618,8 +610,8 @@ WHERE id = $1 RETURNING id, rating_id, user_id, is_helpful, created_at, updated_
 `
 
 type UpdateRatingVotesParams struct {
-	ID        int32 `json:"id"`
-	IsHelpful *bool `json:"is_helpful"`
+	ID        uuid.UUID `json:"id"`
+	IsHelpful *bool     `json:"is_helpful"`
 }
 
 func (q *Queries) UpdateRatingVotes(ctx context.Context, arg UpdateRatingVotesParams) (RatingVote, error) {
