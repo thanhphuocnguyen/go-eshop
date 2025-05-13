@@ -1,10 +1,10 @@
 'use client';
-import { AttributeDetailModel, VariantDetailModel } from '@/lib/definitions';
+import { AttributeDetailModel, VariantDetailModel } from '@/app/lib/definitions';
 import { Button } from '@headlessui/react';
 import clsx from 'clsx';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
-import { useCartCtx } from '@/lib/contexts/CartContext';
+import { useCartCtx } from '@/app/lib/contexts/CartContext';
 
 interface AttributesSectionProps {
   variants: VariantDetailModel[];

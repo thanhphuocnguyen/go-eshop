@@ -7,18 +7,20 @@ import {
 } from '@heroicons/react/24/outline';
 import { ChevronUpIcon } from '@heroicons/react/16/solid';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import { deleteCookie } from 'cookies-next';
 import { redirect, useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import Link from 'next/link';
-import { useUser } from '@/lib/hooks/useUser';
+import { useUser } from '@/app/lib/hooks/useUser';
+import { logoutAction } from '@/app/actions/auth';
 
 export default function AdminNavbar() {
   const { user } = useUser();
   const router = useRouter();
   const logout = async () => {
-    deleteCookie('access_token');
-    deleteCookie('refresh_token');
+    await logoutAction();
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('session_id');
     router.refresh();
     redirect('/login');
   };

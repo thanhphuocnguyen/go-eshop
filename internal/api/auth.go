@@ -25,9 +25,9 @@ type RegisterRequestBody struct {
 }
 
 type LoginRequest struct {
-	Username *string `json:"username" binding:"omitempty,min=3,max=32"`
-	Email    *string `json:"email" binding:"omitempty,email,max=255,min=6"`
-	Password string  `json:"password" binding:"required,min=6,max=32"`
+	Username *string `form:"username" binding:"omitempty,min=3,max=32"`
+	Email    *string `form:"email" binding:"omitempty,email,max=255,min=6"`
+	Password string  `form:"password" binding:"required,min=6,max=32"`
 }
 
 type LoginResponse struct {
@@ -175,7 +175,7 @@ func (sv *Server) registerHandler(c *gin.Context) {
 // @Router /users/loginHandler [post]
 func (sv *Server) loginHandler(c *gin.Context) {
 	var req LoginRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[LoginResponse](InvalidBodyCode, "", err))
 		return
 	}

@@ -2,7 +2,7 @@
 
 import { TextField } from '@/components/FormFields';
 import { Button, Fieldset } from '@headlessui/react';
-import { UserModel } from '@/lib/definitions/user';
+import { UserModel } from '@/app/lib/definitions/user';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';

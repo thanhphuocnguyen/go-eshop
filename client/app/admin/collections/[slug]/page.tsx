@@ -1,6 +1,6 @@
 'use client';
 
-import { ADMIN_API_PATHS } from '@/lib/constants/api';
+import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { use } from 'react';
 import { toast } from 'react-toastify';
 import Link from 'next/link';
@@ -8,9 +8,9 @@ import { ArrowLeftCircleIcon } from '@heroicons/react/24/outline';
 import { CategoryEditForm } from '../../_components/CategoryEditForm';
 import useSWR from 'swr';
 import Loading from '@/app/loading';
-import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
+import { GeneralCategoryModel } from '@/app/lib/definitions';
 import CategoryProductList from '../../_components/CategoryProductList';
-import { apiFetch } from '@/lib/apis/api';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
 
 export default function AdminCollectionDetail({
   params,
@@ -21,10 +21,7 @@ export default function AdminCollectionDetail({
   const { data: category, isLoading } = useSWR(
     ADMIN_API_PATHS.COLLECTION.replace(':id', slug),
     async (url) => {
-      const response = await apiFetch<GenericResponse<GeneralCategoryModel>>(
-        url,
-        {}
-      );
+      const response = await apiFetchClientSide<GeneralCategoryModel>(url, {});
       if (response.error) {
         toast('Failed to fetch category', { type: 'error' });
         return;
@@ -34,7 +31,7 @@ export default function AdminCollectionDetail({
   );
 
   async function handleSave(data: FormData) {
-    const response = await apiFetch<GenericResponse<number>>(
+    const response = await apiFetchClientSide<number>(
       ADMIN_API_PATHS.COLLECTION.replace(':id', slug),
       {
         method: 'PUT',

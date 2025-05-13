@@ -1,4 +1,4 @@
-import { GeneralCategoryModel } from '@/lib/definitions';
+import { GeneralCategoryModel } from '@/app/lib/definitions';
 import Image from 'next/image';
 import Link from 'next/link';
 

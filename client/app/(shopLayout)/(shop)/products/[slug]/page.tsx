@@ -1,6 +1,5 @@
-import { apiFetch } from '@/lib/apis/api';
-import { PUBLIC_API_PATHS } from '@/lib/constants/api';
-import { GenericResponse, ProductDetailModel } from '@/lib/definitions';
+import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
+import { ProductDetailModel } from '@/app/lib/definitions';
 import {
   CurrencyDollarIcon,
   GlobeAsiaAustraliaIcon,
@@ -14,13 +13,14 @@ import {
   ReviewsList,
 } from './_components';
 import { Metadata } from 'next';
+import { apiFetchServerSide } from '@/app/lib/apis/apiServer';
 
 type Props = {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 export const getProduct = cache(async (slug: string) => {
-  const { data, error } = await apiFetch<GenericResponse<ProductDetailModel>>(
+  const { data, error } = await apiFetchServerSide<ProductDetailModel>(
     PUBLIC_API_PATHS.PRODUCT_DETAIL.replace(':id', slug),
     {
       nextOptions: {

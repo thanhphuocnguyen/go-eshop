@@ -4,22 +4,22 @@ import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { ChevronDownIcon, UserIcon } from '@heroicons/react/16/solid';
 import { ArrowUpTrayIcon, ShoppingBagIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
-import { deleteCookie } from 'cookies-next/client';
 import Link from 'next/link';
 import { redirect, useRouter } from 'next/navigation';
 import React from 'react';
-import { useUser } from '@/lib/hooks/useUser';
+import { useUser } from '@/app/lib/hooks/useUser';
+import { logoutAction } from '@/app/actions/auth';
 
-const AuthButtons: React.FC<{ accessToken: string | undefined }> = ({
-  accessToken,
-}) => {
+const AuthButtons: React.FC<{ accessToken: string | undefined }> = ({}) => {
   const { user, isLoading } = useUser();
   const router = useRouter();
 
-  const logout = () => {
+  const logout = async () => {
+    await logoutAction();
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('session_id');
     router.refresh();
-    deleteCookie('access_token');
-    deleteCookie('refresh_token');
     redirect('/login');
   };
   if (isLoading) {

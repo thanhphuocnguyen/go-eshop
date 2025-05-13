@@ -10,7 +10,7 @@ import { useCollections } from '../../_lib/hooks/useCollections';
 import { useBrands } from '../../_lib/hooks/useBrands';
 import { useAttributes } from '../../_lib/hooks/useAttributes';
 import { useCategories } from '../../_lib/hooks/useCategories';
-import { ProductDetailModel, ProductModelForm } from '@/lib/definitions';
+import { ProductDetailModel, ProductModelForm } from '@/app/lib/definitions';
 import { useFormContext } from 'react-hook-form';
 import clsx from 'clsx';
 import { ProductImagesUploader } from './ProductImagesUploader';

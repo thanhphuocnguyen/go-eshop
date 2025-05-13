@@ -1,6 +1,6 @@
-import { apiFetch } from '@/lib/apis/api';
-import { ADMIN_API_PATHS } from '@/lib/constants/api';
-import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
+import { GeneralCategoryModel } from '@/app/lib/definitions';
 import { toast } from 'react-toastify';
 import useSWR from 'swr';
 
@@ -8,7 +8,7 @@ export function useBrands() {
   const { data, error, mutate } = useSWR(
     ADMIN_API_PATHS.BRANDS,
     (url) =>
-      apiFetch<GenericResponse<GeneralCategoryModel[]>>(url, {
+      apiFetchClientSide<GeneralCategoryModel[]>(url, {
         method: 'GET',
       }),
     {

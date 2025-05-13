@@ -1,5 +1,5 @@
 'use client';
-import { useCartCtx } from '@/lib/contexts/CartContext';
+import { useCartCtx } from '@/app/lib/contexts/CartContext';
 import { ShoppingBagIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import Link from 'next/link';

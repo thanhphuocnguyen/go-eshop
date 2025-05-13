@@ -1,16 +1,16 @@
-import { apiFetch } from '@/lib/apis/api';
-import { PUBLIC_API_PATHS } from '@/lib/constants/api';
-import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
+import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
+import { GeneralCategoryModel } from '@/app/lib/definitions';
 import { Metadata } from 'next';
 import CategoryDetailClient from './_components/CategoryDetailClient';
 import { cache } from 'react';
+import { apiFetchServerSide } from '@/app/lib/apis/apiServer';
 
 interface CategoryPageProps {
   params: Promise<{ slug: string }>;
 }
 
 export const getCategory = cache(async (slug: string) => {
-  const { error, data } = await apiFetch<GenericResponse<GeneralCategoryModel>>(
+  const { error, data } = await apiFetchServerSide<GeneralCategoryModel>(
     PUBLIC_API_PATHS.CATEGORY.replace(':slug', slug),
     {
       nextOptions: {

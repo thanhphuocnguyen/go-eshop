@@ -4,9 +4,9 @@ import { useState, useEffect, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
 import LoadingInline from '@/components/Common/Loadings/LoadingInline';
 import { Breadcrumb } from '@/components/Common';
-import { apiFetch } from '@/lib/apis/api';
-import { ADMIN_API_PATHS } from '@/lib/constants/api';
-import { GenericResponse, Order } from '@/lib/definitions';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
+import { GenericResponse, Order } from '@/app/lib/definitions';
 import { Button, Menu, Transition } from '@headlessui/react';
 
 export default function AdminOrdersPage() {
@@ -29,7 +29,7 @@ export default function AdminOrdersPage() {
 
     try {
       // Adjust this API endpoint to your actual backend endpoint
-      const { data, error, pagination } = await apiFetch<
+      const { data, error, pagination } = await apiFetchClientSide<
         GenericResponse<Order[]>
       >(ADMIN_API_PATHS.ORDERS, {
         queryParams: {

@@ -1,7 +1,6 @@
-import { apiFetch } from '@/lib/apis/api';
-import { PUBLIC_API_PATHS } from '@/lib/constants/api';
-import { GenericResponse, OrderStatus } from '@/lib/definitions';
-import { OrderModel } from '@/lib/definitions/order';
+import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
+import { OrderStatus } from '@/app/lib/definitions';
+import { OrderModel } from '@/app/lib/definitions/order';
 import { ArrowRightIcon, ArrowLeftIcon } from '@heroicons/react/16/solid';
 import {
   CheckCircleIcon,
@@ -17,6 +16,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { cache } from 'react';
 import dynamic from 'next/dynamic';
+import { apiFetchServerSide } from '@/app/lib/apis/apiServer';
 
 // Import the client component with dynamic to avoid SSR issues
 const PaymentInfoSection = dynamic(
@@ -29,13 +29,16 @@ const ConfirmOrderButton = dynamic(
   { ssr: true }
 );
 
-const OrderItemRating = dynamic(() => import('././_components/OrderItemRating'), {
-  ssr: true,
-});
+const OrderItemRating = dynamic(
+  () => import('././_components/OrderItemRating'),
+  {
+    ssr: true,
+  }
+);
 
 export const getOrderDetails = cache(async (slug: string) => {
   const cookieStorage = await cookies();
-  const order = await apiFetch<GenericResponse<OrderModel>>(
+  const order = await apiFetchServerSide<OrderModel>(
     PUBLIC_API_PATHS.ORDER_ITEM.replace(':id', slug),
     {
       authToken: cookieStorage.get('access_token')?.value,

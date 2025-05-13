@@ -1,4 +1,4 @@
-import { HookFormProps } from '@/lib/definitions';
+import { HookFormProps } from '@/app/lib/definitions';
 import { Field, Input, Label } from '@headlessui/react';
 import clsx from 'clsx';
 import React from 'react';

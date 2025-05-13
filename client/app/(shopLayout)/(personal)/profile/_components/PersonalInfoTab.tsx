@@ -1,8 +1,8 @@
 'use client';
 
-import { apiFetch } from '@/lib/apis/api';
-import { PUBLIC_API_PATHS } from '@/lib/constants/api';
-import { GenericResponse, UserModel } from '@/lib/definitions';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
+import { GenericResponse, UserModel } from '@/app/lib/definitions';
 import { TextField } from '@/components/FormFields';
 import { Button, Fieldset } from '@headlessui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,10 +10,9 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import { PencilIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
-import { getCookie } from 'cookies-next';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@/lib/hooks/useUser';
+import { useUser } from '@/app/lib/hooks/useUser';
 
 // Profile form schema
 const profileSchema = z.object({
@@ -63,14 +62,10 @@ export default function PersonalInfoTab() {
   // Profile update handler
   const onProfileSubmit = async (data: ProfileFormValues) => {
     try {
-      const response = await apiFetch<GenericResponse<UserModel>>(
+      const response = await apiFetchClientSide<UserModel>(
         PUBLIC_API_PATHS.USER,
         {
           method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${getCookie('access_token')}`,
-          },
           body: {
             user_id: user?.id,
             fullname: data.fullname,
@@ -99,7 +94,7 @@ export default function PersonalInfoTab() {
 
     setIsSendingVerification(true);
     try {
-      const response = await apiFetch<GenericResponse<null>>(
+      const response = await apiFetchClientSide<GenericResponse<null>>(
         PUBLIC_API_PATHS.USER + '/send-verify-email',
         {
           method: 'POST',

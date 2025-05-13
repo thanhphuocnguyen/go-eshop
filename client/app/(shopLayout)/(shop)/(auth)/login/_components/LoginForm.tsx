@@ -10,11 +10,8 @@ import { TextField } from '@/components/FormFields';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
-import { apiFetch } from '@/lib/apis/api';
-import { GenericResponse, LoginResponse } from '@/lib/definitions';
-import { PUBLIC_API_PATHS } from '@/lib/constants/api';
 import { useState } from 'react';
-import { setCookie } from 'cookies-next/client';
+import { loginAction } from '@/app/actions/auth';
 
 // Login form schema
 const loginSchema = z
@@ -52,7 +49,7 @@ export default function LoginFormComponent() {
     defaultValues: {
       email: loginMethod === 'email' ? 'admin@eshop.com' : undefined,
       username: loginMethod === 'username' ? 'admin' : undefined,
-      password: 'admin123',
+      password: 'secret123',
     },
     mode: 'onChange',
   });
@@ -82,37 +79,28 @@ export default function LoginFormComponent() {
   };
 
   const onSubmit = async (data: LoginForm) => {
-    const result = await apiFetch<GenericResponse<LoginResponse>>(
-      PUBLIC_API_PATHS.LOGIN,
-      {
-        method: 'POST',
-        body: data,
-      }
-    );
+    const formData = new FormData();
+    if (loginMethod === 'email') {
+      formData.append('email', data.email || '');
+    } else {
+      formData.append('username', data.username || '');
+    }
+    formData.append('password', data.password as string);
 
-    if (result?.error) {
+    const rs = await loginAction(formData);
+    if (rs?.error) {
       toast.error(
         <div>
           Login failed. Please check your credentials.
-          <div>{JSON.stringify(result.error)}</div>
+          <div>{JSON.stringify(rs.error.message)}</div>
         </div>
       );
       return;
     }
 
-    if (result.data) {
-      setCookie('access_token', result.data.access_token, {
-        expires: new Date(result.data.access_token_expires_in),
-      });
-
-      // Set the refresh token in a cookie
-      setCookie('refresh_token', result.data.refresh_token, {
-        expires: new Date(result.data.refresh_token_expires_at),
-      });
-      setCookie('session_id', result.data.session_id, {
-        expires: new Date(result.data.refresh_token_expires_at),
-      });
-
+    if (rs.access_token) {
+      localStorage.setItem('access_token', rs.access_token);
+      localStorage.setItem('refresh_token', rs.refresh_token);
       toast.success('Login successful!');
       router.refresh();
       router.push('/');

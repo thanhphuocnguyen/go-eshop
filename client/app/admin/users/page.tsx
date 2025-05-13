@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { apiFetch } from '@/lib/apis/api';
-import { ADMIN_API_PATHS } from '@/lib/constants/api';
-import { GenericResponse, UserModel } from '@/lib/definitions';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
+import { UserModel } from '@/app/lib/definitions';
 import { Button } from '@headlessui/react';
 import Link from 'next/link';
 import Loading from '@/app/loading';
@@ -28,7 +28,7 @@ export default function Page() {
     setLoading(true);
     try {
       // Using the admin users API endpoint
-      const response = await apiFetch<GenericResponse<UserModel[]>>(
+      const response = await apiFetchClientSide<UserModel[]>(
         `${ADMIN_API_PATHS.USERS}?page=${page}&page_size=${pageSize}${search ? `&search=${search}` : ''}`,
         {
           method: 'GET',
@@ -47,7 +47,7 @@ export default function Page() {
 
       // If pagination data is available in the response
       if (response.pagination) {
-        setTotalPages(Math.ceil(response.pagination.total / pageSize));
+        setTotalPages(Math.ceil(response.pagination.totalItems / pageSize));
       }
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -71,7 +71,7 @@ export default function Page() {
     if (!selectedUser) return;
 
     try {
-      const response = await apiFetch<GenericResponse<boolean>>(
+      const response = await apiFetchClientSide<boolean>(
         ADMIN_API_PATHS.USER.replace(':id', selectedUser.id),
         {
           method: 'DELETE',

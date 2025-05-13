@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, Fragment } from 'react';
-import { apiFetch } from '@/lib/apis/api';
-import { PUBLIC_API_PATHS } from '@/lib/constants/api';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { StarIcon } from '@heroicons/react/24/solid';
 import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 import {
@@ -60,7 +60,7 @@ export default function OrderItemRating({
   useEffect(() => {
     const fetchExistingRating = async () => {
       try {
-        const response = await apiFetch(
+        const response = await apiFetchClientSide(
           `${PUBLIC_API_PATHS.ORDER_ITEM.replace(':id', orderId)}/ratings/${productId}`,
           {}
         );
@@ -150,12 +150,11 @@ export default function OrderItemRating({
 
         // Upload image to your server endpoint
         try {
-          const uploadResponse = await apiFetch(
-            `${PUBLIC_API_PATHS.UPLOAD_IMAGE}`,
+          const uploadResponse = await apiFetchClientSide(
+            `${PUBLIC_API_PATHS.RATING}`,
             {
               method: 'POST',
               body: formData,
-              isFormData: true,
             }
           );
 
@@ -178,7 +177,7 @@ export default function OrderItemRating({
       }
 
       // Submit the review with image URL if available
-      const response = await apiFetch(
+      const response = await apiFetchClientSide(
         `${PUBLIC_API_PATHS.ORDER_ITEM.replace(':id', orderId)}/rate`,
         {
           method: 'POST',

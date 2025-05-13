@@ -1,6 +1,6 @@
-import { apiFetch } from '@/lib/apis/api';
-import { PUBLIC_API_PATHS } from '@/lib/constants/api';
-import { GenericResponse, ProductDetailModel } from '@/lib/definitions';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
+import { ProductDetailModel } from '@/app/lib/definitions';
 import { toast } from 'react-toastify';
 import useSWR from 'swr';
 
@@ -12,9 +12,7 @@ export function useProductDetail(slug: string) {
   } = useSWR(
     slug ? PUBLIC_API_PATHS.PRODUCT_DETAIL.replace(':id', slug) : null,
     (url) =>
-      apiFetch<GenericResponse<ProductDetailModel>>(url).then(
-        (data) => data.data
-      ),
+      apiFetchClientSide<ProductDetailModel>(url).then((data) => data.data),
     {
       refreshInterval: 0,
       revalidateOnFocus: false,

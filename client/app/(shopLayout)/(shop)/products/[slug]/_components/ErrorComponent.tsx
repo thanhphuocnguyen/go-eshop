@@ -2,7 +2,7 @@
 import React from 'react';
 import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
-import { ErrorResponse } from '@/lib/definitions';
+import { ErrorResponse } from '@/app/lib/definitions';
 
 interface ErrorComponentProps {
   error?: ErrorResponse;

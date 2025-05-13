@@ -302,6 +302,14 @@ func (sv *Server) getProductsHandler(c *gin.Context) {
 		dbParams.CategoryID = utils.GetPgTypeUUID(uuid.MustParse(*queries.CategoryID))
 	}
 
+	if queries.CollectionID != nil {
+		dbParams.CollectionID = utils.GetPgTypeUUID(uuid.MustParse(*queries.CollectionID))
+	}
+
+	if queries.BrandID != nil {
+		dbParams.BrandID = utils.GetPgTypeUUID(uuid.MustParse(*queries.BrandID))
+	}
+
 	products, err := sv.repo.GetProducts(c, dbParams)
 	if err != nil {
 

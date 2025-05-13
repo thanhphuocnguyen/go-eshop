@@ -232,8 +232,14 @@ func (sv *Server) updateCartItemQtyHandler(c *gin.Context) {
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[uuid.UUID](NotFoundCode, "", errors.New("cart not found")))
-			return
+			newCart, createCartErr := sv.repo.CreateCart(c, repository.CreateCartParams{
+				UserID: utils.GetPgTypeUUID(authPayload.UserID),
+			})
+			if createCartErr != nil {
+				c.JSON(http.StatusInternalServerError, createErrorResponse[uuid.UUID](InternalServerErrorCode, "", createCartErr))
+				return
+			}
+			cart = newCart
 		}
 		c.JSON(http.StatusInternalServerError, createErrorResponse[uuid.UUID](InternalServerErrorCode, "", err))
 		return

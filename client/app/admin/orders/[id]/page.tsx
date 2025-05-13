@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { Breadcrumb } from '@/components/Common';
 import LoadingButton from '@/components/Common/LoadingButton';
 import LoadingInline from '@/components/Common/Loadings/LoadingInline';
-import { apiFetch } from '@/lib/apis/api';
-import { ADMIN_API_PATHS } from '@/lib/constants/api';
-import { OrderDetail, GenericResponse } from '@/lib/definitions';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
+import { OrderDetail, GenericResponse } from '@/app/lib/definitions';
 
 export default function OrderDetailPage({
   params,
@@ -29,7 +29,7 @@ export default function OrderDetailPage({
     setError(null);
 
     try {
-      const { data, error } = await apiFetch<GenericResponse<OrderDetail>>(
+      const { data, error } = await apiFetchClientSide<GenericResponse<OrderDetail>>(
         ADMIN_API_PATHS.ORDER_DETAIL.replace(':id', id),
         {}
       );
@@ -57,7 +57,7 @@ export default function OrderDetailPage({
     setError(null);
 
     try {
-      const { data, error } = await apiFetch<GenericResponse<boolean>>(
+      const { data, error } = await apiFetchClientSide<GenericResponse<boolean>>(
         ADMIN_API_PATHS.ORDER_DETAIL_STATUS.replace(':id', id),
         {
           method: 'PUT',

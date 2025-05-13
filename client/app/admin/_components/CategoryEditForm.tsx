@@ -1,4 +1,4 @@
-import { GeneralCategoryModel } from '@/lib/definitions';
+import { GeneralCategoryModel } from '@/app/lib/definitions';
 import {
   Button,
   Field,

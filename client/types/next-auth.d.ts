@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { ErrorResponse } from '@/lib/definitions';
+import { ErrorResponse } from '@/app/lib/definitions';
 import NextAuth, { DefaultSession, DefaultJWT } from 'next-auth';
 import { JWT } from 'next-auth/jwt';
 

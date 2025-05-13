@@ -1,8 +1,8 @@
 'use client';
 
 import Loading from '@/app/loading';
-import { PUBLIC_API_PATHS } from '@/lib/constants/api';
-import { ProductListModel, GenericResponse } from '@/lib/definitions';
+import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
+import { ProductListModel } from '@/app/lib/definitions';
 import { Button } from '@headlessui/react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
@@ -10,13 +10,13 @@ import useSWR from 'swr';
 
 import dayjs from 'dayjs';
 import Image from 'next/image';
-import { apiFetch } from '@/lib/apis/api';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
   MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
-import { useDebounce } from '@/lib/hooks/useDebounce';
+import { useDebounce } from '@/app/lib/hooks/useDebounce';
 
 export default function Page() {
   const [page, setPage] = useState(1);
@@ -29,13 +29,13 @@ export default function Page() {
   const { data, isLoading } = useSWR(
     [PUBLIC_API_PATHS.PRODUCTS, page, limit, debouncedSearch],
     ([url, page, limit, search]) =>
-      apiFetch<GenericResponse<ProductListModel[]>>(
+      apiFetchClientSide<ProductListModel[]>(
         `${url}?page=${page}&page_size=${limit}&search=${search}`,
         {}
       ).then((response) => {
         // Store pagination data
         if (response.pagination) {
-          setTotal(response.pagination.total);
+          setTotal(response.pagination.totalItems);
           setTotalPages(response.pagination.totalPages);
         }
         return response.data;

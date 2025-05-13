@@ -1,20 +1,16 @@
 'use client';
-import { ADMIN_API_PATHS } from '@/lib/constants/api';
+import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import React, { use } from 'react';
 import { toast } from 'react-toastify';
 import useSWR from 'swr';
 import Link from 'next/link';
 import { ArrowLeftCircleIcon } from '@heroicons/react/24/outline';
-import {
-  GeneralCategoryModel,
-  GenericResponse,
-  CategoryProductModel,
-} from '@/lib/definitions';
+import { GeneralCategoryModel, ProductCategory } from '@/app/lib/definitions';
 import Loading from '@/app/loading';
 import { CategoryEditForm } from '../../_components/CategoryEditForm';
 import LoadingInline from '@/components/Common/Loadings/LoadingInline';
 import CategoryProductList from '../../_components/CategoryProductList';
-import { apiFetch } from '@/lib/apis/api';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
 
 export default function AdminBrandDetail({
   params,
@@ -25,10 +21,7 @@ export default function AdminBrandDetail({
   const { data: brand, isLoading } = useSWR(
     ADMIN_API_PATHS.BRAND.replace(':id', slug),
     async (url) => {
-      const response = await apiFetch<GenericResponse<GeneralCategoryModel>>(
-        url,
-        {}
-      );
+      const response = await apiFetchClientSide<GeneralCategoryModel>(url, {});
       return response.data;
     },
     {
@@ -41,10 +34,7 @@ export default function AdminBrandDetail({
   const { data: products, isLoading: isLoadingProducts } = useSWR(
     ADMIN_API_PATHS.BRAND_PRODUCTS.replace(':id', slug),
     async (url) => {
-      const response = await apiFetch<GenericResponse<CategoryProductModel[]>>(
-        url,
-        {}
-      );
+      const response = await apiFetchClientSide<ProductCategory[]>(url, {});
       return response.data;
     },
     {
@@ -55,7 +45,7 @@ export default function AdminBrandDetail({
   );
 
   async function handleSave(data: FormData) {
-    const response = await apiFetch<GenericResponse<GeneralCategoryModel>>(
+    const response = await apiFetchClientSide<GeneralCategoryModel>(
       ADMIN_API_PATHS.BRAND.replace(':id', slug),
       {
         method: 'PUT',

@@ -22,7 +22,6 @@
     "@tiptap/react": "^2.11.7",
     "@tiptap/starter-kit": "^2.11.7",
     "clsx": "^2.1.1",
-    "cookies-next": "^5.1.0",
     "dayjs": "^1.11.13",
     "framer-motion": "^12.9.1",
     "jwt-decode": "^4.0.0",

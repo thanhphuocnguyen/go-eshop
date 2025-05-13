@@ -3,12 +3,11 @@
 import {
   CategoryProductModel,
   GeneralCategoryModel,
-  GenericResponse,
   ProductListModel,
-} from '@/lib/definitions';
+} from '@/app/lib/definitions';
 import { useState, useEffect } from 'react';
-import { apiFetch } from '@/lib/apis/api';
-import { PUBLIC_API_PATHS } from '@/lib/constants/api';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import Link from 'next/link';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
@@ -54,7 +53,7 @@ export default function CategoryDetailClient({
     setLoadingProducts(true);
 
     // First fetch the category to get its ID
-    const { data, error } = await apiFetch<GenericResponse<ProductListModel[]>>(
+    const { data, error } = await apiFetchClientSide<ProductListModel[]>(
       `${PUBLIC_API_PATHS.PRODUCTS}?category_id=${category.id}&page=1&page_size=100`
     );
 

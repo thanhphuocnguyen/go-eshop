@@ -5,13 +5,13 @@ import Link from 'next/link';
 import { CategoryEditForm } from '../../_components/CategoryEditForm';
 import { toast } from 'react-toastify';
 import { redirect } from 'next/navigation';
-import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
-import { ADMIN_API_PATHS } from '@/lib/constants/api';
-import { apiFetch } from '@/lib/apis/api';
+import { GeneralCategoryModel } from '@/app/lib/definitions';
+import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
 
 export default function Page() {
   const handleSave = async (form: FormData) => {
-    const response = await apiFetch<GenericResponse<GeneralCategoryModel>>(
+    const response = await apiFetchClientSide<GeneralCategoryModel>(
       ADMIN_API_PATHS.BRANDS,
       {
         method: 'POST',
@@ -34,7 +34,7 @@ export default function Page() {
     }
   };
   return (
-    <div className='h-full overflow-auto my-auto'>  
+    <div className='h-full overflow-auto my-auto'>
       <Link
         href='/admin/brands'
         className='flex space-x-2 items-center hover:underline text-blue-400'

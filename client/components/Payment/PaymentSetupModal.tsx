@@ -2,13 +2,12 @@
 
 import { useState } from 'react';
 import StyledModal from '../StyledModal';
-import { apiFetch } from '@/lib/apis/api';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
 import { redirect, useRouter } from 'next/navigation';
 import LoadingButton from '../Common/LoadingButton';
 import { toast } from 'react-toastify';
 import { Button } from '@headlessui/react';
-import { PUBLIC_API_PATHS } from '@/lib/constants/api';
-import { GenericResponse } from '@/lib/definitions';
+import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { CheckoutDataResponse } from '@/app/(shopLayout)/(personal)/checkout/_lib/definitions';
 
 interface PaymentSetupModalProps {
@@ -40,15 +39,16 @@ const PaymentSetupModal: React.FC<PaymentSetupModalProps> = ({
 
     setIsLoading(true);
     try {
-      const response = await apiFetch<
-        GenericResponse<Partial<CheckoutDataResponse>>
-      >(PUBLIC_API_PATHS.PAYMENTS, {
-        method: 'POST',
-        body: {
-          order_id: orderId,
-          payment_method: selectedMethod,
-        },
-      });
+      const response = await apiFetchClientSide<Partial<CheckoutDataResponse>>(
+        PUBLIC_API_PATHS.PAYMENTS,
+        {
+          method: 'POST',
+          body: {
+            order_id: orderId,
+            payment_method: selectedMethod,
+          },
+        }
+      );
 
       if (response.error || !response.data) {
         toast.error(response?.error?.details || 'Failed to setup payment');

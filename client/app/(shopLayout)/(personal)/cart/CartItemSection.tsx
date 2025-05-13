@@ -5,7 +5,7 @@ import { Button } from '@headlessui/react';
 import { CheckIcon, TrashIcon } from '@heroicons/react/16/solid';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useCartCtx } from '@/lib/contexts/CartContext';
+import { useCartCtx } from '@/app/lib/contexts/CartContext';
 
 export const CartItemSection = () => {
   const { cart, cartLoading, updateCartItemQuantity, removeFromCart } =

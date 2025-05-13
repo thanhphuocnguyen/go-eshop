@@ -13,7 +13,7 @@ import {
 } from '@headlessui/react';
 import clsx from 'clsx';
 import { CheckIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
-import { BaseOption } from '@/lib/definitions';
+import { BaseOption } from '@/app/lib/definitions';
 import { Control, Controller, FieldValues, Path } from 'react-hook-form';
 
 interface StyledMultipleComboBoxControllerProps<T extends FieldValues> {

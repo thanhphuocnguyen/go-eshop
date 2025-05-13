@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { apiFetch } from '@/lib/apis/api';
-import { PUBLIC_API_PATHS } from '@/lib/constants/api';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { useRouter } from 'next/navigation';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
-import { GenericResponse } from '@/lib/definitions/apiResponse';
+import { GenericResponse } from '@/app/lib/definitions/apiResponse';
 
 interface ConfirmOrderButtonProps {
   orderId: string;
@@ -25,7 +25,7 @@ export default function ConfirmOrderButton({
     setLoading(true);
     setError(null);
 
-    const { data, error } = await apiFetch<GenericResponse<boolean>>(
+    const { data, error } = await apiFetchClientSide<GenericResponse<boolean>>(
       PUBLIC_API_PATHS.RECEIVED_ORDER_ITEM.replace(':id', orderId),
       {
         method: 'PUT',

@@ -1,4 +1,4 @@
-import { ProductCategory } from '@/lib/definitions';
+import { ProductCategory } from '@/app/lib/definitions';
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';

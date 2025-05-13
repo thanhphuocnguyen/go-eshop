@@ -1,17 +1,16 @@
 'use client';
 
-import { ADMIN_API_PATHS } from '@/lib/constants/api';
+import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { use } from 'react';
-import { getCookie } from 'cookies-next';
 import { toast } from 'react-toastify';
 import Link from 'next/link';
 import { ArrowLeftCircleIcon } from '@heroicons/react/24/outline';
 import { CategoryEditForm } from '../../_components/CategoryEditForm';
 import useSWR from 'swr';
 import Loading from '@/app/loading';
-import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
+import { GeneralCategoryModel, GenericResponse } from '@/app/lib/definitions';
 import CategoryProductList from '../../_components/CategoryProductList';
-import { apiFetch } from '@/lib/apis/api';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
 
 export default function AdminCategoryDetail({
   params,
@@ -22,10 +21,7 @@ export default function AdminCategoryDetail({
   const { data: category, isLoading } = useSWR(
     ADMIN_API_PATHS.CATEGORY.replaceAll(':id', slug),
     async (url) => {
-      const response = await apiFetch<GenericResponse<GeneralCategoryModel>>(
-        url,
-        {}
-      );
+      const response = await apiFetchClientSide<GeneralCategoryModel>(url, {});
       return response.data;
     },
     {
@@ -41,13 +37,11 @@ export default function AdminCategoryDetail({
   );
 
   async function handleSave(data: FormData) {
-    const response = await apiFetch<GenericResponse<number>>(
+    const response = await apiFetchClientSide<GenericResponse<number>>(
       ADMIN_API_PATHS.CATEGORY.replace(':id', slug),
       {
         method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${getCookie('access_token')}`,
-        },
+
         body: data,
       }
     );

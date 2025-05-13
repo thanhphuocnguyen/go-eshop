@@ -1,12 +1,13 @@
 'use client';
 
 import { useMemo } from 'react';
-import { apiFetch } from '@/lib/apis/api';
-import { PUBLIC_API_PATHS } from '@/lib/constants/api';
-import { OrderStatus } from '@/lib/definitions/common';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
+import { OrderStatus } from '@/app/lib/definitions/common';
+import { OrderListModel, OrdersStats } from '@/app/lib/definitions/order';
 import Link from 'next/link';
 import useSWR from 'swr';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency } from '@/app/lib/utils';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -15,33 +16,6 @@ import {
 import dayjs from 'dayjs';
 import clsx from 'clsx';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-
-type OrderModel = {
-  id: string;
-  total: number;
-  total_items: number;
-  status: OrderStatus;
-  payment_status: string;
-  created_at: string;
-  updated_at: string;
-};
-
-type GenericResponse<T> = {
-  message: string;
-  data: T;
-};
-
-interface OrdersStats {
-  total: number;
-  pending: number;
-  confirm: number;
-  delivering: number;
-  delivered: number;
-  cancelled: number;
-  refunded: number;
-  completed: number;
-  totalSpent: number;
-}
 
 const getStatusBadgeColor = (status: OrderStatus) => {
   switch (status) {
@@ -79,7 +53,7 @@ export default function OrdersPageClient() {
   // Fetch orders data
   const { data, isLoading, error } = useSWR(
     PUBLIC_API_PATHS.ORDERS,
-    apiFetch<GenericResponse<OrderModel[]>>
+    apiFetchClientSide<OrderListModel[]>
   );
 
   const orders = data?.data || [];

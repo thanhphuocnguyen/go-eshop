@@ -1,6 +1,6 @@
 'use client';
 
-import { PaymentInfo } from '@/lib/definitions/order';
+import { PaymentInfo } from '@/app/lib/definitions/order';
 import { useState } from 'react';
 import PaymentSetupModal from './PaymentSetupModal';
 import { ShoppingBagIcon, CreditCardIcon } from '@heroicons/react/16/solid';

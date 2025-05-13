@@ -3,7 +3,7 @@ import React from 'react';
 import clsx from 'clsx';
 import { Field, Switch } from '@headlessui/react';
 import { useFormContext, useWatch } from 'react-hook-form';
-import { ProductModelForm, VariantModelForm } from '@/lib/definitions';
+import { ProductModelForm, VariantModelForm } from '@/app/lib/definitions';
 import { TextField } from '@/components/FormFields';
 import { StyledComboBoxController } from '@/components/FormFields/StyledComboBoxController';
 import { useAttributes } from '../../_lib/hooks/useAttributes';

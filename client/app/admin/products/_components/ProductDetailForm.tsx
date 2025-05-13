@@ -15,13 +15,13 @@ import {
   ProductModelForm,
   VariantModelForm,
   UploadImageResponseModel,
-} from '@/lib/definitions';
+} from '@/app/lib/definitions';
 
 import { useProductDetailFormContext } from '../_lib/contexts/ProductFormContext';
 import { ProductInfoForm } from './ProductInfoForm';
 import { VariantInfoForm } from './VariantInfoForm';
-import { apiFetch } from '@/lib/apis/api';
-import { ADMIN_API_PATHS } from '@/lib/constants/api';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { toast } from 'react-toastify';
 import { ConfirmDialog } from '@/components/Common/Dialogs/ConfirmDialog';
 import { KeyedMutator } from 'swr';
@@ -108,7 +108,7 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
 
     setIsDeleting(true);
     try {
-      const { error } = await apiFetch<GenericResponse<unknown>>(
+      const { error } = await apiFetchClientSide<GenericResponse<unknown>>(
         ADMIN_API_PATHS.PRODUCT_DETAIL.replace(':id', productDetail.id),
         {
           method: 'DELETE',
@@ -310,7 +310,7 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
       }
     });
 
-    const { error, data } = await apiFetch<
+    const { error, data } = await apiFetchClientSide<
       GenericResponse<UploadImageResponseModel>
     >(ADMIN_API_PATHS.PRODUCT_IMAGES_UPLOAD.replaceAll(':id', productId), {
       method: 'POST',
@@ -331,7 +331,7 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
   async function onSubmitProductDetail(
     payload: Omit<ProductModelForm, 'variants'>
   ): Promise<string | undefined> {
-    const { data, error } = await apiFetch<GenericResponse<{ id: string }>>(
+    const { data, error } = await apiFetchClientSide<{ id: string }>(
       productDetail
         ? ADMIN_API_PATHS.PRODUCT_DETAIL.replace(':id', productDetail.id)
         : ADMIN_API_PATHS.PRODUCTS,
@@ -381,7 +381,7 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
       })),
     };
 
-    const { error } = await apiFetch<
+    const { error } = await apiFetchClientSide<
       GenericResponse<{
         updated_ids: string[];
         created_ids: string[];

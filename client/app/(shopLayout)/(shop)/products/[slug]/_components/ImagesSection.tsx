@@ -1,5 +1,5 @@
 'use client';
-import { ProductImageModel } from '@/lib/definitions';
+import { ProductImageModel } from '@/app/lib/definitions';
 import { Button } from '@headlessui/react';
 import clsx from 'clsx';
 import Image from 'next/image';

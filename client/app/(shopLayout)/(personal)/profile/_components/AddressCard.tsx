@@ -1,6 +1,6 @@
 'use client';
 
-import { AddressModel } from '@/lib/definitions/user';
+import { AddressModel } from '@/app/lib/definitions/user';
 import { Button } from '@headlessui/react';
 import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 

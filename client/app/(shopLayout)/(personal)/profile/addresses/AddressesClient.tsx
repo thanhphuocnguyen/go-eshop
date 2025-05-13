@@ -12,13 +12,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { TextField } from '@/components/FormFields';
-import { AddressModel } from '@/lib/definitions/user';
-import { apiFetch } from '@/lib/apis/api';
-import { PUBLIC_API_PATHS } from '@/lib/constants/api';
-import { GenericResponse } from '@/lib/definitions';
+import { AddressModel } from '@/app/lib/definitions/user';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
+import { GenericResponse } from '@/app/lib/definitions';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@/lib/hooks/useUser';
+import { useUser } from '@/app/lib/hooks/useUser';
 
 // Form schema for address validation
 const addressSchema = z.object({
@@ -98,7 +98,7 @@ export default function AddressesClient() {
     try {
       if (selectedAddress) {
         // Edit existing address
-        const response = await apiFetch<GenericResponse<AddressModel>>(
+        const response = await apiFetchClientSide<GenericResponse<AddressModel>>(
           PUBLIC_API_PATHS.USER_ADDRESS.replace(
             ':id',
             selectedAddress.id.toString()
@@ -117,7 +117,7 @@ export default function AddressesClient() {
         toast.success('Address updated successfully');
       } else {
         // Add new address
-        const response = await apiFetch<GenericResponse<AddressModel>>(
+        const response = await apiFetchClientSide<GenericResponse<AddressModel>>(
           PUBLIC_API_PATHS.USER_ADDRESSES,
           {
             method: 'POST',
@@ -149,7 +149,7 @@ export default function AddressesClient() {
 
     setIsSubmitting(true);
     try {
-      const response = await apiFetch<GenericResponse<null>>(
+      const response = await apiFetchClientSide<GenericResponse<null>>(
         PUBLIC_API_PATHS.USER_ADDRESS.replace(
           ':id',
           selectedAddress.id.toString()
@@ -177,7 +177,7 @@ export default function AddressesClient() {
 
   const handleSetDefaultAddress = async (addressId: string) => {
     try {
-      const response = await apiFetch<GenericResponse<AddressModel>>(
+      const response = await apiFetchClientSide<GenericResponse<AddressModel>>(
         PUBLIC_API_PATHS.USER_ADDRESS_DEFAULT.replace(
           ':id',
           addressId.toString()

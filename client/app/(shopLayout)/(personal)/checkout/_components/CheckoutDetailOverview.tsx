@@ -17,17 +17,17 @@ import { useForm, useWatch } from 'react-hook-form';
 
 import { useEffect, useState } from 'react';
 import { redirect, RedirectType, useRouter } from 'next/navigation';
-import { apiFetch } from '@/lib/apis/api';
-import { PUBLIC_API_PATHS } from '@/lib/constants/api';
-import { GenericResponse } from '@/lib/definitions';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
+import { GenericResponse } from '@/app/lib/definitions';
 import { toast } from 'react-toastify';
-import { useCartCtx } from '@/lib/contexts/CartContext';
+import { useCartCtx } from '@/app/lib/contexts/CartContext';
 import {
   CheckoutDataResponse,
   CheckoutFormSchema,
   CheckoutFormValues,
 } from '../_lib/definitions';
-import { useUser } from '@/lib/hooks/useUser';
+import { useUser } from '@/app/lib/hooks/useUser';
 
 const CheckoutDetailOverview: React.FC = () => {
   const router = useRouter();
@@ -124,18 +124,19 @@ const CheckoutDetailOverview: React.FC = () => {
 
   const onSubmit = async (body: CheckoutFormValues) => {
     // Save form data to session storage for the next step
-    const { data, error } = await apiFetch<
-      GenericResponse<CheckoutDataResponse>
-    >(PUBLIC_API_PATHS.CHECKOUT, {
-      method: 'POST',
-      body: {
-        ...body,
-        address: body.address_id ? undefined : body.address,
-        payment_receipt_email: body.payment_receipt_email
-          ? body.payment_receipt_email
-          : undefined,
-      },
-    });
+    const { data, error } = await apiFetchClientSide<CheckoutDataResponse>(
+      PUBLIC_API_PATHS.CHECKOUT,
+      {
+        method: 'POST',
+        body: {
+          ...body,
+          address: body.address_id ? undefined : body.address,
+          payment_receipt_email: body.payment_receipt_email
+            ? body.payment_receipt_email
+            : undefined,
+        },
+      }
+    );
 
     if (error) {
       if (error.code === 'payment_gateway_error') {

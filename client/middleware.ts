@@ -1,7 +1,7 @@
-import { PUBLIC_API_PATHS } from '@/lib/constants/api';
-import { RefreshTokenResponse } from '@/lib/definitions/auth';
+import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
+import { RefreshTokenResponse } from '@/app/lib/definitions/auth';
 import { NextRequest, NextResponse } from 'next/server';
-import { GenericResponse } from './lib/definitions';
+import { GenericResponse } from './app/lib/definitions';
 import { jwtDecode, JwtPayload } from 'jwt-decode';
 import { revalidateTag } from 'next/cache';
 

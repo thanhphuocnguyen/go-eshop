@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser } from '@/lib/hooks/useUser';
+import { useUser } from '@/app/lib/hooks/useUser';
 
 export default function ProfileHeader() {
   const { user } = useUser();

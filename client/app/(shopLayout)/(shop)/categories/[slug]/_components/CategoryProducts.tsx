@@ -2,7 +2,7 @@
 
 import ProductCard from '@/components/Product/ProductCard';
 import CategoryProductSkeleton from '@/components/Product/CategoryProductSkeleton';
-import { ProductListModel } from '@/lib/definitions';
+import { ProductListModel } from '@/app/lib/definitions';
 import { useMemo, useState } from 'react';
 
 interface CategoryProductsProps {

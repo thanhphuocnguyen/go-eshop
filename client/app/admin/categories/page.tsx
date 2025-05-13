@@ -1,16 +1,15 @@
 'use client';
 
-import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
+import { GeneralCategoryModel } from '@/app/lib/definitions';
 import { useEffect, useState } from 'react';
 
-import { ADMIN_API_PATHS } from '@/lib/constants/api';
+import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { Button } from '@headlessui/react';
 import Link from 'next/link';
 import { ConfirmDialog } from '@/components/Common/Dialogs/ConfirmDialog';
 import { toast } from 'react-toastify';
-import { getCookie } from 'cookies-next';
 import Image from 'next/image';
-import { apiFetch } from '@/lib/apis/api';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
 
 export default function Page() {
   const [categories, setCategories] = useState<GeneralCategoryModel[]>([]);
@@ -20,13 +19,10 @@ export default function Page() {
 
   async function handleDelete() {
     if (selectedCategory) {
-      const { error } = await apiFetch<GenericResponse<boolean>>(
+      const { error } = await apiFetchClientSide<boolean>(
         ADMIN_API_PATHS.CATEGORIES + '/' + selectedCategory.id,
         {
           method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${getCookie('access_token')}`,
-          },
         }
       );
 
@@ -48,15 +44,16 @@ export default function Page() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data, error } = await apiFetch<
-        GenericResponse<GeneralCategoryModel[]>
-      >(ADMIN_API_PATHS.CATEGORIES, {
-        nextOptions: {
-          next: {
-            tags: ['categories'],
+      const { data, error } = await apiFetchClientSide<GeneralCategoryModel[]>(
+        ADMIN_API_PATHS.CATEGORIES,
+        {
+          nextOptions: {
+            next: {
+              tags: ['categories'],
+            },
           },
-        },
-      });
+        }
+      );
       setLoading(false);
       if (error) {
         toast.error(

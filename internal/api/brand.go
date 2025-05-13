@@ -188,14 +188,16 @@ func (sv *Server) getBrandsHandler(c *gin.Context) {
 	dbQueries.Limit = queries.PageSize
 	dbQueries.Offset = (queries.Page - 1) * queries.PageSize
 
-	var cached *ApiResponse[[]BrandResponse]
-	if err := sv.cacheService.Get(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), &cached); err != nil {
-		log.Error().Err(err).Msg("error when get brands from cache")
+	var cached *struct {
+		Data       []BrandResponse `json:"data"`
+		Pagination *Pagination     `json:"pagination"`
 	}
-
-	if cached != nil {
-		c.JSON(http.StatusOK, *cached)
-		return
+	if err := sv.cacheService.Get(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), &cached); err == nil {
+		if cached != nil {
+			resp := createSuccessResponse(c, cached.Data, "Cached", cached.Pagination, nil)
+			c.JSON(http.StatusNotModified, resp)
+			return
+		}
 	}
 
 	rows, err := sv.repo.GetBrands(c, dbQueries)
@@ -222,23 +224,28 @@ func (sv *Server) getBrandsHandler(c *gin.Context) {
 			ImageUrl:    row.ImageUrl,
 		})
 	}
-	resp := createSuccessResponse(
-		c,
-		data,
-		"",
-		&Pagination{
-			Page:            queries.Page,
-			Total:           cnt,
-			PageSize:        queries.PageSize,
-			TotalPages:      cnt / int64(queries.PageSize),
-			HasNextPage:     cnt > int64((queries.Page-1)*queries.PageSize+queries.PageSize),
-			HasPreviousPage: queries.Page > 1,
-		}, nil,
-	)
-	if err = sv.cacheService.Set(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), resp, nil); err != nil {
+	pagination := &Pagination{
+		Page:            queries.Page,
+		Total:           cnt,
+		PageSize:        queries.PageSize,
+		TotalPages:      cnt / int64(queries.PageSize),
+		HasNextPage:     cnt > int64((queries.Page-1)*queries.PageSize+queries.PageSize),
+		HasPreviousPage: queries.Page > 1,
+	}
+
+	cached = &struct {
+		Data       []BrandResponse "json:\"data\""
+		Pagination *Pagination     "json:\"pagination\""
+	}{
+		Data:       data,
+		Pagination: pagination,
+	}
+
+	if err = sv.cacheService.Set(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), cached, nil); err != nil {
 		log.Error().Err(err).Msg("error when set brands to cache")
 	}
 
+	resp := createSuccessResponse(c, data, "", pagination, nil)
 	c.JSON(http.StatusOK, resp)
 }
 

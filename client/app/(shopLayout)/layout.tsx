@@ -1,6 +1,6 @@
 import Footer from '@/components/Footer';
 import NavBar from '@/components/Nav/NavBar';
-import { CartContextProvider } from '@/lib/contexts/CartContext';
+import { CartContextProvider } from '@/app/lib/contexts/CartContext';
 
 export default async function Layout({
   children,

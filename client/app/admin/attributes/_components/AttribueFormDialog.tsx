@@ -1,5 +1,5 @@
 'use client';
-import { ADMIN_API_PATHS } from '@/lib/constants/api';
+import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import {
   Button,
   Dialog,
@@ -14,14 +14,13 @@ import clsx from 'clsx';
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import {
-  GenericResponse,
   AttributeFormModel,
   ProductVariantAttributeFormSchema,
   AttributeValueFormModel,
   AttributeDetailModel,
-} from '@/lib/definitions';
+} from '@/app/lib/definitions';
 import { XCircleIcon } from '@heroicons/react/24/outline';
-import { apiFetch } from '@/lib/apis/api';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
 
 interface AddNewDialogProps {
   open: boolean;
@@ -65,7 +64,7 @@ export const AddNewDialog: React.FC<AddNewDialogProps> = ({
       })),
     };
 
-    const resp = await apiFetch<GenericResponse<AttributeDetailModel>>(
+    const resp = await apiFetchClientSide<AttributeDetailModel>(
       ADMIN_API_PATHS.ATTRIBUTES,
       {
         method: 'POST',

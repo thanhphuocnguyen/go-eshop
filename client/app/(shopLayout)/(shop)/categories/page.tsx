@@ -1,14 +1,14 @@
-import { PUBLIC_API_PATHS } from '@/lib/constants/api';
-import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
+import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
+import { GeneralCategoryModel, GenericResponse } from '@/app/lib/definitions';
 import Link from 'next/link';
 import ProductCard from '@/components/Product/ProductCard';
 import { ArrowRightIcon } from '@heroicons/react/16/solid';
-import { apiFetch } from '@/lib/apis/api';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
 
 async function getCategories() {
   try {
     // Using apiFetch utility instead of native fetch
-    const result = await apiFetch<GenericResponse<GeneralCategoryModel[]>>(
+    const result = await apiFetchClientSide<GenericResponse<GeneralCategoryModel[]>>(
       `${PUBLIC_API_PATHS.CATEGORIES}?page=1&page_size=10`
     );
     

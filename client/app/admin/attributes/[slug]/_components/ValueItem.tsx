@@ -6,7 +6,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useSortable } from '@dnd-kit/sortable';
 import { Button, Field, Input, Label, Switch } from '@headlessui/react';
 import { Controller, useFormContext } from 'react-hook-form';
-import { AttributeFormModel, AttributeValueFormModel } from '@/lib/definitions';
+import { AttributeFormModel, AttributeValueFormModel } from '@/app/lib/definitions';
 import { Bars3Icon, XCircleIcon } from '@heroicons/react/24/outline';
 
 interface ValueItemProps {

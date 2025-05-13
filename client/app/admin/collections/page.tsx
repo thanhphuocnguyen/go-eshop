@@ -1,16 +1,16 @@
 'use client';
 
-import { ADMIN_API_PATHS } from '@/lib/constants/api';
+import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import Link from 'next/link';
 import { Button } from '@headlessui/react';
 import dayjs from 'dayjs';
 import useSWR from 'swr';
 import { toast } from 'react-toastify';
 import Image from 'next/image';
-import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
+import { GeneralCategoryModel, GenericResponse } from '@/app/lib/definitions';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/Common/Dialogs/ConfirmDialog';
-import { apiFetch } from '@/lib/apis/api';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
 
 export default function Page() {
   const [selectedCollection, setSelectedCollection] =
@@ -23,7 +23,7 @@ export default function Page() {
   } = useSWR(
     ADMIN_API_PATHS.COLLECTIONS,
     (url) =>
-      apiFetch<GenericResponse<GeneralCategoryModel[]>>(url, {}).then(
+      apiFetchClientSide<GenericResponse<GeneralCategoryModel[]>>(url, {}).then(
         (data) => data.data
       ),
     {
@@ -35,7 +35,7 @@ export default function Page() {
 
   async function handleDelete() {
     if (selectedCollection) {
-      const response = await apiFetch(
+      const response = await apiFetchClientSide(
         ADMIN_API_PATHS.COLLECTIONS + '/' + selectedCollection.id,
         {
           method: 'DELETE',

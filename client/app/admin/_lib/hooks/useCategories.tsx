@@ -1,13 +1,13 @@
-import { apiFetch } from '@/lib/apis/api';
-import { ADMIN_API_PATHS } from '@/lib/constants/api';
-import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
+import { GeneralCategoryModel, GenericResponse } from '@/app/lib/definitions';
 import { toast } from 'react-toastify';
 import useSWR from 'swr';
 
 export const useCategories = () => {
   const { data, error } = useSWR<GenericResponse<GeneralCategoryModel[]>>(
     ADMIN_API_PATHS.CATEGORIES,
-    (url) => apiFetch<GenericResponse<GeneralCategoryModel[]>>(url),
+    (url) => apiFetchClientSide<GeneralCategoryModel[]>(url),
     {
       refreshInterval: 0,
       revalidateOnFocus: false,

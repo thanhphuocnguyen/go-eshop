@@ -2,7 +2,7 @@ import { Button } from '@headlessui/react';
 import React from 'react';
 import { VariantForm } from './VariantForm';
 import { useFieldArray, useFormContext } from 'react-hook-form';
-import { ProductModelForm } from '@/lib/definitions';
+import { ProductModelForm } from '@/app/lib/definitions';
 import { PlusIcon } from '@heroicons/react/16/solid';
 import clsx from 'clsx';
 import { ChevronUpIcon } from '@heroicons/react/24/outline';

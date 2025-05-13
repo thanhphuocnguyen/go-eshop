@@ -1,11 +1,7 @@
 'use client';
 
-import { ADMIN_API_PATHS } from '@/lib/constants/api';
-import {
-  GenericResponse,
-  AttributeFormModel,
-  AttributeFormSchema,
-} from '@/lib/definitions';
+import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
+import { AttributeFormModel, AttributeFormSchema } from '@/app/lib/definitions';
 
 import { Button, Field, Fieldset, Input, Label } from '@headlessui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -31,7 +27,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import ValueItem from './_components/ValueItem';
-import { apiFetch } from '@/lib/apis/api';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
 
 export default function Page({
   params,
@@ -72,10 +68,7 @@ export default function Page({
   const { data: attribute } = useSWR(
     slug ? ADMIN_API_PATHS.ATTRIBUTE.replace(':id', slug) : null,
     async (url) => {
-      const response = await apiFetch<GenericResponse<AttributeFormModel>>(
-        url,
-        {}
-      );
+      const response = await apiFetchClientSide<AttributeFormModel>(url, {});
       if (response.error) {
         toast('Failed to fetch attribute', { type: 'error' });
         return;
@@ -90,7 +83,7 @@ export default function Page({
       display_order: i + 1,
     }));
 
-    const response = await apiFetch<GenericResponse<AttributeFormModel>>(
+    const response = await apiFetchClientSide<AttributeFormModel>(
       ADMIN_API_PATHS.ATTRIBUTE.replace(':id', slug),
       {
         method: 'PUT',

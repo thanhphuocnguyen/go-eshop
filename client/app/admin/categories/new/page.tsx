@@ -3,24 +3,21 @@
 import { ArrowLeftCircleIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { CategoryEditForm } from '../../_components/CategoryEditForm';
-import { ADMIN_API_PATHS } from '@/lib/constants/api';
+import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { toast } from 'react-toastify';
-import { getCookie } from 'cookies-next';
 import { redirect } from 'next/navigation';
-import { GeneralCategoryModel, GenericResponse } from '@/lib/definitions';
-import { apiFetch } from '@/lib/apis/api';
+import { GeneralCategoryModel } from '@/app/lib/definitions';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
 
 export default function Page() {
   const handleSave = async (form: FormData) => {
-    const { data, error } = await apiFetch<
-      GenericResponse<GeneralCategoryModel>
-    >(ADMIN_API_PATHS.CATEGORIES, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${getCookie('access_token')}`,
-      },
-      body: form,
-    });
+    const { data, error } = await apiFetchClientSide<GeneralCategoryModel>(
+      ADMIN_API_PATHS.CATEGORIES,
+      {
+        method: 'POST',
+        body: form,
+      }
+    );
     if (error) {
       toast.error(
         <div>

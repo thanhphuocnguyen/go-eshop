@@ -5,7 +5,7 @@ import { ChevronUpIcon } from '@heroicons/react/24/outline';
 import { ImageUploader, StyledComboBox } from '@/components/FormFields';
 import { StyledMultipleComboBox } from '@/components/FormFields/StyledMultipleComboBox';
 import Image from 'next/image';
-import { ProductDetailModel, ProductModelForm } from '@/lib/definitions';
+import { ProductDetailModel, ProductModelForm } from '@/app/lib/definitions';
 import {
   useProductDetailFormContext,
   VariantImage,
@@ -18,7 +18,7 @@ import {
   Transition,
 } from '@headlessui/react';
 import clsx from 'clsx';
-import { capitalize } from '@/lib/utils';
+import { capitalize } from '@/app/lib/utils';
 
 interface ProductImagesUploaderProps {
   productDetail?: ProductDetailModel;
