@@ -138,6 +138,61 @@ func (q *Queries) GetProductRatings(ctx context.Context, arg GetProductRatingsPa
 	return items, nil
 }
 
+const getProductRatingsByOrderItemIDs = `-- name: GetProductRatingsByOrderItemIDs :many
+SELECT 
+    pr.id, pr.product_id, pr.user_id, pr.order_item_id, pr.rating, pr.review_title, pr.review_content, pr.verified_purchase, pr.is_visible, pr.is_approved, pr.helpful_votes, pr.unhelpful_votes, pr.created_at, pr.updated_at, 
+    u.id AS user_id, u.fullname, u.email
+FROM product_ratings AS pr
+JOIN users AS u ON u.id = pr.user_id
+WHERE pr.order_item_id = ANY($1::uuid[]) AND pr.is_visible = TRUE
+ORDER BY pr.created_at DESC
+`
+
+type GetProductRatingsByOrderItemIDsRow struct {
+	ProductRating ProductRating `json:"product_rating"`
+	UserID        uuid.UUID     `json:"user_id"`
+	Fullname      string        `json:"fullname"`
+	Email         string        `json:"email"`
+}
+
+func (q *Queries) GetProductRatingsByOrderItemIDs(ctx context.Context, ids []uuid.UUID) ([]GetProductRatingsByOrderItemIDsRow, error) {
+	rows, err := q.db.Query(ctx, getProductRatingsByOrderItemIDs, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetProductRatingsByOrderItemIDsRow{}
+	for rows.Next() {
+		var i GetProductRatingsByOrderItemIDsRow
+		if err := rows.Scan(
+			&i.ProductRating.ID,
+			&i.ProductRating.ProductID,
+			&i.ProductRating.UserID,
+			&i.ProductRating.OrderItemID,
+			&i.ProductRating.Rating,
+			&i.ProductRating.ReviewTitle,
+			&i.ProductRating.ReviewContent,
+			&i.ProductRating.VerifiedPurchase,
+			&i.ProductRating.IsVisible,
+			&i.ProductRating.IsApproved,
+			&i.ProductRating.HelpfulVotes,
+			&i.ProductRating.UnhelpfulVotes,
+			&i.ProductRating.CreatedAt,
+			&i.ProductRating.UpdatedAt,
+			&i.UserID,
+			&i.Fullname,
+			&i.Email,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getProductRatingsByUserID = `-- name: GetProductRatingsByUserID :many
 SELECT 
     pr.id, pr.product_id, pr.user_id, pr.order_item_id, pr.rating, pr.review_title, pr.review_content, pr.verified_purchase, pr.is_visible, pr.is_approved, pr.helpful_votes, pr.unhelpful_votes, pr.created_at, pr.updated_at, 
@@ -427,7 +482,7 @@ func (q *Queries) GetRatingVotesCountByUserID(ctx context.Context, userID uuid.U
 }
 
 const insertProductRating = `-- name: InsertProductRating :one
-INSERT INTO product_ratings (product_id,user_id,order_item_id,rating,review_title,review_content,verified_purchase) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, product_id, user_id, order_item_id, rating, review_title, review_content, verified_purchase, is_visible, is_approved, helpful_votes, unhelpful_votes, created_at, updated_at
+INSERT INTO product_ratings (product_id, user_id, order_item_id, rating, review_title, review_content, verified_purchase) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, product_id, user_id, order_item_id, rating, review_title, review_content, verified_purchase, is_visible, is_approved, helpful_votes, unhelpful_votes, created_at, updated_at
 `
 
 type InsertProductRatingParams struct {

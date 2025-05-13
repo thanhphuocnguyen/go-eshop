@@ -89,20 +89,28 @@ export type OrderModel = {
   customer_email: string;
   payment_info: PaymentInfo;
   shipping_info: ShippingInfoModel;
-  products: OrderItemMode[];
+  products: OrderItemModel[];
   created_at: string;
 };
 
 /**
  * Represents a product order item with slightly different structure
  */
-export type OrderItemMode = {
+export type OrderItemModel = {
   id: string;
   name: string;
   image_url: string;
-  attribute_snapshot: AttributeSnapshot[];
   line_total: number;
   quantity: number;
+  rating?: {
+    id: string;
+    rating: number;
+    title: string;
+    content: string;
+    image_url?: string;
+    created_at: string;
+  };
+  attribute_snapshot: AttributeSnapshot[];
 };
 
 /**

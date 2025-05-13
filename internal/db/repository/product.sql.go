@@ -569,7 +569,7 @@ LEFT JOIN product_variants as v ON p.id = v.product_id
 LEFT JOIN LATERAL (
     SELECT img.id, img.url
     FROM image_assignments as ia
-    JOIN images as img ON img.id = ia.image_id
+    LEFT JOIN images as img ON img.id = ia.image_id
     WHERE ia.entity_id = p.id AND ia.entity_type = 'product'
     ORDER BY ia.display_order ASC, ia.id ASC
     LIMIT 1
@@ -622,8 +622,8 @@ type GetProductsRow struct {
 	ThreeStarCount   int32          `json:"three_star_count"`
 	FourStarCount    int32          `json:"four_star_count"`
 	FiveStarCount    int32          `json:"five_star_count"`
-	ImgID            uuid.UUID      `json:"img_id"`
-	ImgUrl           string         `json:"img_url"`
+	ImgID            pgtype.UUID    `json:"img_id"`
+	ImgUrl           *string        `json:"img_url"`
 	VariantCount     int64          `json:"variant_count"`
 	MinPrice         pgtype.Numeric `json:"min_price"`
 	MaxPrice         pgtype.Numeric `json:"max_price"`

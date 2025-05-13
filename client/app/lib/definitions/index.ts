@@ -14,20 +14,3 @@ export * from './cart';
 export * from './checkout';
 export * from './order'; // Only export from order.ts
 export * from './image';
-
-/**
- * Generic response structure for API calls
- */
-export interface GenericResponse<T> {
-  data: T;
-  error?: {
-    code: string;
-    details: string;
-    stack: string;
-  };
-  pagination?: {
-    totalPages: number;
-    currentPage: number;
-    totalItems: number;
-  };
-}

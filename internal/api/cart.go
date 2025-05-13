@@ -326,9 +326,12 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 		return
 	}
 
-	if cart.UserID.Valid && string(cart.UserID.Bytes[:]) != authPayload.UserID.String() {
-		c.JSON(http.StatusForbidden, createErrorResponse[string]("forbidden", "", errors.New("user not found")))
-		return
+	if cart.UserID.Valid {
+		cartUserID, _ := uuid.FromBytes(cart.UserID.Bytes[:])
+		if cartUserID != authPayload.UserID {
+			c.JSON(http.StatusForbidden, createErrorResponse[string]("forbidden", "", errors.New("user not found")))
+			return
+		}
 	}
 
 	err = sv.repo.RemoveProductFromCart(c, repository.RemoveProductFromCartParams{
@@ -448,7 +451,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
 			return
 		}
-		if cartUserId.String() != authPayload.UserID.String() {
+		if cartUserId != authPayload.UserID {
 			c.JSON(http.StatusForbidden, createErrorResponse[gin.H](PermissionDeniedCode, "", errors.New("you are not allowed to access this cart")))
 			return
 		}
@@ -468,7 +471,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 		price, _ := item.Price.Float64Value()
 		paramIdx := -1
 		for j, param := range createOrderItemParams {
-			if param.VariantID.String() == item.CartItem.VariantID.String() {
+			if param.VariantID == item.CartItem.VariantID {
 				paramIdx = j
 				break
 			}
@@ -528,6 +531,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 		OrderID: orderID,
 		Amount:  utils.GetPgNumericFromFloat(totalPrice),
 	}
+
 	switch req.PaymentMethod {
 	case string(repository.PaymentMethodStripe):
 		createPaymentArgs.PaymentMethod = repository.PaymentMethodStripe

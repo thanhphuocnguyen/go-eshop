@@ -8,7 +8,7 @@ export type ProductListModel = {
   description: string;
   variant_count: number;
   slug: string;
-  image_url: string;
+  image_url?: string;
   min_price: number;
   max_price: number;
   sku: string;

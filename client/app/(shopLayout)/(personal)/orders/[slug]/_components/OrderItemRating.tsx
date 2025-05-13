@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Fragment } from 'react';
+import { useState, Fragment } from 'react';
 import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { StarIcon } from '@heroicons/react/24/solid';
@@ -12,23 +12,25 @@ import {
   Transition,
   TransitionChild,
 } from '@headlessui/react';
-import { XCircleIcon, PhotoIcon } from '@heroicons/react/24/outline';
+import { XCircleIcon } from '@heroicons/react/24/outline';
 import { useForm } from 'react-hook-form';
+import { OrderItemModel } from '@/app/lib/definitions';
+import { ImageUploader } from '@/components/FormFields';
 
 interface OrderItemRatingProps {
-  orderId: string;
-  productId: string;
+  orderItemId: string;
+  ratingModel?: OrderItemModel['rating'];
 }
 
 type ReviewFormData = {
   headline: string;
   comment: string;
-  imageUrl: string | null;
+  imageUrls: string[];
 };
 
 export default function OrderItemRating({
-  orderId,
-  productId,
+  orderItemId,
+  ratingModel,
 }: OrderItemRatingProps) {
   // Form handling with react-hook-form
   const {
@@ -36,55 +38,28 @@ export default function OrderItemRating({
     handleSubmit: handleFormSubmit,
     formState: { errors },
     setValue,
-    watch,
   } = useForm<ReviewFormData>({
     defaultValues: {
-      headline: '',
-      comment: '',
-      imageUrl: null,
+      headline: ratingModel?.title ?? '',
+      comment: ratingModel?.content ?? '',
+      imageUrls: ratingModel?.image_url ? [ratingModel.image_url] : [],
     },
   });
 
-  const [rating, setRating] = useState<number | null>(null);
-  const [existingRating, setExistingRating] = useState<number | null>(null);
+  const [rating, setRating] = useState<number | null>(
+    ratingModel?.rating ?? null
+  );
+  const [existingRating, setExistingRating] = useState<number | null>(
+    ratingModel?.rating ?? null
+  );
   const [hoveredRating, setHoveredRating] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [uploadingImage, setUploadingImage] = useState(false);
-
-  // Check if user has already rated this product in this order
-  useEffect(() => {
-    const fetchExistingRating = async () => {
-      try {
-        const response = await apiFetchClientSide(
-          `${PUBLIC_API_PATHS.ORDER_ITEM.replace(':id', orderId)}/ratings/${productId}`,
-          {}
-        );
-
-        if (response.data) {
-          setExistingRating(response.data.rating);
-          setRating(response.data.rating);
-          setValue('headline', response.data.headline || '');
-          setValue('comment', response.data.comment || '');
-
-          if (response.data.imageUrl) {
-            setValue('imageUrl', response.data.imageUrl);
-            setPreviewUrl(response.data.imageUrl);
-          }
-
-          setSubmitted(true);
-        }
-      } catch (err) {
-        // No existing rating found, that's okay
-      }
-    };
-
-    fetchExistingRating();
-  }, [orderId, productId, setValue]);
+  const [imageFiles, setImageFiles] = useState<(File & { preview: string })[]>(
+    []
+  );
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   const closeModal = () => {
     setIsOpen(false);
@@ -94,41 +69,28 @@ export default function OrderItemRating({
     setIsOpen(true);
   };
 
-  // Handle image upload
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Handle image upload from the ImageUploader component
+  const handleImageUpload = (files: (File & { preview: string })[]) => {
+    setImageFiles([...imageFiles, ...files]);
 
-    // Check if file is an image
-    if (!file.type.match('image.*')) {
-      setError('Please select an image file (png, jpg, jpeg)');
-      return;
-    }
-
-    // Check file size (limit to 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Image size should not exceed 5MB');
-      return;
-    }
-
-    setImageFile(file);
-
-    // Create preview URL
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreviewUrl(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    // You can also update form values with the preview URLs
+    const currentUrls = imageFiles.map((file) => file.preview);
+    const newUrls = files.map((file) => file.preview);
+    setValue('imageUrls', [...currentUrls, ...newUrls]);
   };
 
-  // Remove uploaded image
-  const removeImage = () => {
-    setImageFile(null);
-    setPreviewUrl(null);
-    setValue('imageUrl', null);
+  // Remove an image by index
+  const handleRemoveImage = (indexToRemove: number) => {
+    setImageFiles(imageFiles.filter((_, index) => index !== indexToRemove));
+    setValue(
+      'imageUrls',
+      imageFiles
+        .filter((_, index) => index !== indexToRemove)
+        .map((file) => file.preview)
+    );
   };
 
-  const onSubmit = async (formData: ReviewFormData) => {
+  const onSubmit = async (data: ReviewFormData) => {
     if (!rating) {
       setError('Please select a star rating');
       return;
@@ -138,63 +100,32 @@ export default function OrderItemRating({
     setError(null);
 
     try {
-      let imageUrl = watch('imageUrl');
+      // Create a FormData object for the multipart/form-data request
+      const formData = new FormData();
 
-      // Upload the image first if there's a new file
-      if (imageFile) {
-        setUploadingImage(true);
-
-        // Create FormData to upload the image
-        const formData = new FormData();
-        formData.append('image', imageFile);
-
-        // Upload image to your server endpoint
-        try {
-          const uploadResponse = await apiFetchClientSide(
-            `${PUBLIC_API_PATHS.RATING}`,
-            {
-              method: 'POST',
-              body: formData,
-            }
-          );
-
-          if (uploadResponse.error) {
-            throw new Error(
-              uploadResponse.error.details || 'Failed to upload image'
-            );
-          }
-
-          imageUrl = uploadResponse.data.url;
-          setValue('imageUrl', imageUrl);
-        } catch (err) {
-          setError('Failed to upload image. Please try again.');
-          setLoading(false);
-          setUploadingImage(false);
-          return;
-        } finally {
-          setUploadingImage(false);
-        }
+      // Add all image files to the FormData object
+      if (imageFiles.length > 0) {
+        setUploadingImages(true);
+        imageFiles.forEach((file) => {
+          formData.append('files', file);
+        });
       }
 
+      // Add other form fields
+      formData.append('order_item_id', orderItemId);
+      formData.append('rating', rating.toString());
+      formData.append('title', data.headline.trim());
+      formData.append('content', data.comment.trim());
+
       // Submit the review with image URL if available
-      const response = await apiFetchClientSide(
-        `${PUBLIC_API_PATHS.ORDER_ITEM.replace(':id', orderId)}/rate`,
-        {
-          method: 'POST',
-          body: {
-            product_id: productId,
-            rating,
-            headline: formData.headline.trim(),
-            comment: formData.comment.trim(),
-            imageUrl: imageUrl || undefined,
-          },
-        }
-      );
+      const response = await apiFetchClientSide(PUBLIC_API_PATHS.RATING, {
+        method: 'POST',
+        body: formData,
+      });
 
       if (response.error) {
         setError(response.error.details || 'Failed to submit rating');
       } else {
-        setSubmitted(true);
         setExistingRating(rating);
         closeModal();
       }
@@ -202,6 +133,7 @@ export default function OrderItemRating({
       setError('An error occurred while submitting your rating');
     } finally {
       setLoading(false);
+      setUploadingImages(false);
     }
   };
 
@@ -312,7 +244,7 @@ export default function OrderItemRating({
                           </div>
                           <span className='ml-4 text-sm font-medium text-gray-700'>
                             {rating ? (
-                              <span className='px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full'>
+                              <span className='px-3 py-1 bg-yellow-100 border border-orange-900 shadow-sm text-orange-600 rounded-full'>
                                 {rating} star{rating !== 1 ? 's' : ''}
                               </span>
                             ) : (
@@ -386,56 +318,44 @@ export default function OrderItemRating({
                         </p>
                       </div>
 
-                      {/* Image upload section */}
+                      {/* Image upload section using the reusable ImageUploader component */}
                       <div className='mb-6'>
-                        <label
-                          htmlFor='image'
-                          className='block text-sm font-medium text-gray-700 mb-2'
-                        >
-                          Add Photo{' '}
-                          <span className='text-gray-500'>(Optional)</span>
-                        </label>
+                        <ImageUploader
+                          label='Add Photos'
+                          multiple={true}
+                          onUpload={handleImageUpload}
+                        />
 
-                        {previewUrl ? (
-                          <div className='relative rounded-md overflow-hidden mb-3'>
-                            <img
-                              src={previewUrl}
-                              alt='Preview'
-                              className='w-32 h-32 object-cover border border-gray-300 rounded-md'
-                            />
-                            <button
-                              type='button'
-                              onClick={removeImage}
-                              className='absolute top-1 right-1 bg-white rounded-full p-1 shadow-md hover:bg-gray-100'
-                            >
-                              <XCircleIcon className='h-5 w-5 text-gray-600' />
-                            </button>
-                          </div>
-                        ) : (
-                          <div className='mb-3'>
-                            <label
-                              htmlFor='image-upload'
-                              className='flex flex-col items-center justify-center w-32 h-32 border-2 border-gray-300 border-dashed rounded-md cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors'
-                            >
-                              <div className='flex flex-col items-center justify-center'>
-                                <PhotoIcon className='h-10 w-10 text-gray-400 mb-1' />
-                                <p className='text-xs text-gray-500'>
-                                  Click to upload
-                                </p>
-                              </div>
-                              <input
-                                id='image-upload'
-                                type='file'
-                                accept='image/*'
-                                onChange={handleImageChange}
-                                className='sr-only'
-                              />
-                            </label>
+                        {/* Preview of uploaded images */}
+                        {imageFiles.length > 0 && (
+                          <div className='mt-4'>
+                            <h4 className='text-sm font-medium text-gray-700 mb-2'>
+                              Uploaded Images
+                            </h4>
+                            <div className='flex flex-wrap gap-4'>
+                              {imageFiles.map((file, index) => (
+                                <div key={index} className='relative'>
+                                  <img
+                                    src={file.preview}
+                                    alt={`Preview ${index + 1}`}
+                                    className='w-32 h-32 object-cover border border-gray-300 rounded-md'
+                                  />
+                                  <button
+                                    type='button'
+                                    onClick={() => handleRemoveImage(index)}
+                                    className='absolute top-1 right-1 bg-white rounded-full p-1 shadow-md hover:bg-gray-100'
+                                  >
+                                    <XCircleIcon className='h-5 w-5 text-gray-600' />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         )}
-                        <p className='text-xs text-gray-500'>
-                          Add a photo to help other shoppers visualize your
-                          experience. Max size: 5MB.
+
+                        <p className='mt-2 text-xs text-gray-500'>
+                          Add photos to help other shoppers visualize your
+                          experience. Max size: 5MB per image.
                         </p>
                       </div>
 
@@ -471,7 +391,7 @@ export default function OrderItemRating({
                             : 'bg-indigo-600 hover:bg-indigo-700'
                         }`}
                       >
-                        {loading || uploadingImage
+                        {loading || uploadingImages
                           ? 'Submitting...'
                           : existingRating
                             ? 'Update Review'

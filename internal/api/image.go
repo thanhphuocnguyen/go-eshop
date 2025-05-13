@@ -261,7 +261,7 @@ func (sv *Server) getProductImagesHandler(c *gin.Context) {
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /images/product/{product_id} [delete]
-func (sv *Server) removeImage(c *gin.Context) {
+func (sv *Server) removeImageHandler(c *gin.Context) {
 	_, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, createErrorResponse[bool](UnauthorizedCode, "", errors.New("missing user payload in context")))
@@ -311,7 +311,7 @@ func (sv *Server) removeImage(c *gin.Context) {
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /images/{publicID} [delete]
-func (sv *Server) removeImageByPublicID(c *gin.Context) {
+func (sv *Server) removeImageByPublicIDHandler(c *gin.Context) {
 	_, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](UnauthorizedCode, "", errors.New("missing user payload in context")))

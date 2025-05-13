@@ -85,7 +85,7 @@ LEFT JOIN product_variants as v ON p.id = v.product_id
 LEFT JOIN LATERAL (
     SELECT img.id, img.url
     FROM image_assignments as ia
-    JOIN images as img ON img.id = ia.image_id
+    LEFT JOIN images as img ON img.id = ia.image_id
     WHERE ia.entity_id = p.id AND ia.entity_type = 'product'
     ORDER BY ia.display_order ASC, ia.id ASC
     LIMIT 1

@@ -35,7 +35,7 @@ export default function Page() {
       ).then((response) => {
         // Store pagination data
         if (response.pagination) {
-          setTotal(response.pagination.totalItems);
+          setTotal(response.pagination.total);
           setTotalPages(response.pagination.totalPages);
         }
         return response.data;
@@ -133,7 +133,7 @@ export default function Page() {
                 className='odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200'
               >
                 <td className='px-6 py-4'>
-                  {product.image_url && (
+                  {product?.image_url && (
                     <div className='h-10 w-10 relative'>
                       <Image
                         src={product.image_url}

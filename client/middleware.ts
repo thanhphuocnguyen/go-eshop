@@ -33,7 +33,6 @@ export async function middleware(request: NextRequest) {
       }
       const { data }: GenericResponse<RefreshTokenResponse> =
         await refreshResult.json();
-      console.log({ data });
       response.cookies.set('access_token', data.access_token, {
         expires: new Date(data.access_token_expires_at),
       });

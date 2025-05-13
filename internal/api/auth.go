@@ -300,6 +300,7 @@ func (sv *Server) refreshTokenHandler(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, createErrorResponse[RefreshTokenResponse](InvalidSessionCode, "", err))
 		return
 	}
+
 	accessToken, _, err := sv.tokenGenerator.GenerateToken(session.UserID, refreshTokenPayload.Username, refreshTokenPayload.Role, sv.config.AccessTokenDuration)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[RefreshTokenResponse](InternalServerErrorCode, "", err))

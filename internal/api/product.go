@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -55,45 +54,10 @@ type ProductVariantModel struct {
 	Attributes []ProductAttributeDetail `json:"attributes"`
 }
 
-type CreateProductReq struct {
-	Name             string                                    `json:"name" binding:"required,min=3,max=100"`
-	Description      string                                    `json:"description" binding:"omitempty,min=6,max=5000"`
-	ShortDescription *string                                   `json:"short_description" binding:"omitempty,max=2000"`
-	Price            float64                                   `json:"price" binding:"required,gt=0"`
-	Sku              string                                    `json:"sku" binding:"required"`
-	Slug             string                                    `json:"slug" binding:"omitempty"`
-	CategoryID       string                                    `json:"category_id,omitempty" binding:"omitempty,uuid"`
-	BrandID          string                                    `json:"brand_id,omitempty" binding:"omitempty,uuid"`
-	CollectionID     *string                                   `json:"collection_id,omitempty" binding:"omitempty,uuid"`
-	Attributes       []string                                  `json:"attributes" binding:"min=1"`
-	Variants         []repository.CreateProductVariantTxParams `json:"variants,omitempty"`
-}
 type UpdateProductImageAssignments struct {
 	ID           int32  `json:"id"`
 	EntityID     string `json:"entity_id"`
 	DisplayOrder int16  `json:"display_order"`
-}
-
-type UpdateProductImages struct {
-	ID          string   `json:"id"`
-	Role        *string  `json:"role"`
-	IsRemoved   *bool    `json:"omitempty,is_removed"`
-	Assignments []string `json:"assignments,omitempty"`
-}
-
-type UpdateProductReq struct {
-	Name             *string               `json:"name" binding:"omitempty,min=3,max=100"`
-	Description      *string               `json:"description" binding:"omitempty,min=6,max=5000"`
-	ShortDescription *string               `json:"short_description" binding:"omitempty,max=2000"`
-	Price            *float64              `json:"price" binding:"omitempty,gt=0"`
-	Sku              *string               `json:"sku" binding:"omitempty"`
-	Slug             *string               `json:"slug" binding:"omitempty"`
-	Stock            *int32                `json:"stock" binding:"omitempty,gt=0"`
-	CategoryID       *string               `json:"category_id,omitempty" binding:"omitempty,uuid"`
-	BrandID          *string               `json:"brand_id,omitempty" binding:"omitempty,uuid"`
-	CollectionID     *string               `json:"collection_id,omitempty" binding:"omitempty,uuid"`
-	Attributes       []string              `json:"attributes" binding:"omitempty"`
-	Images           []UpdateProductImages `json:"images" binding:"omitempty,dive"`
 }
 
 type GeneralCategoryResponse struct {
@@ -129,10 +93,14 @@ type ProductListModel struct {
 	MaxPrice     float64 `json:"max_price,omitzero"`
 	Slug         string  `json:"slug,omitempty"`
 	Sku          string  `json:"sku"`
-	ImgUrl       string  `json:"image_url,omitempty"`
-	ImgID        string  `json:"image_id,omitempty"`
+	ImgUrl       *string `json:"image_url,omitempty"`
+	ImgID        *string `json:"image_id,omitempty"`
 	CreatedAt    string  `json:"created_at,omitempty"`
 	UpdatedAt    string  `json:"updated_at,omitempty"`
+}
+
+type ProductCreateResp struct {
+	ID string `json:"id"`
 }
 
 // ------------------------------ Handlers ------------------------------
@@ -148,57 +116,26 @@ type ProductListModel struct {
 // @Failure 400 {object} ApiResponse[ProductListModel]
 // @Failure 500 {object} ApiResponse[ProductListModel]
 // @Router /products [post]
-func (sv *Server) createProduct(c *gin.Context) {
-	var req CreateProductReq
+func (sv *Server) addProductHandler(c *gin.Context) {
+	var req repository.CreateProductTxArgs
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](InvalidBodyCode, "", err))
 		return
 	}
-	attributes := make([]uuid.UUID, len(req.Attributes))
-	for i, attr := range req.Attributes {
-		attributes[i] = uuid.MustParse(attr)
-	}
-	createParams := repository.CreateProductParams{
-		Name:        req.Name,
-		Attributes:  attributes,
-		Description: req.Description,
-	}
 
-	createParams.BasePrice = utils.GetPgNumericFromFloat(req.Price)
-	createParams.ShortDescription = req.ShortDescription
-	createParams.Slug = req.Slug
-	createParams.BaseSku = req.Sku
+	productID, err := sv.repo.CreateProductTx(c, req)
 
-	createParams.CategoryID = utils.GetPgTypeUUIDFromString(req.CategoryID)
-
-	createParams.BrandID = utils.GetPgTypeUUIDFromString(req.BrandID)
-	if req.CollectionID != nil {
-		createParams.CollectionID = utils.GetPgTypeUUIDFromString(*req.CollectionID)
-	}
-
-	product, err := sv.repo.CreateProduct(c, createParams)
 	if err != nil {
-		log.Error().Err(err).Timestamp()
-
-		if errors.Is(err, repository.ErrUniqueViolation) {
-			c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](ConflictCode, "", err))
-			return
-		}
+		log.Error().Err(err).Msg("CreateProduct")
 		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](InternalServerErrorCode, "", err))
 		return
 	}
 
-	resp := ProductListModel{
-		ID:          product.ID.String(),
-		Name:        product.Name,
-		Description: product.Description,
-		Slug:        product.Slug,
-		Sku:         product.BaseSku,
-		CreatedAt:   product.CreatedAt.String(),
-		UpdatedAt:   product.UpdatedAt.String(),
+	resp := ProductCreateResp{
+		ID: productID.String(),
 	}
 
-	c.JSON(http.StatusCreated, createSuccessResponse(c, resp, "product created", nil, nil))
+	c.JSON(http.StatusCreated, createSuccessResponse(c, resp, "", nil, nil))
 }
 
 // @Summary Get a product detail by ID
@@ -312,7 +249,6 @@ func (sv *Server) getProductsHandler(c *gin.Context) {
 
 	products, err := sv.repo.GetProducts(c, dbParams)
 	if err != nil {
-
 		c.JSON(http.StatusInternalServerError, createErrorResponse[[]ProductListModel](InternalServerErrorCode, "Server error", err))
 		return
 	}
@@ -350,181 +286,30 @@ func (sv *Server) getProductsHandler(c *gin.Context) {
 // @Failure 404 {object} ApiResponse[ProductListModel]
 // @Failure 500 {object} ApiResponse[ProductListModel]
 // @Router /products/{product_id} [put]
-func (sv *Server) updateProduct(c *gin.Context) {
+func (sv *Server) updateProductHandler(c *gin.Context) {
 	var param ProductParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](InvalidBodyCode, "", err))
 		return
 	}
 
-	var req UpdateProductReq
+	var req repository.UpdateProductTxParams
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](InvalidBodyCode, "", err))
 		return
 	}
 	productID := uuid.MustParse(param.ID)
-	updateProductParam := repository.UpdateProductParams{
-		ID: productID,
-	}
-
-	if req.Name != nil {
-		updateProductParam.Name = req.Name
-	}
-	if req.Description != nil {
-		updateProductParam.Description = req.Description
-	}
-	if req.ShortDescription != nil {
-		updateProductParam.ShortDescription = req.ShortDescription
-	}
-	if req.Slug != nil {
-		updateProductParam.Slug = req.Slug
-	}
-	if req.Sku != nil {
-		updateProductParam.BaseSku = req.Sku
-	}
-	if req.CategoryID != nil {
-		updateProductParam.CategoryID = utils.GetPgTypeUUIDFromString(*req.CategoryID)
-	}
-	if req.CollectionID != nil {
-		updateProductParam.CollectionID = utils.GetPgTypeUUIDFromString(*req.CollectionID)
-	}
-	if req.BrandID != nil {
-		updateProductParam.BrandID = utils.GetPgTypeUUIDFromString(*req.BrandID)
-	}
-	if req.Price != nil {
-		updateProductParam.BasePrice = utils.GetPgNumericFromFloat(*req.Price)
-	}
-	if len(req.Attributes) > 0 {
-		attributes := make([]uuid.UUID, len(req.Attributes))
-		for i, attr := range req.Attributes {
-			attributes[i] = uuid.MustParse(attr)
-		}
-		updateProductParam.Attributes = attributes
-	}
-
-	product, err := sv.repo.UpdateProduct(c, updateProductParam)
-
-	if err != nil {
-		log.Error().Err(err).Msg("UpdateProduct")
-		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](InternalServerErrorCode, "", err))
-		return
-	}
-
-	var removeImgErr *ApiError
-	if len(req.Images) > 0 {
-		errGroup, _ := errgroup.WithContext(c)
-		imgAssignmentArgs := make([]repository.UpdateProdImagesTxArgs, 0)
-		for _, image := range req.Images {
-			if image.IsRemoved != nil && *image.IsRemoved {
-				errGroup.Go(func() (err error) {
-					img, err := sv.repo.GetImageFromID(c, repository.GetImageFromIDParams{
-						ID:         uuid.MustParse(image.ID),
-						EntityType: repository.ProductEntityType,
-					})
-
-					if err != nil {
-						if errors.Is(err, repository.ErrRecordNotFound) {
-							c.JSON(http.StatusNotFound, createErrorResponse[ProductListModel](NotFoundCode, "", err))
-							return
-						}
-						c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](InternalServerErrorCode, "", err))
-						return
-					}
-
-					msg, err := sv.removeImageUtil(c, img.ExternalID)
-					if err != nil {
-						return fmt.Errorf("failed to remove image: %w, reason: %s", err, msg)
-					}
-
-					// Remove image from product
-					err = sv.repo.DeleteProductImage(c, uuid.MustParse(image.ID))
-					if err != nil {
-						if errors.Is(err, repository.ErrRecordNotFound) {
-							c.JSON(http.StatusNotFound, createErrorResponse[ProductListModel](NotFoundCode, "", err))
-							return
-						}
-						c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](InternalServerErrorCode, "", err))
-						return
-					}
-					return err
-				})
-			} else {
-				// parse the assignments to UUIDs
-				assignmentIds := make([]uuid.UUID, 0)
-				for _, assignment := range image.Assignments {
-					if assignment == productID.String() {
-						continue
-					}
-					assignmentIds = append(assignmentIds, uuid.MustParse(assignment))
-				}
-				// append the image assignment to the list
-				args := repository.UpdateProdImagesTxArgs{
-					ImageID:    image.ID,
-					Role:       image.Role,
-					EntityID:   productID,
-					EntityType: repository.ProductEntityType,
-					VariantIDs: assignmentIds,
-				}
-
-				imgAssignmentArgs = append(imgAssignmentArgs, args)
-			}
-
-		}
-
-		err = errGroup.Wait()
-		if err != nil {
-			removeImgErr = &ApiError{
-				Code:    strconv.Itoa(http.StatusBadRequest),
-				Details: "Some images are not removed",
-				Stack:   err.Error(),
-			}
-		}
-		if len(imgAssignmentArgs) != 0 {
-			// update the image assignments
-			err := sv.repo.UpdateProductImagesTx(c, imgAssignmentArgs)
-			if err != nil {
-				if errors.Is(err, repository.ErrRecordNotFound) {
-					c.JSON(http.StatusNotFound, createErrorResponse[ProductListModel](InternalServerErrorCode, "", err))
-					return
-				}
-				c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](InternalServerErrorCode, "", err))
-				return
-			}
-		}
-
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](InternalServerErrorCode, "", err))
-			return
-		}
-	}
-
-	c.JSON(http.StatusOK, createSuccessResponse(c, product, "product updated", nil, removeImgErr))
-}
-
-func (sv *Server) updateProductVariants(c *gin.Context) {
-	var params ProductParam
-	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[repository.UpdateProductVariantsTxResult](InvalidBodyCode, "", err))
-		return
-	}
-
-	var req repository.UpdateProdVariantsTxArgs
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[repository.UpdateProductVariantsTxResult](InvalidBodyCode, "", err))
-		return
-	}
-
-	updated, err := sv.repo.UpdateProductVariantsTx(c, uuid.MustParse(params.ID), req)
+	err := sv.repo.UpdateProductTx(c, productID, req)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[repository.UpdateProductVariantsTxResult](NotFoundCode, "", err))
+			c.JSON(http.StatusNotFound, createErrorResponse[ProductListModel](NotFoundCode, "", err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[repository.UpdateProductVariantsTxResult](InternalServerErrorCode, "", err))
-		return
 	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(c, updated, "product variants updated", nil, nil))
+	c.JSON(http.StatusOK, createSuccessResponse(c, ProductCreateResp{
+		ID: productID.String(),
+	}, "product updated", nil, nil))
 }
 
 // @Summary Remove a product by ID
@@ -538,7 +323,7 @@ func (sv *Server) updateProductVariants(c *gin.Context) {
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /products/{product_id} [delete]
-func (sv *Server) removeProduct(c *gin.Context) {
+func (sv *Server) deleteProductHandler(c *gin.Context) {
 	var params ProductParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidBodyCode, "", err))
@@ -753,7 +538,7 @@ func mapToProductImages(productID uuid.UUID, imageRows []repository.GetProductIm
 				Role:         row.Role,
 				DisplayOrder: row.DisplayOrder,
 			}
-			if row.EntityID.String() != productID.String() {
+			if row.EntityID != productID {
 				// If the image already exists, append the assignment to the existing image
 				images[existingImageIdx].VariantAssignments = append(images[existingImageIdx].VariantAssignments, image)
 			}
@@ -767,7 +552,7 @@ func mapToProductImages(productID uuid.UUID, imageRows []repository.GetProductIm
 				VariantAssignments: make([]ImageAssignment, 0),
 			}
 
-			if row.EntityID.String() != productID.String() {
+			if row.EntityID != productID {
 				image.VariantAssignments = append(image.VariantAssignments, ImageAssignment{
 					ID:           row.ID.String(),
 					EntityID:     row.EntityID.String(),
@@ -785,6 +570,13 @@ func mapToProductImages(productID uuid.UUID, imageRows []repository.GetProductIm
 func mapToListProductResponse(productRow repository.GetProductsRow) ProductListModel {
 	minPrice, _ := productRow.MinPrice.Float64Value()
 	maxPrice, _ := productRow.MaxPrice.Float64Value()
+	basePrice, _ := productRow.BasePrice.Float64Value()
+	if minPrice.Float64 == 0 {
+		minPrice = basePrice
+	}
+	if maxPrice.Float64 == 0 {
+		maxPrice = basePrice
+	}
 	product := ProductListModel{
 		ID:           productRow.ID.String(),
 		Name:         productRow.Name,
@@ -794,10 +586,13 @@ func mapToListProductResponse(productRow repository.GetProductsRow) ProductListM
 		Sku:          productRow.BaseSku,
 		Slug:         productRow.Slug,
 		ImgUrl:       productRow.ImgUrl,
-		ImgID:        productRow.ImgID.String(),
 		VariantCount: productRow.VariantCount,
 		CreatedAt:    productRow.CreatedAt.String(),
 		UpdatedAt:    productRow.UpdatedAt.String(),
+	}
+	if productRow.ImgID.Valid {
+		id, _ := uuid.FromBytes(productRow.ImgID.Bytes[:])
+		product.ImgID = StringPtr(id.String())
 	}
 
 	return product

@@ -13,18 +13,17 @@ import {
   ProductDetailModel,
   ProductFormSchema,
   ProductModelForm,
-  VariantModelForm,
   UploadImageResponseModel,
 } from '@/app/lib/definitions';
 
 import { useProductDetailFormContext } from '../_lib/contexts/ProductFormContext';
 import { ProductInfoForm } from './ProductInfoForm';
 import { VariantInfoForm } from './VariantInfoForm';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { toast } from 'react-toastify';
 import { ConfirmDialog } from '@/components/Common/Dialogs/ConfirmDialog';
 import { KeyedMutator } from 'swr';
+import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
 
 interface ProductEditFormProps {
   productDetail?: ProductDetailModel;
@@ -259,29 +258,15 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
 
   async function submitHandler(data: ProductModelForm) {
     let productID = productDetail?.id;
-    const { variants, ...productData } = data;
     let isAllSuccess = true;
     if (dirtyFields.product_info) {
-      const rs = await onSubmitProductDetail(productData);
+      const rs = await onSubmitProductDetail(data);
       productID = rs;
       isAllSuccess &&= !!rs;
     }
 
     if (productID && tempProductImages.length) {
       const rs = await onUploadImages(productID);
-      isAllSuccess &&= rs;
-    }
-
-    if (productID && dirtyFields.variants?.length) {
-      const variantsToUpdate = new Array<VariantModelForm>(0);
-
-      dirtyFields.variants.map((val, i) => {
-        if (val) {
-          variantsToUpdate.push(variants[i]);
-        }
-      });
-
-      const rs = await onSubmitVariants(productID, variantsToUpdate);
       isAllSuccess &&= rs;
     }
 
@@ -329,8 +314,15 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
   }
 
   async function onSubmitProductDetail(
-    payload: Omit<ProductModelForm, 'variants'>
+    payload: ProductModelForm
   ): Promise<string | undefined> {
+    const variants = payload.variants.map((variant) => ({
+      ...variant,
+      attributes: variant.attributes.map((attribute) => ({
+        id: attribute.id,
+        value_id: attribute.value_object?.id,
+      })),
+    }));
     const { data, error } = await apiFetchClientSide<{ id: string }>(
       productDetail
         ? ADMIN_API_PATHS.PRODUCT_DETAIL.replace(':id', productDetail.id)
@@ -339,6 +331,7 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
         method: productDetail ? 'PUT' : 'POST',
         body: {
           ...payload.product_info,
+          variants,
           collection_id: payload.product_info.collection?.id || null,
           attributes: payload.product_info.attributes,
           brand_id: payload.product_info.brand?.id || null,
@@ -368,35 +361,5 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
     }
 
     return data.id;
-  }
-
-  async function onSubmitVariants(prodId: string, payload: VariantModelForm[]) {
-    const body = {
-      variants: payload.map((variant) => ({
-        ...variant,
-        attributes: variant.attributes.map((attribute) => ({
-          id: attribute.id,
-          value_id: attribute.value_object?.id,
-        })),
-      })),
-    };
-
-    const { error } = await apiFetchClientSide<
-      GenericResponse<{
-        updated_ids: string[];
-        created_ids: string[];
-      }>
-    >(ADMIN_API_PATHS.PRODUCT_VARIANTS.replace(':id', prodId), {
-      method: 'PUT',
-      body: body,
-    });
-
-    if (error) {
-      toast.error('Failed to update variants');
-      return false;
-    }
-
-    toast.success('Variants updated successfully');
-    return true;
   }
 };

@@ -264,11 +264,11 @@ func (q *Queries) GetOrderItemByID(ctx context.Context, id uuid.UUID) (GetOrderI
 	return i, err
 }
 
-const getOrderProducts = `-- name: GetOrderProducts :many
+const getOrderItems = `-- name: GetOrderItems :many
 SELECT
     oi.id, oi.order_id, oi.variant_id, oi.quantity, oi.price_per_unit_snapshot, oi.line_total_snapshot, oi.product_name_snapshot, oi.variant_sku_snapshot, oi.attributes_snapshot, oi.created_at, oi.updated_at, oi.discounted_price,
-    p.name as product_name,
-    i.url as image_url
+    p.name as product_name, i.url as image_url,
+    rv.id as rating_id, rv.rating, rv.review_title, rv.review_content, rv.created_at as rating_created_at
 FROM
     order_items oi
 JOIN
@@ -277,11 +277,12 @@ JOIN
     products p ON pv.product_id = p.id
 LEFT JOIN image_assignments AS ia ON ia.entity_id = pv.id AND ia.entity_type = 'variant'
 LEFT JOIN images AS i ON i.id = ia.image_id
+LEFT JOIN product_ratings rv ON rv.order_item_id = oi.id
 WHERE
     oi.order_id = $1
 `
 
-type GetOrderProductsRow struct {
+type GetOrderItemsRow struct {
 	ID                   uuid.UUID               `json:"id"`
 	OrderID              uuid.UUID               `json:"order_id"`
 	VariantID            uuid.UUID               `json:"variant_id"`
@@ -296,17 +297,22 @@ type GetOrderProductsRow struct {
 	DiscountedPrice      pgtype.Numeric          `json:"discounted_price"`
 	ProductName          string                  `json:"product_name"`
 	ImageUrl             *string                 `json:"image_url"`
+	RatingID             pgtype.UUID             `json:"rating_id"`
+	Rating               pgtype.Numeric          `json:"rating"`
+	ReviewTitle          *string                 `json:"review_title"`
+	ReviewContent        *string                 `json:"review_content"`
+	RatingCreatedAt      pgtype.Timestamptz      `json:"rating_created_at"`
 }
 
-func (q *Queries) GetOrderProducts(ctx context.Context, orderID uuid.UUID) ([]GetOrderProductsRow, error) {
-	rows, err := q.db.Query(ctx, getOrderProducts, orderID)
+func (q *Queries) GetOrderItems(ctx context.Context, orderID uuid.UUID) ([]GetOrderItemsRow, error) {
+	rows, err := q.db.Query(ctx, getOrderItems, orderID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetOrderProductsRow{}
+	items := []GetOrderItemsRow{}
 	for rows.Next() {
-		var i GetOrderProductsRow
+		var i GetOrderItemsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.OrderID,
@@ -322,6 +328,66 @@ func (q *Queries) GetOrderProducts(ctx context.Context, orderID uuid.UUID) ([]Ge
 			&i.DiscountedPrice,
 			&i.ProductName,
 			&i.ImageUrl,
+			&i.RatingID,
+			&i.Rating,
+			&i.ReviewTitle,
+			&i.ReviewContent,
+			&i.RatingCreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getOrderItemsByOrderID = `-- name: GetOrderItemsByOrderID :many
+SELECT
+    oi.id as order_item_id,
+    o.id as order_id,
+    p.id as product_id,
+    pv.id as variant_id,
+    o.customer_id
+FROM
+    order_items oi
+JOIN
+    product_variants pv ON oi.variant_id = pv.id
+JOIN
+    products p ON pv.product_id = p.id
+JOIN
+    orders o ON oi.order_id = o.id
+WHERE
+    oi.order_id = $1
+ORDER BY
+    oi.id
+`
+
+type GetOrderItemsByOrderIDRow struct {
+	OrderItemID uuid.UUID `json:"order_item_id"`
+	OrderID     uuid.UUID `json:"order_id"`
+	ProductID   uuid.UUID `json:"product_id"`
+	VariantID   uuid.UUID `json:"variant_id"`
+	CustomerID  uuid.UUID `json:"customer_id"`
+}
+
+func (q *Queries) GetOrderItemsByOrderID(ctx context.Context, orderID uuid.UUID) ([]GetOrderItemsByOrderIDRow, error) {
+	rows, err := q.db.Query(ctx, getOrderItemsByOrderID, orderID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetOrderItemsByOrderIDRow{}
+	for rows.Next() {
+		var i GetOrderItemsByOrderIDRow
+		if err := rows.Scan(
+			&i.OrderItemID,
+			&i.OrderID,
+			&i.ProductID,
+			&i.VariantID,
+			&i.CustomerID,
 		); err != nil {
 			return nil, err
 		}

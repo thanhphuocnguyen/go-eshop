@@ -154,7 +154,6 @@ func (sv *Server) getCollectionsHandler(c *gin.Context) {
 			HasPreviousPage: queries.Page > 1,
 		}, nil,
 	))
-
 }
 
 // getCollectionByIDHandler retrieves a Collection by its ID.

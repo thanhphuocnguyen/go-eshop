@@ -32,13 +32,22 @@ type OrderStatusRequest struct {
 	Reason string `json:"reason,omitempty"`
 }
 
+type Rating struct {
+	ID        string    `json:"id"`
+	Title     string    `json:"title"`
+	Content   string    `json:"content"`
+	Rating    float64   `json:"rating"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type OrderItemResponse struct {
 	ID                 string                             `json:"id"`
 	Name               string                             `json:"name"`
 	ImageUrl           *string                            `json:"image_url"`
-	AttributesSnapshot []repository.AttributeDataSnapshot `json:"attributes_snapshot"`
 	LineTotal          float64                            `json:"line_total"`
 	Quantity           int16                              `json:"quantity"`
+	AttributesSnapshot []repository.AttributeDataSnapshot `json:"attributes_snapshot"`
+	Rating             *Rating                            `json:"ratings,omitempty"`
 }
 type PaymentInfo struct {
 	ID           string  `json:"id"`
@@ -172,6 +181,15 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 		return
 	}
 
+	var resp *OrderDetailResponse
+
+	if err := sv.cacheService.Get(c, "order_detail:"+params.ID, &resp); err == nil {
+		if resp != nil {
+			c.JSON(http.StatusOK, createSuccessResponse(c, resp, "success", nil, nil))
+			return
+		}
+	}
+
 	order, err := sv.repo.GetOrder(c, uuid.MustParse(params.ID))
 	if err != nil {
 		if err == repository.ErrRecordNotFound {
@@ -184,7 +202,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 
 	total, _ := order.TotalPrice.Float64Value()
 
-	resp := OrderDetailResponse{
+	resp = &OrderDetailResponse{
 		ID:            order.ID,
 		Total:         total.Float64,
 		CustomerName:  order.CustomerName,
@@ -196,7 +214,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 		Products:      []OrderItemResponse{},
 	}
 
-	orderItemRows, err := sv.repo.GetOrderProducts(c, order.ID)
+	orderItemRows, err := sv.repo.GetOrderItems(c, order.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderDetailResponse](InternalServerErrorCode, "", err))
 		return
@@ -251,17 +269,38 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 
 	for _, item := range orderItemRows {
 		lineTotal, _ := item.LineTotalSnapshot.Float64Value()
-		orderItems = append(orderItems, OrderItemResponse{
+		itemResp := OrderItemResponse{
 			ID:                 item.VariantID.String(),
 			Name:               item.ProductName,
 			ImageUrl:           item.ImageUrl,
 			LineTotal:          lineTotal.Float64,
 			AttributesSnapshot: item.AttributesSnapshot,
 			Quantity:           item.Quantity,
-		})
+		}
+		if item.RatingID.Valid {
+			id, _ := uuid.FromBytes(item.RatingID.Bytes[:])
+			rating, _ := item.Rating.Float64Value()
+			itemResp.Rating = &Rating{
+				ID:        id.String(),
+				Title:     *item.ReviewTitle,
+				Content:   *item.ReviewContent,
+				Rating:    rating.Float64,
+				CreatedAt: item.RatingCreatedAt.Time.UTC(),
+			}
+		}
+		orderItems = append(orderItems, itemResp)
 	}
 
 	resp.Products = orderItems
+
+	if err := sv.cacheService.Set(c, "order_detail:"+params.ID, resp, TimeDurationPtr(5*time.Minute)); err != nil {
+		log.Err(err).Msg("failed to cache order detail")
+		apiErr = &ApiError{
+			Code:    InternalServerErrorCode,
+			Details: "failed to cache order detail",
+			Stack:   err.Error(),
+		}
+	}
 
 	c.JSON(http.StatusOK, createSuccessResponse(c, resp, "success", nil, apiErr))
 }
@@ -319,7 +358,16 @@ func (sv *Server) confirmOrderPayment(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 		return
 	}
-	c.JSON(http.StatusOK, createSuccessResponse(c, true, "success", nil, nil))
+	var apiErr *ApiError
+	if err := sv.cacheService.Delete(c, "order_detail:"+params.ID); err != nil {
+		log.Err(err).Msg("failed to delete order detail cache")
+		apiErr = &ApiError{
+			Code:    InternalServerErrorCode,
+			Details: "failed to delete order detail cache",
+			Stack:   err.Error(),
+		}
+	}
+	c.JSON(http.StatusOK, createSuccessResponse(c, true, "success", nil, apiErr))
 }
 
 // @Router /order/{order_id}/confirm_payment [put]
@@ -484,6 +532,13 @@ func (sv *Server) changeOrderStatus(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](InternalServerErrorCode, "", err))
 		return
 	}
+
+	if err := sv.cacheService.Delete(c, "order_detail:"+params.ID); err != nil {
+		log.Err(err).Msg("failed to delete order detail cache")
+		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](InternalServerErrorCode, "", err))
+		return
+	}
+
 	c.JSON(http.StatusOK, createSuccessResponse(c, rs, "success", nil, nil))
 }
 

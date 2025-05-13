@@ -150,10 +150,9 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 
 		productGroup := admin.Group("products")
 		{
-			productGroup.POST("", sv.createProduct)
-			productGroup.PUT(":id", sv.updateProduct)
-			productGroup.PUT(":id/variants", sv.updateProductVariants)
-			productGroup.DELETE(":id", sv.removeProduct)
+			productGroup.POST("", sv.addProductHandler)
+			productGroup.PUT(":id", sv.updateProductHandler)
+			productGroup.DELETE(":id", sv.deleteProductHandler)
 		}
 
 		attributeGroup := admin.Group("attributes")
@@ -162,7 +161,7 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 			attributeGroup.GET("", sv.getAttributesHandler)
 			attributeGroup.GET(":id", sv.getAttributeByIDHandler)
 			attributeGroup.PUT(":id", sv.updateAttributeHandler)
-			attributeGroup.DELETE(":id", sv.deleteAttribute)
+			attributeGroup.DELETE(":id", sv.deleteAttributeHandler)
 		}
 
 		adminOrder := admin.Group("orders")
@@ -177,7 +176,7 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 		{
 			categories.GET("", sv.getAdminCategoriesHandler)
 			categories.GET(":id", sv.getCategoryByID)
-			categories.POST("", sv.addCategoryHandler)
+			categories.POST("", sv.createCategoryHandler)
 			categories.PUT(":id", sv.updateCategoryHandler)
 			categories.DELETE(":id", sv.deleteCategory)
 		}
@@ -188,7 +187,7 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 			brands.GET("", sv.getBrandsHandler)
 			brands.POST("", sv.createBrandHandler)
 			brands.GET(":id", sv.getBrandByIDHandler)
-			brands.PUT(":id", sv.updateBrand)
+			brands.PUT(":id", sv.updateBrandHandler)
 			brands.DELETE(":id", sv.deleteBrand)
 		}
 
@@ -205,7 +204,7 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 		{
 			productImages := images.Group("products")
 			productImages.POST(":entity_id", sv.uploadProductImagesHandler)
-			productImages.DELETE(":entity_id", sv.removeImage)
+			productImages.DELETE(":entity_id", sv.removeImageHandler)
 		}
 
 		ratings := admin.Group("ratings")
@@ -261,7 +260,7 @@ func (sv *Server) setupProductRoutes(rg *gin.RouterGroup) {
 func (sv *Server) setupImageRoutes(rg *gin.RouterGroup) {
 	images := rg.Group("images", authMiddleware(sv.tokenGenerator))
 	{
-		images.DELETE("remove-external/:public_id", sv.removeImageByPublicID)
+		images.DELETE("remove-external/:public_id", sv.removeImageByPublicIDHandler)
 		images.GET("", sv.getProductImagesHandler)
 	}
 }
@@ -332,6 +331,7 @@ func (sv *Server) setupRatingRoutes(rg *gin.RouterGroup) {
 	ratings := rg.Group("ratings", authMiddleware(sv.tokenGenerator))
 	{
 		ratings.POST("", sv.postRatingHandler)
+		ratings.GET(":order_id", sv.getOrderRatingsHandler)
 		ratings.POST("helpful", sv.postRatingHelpfulHandler)
 		ratings.POST(":id/reply", sv.postReplyRatingHandler)
 	}

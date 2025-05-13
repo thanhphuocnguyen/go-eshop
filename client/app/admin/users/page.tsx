@@ -47,7 +47,7 @@ export default function Page() {
 
       // If pagination data is available in the response
       if (response.pagination) {
-        setTotalPages(Math.ceil(response.pagination.totalItems / pageSize));
+        setTotalPages(Math.ceil(response.pagination.total / pageSize));
       }
     } catch (error) {
       console.error('Error fetching users:', error);

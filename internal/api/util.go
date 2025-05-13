@@ -43,3 +43,7 @@ func CalculateTotalPages(total int64, pageSize int64) int64 {
 	}
 	return total/pageSize + 1
 }
+
+func TimeDurationPtr(value time.Duration) *time.Duration {
+	return &value
+}

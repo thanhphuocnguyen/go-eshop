@@ -33,15 +33,21 @@ type PostReplyRatingRequest struct {
 	Content  string `json:"content" binding:"required"`
 }
 
+type RatingImageModel struct {
+	ID  string `json:"id"`
+	URL string `json:"url"`
+}
+
 type ProductRatingModel struct {
-	ID               uuid.UUID `json:"id"`
-	UserID           uuid.UUID `json:"user_id"`
-	Rating           float64   `json:"rating"`
-	ReviewTitle      string    `json:"review_title"`
-	ReviewContent    string    `json:"review_content"`
-	VerifiedPurchase bool      `json:"verified_purchase"`
-	HelpfulVotes     int32     `json:"helpful_votes"`
-	UnhelpfulVotes   int32     `json:"unhelpful_votes"`
+	ID               uuid.UUID          `json:"id"`
+	UserID           uuid.UUID          `json:"user_id"`
+	Rating           float64            `json:"rating"`
+	ReviewTitle      string             `json:"review_title"`
+	ReviewContent    string             `json:"review_content"`
+	VerifiedPurchase bool               `json:"verified_purchase"`
+	HelpfulVotes     int32              `json:"helpful_votes"`
+	UnhelpfulVotes   int32              `json:"unhelpful_votes"`
+	Images           []RatingImageModel `json:"images"`
 }
 
 // ----- Rating Handlers -----
@@ -62,6 +68,7 @@ func (s *Server) postRatingHandler(c *gin.Context) {
 		c.JSON(403, createErrorResponse[gin.H](InvalidBodyCode, "forbidden", nil))
 		return
 	}
+
 	rating, err := s.repo.InsertProductRating(c, repository.InsertProductRatingParams{
 		ProductID:        orderItem.ProductID,
 		UserID:           auth.UserID,
@@ -76,7 +83,7 @@ func (s *Server) postRatingHandler(c *gin.Context) {
 		c.JSON(500, createErrorResponse[bool](InternalServerErrorCode, "internal server error", err))
 		return
 	}
-
+	images := make([]RatingImageModel, 0)
 	if len(req.Files) > 0 {
 		var wg sync.WaitGroup
 		wg.Add(len(req.Files))
@@ -101,7 +108,7 @@ func (s *Server) postRatingHandler(c *gin.Context) {
 				}
 				assignments[i] = repository.InsertImageAssignmentParams{
 					EntityID:   rating.ID,
-					EntityType: string(repository.ImageRoleGallery),
+					EntityType: "product_rating",
 					Role:       string(repository.ImageRoleGallery),
 				}
 			}(i, file)
@@ -127,10 +134,29 @@ func (s *Server) postRatingHandler(c *gin.Context) {
 				c.JSON(500, createErrorResponse[gin.H](InternalServerErrorCode, "internal server error", err))
 				return
 			}
+			images = append(images, struct {
+				ID  string `json:"id"`
+				URL string `json:"url"`
+			}{
+				ID:  img.ID.String(),
+				URL: img.Url,
+			})
 		}
 	}
 
-	c.JSON(200, createSuccessResponse(c, rating, "success", nil, nil))
+	resp := ProductRatingModel{
+		ID:               rating.ID,
+		UserID:           rating.UserID,
+		Rating:           req.Rating,
+		ReviewTitle:      *rating.ReviewTitle,
+		ReviewContent:    *rating.ReviewContent,
+		VerifiedPurchase: rating.VerifiedPurchase,
+		HelpfulVotes:     rating.HelpfulVotes,
+		UnhelpfulVotes:   rating.UnhelpfulVotes,
+		Images:           images,
+	}
+
+	c.JSON(200, createSuccessResponse(c, resp, "success", nil, nil))
 }
 
 func (s *Server) postRatingHelpfulHandler(c *gin.Context) {
@@ -258,6 +284,43 @@ func (s *Server) getProductRatingsHandler(c *gin.Context) {
 			HasPreviousPage: queries.Page > 1,
 		}, nil),
 	)
+}
+
+func (s *Server) getOrderRatingsHandler(c *gin.Context) {
+	auth, _ := c.MustGet(authorizationPayload).(*auth.Payload)
+
+	var param struct {
+		OrderID string `uri:"order_id" binding:"required,uuid"`
+	}
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(400, createErrorResponse[bool](InvalidBodyCode, "invalid request", err))
+		return
+	}
+
+	orderItems, err := s.repo.GetOrderItemsByOrderID(c, uuid.MustParse(param.OrderID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "internal server error", err))
+		return
+	}
+	if len(orderItems) == 0 {
+		c.JSON(http.StatusNotFound, createErrorResponse[bool](NotFoundCode, "order items not found", nil))
+		return
+	}
+	if orderItems[0].CustomerID != auth.UserID {
+		c.JSON(http.StatusForbidden, createErrorResponse[bool](PermissionDeniedCode, "forbidden", nil))
+		return
+	}
+	orderItemIds := make([]uuid.UUID, len(orderItems))
+	for i, orderItem := range orderItems {
+		orderItemIds[i] = orderItem.OrderItemID
+	}
+	ratings, err := s.repo.GetProductRatingsByOrderItemIDs(c, orderItemIds)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "internal server error", err))
+		return
+	}
+
+	c.JSON(200, createSuccessResponse(c, ratings, "success", nil, nil))
 }
 
 // @Summary Delete a rating

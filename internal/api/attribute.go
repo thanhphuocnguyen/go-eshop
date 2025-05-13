@@ -380,7 +380,7 @@ func (sv *Server) updateAttributeHandler(c *gin.Context) {
 // @Success 204 {object} nil
 // @Failure 500 {object} ApiResponse[bool]
 // @Router /attributes/{id} [delete]
-func (sv *Server) deleteAttribute(c *gin.Context) {
+func (sv *Server) deleteAttributeHandler(c *gin.Context) {
 	var params AttributeParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidBodyCode, "", err))

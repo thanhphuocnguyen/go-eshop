@@ -239,6 +239,18 @@ func (sv *Server) getUsersHandler(c *gin.Context) {
 	}, nil))
 }
 
+// sendVerifyEmailHandler godoc
+// @Summary Send verify email
+// @Description Send verify email
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Success 204 {object} ApiResponse[bool]
+// @Failure 400 {object} ApiResponse[bool]
+// @Failure 401 {object} ApiResponse[bool]
+// @Failure 500 {object} ApiResponse[bool]
+// @Router /users/verify-email [post]
+// @Security BearerAuth
 func (sv *Server) sendVerifyEmailHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {

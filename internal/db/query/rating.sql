@@ -1,5 +1,5 @@
 -- name: InsertProductRating :one
-INSERT INTO product_ratings (product_id,user_id,order_item_id,rating,review_title,review_content,verified_purchase) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
+INSERT INTO product_ratings (product_id, user_id, order_item_id, rating, review_title, review_content, verified_purchase) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
 
 -- name: UpdateProductRating :one
 UPDATE product_ratings SET 
@@ -42,6 +42,16 @@ JOIN users AS u ON u.id = pr.user_id
 WHERE pr.user_id = $1 AND pr.is_visible = TRUE
 ORDER BY pr.created_at DESC
 LIMIT $2 OFFSET $3;
+
+-- name: GetProductRatingsByOrderItemIDs :many
+SELECT 
+    sqlc.embed(pr), 
+    u.id AS user_id, u.fullname, u.email
+FROM product_ratings AS pr
+JOIN users AS u ON u.id = pr.user_id
+WHERE pr.order_item_id = ANY(sqlc.arg(ids)::uuid[]) AND pr.is_visible = TRUE
+ORDER BY pr.created_at DESC;
+
 
 -- name: CountProductRatings :one
 SELECT COUNT(*) FROM product_ratings WHERE product_id = $1 AND is_visible = TRUE;

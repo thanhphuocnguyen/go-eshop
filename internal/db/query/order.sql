@@ -21,11 +21,11 @@ WHERE
 LIMIT 1;
 
 
--- name: GetOrderProducts :many
+-- name: GetOrderItems :many
 SELECT
     oi.*,
-    p.name as product_name,
-    i.url as image_url
+    p.name as product_name, i.url as image_url,
+    rv.id as rating_id, rv.rating, rv.review_title, rv.review_content, rv.created_at as rating_created_at
 FROM
     order_items oi
 JOIN
@@ -34,6 +34,7 @@ JOIN
     products p ON pv.product_id = p.id
 LEFT JOIN image_assignments AS ia ON ia.entity_id = pv.id AND ia.entity_type = 'variant'
 LEFT JOIN images AS i ON i.id = ia.image_id
+LEFT JOIN product_ratings rv ON rv.order_item_id = oi.id
 WHERE
     oi.order_id = $1;
 
@@ -106,6 +107,26 @@ JOIN
 WHERE
     oi.id = $1
 LIMIT 1;
+
+-- name: GetOrderItemsByOrderID :many
+SELECT
+    oi.id as order_item_id,
+    o.id as order_id,
+    p.id as product_id,
+    pv.id as variant_id,
+    o.customer_id
+FROM
+    order_items oi
+JOIN
+    product_variants pv ON oi.variant_id = pv.id
+JOIN
+    products p ON pv.product_id = p.id
+JOIN
+    orders o ON oi.order_id = o.id
+WHERE
+    oi.order_id = $1
+ORDER BY
+    oi.id;
 
 -- name: ListOrderItems :many
 SELECT

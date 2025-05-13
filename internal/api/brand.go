@@ -62,15 +62,17 @@ func (sv *Server) getShopBrandsHandler(c *gin.Context) {
 	}
 	dbQueries.Limit = queries.PageSize
 	dbQueries.Offset = (queries.Page - 1) * queries.PageSize
-	var cached *ApiResponse[[]BrandResponse]
-
-	if err := sv.cacheService.Get(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), &cached); err != nil {
-		log.Error().Err(err).Msg("error when get brands from cache")
+	var cached *struct {
+		Data       []BrandResponse `json:"data"`
+		Pagination *Pagination     `json:"pagination"`
 	}
 
-	if cached != nil {
-		c.JSON(http.StatusNotModified, cached)
-		return
+	if err := sv.cacheService.Get(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), &cached); err == nil {
+		if cached != nil {
+			resp := createSuccessResponse(c, cached.Data, "Cached", cached.Pagination, nil)
+			c.JSON(http.StatusOK, resp)
+			return
+		}
 	}
 
 	rows, err := sv.repo.GetBrands(c, dbQueries)
@@ -97,21 +99,22 @@ func (sv *Server) getShopBrandsHandler(c *gin.Context) {
 			ImageUrl:    row.ImageUrl,
 		}
 	}
-
-	resp := createSuccessResponse(
-		c,
-		data,
-		"",
-		&Pagination{
+	cached = &struct {
+		Data       []BrandResponse `json:"data"`
+		Pagination *Pagination     `json:"pagination"`
+	}{
+		Data: data,
+		Pagination: &Pagination{
 			Page:            queries.Page,
 			Total:           cnt,
 			PageSize:        queries.PageSize,
 			TotalPages:      cnt / int64(queries.PageSize),
 			HasNextPage:     cnt > int64((queries.Page-1)*queries.PageSize+queries.PageSize),
 			HasPreviousPage: queries.Page > 1,
-		}, nil,
-	)
+		},
+	}
 
+	resp := createSuccessResponse(c, cached.Data, "", cached.Pagination, nil)
 	if err = sv.cacheService.Set(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), resp, nil); err != nil {
 		log.Error().Err(err).Msg("error when set brands to cache")
 	}
@@ -195,7 +198,7 @@ func (sv *Server) getBrandsHandler(c *gin.Context) {
 	if err := sv.cacheService.Get(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), &cached); err == nil {
 		if cached != nil {
 			resp := createSuccessResponse(c, cached.Data, "Cached", cached.Pagination, nil)
-			c.JSON(http.StatusNotModified, resp)
+			c.JSON(http.StatusOK, resp)
 			return
 		}
 	}
@@ -224,6 +227,7 @@ func (sv *Server) getBrandsHandler(c *gin.Context) {
 			ImageUrl:    row.ImageUrl,
 		})
 	}
+
 	pagination := &Pagination{
 		Page:            queries.Page,
 		Total:           cnt,
@@ -314,7 +318,7 @@ func (sv *Server) getBrandByIDHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, createSuccessResponse(c, colResp, "", nil, nil))
 }
 
-// updateBrand updates a Brand.
+// updateBrandHandler updates a Brand.
 // @Summary Update a Brand
 // @Description Update a Brand
 // @ID update-Brand
@@ -326,7 +330,7 @@ func (sv *Server) getBrandByIDHandler(c *gin.Context) {
 // @Failure 400 {object} ApiResponse[BrandResponse]
 // @Failure 500 {object} ApiResponse[BrandResponse]
 // @Router /Brands/{id} [put]
-func (sv *Server) updateBrand(c *gin.Context) {
+func (sv *Server) updateBrandHandler(c *gin.Context) {
 	var param BrandParams
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[gin.H](InvalidBodyCode, "", err))

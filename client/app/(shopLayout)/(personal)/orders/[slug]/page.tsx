@@ -11,7 +11,6 @@ import {
 import clsx from 'clsx';
 import dayjs from 'dayjs';
 import { Metadata } from 'next';
-import { cookies } from 'next/headers';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cache } from 'react';
@@ -37,11 +36,9 @@ const OrderItemRating = dynamic(
 );
 
 export const getOrderDetails = cache(async (slug: string) => {
-  const cookieStorage = await cookies();
   const order = await apiFetchServerSide<OrderModel>(
-    PUBLIC_API_PATHS.ORDER_ITEM.replace(':id', slug),
+    PUBLIC_API_PATHS.ORDER_DETAIL.replace(':id', slug),
     {
-      authToken: cookieStorage.get('access_token')?.value,
       nextOptions: {
         next: {
           tags: ['order'],
@@ -49,6 +46,7 @@ export const getOrderDetails = cache(async (slug: string) => {
       },
     }
   );
+  console.log({ order });
   if (order.error && !order.data) {
     console.error(order.error);
     throw new Error(order.error.details);
@@ -86,7 +84,6 @@ const orderProgressSteps = [
 export default async function Page({ params }: Props) {
   const { slug } = await params;
   const { data: orderDetail } = await getOrderDetails(slug);
-  console.log(orderDetail);
   // Find the current step index based on status
   const getCurrentStepIndex = (status: OrderStatus): number => {
     // Special handling for Completed, Cancelled, and Refunded
@@ -96,7 +93,6 @@ export default async function Page({ params }: Props) {
     const index = orderProgressSteps.findIndex(
       (step) => step.status === status
     );
-    console.log({ index });
     return index >= 0 ? index : 0;
   };
 
@@ -171,8 +167,8 @@ export default async function Page({ params }: Props) {
                     {orderDetail.status === OrderStatus.Completed && (
                       <div className='mt-2'>
                         <OrderItemRating
-                          orderId={orderDetail.id}
-                          productId={e.id}
+                          orderItemId={e.id}
+                          ratingModel={e.rating}
                         />
                       </div>
                     )}
