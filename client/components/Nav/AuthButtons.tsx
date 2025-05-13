@@ -8,9 +8,12 @@ import { deleteCookie } from 'cookies-next/client';
 import Link from 'next/link';
 import { redirect, useRouter } from 'next/navigation';
 import React from 'react';
-import { UserModel } from '@/lib/definitions';
+import { useUser } from '@/lib/hooks/useUser';
 
-const AuthButtons: React.FC<{ user: UserModel | null }> = ({ user }) => {
+const AuthButtons: React.FC<{ accessToken: string | undefined }> = ({
+  accessToken,
+}) => {
+  const { user, isLoading } = useUser();
   const router = useRouter();
 
   const logout = () => {
@@ -19,6 +22,13 @@ const AuthButtons: React.FC<{ user: UserModel | null }> = ({ user }) => {
     deleteCookie('refresh_token');
     redirect('/login');
   };
+  if (isLoading) {
+    return (
+      <div className='flex items-center gap-2'>
+        <span className='h-6 w-6 animate-spin rounded-full border-4 border-t-transparent border-gray-200' />
+      </div>
+    );
+  }
 
   return (
     <>

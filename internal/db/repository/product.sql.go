@@ -366,8 +366,8 @@ SELECT
     b.id AS brand_id, b.name AS brand_name
 FROM
     products p
-JOIN categories as c ON p.category_id = c.id
-JOIN brands AS b ON p.brand_id = b.id
+LEFT JOIN categories as c ON p.category_id = c.id
+LEFT JOIN brands AS b ON p.brand_id = b.id
 LEFT JOIN collections as cl ON p.collection_id = cl.id
 WHERE
     p.id = $1 AND
@@ -399,12 +399,12 @@ type GetProductDetailRow struct {
 	ThreeStarCount   int32          `json:"three_star_count"`
 	FourStarCount    int32          `json:"four_star_count"`
 	FiveStarCount    int32          `json:"five_star_count"`
-	CategoryID       uuid.UUID      `json:"category_id"`
-	CategoryName     string         `json:"category_name"`
+	CategoryID       pgtype.UUID    `json:"category_id"`
+	CategoryName     *string        `json:"category_name"`
 	CollectionID     pgtype.UUID    `json:"collection_id"`
 	CollectionName   *string        `json:"collection_name"`
-	BrandID          uuid.UUID      `json:"brand_id"`
-	BrandName        string         `json:"brand_name"`
+	BrandID          pgtype.UUID    `json:"brand_id"`
+	BrandName        *string        `json:"brand_name"`
 }
 
 func (q *Queries) GetProductDetail(ctx context.Context, arg GetProductDetailParams) ([]GetProductDetailRow, error) {
@@ -575,8 +575,8 @@ LEFT JOIN LATERAL (
     LIMIT 1
 ) AS first_img ON true
 WHERE
-    p.is_active = COALESCE($3, p.is_active) AND
-    (p.name ILIKE COALESCE($4, p.name) OR p.base_sku ILIKE COALESCE($4, p.base_sku) OR p.description ILIKE COALESCE($4, p.description))
+    p.is_active = COALESCE($3, p.is_active) 
+    AND (p.name ILIKE COALESCE($4, p.name) OR p.base_sku ILIKE COALESCE($4, p.base_sku) OR p.description ILIKE COALESCE($4, p.description))
     AND p.category_id = COALESCE($5, p.category_id)
     AND p.collection_id = COALESCE($6, p.collection_id)
     AND p.brand_id = COALESCE($7, p.brand_id)

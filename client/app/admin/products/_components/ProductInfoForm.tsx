@@ -113,7 +113,7 @@ export const ProductInfoForm: React.FC<{
           </div>
         ) : attributes ? (
           <StyledMultipleComboBox<{
-            id: number;
+            id: string;
             name: string;
           }>
             label='Select an attribute'

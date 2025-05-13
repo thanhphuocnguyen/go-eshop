@@ -12,12 +12,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { TextField } from '@/components/FormFields';
-import { AddressModel, UserModel } from '@/lib/definitions/user';
+import { AddressModel } from '@/lib/definitions/user';
 import { apiFetch } from '@/lib/apis/api';
 import { PUBLIC_API_PATHS } from '@/lib/constants/api';
 import { GenericResponse } from '@/lib/definitions';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@/lib/hooks/useUser';
 
 // Form schema for address validation
 const addressSchema = z.object({
@@ -34,7 +35,8 @@ const addressSchema = z.object({
 
 type AddressFormValues = z.infer<typeof addressSchema>;
 
-export default function AddressesClient({ user }: { user: UserModel }) {
+export default function AddressesClient() {
+  const { user } = useUser();
   const router = useRouter();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -173,7 +175,7 @@ export default function AddressesClient({ user }: { user: UserModel }) {
     }
   };
 
-  const handleSetDefaultAddress = async (addressId: number) => {
+  const handleSetDefaultAddress = async (addressId: string) => {
     try {
       const response = await apiFetch<GenericResponse<AddressModel>>(
         PUBLIC_API_PATHS.USER_ADDRESS_DEFAULT.replace(

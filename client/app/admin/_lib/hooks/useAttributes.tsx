@@ -13,7 +13,7 @@ export function useAttributes(ids: number[] = [], productId?: number) {
         {}
       ).then((res) => {
         if (res.error) {
-          throw new Error(res.error.stack, {
+          throw new Error(res.error.details, {
             cause: res.error,
           });
         }

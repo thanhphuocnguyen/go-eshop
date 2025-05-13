@@ -6,6 +6,7 @@ import { getCookie } from 'cookies-next';
 import { apiFetch } from '../apis/api';
 import { PUBLIC_API_PATHS } from '../constants/api';
 import { toast } from 'react-toastify';
+import { useUser } from '../hooks/useUser';
 
 interface CartContextType {
   cart: CartModel | undefined;
@@ -22,14 +23,12 @@ export const CartContext = React.createContext<CartContextType | undefined>(
 );
 
 export function CartContextProvider({
-  user,
   children,
 }: {
-  user: UserModel | null;
   children: React.ReactNode;
 }) {
+  const { user } = useUser();
   const [isLoading, setIsLoading] = useState(false);
-
   // Load user from cookies if available
   const { cart, mutateCart, cartLoading } = useCart(user?.id);
 

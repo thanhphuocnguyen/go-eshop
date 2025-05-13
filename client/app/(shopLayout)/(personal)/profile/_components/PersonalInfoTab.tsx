@@ -13,6 +13,7 @@ import { PencilIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
 import { getCookie } from 'cookies-next';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@/lib/hooks/useUser';
 
 // Profile form schema
 const profileSchema = z.object({
@@ -27,11 +28,8 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
-interface PersonalInfoTabProps {
-  userData: UserModel | null;
-}
-
-export default function PersonalInfoTab({ userData }: PersonalInfoTabProps) {
+export default function PersonalInfoTab() {
+  const { user } = useUser();
   const router = useRouter();
   const [editMode, setEditMode] = useState(false);
   const [isSendingVerification, setIsSendingVerification] = useState(false);
@@ -53,14 +51,14 @@ export default function PersonalInfoTab({ userData }: PersonalInfoTabProps) {
 
   // Set initial profile form values
   useEffect(() => {
-    if (userData) {
+    if (user) {
       resetProfileForm({
-        fullname: userData.fullname,
-        email: userData.email,
-        phone: userData.phone || '',
+        fullname: user.fullname,
+        email: user.email,
+        phone: user.phone || '',
       });
     }
-  }, [userData, resetProfileForm]);
+  }, [user, resetProfileForm]);
 
   // Profile update handler
   const onProfileSubmit = async (data: ProfileFormValues) => {
@@ -74,7 +72,7 @@ export default function PersonalInfoTab({ userData }: PersonalInfoTabProps) {
             Authorization: `Bearer ${getCookie('access_token')}`,
           },
           body: {
-            user_id: userData?.id,
+            user_id: user?.id,
             fullname: data.fullname,
             email: data.email,
             // phone: data.phone, // Add if your API supports phone updates
@@ -97,7 +95,7 @@ export default function PersonalInfoTab({ userData }: PersonalInfoTabProps) {
 
   // Send verification email handler
   const handleSendVerificationEmail = async () => {
-    if (!userData || userData.verified_email) return;
+    if (!user || user.verified_email) return;
 
     setIsSendingVerification(true);
     try {
@@ -193,28 +191,24 @@ export default function PersonalInfoTab({ userData }: PersonalInfoTabProps) {
           <dl className='grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2'>
             <div>
               <dt className='text-sm font-medium text-gray-500'>Full name</dt>
-              <dd className='mt-1 text-sm text-gray-900'>
-                {userData?.fullname}
-              </dd>
+              <dd className='mt-1 text-sm text-gray-900'>{user?.fullname}</dd>
             </div>
             <div>
               <dt className='text-sm font-medium text-gray-500'>Username</dt>
-              <dd className='mt-1 text-sm text-gray-900'>
-                {userData?.username}
-              </dd>
+              <dd className='mt-1 text-sm text-gray-900'>{user?.username}</dd>
             </div>
             <div>
               <dt className='text-sm font-medium text-gray-500'>
                 Email address
               </dt>
-              <dd className='mt-1 text-sm text-gray-900'>{userData?.email}</dd>
+              <dd className='mt-1 text-sm text-gray-900'>{user?.email}</dd>
             </div>
             <div>
               <dt className='text-sm font-medium text-gray-500'>
                 Phone number
               </dt>
               <dd className='mt-1 text-sm text-gray-900'>
-                {userData?.phone || 'Not provided'}
+                {user?.phone || 'Not provided'}
               </dd>
             </div>
             <div>
@@ -223,11 +217,11 @@ export default function PersonalInfoTab({ userData }: PersonalInfoTabProps) {
               </dt>
               <dd className='mt-1 text-sm text-gray-900 flex items-center gap-2'>
                 <span
-                  className={`inline-flex items-center px-3 py-1 rounded-md text-sm font-medium ${userData?.verified_email ? 'bg-green-100 text-green-800' : 'bg-yellow-200 text-orange-800'}`}
+                  className={`inline-flex items-center px-3 py-1 rounded-md text-sm font-medium ${user?.verified_email ? 'bg-green-100 text-green-800' : 'bg-yellow-200 text-orange-800'}`}
                 >
-                  {userData?.verified_email ? 'Verified' : 'Not verified'}
+                  {user?.verified_email ? 'Verified' : 'Not verified'}
                 </span>
-                {!userData?.verified_email && (
+                {!user?.verified_email && (
                   <Button
                     onClick={handleSendVerificationEmail}
                     disabled={isSendingVerification}
@@ -245,9 +239,9 @@ export default function PersonalInfoTab({ userData }: PersonalInfoTabProps) {
               </dt>
               <dd className='mt-1 text-sm text-gray-900 flex items-center gap-2'>
                 <span
-                  className={`inline-flex items-center px-3 py-1 rounded-md text-sm font-medium ${userData?.verified_phone ? 'bg-green-100 text-green-800' : 'bg-yellow-200 text-orange-800'}`}
+                  className={`inline-flex items-center px-3 py-1 rounded-md text-sm font-medium ${user?.verified_phone ? 'bg-green-100 text-green-800' : 'bg-yellow-200 text-orange-800'}`}
                 >
-                  {userData?.verified_phone ? 'Verified' : 'Not verified'}
+                  {user?.verified_phone ? 'Verified' : 'Not verified'}
                 </span>
               </dd>
             </div>
@@ -256,8 +250,8 @@ export default function PersonalInfoTab({ userData }: PersonalInfoTabProps) {
                 Member since
               </dt>
               <dd className='mt-1 text-sm text-gray-900'>
-                {userData?.created_at
-                  ? new Date(userData.created_at).toLocaleDateString()
+                {user?.created_at
+                  ? new Date(user.created_at).toLocaleDateString()
                   : 'Unknown'}
               </dd>
             </div>

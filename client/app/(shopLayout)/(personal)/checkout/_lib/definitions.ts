@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const CheckoutFormSchema = z.object({
   email: z.string().email().optional(),
   fullname: z.string().optional(),
-  address_id: z.number().optional(),
+  address_id: z.string().optional(),
   address: z
     .object({
       street: z.string().min(1, { message: 'Address is required' }),

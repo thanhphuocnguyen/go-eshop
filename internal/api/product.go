@@ -289,13 +289,17 @@ func (sv *Server) getProductsHandler(c *gin.Context) {
 		Offset: (queries.Page - 1) * queries.PageSize,
 	}
 
-	if queries.Search != nil {
+	if queries.Search != nil && len(*queries.Search) > 0 {
 		search := *queries.Search
 		search = strings.ReplaceAll(search, " ", "%")
 		search = strings.ReplaceAll(search, ",", "%")
 		search = strings.ReplaceAll(search, ":", "%")
 		search = "%" + search + "%"
 		dbParams.Search = &search
+	}
+
+	if queries.CategoryID != nil {
+		dbParams.CategoryID = utils.GetPgTypeUUID(uuid.MustParse(*queries.CategoryID))
 	}
 
 	products, err := sv.repo.GetProducts(c, dbParams)
@@ -629,16 +633,22 @@ func mapToProductResponse(productRows []repository.GetProductDetailRow) ProductM
 		IsActive:         *product.IsActive,
 		Variants:         make([]ProductVariantModel, 0),
 		ProductImages:    make([]ProductImageModel, 0),
-		Brand: &GeneralCategoryResponse{
-			ID:   product.BrandID.String(),
-			Name: product.BrandName,
-		},
-		Category: &GeneralCategoryResponse{
-			ID:   product.CategoryID.String(),
-			Name: product.CategoryName,
-		},
 	}
 
+	if product.BrandID.Valid {
+		id, _ := uuid.FromBytes(product.BrandID.Bytes[:])
+		resp.Brand = &GeneralCategoryResponse{
+			ID:   id.String(),
+			Name: *product.BrandName,
+		}
+	}
+	if product.CategoryID.Valid {
+		id, _ := uuid.FromBytes(product.CategoryID.Bytes[:])
+		resp.Category = &GeneralCategoryResponse{
+			ID:   id.String(),
+			Name: *product.CategoryName,
+		}
+	}
 	if product.CollectionID.Valid {
 		collectionID, _ := uuid.FromBytes(product.CollectionID.Bytes[:])
 		resp.Collection = &GeneralCategoryResponse{

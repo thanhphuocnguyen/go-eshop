@@ -109,6 +109,9 @@ export default function LoginFormComponent() {
       setCookie('refresh_token', result.data.refresh_token, {
         expires: new Date(result.data.refresh_token_expires_at),
       });
+      setCookie('session_id', result.data.session_id, {
+        expires: new Date(result.data.refresh_token_expires_at),
+      });
 
       toast.success('Login successful!');
       router.refresh();

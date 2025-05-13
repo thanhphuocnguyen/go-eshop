@@ -49,7 +49,7 @@ type BrandResponse struct {
 // @Success 200 {object} ApiResponse[BrandResponse]
 // @Failure 400 {object} ApiResponse[gin.H]
 // @Failure 500 {object} ApiResponse[gin.H]
-// @Router /shop/Brands [get]
+// @Router /shop/brands [get]
 func (sv *Server) getShopBrandsHandler(c *gin.Context) {
 	var queries BrandsQueries
 	if err := c.ShouldBindQuery(&queries); err != nil {
@@ -62,6 +62,16 @@ func (sv *Server) getShopBrandsHandler(c *gin.Context) {
 	}
 	dbQueries.Limit = queries.PageSize
 	dbQueries.Offset = (queries.Page - 1) * queries.PageSize
+	var cached *ApiResponse[[]BrandResponse]
+
+	if err := sv.cacheService.Get(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), &cached); err != nil {
+		log.Error().Err(err).Msg("error when get brands from cache")
+	}
+
+	if cached != nil {
+		c.JSON(http.StatusNotModified, cached)
+		return
+	}
 
 	rows, err := sv.repo.GetBrands(c, dbQueries)
 	if err != nil {
@@ -76,21 +86,21 @@ func (sv *Server) getShopBrandsHandler(c *gin.Context) {
 		return
 	}
 
-	resp := make([]BrandResponse, 0, len(rows))
+	data := make([]BrandResponse, len(rows))
 
-	for _, row := range rows {
-		resp = append(resp, BrandResponse{
+	for i, row := range rows {
+		data[i] = BrandResponse{
 			ID:          row.ID,
 			Name:        row.Name,
 			Description: row.Description,
 			Slug:        row.Slug,
 			ImageUrl:    row.ImageUrl,
-		})
+		}
 	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(
+	resp := createSuccessResponse(
 		c,
-		resp,
+		data,
 		"",
 		&Pagination{
 			Page:            queries.Page,
@@ -100,7 +110,12 @@ func (sv *Server) getShopBrandsHandler(c *gin.Context) {
 			HasNextPage:     cnt > int64((queries.Page-1)*queries.PageSize+queries.PageSize),
 			HasPreviousPage: queries.Page > 1,
 		}, nil,
-	))
+	)
+
+	if err = sv.cacheService.Set(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), resp, nil); err != nil {
+		log.Error().Err(err).Msg("error when set brands to cache")
+	}
+	c.JSON(http.StatusOK, resp)
 }
 
 // --- Admin API ---
@@ -173,6 +188,16 @@ func (sv *Server) getBrandsHandler(c *gin.Context) {
 	dbQueries.Limit = queries.PageSize
 	dbQueries.Offset = (queries.Page - 1) * queries.PageSize
 
+	var cached *ApiResponse[[]BrandResponse]
+	if err := sv.cacheService.Get(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), &cached); err != nil {
+		log.Error().Err(err).Msg("error when get brands from cache")
+	}
+
+	if cached != nil {
+		c.JSON(http.StatusOK, *cached)
+		return
+	}
+
 	rows, err := sv.repo.GetBrands(c, dbQueries)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
@@ -186,10 +211,10 @@ func (sv *Server) getBrandsHandler(c *gin.Context) {
 		return
 	}
 
-	resp := make([]BrandResponse, 0, len(rows))
+	data := make([]BrandResponse, 0, len(rows))
 
 	for _, row := range rows {
-		resp = append(resp, BrandResponse{
+		data = append(data, BrandResponse{
 			ID:          row.ID,
 			Name:        row.Name,
 			Description: row.Description,
@@ -197,10 +222,9 @@ func (sv *Server) getBrandsHandler(c *gin.Context) {
 			ImageUrl:    row.ImageUrl,
 		})
 	}
-
-	c.JSON(http.StatusOK, createSuccessResponse(
+	resp := createSuccessResponse(
 		c,
-		resp,
+		data,
 		"",
 		&Pagination{
 			Page:            queries.Page,
@@ -210,7 +234,12 @@ func (sv *Server) getBrandsHandler(c *gin.Context) {
 			HasNextPage:     cnt > int64((queries.Page-1)*queries.PageSize+queries.PageSize),
 			HasPreviousPage: queries.Page > 1,
 		}, nil,
-	))
+	)
+	if err = sv.cacheService.Set(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), resp, nil); err != nil {
+		log.Error().Err(err).Msg("error when set brands to cache")
+	}
+
+	c.JSON(http.StatusOK, resp)
 }
 
 // getBrandByIDHandler retrieves a Brand by its ID.

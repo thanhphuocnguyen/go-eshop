@@ -23,6 +23,7 @@ export interface GenericResponse<T> {
   error?: {
     code: string;
     details: string;
+    stack: string;
   };
   pagination?: {
     totalPages: number;

@@ -11,9 +11,10 @@ import { deleteCookie } from 'cookies-next';
 import { redirect, useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import Link from 'next/link';
-import { UserModel } from '@/lib/definitions';
+import { useUser } from '@/lib/hooks/useUser';
 
-export default function AdminNavbar({ user }: { user: UserModel }) {
+export default function AdminNavbar() {
+  const { user } = useUser();
   const router = useRouter();
   const logout = async () => {
     deleteCookie('access_token');

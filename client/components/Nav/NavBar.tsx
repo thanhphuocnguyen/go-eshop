@@ -7,10 +7,12 @@ import Link from 'next/link';
 import CartSection from './CartSection';
 import CategorySection from './CategorySection';
 import AuthButtons from './AuthButtons';
-import { getUserCache } from '@/lib/cache/user';
+import { cookies } from 'next/headers';
 
 export default async function NavBar() {
-  const user = await getUserCache();
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get('access_token')?.value;
+
   return (
     <div className='bg-white sticky top-0 z-20'>
       <header className='relative bg-white'>
@@ -80,7 +82,7 @@ export default async function NavBar() {
                 </div>
 
                 {/* Orders - only shown when logged in */}
-                {!!user && (
+                {Boolean(accessToken) && (
                   <div className='hidden lg:flex lg:ml-6'>
                     <Link
                       href='/orders'
@@ -94,7 +96,7 @@ export default async function NavBar() {
 
                 <CartSection />
                 <div className='hidden lg:flex lg:flex-1 lg:items-center lg:justify-end lg:space-x-6'>
-                  <AuthButtons user={user} />
+                  <AuthButtons accessToken={accessToken} />
                 </div>
               </div>
             </div>

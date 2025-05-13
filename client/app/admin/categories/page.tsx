@@ -20,7 +20,7 @@ export default function Page() {
 
   async function handleDelete() {
     if (selectedCategory) {
-      const response = await apiFetch(
+      const { error } = await apiFetch<GenericResponse<boolean>>(
         ADMIN_API_PATHS.CATEGORIES + '/' + selectedCategory.id,
         {
           method: 'DELETE',
@@ -29,7 +29,8 @@ export default function Page() {
           },
         }
       );
-      if (!response.ok) {
+
+      if (error) {
         toast('Failed to delete category', { type: 'error' });
         return;
       }

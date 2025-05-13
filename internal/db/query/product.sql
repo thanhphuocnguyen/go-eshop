@@ -49,8 +49,8 @@ SELECT
     b.id AS brand_id, b.name AS brand_name
 FROM
     products p
-JOIN categories as c ON p.category_id = c.id
-JOIN brands AS b ON p.brand_id = b.id
+LEFT JOIN categories as c ON p.category_id = c.id
+LEFT JOIN brands AS b ON p.brand_id = b.id
 LEFT JOIN collections as cl ON p.collection_id = cl.id
 WHERE
     p.id = $1 AND
@@ -91,8 +91,8 @@ LEFT JOIN LATERAL (
     LIMIT 1
 ) AS first_img ON true
 WHERE
-    p.is_active = COALESCE(sqlc.narg('is_active'), p.is_active) AND
-    (p.name ILIKE COALESCE(sqlc.narg('search'), p.name) OR p.base_sku ILIKE COALESCE(sqlc.narg('search'), p.base_sku) OR p.description ILIKE COALESCE(sqlc.narg('search'), p.description))
+    p.is_active = COALESCE(sqlc.narg('is_active'), p.is_active) 
+    AND (p.name ILIKE COALESCE(sqlc.narg('search'), p.name) OR p.base_sku ILIKE COALESCE(sqlc.narg('search'), p.base_sku) OR p.description ILIKE COALESCE(sqlc.narg('search'), p.description))
     AND p.category_id = COALESCE(sqlc.narg('category_id'), p.category_id)
     AND p.collection_id = COALESCE(sqlc.narg('collection_id'), p.collection_id)
     AND p.brand_id = COALESCE(sqlc.narg('brand_id'), p.brand_id)

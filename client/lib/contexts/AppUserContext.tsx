@@ -21,7 +21,7 @@ export const AppUserContextConsumer = AppUserContext.Consumer;
 
 export function AppUserProvider({ children }: { children: React.ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const { user, mutateUser, isLoading } = useUser(isLoggedIn);
+  const { user, mutateUser, isLoading } = useUser();
 
   const value = {
     user,

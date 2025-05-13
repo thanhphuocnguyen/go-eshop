@@ -43,8 +43,8 @@ type VerifyEmailQuery struct {
 
 // ------------------------------ Mappers ------------------------------
 
-func mapToUserResponse(user repository.User) UserResponse {
-	return UserResponse{
+func mapToUserResponse(user repository.User) *UserResponse {
+	return &UserResponse{
 		ID:                user.ID,
 		Addresses:         []AddressResponse{},
 		Email:             user.Email,
@@ -151,10 +151,11 @@ func (sv *Server) getUserHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", errors.New("authorization payload is not provided")))
 		return
 	}
-	var userResp UserResponse
+
+	var userResp *UserResponse
 	err := sv.cacheService.Get(c, cache.USER_KEY_PREFIX+authPayload.UserID.String(), &userResp)
 	if err == nil {
-		c.JSON(http.StatusOK, createSuccessResponse(c, userResp, "", nil, nil))
+		c.JSON(http.StatusOK, createSuccessResponse(c, *userResp, "", nil, nil))
 		return
 	}
 
@@ -180,7 +181,11 @@ func (sv *Server) getUserHandler(c *gin.Context) {
 	}
 	userResp = mapToUserResponse(user)
 	userResp.Addresses = addressResp
-	sv.cacheService.Set(c, cache.USER_KEY_PREFIX+authPayload.UserID.String(), userResp, &cache.DEFAULT_EXPIRATION)
+	err = sv.cacheService.Set(c, cache.USER_KEY_PREFIX+authPayload.UserID.String(), userResp, &cache.DEFAULT_EXPIRATION)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", err))
+		return
+	}
 
 	c.JSON(http.StatusOK, createSuccessResponse(c, userResp, "", nil, nil))
 }
@@ -221,7 +226,7 @@ func (sv *Server) getUsersHandler(c *gin.Context) {
 
 	userResp := make([]UserResponse, 0)
 	for _, user := range users {
-		userResp = append(userResp, mapToUserResponse(user))
+		userResp = append(userResp, *mapToUserResponse(user))
 	}
 
 	c.JSON(http.StatusOK, createSuccessResponse(c, userResp, "", &Pagination{

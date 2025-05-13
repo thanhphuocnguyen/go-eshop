@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
 import AddressesClient from './AddressesClient';
-import { getUserCache } from '@/lib/cache/user';
 
 export const metadata: Metadata = {
   title: 'Shipping Addresses | E-Shop',
@@ -8,9 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default async function AddressesPage() {
-  const user = await getUserCache();
-  if (!user) {
-    return <div>Unauthorized</div>;
-  }
-  return <AddressesClient user={user} />;
+  return <AddressesClient />;
 }

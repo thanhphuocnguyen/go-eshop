@@ -3,9 +3,9 @@ import { PUBLIC_API_PATHS } from '../constants/api';
 import { apiFetch } from '../apis/api';
 import { GenericResponse, UserModel } from '../definitions';
 
-export const useUser = (loggedIn: boolean = false) => {
+export const useUser = () => {
   const { data, isLoading, mutate } = useSWR(
-    loggedIn ? PUBLIC_API_PATHS.USER : null,
+    PUBLIC_API_PATHS.USER,
     (url) =>
       apiFetch<GenericResponse<UserModel>>(url, {
         method: 'GET',

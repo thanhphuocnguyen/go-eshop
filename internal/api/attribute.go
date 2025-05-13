@@ -2,10 +2,12 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 )
 
@@ -174,9 +176,14 @@ func (sv *Server) getAttributeByIDHandler(c *gin.Context) {
 // @Router /attributes [get]
 func (sv *Server) getAttributesHandler(c *gin.Context) {
 	var queries GetAttributesQuery
-
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[[]AttributeResponse](InvalidBodyCode, "", err))
+		return
+	}
+	var cached *[]AttributeResponse
+	err := sv.cacheService.Get(c, fmt.Sprintf("attributes-%s", queries.IDs), &cached)
+	if cached != nil {
+		c.JSON(http.StatusOK, createSuccessResponse(c, &cached, "", nil, nil))
 		return
 	}
 
@@ -222,6 +229,9 @@ func (sv *Server) getAttributesHandler(c *gin.Context) {
 				DisplayOrder: attrVal.DisplayOrder,
 			})
 		}
+	}
+	if err := sv.cacheService.Set(c, fmt.Sprintf("attributes-%s", queries.IDs), attributeResp, nil); err != nil {
+		log.Error().Err(err).Msg("failed to cache attributes")
 	}
 
 	c.JSON(http.StatusOK, createSuccessResponse(c, attributeResp, "", &Pagination{Total: cnt}, nil))
