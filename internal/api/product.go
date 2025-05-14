@@ -247,11 +247,11 @@ func (sv *Server) getProductsHandler(c *gin.Context) {
 	}
 
 	if queries.CategoryID != nil {
-		dbParams.CategoryID = utils.GetPgTypeUUID(uuid.MustParse(*queries.CategoryID))
+		dbParams.CategoryIds = []uuid.UUID{uuid.MustParse(*queries.CategoryID)}
 	}
 
 	if queries.CollectionID != nil {
-		dbParams.CollectionID = utils.GetPgTypeUUID(uuid.MustParse(*queries.CollectionID))
+		dbParams.CollectionID = []uuid.UUID{uuid.MustParse(*queries.CollectionID)}
 	}
 
 	if queries.BrandID != nil {

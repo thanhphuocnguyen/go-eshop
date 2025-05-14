@@ -103,8 +103,9 @@ LEFT JOIN LATERAL (
 WHERE
     p.is_active = COALESCE(sqlc.narg('is_active'), p.is_active) 
     AND (p.name ILIKE COALESCE(sqlc.narg('search'), p.name) OR p.base_sku ILIKE COALESCE(sqlc.narg('search'), p.base_sku) OR p.description ILIKE COALESCE(sqlc.narg('search'), p.description))
-    AND p.category_id = COALESCE(sqlc.narg('category_id'), p.category_id)
-    AND p.collection_id = COALESCE(sqlc.narg('collection_id'), p.collection_id)
+    -- 
+    AND (ARRAY_LENGTH(sqlc.arg(category_ids)::uuid[], 1) IS NULL OR p.category_id = ANY(sqlc.arg(category_ids)::uuid[]))
+    AND (ARRAY_LENGTH(sqlc.arg(collection_id)::uuid[], 1) IS NULL OR p.collection_id = ANY(sqlc.arg(collection_id)::uuid[]))
     AND p.brand_id = COALESCE(sqlc.narg('brand_id'), p.brand_id)
     AND p.slug ILIKE COALESCE(sqlc.narg('slug'), p.slug)
 GROUP BY

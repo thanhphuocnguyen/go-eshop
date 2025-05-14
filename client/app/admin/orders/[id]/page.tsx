@@ -29,7 +29,7 @@ export default function OrderDetailPage({
     setError(null);
 
     try {
-      const { data, error } = await apiFetchClientSide<GenericResponse<OrderDetail>>(
+      const { data, error } = await apiFetchClientSide<OrderDetail>(
         ADMIN_API_PATHS.ORDER_DETAIL.replace(':id', id),
         {}
       );
@@ -57,13 +57,12 @@ export default function OrderDetailPage({
     setError(null);
 
     try {
-      const { data, error } = await apiFetchClientSide<GenericResponse<boolean>>(
-        ADMIN_API_PATHS.ORDER_DETAIL_STATUS.replace(':id', id),
-        {
-          method: 'PUT',
-          body: { status: newStatus },
-        }
-      );
+      const { data, error } = await apiFetchClientSide<
+        GenericResponse<boolean>
+      >(ADMIN_API_PATHS.ORDER_DETAIL_STATUS.replace(':id', id), {
+        method: 'PUT',
+        body: { status: newStatus },
+      });
 
       if (error) {
         setError(error.details || 'Failed to change order status');

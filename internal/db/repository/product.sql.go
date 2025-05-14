@@ -622,8 +622,9 @@ LEFT JOIN LATERAL (
 WHERE
     p.is_active = COALESCE($3, p.is_active) 
     AND (p.name ILIKE COALESCE($4, p.name) OR p.base_sku ILIKE COALESCE($4, p.base_sku) OR p.description ILIKE COALESCE($4, p.description))
-    AND p.category_id = COALESCE($5, p.category_id)
-    AND p.collection_id = COALESCE($6, p.collection_id)
+    -- 
+    AND (ARRAY_LENGTH($5::uuid[], 1) IS NULL OR p.category_id = ANY($5::uuid[]))
+    AND (ARRAY_LENGTH($6::uuid[], 1) IS NULL OR p.collection_id = ANY($6::uuid[]))
     AND p.brand_id = COALESCE($7, p.brand_id)
     AND p.slug ILIKE COALESCE($8, p.slug)
 GROUP BY
@@ -638,8 +639,8 @@ type GetProductsParams struct {
 	Offset       int64       `json:"offset"`
 	IsActive     *bool       `json:"is_active"`
 	Search       *string     `json:"search"`
-	CategoryID   pgtype.UUID `json:"category_id"`
-	CollectionID pgtype.UUID `json:"collection_id"`
+	CategoryIds  []uuid.UUID `json:"category_ids"`
+	CollectionID []uuid.UUID `json:"collection_id"`
 	BrandID      pgtype.UUID `json:"brand_id"`
 	Slug         *string     `json:"slug"`
 	Orderby      string      `json:"orderby"`
@@ -680,7 +681,7 @@ func (q *Queries) GetProducts(ctx context.Context, arg GetProductsParams) ([]Get
 		arg.Offset,
 		arg.IsActive,
 		arg.Search,
-		arg.CategoryID,
+		arg.CategoryIds,
 		arg.CollectionID,
 		arg.BrandID,
 		arg.Slug,

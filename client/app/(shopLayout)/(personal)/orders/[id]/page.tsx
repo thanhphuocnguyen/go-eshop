@@ -28,12 +28,9 @@ const ConfirmOrderButton = dynamic(
   { ssr: true }
 );
 
-const OrderItemRating = dynamic(
-  () => import('./_components/OrderItemRating'),
-  {
-    ssr: true,
-  }
-);
+const OrderItemRating = dynamic(() => import('./_components/OrderItemRating'), {
+  ssr: true,
+});
 
 export const getOrderDetails = cache(async (id: string) => {
   const order = await apiFetchServerSide<OrderModel>(
@@ -94,7 +91,7 @@ export default async function Page({ params }: Props) {
     );
     return index >= 0 ? index : 0;
   };
-
+  console.log(orderDetail);
   const currentStepIndex = getCurrentStepIndex(orderDetail.status);
 
   const isSpecialStatus =

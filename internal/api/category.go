@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"mime/multipart"
 	"net/http"
-	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -116,10 +115,9 @@ func (sv *Server) getCategoriesHandler(c *gin.Context) {
 	}
 
 	categoriesResp := make([]CategoryListResponse, len(categories))
-	var wg sync.WaitGroup
-	productChannel := make(chan []ProductListModel, len(categories))
+	categoryProductsMap := make(map[uuid.UUID][]ProductListModel)
+	catIds := make([]uuid.UUID, len(categories))
 	for i, category := range categories {
-		wg.Add(1)
 		categoriesResp[i] = CategoryListResponse{
 			ID:          category.ID.String(),
 			Name:        category.Name,
@@ -130,67 +128,54 @@ func (sv *Server) getCategoriesHandler(c *gin.Context) {
 			Description: category.Description,
 			Remarkable:  *category.Remarkable,
 			ImageUrl:    category.ImageUrl,
-			Products:    []ProductListModel{},
 		}
-		go func() {
-			defer wg.Done()
-			prodByCategoryRows, err := sv.repo.GetProducts(c, repository.GetProductsParams{
-				CategoryID: utils.GetPgTypeUUID(category.ID),
-				Limit:      10,
-				Offset:     0,
-			})
-			if err != nil {
-				productChannel <- []ProductListModel{}
-				return
-			}
-			productsResp := make([]ProductListModel, len(prodByCategoryRows))
-			for j, product := range prodByCategoryRows {
-				minPrice, _ := product.BasePrice.Float64Value()
-				maxPrice, _ := product.BasePrice.Float64Value()
-				if product.MinPrice.Valid {
-					minPriceParsed, _ := product.MinPrice.Float64Value()
-					if minPriceParsed.Float64 > 0 {
-						minPrice = minPriceParsed
-					}
-				}
-				if product.MaxPrice.Valid {
-					maxPriceParsed, _ := product.MaxPrice.Float64Value()
-					if maxPriceParsed.Float64 > 0 {
-						maxPrice = maxPriceParsed
-					}
-				}
-				model := ProductListModel{
-					ID:           product.ID.String(),
-					Name:         product.Name,
-					Slug:         product.Slug,
-					CreatedAt:    product.CreatedAt.String(),
-					UpdatedAt:    product.UpdatedAt.String(),
-					Description:  product.Description,
-					MinPrice:     minPrice.Float64,
-					MaxPrice:     maxPrice.Float64,
-					VariantCount: product.VariantCount,
-					Sku:          product.BaseSku,
-				}
-				if product.ImgID.Valid {
-					model.ImgUrl = product.ImgUrl
-					id, _ := uuid.FromBytes(product.ImgID.Bytes[:])
-					model.ImgID = utils.StringPtr(id.String())
-				}
-				productsResp[j] = model
-			}
-			productChannel <- productsResp
-		}()
+
+		categoryProductsMap[category.ID] = []ProductListModel{}
+		catIds[i] = category.ID
+	}
+	prodByCategoryRows, err := sv.repo.GetProducts(c, repository.GetProductsParams{
+		CategoryIds: catIds,
+		Limit:       10,
+		Offset:      0,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
+		return
+	}
+	for _, row := range prodByCategoryRows {
+		categoryID, _ := uuid.FromBytes(row.CategoryID.Bytes[:])
+		minPrice, _ := row.BasePrice.Float64Value()
+		maxPrice, _ := row.BasePrice.Float64Value()
+		if mp, err := minPrice.Float64Value(); err != nil && mp.Float64 > 0 {
+			minPrice = mp
+		}
+		if mp, err := maxPrice.Float64Value(); err != nil && mp.Float64 > 0 {
+			maxPrice = mp
+		}
+		model := ProductListModel{
+			ID:           row.ID.String(),
+			Name:         row.Name,
+			Slug:         row.Slug,
+			ImgUrl:       row.ImgUrl,
+			VariantCount: row.VariantCount,
+			Description:  row.Description,
+			MinPrice:     minPrice.Float64,
+			MaxPrice:     maxPrice.Float64,
+			Sku:          row.BaseSku,
+			CreatedAt:    row.CreatedAt.String(),
+			UpdatedAt:    row.UpdatedAt.String(),
+		}
+		if row.ImgID.Valid {
+			id, _ := uuid.FromBytes(row.ImgID.Bytes[:])
+			model.ImgID = utils.StringPtr(id.String())
+			model.ImgUrl = utils.StringPtr(*row.ImgUrl)
+		}
+		categoryProductsMap[categoryID] = append(categoryProductsMap[categoryID], model)
 	}
 
-	wg.Wait()
-	close(productChannel)
-	i := 0
-
-	for products := range productChannel {
-		categoriesResp[i].Products = products
-		i++
+	for i := range categoriesResp {
+		categoriesResp[i].Products = categoryProductsMap[uuid.MustParse(categoriesResp[i].ID)]
 	}
-
 	c.JSON(http.StatusOK, createSuccessResponse(
 		c,
 		categoriesResp,

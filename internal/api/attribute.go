@@ -368,6 +368,10 @@ func (sv *Server) updateAttributeHandler(c *gin.Context) {
 		CreatedAt: attribute.CreatedAt.String(),
 	}
 
+	if err := sv.cacheService.Set(c, fmt.Sprintf("attributes-%s", []uuid.UUID{attribute.ID}), attributeResp, nil); err != nil {
+		log.Error().Err(err).Msg("failed to cache attributes")
+	}
+
 	c.JSON(http.StatusOK, createSuccessResponse(c, attributeResp, "", nil, nil))
 }
 
@@ -401,6 +405,9 @@ func (sv *Server) deleteAttributeHandler(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 		return
+	}
+	if err := sv.cacheService.Delete(c, fmt.Sprintf("attributes-%s", []uuid.UUID{attribute[0].ID})); err != nil {
+		log.Error().Err(err).Msg("failed to delete attributes cache")
 	}
 	c.Status(http.StatusNoContent)
 }

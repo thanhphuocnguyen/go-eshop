@@ -48,7 +48,7 @@ type OrderItemResponse struct {
 	LineTotal          float64                            `json:"line_total"`
 	Quantity           int16                              `json:"quantity"`
 	AttributesSnapshot []repository.AttributeDataSnapshot `json:"attributes_snapshot"`
-	Rating             *Rating                            `json:"ratings,omitempty"`
+	Rating             *Rating                            `json:"rating,omitempty"`
 }
 type PaymentInfo struct {
 	ID           string  `json:"id"`

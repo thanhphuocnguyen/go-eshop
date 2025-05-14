@@ -137,34 +137,39 @@ export default function OrderItemRating({
     }
   };
 
-  // Button to open the rating dialog
+  // If there's already a rating, just show the rating summary
+  // Otherwise, provide a button to create a new rating
+  if (existingRating) {
+    return (
+      <div className='p-2 bg-gray-50 rounded border border-gray-200 inline-flex items-center text-sm'>
+        <div className='flex items-center'>
+          <span className='text-gray-700 mr-1'>Your Rating:</span>
+          <div className='flex'>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <StarIcon
+                key={star}
+                className={`w-4 h-4 ${
+                  star <= existingRating ? 'text-yellow-400' : 'text-gray-300'
+                }`}
+              />
+            ))}
+          </div>
+          <span className='ml-1 text-xs font-medium text-gray-600'>
+            ({existingRating.toFixed(1)})
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // Button to open the rating dialog (only for creating new ratings)
   return (
     <>
       <button
         onClick={openModal}
-        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-          existingRating
-            ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
-            : 'bg-indigo-600 text-white hover:bg-indigo-700'
-        }`}
+        className='px-4 py-2 rounded-md text-sm font-medium transition-colors bg-indigo-600 text-white hover:bg-indigo-700'
       >
-        {existingRating ? (
-          <div className='flex items-center'>
-            <span className='mr-2'>Your Rating: </span>
-            <div className='flex'>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <StarIcon
-                  key={star}
-                  className={`w-4 h-4 ${
-                    star <= existingRating ? 'text-yellow-400' : 'text-gray-300'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-        ) : (
-          'Rate This Product'
-        )}
+        Rate This Product
       </button>
 
       <Transition appear show={isOpen} as={Fragment}>
@@ -199,9 +204,7 @@ export default function OrderItemRating({
                       as='h3'
                       className='text-xl font-semibold text-gray-900'
                     >
-                      {existingRating
-                        ? 'Update Your Product Review'
-                        : 'Share Your Experience'}
+                      Share Your Experience
                     </DialogTitle>
                     <button
                       type='button'
@@ -393,9 +396,7 @@ export default function OrderItemRating({
                       >
                         {loading || uploadingImages
                           ? 'Submitting...'
-                          : existingRating
-                            ? 'Update Review'
-                            : 'Submit Review'}
+                          : 'Submit Review'}
                       </button>
                     </div>
                   </form>

@@ -72,7 +72,7 @@ export default function LoginFormComponent() {
 
     // Set default for the active method
     if (newMethod === 'email') {
-      setValue('email', 'admin@simple-life.com');
+      setValue('email', 'admin@eshop.com');
     } else {
       setValue('username', 'admin');
     }
