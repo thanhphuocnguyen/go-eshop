@@ -9,6 +9,7 @@ const _apiPaths = {
   CATEGORY: 'categories/:slug',
   PRODUCTS: 'products',
   PRODUCT_DETAIL: 'products/:id',
+  PRODUCT_RATING: 'products/:id/ratings',
   LOGOUT: 'auth/logout',
   USER: 'user',
   USER_ADDRESSES: 'user/addresses',
@@ -33,6 +34,7 @@ const _apiPaths = {
   COLLECTION_PRODUCTS: 'collections/:slug/products',
   PRODUCT_IMAGES_UPLOAD: 'images/product/:id',
   RATING: 'ratings',
+  RATING_VOTE: 'ratings/:id/helpful',
 } as const;
 
 const _adminPaths = {
@@ -58,7 +60,10 @@ const _adminPaths = {
   ORDER_DETAIL: 'orders/:id',
   ORDER_DETAIL_STATUS: 'orders/:id/status',
   ORDER_DETAIL_TRACKING: 'orders/:id/tracking',
-  RATING: 'ratings/:orderItemID',
+  RATINGS: 'ratings',
+  RATING_DETAIL: 'ratings/:id',
+  RATING_APPROVE: 'ratings/:id/approve',
+  RATING_REJECT: 'ratings/:id/ban',
 } as const;
 
 const attachBasePath = {

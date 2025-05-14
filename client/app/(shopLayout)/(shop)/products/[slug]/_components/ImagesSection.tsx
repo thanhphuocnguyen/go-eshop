@@ -34,9 +34,9 @@ export const ImagesSection: React.FC<ImagesSectionProps> = ({ images }) => {
                 <Image
                   fill
                   src={image.url}
-                  objectFit='cover'
-                  objectPosition='center'
                   alt={'Thumbnail image'}
+                  className='object-cover w-full h-full'
+                  sizes='(max-width: 768px) 96px, 96px'
                 />
               </span>
               {/* Selected ring */}
@@ -66,10 +66,11 @@ export const ImagesSection: React.FC<ImagesSectionProps> = ({ images }) => {
         {mainImage && (
           <Image
             fill
+            priority
             src={mainImage.url}
             alt={'Model wearing Basic Tee in black.'}
-            objectFit='cover'
-            className='rounded-lg shadow-sm'
+            className='object-cover rounded-md shadow-lg'
+            sizes='(max-width: 768px) 100vw, 100vw'
           />
         )}
       </div>

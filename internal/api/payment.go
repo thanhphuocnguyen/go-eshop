@@ -23,10 +23,6 @@ type GetPaymentByOrderIDParam struct {
 	OrderID uuid.UUID `uri:"order_id" binding:"required,uuid"`
 }
 
-type GetPaymentParam struct {
-	ID string `uri:"id" binding:"required,uuid"`
-}
-
 type CreatePaymentIntentResult struct {
 	PaymentID    string  `json:"payment_id"`
 	ClientSecret *string `json:"client_secret"`
@@ -165,7 +161,7 @@ func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[PaymentResponse]
 // @Router /payment/{id} [get]
 func (sv *Server) getPaymentHandler(c *gin.Context) {
-	var param GetPaymentParam
+	var param URIParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](InvalidBodyCode, "", err))
 		return
@@ -218,7 +214,7 @@ func (sv *Server) getPaymentHandler(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[PaymentResponse]
 // @Router /payment/{payment_id} [get]
 func (sv *Server) changePaymentStatus(c *gin.Context) {
-	var param GetPaymentParam
+	var param URIParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](InvalidBodyCode, "", errors.New("order not found")))
 		return

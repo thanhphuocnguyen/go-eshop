@@ -29,6 +29,15 @@ WHERE
 GROUP BY
     products.id;
 
+-- name: GetProductBySlug :one
+SELECT
+    products.*
+FROM    
+    products
+WHERE
+    products.slug = $1 AND
+    is_active = COALESCE(sqlc.narg('is_active'), TRUE);
+
 -- name: GetProductVariantByID :one
 SELECT
     product_variants.*
@@ -36,6 +45,7 @@ FROM
     product_variants
 WHERE
     id = $1;
+
 
 -- name: GetProductDetail :many
 SELECT
@@ -53,7 +63,7 @@ LEFT JOIN categories as c ON p.category_id = c.id
 LEFT JOIN brands AS b ON p.brand_id = b.id
 LEFT JOIN collections as cl ON p.collection_id = cl.id
 WHERE
-    p.id = $1 AND
+    (p.id = $1 OR p.slug = $2) AND
     p.is_active = COALESCE(sqlc.narg('is_active'), TRUE)
 ORDER BY
     p.id;

@@ -12,51 +12,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createSession = `-- name: CreateSession :one
-INSERT INTO sessions (
-    user_id,
-    refresh_token,
-    user_agent,
-    client_ip,
-    blocked,
-    expired_at
-) VALUES (
-    $1, $2, $3, $4, $5, $6
-) RETURNING id, user_id, refresh_token, user_agent, client_ip, blocked, expired_at, created_at
-`
-
-type CreateSessionParams struct {
-	UserID       uuid.UUID          `json:"user_id"`
-	RefreshToken string             `json:"refresh_token"`
-	UserAgent    string             `json:"user_agent"`
-	ClientIp     string             `json:"client_ip"`
-	Blocked      bool               `json:"blocked"`
-	ExpiredAt    pgtype.Timestamptz `json:"expired_at"`
-}
-
-func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error) {
-	row := q.db.QueryRow(ctx, createSession,
-		arg.UserID,
-		arg.RefreshToken,
-		arg.UserAgent,
-		arg.ClientIp,
-		arg.Blocked,
-		arg.ExpiredAt,
-	)
-	var i Session
-	err := row.Scan(
-		&i.ID,
-		&i.UserID,
-		&i.RefreshToken,
-		&i.UserAgent,
-		&i.ClientIp,
-		&i.Blocked,
-		&i.ExpiredAt,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
 const getSession = `-- name: GetSession :one
 SELECT id, user_id, refresh_token, user_agent, client_ip, blocked, expired_at, created_at FROM sessions
 WHERE id = $1 LIMIT 1
@@ -85,6 +40,54 @@ WHERE refresh_token = $1 LIMIT 1
 
 func (q *Queries) GetSessionByRefreshToken(ctx context.Context, refreshToken string) (Session, error) {
 	row := q.db.QueryRow(ctx, getSessionByRefreshToken, refreshToken)
+	var i Session
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.RefreshToken,
+		&i.UserAgent,
+		&i.ClientIp,
+		&i.Blocked,
+		&i.ExpiredAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const insertSession = `-- name: InsertSession :one
+INSERT INTO sessions (
+    id,
+    user_id,
+    refresh_token,
+    user_agent,
+    client_ip,
+    blocked,
+    expired_at
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7
+) RETURNING id, user_id, refresh_token, user_agent, client_ip, blocked, expired_at, created_at
+`
+
+type InsertSessionParams struct {
+	ID           uuid.UUID          `json:"id"`
+	UserID       uuid.UUID          `json:"user_id"`
+	RefreshToken string             `json:"refresh_token"`
+	UserAgent    string             `json:"user_agent"`
+	ClientIp     string             `json:"client_ip"`
+	Blocked      bool               `json:"blocked"`
+	ExpiredAt    pgtype.Timestamptz `json:"expired_at"`
+}
+
+func (q *Queries) InsertSession(ctx context.Context, arg InsertSessionParams) (Session, error) {
+	row := q.db.QueryRow(ctx, insertSession,
+		arg.ID,
+		arg.UserID,
+		arg.RefreshToken,
+		arg.UserAgent,
+		arg.ClientIp,
+		arg.Blocked,
+		arg.ExpiredAt,
+	)
 	var i Session
 	err := row.Scan(
 		&i.ID,

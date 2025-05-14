@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -181,8 +182,8 @@ func (sv *Server) getUserHandler(c *gin.Context) {
 	}
 	userResp = mapToUserResponse(user)
 	userResp.Addresses = addressResp
-	err = sv.cacheService.Set(c, cache.USER_KEY_PREFIX+authPayload.UserID.String(), userResp, &cache.DEFAULT_EXPIRATION)
-	if err != nil {
+
+	if err = sv.cacheService.Set(c, cache.USER_KEY_PREFIX+authPayload.UserID.String(), userResp, &cache.DEFAULT_EXPIRATION); err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", err))
 		return
 	}
@@ -245,25 +246,25 @@ func (sv *Server) getUsersHandler(c *gin.Context) {
 // @Tags users
 // @Accept  json
 // @Produce  json
-// @Success 204 {object} ApiResponse[bool]
-// @Failure 400 {object} ApiResponse[bool]
-// @Failure 401 {object} ApiResponse[bool]
-// @Failure 500 {object} ApiResponse[bool]
+// @Success 204 {object} ApiResponse[gin.H]
+// @Failure 400 {object} ApiResponse[gin.H]
+// @Failure 401 {object} ApiResponse[gin.H]
+// @Failure 500 {object} ApiResponse[gin.H]
 // @Router /users/verify-email [post]
 // @Security BearerAuth
 func (sv *Server) sendVerifyEmailHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", errors.New("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", errors.New("authorization payload is not provided")))
 		return
 	}
 	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
 		return
 	}
 	if user.VerifiedEmail {
-		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidEmailCode, "email already verified", nil))
+		c.JSON(http.StatusBadRequest, createErrorResponse[gin.H](InvalidEmailCode, "email already verified", fmt.Errorf("email already verified")))
 		return
 	}
 
@@ -277,7 +278,7 @@ func (sv *Server) sendVerifyEmailHandler(c *gin.Context) {
 		asynq.Queue(worker.QueueCritical),
 	)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -292,11 +293,11 @@ func (sv *Server) sendVerifyEmailHandler(c *gin.Context) {
 // @Produce  json
 // @Param id query int true "ID"
 // @Param verify_code query string true "Verify code"
-// @Success 200 {object} ApiResponse[bool]
-// @Failure 400 {object} ApiResponse[bool]
-// @Failure 401 {object} ApiResponse[bool]
-// @Failure 404 {object} ApiResponse[bool]
-// @Failure 500 {object} ApiResponse[bool]
+// @Success 200 {object} ApiResponse[gin.H]
+// @Failure 400 {object} ApiResponse[gin.H]
+// @Failure 401 {object} ApiResponse[gin.H]
+// @Failure 404 {object} ApiResponse[gin.H]
+// @Failure 500 {object} ApiResponse[gin.H]
 // @Router /users/verify-email [get]
 // @Security BearerAuth
 func (sv *Server) verifyEmailHandler(c *gin.Context) {
@@ -324,6 +325,10 @@ func (sv *Server) verifyEmailHandler(c *gin.Context) {
 
 	user, err := sv.repo.GetUserByID(c, verifyEmail.UserID)
 	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
+		return
+	}
+	if err := sv.cacheService.Set(c, cache.USER_KEY_PREFIX+user.ID.String(), mapToUserResponse(user), &cache.DEFAULT_EXPIRATION); err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 		return
 	}

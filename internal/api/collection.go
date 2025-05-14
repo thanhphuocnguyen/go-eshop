@@ -14,10 +14,6 @@ import (
 
 // ------------------------------------------ Request and Response ------------------------------------------
 
-type getCollectionParams struct {
-	ID        string  `uri:"id" binding:"required,uuid"`
-	ProductID *string `json:"product_id,omitempty"`
-}
 type getCollectionsQueries struct {
 	PaginationQueryParams
 	Collections *[]int32 `form:"collection_ids,omitempty"`
@@ -45,6 +41,7 @@ type CollectionResponse struct {
 // @Description Get a list of Collections
 // @ID get-Shop-Collections
 // @Accept json
+// @Tags Collections
 // @Produce json
 // @Param page query int false "Page number"
 // @Param page_size query int false "Page size"
@@ -57,18 +54,19 @@ func (sv *Server) getShopCollectionsHandler(c *gin.Context) {
 
 // --- Admin API ---
 
-// addCollectionHandler creates a new Collection.
+// createCollectionHandler creates a new Collection.
 // @Summary Create a new Collection
 // @Description Create a new Collection
 // @ID create-Collection
 // @Accept json
+// @Tags Admin
 // @Produce json
 // @Param request body CreateCategoryRequest true "Collection info"
 // @Success 201 {object} ApiResponse[CollectionResponse]
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
-// @Router /collections [post]
-func (sv *Server) addCollectionHandler(c *gin.Context) {
+// @Router /admin/collections [post]
+func (sv *Server) createCollectionHandler(c *gin.Context) {
 	var req CreateCategoryRequest
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CollectionResponse](InvalidBodyCode, "", err))
@@ -108,13 +106,14 @@ func (sv *Server) addCollectionHandler(c *gin.Context) {
 // @Description Get a list of Collections
 // @ID get-Collections
 // @Accept json
+// @Tags Admin
 // @Produce json
 // @Param page query int false "Page number"
 // @Param page_size query int false "Page size"
 // @Success 200 {object} ApiResponse[CollectionResponse]
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
-// @Router /collections [get]
+// @Router /admin/collections [get]
 func (sv *Server) getCollectionsHandler(c *gin.Context) {
 	var queries getCollectionsQueries
 	if err := c.ShouldBindQuery(&queries); err != nil {
@@ -161,15 +160,16 @@ func (sv *Server) getCollectionsHandler(c *gin.Context) {
 // @Description Get a Collection by ID
 // @ID get-Collection-by-id
 // @Accept json
+// @Tags Admin
 // @Produce json
 // @Param id path int true "Collection ID"
 // @Success 200 {object} ApiResponse[CategoryResponse]
 // @Failure 400 {object} gin.H
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
-// @Router /collections/{id} [get]
+// @Router /admin/collections/{id} [get]
 func (sv *Server) getCollectionByIDHandler(c *gin.Context) {
-	var param getCollectionParams
+	var param URIParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
 		return
@@ -227,15 +227,16 @@ func (sv *Server) getCollectionByIDHandler(c *gin.Context) {
 // @Description Update a Collection
 // @ID update-Collection
 // @Accept json
+// @Tags Admin
 // @Produce json
 // @Param id path int true "Collection ID"
 // @Param request body CreateCategoryRequest true "Collection info"
 // @Success 200 {object} ApiResponse[CollectionResponse]
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
-// @Router /collections/{id} [put]
+// @Router /admin/collections/{id} [put]
 func (sv *Server) updateCollectionHandler(c *gin.Context) {
-	var param getCollectionParams
+	var param URIParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CollectionResponse](InvalidBodyCode, "", err))
 		return
@@ -310,14 +311,15 @@ func (sv *Server) updateCollectionHandler(c *gin.Context) {
 // @Description Delete a Collection
 // @ID delete-Collection
 // @Accept json
+// @Tags Admin
 // @Produce json
 // @Param id path int true "Collection ID"
 // @Success 204 {object} ApiResponse[bool]
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
-// @Router /collections/{id} [delete]
+// @Router /admin/collections/{id} [delete]
 func (sv *Server) deleteCollection(c *gin.Context) {
-	var colID getCollectionParams
+	var colID URIParam
 	if err := c.ShouldBindUri(&colID); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidBodyCode, "", err))
 		return

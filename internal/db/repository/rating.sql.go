@@ -7,16 +7,17 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const countProductRatings = `-- name: CountProductRatings :one
-SELECT COUNT(*) FROM product_ratings WHERE product_id = $1 AND is_visible = TRUE
+SELECT COUNT(*) FROM product_ratings WHERE product_id = COALESCE($1, product_id) AND is_visible = TRUE
 `
 
-func (q *Queries) CountProductRatings(ctx context.Context, productID uuid.UUID) (int64, error) {
+func (q *Queries) CountProductRatings(ctx context.Context, productID pgtype.UUID) (int64, error) {
 	row := q.db.QueryRow(ctx, countProductRatings, productID)
 	var count int64
 	err := row.Scan(&count)
@@ -77,31 +78,57 @@ func (q *Queries) GetProductRating(ctx context.Context, id uuid.UUID) (ProductRa
 }
 
 const getProductRatings = `-- name: GetProductRatings :many
-SELECT 
-    pr.id, pr.product_id, pr.user_id, pr.order_item_id, pr.rating, pr.review_title, pr.review_content, pr.verified_purchase, pr.is_visible, pr.is_approved, pr.helpful_votes, pr.unhelpful_votes, pr.created_at, pr.updated_at, 
-    u.id AS user_id, u.fullname, u.email
-FROM product_ratings AS pr
-JOIN users AS u ON u.id = pr.user_id
-WHERE pr.product_id = $1 AND pr.is_visible = TRUE
-ORDER BY pr.created_at DESC
-LIMIT $2 OFFSET $3
+SELECT pr.id, pr.product_id, pr.user_id, pr.order_item_id, pr.rating, pr.review_title, pr.review_content, pr.verified_purchase, pr.is_visible, pr.is_approved, pr.helpful_votes, pr.unhelpful_votes, pr.created_at, pr.updated_at, pr.fullname, pr.email, pr.product_name, ia.id AS image_id, img.url as image_url, ia.role as image_role FROM
+    (SELECT  r.id, r.product_id, r.user_id, r.order_item_id, r.rating, r.review_title, r.review_content, r.verified_purchase, r.is_visible, r.is_approved, r.helpful_votes, r.unhelpful_votes, r.created_at, r.updated_at, u.fullname, u.email, p.name AS product_name
+    FROM product_ratings AS r
+    JOIN users AS u ON u.id = r.user_id
+    JOIN products AS p ON p.id = r.product_id
+    WHERE r.product_id = COALESCE($3, r.product_id) AND r.is_visible = COALESCE($4, TRUE) AND r.is_approved = COALESCE($5, r.is_approved)
+    ORDER BY r.created_at DESC
+    LIMIT $1 OFFSET $2) as pr
+LEFT JOIN image_assignments AS ia ON ia.entity_id = pr.id AND ia.entity_type = 'product_rating'
+LEFT JOIN images AS img ON img.id = ia.image_id
 `
 
 type GetProductRatingsParams struct {
-	ProductID uuid.UUID `json:"product_id"`
-	Limit     int64     `json:"limit"`
-	Offset    int64     `json:"offset"`
+	Limit      int64       `json:"limit"`
+	Offset     int64       `json:"offset"`
+	ProductID  pgtype.UUID `json:"product_id"`
+	IsVisible  *bool       `json:"is_visible"`
+	IsApproved *bool       `json:"is_approved"`
 }
 
 type GetProductRatingsRow struct {
-	ProductRating ProductRating `json:"product_rating"`
-	UserID        uuid.UUID     `json:"user_id"`
-	Fullname      string        `json:"fullname"`
-	Email         string        `json:"email"`
+	ID               uuid.UUID      `json:"id"`
+	ProductID        uuid.UUID      `json:"product_id"`
+	UserID           uuid.UUID      `json:"user_id"`
+	OrderItemID      pgtype.UUID    `json:"order_item_id"`
+	Rating           pgtype.Numeric `json:"rating"`
+	ReviewTitle      *string        `json:"review_title"`
+	ReviewContent    *string        `json:"review_content"`
+	VerifiedPurchase bool           `json:"verified_purchase"`
+	IsVisible        bool           `json:"is_visible"`
+	IsApproved       bool           `json:"is_approved"`
+	HelpfulVotes     int32          `json:"helpful_votes"`
+	UnhelpfulVotes   int32          `json:"unhelpful_votes"`
+	CreatedAt        time.Time      `json:"created_at"`
+	UpdatedAt        time.Time      `json:"updated_at"`
+	Fullname         string         `json:"fullname"`
+	Email            string         `json:"email"`
+	ProductName      string         `json:"product_name"`
+	ImageID          pgtype.UUID    `json:"image_id"`
+	ImageUrl         *string        `json:"image_url"`
+	ImageRole        *string        `json:"image_role"`
 }
 
 func (q *Queries) GetProductRatings(ctx context.Context, arg GetProductRatingsParams) ([]GetProductRatingsRow, error) {
-	rows, err := q.db.Query(ctx, getProductRatings, arg.ProductID, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, getProductRatings,
+		arg.Limit,
+		arg.Offset,
+		arg.ProductID,
+		arg.IsVisible,
+		arg.IsApproved,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -110,23 +137,26 @@ func (q *Queries) GetProductRatings(ctx context.Context, arg GetProductRatingsPa
 	for rows.Next() {
 		var i GetProductRatingsRow
 		if err := rows.Scan(
-			&i.ProductRating.ID,
-			&i.ProductRating.ProductID,
-			&i.ProductRating.UserID,
-			&i.ProductRating.OrderItemID,
-			&i.ProductRating.Rating,
-			&i.ProductRating.ReviewTitle,
-			&i.ProductRating.ReviewContent,
-			&i.ProductRating.VerifiedPurchase,
-			&i.ProductRating.IsVisible,
-			&i.ProductRating.IsApproved,
-			&i.ProductRating.HelpfulVotes,
-			&i.ProductRating.UnhelpfulVotes,
-			&i.ProductRating.CreatedAt,
-			&i.ProductRating.UpdatedAt,
+			&i.ID,
+			&i.ProductID,
 			&i.UserID,
+			&i.OrderItemID,
+			&i.Rating,
+			&i.ReviewTitle,
+			&i.ReviewContent,
+			&i.VerifiedPurchase,
+			&i.IsVisible,
+			&i.IsApproved,
+			&i.HelpfulVotes,
+			&i.UnhelpfulVotes,
+			&i.CreatedAt,
+			&i.UpdatedAt,
 			&i.Fullname,
 			&i.Email,
+			&i.ProductName,
+			&i.ImageID,
+			&i.ImageUrl,
+			&i.ImageRole,
 		); err != nil {
 			return nil, err
 		}
@@ -377,6 +407,29 @@ func (q *Queries) GetRatingRepliesByUserID(ctx context.Context, replyBy uuid.UUI
 		return nil, err
 	}
 	return items, nil
+}
+
+const getRatingVote = `-- name: GetRatingVote :one
+SELECT id, rating_id, user_id, is_helpful, created_at, updated_at FROM rating_votes WHERE rating_id = $1 AND user_id = $2
+`
+
+type GetRatingVoteParams struct {
+	RatingID uuid.UUID `json:"rating_id"`
+	UserID   uuid.UUID `json:"user_id"`
+}
+
+func (q *Queries) GetRatingVote(ctx context.Context, arg GetRatingVoteParams) (RatingVote, error) {
+	row := q.db.QueryRow(ctx, getRatingVote, arg.RatingID, arg.UserID)
+	var i RatingVote
+	err := row.Scan(
+		&i.ID,
+		&i.RatingID,
+		&i.UserID,
+		&i.IsHelpful,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const getRatingVotes = `-- name: GetRatingVotes :one
@@ -658,19 +711,19 @@ func (q *Queries) UpdateRatingReplies(ctx context.Context, arg UpdateRatingRepli
 	return i, err
 }
 
-const updateRatingVotes = `-- name: UpdateRatingVotes :one
+const updateRatingVote = `-- name: UpdateRatingVote :one
 UPDATE rating_votes SET 
     is_helpful = COALESCE($2, is_helpful)
 WHERE id = $1 RETURNING id, rating_id, user_id, is_helpful, created_at, updated_at
 `
 
-type UpdateRatingVotesParams struct {
+type UpdateRatingVoteParams struct {
 	ID        uuid.UUID `json:"id"`
 	IsHelpful *bool     `json:"is_helpful"`
 }
 
-func (q *Queries) UpdateRatingVotes(ctx context.Context, arg UpdateRatingVotesParams) (RatingVote, error) {
-	row := q.db.QueryRow(ctx, updateRatingVotes, arg.ID, arg.IsHelpful)
+func (q *Queries) UpdateRatingVote(ctx context.Context, arg UpdateRatingVoteParams) (RatingVote, error) {
+	row := q.db.QueryRow(ctx, updateRatingVote, arg.ID, arg.IsHelpful)
 	var i RatingVote
 	err := row.Scan(
 		&i.ID,

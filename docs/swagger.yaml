@@ -24,7 +24,7 @@ definitions:
       district:
         type: string
       id:
-        type: integer
+        type: string
       phone:
         type: string
       street:
@@ -207,6 +207,21 @@ definitions:
       success:
         type: boolean
     type: object
+  api.ApiResponse-api_ProductRatingModel:
+    properties:
+      data:
+        $ref: '#/definitions/api.ProductRatingModel'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
   api.ApiResponse-api_RefreshTokenResponse:
     properties:
       data:
@@ -293,6 +308,23 @@ definitions:
       data:
         items:
           $ref: '#/definitions/api.OrderListResponse'
+        type: array
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-array_api_ProductRatingModel:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/api.ProductRatingModel'
         type: array
       error:
         $ref: '#/definitions/api.ApiError'
@@ -402,7 +434,7 @@ definitions:
       created_at:
         type: string
       id:
-        type: integer
+        type: string
       name:
         type: string
       updated_at:
@@ -419,7 +451,7 @@ definitions:
       display_order:
         type: integer
       id:
-        type: integer
+        type: string
       is_active:
         type: boolean
       name:
@@ -539,7 +571,7 @@ definitions:
       address:
         $ref: '#/definitions/api.Address'
       address_id:
-        type: integer
+        type: string
       email:
         type: string
       full_name:
@@ -632,45 +664,6 @@ definitions:
     - name
     - slug
     type: object
-  api.CreateProductReq:
-    properties:
-      attributes:
-        items:
-          type: integer
-        minItems: 1
-        type: array
-      brand_id:
-        type: string
-      category_id:
-        type: string
-      collection_id:
-        type: string
-      description:
-        maxLength: 5000
-        minLength: 6
-        type: string
-      name:
-        maxLength: 100
-        minLength: 3
-        type: string
-      price:
-        type: number
-      short_description:
-        maxLength: 2000
-        type: string
-      sku:
-        type: string
-      slug:
-        type: string
-      variants:
-        items:
-          $ref: '#/definitions/repository.CreateProductVariantTxParams'
-        type: array
-    required:
-    - name
-    - price
-    - sku
-    type: object
   api.ImageResponse:
     properties:
       assignments:
@@ -682,7 +675,7 @@ definitions:
       file_size:
         type: integer
       id:
-        type: integer
+        type: string
       mime_type:
         type: string
       url:
@@ -768,6 +761,10 @@ definitions:
         type: string
       quantity:
         type: integer
+      ratings:
+        $ref: '#/definitions/api.Rating'
+      variant_id:
+        type: string
     type: object
   api.OrderListResponse:
     properties:
@@ -856,7 +853,7 @@ definitions:
       id:
         type: string
       image_id:
-        type: integer
+        type: string
       image_url:
         type: string
       max_price:
@@ -873,6 +870,51 @@ definitions:
         type: string
       variant_count:
         type: integer
+    type: object
+  api.ProductRatingModel:
+    properties:
+      helpful_votes:
+        type: integer
+      id:
+        type: string
+      images:
+        items:
+          $ref: '#/definitions/api.RatingImageModel'
+        type: array
+      name:
+        type: string
+      rating:
+        type: number
+      review_content:
+        type: string
+      review_title:
+        type: string
+      unhelpful_votes:
+        type: integer
+      user_id:
+        type: string
+      verified_purchase:
+        type: boolean
+    type: object
+  api.Rating:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      rating:
+        type: number
+      title:
+        type: string
+    type: object
+  api.RatingImageModel:
+    properties:
+      id:
+        type: string
+      url:
+        type: string
     type: object
   api.RefreshTokenResponse:
     properties:
@@ -947,7 +989,7 @@ definitions:
         minimum: 0
         type: integer
       id:
-        type: integer
+        type: string
       is_active:
         type: boolean
       name:
@@ -983,55 +1025,6 @@ definitions:
         maxLength: 255
         minLength: 3
         type: string
-    type: object
-  api.UpdateProductImages:
-    properties:
-      assignments:
-        items:
-          type: string
-        type: array
-      id:
-        type: integer
-      omitempty:
-        type: boolean
-      role:
-        type: string
-    type: object
-  api.UpdateProductReq:
-    properties:
-      attributes:
-        items:
-          type: integer
-        type: array
-      brand_id:
-        type: string
-      category_id:
-        type: string
-      collection_id:
-        type: string
-      description:
-        maxLength: 5000
-        minLength: 6
-        type: string
-      images:
-        items:
-          $ref: '#/definitions/api.UpdateProductImages'
-        type: array
-      name:
-        maxLength: 100
-        minLength: 3
-        type: string
-      price:
-        type: number
-      short_description:
-        maxLength: 2000
-        type: string
-      sku:
-        type: string
-      slug:
-        type: string
-      stock:
-        type: integer
     type: object
   api.UpdateUserRequest:
     properties:
@@ -1099,6 +1092,45 @@ definitions:
         type: string
       value:
         type: string
+    type: object
+  repository.CreateProductTxArgs:
+    properties:
+      attributes:
+        items:
+          type: string
+        minItems: 1
+        type: array
+      brand_id:
+        type: string
+      category_id:
+        type: string
+      collection_id:
+        type: string
+      description:
+        maxLength: 5000
+        minLength: 6
+        type: string
+      name:
+        maxLength: 100
+        minLength: 3
+        type: string
+      price:
+        type: number
+      short_description:
+        maxLength: 2000
+        type: string
+      sku:
+        type: string
+      slug:
+        type: string
+      variants:
+        items:
+          $ref: '#/definitions/repository.CreateProductVariantTxParams'
+        type: array
+    required:
+    - name
+    - price
+    - sku
     type: object
   repository.CreateProductVariantTxParams:
     properties:
@@ -1180,10 +1212,9 @@ definitions:
   repository.ProductAttributesTxParam:
     properties:
       id:
-        description: AttributeID int32 `json:"attribute_id" binding:"required"`
-        type: integer
+        type: string
       value_id:
-        type: integer
+        type: string
     required:
     - id
     - value_id
@@ -1206,6 +1237,82 @@ definitions:
     - phone
     - street
     - ward
+    type: object
+  repository.UpdateProductImages:
+    properties:
+      assignments:
+        items:
+          type: string
+        type: array
+      id:
+        type: string
+      omitempty:
+        type: boolean
+      role:
+        type: string
+    type: object
+  repository.UpdateProductTxParams:
+    properties:
+      attributes:
+        items:
+          type: string
+        type: array
+      brand_id:
+        type: string
+      category_id:
+        type: string
+      collection_id:
+        type: string
+      description:
+        maxLength: 5000
+        minLength: 6
+        type: string
+      images:
+        items:
+          $ref: '#/definitions/repository.UpdateProductImages'
+        type: array
+      name:
+        maxLength: 100
+        minLength: 3
+        type: string
+      price:
+        type: number
+      short_description:
+        maxLength: 2000
+        type: string
+      sku:
+        type: string
+      slug:
+        type: string
+      stock:
+        type: integer
+      variants:
+        items:
+          $ref: '#/definitions/repository.UpdateProductVariantTxParams'
+        type: array
+    type: object
+  repository.UpdateProductVariantTxParams:
+    properties:
+      attributes:
+        items:
+          $ref: '#/definitions/repository.ProductAttributesTxParam'
+        minItems: 1
+        type: array
+      id:
+        type: string
+      is_active:
+        type: boolean
+      price:
+        type: number
+      stock_qty:
+        minimum: 0
+        type: integer
+      weight:
+        minimum: 0
+        type: number
+    required:
+    - price
+    - stock_qty
     type: object
   repository.UpdateUserRow:
     properties:
@@ -1250,153 +1357,6 @@ info:
   description: This is a sample server for a simple e-commerce API.
   title: E-Commerce API
 paths:
-  /Brands:
-    get:
-      consumes:
-      - application/json
-      description: Get a list of Brands
-      operationId: get-Brands
-      parameters:
-      - description: Page number
-        in: query
-        name: page
-        type: integer
-      - description: Page size
-        in: query
-        name: page_size
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
-      summary: Get a list of Brands
-    post:
-      consumes:
-      - application/json
-      description: Create a new Brand
-      operationId: create-Brand
-      parameters:
-      - description: Brand request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/api.CreateCategoryRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
-      summary: Create a new Brand
-  /Brands/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete a Brand
-      operationId: delete-Brand
-      parameters:
-      - description: Brand ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: No Content
-          schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
-      summary: Delete a Brand
-    get:
-      consumes:
-      - application/json
-      description: Get a Brand by ID
-      operationId: get-Brand-by-id
-      parameters:
-      - description: Brand ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
-      summary: Get a Brand by ID
-    put:
-      consumes:
-      - application/json
-      description: Update a Brand
-      operationId: update-Brand
-      parameters:
-      - description: Brand ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Brand request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/api.UpdateCategoryRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
-      summary: Update a Brand
   /address:
     get:
       consumes:
@@ -1542,6 +1502,263 @@ paths:
       summary: Set default address
       tags:
       - address
+  /admin/categories:
+    post:
+      consumes:
+      - application/json
+      description: Create a new Category
+      operationId: create-Category
+      parameters:
+      - description: Category request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.CreateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Create a new Category
+      tags:
+      - Categories
+  /admin/categories/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a Category
+      operationId: delete-Category
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Delete a Category
+      tags:
+      - Admin
+    put:
+      consumes:
+      - application/json
+      description: Update a Category
+      operationId: update-Category
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Category request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.UpdateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Update a Category
+      tags:
+      - Admin
+  /admin/collections:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of Collections
+      operationId: get-Collections
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get a list of Collections
+      tags:
+      - Admin
+    post:
+      consumes:
+      - application/json
+      description: Create a new Collection
+      operationId: create-Collection
+      parameters:
+      - description: Collection info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.CreateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Create a new Collection
+      tags:
+      - Admin
+  /admin/collections/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a Collection
+      operationId: delete-Collection
+      parameters:
+      - description: Collection ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Delete a Collection
+      tags:
+      - Admin
+    get:
+      consumes:
+      - application/json
+      description: Get a Collection by ID
+      operationId: get-Collection-by-id
+      parameters:
+      - description: Collection ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get a Collection by ID
+      tags:
+      - Admin
+    put:
+      consumes:
+      - application/json
+      description: Update a Collection
+      operationId: update-Collection
+      parameters:
+      - description: Collection ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Collection info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.CreateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Update a Collection
+      tags:
+      - Admin
   /admin/orders:
     get:
       consumes:
@@ -1583,7 +1800,7 @@ paths:
       - BearerAuth: []
       summary: Get all orders (Admin endpoint)
       tags:
-      - admin
+      - Admin
   /admin/orders/{id}:
     get:
       consumes:
@@ -1622,7 +1839,50 @@ paths:
       - BearerAuth: []
       summary: Get order details by ID (Admin endpoint)
       tags:
-      - admin
+      - Admin
+  /admin/ratings:
+    get:
+      consumes:
+      - application/json
+      description: Get ratings for a specific product
+      parameters:
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-array_api_ProductRatingModel'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+      summary: Get product ratings
+      tags:
+      - ratings
   /admin/ratings/{id}:
     delete:
       consumes:
@@ -1864,6 +2124,163 @@ paths:
       summary: Update an attribute
       tags:
       - attributes
+  /brands:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of brands
+      operationId: get-brands
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+      summary: Get a list of brands
+      tags:
+      - Admin
+    post:
+      consumes:
+      - application/json
+      description: Create a new Brand
+      operationId: create-Brand
+      parameters:
+      - description: Brand request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.CreateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+      summary: Create a new Brand
+      tags:
+      - Admin
+  /brands/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a Brand
+      operationId: delete-Brand
+      parameters:
+      - description: Brand ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+      summary: Delete a Brand
+      tags:
+      - Admin
+    get:
+      consumes:
+      - application/json
+      description: Get a Brand by ID
+      operationId: get-Brand-by-id
+      parameters:
+      - description: Brand ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+      summary: Get a Brand by ID
+      tags:
+      - Admin
+    put:
+      consumes:
+      - application/json
+      description: Update a Brand
+      operationId: update-Brand
+      parameters:
+      - description: Brand ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Brand request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.UpdateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+      summary: Update a Brand
+      tags:
+      - Admin
   /cart:
     get:
       consumes:
@@ -2112,62 +2529,9 @@ paths:
           schema:
             $ref: '#/definitions/gin.H'
       summary: Get a list of Categories
-    post:
-      consumes:
-      - application/json
-      description: Create a new Category
-      operationId: create-Category
-      parameters:
-      - description: Category request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/api.CreateCategoryRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/gin.H'
-      summary: Create a new Category
+      tags:
+      - Categories
   /categories/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete a Category
-      operationId: delete-Category
-      parameters:
-      - description: Category ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: No Content
-          schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/gin.H'
-      summary: Delete a Category
     get:
       consumes:
       - application/json
@@ -2199,75 +2563,8 @@ paths:
           schema:
             $ref: '#/definitions/gin.H'
       summary: Get a Category by ID
-    put:
-      consumes:
-      - application/json
-      description: Update a Category
-      operationId: update-Category
-      parameters:
-      - description: Category ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Category request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/api.UpdateCategoryRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/gin.H'
-      summary: Update a Category
-  /categories/{id}/products:
-    get:
-      consumes:
-      - application/json
-      description: Get a list of Products by Category ID
-      operationId: get-Products-by-Category-ID
-      parameters:
-      - description: Category ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Page number
-        in: query
-        name: page
-        type: integer
-      - description: Page size
-        in: query
-        name: page_size
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/gin.H'
-      summary: Get a list of Products by Category ID
+      tags:
+      - Categories
   /categories/slug/{slug}:
     get:
       consumes:
@@ -2304,157 +2601,8 @@ paths:
           schema:
             $ref: '#/definitions/gin.H'
       summary: Get a list of Products by Category Slug
-  /collections:
-    get:
-      consumes:
-      - application/json
-      description: Get a list of Collections
-      operationId: get-Collections
-      parameters:
-      - description: Page number
-        in: query
-        name: page
-        type: integer
-      - description: Page size
-        in: query
-        name: page_size
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/gin.H'
-      summary: Get a list of Collections
-    post:
-      consumes:
-      - application/json
-      description: Create a new Collection
-      operationId: create-Collection
-      parameters:
-      - description: Collection info
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/api.CreateCategoryRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/gin.H'
-      summary: Create a new Collection
-  /collections/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete a Collection
-      operationId: delete-Collection
-      parameters:
-      - description: Collection ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: No Content
-          schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/gin.H'
-      summary: Delete a Collection
-    get:
-      consumes:
-      - application/json
-      description: Get a Collection by ID
-      operationId: get-Collection-by-id
-      parameters:
-      - description: Collection ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/gin.H'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/gin.H'
-      summary: Get a Collection by ID
-    put:
-      consumes:
-      - application/json
-      description: Update a Collection
-      operationId: update-Collection
-      parameters:
-      - description: Collection ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Collection info
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/api.CreateCategoryRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/gin.H'
-      summary: Update a Collection
+      tags:
+      - Categories
   /images/{publicID}:
     delete:
       consumes:
@@ -2677,41 +2825,6 @@ paths:
       security:
       - BearerAuth: []
       summary: confirm received order payment info
-      tags:
-      - orders
-  /order/{order_id}/confirm_payment:
-    put:
-      consumes:
-      - application/json
-      description: Cancel order by order ID
-      parameters:
-      - description: Order ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
-      security:
-      - BearerAuth: []
-      summary: Cancel order
       tags:
       - orders
   /order/{order_id}/refund:
@@ -3012,7 +3125,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/api.CreateProductReq'
+          $ref: '#/definitions/repository.CreateProductTxArgs'
       produces:
       - application/json
       responses:
@@ -3087,7 +3200,7 @@ paths:
             $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
       summary: Get a product detail by ID
       tags:
-      - product detail
+      - products
     put:
       consumes:
       - application/json
@@ -3103,7 +3216,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/api.UpdateProductReq'
+          $ref: '#/definitions/repository.UpdateProductTxParams'
       produces:
       - application/json
       responses:
@@ -3122,12 +3235,231 @@ paths:
       summary: Update a product by ID
       tags:
       - products
-  /shop/Brands:
+  /ratings:
+    post:
+      consumes:
+      - application/json
+      description: Post a product rating
+      parameters:
+      - description: Order Item ID
+        in: formData
+        name: order_item_id
+        required: true
+        type: string
+      - description: Rating (1-5)
+        in: formData
+        name: rating
+        required: true
+        type: number
+      - description: Review Title
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: Review Content
+        in: formData
+        name: content
+        required: true
+        type: string
+      - description: Images
+        in: formData
+        name: files
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_ProductRatingModel'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+      security:
+      - BearerAuth: []
+      summary: Post a rating
+      tags:
+      - ratings
+  /ratings/{rating_id}/helpful:
+    post:
+      consumes:
+      - application/json
+      description: Post a helpful rating
+      parameters:
+      - description: Rating ID
+        in: body
+        name: rating_id
+        required: true
+        schema:
+          type: string
+      - description: Helpful
+        in: body
+        name: helpful
+        required: true
+        schema:
+          type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+      security:
+      - BearerAuth: []
+      summary: Post a helpful rating
+      tags:
+      - ratings
+  /ratings/{rating_id}/reply:
+    post:
+      consumes:
+      - application/json
+      description: Post a reply to a product rating
+      parameters:
+      - description: Rating ID
+        in: path
+        name: rating_id
+        required: true
+        type: string
+      - description: Reply Content
+        in: body
+        name: content
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+      security:
+      - BearerAuth: []
+      summary: Post a reply to a rating
+      tags:
+      - ratings
+  /ratings/orders/{order_id}:
     get:
       consumes:
       - application/json
-      description: Get a list of Brands for the shop
-      operationId: get-shop-Brands
+      description: Get ratings for a specific order
+      parameters:
+      - description: Order ID
+        in: path
+        name: order_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-array_api_ProductRatingModel'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+      security:
+      - BearerAuth: []
+      summary: Get order ratings
+      tags:
+      - ratings
+  /ratings/products/{product_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get ratings for a specific product
+      parameters:
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-array_api_ProductRatingModel'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+      summary: Get product ratings
+      tags:
+      - ratings
+  /shop/brands:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of brands for the shop
+      operationId: get-shop-brands
       parameters:
       - description: Page number
         in: query
@@ -3152,7 +3484,9 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/api.ApiResponse-gin_H'
-      summary: Get a list of Brands for the shop
+      summary: Get a list of brands for the shop
+      tags:
+      - Brands
   /shop/collections:
     get:
       consumes:
@@ -3184,6 +3518,8 @@ paths:
           schema:
             $ref: '#/definitions/gin.H'
       summary: Get a list of Collections
+      tags:
+      - Collections
   /users:
     get:
       consumes:
@@ -3373,26 +3709,54 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
       security:
       - BearerAuth: []
       summary: Verify email
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Send verify email
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+      security:
+      - BearerAuth: []
+      summary: Send verify email
       tags:
       - users
   /webhook/stripe:

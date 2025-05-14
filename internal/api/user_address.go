@@ -13,10 +13,6 @@ import (
 )
 
 // ------------------------------ Params ------------------------------
-type GetAddressParams struct {
-	ID string `uri:"id" binding:"required,uuid"`
-}
-
 type CreateAddressReq struct {
 	Phone     string  `json:"phone" binding:"required,min=10,max=15"`
 	Street    string  `json:"street" binding:"required"`
@@ -192,7 +188,7 @@ func (sv *Server) updateAddressHandlers(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, createErrorResponse[AddressResponse](InvalidBodyCode, "", err))
 		return
 	}
-	var param GetAddressParams
+	var param URIParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[AddressResponse](InvalidBodyCode, "", err))
 		return
@@ -276,7 +272,7 @@ func (sv *Server) removeAddressHandlers(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](UnauthorizedCode, "", fmt.Errorf("authorization payload is not provided")))
 		return
 	}
-	var param GetAddressParams
+	var param URIParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidBodyCode, "", err))
 		return
@@ -334,7 +330,7 @@ func (sv *Server) setDefaultAddressHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](UnauthorizedCode, "", fmt.Errorf("authorization payload is not provided")))
 		return
 	}
-	var param GetAddressParams
+	var param URIParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidBodyCode, "", err))
 		return

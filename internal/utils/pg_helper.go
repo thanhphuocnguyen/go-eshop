@@ -47,7 +47,3 @@ func GetPgNumericFromFloat(value float64) pgtype.Numeric {
 		Valid: true,
 	}
 }
-
-func StandardizeDecimal(num float64) float64 {
-	return num * MUL / EXP
-}

@@ -23,19 +23,20 @@ export async function refreshTokenAction() {
     })
     .then((data) => {
       if (data.error) {
+        cookieStore.delete('access_token');
+        cookieStore.delete('refresh_token');
+        cookieStore.delete('session_id');
         redirect('/login');
-        return null;
       }
       if (data) {
         const { access_token, access_token_expires_at } = data.data;
         cookieStore.set('access_token', access_token, {
           expires: new Date(access_token_expires_at),
         });
-        localStorage.setItem('token', access_token);
         return access_token;
       }
     });
-} 
+}
 
 export async function loginAction(data: FormData) {
   const result = await fetch(PUBLIC_API_PATHS.LOGIN, {
@@ -89,6 +90,4 @@ export async function logoutAction() {
   cookieStore.delete('access_token');
   cookieStore.delete('refresh_token');
   cookieStore.delete('session_id');
-  localStorage.removeItem('token');
-  redirect('/login');
 }

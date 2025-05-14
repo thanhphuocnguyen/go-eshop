@@ -204,4 +204,10 @@ export type ProductDetailModel = {
   product_images: ProductImageModel[];
   created_at: string; // date
   updated_at: string; // date
+  rating_count: number;
+  one_star_count: number;
+  two_star_count: number;
+  three_star_count: number;
+  four_star_count: number;
+  five_star_count: number;
 };

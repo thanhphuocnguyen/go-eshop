@@ -14,13 +14,9 @@ import (
 
 // ------------------------------------------ Request and Response ------------------------------------------
 
-type BrandParams struct {
-	ID        string  `uri:"id" binding:"required,uuid"`
-	ProductID *string `json:"product_id,omitempty"`
-}
 type BrandsQueries struct {
 	PaginationQueryParams
-	Brands []int32 `form:"Brand_ids,omitempty"`
+	brands []int32 `form:"Brand_ids,omitempty"`
 }
 
 type BrandProductRequest struct {
@@ -38,11 +34,12 @@ type BrandResponse struct {
 // ------------------------------------------ API Handlers ------------------------------------------
 
 // --- Public API ---
-// getShopBrandsHandler retrieves a list of Brands for the shop.
-// @Summary Get a list of Brands for the shop
-// @Description Get a list of Brands for the shop
-// @ID get-shop-Brands
+// getShopBrandsHandler retrieves a list of brands for the shop.
+// @Summary Get a list of brands for the shop
+// @Description Get a list of brands for the shop
+// @ID get-shop-brands
 // @Accept json
+// @Tags Brands
 // @Produce json
 // @Param page query int false "Page number"
 // @Param page_size query int false "Page size"
@@ -125,6 +122,7 @@ func (sv *Server) getShopBrandsHandler(c *gin.Context) {
 // createBrandHandler creates a new Brand.
 // @Summary Create a new Brand
 // @Description Create a new Brand
+// @Tags Admin
 // @ID create-Brand
 // @Accept json
 // @Produce json
@@ -132,7 +130,7 @@ func (sv *Server) getShopBrandsHandler(c *gin.Context) {
 // @Success 201 {object} ApiResponse[BrandResponse]
 // @Failure 400 {object} ApiResponse[gin.H]
 // @Failure 500 {object} ApiResponse[gin.H]
-// @Router /Brands [post]
+// @Router /brands [post]
 func (sv *Server) createBrandHandler(c *gin.Context) {
 	var req CreateCategoryRequest
 	if err := c.ShouldBind(&req); err != nil {
@@ -166,10 +164,11 @@ func (sv *Server) createBrandHandler(c *gin.Context) {
 	c.JSON(http.StatusCreated, createSuccessResponse(c, col, "", nil, nil))
 }
 
-// getBrandsHandler retrieves a list of Brands.
-// @Summary Get a list of Brands
-// @Description Get a list of Brands
-// @ID get-Brands
+// getBrandsHandler retrieves a list of brands.
+// @Summary Get a list of brands
+// @Description Get a list of brands
+// @Tags Admin
+// @ID get-brands
 // @Accept json
 // @Produce json
 // @Param page query int false "Page number"
@@ -177,7 +176,7 @@ func (sv *Server) createBrandHandler(c *gin.Context) {
 // @Success 200 {object} ApiResponse[gin.H]
 // @Failure 400 {object} ApiResponse[gin.H]
 // @Failure 500 {object} ApiResponse[BrandResponse]
-// @Router /Brands [get]
+// @Router /brands [get]
 func (sv *Server) getBrandsHandler(c *gin.Context) {
 	var queries BrandsQueries
 	if err := c.ShouldBindQuery(&queries); err != nil {
@@ -258,14 +257,15 @@ func (sv *Server) getBrandsHandler(c *gin.Context) {
 // @Description Get a Brand by ID
 // @ID get-Brand-by-id
 // @Accept json
+// @Tags Admin
 // @Produce json
 // @Param id path int true "Brand ID"
 // @Success 200 {object} ApiResponse[CategoryResponse]
 // @Failure 400 {object} ApiResponse[gin.H]
 // @Failure 500 {object} ApiResponse[gin.H]
-// @Router /Brands/{id} [get]
+// @Router /brands/{id} [get]
 func (sv *Server) getBrandByIDHandler(c *gin.Context) {
-	var param BrandParams
+	var param URIParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[gin.H](InvalidBodyCode, "", err))
 		return
@@ -324,14 +324,15 @@ func (sv *Server) getBrandByIDHandler(c *gin.Context) {
 // @ID update-Brand
 // @Accept json
 // @Produce json
+// @Tags Admin
 // @Param id path int true "Brand ID"
 // @Param request body UpdateCategoryRequest true "Brand request"
 // @Success 200 {object} ApiResponse[BrandResponse]
 // @Failure 400 {object} ApiResponse[BrandResponse]
 // @Failure 500 {object} ApiResponse[BrandResponse]
-// @Router /Brands/{id} [put]
+// @Router /brands/{id} [put]
 func (sv *Server) updateBrandHandler(c *gin.Context) {
-	var param BrandParams
+	var param URIParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[gin.H](InvalidBodyCode, "", err))
 		return
@@ -410,14 +411,15 @@ func (sv *Server) updateBrandHandler(c *gin.Context) {
 // @Description Delete a Brand
 // @ID delete-Brand
 // @Accept json
+// @Tags Admin
 // @Produce json
 // @Param id path int true "Brand ID"
 // @Success 204 {object} ApiResponse[bool]
 // @Failure 400 {object} ApiResponse[gin.H]
 // @Failure 500 {object} ApiResponse[gin.H]
-// @Router /Brands/{id} [delete]
+// @Router /brands/{id} [delete]
 func (sv *Server) deleteBrand(c *gin.Context) {
-	var colID BrandParams
+	var colID URIParam
 	if err := c.ShouldBindUri(&colID); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[gin.H](InvalidBodyCode, "", err))
 		return

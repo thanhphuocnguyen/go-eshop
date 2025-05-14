@@ -12,3 +12,16 @@ export const formatCurrency = (value: number): string => {
     maximumFractionDigits: 2,
   }).format(value);
 };
+
+/**
+ * Format date in a human-readable format
+ * @param date Date to format
+ * @returns Formatted date string (e.g. May 16, 2023)
+ */
+export const formatDate = (date: Date): string => {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  }).format(date);
+};

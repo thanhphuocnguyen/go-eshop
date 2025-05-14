@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
@@ -24,7 +25,7 @@ type Querier interface {
 	CountCategories(ctx context.Context) (int64, error)
 	CountCollections(ctx context.Context) (int64, error)
 	CountOrders(ctx context.Context, arg CountOrdersParams) (int64, error)
-	CountProductRatings(ctx context.Context, productID uuid.UUID) (int64, error)
+	CountProductRatings(ctx context.Context, productID pgtype.UUID) (int64, error)
 	CountProducts(ctx context.Context, arg CountProductsParams) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
 	// User Address Queries
@@ -50,7 +51,6 @@ type Querier interface {
 	CreateProductVariant(ctx context.Context, arg CreateProductVariantParams) (ProductVariant, error)
 	// Product Variant attributes
 	CreateProductVariantAttribute(ctx context.Context, arg CreateProductVariantAttributeParams) (VariantAttributeValue, error)
-	CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
 	// Verification Token Queries
 	CreateVerifyEmail(ctx context.Context, arg CreateVerifyEmailParams) (VerifyEmail, error)
@@ -117,6 +117,7 @@ type Querier interface {
 	GetPaymentTransactionByID(ctx context.Context, id uuid.UUID) (PaymentTransaction, error)
 	GetPaymentTransactionByPaymentID(ctx context.Context, paymentID uuid.UUID) (PaymentTransaction, error)
 	GetProductByID(ctx context.Context, arg GetProductByIDParams) (Product, error)
+	GetProductBySlug(ctx context.Context, arg GetProductBySlugParams) (Product, error)
 	GetProductDetail(ctx context.Context, arg GetProductDetailParams) ([]GetProductDetailRow, error)
 	GetProductImageByEntityID(ctx context.Context, entityID uuid.UUID) (GetProductImageByEntityIDRow, error)
 	GetProductImagesAssigned(ctx context.Context, entityIds []uuid.UUID) ([]GetProductImagesAssignedRow, error)
@@ -133,6 +134,7 @@ type Querier interface {
 	GetRatingReplies(ctx context.Context, id uuid.UUID) (RatingReply, error)
 	GetRatingRepliesByRatingID(ctx context.Context, ratingID uuid.UUID) ([]GetRatingRepliesByRatingIDRow, error)
 	GetRatingRepliesByUserID(ctx context.Context, replyBy uuid.UUID) ([]GetRatingRepliesByUserIDRow, error)
+	GetRatingVote(ctx context.Context, arg GetRatingVoteParams) (RatingVote, error)
 	GetRatingVotes(ctx context.Context, id uuid.UUID) (RatingVote, error)
 	GetRatingVotesByRatingID(ctx context.Context, ratingID uuid.UUID) ([]RatingVote, error)
 	GetRatingVotesByUserID(ctx context.Context, userID uuid.UUID) ([]RatingVote, error)
@@ -152,6 +154,7 @@ type Querier interface {
 	InsertProductRating(ctx context.Context, arg InsertProductRatingParams) (ProductRating, error)
 	InsertRatingReply(ctx context.Context, arg InsertRatingReplyParams) (RatingReply, error)
 	InsertRatingVotes(ctx context.Context, arg InsertRatingVotesParams) (RatingVote, error)
+	InsertSession(ctx context.Context, arg InsertSessionParams) (Session, error)
 	ListOrderItems(ctx context.Context, arg ListOrderItemsParams) ([]OrderItem, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	RemoveProductFromCart(ctx context.Context, arg RemoveProductFromCartParams) error
@@ -179,7 +182,7 @@ type Querier interface {
 	UpdateProductStock(ctx context.Context, arg UpdateProductStockParams) (ProductVariant, error)
 	UpdateProductVariant(ctx context.Context, arg UpdateProductVariantParams) (ProductVariant, error)
 	UpdateRatingReplies(ctx context.Context, arg UpdateRatingRepliesParams) (RatingReply, error)
-	UpdateRatingVotes(ctx context.Context, arg UpdateRatingVotesParams) (RatingVote, error)
+	UpdateRatingVote(ctx context.Context, arg UpdateRatingVoteParams) (RatingVote, error)
 	UpdateSession(ctx context.Context, arg UpdateSessionParams) (Session, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateUserRow, error)
 	UpdateVerifyEmail(ctx context.Context, arg UpdateVerifyEmailParams) (VerifyEmail, error)

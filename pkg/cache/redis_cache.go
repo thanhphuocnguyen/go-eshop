@@ -36,6 +36,10 @@ func (r *RedisCache) Set(c context.Context, key string, value interface{}, expir
 	})
 }
 
+func (r *RedisCache) FlushAll(c context.Context) error {
+	return r.FlushAll(c)
+}
+
 func NewRedisCache(cfg config.Config) Cache {
 	ring := redis.NewRing(&redis.RingOptions{
 		Addrs: map[string]string{

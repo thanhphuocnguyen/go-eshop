@@ -134,7 +134,6 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 			}()
 
 			<-ctx.Done()
-
 			log.Info().Msg("Shutting down API server")
 			_ = server.Shutdown(ctx)
 
@@ -146,6 +145,7 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 
 			log.Info().Msg("Shutting down pgRepo")
 			pgRepo.Close()
+
 			return nil
 		},
 	}

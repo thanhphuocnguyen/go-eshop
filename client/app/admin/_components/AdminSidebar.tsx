@@ -10,6 +10,7 @@ import {
   RectangleStackIcon,
   ShoppingCartIcon,
   UsersIcon,
+  StarIcon,
 } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -64,6 +65,12 @@ const NavBarItems = [
     icon: ShoppingCartIcon,
     path: '/admin/orders',
     href: '/admin/orders',
+  },
+  {
+    name: 'Ratings',
+    icon: StarIcon,
+    path: '/admin/ratings',
+    href: '/admin/ratings',
   },
 ];
 

@@ -15,5 +15,8 @@ export type ProductCategory = {
   id: string;
   name: string;
   image_url?: string;
+  min_price: number;
+  max_price: number;
+  slug: string;
   variant_count: number;
 };

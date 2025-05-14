@@ -100,6 +100,7 @@ export default function CategoryProducts({
             {sortedProducts.map((product) => (
               <ProductCard
                 key={product.id}
+                slug={product.slug}
                 ID={product.id}
                 name={product.name}
                 image={product.image_url}

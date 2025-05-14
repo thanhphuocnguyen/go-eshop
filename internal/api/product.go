@@ -77,6 +77,12 @@ type ProductModel struct {
 	IsActive         bool                     `json:"is_active"`
 	Slug             string                   `json:"slug"`
 	CreatedAt        string                   `json:"created_at"`
+	RatingCount      int32                    `json:"rating_count"`
+	OneStarCount     int32                    `json:"one_star_count"`
+	TwoStarCount     int32                    `json:"two_star_count"`
+	ThreeStarCount   int32                    `json:"three_star_count"`
+	FourStarCount    int32                    `json:"four_star_count"`
+	FiveStarCount    int32                    `json:"five_star_count"`
 	Variants         []ProductVariantModel    `json:"variants"`
 	ProductImages    []ProductImageModel      `json:"product_images"`
 	Collection       *GeneralCategoryResponse `json:"collection,omitempty"`
@@ -110,7 +116,7 @@ type ProductCreateResp struct {
 // @Description create a new product with the input payload
 // @Tags products
 // @Accept json
-// @Param input body CreateProductReq true "Product input"
+// @Param input body repository.CreateProductTxArgs true "Product input"
 // @Produce json
 // @Success 200 {object} ApiResponse[ProductListModel]
 // @Failure 400 {object} ApiResponse[ProductListModel]
@@ -141,7 +147,7 @@ func (sv *Server) addProductHandler(c *gin.Context) {
 // @Summary Get a product detail by ID
 // @Schemes http
 // @Description get a product detail by ID
-// @Tags product detail
+// @Tags products
 // @Accept json
 // @Param product_id path int true "Product ID"
 // @Produce json
@@ -150,15 +156,20 @@ func (sv *Server) addProductHandler(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[ProductListModel]
 // @Router /products/{product_id} [get]
 func (sv *Server) getProductDetailHandler(c *gin.Context) {
-	var params ProductParam
+	var params ProductDetailParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[ProductModel](InvalidBodyCode, "", err))
 		return
 	}
-	productID := uuid.MustParse(params.ID)
-	productRows, err := sv.repo.GetProductDetail(c, repository.GetProductDetailParams{
-		ID: productID,
-	})
+	sqlParams := repository.GetProductDetailParams{}
+	err := uuid.Validate(params.ID)
+	if err == nil {
+		sqlParams.ID = uuid.MustParse(params.ID)
+	} else {
+		sqlParams.Slug = params.ID
+	}
+
+	productRows, err := sv.repo.GetProductDetail(c, sqlParams)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductModel](InternalServerErrorCode, "", err))
 		return
@@ -168,11 +179,11 @@ func (sv *Server) getProductDetailHandler(c *gin.Context) {
 		c.JSON(http.StatusNotFound, createErrorResponse[ProductModel](NotFoundCode, "", errors.New("product not found")))
 		return
 	}
-
+	prodID := productRows[0].ProductID
 	productDetail := mapToProductResponse(productRows)
 
 	variantRows, err := sv.repo.GetProductVariants(c, repository.GetProductVariantsParams{
-		ProductID: uuid.MustParse(params.ID),
+		ProductID: prodID,
 	})
 
 	if err != nil {
@@ -192,10 +203,10 @@ func (sv *Server) getProductDetailHandler(c *gin.Context) {
 	// Add the product ID to the entityIds slice
 	// This ensures that the product ID is included in the list of entity IDs
 	// when fetching product images
-	entityIds = append(entityIds, productID)
+	entityIds = append(entityIds, prodID)
 
 	images, err := sv.repo.GetProductImagesAssigned(c, entityIds)
-	imageResp := mapToProductImages(productID, images)
+	imageResp := mapToProductImages(prodID, images)
 	variants := mapToVariantResp(variantRows)
 	productDetail.Variants = variants
 	productDetail.ProductImages = imageResp
@@ -280,15 +291,20 @@ func (sv *Server) getProductsHandler(c *gin.Context) {
 // @Tags products
 // @Accept json
 // @Param product_id path int true "Product ID"
-// @Param input body UpdateProductReq true "Product input"
+// @Param input body repository.UpdateProductTxParams true "Product input"
 // @Produce json
 // @Success 200 {object} ApiResponse[ProductListModel]
 // @Failure 404 {object} ApiResponse[ProductListModel]
 // @Failure 500 {object} ApiResponse[ProductListModel]
 // @Router /products/{product_id} [put]
 func (sv *Server) updateProductHandler(c *gin.Context) {
-	var param ProductParam
+	var param URIParam
 	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](InvalidBodyCode, "", err))
+		return
+	}
+	uuid, err := uuid.Parse(param.ID)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](InvalidBodyCode, "", err))
 		return
 	}
@@ -298,8 +314,7 @@ func (sv *Server) updateProductHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](InvalidBodyCode, "", err))
 		return
 	}
-	productID := uuid.MustParse(param.ID)
-	err := sv.repo.UpdateProductTx(c, productID, req)
+	err = sv.repo.UpdateProductTx(c, uuid, req)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, createErrorResponse[ProductListModel](NotFoundCode, "", err))
@@ -307,9 +322,7 @@ func (sv *Server) updateProductHandler(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(c, ProductCreateResp{
-		ID: productID.String(),
-	}, "product updated", nil, nil))
+	c.JSON(http.StatusOK, createSuccessResponse(c, ProductCreateResp{ID: uuid.String()}, "product updated", nil, nil))
 }
 
 // @Summary Remove a product by ID
@@ -324,15 +337,13 @@ func (sv *Server) updateProductHandler(c *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /products/{product_id} [delete]
 func (sv *Server) deleteProductHandler(c *gin.Context) {
-	var params ProductParam
+	var params URIParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidBodyCode, "", err))
 		return
 	}
 
-	product, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{
-		ID: uuid.MustParse(params.ID),
-	})
+	product, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(params.ID)})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, createErrorResponse[bool](NotFoundCode, "", err))
@@ -421,11 +432,18 @@ func mapToProductResponse(productRows []repository.GetProductDetailRow) ProductM
 		Description:      product.Description,
 		BaseSku:          product.BaseSku,
 		Slug:             product.Slug,
-		UpdatedAt:        product.UpdatedAt.String(),
-		CreatedAt:        product.CreatedAt.String(),
-		IsActive:         *product.IsActive,
-		Variants:         make([]ProductVariantModel, 0),
-		ProductImages:    make([]ProductImageModel, 0),
+		RatingCount:      product.RatingCount,
+		OneStarCount:     product.OneStarCount,
+		TwoStarCount:     product.TwoStarCount,
+		ThreeStarCount:   product.ThreeStarCount,
+		FourStarCount:    product.FourStarCount,
+		FiveStarCount:    product.FiveStarCount,
+
+		UpdatedAt:     product.UpdatedAt.String(),
+		CreatedAt:     product.CreatedAt.String(),
+		IsActive:      *product.IsActive,
+		Variants:      make([]ProductVariantModel, 0),
+		ProductImages: make([]ProductImageModel, 0),
 	}
 
 	if product.BrandID.Valid {
@@ -592,7 +610,7 @@ func mapToListProductResponse(productRow repository.GetProductsRow) ProductListM
 	}
 	if productRow.ImgID.Valid {
 		id, _ := uuid.FromBytes(productRow.ImgID.Bytes[:])
-		product.ImgID = StringPtr(id.String())
+		product.ImgID = utils.StringPtr(id.String())
 	}
 
 	return product

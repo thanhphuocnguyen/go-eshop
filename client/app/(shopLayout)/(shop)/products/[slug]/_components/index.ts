@@ -3,3 +3,5 @@ export * from './ReviewSection';
 export * from './ReviewsList';
 export * from './RelateProductSection';
 export * from './ImagesSection';
+export * from './ErrorComponent';
+export * from './RatingHelpfulButtons';

@@ -10,8 +10,8 @@ import React from 'react';
 import { useUser } from '@/app/lib/hooks/useUser';
 import { logoutAction } from '@/app/actions/auth';
 
-const AuthButtons: React.FC<{ accessToken: string | undefined }> = ({}) => {
-  const { user, isLoading } = useUser();
+const AuthButtons: React.FC = ({}) => {
+  const { user, isLoading, mutateUser } = useUser();
   const router = useRouter();
 
   const logout = async () => {
@@ -19,6 +19,7 @@ const AuthButtons: React.FC<{ accessToken: string | undefined }> = ({}) => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('session_id');
+    await mutateUser();
     router.refresh();
     redirect('/login');
   };

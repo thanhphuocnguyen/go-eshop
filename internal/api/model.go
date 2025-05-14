@@ -6,8 +6,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type ProductParam struct {
+type ProductDetailParam struct {
 	ID string `uri:"id" binding:"required"`
+}
+
+type URIParam struct {
+	ID string `uri:"id" binding:"required,uuid"`
 }
 
 // Response types - unchanged

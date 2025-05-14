@@ -178,7 +178,7 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 			categories.GET(":id", sv.getCategoryByID)
 			categories.POST("", sv.createCategoryHandler)
 			categories.PUT(":id", sv.updateCategoryHandler)
-			categories.DELETE(":id", sv.deleteCategory)
+			categories.DELETE(":id", sv.deleteCategoryHandler)
 		}
 
 		brands := admin.Group("brands")
@@ -194,7 +194,7 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 		collections := admin.Group("collections")
 		{
 			collections.GET("", sv.getCollectionsHandler)
-			collections.POST("", sv.addCollectionHandler)
+			collections.POST("", sv.createCollectionHandler)
 			collections.GET(":id", sv.getCollectionByIDHandler)
 			collections.PUT(":id", sv.updateCollectionHandler)
 			collections.DELETE(":id", sv.deleteCollection)
@@ -209,11 +209,11 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 
 		ratings := admin.Group("ratings")
 		{
+			ratings.GET("", sv.getRatingsHandler)
 			ratings.DELETE(":id", sv.deleteRatingHandler)
-			ratings.POST(":id/approve", sv.approveRatingHandler)
-			ratings.POST(":id/ban", sv.banUserRatingHandler)
+			ratings.PUT(":id/approve", sv.approveRatingHandler)
+			ratings.PUT(":id/ban", sv.banUserRatingHandler)
 		}
-
 	}
 }
 
@@ -252,7 +252,7 @@ func (sv *Server) setupProductRoutes(rg *gin.RouterGroup) {
 	{
 		product.GET("", sv.getProductsHandler)
 		product.GET(":id", sv.getProductDetailHandler)
-		product.GET(":id/ratings", sv.getProductRatingsHandler)
+		product.GET(":id/ratings", sv.getRatingsByProductHandler)
 	}
 }
 
@@ -306,7 +306,7 @@ func (sv *Server) setupCategoryRoutes(rg *gin.RouterGroup) {
 	category := rg.Group("categories")
 	{
 		category.GET("", sv.getCategoriesHandler)
-		category.GET(":slug", sv.getCategoryBySlug)
+		category.GET(":slug", sv.getCategoryBySlugHandler)
 	}
 }
 
@@ -332,7 +332,7 @@ func (sv *Server) setupRatingRoutes(rg *gin.RouterGroup) {
 	{
 		ratings.POST("", sv.postRatingHandler)
 		ratings.GET(":order_id", sv.getOrderRatingsHandler)
-		ratings.POST("helpful", sv.postRatingHelpfulHandler)
+		ratings.POST(":id/helpful", sv.postRatingHelpfulHandler)
 		ratings.POST(":id/reply", sv.postReplyRatingHandler)
 	}
 }

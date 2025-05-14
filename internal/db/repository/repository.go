@@ -23,6 +23,7 @@ type Repository interface {
 	QueryRaw(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error)
 	CreateProductTx(ctx context.Context, arg CreateProductTxArgs) (uuid.UUID, error)
 	UpdateProductTx(ctx context.Context, productID uuid.UUID, arg UpdateProductTxParams) error
+	VoteHelpfulRatingTx(ctx context.Context, arg VoteHelpfulRatingTxArgs) (uuid.UUID, error)
 	Close()
 }
 

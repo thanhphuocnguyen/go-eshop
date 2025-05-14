@@ -42,6 +42,7 @@ type Rating struct {
 
 type OrderItemResponse struct {
 	ID                 string                             `json:"id"`
+	VariantID          string                             `json:"variant_id"`
 	Name               string                             `json:"name"`
 	ImageUrl           *string                            `json:"image_url"`
 	LineTotal          float64                            `json:"line_total"`
@@ -121,9 +122,12 @@ func (sv *Server) getOrdersHandler(c *gin.Context) {
 	}
 
 	dbParams := repository.GetOrdersParams{
-		// CustomerID: utils.GetPgTypeUUID(tokenPayload.UserID),
 		Limit:  orderListQuery.PageSize,
 		Offset: (orderListQuery.Page - 1) * orderListQuery.PageSize,
+	}
+
+	if tokenPayload.Role != repository.UserRoleAdmin {
+		dbParams.CustomerID = utils.GetPgTypeUUID(tokenPayload.UserID)
 	}
 
 	fetchedOrderRows, err := sv.repo.GetOrders(c, dbParams)
@@ -270,7 +274,8 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 	for _, item := range orderItemRows {
 		lineTotal, _ := item.LineTotalSnapshot.Float64Value()
 		itemResp := OrderItemResponse{
-			ID:                 item.VariantID.String(),
+			ID:                 item.ID.String(),
+			VariantID:          item.VariantID.String(),
 			Name:               item.ProductName,
 			ImageUrl:           item.ImageUrl,
 			LineTotal:          lineTotal.Float64,
@@ -293,7 +298,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 
 	resp.Products = orderItems
 
-	if err := sv.cacheService.Set(c, "order_detail:"+params.ID, resp, TimeDurationPtr(5*time.Minute)); err != nil {
+	if err := sv.cacheService.Set(c, "order_detail:"+params.ID, resp, utils.TimeDurationPtr(5*time.Minute)); err != nil {
 		log.Err(err).Msg("failed to cache order detail")
 		apiErr = &ApiError{
 			Code:    InternalServerErrorCode,
@@ -370,7 +375,6 @@ func (sv *Server) confirmOrderPayment(c *gin.Context) {
 	c.JSON(http.StatusOK, createSuccessResponse(c, true, "success", nil, apiErr))
 }
 
-// @Router /order/{order_id}/confirm_payment [put]
 // @Summary Cancel order
 // @Description Cancel order by order ID
 // @Tags orders
@@ -624,7 +628,7 @@ func (sv *Server) refundOrder(c *gin.Context) {
 
 // @Summary Get all orders (Admin endpoint)
 // @Description Get all orders with pagination and filtering
-// @Tags admin
+// @Tags Admin
 // @Accept json
 // @Produce json
 // @Param page query int false "Page number"
@@ -717,7 +721,7 @@ func (sv *Server) getAdminOrdersHandler(c *gin.Context) {
 
 // @Summary Get order details by ID (Admin endpoint)
 // @Description Get detailed information about an order by its ID
-// @Tags admin
+// @Tags Admin
 // @Accept json
 // @Produce json
 // @Param id path string true "Order ID"

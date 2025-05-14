@@ -20,10 +20,6 @@ type ProductVariantParam struct {
 	ID string `uri:"variant_id" binding:"required,uuid"`
 }
 
-type CartItemParam struct {
-	ID string `uri:"id" binding:"required,uuid"`
-}
-
 type OrderItemAttribute struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
@@ -208,15 +204,15 @@ func (sv *Server) getCartHandler(c *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /cart/item/{variant_id} [post]
 func (sv *Server) updateCartItemQtyHandler(c *gin.Context) {
-	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
-	if !ok {
-		c.JSON(http.StatusBadRequest, createErrorResponse[uuid.UUID](InvalidBodyCode, "", errors.New("user not found")))
+	var param URIParam
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse[uuid.UUID](InvalidBodyCode, "", errors.New("invalid variant id")))
 		return
 	}
 
-	var param CartItemParam
-	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[uuid.UUID](InvalidBodyCode, "", errors.New("invalid variant id")))
+	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	if !ok {
+		c.JSON(http.StatusBadRequest, createErrorResponse[uuid.UUID](InvalidBodyCode, "", errors.New("user not found")))
 		return
 	}
 

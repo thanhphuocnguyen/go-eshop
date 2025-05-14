@@ -35,17 +35,17 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 	evtData := evt.Data.Object
 	var id *string
 	if evtData["id"] != nil {
-		id = StringPtr(evtData["id"].(string))
+		id = utils.StringPtr(evtData["id"].(string))
 	}
 	log.Info().Interface("evt type", evt.Type).Msg("Received stripe event")
 
 	var failureCode *string
 	var failureMsg *string
 	if evtData["failure_code"] != nil {
-		failureCode = StringPtr(evtData["failure_code"].(string))
+		failureCode = utils.StringPtr(evtData["failure_code"].(string))
 	}
 	if evtData["failure_message"] != nil {
-		failureMsg = StringPtr(evtData["failure_message"].(string))
+		failureMsg = utils.StringPtr(evtData["failure_message"].(string))
 	}
 
 	if strings.HasPrefix(string(evt.Type), "payment_intent.") {
@@ -110,7 +110,7 @@ func (server *Server) stripeWebhook(c *gin.Context) {
 		piAmount := evtData["amount"].(float64)
 		var paymentIntentID *string
 		if evtData["payment_intent"] != nil {
-			paymentIntentID = StringPtr(evtData["payment_intent"].(string))
+			paymentIntentID = utils.StringPtr(evtData["payment_intent"].(string))
 		}
 		payment, err := server.repo.GetPaymentByPaymentIntentID(c, paymentIntentID)
 		if err != nil {

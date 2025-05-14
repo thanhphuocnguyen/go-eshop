@@ -98,6 +98,7 @@ export type OrderModel = {
  */
 export type OrderItemModel = {
   id: string;
+  variant_id: string;
   name: string;
   image_url: string;
   line_total: number;

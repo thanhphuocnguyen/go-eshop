@@ -20,28 +20,35 @@ export async function middleware(request: NextRequest) {
   const refreshToken = request.cookies.get('refresh_token')?.value;
   const response = NextResponse.next();
   if (!accessToken && refreshToken) {
-    try {
-      const refreshResult = await fetch(PUBLIC_API_PATHS.REFRESH_TOKEN, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${request.cookies.get('refresh_token')?.value}`,
-        },
-      });
-      if (!refreshResult.ok) {
-        console.error(refreshResult.statusText);
-        return response;
-      }
-      const { data }: GenericResponse<RefreshTokenResponse> =
-        await refreshResult.json();
-      response.cookies.set('access_token', data.access_token, {
-        expires: new Date(data.access_token_expires_at),
-      });
-      revalidateTag('user');
-    } catch (error) {
+    const refreshResult = await fetch(PUBLIC_API_PATHS.REFRESH_TOKEN, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${refreshToken}`,
+      },
+    });
+    if (!refreshResult.ok) {
+      const response = NextResponse.redirect(
+        new URL('/login', request.nextUrl)
+      );
       response.cookies.delete('access_token');
       response.cookies.delete('refresh_token');
-      console.error(error);
+      response.cookies.delete('session_id');
+      return response;
     }
+
+    const { data, error }: GenericResponse<RefreshTokenResponse> =
+      await refreshResult.json();
+    if (error) {
+      request.cookies.delete('access_token');
+      request.cookies.delete('refresh_token');
+      request.cookies.delete('session_id');
+      return NextResponse.redirect(new URL('/login', request.nextUrl));
+    }
+
+    response.cookies.set('access_token', data.access_token, {
+      expires: new Date(data.access_token_expires_at),
+    });
+    revalidateTag('user');
   }
   if (path.startsWith(AdminPath) && accessToken) {
     const decode = jwtDecode<JwtModel>(accessToken || '');

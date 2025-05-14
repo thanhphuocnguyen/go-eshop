@@ -21,14 +21,16 @@ DELETE FROM product_ratings WHERE id = $1;
 SELECT * FROM product_ratings WHERE id = $1;
 
 -- name: GetProductRatings :many
-SELECT 
-    sqlc.embed(pr), 
-    u.id AS user_id, u.fullname, u.email
-FROM product_ratings AS pr
-JOIN users AS u ON u.id = pr.user_id
-WHERE pr.product_id = $1 AND pr.is_visible = TRUE
-ORDER BY pr.created_at DESC
-LIMIT $2 OFFSET $3;
+SELECT pr.*, ia.id AS image_id, img.url as image_url, ia.role as image_role FROM
+    (SELECT  r.*, u.fullname, u.email, p.name AS product_name
+    FROM product_ratings AS r
+    JOIN users AS u ON u.id = r.user_id
+    JOIN products AS p ON p.id = r.product_id
+    WHERE r.product_id = COALESCE(sqlc.narg('product_id'), r.product_id) AND r.is_visible = COALESCE(sqlc.narg('is_visible'), TRUE) AND r.is_approved = COALESCE(sqlc.narg('is_approved'), r.is_approved)
+    ORDER BY r.created_at DESC
+    LIMIT $1 OFFSET $2) as pr
+LEFT JOIN image_assignments AS ia ON ia.entity_id = pr.id AND ia.entity_type = 'product_rating'
+LEFT JOIN images AS img ON img.id = ia.image_id;
 
 -- name: GetProductRatingsCount :one
 SELECT COUNT(*) FROM product_ratings WHERE product_id = $1 AND is_visible = TRUE;
@@ -54,20 +56,25 @@ ORDER BY pr.created_at DESC;
 
 
 -- name: CountProductRatings :one
-SELECT COUNT(*) FROM product_ratings WHERE product_id = $1 AND is_visible = TRUE;
+SELECT COUNT(*) FROM product_ratings WHERE product_id = COALESCE(sqlc.narg('product_id'), product_id) AND is_visible = TRUE;
 
 
 -- name: InsertRatingVotes :one
 INSERT INTO rating_votes (rating_id, user_id, is_helpful) VALUES ($1, $2, $3) RETURNING *;
 
--- name: UpdateRatingVotes :one
+-- name: UpdateRatingVote :one
 UPDATE rating_votes SET 
     is_helpful = COALESCE(sqlc.narg(is_helpful), is_helpful)
 WHERE id = $1 RETURNING *;
 -- name: DeleteRatingVotes :exec
 DELETE FROM rating_votes WHERE id = $1;
+
+-- name: GetRatingVote :one
+SELECT * FROM rating_votes WHERE rating_id = $1 AND user_id = $2;
+
 -- name: GetRatingVotes :one
 SELECT * FROM rating_votes WHERE id = $1;
+
 -- name: GetRatingVotesByRatingID :many
 SELECT * FROM rating_votes WHERE rating_id = $1;
 -- name: GetRatingVotesByUserID :many

@@ -4,7 +4,7 @@ import {
   CurrencyDollarIcon,
   GlobeAsiaAustraliaIcon,
 } from '@heroicons/react/16/solid';
-import React, { cache } from 'react';
+import React, { cache, Suspense } from 'react';
 import {
   AttributesSection,
   ImagesSection,
@@ -19,7 +19,7 @@ type Props = {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
-export const getProduct = cache(async (slug: string) => {
+export const getCacheProduct = cache(async (slug: string) => {
   const { data, error } = await apiFetchServerSide<ProductDetailModel>(
     PUBLIC_API_PATHS.PRODUCT_DETAIL.replace(':id', slug),
     {
@@ -30,6 +30,7 @@ export const getProduct = cache(async (slug: string) => {
       },
     }
   );
+
   if (error) {
     throw new Error(error.details, {
       cause: error,
@@ -40,7 +41,7 @@ export const getProduct = cache(async (slug: string) => {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getProduct(slug);
+  const post = await getCacheProduct(slug);
   return {
     title: post.name,
     description: post.description,
@@ -49,37 +50,57 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 async function ProductDetailPage({ params }: Props) {
   const { slug } = await params;
-  const data = await getProduct(slug);
-
+  const productDetail = await getCacheProduct(slug);
+  const {
+    one_star_count,
+    two_star_count,
+    three_star_count,
+    four_star_count,
+    five_star_count,
+  } = productDetail;
+  const avg_rating =
+    (one_star_count * 1 +
+      two_star_count * 2 +
+      three_star_count * 3 +
+      four_star_count * 4 +
+      five_star_count * 5) /
+    (one_star_count +
+      two_star_count +
+      three_star_count +
+      four_star_count +
+      five_star_count);
   return (
     <div className='container mx-auto px-8 py-8'>
       <div className='lg:grid lg:grid-cols-3 lg:gap-x-8 lg:items-start'>
         {/* Image gallery */}
-        <ImagesSection images={data.product_images} />
+        <ImagesSection images={productDetail.product_images} />
 
         {/* Product info */}
         <div className='mt-10 px-4 sm:px-0 sm:mt-16 lg:mt-0'>
           <div className='flex items-center justify-between mb-6'>
             <h1 className='text-3xl font-semibold tracking-tight text-gray-900'>
-              {data.name}
+              {productDetail.name}
             </h1>
 
             <div className=''>
               <h2 className='sr-only'>Product information</h2>
-              <p className='text-2xl text-gray-900'>${data.price}</p>
+              <p className='text-2xl text-gray-900'>${productDetail.price}</p>
             </div>
           </div>
 
           <div>
             {/* Reviews */}
-            <ReviewSection rating={5} reviewsCount={30} />
+            <ReviewSection
+              rating={avg_rating}
+              reviewsCount={productDetail.rating_count}
+            />
           </div>
-          <AttributesSection variants={data.variants} />
+          <AttributesSection variants={productDetail.variants} />
           <div className='mt-6'>
             <h3 className='sr-only'>Description</h3>
             <div
               className='text-base text-gray-700 space-y-6 list-inside list-disc'
-              dangerouslySetInnerHTML={{ __html: data.description }} // Use only if description is trusted HTML
+              dangerouslySetInnerHTML={{ __html: productDetail.description }} // Use only if description is trusted HTML
               // Or just: <p className="text-base text-gray-700">{data.description}</p>
             />
           </div>
@@ -87,7 +108,7 @@ async function ProductDetailPage({ params }: Props) {
           <div
             className='mt-6 text-base text-gray-700 space-y-4'
             dangerouslySetInnerHTML={{
-              __html: data.description,
+              __html: productDetail.description,
             }}
           />
 
@@ -138,7 +159,11 @@ async function ProductDetailPage({ params }: Props) {
           </div>
         </div>
       </div>
-      <ReviewsList />
+      <Suspense
+        fallback={<div className='mt-20 text-center'>Loading reviews...</div>}
+      >
+        <ReviewsList productID={productDetail.id} />
+      </Suspense>
       <RelateProductSection />
     </div>
   );

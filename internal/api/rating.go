@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
@@ -22,10 +23,12 @@ type PostRatingFormData struct {
 	Content     string                  `form:"content" binding:"required"`
 	Files       []*multipart.FileHeader `form:"files" binding:"omitempty"`
 }
-
+type RatingsQueryParams struct {
+	PaginationQueryParams
+	Status *string `form:"status" binding:"omitempty,oneof=approved rejected pending"`
+}
 type PostHelpfulRatingRequest struct {
-	RatingID string `json:"rating_id" binding:"required"`
-	Helpful  bool   `json:"helpful" binding:"required"`
+	Helpful bool `json:"helpful"`
 }
 
 type PostReplyRatingRequest struct {
@@ -40,9 +43,13 @@ type RatingImageModel struct {
 
 type ProductRatingModel struct {
 	ID               uuid.UUID          `json:"id"`
+	Name             string             `json:"name"`
+	ProductName      string             `json:"product_name,omitempty"`
 	UserID           uuid.UUID          `json:"user_id"`
 	Rating           float64            `json:"rating"`
 	ReviewTitle      string             `json:"review_title"`
+	IsVisible        bool               `json:"is_visible"`
+	IsApproved       bool               `json:"is_approved"`
 	ReviewContent    string             `json:"review_content"`
 	VerifiedPurchase bool               `json:"verified_purchase"`
 	HelpfulVotes     int32              `json:"helpful_votes"`
@@ -51,6 +58,22 @@ type ProductRatingModel struct {
 }
 
 // ----- Rating Handlers -----
+// @Summary Post a rating
+// @Description Post a product rating
+// @Tags ratings
+// @Accept json
+// @Produce json
+// @Param order_item_id formData string true "Order Item ID"
+// @Param rating formData float64 true "Rating (1-5)"
+// @Param title formData string true "Review Title"
+// @Param content formData string true "Review Content"
+// @Param files formData file false "Images"
+// @Security BearerAuth
+// @Success 200 {object} ApiResponse[ProductRatingModel]
+// @Failure 400 {object} ApiResponse[bool]
+// @Failure 403 {object} ApiResponse[bool]
+// @Failure 500 {object} ApiResponse[bool]
+// @Router /ratings [post]
 func (s *Server) postRatingHandler(c *gin.Context) {
 	auth, _ := c.MustGet(authorizationPayload).(*auth.Payload)
 
@@ -59,6 +82,7 @@ func (s *Server) postRatingHandler(c *gin.Context) {
 		c.JSON(400, createErrorResponse[gin.H](InvalidBodyCode, "invalid request", err))
 		return
 	}
+
 	orderItem, err := s.repo.GetOrderItemByID(c, uuid.MustParse(req.OrderItemID))
 	if err != nil {
 		c.JSON(400, createErrorResponse[gin.H](InvalidBodyCode, "invalid request", err))
@@ -83,6 +107,7 @@ func (s *Server) postRatingHandler(c *gin.Context) {
 		c.JSON(500, createErrorResponse[bool](InternalServerErrorCode, "internal server error", err))
 		return
 	}
+
 	images := make([]RatingImageModel, 0)
 	if len(req.Files) > 0 {
 		var wg sync.WaitGroup
@@ -101,10 +126,10 @@ func (s *Server) postRatingHandler(c *gin.Context) {
 				uploadResults[i] = repository.InsertImageParams{
 					ExternalID: ID,
 					Url:        url,
-					AltText:    StringPtr(file.Filename),
-					Caption:    StringPtr(fmt.Sprintf("Image %d", i+1)),
-					MimeType:   StringPtr(file.Header.Get("Content-Type")),
-					FileSize:   Int64Ptr(file.Size),
+					AltText:    utils.StringPtr(file.Filename),
+					Caption:    utils.StringPtr(fmt.Sprintf("Image %d", i+1)),
+					MimeType:   utils.StringPtr(file.Header.Get("Content-Type")),
+					FileSize:   utils.Int64Ptr(file.Size),
 				}
 				assignments[i] = repository.InsertImageAssignmentParams{
 					EntityID:   rating.ID,
@@ -159,53 +184,76 @@ func (s *Server) postRatingHandler(c *gin.Context) {
 	c.JSON(200, createSuccessResponse(c, resp, "success", nil, nil))
 }
 
+// @Summary Post a helpful rating
+// @Description Post a helpful rating
+// @Tags ratings
+// @Accept json
+// @Produce json
+// @Param rating_id body string true "Rating ID"
+// @Param helpful body bool true "Helpful"
+// @Security BearerAuth
+// @Success 200 {object} ApiResponse[bool]
+// @Failure 400 {object} ApiResponse[bool]
+// @Failure 403 {object} ApiResponse[bool]
+// @Failure 500 {object} ApiResponse[bool]
+// @Router /ratings/{rating_id}/helpful [post]
 func (s *Server) postRatingHelpfulHandler(c *gin.Context) {
+	var param URIParam
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(400, createErrorResponse[gin.H](InvalidBodyCode, "invalid request", err))
+		return
+	}
 	auth, _ := c.MustGet(authorizationPayload).(*auth.Payload)
-
 	var req PostHelpfulRatingRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(400, createErrorResponse[bool](InvalidBodyCode, "invalid request", err))
 		return
 	}
-	rating, err := s.repo.GetProductRating(c, uuid.MustParse(req.RatingID))
+
+	rating, err := s.repo.GetProductRating(c, uuid.MustParse(param.ID))
 	if err != nil {
 		c.JSON(400, createErrorResponse[bool](InvalidBodyCode, "invalid request", err))
 		return
 	}
-	if rating.UserID != auth.UserID {
+	if rating.UserID == auth.UserID {
 		c.JSON(403, createErrorResponse[bool](InvalidBodyCode, "forbidden", nil))
 		return
 	}
 
-	// add rating helpful record
-	helpfulVote, err := s.repo.InsertRatingVotes(c, repository.InsertRatingVotesParams{
-		RatingID:  uuid.MustParse(req.RatingID),
-		UserID:    auth.UserID,
-		IsHelpful: req.Helpful,
+	id, err := s.repo.VoteHelpfulRatingTx(c, repository.VoteHelpfulRatingTxArgs{
+		UserID:         auth.UserID,
+		RatingID:       rating.ID,
+		Helpful:        req.Helpful,
+		HelpfulVotes:   rating.HelpfulVotes,
+		UnhelpfulVotes: rating.UnhelpfulVotes,
 	})
+
 	if err != nil {
 		c.JSON(500, createErrorResponse[bool](InternalServerErrorCode, "internal server error", err))
-		return
 	}
 
-	updateRatingParams := repository.UpdateProductRatingParams{
-		ID: uuid.MustParse(req.RatingID),
-	}
-	if req.Helpful {
-		updateRatingParams.HelpfulVotes = Int32Ptr(rating.HelpfulVotes + 1)
-	} else {
-		updateRatingParams.UnhelpfulVotes = Int32Ptr(rating.UnhelpfulVotes + 1)
-	}
-	_, err = s.repo.UpdateProductRating(c, updateRatingParams)
-	if err != nil {
-		c.JSON(500, createErrorResponse[bool](InternalServerErrorCode, "internal server error", err))
-		return
-	}
-
-	c.JSON(200, createSuccessResponse(c, helpfulVote.ID, "success", nil, nil))
+	c.JSON(200, createSuccessResponse(c, id, "success", nil, nil))
 }
 
+// @Summary Post a reply to a rating
+// @Description Post a reply to a product rating
+// @Tags ratings
+// @Accept json
+// @Produce json
+// @Param rating_id path string true "Rating ID"
+// @Param content body string true "Reply Content"
+// @Security BearerAuth
+// @Success 200 {object} ApiResponse[bool]
+// @Failure 400 {object} ApiResponse[bool]
+// @Failure 403 {object} ApiResponse[bool]
+// @Failure 500 {object} ApiResponse[bool]
+// @Router /ratings/{rating_id}/reply [post]
 func (s *Server) postReplyRatingHandler(c *gin.Context) {
+	var param URIParam
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(400, createErrorResponse[gin.H](InvalidBodyCode, "invalid request", err))
+		return
+	}
 	auth, _ := c.MustGet(authorizationPayload).(*auth.Payload)
 
 	var req PostReplyRatingRequest
@@ -213,7 +261,7 @@ func (s *Server) postReplyRatingHandler(c *gin.Context) {
 		c.JSON(400, createErrorResponse[bool](InvalidBodyCode, "invalid request", err))
 		return
 	}
-	rating, err := s.repo.GetProductRating(c, uuid.MustParse(req.RatingID))
+	rating, err := s.repo.GetProductRating(c, uuid.MustParse(param.ID))
 	if err != nil {
 		c.JSON(400, createErrorResponse[bool](InvalidBodyCode, "invalid request", err))
 		return
@@ -232,8 +280,124 @@ func (s *Server) postReplyRatingHandler(c *gin.Context) {
 	c.JSON(200, createSuccessResponse(c, reply.ID, "success", nil, nil))
 }
 
-func (s *Server) getProductRatingsHandler(c *gin.Context) {
-	var param ProductParam
+// @Summary Get product ratings
+// @Description Get ratings for a specific product
+// @Tags ratings
+// @Accept json
+// @Produce json
+// @Param product_id path string true "Product ID"
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Page size" default(10)
+// @Success 200 {object} ApiResponse[[]ProductRatingModel]
+// @Failure 400 {object} ApiResponse[bool]
+// @Failure 404 {object} ApiResponse[bool]
+// @Failure 500 {object} ApiResponse[bool]
+// @Router /admin/ratings [get]
+func (s *Server) getRatingsHandler(c *gin.Context) {
+	var queries RatingsQueryParams
+	if err := c.ShouldBindQuery(&queries); err != nil {
+		c.JSON(400, createErrorResponse[bool](InvalidBodyCode, "invalid request", err))
+		return
+	}
+	sqlParams := repository.GetProductRatingsParams{
+		Limit:  queries.PageSize,
+		Offset: (queries.Page - 1) * queries.PageSize,
+	}
+
+	if queries.Status != nil {
+		switch *queries.Status {
+		case "approved":
+			sqlParams.IsApproved = utils.BoolPtr(true)
+		case "rejected":
+			sqlParams.IsApproved = utils.BoolPtr(false)
+			sqlParams.IsVisible = utils.BoolPtr(false)
+		case "pending":
+			sqlParams.IsApproved = nil
+		default:
+		}
+	}
+	ratings, err := s.repo.GetProductRatings(c, sqlParams)
+	if err != nil {
+		c.JSON(400, createErrorResponse[bool](InvalidBodyCode, "invalid request", err))
+		return
+	}
+
+	ratingsCount, err := s.repo.CountProductRatings(c, pgtype.UUID{
+		Bytes: uuid.Nil,
+		Valid: false,
+	})
+
+	productRatings := make([]ProductRatingModel, 0)
+	for _, rating := range ratings {
+		ratingPoint, _ := rating.Rating.Float64Value()
+		prIdx := -1
+		for i, pr := range productRatings {
+			if pr.ID == rating.ID {
+				prIdx = i
+				break
+			}
+		}
+		if prIdx != -1 && rating.ImageID.Valid {
+			id, _ := uuid.FromBytes(rating.ImageID.Bytes[:])
+			productRatings[prIdx].Images = append(productRatings[prIdx].Images, RatingImageModel{
+				ID:  id.String(),
+				URL: *rating.ImageUrl,
+			})
+			continue
+		}
+		model := ProductRatingModel{
+			ID:               rating.ID,
+			UserID:           rating.UserID,
+			Name:             rating.Fullname,
+			ProductName:      rating.ProductName,
+			Rating:           ratingPoint.Float64,
+			IsVisible:        rating.IsVisible,
+			IsApproved:       rating.IsApproved,
+			ReviewTitle:      *rating.ReviewTitle,
+			ReviewContent:    *rating.ReviewContent,
+			VerifiedPurchase: rating.VerifiedPurchase,
+			HelpfulVotes:     rating.HelpfulVotes,
+			UnhelpfulVotes:   rating.UnhelpfulVotes,
+		}
+		if rating.ImageID.Valid {
+			id, _ := uuid.FromBytes(rating.ImageID.Bytes[:])
+			model.Images = append(model.Images, RatingImageModel{
+				ID:  id.String(),
+				URL: *rating.ImageUrl,
+			})
+		}
+		productRatings = append(productRatings, model)
+	}
+	c.JSON(200, createSuccessResponse(
+		c,
+		productRatings,
+		"success",
+		&Pagination{
+			Total:           ratingsCount,
+			Page:            queries.Page,
+			PageSize:        queries.PageSize,
+			TotalPages:      utils.CalculateTotalPages(ratingsCount, queries.PageSize),
+			HasNextPage:     queries.Page*queries.PageSize < ratingsCount,
+			HasPreviousPage: queries.Page > 1,
+		}, nil),
+	)
+}
+
+// @Summary Get product ratings
+// @Description Get ratings for a specific product
+// @Tags ratings
+// @Accept json
+// @Produce json
+// @Param product_id path string true "Product ID"
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Page size" default(10)
+// @Success 200 {object} ApiResponse[[]ProductRatingModel]
+// @Failure 400 {object} ApiResponse[bool]
+// @Failure 404 {object} ApiResponse[bool]
+// @Failure 500 {object} ApiResponse[bool]
+// @Router /ratings/products/{product_id} [get]
+func (s *Server) getRatingsByProductHandler(c *gin.Context) {
+	var param URIParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(400, createErrorResponse[bool](InvalidBodyCode, "invalid request", err))
 		return
@@ -245,7 +409,7 @@ func (s *Server) getProductRatingsHandler(c *gin.Context) {
 	}
 
 	ratings, err := s.repo.GetProductRatings(c, repository.GetProductRatingsParams{
-		ProductID: uuid.MustParse(param.ID),
+		ProductID: utils.GetPgTypeUUID(uuid.MustParse(param.ID)),
 		Limit:     queries.PageSize,
 		Offset:    (queries.Page - 1) * queries.PageSize,
 	})
@@ -254,21 +418,47 @@ func (s *Server) getProductRatingsHandler(c *gin.Context) {
 		return
 	}
 
-	ratingsCount, err := s.repo.CountProductRatings(c, uuid.MustParse(param.ID))
+	ratingsCount, err := s.repo.CountProductRatings(c, utils.GetPgTypeUUID(uuid.MustParse(param.ID)))
 
 	productRatings := make([]ProductRatingModel, 0)
 	for _, rating := range ratings {
-		ratingPoint, _ := rating.ProductRating.Rating.Float64Value()
-		productRatings = append(productRatings, ProductRatingModel{
-			ID:               rating.ProductRating.ID,
+		ratingPoint, _ := rating.Rating.Float64Value()
+		prIdx := -1
+		for i, pr := range productRatings {
+			if pr.ID == rating.ID {
+				prIdx = i
+				break
+			}
+		}
+		if prIdx != -1 && rating.ImageID.Valid {
+			id, _ := uuid.FromBytes(rating.ImageID.Bytes[:])
+			productRatings[prIdx].Images = append(productRatings[prIdx].Images, RatingImageModel{
+				ID:  id.String(),
+				URL: *rating.ImageUrl,
+			})
+			continue
+		}
+		model := ProductRatingModel{
+			ID:               rating.ID,
 			UserID:           rating.UserID,
+			Name:             rating.Fullname,
 			Rating:           ratingPoint.Float64,
-			ReviewTitle:      *rating.ProductRating.ReviewTitle,
-			ReviewContent:    *rating.ProductRating.ReviewContent,
-			VerifiedPurchase: rating.ProductRating.VerifiedPurchase,
-			HelpfulVotes:     rating.ProductRating.HelpfulVotes,
-			UnhelpfulVotes:   rating.ProductRating.UnhelpfulVotes,
-		})
+			ProductName:      rating.ProductName,
+			IsVisible:        rating.IsVisible,
+			ReviewTitle:      *rating.ReviewTitle,
+			ReviewContent:    *rating.ReviewContent,
+			VerifiedPurchase: rating.VerifiedPurchase,
+			HelpfulVotes:     rating.HelpfulVotes,
+			UnhelpfulVotes:   rating.UnhelpfulVotes,
+		}
+		if rating.ImageID.Valid {
+			id, _ := uuid.FromBytes(rating.ImageID.Bytes[:])
+			model.Images = append(model.Images, RatingImageModel{
+				ID:  id.String(),
+				URL: *rating.ImageUrl,
+			})
+		}
+		productRatings = append(productRatings, model)
 	}
 
 	c.JSON(200, createSuccessResponse(
@@ -279,13 +469,26 @@ func (s *Server) getProductRatingsHandler(c *gin.Context) {
 			Total:           ratingsCount,
 			Page:            queries.Page,
 			PageSize:        queries.PageSize,
-			TotalPages:      CalculateTotalPages(ratingsCount, queries.PageSize),
+			TotalPages:      utils.CalculateTotalPages(ratingsCount, queries.PageSize),
 			HasNextPage:     queries.Page*queries.PageSize < ratingsCount,
 			HasPreviousPage: queries.Page > 1,
 		}, nil),
 	)
 }
 
+// @Summary Get order ratings
+// @Description Get ratings for a specific order
+// @Tags ratings
+// @Accept json
+// @Produce json
+// @Param order_id path string true "Order ID"
+// @Security BearerAuth
+// @Success 200 {object} ApiResponse[[]ProductRatingModel]
+// @Failure 400 {object} ApiResponse[bool]
+// @Failure 403 {object} ApiResponse[bool]
+// @Failure 404 {object} ApiResponse[bool]
+// @Failure 500 {object} ApiResponse[bool]
+// @Router /ratings/orders/{order_id} [get]
 func (s *Server) getOrderRatingsHandler(c *gin.Context) {
 	auth, _ := c.MustGet(authorizationPayload).(*auth.Payload)
 

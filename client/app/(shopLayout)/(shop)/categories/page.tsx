@@ -1,28 +1,23 @@
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
-import { GeneralCategoryModel, GenericResponse } from '@/app/lib/definitions';
+import { GeneralCategoryModel } from '@/app/lib/definitions';
 import Link from 'next/link';
 import ProductCard from '@/components/Product/ProductCard';
 import { ArrowRightIcon } from '@heroicons/react/16/solid';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { apiFetchServerSide } from '@/app/lib/apis/apiServer';
 
 async function getCategories() {
-  try {
-    // Using apiFetch utility instead of native fetch
-    const result = await apiFetchClientSide<GenericResponse<GeneralCategoryModel[]>>(
-      `${PUBLIC_API_PATHS.CATEGORIES}?page=1&page_size=10`
-    );
-    
-    return result.data || [];
-  } catch (error) {
-    console.error('Failed to fetch categories:', error);
-    return [];
-  }
+  // Using apiFetch utility instead of native fetch
+  const result = await apiFetchServerSide<GeneralCategoryModel[]>(
+    `${PUBLIC_API_PATHS.CATEGORIES}?page=1&page_size=10`
+  );
+
+  return result.data || [];
 }
 
 export default async function CategoryPage() {
   // Server component with async data fetching
   const categories = await getCategories();
-  
+  console.log(categories);
   return (
     <div className='container mx-auto px-4 py-8'>
       <div className='mb-8'>
@@ -51,9 +46,7 @@ export default async function CategoryPage() {
                   </span>
                 </Link>
               </div>
-              <p className='text-gray-600 line-clamp-2'>
-                {item.description}
-              </p>
+              <p className='text-gray-600 line-clamp-2'>{item.description}</p>
             </div>
 
             <>
@@ -61,9 +54,12 @@ export default async function CategoryPage() {
                 <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6'>
                   {item.products.slice(0, 5).map((product) => (
                     <ProductCard
+                      slug={product.slug}
                       key={product.id}
                       ID={parseInt(product.id)}
                       name={product.name}
+                      priceFrom={product.min_price}
+                      priceTo={product.max_price}
                       image={product.image_url || ''}
                       rating={4.5}
                     />

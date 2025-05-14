@@ -354,6 +354,50 @@ func (q *Queries) GetProductByID(ctx context.Context, arg GetProductByIDParams) 
 	return i, err
 }
 
+const getProductBySlug = `-- name: GetProductBySlug :one
+SELECT
+    products.id, products.name, products.description, products.short_description, products.attributes, products.base_price, products.base_sku, products.slug, products.is_active, products.category_id, products.collection_id, products.brand_id, products.created_at, products.updated_at, products.avg_rating, products.rating_count, products.one_star_count, products.two_star_count, products.three_star_count, products.four_star_count, products.five_star_count
+FROM    
+    products
+WHERE
+    products.slug = $1 AND
+    is_active = COALESCE($2, TRUE)
+`
+
+type GetProductBySlugParams struct {
+	Slug     string `json:"slug"`
+	IsActive *bool  `json:"is_active"`
+}
+
+func (q *Queries) GetProductBySlug(ctx context.Context, arg GetProductBySlugParams) (Product, error) {
+	row := q.db.QueryRow(ctx, getProductBySlug, arg.Slug, arg.IsActive)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.ShortDescription,
+		&i.Attributes,
+		&i.BasePrice,
+		&i.BaseSku,
+		&i.Slug,
+		&i.IsActive,
+		&i.CategoryID,
+		&i.CollectionID,
+		&i.BrandID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.AvgRating,
+		&i.RatingCount,
+		&i.OneStarCount,
+		&i.TwoStarCount,
+		&i.ThreeStarCount,
+		&i.FourStarCount,
+		&i.FiveStarCount,
+	)
+	return i, err
+}
+
 const getProductDetail = `-- name: GetProductDetail :many
 SELECT
     p.id as product_id, p.name, p.description, p.base_price,
@@ -370,14 +414,15 @@ LEFT JOIN categories as c ON p.category_id = c.id
 LEFT JOIN brands AS b ON p.brand_id = b.id
 LEFT JOIN collections as cl ON p.collection_id = cl.id
 WHERE
-    p.id = $1 AND
-    p.is_active = COALESCE($2, TRUE)
+    (p.id = $1 OR p.slug = $2) AND
+    p.is_active = COALESCE($3, TRUE)
 ORDER BY
     p.id
 `
 
 type GetProductDetailParams struct {
 	ID       uuid.UUID `json:"id"`
+	Slug     string    `json:"slug"`
 	IsActive *bool     `json:"is_active"`
 }
 
@@ -408,7 +453,7 @@ type GetProductDetailRow struct {
 }
 
 func (q *Queries) GetProductDetail(ctx context.Context, arg GetProductDetailParams) ([]GetProductDetailRow, error) {
-	rows, err := q.db.Query(ctx, getProductDetail, arg.ID, arg.IsActive)
+	rows, err := q.db.Query(ctx, getProductDetail, arg.ID, arg.Slug, arg.IsActive)
 	if err != nil {
 		return nil, err
 	}

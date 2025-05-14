@@ -218,7 +218,8 @@ func (sv *Server) loginHandler(c *gin.Context) {
 		return
 	}
 
-	session, err := sv.repo.CreateSession(c, repository.CreateSessionParams{
+	session, err := sv.repo.InsertSession(c, repository.InsertSessionParams{
+		ID:           rfPayload.ID,
 		UserID:       user.ID,
 		RefreshToken: refreshToken,
 		UserAgent:    c.GetHeader("User-Agent"),

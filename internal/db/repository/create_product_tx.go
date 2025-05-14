@@ -101,7 +101,9 @@ func (s *pgRepo) CreateProductTx(ctx context.Context, arg CreateProductTxArgs) (
 			}
 
 			createVariantParams.Stock = *&variant.Stock
-			createVariantParams.Weight = utils.GetPgNumericFromFloat(*variant.Weight)
+			if variant.Weight != nil {
+				createVariantParams.Weight = utils.GetPgNumericFromFloat(*variant.Weight)
+			}
 			createVariantParams.Price = utils.GetPgNumericFromFloat(variant.Price)
 
 			created, err := q.CreateProductVariant(ctx, createVariantParams)
@@ -127,6 +129,7 @@ func (s *pgRepo) CreateProductTx(ctx context.Context, arg CreateProductTxArgs) (
 
 			}
 		}
+		productID = product.ID
 
 		return nil
 	})
