@@ -5,7 +5,7 @@ import { UserModel } from '../definitions';
 
 export const useUser = () => {
   const { data, isLoading, mutate } = useSWR(
-    PUBLIC_API_PATHS.USER,
+    PUBLIC_API_PATHS.GET_ME,
     (url) =>
       apiFetchClientSide<UserModel>(url, {
         method: 'GET',

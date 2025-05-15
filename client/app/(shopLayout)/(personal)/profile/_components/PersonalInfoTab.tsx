@@ -63,7 +63,7 @@ export default function PersonalInfoTab() {
   const onProfileSubmit = async (data: ProfileFormValues) => {
     try {
       const response = await apiFetchClientSide<UserModel>(
-        PUBLIC_API_PATHS.USER,
+        PUBLIC_API_PATHS.GET_ME,
         {
           method: 'PATCH',
           body: {
@@ -95,7 +95,7 @@ export default function PersonalInfoTab() {
     setIsSendingVerification(true);
     try {
       const response = await apiFetchClientSide<GenericResponse<null>>(
-        PUBLIC_API_PATHS.USER + '/send-verify-email',
+        PUBLIC_API_PATHS.GET_ME + '/send-verify-email',
         {
           method: 'POST',
         }

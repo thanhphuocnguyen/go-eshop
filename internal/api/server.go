@@ -229,12 +229,11 @@ func (sv *Server) setupAuthRoutes(rg *gin.RouterGroup) {
 
 // Setup user-related routes
 func (sv *Server) setupUserRoutes(rg *gin.RouterGroup) {
-	user := rg.Group("/user", authMiddleware(sv.tokenGenerator))
+	user := rg.Group("user", authMiddleware(sv.tokenGenerator))
 	{
-		user.GET("", sv.getUserHandler)
-		user.PATCH("", sv.updateUserHandler)
+		user.GET("me", sv.getUserHandler)
+		user.PATCH("me", sv.updateUserHandler)
 		user.POST("send-verify-email", sv.sendVerifyEmailHandler)
-
 		userAddress := user.Group("addresses")
 		{
 			userAddress.POST("", sv.createAddressHandler)
@@ -260,7 +259,10 @@ func (sv *Server) setupProductRoutes(rg *gin.RouterGroup) {
 func (sv *Server) setupImageRoutes(rg *gin.RouterGroup) {
 	images := rg.Group("images", authMiddleware(sv.tokenGenerator))
 	{
-		images.DELETE("remove-external/:public_id", sv.removeImageByPublicIDHandler)
+		images.DELETE(
+			"remove-external/:public_id",
+			roleMiddleware(sv.repo, repository.UserRoleAdmin),
+			sv.removeImageByPublicIDHandler)
 		images.GET("", sv.getProductImagesHandler)
 	}
 }
@@ -315,6 +317,7 @@ func (sv *Server) setupCollectionRoutes(rg *gin.RouterGroup) {
 	collections := rg.Group("collections")
 	{
 		collections.GET("", sv.getShopCollectionsHandler)
+		collections.GET(":slug", sv.getShopCollectionBySlugHandler)
 	}
 }
 
@@ -323,6 +326,7 @@ func (sv *Server) setupBrandRoutes(rg *gin.RouterGroup) {
 	brands := rg.Group("brands")
 	{
 		brands.GET("", sv.getShopBrandsHandler)
+		brands.GET(":slug", sv.getShopBrandBySlugHandler)
 	}
 }
 
@@ -353,8 +357,8 @@ func (s *Server) Server(addr string) *http.Server {
 }
 
 type DashboardData struct {
-	Categories  []CategoryResponse   `json:"categories"`
-	Collections []CollectionResponse `json:"collections"`
+	Categories  []CategoryResponse `json:"categories"`
+	Collections []CategoryResponse `json:"collections"`
 }
 
 func (s *Server) getHomePageHandler(ctx *gin.Context) {
@@ -363,7 +367,7 @@ func (s *Server) getHomePageHandler(ctx *gin.Context) {
 
 	// Use channels to collect results
 	categoriesChan := make(chan []CategoryResponse, 1)
-	collectionsChan := make(chan []CollectionResponse, 1)
+	collectionsChan := make(chan []CategoryResponse, 1)
 
 	// Fetch categories
 	go func() {
@@ -401,13 +405,13 @@ func (s *Server) getHomePageHandler(ctx *gin.Context) {
 		})
 
 		if err != nil {
-			collectionsChan <- []CollectionResponse{}
+			collectionsChan <- []CategoryResponse{}
 			return
 		}
 
-		collectionModel := make([]CollectionResponse, len(collectionRows))
+		collectionModel := make([]CategoryResponse, len(collectionRows))
 		for i, collection := range collectionRows {
-			collectionModel[i] = CollectionResponse{
+			collectionModel[i] = CategoryResponse{
 				ID:          collection.ID.String(),
 				Name:        collection.Name,
 				Description: collection.Description,

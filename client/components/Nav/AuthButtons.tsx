@@ -19,7 +19,7 @@ const AuthButtons: React.FC = ({}) => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('session_id');
-    await mutateUser();
+    mutateUser(undefined, { revalidate: false });
     router.refresh();
     redirect('/login');
   };

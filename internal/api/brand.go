@@ -23,14 +23,6 @@ type BrandProductRequest struct {
 	SortOrder int16 `json:"sort_order,omitempty"`
 }
 
-type BrandResponse struct {
-	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	Description *string   `json:"description,omitempty"`
-	Slug        string    `json:"slug"`
-	ImageUrl    *string   `json:"image_url,omitempty"`
-}
-
 // ------------------------------------------ API Handlers ------------------------------------------
 
 // --- Public API ---
@@ -43,7 +35,7 @@ type BrandResponse struct {
 // @Produce json
 // @Param page query int false "Page number"
 // @Param page_size query int false "Page size"
-// @Success 200 {object} ApiResponse[BrandResponse]
+// @Success 200 {object} ApiResponse[CategoryResponse]
 // @Failure 400 {object} ApiResponse[gin.H]
 // @Failure 500 {object} ApiResponse[gin.H]
 // @Router /shop/brands [get]
@@ -60,8 +52,8 @@ func (sv *Server) getShopBrandsHandler(c *gin.Context) {
 	dbQueries.Limit = queries.PageSize
 	dbQueries.Offset = (queries.Page - 1) * queries.PageSize
 	var cached *struct {
-		Data       []BrandResponse `json:"data"`
-		Pagination *Pagination     `json:"pagination"`
+		Data       []CategoryResponse `json:"data"`
+		Pagination *Pagination        `json:"pagination"`
 	}
 
 	if err := sv.cacheService.Get(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), &cached); err == nil {
@@ -85,11 +77,11 @@ func (sv *Server) getShopBrandsHandler(c *gin.Context) {
 		return
 	}
 
-	data := make([]BrandResponse, len(rows))
+	data := make([]CategoryResponse, len(rows))
 
 	for i, row := range rows {
-		data[i] = BrandResponse{
-			ID:          row.ID,
+		data[i] = CategoryResponse{
+			ID:          row.ID.String(),
 			Name:        row.Name,
 			Description: row.Description,
 			Slug:        row.Slug,
@@ -97,8 +89,126 @@ func (sv *Server) getShopBrandsHandler(c *gin.Context) {
 		}
 	}
 	cached = &struct {
-		Data       []BrandResponse `json:"data"`
-		Pagination *Pagination     `json:"pagination"`
+		Data       []CategoryResponse `json:"data"`
+		Pagination *Pagination        `json:"pagination"`
+	}{
+		Data: data,
+		Pagination: &Pagination{
+			Page:            queries.Page,
+			Total:           cnt,
+			PageSize:        queries.PageSize,
+			TotalPages:      cnt / int64(queries.PageSize),
+			HasNextPage:     cnt > int64((queries.Page-1)*queries.PageSize+queries.PageSize),
+			HasPreviousPage: queries.Page > 1,
+		},
+	}
+
+	resp := createSuccessResponse(c, cached.Data, "", cached.Pagination, nil)
+	if err = sv.cacheService.Set(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), resp, nil); err != nil {
+		log.Error().Err(err).Msg("error when set brands to cache")
+	}
+	c.JSON(http.StatusOK, resp)
+}
+
+// getShopBrandBySlugHandler retrieves a list of brands for the shop.
+// @Summary Get a list of brands for the shop
+// @Description Get a list of brands for the shop
+// @ID get-shop-brand-by-slug
+// @Accept json
+// @Tags Brands
+// @Produce json
+// @Param slug path string true "Brand slug"
+// @Success 200 {object} ApiResponse[CategoryResponse]
+// @Failure 400 {object} ApiResponse[gin.H]
+// @Failure 500 {object} ApiResponse[gin.H]
+// @Router /shop/brands/{slug} [get]
+func (sv *Server) getShopBrandBySlugHandler(c *gin.Context) {
+	var param SlugParam
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
+		return
+	}
+	var query PaginationQueryParams
+	if err := c.ShouldBindQuery(&query); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
+		return
+	}
+
+	category, err := sv.repo.GetBrandBySlug(c, param.Slug)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, createErrorResponse[CategoryResponse](NotFoundCode, "", fmt.Errorf("category with slug %s not found", param.Slug)))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
+		return
+	}
+
+	c.JSON(http.StatusOK, createSuccessResponse(
+		c,
+		CategoryResponse{
+			ID:          category.ID.String(),
+			Name:        category.Name,
+			Description: category.Description,
+			Slug:        category.Slug,
+			ImageUrl:    category.ImageUrl,
+			CreatedAt:   category.CreatedAt.String(),
+		},
+		"",
+		nil,
+		nil,
+	))
+	var queries BrandsQueries
+	if err := c.ShouldBindQuery(&queries); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse[gin.H](InvalidBodyCode, "", err))
+		return
+	}
+	var dbQueries repository.GetBrandsParams = repository.GetBrandsParams{
+		Limit:  20,
+		Offset: 0,
+	}
+	dbQueries.Limit = queries.PageSize
+	dbQueries.Offset = (queries.Page - 1) * queries.PageSize
+	var cached *struct {
+		Data       []CategoryResponse `json:"data"`
+		Pagination *Pagination        `json:"pagination"`
+	}
+
+	if err := sv.cacheService.Get(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), &cached); err == nil {
+		if cached != nil {
+			resp := createSuccessResponse(c, cached.Data, "Cached", cached.Pagination, nil)
+			c.JSON(http.StatusOK, resp)
+			return
+		}
+	}
+
+	rows, err := sv.repo.GetBrands(c, dbQueries)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
+		return
+	}
+
+	cnt, err := sv.repo.CountBrands(c)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
+		return
+	}
+
+	data := make([]CategoryResponse, len(rows))
+
+	for i, row := range rows {
+		data[i] = CategoryResponse{
+			ID:          row.ID.String(),
+			Name:        row.Name,
+			Description: row.Description,
+			Slug:        row.Slug,
+			ImageUrl:    row.ImageUrl,
+		}
+	}
+	cached = &struct {
+		Data       []CategoryResponse `json:"data"`
+		Pagination *Pagination        `json:"pagination"`
 	}{
 		Data: data,
 		Pagination: &Pagination{
@@ -127,7 +237,7 @@ func (sv *Server) getShopBrandsHandler(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param request body CreateCategoryRequest true "Brand request"
-// @Success 201 {object} ApiResponse[BrandResponse]
+// @Success 201 {object} ApiResponse[CategoryResponse]
 // @Failure 400 {object} ApiResponse[gin.H]
 // @Failure 500 {object} ApiResponse[gin.H]
 // @Router /brands [post]
@@ -175,7 +285,7 @@ func (sv *Server) createBrandHandler(c *gin.Context) {
 // @Param page_size query int false "Page size"
 // @Success 200 {object} ApiResponse[gin.H]
 // @Failure 400 {object} ApiResponse[gin.H]
-// @Failure 500 {object} ApiResponse[BrandResponse]
+// @Failure 500 {object} ApiResponse[CategoryResponse]
 // @Router /brands [get]
 func (sv *Server) getBrandsHandler(c *gin.Context) {
 	var queries BrandsQueries
@@ -191,8 +301,8 @@ func (sv *Server) getBrandsHandler(c *gin.Context) {
 	dbQueries.Offset = (queries.Page - 1) * queries.PageSize
 
 	var cached *struct {
-		Data       []BrandResponse `json:"data"`
-		Pagination *Pagination     `json:"pagination"`
+		Data       []CategoryResponse `json:"data"`
+		Pagination *Pagination        `json:"pagination"`
 	}
 	if err := sv.cacheService.Get(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), &cached); err == nil {
 		if cached != nil {
@@ -215,11 +325,11 @@ func (sv *Server) getBrandsHandler(c *gin.Context) {
 		return
 	}
 
-	data := make([]BrandResponse, 0, len(rows))
+	data := make([]CategoryResponse, 0, len(rows))
 
 	for _, row := range rows {
-		data = append(data, BrandResponse{
-			ID:          row.ID,
+		data = append(data, CategoryResponse{
+			ID:          row.ID.String(),
 			Name:        row.Name,
 			Description: row.Description,
 			Slug:        row.Slug,
@@ -237,8 +347,8 @@ func (sv *Server) getBrandsHandler(c *gin.Context) {
 	}
 
 	cached = &struct {
-		Data       []BrandResponse "json:\"data\""
-		Pagination *Pagination     "json:\"pagination\""
+		Data       []CategoryResponse "json:\"data\""
+		Pagination *Pagination        "json:\"pagination\""
 	}{
 		Data:       data,
 		Pagination: pagination,
@@ -327,9 +437,9 @@ func (sv *Server) getBrandByIDHandler(c *gin.Context) {
 // @Tags Admin
 // @Param id path int true "Brand ID"
 // @Param request body UpdateCategoryRequest true "Brand request"
-// @Success 200 {object} ApiResponse[BrandResponse]
-// @Failure 400 {object} ApiResponse[BrandResponse]
-// @Failure 500 {object} ApiResponse[BrandResponse]
+// @Success 200 {object} ApiResponse[CategoryResponse]
+// @Failure 400 {object} ApiResponse[CategoryResponse]
+// @Failure 500 {object} ApiResponse[CategoryResponse]
 // @Router /brands/{id} [put]
 func (sv *Server) updateBrandHandler(c *gin.Context) {
 	var param URIParam

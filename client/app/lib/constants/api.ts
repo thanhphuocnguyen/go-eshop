@@ -11,7 +11,7 @@ const _apiPaths = {
   PRODUCT_DETAIL: 'products/:id',
   PRODUCT_RATING: 'products/:id/ratings',
   LOGOUT: 'auth/logout',
-  USER: 'user',
+  GET_ME: 'user/me',
   USER_ADDRESSES: 'user/addresses',
   USER_ADDRESS: 'user/addresses/:id',
   USER_ADDRESS_DEFAULT: 'user/addresses/:id/default',

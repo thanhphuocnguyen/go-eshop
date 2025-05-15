@@ -72,21 +72,6 @@ definitions:
       success:
         type: boolean
     type: object
-  api.ApiResponse-api_BrandResponse:
-    properties:
-      data:
-        $ref: '#/definitions/api.BrandResponse'
-      error:
-        $ref: '#/definitions/api.ApiError'
-      message:
-        type: string
-      meta:
-        $ref: '#/definitions/api.MetaInfo'
-      pagination:
-        $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
-    type: object
   api.ApiResponse-api_CartDetailResponse:
     properties:
       data:
@@ -106,21 +91,6 @@ definitions:
     properties:
       data:
         $ref: '#/definitions/api.CategoryResponse'
-      error:
-        $ref: '#/definitions/api.ApiError'
-      message:
-        type: string
-      meta:
-        $ref: '#/definitions/api.MetaInfo'
-      pagination:
-        $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
-    type: object
-  api.ApiResponse-api_CollectionResponse:
-    properties:
-      data:
-        $ref: '#/definitions/api.CollectionResponse'
       error:
         $ref: '#/definitions/api.ApiError'
       message:
@@ -471,19 +441,6 @@ definitions:
     required:
     - code
     type: object
-  api.BrandResponse:
-    properties:
-      description:
-        type: string
-      id:
-        type: string
-      image_url:
-        type: string
-      name:
-        type: string
-      slug:
-        type: string
-    type: object
   api.CartDetailResponse:
     properties:
       cart_items:
@@ -589,25 +546,6 @@ definitions:
         type: string
     required:
     - payment_method
-    type: object
-  api.CollectionResponse:
-    properties:
-      created_at:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      image_url:
-        type: string
-      name:
-        type: string
-      published:
-        type: boolean
-      remarkable:
-        type: boolean
-      slug:
-        type: string
     type: object
   api.CreateAddressReq:
     properties:
@@ -761,7 +699,7 @@ definitions:
         type: string
       quantity:
         type: integer
-      ratings:
+      rating:
         $ref: '#/definitions/api.Rating'
       variant_id:
         type: string
@@ -881,7 +819,13 @@ definitions:
         items:
           $ref: '#/definitions/api.RatingImageModel'
         type: array
+      is_approved:
+        type: boolean
+      is_visible:
+        type: boolean
       name:
+        type: string
+      product_name:
         type: string
       rating:
         type: number
@@ -1619,7 +1563,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
         "400":
           description: Bad Request
           schema:
@@ -1649,7 +1593,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
         "400":
           description: Bad Request
           schema:
@@ -1747,7 +1691,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
         "400":
           description: Bad Request
           schema:
@@ -2153,7 +2097,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
       summary: Get a list of brands
       tags:
       - Admin
@@ -2175,7 +2119,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
         "400":
           description: Bad Request
           schema:
@@ -2269,15 +2213,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
       summary: Update a Brand
       tags:
       - Admin
@@ -2576,11 +2520,7 @@ paths:
         in: path
         name: slug
         required: true
-        type: integer
-      - description: Page number
-        in: query
-        name: page
-        type: integer
+        type: string
       - description: Page size
         in: query
         name: page_size
@@ -3475,7 +3415,37 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_BrandResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+      summary: Get a list of brands for the shop
+      tags:
+      - Brands
+  /shop/brands/{slug}:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of brands for the shop
+      operationId: get-shop-brand-by-slug
+      parameters:
+      - description: Brand slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
         "400":
           description: Bad Request
           schema:
@@ -3508,7 +3478,37 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CollectionResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get a list of Collections
+      tags:
+      - Collections
+  /shop/collections/{slug}:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of Collections
+      operationId: get-Shop-Collection-by-slug
+      parameters:
+      - description: Collection slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
         "400":
           description: Bad Request
           schema:

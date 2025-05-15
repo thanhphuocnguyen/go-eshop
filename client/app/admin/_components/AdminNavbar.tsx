@@ -14,13 +14,14 @@ import { useUser } from '@/app/lib/hooks/useUser';
 import { logoutAction } from '@/app/actions/auth';
 
 export default function AdminNavbar() {
-  const { user } = useUser();
+  const { user, mutateUser } = useUser();
   const router = useRouter();
   const logout = async () => {
     await logoutAction();
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('session_id');
+    mutateUser(undefined, { revalidate: false });
     router.refresh();
     redirect('/login');
   };

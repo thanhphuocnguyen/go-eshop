@@ -64,7 +64,7 @@ type CategoryResponse struct {
 	Products    []CategoryLinkedProduct `json:"products"`
 }
 
-type CategorySlugParam struct {
+type SlugParam struct {
 	Slug string `uri:"slug" binding:"required"`
 }
 
@@ -192,15 +192,14 @@ func (sv *Server) getCategoriesHandler(c *gin.Context) {
 // @Accept json
 // @Tags Categories
 // @Produce json
-// @Param slug path int true "Category Slug"
-// @Param page query int false "Page number"
+// @Param slug path string true "Category Slug"
 // @Param page_size query int false "Page size"
 // @Success 200 {object} ApiResponse[CategoryResponse]
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /categories/slug/{slug} [get]
 func (sv *Server) getCategoryBySlugHandler(c *gin.Context) {
-	var param CategorySlugParam
+	var param SlugParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
 		return
