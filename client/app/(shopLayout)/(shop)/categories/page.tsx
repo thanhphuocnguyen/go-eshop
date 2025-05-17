@@ -1,85 +1,157 @@
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { GeneralCategoryModel } from '@/app/lib/definitions';
 import Link from 'next/link';
-import ProductCard from '@/components/Product/ProductCard';
-import { ArrowRightIcon } from '@heroicons/react/16/solid';
+import Image from 'next/image';
 import { apiFetchServerSide } from '@/app/lib/apis/apiServer';
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
-async function getCategories() {
-  // Using apiFetch utility instead of native fetch
+// Define the search params type
+type SearchParams = {
+  page?: string;
+};
+
+async function getCategories(page = 1, pageSize = 9) {
+  // Using apiFetch utility with pagination
   const result = await apiFetchServerSide<GeneralCategoryModel[]>(
-    `${PUBLIC_API_PATHS.CATEGORIES}?page=1&page_size=10`
+    `${PUBLIC_API_PATHS.CATEGORIES}?page=${page}&page_size=${pageSize}`
   );
 
-  return result.data || [];
+  return {
+    data: result.data || [],
+    pagination: result.pagination || { total: 0, page, page_size: pageSize },
+  };
 }
 
-export default async function CategoryPage() {
+export default async function CategoryPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const currentPage = searchParams.page ? Number(searchParams.page) : 1;
+  const pageSize = 9; // 3x3 grid
+
   // Server component with async data fetching
-  const categories = await getCategories();
-  console.log(categories);
+  const { data: categories, pagination } = await getCategories(
+    currentPage,
+    pageSize
+  );
+
+  // Calculate total pages
+  const totalPages = Math.ceil(pagination.total / pageSize);
+
   return (
     <div className='container mx-auto px-4 py-8'>
-      <div className='mb-8'>
+      <div className='mb-8 text-center'>
         <h1 className='text-3xl font-bold'>Categories</h1>
-        <p className='text-gray-500 mt-2'>Explore our product categories</p>
+        <p className='text-gray-500 mt-2'>Explore our product collections</p>
       </div>
 
-      <div className='space-y-12'>
-        {categories.map((item) => (
-          <div
-            key={item.id}
-            className='pb-8 border-b border-gray-200 last:border-0'
+      {/* Categories Grid */}
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+        {categories.map((category) => (
+          <Link
+            href={`/categories/${category.slug}`}
+            key={category.id}
+            className='group'
           >
-            <div className='mb-4'>
-              <div className='flex items-baseline mb-2 justify-between gap-2'>
-                <h2 className='text-2xl font-bold text-gray-800'>
-                  {item.name}
-                </h2>
-                <Link
-                  href={`/categories/${item.slug}`}
-                  className='text-indigo-600 flex items-center text-base font-medium hover:underline'
-                >
-                  View all
-                  <span>
-                    <ArrowRightIcon className='size-6' />
-                  </span>
-                </Link>
+            <div className='bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 h-full flex flex-col'>
+              <div className='relative h-96 w-full bg-gray-100'>
+                {category.image_url ? (
+                  <Image
+                    src={category.image_url}
+                    alt={category.name}
+                    fill
+                    sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
+                    className='object-cover group-hover:scale-105 transition-transform duration-300'
+                  />
+                ) : (
+                  <div className='w-full h-full flex items-center justify-center bg-gray-200'>
+                    <span className='text-gray-400'>No image</span>
+                  </div>
+                )}
               </div>
-              <p className='text-gray-600 line-clamp-2'>{item.description}</p>
-            </div>
-
-            <>
-              {item.products && item.products.length > 0 ? (
-                <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6'>
-                  {item.products.slice(0, 5).map((product) => (
-                    <ProductCard
-                      slug={product.slug}
-                      key={product.id}
-                      ID={parseInt(product.id)}
-                      name={product.name}
-                      priceFrom={product.min_price}
-                      priceTo={product.max_price}
-                      image={product.image_url || ''}
-                      rating={4.5}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <p className='text-gray-500 italic'>
-                  No products available in this category.
+              <div className='p-6 flex flex-col flex-grow'>
+                <h2 className='text-xl font-bold text-gray-800 mb-3 group-hover:text-indigo-600 transition-colors'>
+                  {category.name}
+                </h2>
+                <p className='text-gray-600 text-sm line-clamp-3 flex-grow'>
+                  {category.description || 'No description available'}
                 </p>
-              )}
-            </>
-          </div>
+                <div className='mt-4 text-indigo-600 text-sm font-medium flex items-center opacity-0 group-hover:opacity-100 transition-opacity'>
+                  <span>Browse products</span>
+                  <svg
+                    className='w-4 h-4 ml-1'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
+                    xmlns='http://www.w3.org/2000/svg'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M14 5l7 7m0 0l-7 7m7-7H3'
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </Link>
         ))}
-
-        {categories.length === 0 && (
-          <div className='text-center py-12'>
-            <p className='text-xl text-gray-600'>No categories found.</p>
-          </div>
-        )}
       </div>
+
+      {categories.length === 0 && (
+        <div className='text-center py-12'>
+          <p className='text-xl text-gray-600'>No categories found.</p>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className='flex items-center justify-center space-x-2 mt-12'>
+          <Link
+            href={`/categories?page=${Math.max(1, currentPage - 1)}`}
+            className={`flex items-center px-3 py-2 rounded-md ${
+              currentPage === 1
+                ? 'text-gray-400 cursor-not-allowed'
+                : 'text-gray-700 hover:bg-gray-100'
+            }`}
+            aria-disabled={currentPage === 1}
+          >
+            <ChevronLeftIcon className='h-5 w-5 mr-1' />
+            Previous
+          </Link>
+
+          <div className='flex items-center space-x-1'>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <Link
+                key={page}
+                href={`/categories?page=${page}`}
+                className={`px-3 py-2 rounded-md ${
+                  currentPage === page
+                    ? 'bg-indigo-600 text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                {page}
+              </Link>
+            ))}
+          </div>
+
+          <Link
+            href={`/categories?page=${Math.min(totalPages, currentPage + 1)}`}
+            className={`flex items-center px-3 py-2 rounded-md ${
+              currentPage === totalPages
+                ? 'text-gray-400 cursor-not-allowed'
+                : 'text-gray-700 hover:bg-gray-100'
+            }`}
+            aria-disabled={currentPage === totalPages}
+          >
+            Next
+            <ChevronRightIcon className='h-5 w-5 ml-1' />
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

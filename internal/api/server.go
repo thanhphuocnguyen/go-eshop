@@ -119,9 +119,9 @@ func (sv *Server) initializeRouter() {
 
 // Setup environment mode based on configuration
 func (sv *Server) setupEnvironmentMode(router *gin.Engine) {
+	router.Use(gin.Recovery())
 	if sv.config.Env == "production" {
 		gin.SetMode(gin.ReleaseMode)
-		router.Use(gin.Recovery())
 	}
 	if sv.config.Env == "development" {
 		router.Use(gin.Logger())
@@ -309,6 +309,7 @@ func (sv *Server) setupCategoryRoutes(rg *gin.RouterGroup) {
 	{
 		category.GET("", sv.getCategoriesHandler)
 		category.GET(":slug", sv.getCategoryBySlugHandler)
+		category.GET(":slug/products", sv.getCategoryBySlugHandler)
 	}
 }
 
@@ -316,8 +317,9 @@ func (sv *Server) setupCategoryRoutes(rg *gin.RouterGroup) {
 func (sv *Server) setupCollectionRoutes(rg *gin.RouterGroup) {
 	collections := rg.Group("collections")
 	{
-		collections.GET("", sv.getShopCollectionsHandler)
-		collections.GET(":slug", sv.getShopCollectionBySlugHandler)
+		collections.GET("", sv.getCollectionsHandler)
+		collections.GET(":slug", sv.getCollectionHandler)
+		collections.GET(":slug/products", sv.getCollectionProductsHandler)
 	}
 }
 

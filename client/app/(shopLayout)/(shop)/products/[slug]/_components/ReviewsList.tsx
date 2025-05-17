@@ -39,16 +39,16 @@ export async function ReviewsList({ productID }: { productID: string }) {
   }
 
   return (
-    <div className='mt-20'>
+    <div className='mt-16'>
       <h3 className='text-2xl font-semibold text-gray-600'>
-        Reviews ({ratings.length})
+        Customer Reviews ({ratings.length})
       </h3>
-      <hr className='my-8' />
-      <ul className='flex flex-col gap-y-8 items-start'>
+      <hr className='my-4' />
+      <ul className='flex flex-col gap-y-6 items-start'>
         {ratings.map((rating) => (
           <li
             key={rating.id}
-            className='py-6 grid grid-cols-1 md:grid-cols-4 gap-x-6 border-b border-gray-100 items-start'
+            className='py-4 grid grid-cols-1 md:grid-cols-4 gap-x-3 border-b border-gray-100 items-start'
           >
             <div className='md:col-span-1 mt-2'>
               <div className='font-medium text-gray-800 flex items-center gap-x-2'>
@@ -64,17 +64,16 @@ export async function ReviewsList({ productID }: { productID: string }) {
               </div>
             </div>
 
-            <div className='mt-3 flex items-start gap-x-2 md:col-span-1'>
+            <div className='mt-3 flex items-start gap-x-1 md:col-span-1'>
               {Array.from({ length: 5 }, (_, i) => (
                 <div key={i}>
                   {i < rating.rating ? (
-                    <StarIcon className='size-5 text-yellow-400' />
+                    <StarIcon className='size-5 text-yellow-700' />
                   ) : (
                     <StarOutlineIcon className='size-5 text-gray-300' />
                   )}
                 </div>
               ))}
-              <span className='text-sm font-medium'>{rating.rating}</span>
             </div>
 
             <div className='md:col-span-2 mt-4 md:mt-0 flex flex-col items-start'>

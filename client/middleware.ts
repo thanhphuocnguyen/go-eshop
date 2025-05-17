@@ -3,7 +3,6 @@ import { RefreshTokenResponse } from '@/app/lib/definitions/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { GenericResponse } from './app/lib/definitions';
 import { jwtDecode, JwtPayload } from 'jwt-decode';
-import { revalidateTag } from 'next/cache';
 
 export type JwtModel = {
   role: string;
@@ -48,7 +47,7 @@ export async function middleware(request: NextRequest) {
     response.cookies.set('access_token', data.access_token, {
       expires: new Date(data.access_token_expires_at),
     });
-    revalidateTag('user');
+    return response;
   }
   if (path.startsWith(AdminPath) && accessToken) {
     const decode = jwtDecode<JwtModel>(accessToken || '');

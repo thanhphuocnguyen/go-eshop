@@ -57,22 +57,27 @@ export default async function Home() {
 
   return (
     <div className='block relative mb-10'>
-      <section className='new-arrival-ads'>
-        <div className='overlay'></div>
-        <div className='relative w-[600] mx-auto flex flex-col justify-center items-center'>
-          <h2 className='text-white relative text-5xl font-bold text-center'>
-            New Arrivals Are Here
-          </h2>
-          <p className='relative pb-10 pt-4 z-1 text-white text-xl text-center'>
+      <section className='new-arrival-ads relative overflow-hidden min-h-[700px] flex items-center justify-center'>
+        <div className='absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/60'></div>
+        <div className='relative w-full max-w-4xl mx-auto flex flex-col justify-center items-center z-10 px-4'>
+          <div className='overflow-hidden mb-4'>
+            <span className='block text-amber-300 text-xl font-medium uppercase tracking-wider mb-3 animate-fadeIn'>Just Launched</span>
+            <h2 className='text-white text-6xl md:text-7xl font-bold text-center leading-tight'>
+              New Arrivals <span className='text-blue-400'>Are Here</span>
+            </h2>
+          </div>
+          <div className='h-1 w-24 bg-white my-8'></div>
+          <p className='relative pb-10 pt-4 z-1 text-white text-xl md:text-2xl text-center max-w-2xl opacity-90'>
             The new arrivals have, well, newly arrived. Check out the latest
             options from our summer small-batch release while they&apos;re still
             in stock.
           </p>
           <Link
-            href={'/categories/new-arrivals'}
-            className='relative mx-auto bg-white hover:bg-white/60 text-xl text-black p-4 rounded-lg'
+            href={'/collections/new-arrivals'}
+            className='group relative mx-auto bg-white hover:bg-blue-600 text-xl text-black hover:text-white p-5 px-8 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl flex items-center space-x-2'
           >
-            Shop New Arrivals
+            <span>Shop New Arrivals</span>
+            <ArrowRightIcon className='w-5 h-5 group-hover:translate-x-1 transition-transform' />
           </Link>
         </div>
       </section>
@@ -96,33 +101,40 @@ export default async function Home() {
             <NoDataPlaceholder type='Categories' />
           </div>
         )}
-        <section className='relative pt-24 h-[700px]'>
+        <section aria-label='banner' className='relative pt-24 h-[800px] overflow-hidden'>
           <div className='relative h-full'>
             <div className='relative w-full h-full'>
               <Image
-                className='rounded-lg object-cover relative'
+                className='rounded-2xl object-cover relative scale-105 hover:scale-100 transition-all duration-700 ease-in-out'
                 alt='shop workspace'
                 src='/images/banners/home-page-01-feature-section-01.jpg'
                 fill
+                priority
+                sizes="100vw"
+                quality={90}
               />
-              <div className='overlay rounded-md'></div>
+              <div className='absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent rounded-2xl'></div>
             </div>
-            <div className='absolute inset-0 flex flex-col m-auto'>
-              <div className='w-1/2 m-auto flex flex-col content-center text-center'>
-                <h2 className='text-white text-5xl font-bold text-center'>
-                  Level up your desk
-                </h2>
-                <p className='pb-10 pt-4 z-1 text-white text-xl text-center'>
+            <div className='absolute inset-0 flex flex-col justify-center'>
+              <div className='w-1/2 ml-16 mr-auto flex flex-col content-start text-left max-w-2xl'>
+                <div className='overflow-hidden'>
+                  <h2 className='text-white text-6xl font-bold leading-tight transform transition-transform duration-500 ease-out'>
+                    Level up <span className="text-blue-300">your desk</span>
+                  </h2>
+                </div>
+                <div className='h-1 w-20 bg-blue-400 my-6'></div>
+                <p className='pb-10 pt-2 text-white text-xl max-w-lg text-opacity-90'>
                   Make your desk beautiful and organized. Post a picture to
                   social media and watch it get more likes than life-changing
                   announcements. Reflect on the shallow nature of existence. At
                   least you have a really nice desk setup.
                 </p>
                 <Link
-                  href={'/categories/workspaces'}
-                  className='mx-auto bg-white hover:bg-white/60 text-xl text-black p-4 rounded-lg'
+                  href={'/collections/workspace'}
+                  className='group w-fit flex items-center space-x-2 bg-white hover:bg-blue-600 text-xl text-black hover:text-white p-5 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl'
                 >
-                  Shop Workspace
+                  <span>Shop Workspace</span>
+                  <ArrowRightIcon className='w-5 h-5 group-hover:translate-x-1 transition-transform' />
                 </Link>
               </div>
             </div>
@@ -135,29 +147,42 @@ export default async function Home() {
             <NoDataPlaceholder type='Collections' />
           </div>
         )}
-        <section className='relative my-24 mb-40 h-[600px]'>
+        <section aria-label='banner' className='relative my-32 mb-48 h-[700px] overflow-hidden'>
           <div className='h-full'>
-            <div className='relative h-full rounded-md'>
+            <div className='relative h-full rounded-2xl'>
               <Image
-                className='rounded-lg object-cover relative'
+                className='rounded-2xl object-cover relative scale-105 hover:scale-100 transition-all duration-700 ease-in-out'
                 src={'/images/banners/home-page-01-feature-section-02.jpg'}
-                alt='product-image'
+                alt='productivity tools and focus system'
                 fill
+                sizes="100vw"
+                quality={90}
               />
-              <div className='overlay rounded-md'></div>
+              <div className='absolute inset-0 bg-gradient-to-l from-black/70 via-black/40 to-transparent rounded-2xl'></div>
             </div>
-            <div className='absolute h-full inset-0 m-auto'>
-              <div className='text-center flex flex-col content-center justify-center text-white m-auto gap-4 w-1/2 h-full'>
-                <h2 className='text-3xl font-bold'>Simple productivity</h2>
-                <p>
+            <div className='absolute h-full inset-0 flex items-center'>
+              <div className='text-right flex flex-col content-center justify-center text-white mr-16 ml-auto gap-6 w-1/2 max-w-2xl'>
+                <div className='overflow-hidden'>
+                  <h2 className='text-5xl font-bold leading-tight transform transition-transform duration-500 ease-out'>
+                    <span className="text-amber-200">Simple</span> productivity
+                  </h2>
+                </div>
+                <div className='h-1 w-20 bg-amber-300 my-2 ml-auto'></div>
+                <p className='text-xl text-white/90 max-w-lg ml-auto'>
                   Endless tasks, limited hours, a single piece of paper. Not
                   really a haiku, but we&apos;re doing our best here. No kanban
                   boards, burn-down charts, or tangled flowcharts with our Focus
                   system. Just the undeniable urge to fill empty circles.
                 </p>
-                <Link className='p-3' href={'/collections/focus'}>
-                  Shop Productivity
-                </Link>
+                <div className='mt-4 ml-auto'>
+                  <Link 
+                    className='group inline-flex items-center space-x-2 bg-amber-100 hover:bg-amber-500 text-amber-900 hover:text-white font-medium py-5 px-8 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl' 
+                    href={'/collections/focus'}
+                  >
+                    <span>Shop Productivity</span>
+                    <ArrowRightIcon className='w-5 h-5 group-hover:translate-x-1 transition-transform' />
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

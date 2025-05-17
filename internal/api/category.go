@@ -28,6 +28,7 @@ type CreateCategoryRequest struct {
 	Slug         string                `form:"slug" binding:"required,min=3,max=255"`
 	Description  *string               `form:"description" binding:"omitempty,max=1000"`
 	DisplayOrder *int16                `form:"display_order" binding:"omitempty"`
+	Remarkable   *bool                 `form:"remarkable" binding:"omitempty"`
 	Image        *multipart.FileHeader `form:"image" binding:"omitempty"`
 }
 
@@ -48,7 +49,7 @@ type CategoryListResponse struct {
 	CreatedAt   string             `json:"created_at,omitempty"`
 	UpdatedAt   string             `json:"updated_at,omitempty"`
 	ImageUrl    *string            `json:"image_url,omitempty"`
-	Products    []ProductListModel `json:"products"`
+	Products    []ProductListModel `json:"products,omitempty"`
 }
 
 type CategoryResponse struct {
@@ -96,8 +97,9 @@ func (sv *Server) getCategoriesHandler(c *gin.Context) {
 		return
 	}
 	params := repository.GetCategoriesParams{
-		Limit:  10,
-		Offset: 0,
+		Limit:     10,
+		Offset:    0,
+		Published: utils.BoolPtr(true),
 	}
 	params.Offset = (params.Limit) * int64(query.Page-1)
 	params.Limit = int64(query.PageSize)
@@ -115,7 +117,6 @@ func (sv *Server) getCategoriesHandler(c *gin.Context) {
 	}
 
 	categoriesResp := make([]CategoryListResponse, len(categories))
-	categoryProductsMap := make(map[uuid.UUID][]ProductListModel)
 	catIds := make([]uuid.UUID, len(categories))
 	for i, category := range categories {
 		categoriesResp[i] = CategoryListResponse{
@@ -130,52 +131,9 @@ func (sv *Server) getCategoriesHandler(c *gin.Context) {
 			ImageUrl:    category.ImageUrl,
 		}
 
-		categoryProductsMap[category.ID] = []ProductListModel{}
 		catIds[i] = category.ID
 	}
-	prodByCategoryRows, err := sv.repo.GetProducts(c, repository.GetProductsParams{
-		CategoryIds: catIds,
-		Limit:       10,
-		Offset:      0,
-	})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
-		return
-	}
-	for _, row := range prodByCategoryRows {
-		categoryID, _ := uuid.FromBytes(row.CategoryID.Bytes[:])
-		minPrice, _ := row.BasePrice.Float64Value()
-		maxPrice, _ := row.BasePrice.Float64Value()
-		if mp, err := minPrice.Float64Value(); err != nil && mp.Float64 > 0 {
-			minPrice = mp
-		}
-		if mp, err := maxPrice.Float64Value(); err != nil && mp.Float64 > 0 {
-			maxPrice = mp
-		}
-		model := ProductListModel{
-			ID:           row.ID.String(),
-			Name:         row.Name,
-			Slug:         row.Slug,
-			ImgUrl:       row.ImgUrl,
-			VariantCount: row.VariantCount,
-			Description:  row.Description,
-			MinPrice:     minPrice.Float64,
-			MaxPrice:     maxPrice.Float64,
-			Sku:          row.BaseSku,
-			CreatedAt:    row.CreatedAt.String(),
-			UpdatedAt:    row.UpdatedAt.String(),
-		}
-		if row.ImgID.Valid {
-			id, _ := uuid.FromBytes(row.ImgID.Bytes[:])
-			model.ImgID = utils.StringPtr(id.String())
-			model.ImgUrl = utils.StringPtr(*row.ImgUrl)
-		}
-		categoryProductsMap[categoryID] = append(categoryProductsMap[categoryID], model)
-	}
 
-	for i := range categoriesResp {
-		categoriesResp[i].Products = categoryProductsMap[uuid.MustParse(categoriesResp[i].ID)]
-	}
 	c.JSON(http.StatusOK, createSuccessResponse(
 		c,
 		categoriesResp,
@@ -236,6 +194,60 @@ func (sv *Server) getCategoryBySlugHandler(c *gin.Context) {
 	))
 }
 
+// getCategoryProductsHandler retrieves a list of Products by Category ID.
+// @Summary Get a list of Products by Category ID
+// @Description Get a list of Products by Category ID
+// @ID get-Products-by-Category-ID
+// @Accept json
+// @Tags Categories
+// @Produce json
+// @Param id path string true "Category ID"
+// @Param page_size query int false "Page size"
+// @Success 200 {object} ApiResponse[CategoryResponse]
+// @Failure 400 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /categories/{id}/products [get]
+func (sv *Server) getCategoryProductsHandler(c *gin.Context) {
+	var param URIParam
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
+		return
+	}
+	var query PaginationQueryParams
+	if err := c.ShouldBindQuery(&query); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
+		return
+	}
+
+	category, err := sv.repo.GetCategoryByID(c, uuid.MustParse(param.ID))
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, createErrorResponse[CategoryResponse](NotFoundCode, "", fmt.Errorf("category with ID %s not found", param.ID)))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
+		return
+	}
+
+	productRows, err := sv.repo.GetProducts(c, repository.GetProductsParams{
+		Limit:        query.PageSize,
+		Offset:       (query.Page - 1) * query.PageSize,
+		IsActive:     utils.BoolPtr(true),
+		Search:       nil,
+		CategoryIds:  []uuid.UUID{category.ID},
+		CollectionID: nil,
+		Slug:         nil,
+	})
+
+	c.JSON(http.StatusOK, createSuccessResponse(
+		c,
+		productRows,
+		fmt.Sprintf("Total %d products", len(productRows)),
+		nil,
+		nil,
+	))
+}
+
 // --- Admin API ---
 // createCategoryHandler creates a new Category.
 // @Summary Create a new Category
@@ -262,6 +274,10 @@ func (sv *Server) createCategoryHandler(c *gin.Context) {
 
 	if req.Description != nil {
 		params.Description = req.Description
+	}
+
+	if req.Remarkable != nil {
+		params.Remarkable = req.Remarkable
 	}
 
 	if req.Image != nil {
@@ -453,8 +469,7 @@ func (sv *Server) updateCategoryHandler(c *gin.Context) {
 	}
 
 	category, err := sv.repo.GetCategoryByID(c, uuid.MustParse(param.ID))
-	oldImageID := category.ImageID
-	oldImageURL := category.ImageUrl
+
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, createErrorResponse[CategoryResponse](NotFoundCode, "", fmt.Errorf("category with ID %s not found", param.ID)))
@@ -489,19 +504,21 @@ func (sv *Server) updateCategoryHandler(c *gin.Context) {
 	}
 	msg := ""
 	var apiErr *ApiError
-	// remove old image
-	if oldImageID != nil && oldImageURL != nil {
-		msg, err = sv.uploadService.RemoveFile(c, *oldImageID)
-		if err != nil {
-			apiErr = &ApiError{
-				Code:    UploadFileCode,
-				Details: "Failed to remove old image",
-				Stack:   err.Error()}
-		}
-	}
 
 	imageID, imageURL := "", ""
 	if req.Image != nil {
+		oldImageID := category.ImageID
+		oldImageURL := category.ImageUrl
+		// remove old image
+		if oldImageID != nil && oldImageURL != nil {
+			msg, err = sv.uploadService.RemoveFile(c, *oldImageID)
+			if err != nil {
+				apiErr = &ApiError{
+					Code:    UploadFileCode,
+					Details: "Failed to remove old image",
+					Stack:   err.Error()}
+			}
+		}
 		imageID, imageURL, err = sv.uploadService.UploadFile(c, req.Image)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](UploadFileCode, "", err))

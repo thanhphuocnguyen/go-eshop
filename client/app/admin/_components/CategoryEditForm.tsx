@@ -6,6 +6,7 @@ import {
   Input,
   Label,
   Legend,
+  Switch,
 } from '@headlessui/react';
 import clsx from 'clsx';
 import React from 'react';
@@ -23,6 +24,8 @@ const UpdateCategoryFormSchema = z.object({
   description: z.string().optional(),
   display_order: z.number().optional(),
   slug: z.string().nonempty(),
+  published: z.boolean().optional(),
+  remarkable: z.boolean().optional(),
 });
 
 export const CategoryEditForm: React.FC<CategoryEditFormProps> = ({
@@ -32,6 +35,12 @@ export const CategoryEditForm: React.FC<CategoryEditFormProps> = ({
 }) => {
   const [file, setFile] = React.useState<File | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [published, setPublished] = React.useState<boolean>(
+    data?.published ?? true
+  );
+  const [remarkable, setRemarkable] = React.useState<boolean>(
+    data?.remarkable ?? false
+  );
   const [state, setState] = React.useState<{
     name?: string[];
     slug?: string[];
@@ -40,10 +49,18 @@ export const CategoryEditForm: React.FC<CategoryEditFormProps> = ({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+
+    // Add toggle values to form data
+    formData.append('published', published.toString());
+    formData.append('remarkable', remarkable.toString());
+
     const parseResult = UpdateCategoryFormSchema.safeParse({
       name: formData.get('name') as string,
       slug: formData.get('slug') as string,
+      published: published,
+      remarkable: remarkable,
     });
+
     if (!parseResult.success) {
       const errors = parseResult.error.flatten().fieldErrors;
       setState(errors);
@@ -140,6 +157,46 @@ export const CategoryEditForm: React.FC<CategoryEditFormProps> = ({
               )}
             />
           </Field>
+
+          <div className='flex space-x-8 mt-6'>
+            <Field as='div' className='flex items-center gap-3'>
+              <Label className='text-sm/3 font-medium text-gray-600'>
+                Published
+              </Label>
+              <Switch
+                checked={published}
+                onChange={setPublished}
+                className={`${
+                  published ? 'bg-green-500' : 'bg-gray-300'
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2`}
+              >
+                <span
+                  className={`${
+                    published ? 'translate-x-6' : 'translate-x-1'
+                  } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                />
+              </Switch>
+            </Field>
+
+            <Field as='div' className='flex items-center gap-3'>
+              <Label className='text-sm/3 font-medium text-gray-600'>
+                Remarkable
+              </Label>
+              <Switch
+                checked={remarkable}
+                onChange={setRemarkable}
+                className={`${
+                  remarkable ? 'bg-blue-500' : 'bg-gray-300'
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+              >
+                <span
+                  className={`${
+                    remarkable ? 'translate-x-6' : 'translate-x-1'
+                  } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                />
+              </Switch>
+            </Field>
+          </div>
         </div>
 
         <div className='flex-2'>

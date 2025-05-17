@@ -27,9 +27,9 @@ func (q *Queries) CountBrands(ctx context.Context) (int64, error) {
 
 const createBrand = `-- name: CreateBrand :one
 INSERT INTO brands 
-    (name, slug, description, image_url, image_id)
+    (name, slug, description, image_url, image_id, remarkable)
 VALUES 
-    ($1, $2, $3, $4, $5)
+    ($1, $2, $3, $4, $5, $6)
 RETURNING id, name, image_url, image_id, description, slug, remarkable, display_order, published, created_at, updated_at
 `
 
@@ -39,6 +39,7 @@ type CreateBrandParams struct {
 	Description *string `json:"description"`
 	ImageUrl    *string `json:"image_url"`
 	ImageID     *string `json:"image_id"`
+	Remarkable  *bool   `json:"remarkable"`
 }
 
 func (q *Queries) CreateBrand(ctx context.Context, arg CreateBrandParams) (Brand, error) {
@@ -48,6 +49,7 @@ func (q *Queries) CreateBrand(ctx context.Context, arg CreateBrandParams) (Brand
 		arg.Description,
 		arg.ImageUrl,
 		arg.ImageID,
+		arg.Remarkable,
 	)
 	var i Brand
 	err := row.Scan(
@@ -131,17 +133,19 @@ SELECT
     c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at
 FROM
     brands AS c
+WHERE c.published = COALESCE($3, c.published)
 LIMIT $1
 OFFSET $2
 `
 
 type GetBrandsParams struct {
-	Limit  int64 `json:"limit"`
-	Offset int64 `json:"offset"`
+	Limit     int64 `json:"limit"`
+	Offset    int64 `json:"offset"`
+	Published *bool `json:"published"`
 }
 
 func (q *Queries) GetBrands(ctx context.Context, arg GetBrandsParams) ([]Brand, error) {
-	rows, err := q.db.Query(ctx, getBrands, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, getBrands, arg.Limit, arg.Offset, arg.Published)
 	if err != nil {
 		return nil, err
 	}

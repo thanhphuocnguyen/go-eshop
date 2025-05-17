@@ -1,8 +1,8 @@
 -- name: CreateCollection :one
 INSERT INTO collections 
-    (name, slug, description, image_url, image_id)
+    (name, slug, description, remarkable, image_url, image_id)
 VALUES 
-    ($1, $2, $3, $4, $5)
+    ($1, $2, $3, $4, $5, $6)
 RETURNING *;
 
 -- name: GetCollectionByID :one
@@ -17,22 +17,6 @@ FROM collections c
 WHERE c.slug = $1
 LIMIT 1;
 
--- name: GetCollectionByIDWithProducts :many
-SELECT 
-    c.*,
-    p.name as product_name, p.id as product_id, p.description as product_description, 
-    p.base_price as product_price, 
-    p.base_sku as product_sku, p.slug as product_slug,
-    img.id as image_id, img.url as product_image_url
-FROM 
-    collections c
-LEFT JOIN
-    products p ON c.id = p.collection_id
-LEFT JOIN
-    image_assignments ia ON p.id = ia.entity_id AND ia.entity_type = 'product'
-LEFT JOIN
-    images img ON img.id = ia.image_id
-WHERE c.id = $1;
 
 -- name: GetCollectionsByIDs :many
 SELECT 
@@ -53,6 +37,7 @@ LIMIT $1 OFFSET $2;
 SELECT 
     c.*
 FROM collections AS c
+WHERE c.published = COALESCE(sqlc.narg('published'), c.published)
 LIMIT $1 OFFSET $2;
 
 -- name: UpdateCollectionWith :one

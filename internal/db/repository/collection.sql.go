@@ -27,9 +27,9 @@ func (q *Queries) CountCollections(ctx context.Context) (int64, error) {
 
 const createCollection = `-- name: CreateCollection :one
 INSERT INTO collections 
-    (name, slug, description, image_url, image_id)
+    (name, slug, description, remarkable, image_url, image_id)
 VALUES 
-    ($1, $2, $3, $4, $5)
+    ($1, $2, $3, $4, $5, $6)
 RETURNING id, name, image_url, image_id, description, slug, remarkable, display_order, published, created_at, updated_at
 `
 
@@ -37,6 +37,7 @@ type CreateCollectionParams struct {
 	Name        string  `json:"name"`
 	Slug        string  `json:"slug"`
 	Description *string `json:"description"`
+	Remarkable  *bool   `json:"remarkable"`
 	ImageUrl    *string `json:"image_url"`
 	ImageID     *string `json:"image_id"`
 }
@@ -46,6 +47,7 @@ func (q *Queries) CreateCollection(ctx context.Context, arg CreateCollectionPara
 		arg.Name,
 		arg.Slug,
 		arg.Description,
+		arg.Remarkable,
 		arg.ImageUrl,
 		arg.ImageID,
 	)
@@ -211,16 +213,18 @@ const getCollections = `-- name: GetCollections :many
 SELECT 
     c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at
 FROM collections AS c
+WHERE c.published = COALESCE($3, c.published)
 LIMIT $1 OFFSET $2
 `
 
 type GetCollectionsParams struct {
-	Limit  int64 `json:"limit"`
-	Offset int64 `json:"offset"`
+	Limit     int64 `json:"limit"`
+	Offset    int64 `json:"offset"`
+	Published *bool `json:"published"`
 }
 
 func (q *Queries) GetCollections(ctx context.Context, arg GetCollectionsParams) ([]Collection, error) {
-	rows, err := q.db.Query(ctx, getCollections, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, getCollections, arg.Limit, arg.Offset, arg.Published)
 	if err != nil {
 		return nil, err
 	}

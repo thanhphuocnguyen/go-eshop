@@ -46,9 +46,11 @@ func (sv *Server) getShopBrandsHandler(c *gin.Context) {
 		return
 	}
 	var dbQueries repository.GetBrandsParams = repository.GetBrandsParams{
-		Limit:  20,
-		Offset: 0,
+		Limit:     20,
+		Offset:    0,
+		Published: utils.BoolPtr(true),
 	}
+
 	dbQueries.Limit = queries.PageSize
 	dbQueries.Offset = (queries.Page - 1) * queries.PageSize
 	var cached *struct {
@@ -80,13 +82,22 @@ func (sv *Server) getShopBrandsHandler(c *gin.Context) {
 	data := make([]CategoryResponse, len(rows))
 
 	for i, row := range rows {
-		data[i] = CategoryResponse{
+		model := CategoryResponse{
 			ID:          row.ID.String(),
 			Name:        row.Name,
 			Description: row.Description,
 			Slug:        row.Slug,
+			Published:   row.Published,
+			CreatedAt:   row.CreatedAt.String(),
+			UpdatedAt:   row.UpdatedAt.String(),
 			ImageUrl:    row.ImageUrl,
 		}
+
+		if row.Remarkable != nil {
+			model.Remarkable = *row.Remarkable
+		}
+
+		data[i] = model
 	}
 	cached = &struct {
 		Data       []CategoryResponse `json:"data"`
@@ -134,7 +145,7 @@ func (sv *Server) getShopBrandBySlugHandler(c *gin.Context) {
 		return
 	}
 
-	category, err := sv.repo.GetBrandBySlug(c, param.Slug)
+	brand, err := sv.repo.GetBrandBySlug(c, param.Slug)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, createErrorResponse[CategoryResponse](NotFoundCode, "", fmt.Errorf("category with slug %s not found", param.Slug)))
@@ -147,12 +158,12 @@ func (sv *Server) getShopBrandBySlugHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, createSuccessResponse(
 		c,
 		CategoryResponse{
-			ID:          category.ID.String(),
-			Name:        category.Name,
-			Description: category.Description,
-			Slug:        category.Slug,
-			ImageUrl:    category.ImageUrl,
-			CreatedAt:   category.CreatedAt.String(),
+			ID:          brand.ID.String(),
+			Name:        brand.Name,
+			Description: brand.Description,
+			Slug:        brand.Slug,
+			ImageUrl:    brand.ImageUrl,
+			CreatedAt:   brand.CreatedAt.String(),
 		},
 		"",
 		nil,
@@ -468,9 +479,9 @@ func (sv *Server) updateBrandHandler(c *gin.Context) {
 		ID:   brand.ID,
 		Name: req.Name,
 	}
-	oldImageID := brand.ImageID
 
 	if req.Image != nil {
+
 		imgID, imgUrl, err := sv.uploadService.UploadFile(c, req.Image)
 		if err != nil {
 			log.Error().Err(err).Interface("value", req.Image.Header).Msg("error when upload image")
@@ -479,16 +490,16 @@ func (sv *Server) updateBrandHandler(c *gin.Context) {
 		}
 		updateParam.ImageUrl = &imgUrl
 		updateParam.ImageID = &imgID
-	}
-
-	if oldImageID != nil {
-		errMsg, err := sv.uploadService.RemoveFile(c, *oldImageID)
-		if err != nil {
-			log.Error().Err(err).Msg("error when remove old image")
-			c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](UploadFileCode, errMsg, err))
-			return
+		oldImageID := brand.ImageID
+		if oldImageID != nil {
+			errMsg, err := sv.uploadService.RemoveFile(c, *oldImageID)
+			if err != nil {
+				log.Error().Err(err).Msg("error when remove old image")
+				c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](UploadFileCode, errMsg, err))
+				return
+			}
+			log.Info().Msgf("old image %s removed", *oldImageID)
 		}
-		log.Info().Msgf("old image %s removed", *oldImageID)
 	}
 
 	if req.Slug != nil {

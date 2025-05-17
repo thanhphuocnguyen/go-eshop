@@ -26,23 +26,8 @@ type CollectionProductRequest struct {
 // ------------------------------------------ API Handlers ------------------------------------------
 
 // --- Public API ---
-// getShopCollectionsHandler retrieves a list of Collections.
-// @Summary Get a list of Collections
-// @Description Get a list of Collections
-// @ID get-Shop-Collections
-// @Accept json
-// @Tags Collections
-// @Produce json
-// @Param page query int false "Page number"
-// @Param page_size query int false "Page size"
-// @Success 200 {object} ApiResponse[CategoryResponse]
-// @Failure 400 {object} gin.H
-// @Failure 500 {object} gin.H
-// @Router /shop/collections [get]
-func (sv *Server) getShopCollectionsHandler(c *gin.Context) {
-}
 
-// getShopCollectionBySlugHandler retrieves a list of Collections.
+// getCollectionHandler retrieves a list of Collections.
 // @Summary Get a list of Collections
 // @Description Get a list of Collections
 // @ID get-Shop-Collection-by-slug
@@ -54,7 +39,7 @@ func (sv *Server) getShopCollectionsHandler(c *gin.Context) {
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /shop/collections/{slug} [get]
-func (sv *Server) getShopCollectionBySlugHandler(c *gin.Context) {
+func (sv *Server) getCollectionHandler(c *gin.Context) {
 	var param SlugParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
@@ -65,8 +50,14 @@ func (sv *Server) getShopCollectionBySlugHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
 		return
 	}
+	var category repository.Collection
+	var err error
+	if id, pErr := uuid.Parse(param.Slug); pErr == nil {
+		category, err = sv.repo.GetCollectionByID(c, id)
+	} else {
+		category, err = sv.repo.GetCollectionBySlug(c, param.Slug)
+	}
 
-	category, err := sv.repo.GetCollectionBySlug(c, param.Slug)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, createErrorResponse[CategoryResponse](NotFoundCode, "", fmt.Errorf("category with slug %s not found", param.Slug)))
@@ -85,6 +76,85 @@ func (sv *Server) getShopCollectionBySlugHandler(c *gin.Context) {
 		CreatedAt:   category.CreatedAt.String(),
 	}
 	c.JSON(http.StatusOK, createSuccessResponse(c, resp, "", nil, nil))
+}
+
+// getCollectionProductsHandler retrieves a list of Products in a Collection.
+// @Summary Get a list of Products in a Collection
+// @Description Get a list of Products in a Collection
+// @ID get-Shop-Collection-Products-by-slug
+// @Accept json
+// @Tags Collections
+// @Produce json
+// @Param slug path string true "Collection slug"
+// @Param request body CollectionProductRequest true "Collection info"
+// @Success 200 {object} ApiResponse[ProductListModel]
+// @Failure 400 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /shop/collections/{slug}/products [get]
+func (sv *Server) getCollectionProductsHandler(c *gin.Context) {
+	var param SlugParam
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](InvalidBodyCode, "", err))
+		return
+	}
+	var query PaginationQueryParams
+	if err := c.ShouldBindQuery(&query); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](InvalidBodyCode, "", err))
+		return
+	}
+
+	var req CollectionProductRequest
+	if err := c.ShouldBind(&req); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](InvalidBodyCode, "", err))
+		return
+	}
+
+	colID, err := sv.repo.GetCollectionBySlug(c, param.Slug)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, createErrorResponse[ProductListModel](NotFoundCode, "", fmt.Errorf("collection with slug %s not found", param.Slug)))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](InternalServerErrorCode, "", err))
+		return
+	}
+
+	getProductsParams := repository.GetProductsParams{
+		CollectionID: []uuid.UUID{colID.ID},
+		IsActive:     utils.BoolPtr(true),
+		Limit:        int64(query.PageSize),
+		Offset:       int64((query.Page - 1) * query.PageSize),
+	}
+
+	productRows, err := sv.repo.GetProducts(c, getProductsParams)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](InternalServerErrorCode, "", err))
+		return
+	}
+
+	cnt, err := sv.repo.CountProducts(c, repository.CountProductsParams{
+		IsActive:     utils.BoolPtr(true),
+		Name:         nil,
+		CollectionID: utils.GetPgTypeUUID(colID.ID),
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](InternalServerErrorCode, "", err))
+		return
+	}
+
+	c.JSON(http.StatusOK, createSuccessResponse(
+		c,
+		productRows,
+		"products",
+		&Pagination{
+			Page:            query.Page,
+			PageSize:        query.PageSize,
+			Total:           cnt,
+			TotalPages:      cnt / int64(query.PageSize),
+			HasNextPage:     cnt > int64(query.Page*query.PageSize),
+			HasPreviousPage: query.Page > 1,
+		}, nil,
+	))
 }
 
 // --- Admin API ---
@@ -114,6 +184,10 @@ func (sv *Server) createCollectionHandler(c *gin.Context) {
 
 	if req.Description != nil {
 		createParams.Description = req.Description
+	}
+
+	if req.Remarkable != nil {
+		createParams.Remarkable = req.Remarkable
 	}
 
 	if req.Image != nil {
@@ -163,7 +237,7 @@ func (sv *Server) getCollectionsHandler(c *gin.Context) {
 
 	dbQueries.Offset = int64(queries.Page-1) * int64(queries.PageSize)
 	dbQueries.Limit = int64(queries.PageSize)
-	rows, err := sv.repo.GetCollections(c, dbQueries)
+	collectionRows, err := sv.repo.GetCollections(c, dbQueries)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
 		return
@@ -177,7 +251,7 @@ func (sv *Server) getCollectionsHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, createSuccessResponse(
 		c,
-		rows,
+		collectionRows,
 		"collections",
 		&Pagination{
 			Page:            queries.Page,
@@ -227,11 +301,13 @@ func (sv *Server) getCollectionByIDHandler(c *gin.Context) {
 		Description: firstRow.Description,
 		Published:   firstRow.Published,
 		Name:        firstRow.Name,
-		Remarkable:  *firstRow.Remarkable,
 		ImageUrl:    firstRow.ImageUrl,
 		CreatedAt:   firstRow.CreatedAt.Format("2006-01-02 15:04:05"),
 		UpdatedAt:   firstRow.UpdatedAt.Format("2006-01-02 15:04:05"),
 		Products:    []CategoryLinkedProduct{},
+	}
+	if firstRow.Remarkable != nil {
+		colResp.Remarkable = *firstRow.Remarkable
 	}
 
 	getProductsParams := repository.GetLinkedProductsByCategoryParams{
@@ -283,8 +359,7 @@ func (sv *Server) updateCollectionHandler(c *gin.Context) {
 	}
 
 	collection, err := sv.repo.GetCollectionByID(c, uuid.MustParse(param.ID))
-	oldImageID := collection.ImageID
-	oldImageUrl := collection.ImageUrl
+
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, createErrorResponse[CategoryResponse](NotFoundCode, "", fmt.Errorf("collection with ID %s not found", param.ID)))
@@ -305,6 +380,8 @@ func (sv *Server) updateCollectionHandler(c *gin.Context) {
 	}
 
 	if req.Image != nil {
+		oldImageID := collection.ImageID
+		oldImageUrl := collection.ImageUrl
 		ID, url, err := sv.uploadService.UploadFile(c, req.Image)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
@@ -313,13 +390,13 @@ func (sv *Server) updateCollectionHandler(c *gin.Context) {
 
 		updateParam.ImageUrl = &url
 		updateParam.ImageID = &ID
-	}
 
-	// Delete old image
-	if oldImageID != nil && oldImageUrl != nil {
-		if msg, err := sv.uploadService.RemoveFile(c, *oldImageID); err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, msg, err))
-			return
+		// Delete old image
+		if oldImageID != nil && oldImageUrl != nil {
+			if msg, err := sv.uploadService.RemoveFile(c, *oldImageID); err != nil {
+				c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, msg, err))
+				return
+			}
 		}
 	}
 

@@ -1,8 +1,8 @@
 -- name: CreateBrand :one
 INSERT INTO brands 
-    (name, slug, description, image_url, image_id)
+    (name, slug, description, image_url, image_id, remarkable)
 VALUES 
-    ($1, $2, $3, $4, $5)
+    ($1, $2, $3, $4, $5, $6)
 RETURNING *;
 
 -- name: GetBrandByID :one
@@ -31,6 +31,7 @@ SELECT
     c.*
 FROM
     brands AS c
+WHERE c.published = COALESCE(sqlc.narg('published'), c.published)
 LIMIT $1
 OFFSET $2;
 

@@ -3,7 +3,7 @@
 import { ArrowLeftCircleIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { CategoryEditForm } from '../../_components/CategoryEditForm';
-import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
+import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { toast } from 'react-toastify';
 import { redirect } from 'next/navigation';
 import { GeneralCategoryModel, GenericResponse } from '@/app/lib/definitions';
@@ -13,7 +13,7 @@ export default function Page() {
   const handleSave = async (form: FormData) => {
     const { data, error } = await apiFetchClientSide<
       GenericResponse<GeneralCategoryModel>
-    >(ADMIN_API_PATHS.COLLECTIONS, {
+    >(PUBLIC_API_PATHS.COLLECTIONS, {
       method: 'POST',
       body: form,
     });

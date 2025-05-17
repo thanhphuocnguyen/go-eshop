@@ -8,7 +8,6 @@ export type GeneralCategoryModel = {
   remarkable: boolean;
   created_at: Date;
   updated_at: Date;
-  products?: ProductCategory[];
 };
 
 export type ProductCategory = {

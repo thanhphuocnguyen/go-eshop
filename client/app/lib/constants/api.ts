@@ -49,7 +49,6 @@ const _adminPaths = {
   PRODUCT_VARIANTS: 'products/:id/variants',
   CATEGORY: 'categories/:id',
   CATEGORY_PRODUCTS: 'categories/:id',
-  COLLECTIONS: 'collections',
   COLLECTION: 'collections/:id',
   COLLECTION_PRODUCTS: 'collections/:id/products',
   PRODUCT_IMAGES_UPLOAD: 'images/products/:id',

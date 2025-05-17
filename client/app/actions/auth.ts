@@ -13,7 +13,9 @@ export async function refreshTokenAction() {
   const cookieStore = await cookies();
   return fetch(PUBLIC_API_PATHS.REFRESH_TOKEN, {
     method: 'POST',
-    credentials: 'include',
+    headers: {
+      Authorization: `Bearer ${cookieStore.get('refresh_token')?.value}`,
+    },
   })
     .then<GenericResponse<RefreshTokenResponse>>((response) => {
       if (!response.ok) {

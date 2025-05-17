@@ -1,5 +1,8 @@
 'use client';
-import { AttributeDetailModel, VariantDetailModel } from '@/app/lib/definitions';
+import {
+  AttributeDetailModel,
+  VariantDetailModel,
+} from '@/app/lib/definitions';
 import { Button } from '@headlessui/react';
 import clsx from 'clsx';
 import React, { useEffect, useState } from 'react';
@@ -106,7 +109,7 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({ variants }) => {
   }, [variants]);
 
   return (
-    <div className='flex flex-col gap-6 mt-10'>
+    <div className='flex flex-col gap-6 mt-4'>
       {/* Colors */}
       {attributesData.map((attr) => (
         <div key={attr.id}>
@@ -199,7 +202,7 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({ variants }) => {
                 </a>
               </div>
 
-              <div className='grid grid-cols-4 gap-4 sm:grid-cols-8 lg:grid-cols-6 mt-4'>
+              <div className='grid grid-cols-4 gap-4 sm:grid-cols-8 lg:grid-cols-6 mt-6'>
                 {attr.values.map((value) => {
                   const isAvailable = isValueAvailable(attr.id, value.id);
                   return (
@@ -259,20 +262,53 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({ variants }) => {
           )}
         </div>
       ))}
-      <Button
-        type='button' // Change to type="submit" if this button submits the form
-        onClick={handleAddToCart}
-        disabled={
-          Object.keys(selectedAttributeValues).length !== attributesData?.length
-        } // Disable if no size is selected
-        className={`mt-10 w-full flex items-center justify-center rounded-md border border-transparent px-8 py-3 text-base font-medium text-white ${
-          Object.keys(selectedAttributeValues).length !== attributesData?.length
-            ? 'bg-gray-400 cursor-not-allowed'
-            : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
-        }`}
-      >
-        Add to cart
-      </Button>
+      {/* Add to cart actions - this would be a client component in reality */}
+      <div className='mt-4'>
+        <div className='flex space-x-4'>
+          <Button
+            type='button'
+            onClick={handleAddToCart}
+            disabled={Object.keys(selectedAttributeValues).length < 2}
+            className={clsx(
+              'flex-1 items-center justify-center rounded-md border border-transparent py-3 px-8 flex text-base font-medium text-white',
+              'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
+            )}
+          >
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              className='h-5 w-5 mr-2'
+              fill='none'
+              viewBox='0 0 24 24'
+              stroke='currentColor'
+            >
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth={2}
+                d='M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z'
+              />
+            </svg>
+            Add to cart
+          </Button>
+
+          <Button className='rounded-md border border-gray-300 p-3 flex items-center justify-center text-gray-700 hover:bg-gray-50'>
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              className='h-6 w-6'
+              fill='none'
+              viewBox='0 0 24 24'
+              stroke='currentColor'
+            >
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth={2}
+                d='M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z'
+              />
+            </svg>
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };

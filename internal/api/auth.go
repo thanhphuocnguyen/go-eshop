@@ -235,8 +235,8 @@ func (sv *Server) loginHandler(c *gin.Context) {
 
 	loginResp := LoginResponse{
 		ID:                    session.ID,
-		AccessTokenExpiresAt:  payload.Expires,
 		AccessToken:           accessToken,
+		AccessTokenExpiresAt:  payload.Expires,
 		RefreshToken:          refreshToken,
 		RefreshTokenExpiresAt: rfPayload.Expires,
 	}

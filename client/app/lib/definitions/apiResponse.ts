@@ -26,4 +26,6 @@ export type Pagination = {
   pageSize: number;
   totalPages: number;
   total: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
 };

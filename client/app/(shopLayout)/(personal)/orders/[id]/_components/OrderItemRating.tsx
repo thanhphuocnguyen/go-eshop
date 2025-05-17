@@ -16,6 +16,7 @@ import { XCircleIcon } from '@heroicons/react/24/outline';
 import { useForm } from 'react-hook-form';
 import { OrderItemModel } from '@/app/lib/definitions';
 import { ImageUploader } from '@/components/FormFields';
+import { toast } from 'react-toastify';
 
 interface OrderItemRatingProps {
   orderItemId: string;
@@ -127,6 +128,7 @@ export default function OrderItemRating({
         setError(response.error.details || 'Failed to submit rating');
       } else {
         setExistingRating(rating);
+        toast.success('Your review has been submitted successfully!');
         closeModal();
       }
     } catch (err) {

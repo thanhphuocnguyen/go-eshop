@@ -5,3 +5,5 @@ export * from './RelateProductSection';
 export * from './ImagesSection';
 export * from './ErrorComponent';
 export * from './RatingHelpfulButtons';
+export * from './TabsSection';
+export * from './AddToCartSection';

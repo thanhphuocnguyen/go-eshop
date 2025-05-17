@@ -1,8 +1,8 @@
 -- name: CreateCategory :one
 INSERT INTO categories
-    (name, slug, description, image_url, image_id)
+    (name, slug, description, remarkable, image_url, image_id)
 VALUES
-    ($1, $2, $3, $4, $5)
+    ($1, $2, $3, $4, $5, $6)
 RETURNING *;
 
 -- name: GetCategoryByID :one

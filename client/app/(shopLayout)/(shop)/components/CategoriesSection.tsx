@@ -9,7 +9,7 @@ export default function CategoriesSection({
   categories?: GeneralCategoryModel[];
 }) {
   return (
-    <section className='pt-24'>
+    <section className='container pt-24'>
       <div className=' flex justify-between mb-2'>
         <h4 className='font-bold text-2xl'>Shop by Category</h4>
         <Link
@@ -23,22 +23,24 @@ export default function CategoriesSection({
         </Link>
       </div>
       {categories?.length ? (
-        <div className='h-[500px] grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4'>
+        <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6'>
           {categories.map((e) => (
-            <Link href={`/categories/${e.slug}`} key={e.id} className="block w-full h-full">
-              <div className='relative bg-white rounded-md shadow-md h-full'>
-                <h2 className='text-xl font-bold absolute bottom-5 text-white text-center left-0 right-0 mx-auto z-10 '>
-                  {e.name}
-                </h2>
-                {
+            <Link href={`/categories/${e.slug}`} key={e.id} className="group block">
+              <div className='bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300'>
+                <div className='relative h-[30rem] w-full'>
                   <Image
                     fill
-                    alt='product-image'
-                    className='object-cover rounded-md'
+                    alt={`${e.name} category`}
+                    className='object-cover'
                     src={e.image_url ?? '/images/product-placeholder.webp'}
                   />
-                }
-                <div className='absolute z-0 h-1/2 opacity-45 inset-x-0 bottom-0 bg-gradient-to-t from-slate-600 via-white to-transparent rounded-md'></div>
+                  <div className='absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent rounded-b-lg opacity-50 group-hover:opacity-80 transition-opacity duration-300'></div>
+                  <div className='absolute bottom-0 left-0 right-0 p-4 text-center z-10'>
+                    <h2 className='text-lg font-bold text-white group-hover:text-blue-100 transition-colors drop-shadow-md'>
+                      {e.name}
+                    </h2>
+                  </div>
+                </div>
               </div>
             </Link>
           ))}

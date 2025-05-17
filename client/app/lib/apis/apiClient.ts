@@ -78,12 +78,7 @@ export async function apiFetchClientSide<T = any>(
     ...nextOptions,
   });
 
-  if (
-    response.status === 401 &&
-    retryOnUnauthorized &&
-    !token &&
-    refreshTokenAction
-  ) {
+  if (response.status === 401 && retryOnUnauthorized) {
     const newToken = await refreshTokenAction();
     if (newToken) {
       localStorage.setItem('access_token', newToken);
