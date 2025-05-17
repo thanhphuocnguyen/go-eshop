@@ -86,13 +86,13 @@ func createSuccessResponse[T any](c *gin.Context, data T, message string, pagina
 	return resp
 }
 
-func createPagination(page, pageSize, totalPages, total int64) *Pagination {
+func createPagination(page, pageSize, total int64) *Pagination {
 	return &Pagination{
-		Total:           total,
 		Page:            page,
 		PageSize:        pageSize,
-		TotalPages:      totalPages,
-		HasNextPage:     page < totalPages,
+		Total:           total,
+		TotalPages:      total / int64(pageSize),
+		HasNextPage:     total > int64(page*pageSize),
 		HasPreviousPage: page > 1,
 	}
 }

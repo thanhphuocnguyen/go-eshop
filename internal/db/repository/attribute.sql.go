@@ -116,38 +116,6 @@ func (q *Queries) DeleteProductVariantAttributes(ctx context.Context, variantID 
 	return err
 }
 
-const getAttrValuesByAttrIDs = `-- name: GetAttrValuesByAttrIDs :many
-SELECT id, attribute_id, name, code, is_active, display_order, created_at FROM attribute_values WHERE attribute_id = ANY($1::uuid[]) ORDER BY attribute_values.id
-`
-
-func (q *Queries) GetAttrValuesByAttrIDs(ctx context.Context, ids []uuid.UUID) ([]AttributeValue, error) {
-	rows, err := q.db.Query(ctx, getAttrValuesByAttrIDs, ids)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []AttributeValue{}
-	for rows.Next() {
-		var i AttributeValue
-		if err := rows.Scan(
-			&i.ID,
-			&i.AttributeID,
-			&i.Name,
-			&i.Code,
-			&i.IsActive,
-			&i.DisplayOrder,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getAttributeByID = `-- name: GetAttributeByID :many
 SELECT a.id, a.name, a.created_at, 
     av.name as attr_val_name, av.id as attribute_value_id, av.is_active as attribute_value_is_active, 
@@ -190,30 +158,6 @@ func (q *Queries) GetAttributeByID(ctx context.Context, id uuid.UUID) ([]GetAttr
 			&i.AttributeValueCreatedAt,
 			&i.DisplayOrder,
 		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getAttributeByIDs = `-- name: GetAttributeByIDs :many
-SELECT id, name, created_at FROM attributes WHERE id = ANY($1::uuid[]) ORDER BY attributes.id
-`
-
-func (q *Queries) GetAttributeByIDs(ctx context.Context, ids []uuid.UUID) ([]Attribute, error) {
-	rows, err := q.db.Query(ctx, getAttributeByIDs, ids)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Attribute{}
-	for rows.Next() {
-		var i Attribute
-		if err := rows.Scan(&i.ID, &i.Name, &i.CreatedAt); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -318,6 +262,46 @@ func (q *Queries) GetAttributeValuesByIDs(ctx context.Context, ids []uuid.UUID) 
 	return items, nil
 }
 
+const getAttributeWithValuesByIDs = `-- name: GetAttributeWithValuesByIDs :many
+SELECT att.name as attribute_name, att.id as attribute_id, atv.name as attribute_value_name, atv.id as attribute_value_id 
+FROM attributes as att
+LEFT JOIN attribute_values as atv ON att.id = atv.attribute_id
+WHERE attribute_id = ANY($1::uuid[]) 
+ORDER BY atv.id
+`
+
+type GetAttributeWithValuesByIDsRow struct {
+	AttributeName      string      `json:"attribute_name"`
+	AttributeID        uuid.UUID   `json:"attribute_id"`
+	AttributeValueName *string     `json:"attribute_value_name"`
+	AttributeValueID   pgtype.UUID `json:"attribute_value_id"`
+}
+
+func (q *Queries) GetAttributeWithValuesByIDs(ctx context.Context, ids []uuid.UUID) ([]GetAttributeWithValuesByIDsRow, error) {
+	rows, err := q.db.Query(ctx, getAttributeWithValuesByIDs, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetAttributeWithValuesByIDsRow{}
+	for rows.Next() {
+		var i GetAttributeWithValuesByIDsRow
+		if err := rows.Scan(
+			&i.AttributeName,
+			&i.AttributeID,
+			&i.AttributeValueName,
+			&i.AttributeValueID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAttributes = `-- name: GetAttributes :many
 SELECT 
     a.id, a.name, a.created_at, 
@@ -365,6 +349,30 @@ func (q *Queries) GetAttributes(ctx context.Context, ids []uuid.UUID) ([]GetAttr
 			&i.AttributeValueCreatedAt,
 			&i.DisplayOrder,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAttributesByIDs = `-- name: GetAttributesByIDs :many
+SELECT id, name, created_at FROM attributes WHERE id = ANY($1::uuid[]) ORDER BY attributes.id
+`
+
+func (q *Queries) GetAttributesByIDs(ctx context.Context, ids []uuid.UUID) ([]Attribute, error) {
+	rows, err := q.db.Query(ctx, getAttributesByIDs, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Attribute{}
+	for rows.Next() {
+		var i Attribute
+		if err := rows.Scan(&i.ID, &i.Name, &i.CreatedAt); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

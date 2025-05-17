@@ -15,12 +15,12 @@ import (
 )
 
 type ProductQueries struct {
-	Page         int64   `form:"page,default=1" binding:"omitempty,min=1"`
-	PageSize     int64   `form:"page_size,default=20" binding:"omitempty,min=1,max=100"`
-	Search       *string `form:"search" binding:"omitempty,max=1000"`
-	CategoryID   *string `form:"category_id" binding:"omitempty,uuid"`
-	BrandID      *string `form:"brand_id" binding:"omitempty,uuid"`
-	CollectionID *string `form:"collection_id" binding:"omitempty,uuid"`
+	Page         int64    `form:"page,default=1" binding:"omitempty,min=1"`
+	PageSize     int64    `form:"page_size,default=20" binding:"omitempty,min=1,max=100"`
+	Search       *string  `form:"search" binding:"omitempty,max=1000"`
+	CategoryIDs  []string `form:"category_ids" binding:"omitempty,uuidslice"`
+	BrandID      *string  `form:"brand_id" binding:"omitempty,uuid4"`
+	CollectionID *string  `form:"collection_id" binding:"omitempty,uuid4"`
 }
 
 type ProductAttributeDetail struct {
@@ -246,12 +246,15 @@ func (sv *Server) getProductsHandler(c *gin.Context) {
 		dbParams.Search = &search
 	}
 
-	if queries.CategoryID != nil {
-		dbParams.CategoryIds = []uuid.UUID{uuid.MustParse(*queries.CategoryID)}
+	if len(queries.CategoryIDs) > 0 {
+		dbParams.CategoryIds = make([]uuid.UUID, len(queries.CategoryIDs))
+		for i, id := range queries.CategoryIDs {
+			dbParams.CategoryIds[i] = uuid.MustParse(id)
+		}
 	}
 
 	if queries.CollectionID != nil {
-		dbParams.CollectionID = []uuid.UUID{uuid.MustParse(*queries.CollectionID)}
+		dbParams.CollectionID = utils.GetPgTypeUUID(uuid.MustParse(*queries.CollectionID))
 	}
 
 	if queries.BrandID != nil {

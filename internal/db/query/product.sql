@@ -85,6 +85,19 @@ WHERE
 ORDER BY
     a.id, av.display_order, v.created_at DESC;
 
+-- name: GetFilterListForCollectionID :many
+SELECT
+    c.name as category_name, c.id as category_id, br.id as brand_id, br.name AS brand_name, p.attributes
+FROM    
+    products p
+LEFT JOIN categories c ON c.id = p.category_id
+LEFT JOIN collections cl ON p.collection_id = cl.id
+LEFT JOIN brands br ON p.brand_id = br.id
+WHERE 
+    cl.id = $1
+GROUP BY c.id, br.id, p.attributes
+ORDER BY c.id;
+
 -- name: GetProducts :many
 SELECT
     p.*,
@@ -102,10 +115,12 @@ LEFT JOIN LATERAL (
 ) AS first_img ON true
 WHERE
     p.is_active = COALESCE(sqlc.narg('is_active'), p.is_active) 
-    AND (p.name ILIKE COALESCE(sqlc.narg('search'), p.name) OR p.base_sku ILIKE COALESCE(sqlc.narg('search'), p.base_sku) OR p.description ILIKE COALESCE(sqlc.narg('search'), p.description))
+    AND (p.name ILIKE COALESCE(sqlc.narg('search'), p.name) OR 
+        p.base_sku ILIKE COALESCE(sqlc.narg('search'), p.base_sku) OR 
+        p.description ILIKE COALESCE(sqlc.narg('search'), p.description))
     -- 
     AND (ARRAY_LENGTH(sqlc.arg(category_ids)::uuid[], 1) IS NULL OR p.category_id = ANY(sqlc.arg(category_ids)::uuid[]))
-    AND (ARRAY_LENGTH(sqlc.arg(collection_id)::uuid[], 1) IS NULL OR p.collection_id = ANY(sqlc.arg(collection_id)::uuid[]))
+    AND p.collection_id = COALESCE(sqlc.narg('collection_id'), p.collection_id)
     AND p.brand_id = COALESCE(sqlc.narg('brand_id'), p.brand_id)
     AND p.slug ILIKE COALESCE(sqlc.narg('slug'), p.slug)
 GROUP BY
@@ -113,33 +128,6 @@ GROUP BY
 ORDER BY
     @orderBy::text
 LIMIT $1 OFFSET $2;
-
--- name: GetLinkedProductsByCategory :many
-SELECT
-    p.id, p.name, p.short_description, first_img.id AS img_id, first_img.url AS img_url, COUNT(v.id) AS variant_count
-FROM
-    products AS p
-LEFT JOIN product_variants as v ON p.id = v.product_id
-LEFT JOIN LATERAL (
-    SELECT img.id, img.url
-    FROM image_assignments as ia
-    JOIN images as img ON img.id = ia.image_id
-    WHERE ia.entity_id = p.id AND ia.entity_type = 'product'
-    ORDER BY ia.display_order ASC, ia.id ASC
-    LIMIT 1
-) AS first_img ON true
-WHERE
-    p.collection_id = COALESCE(sqlc.narg('collection_id'), p.collection_id) AND
-    p.category_id = COALESCE(sqlc.narg('category_id'), p.category_id) AND
-    p.brand_id = COALESCE(sqlc.narg('brand_id'), p.brand_id)
-GROUP BY
-    p.id, first_img.id, first_img.url
-ORDER BY
-    p.id
-LIMIT
-    $2
-OFFSET
-    $3;
 
 -- name: CountProducts :one
 SELECT

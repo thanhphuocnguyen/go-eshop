@@ -230,73 +230,43 @@ func (q *Queries) DeleteProductVariant(ctx context.Context, id uuid.UUID) error 
 	return err
 }
 
-const getLinkedProductsByCategory = `-- name: GetLinkedProductsByCategory :many
+const getFilterListForCollectionID = `-- name: GetFilterListForCollectionID :many
 SELECT
-    p.id, p.name, p.short_description, first_img.id AS img_id, first_img.url AS img_url, COUNT(v.id) AS variant_count
-FROM
-    products AS p
-LEFT JOIN product_variants as v ON p.id = v.product_id
-LEFT JOIN LATERAL (
-    SELECT img.id, img.url
-    FROM image_assignments as ia
-    JOIN images as img ON img.id = ia.image_id
-    WHERE ia.entity_id = p.id AND ia.entity_type = 'product'
-    ORDER BY ia.display_order ASC, ia.id ASC
-    LIMIT 1
-) AS first_img ON true
-WHERE
-    p.collection_id = COALESCE($1, p.collection_id) AND
-    p.category_id = COALESCE($4, p.category_id) AND
-    p.brand_id = COALESCE($5, p.brand_id)
-GROUP BY
-    p.id, first_img.id, first_img.url
-ORDER BY
-    p.id
-LIMIT
-    $2
-OFFSET
-    $3
+    c.name as category_name, c.id as category_id, br.id as brand_id, br.name AS brand_name, p.attributes
+FROM    
+    products p
+LEFT JOIN categories c ON c.id = p.category_id
+LEFT JOIN collections cl ON p.collection_id = cl.id
+LEFT JOIN brands br ON p.brand_id = br.id
+WHERE 
+    cl.id = $1
+GROUP BY c.id, br.id, p.attributes
+ORDER BY c.id
 `
 
-type GetLinkedProductsByCategoryParams struct {
-	CollectionID pgtype.UUID `json:"collection_id"`
-	Limit        int64       `json:"limit"`
-	Offset       int64       `json:"offset"`
+type GetFilterListForCollectionIDRow struct {
+	CategoryName *string     `json:"category_name"`
 	CategoryID   pgtype.UUID `json:"category_id"`
 	BrandID      pgtype.UUID `json:"brand_id"`
+	BrandName    *string     `json:"brand_name"`
+	Attributes   []uuid.UUID `json:"attributes"`
 }
 
-type GetLinkedProductsByCategoryRow struct {
-	ID               uuid.UUID `json:"id"`
-	Name             string    `json:"name"`
-	ShortDescription *string   `json:"short_description"`
-	ImgID            uuid.UUID `json:"img_id"`
-	ImgUrl           string    `json:"img_url"`
-	VariantCount     int64     `json:"variant_count"`
-}
-
-func (q *Queries) GetLinkedProductsByCategory(ctx context.Context, arg GetLinkedProductsByCategoryParams) ([]GetLinkedProductsByCategoryRow, error) {
-	rows, err := q.db.Query(ctx, getLinkedProductsByCategory,
-		arg.CollectionID,
-		arg.Limit,
-		arg.Offset,
-		arg.CategoryID,
-		arg.BrandID,
-	)
+func (q *Queries) GetFilterListForCollectionID(ctx context.Context, id uuid.UUID) ([]GetFilterListForCollectionIDRow, error) {
+	rows, err := q.db.Query(ctx, getFilterListForCollectionID, id)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetLinkedProductsByCategoryRow{}
+	items := []GetFilterListForCollectionIDRow{}
 	for rows.Next() {
-		var i GetLinkedProductsByCategoryRow
+		var i GetFilterListForCollectionIDRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.ShortDescription,
-			&i.ImgID,
-			&i.ImgUrl,
-			&i.VariantCount,
+			&i.CategoryName,
+			&i.CategoryID,
+			&i.BrandID,
+			&i.BrandName,
+			&i.Attributes,
 		); err != nil {
 			return nil, err
 		}
@@ -621,10 +591,12 @@ LEFT JOIN LATERAL (
 ) AS first_img ON true
 WHERE
     p.is_active = COALESCE($3, p.is_active) 
-    AND (p.name ILIKE COALESCE($4, p.name) OR p.base_sku ILIKE COALESCE($4, p.base_sku) OR p.description ILIKE COALESCE($4, p.description))
+    AND (p.name ILIKE COALESCE($4, p.name) OR 
+        p.base_sku ILIKE COALESCE($4, p.base_sku) OR 
+        p.description ILIKE COALESCE($4, p.description))
     -- 
     AND (ARRAY_LENGTH($5::uuid[], 1) IS NULL OR p.category_id = ANY($5::uuid[]))
-    AND (ARRAY_LENGTH($6::uuid[], 1) IS NULL OR p.collection_id = ANY($6::uuid[]))
+    AND p.collection_id = COALESCE($6, p.collection_id)
     AND p.brand_id = COALESCE($7, p.brand_id)
     AND p.slug ILIKE COALESCE($8, p.slug)
 GROUP BY
@@ -640,7 +612,7 @@ type GetProductsParams struct {
 	IsActive     *bool       `json:"is_active"`
 	Search       *string     `json:"search"`
 	CategoryIds  []uuid.UUID `json:"category_ids"`
-	CollectionID []uuid.UUID `json:"collection_id"`
+	CollectionID pgtype.UUID `json:"collection_id"`
 	BrandID      pgtype.UUID `json:"brand_id"`
 	Slug         *string     `json:"slug"`
 	Orderby      string      `json:"orderby"`

@@ -1,19 +1,17 @@
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { apiFetchServerSide } from '@/app/lib/apis/apiServer';
-import {
-  CollectionDetailModel,
-  Pagination,
-  ProductDetailModel,
-} from '@/app/lib/definitions';
-import { Metadata } from 'next';
-import Image from 'next/image';
+import { Pagination, ProductDetailModel } from '@/app/lib/definitions';
 import ProductGrid from '@/components/Product/ProductGrid';
-import { notFound } from 'next/navigation';
-import { cache } from 'react';
+// Import the CategoryFilter component
+import { CheckboxGroup } from './components/CategoryFilter';
+import { collectionBySlugCache } from './layout';
 
 // Define the search params type
 type SearchParams = {
   page?: string;
+  category?: string;
+  brand?: string;
+  attribute?: string;
 };
 
 // Define the params type
@@ -21,74 +19,41 @@ type Params = {
   slug: string;
 };
 
-// Dynamic metadata generation
-export async function generateMetadata({
-  params,
-}: {
-  params: Params;
-}): Promise<Metadata> {
-  try {
-    const collection = await collectionBySlugCache(params.slug);
-
-    return {
-      title: `${collection.name} Collection | eShop`,
-      description:
-        collection.description ||
-        `Browse the ${collection.name} collection at eShop.`,
-      openGraph: {
-        title: `${collection.name} Collection | eShop`,
-        description:
-          collection.description ||
-          `Browse the ${collection.name} collection at eShop.`,
-        images: collection.image_url
-          ? [
-              {
-                url: collection.image_url,
-                width: 1200,
-                height: 630,
-                alt: `${collection.name} Collection`,
-              },
-            ]
-          : [],
-      },
-    };
-  } catch (error) {
-    return {
-      title: 'Collection | eShop',
-      description: 'Explore our curated collections',
-    };
-  }
-}
-
-async function getCollectionBySlug(
-  slug: string
-): Promise<CollectionDetailModel> {
-  const result = await apiFetchServerSide<CollectionDetailModel>(
-    PUBLIC_API_PATHS.COLLECTION.replace(':slug', slug)
-  );
-  if (result.error) {
-    throw new Error(result.error.details, {
-      cause: result.error,
-    });
-  }
-  if (!result.data || result.error) {
-    notFound();
-  }
-
-  return result.data;
-}
-const collectionBySlugCache = cache(getCollectionBySlug);
-
 async function getCollectionProducts(
   slug: string,
   page = 1,
-  pageSize = 12
+  pageSize = 12,
+  categorySlug?: string,
+  brandSlug?: string,
+  attributeSlug?: string
 ): Promise<{
   data: ProductDetailModel[];
   pagination: Pagination;
 }> {
+  const queryParams: Record<string, string> = {
+    collections: slug,
+  };
+
+  // Add category filter if provided
+  if (categorySlug) {
+    queryParams.category = categorySlug;
+  }
+
+  // Add brand filter if provided
+  if (brandSlug) {
+    queryParams.brand = brandSlug;
+  }
+
+  // Add attribute filter if provided
+  if (attributeSlug) {
+    queryParams.attribute = attributeSlug;
+  }
+
   const result = await apiFetchServerSide<ProductDetailModel[]>(
-    `${PUBLIC_API_PATHS.COLLECTION_PRODUCTS.replace(':slug', slug)}?page=${page}&page_size=${pageSize}`
+    `${PUBLIC_API_PATHS.PRODUCTS}?page=${page}&page_size=${pageSize}`,
+    {
+      queryParams,
+    }
   );
 
   return {
@@ -109,76 +74,121 @@ export default async function CollectionDetailPage({
   searchParams,
 }: {
   params: Promise<Params>;
-  searchParams: SearchParams;
+  searchParams: Promise<SearchParams>;
 }) {
   const { slug } = await params;
-  const currentPage = searchParams.page ? Number(searchParams.page) : 1;
+  const queries = await searchParams;
+  const currentPage = queries.page ? Number(queries.page) : 1;
+  const categoryFilter = queries.category || undefined;
+  const brandFilter = queries.brand || undefined;
+  const attributeFilter = queries.attribute || undefined;
   const pageSize = 12; // 3x4 grid
 
   // Fetch collection details and products
-  const collection = await collectionBySlugCache(slug);
+  const { categories, brands, attributes } = await collectionBySlugCache(slug);
+  console.log(attributes, 'attributes');
   const { data: products, pagination } = await getCollectionProducts(
     slug,
     currentPage,
-    pageSize
+    pageSize,
+    categoryFilter,
+    brandFilter,
+    attributeFilter
   );
 
+  // Prepare filter indicators
+  const activeCategory = categoryFilter
+    ? categories.find((c) => c.id === categoryFilter)
+    : null;
+
+  const activeBrand = brandFilter
+    ? brands.find((b) => b.id === brandFilter)
+    : null;
+
+  // Parse the attribute filter which should be in format "attributeKey:valueId"
+  let activeAttribute = null;
+  if (attributeFilter && attributeFilter.includes(':')) {
+    const [attributeKey, valueId] = attributeFilter.split(':');
+    
+    // Check if this attribute key exists in our attributes object
+    if (attributes[attributeKey]) {
+      // Find the specific value within that attribute's values
+      const value = attributes[attributeKey].find(v => v.id === valueId);
+      if (value) {
+        activeAttribute = {
+          key: attributeKey,
+          value: value
+        };
+      }
+    }
+  }
+
+  // Check if any filters are active
+  const hasActiveFilters = activeCategory || activeBrand || activeAttribute;
+
   return (
-    <div className='container mx-auto px-4 py-8'>
-      {/* Collection Hero Section */}
-      <div className='relative mb-12 h-[40vh] min-h-[400px] rounded-2xl overflow-hidden'>
-        {collection.image_url ? (
-          <Image
-            src={collection.image_url}
-            alt={collection.name}
-            fill
-            priority
-            className='object-cover'
-            sizes='100vw'
-          />
-        ) : (
-          <div className='w-full h-full bg-gradient-to-r from-blue-600 to-indigo-800'></div>
-        )}
-
-        {/* Overlay */}
-        <div className='absolute inset-0 bg-gradient-to-t from-black/80 to-black/30'></div>
-
-        {/* Content */}
-        <div className='absolute inset-0 flex flex-col justify-end p-8 md:p-16'>
-          <div className='max-w-3xl'>
-            <h1 className='text-3xl md:text-5xl font-bold text-white mb-4 tracking-tight'>
-              {collection.name}
-            </h1>
-            <p className='text-gray-200 text-lg md:text-xl mb-4 max-w-2xl'>
-              {collection.description ||
-                `Explore our ${collection.name} collection.`}
-            </p>
-          </div>
-        </div>
+    <div className='flex flex-col lg:flex-row gap-6'>
+      {/* Filter Panel */}
+      <div className='lg:w-64 shrink-0'>
+        <CheckboxGroup
+          categories={categories}
+          brands={brands}
+          attributes={attributes}
+        />
       </div>
 
-      {/* Product Grid */}
-      <div className='my-8'>
-        <h2 className='text-2xl font-semibold mb-6'>
-          Products in this Collection
-        </h2>
+      {/* Content Area */}
+      <div className='flex-1'>
+        {/* Product Grid */}
+        <div>
+          <div className='flex flex-col sm:flex-row sm:items-center justify-between mb-6'>
+            <h2 className='text-2xl font-semibold'>
+              {hasActiveFilters ? 'Filtered Products' : 'All Products'}
+            </h2>
 
-        {products.length > 0 ? (
-          <ProductGrid
-            products={products}
-            pagination={pagination}
-            basePath={`/collections/${slug}`}
-          />
-        ) : (
-          <div className='text-center py-16 bg-gray-50 rounded-lg'>
-            <h3 className='text-xl font-medium text-gray-600'>
-              No products found in this collection
-            </h3>
-            <p className='text-gray-500 mt-2'>
-              Check back later for new additions.
-            </p>
+            {/* Filter indicators */}
+            {hasActiveFilters && (
+              <div className='mt-2 sm:mt-0 flex items-center flex-wrap gap-2 text-sm text-gray-500'>
+                <span>Filtered by:</span>
+                {activeCategory && (
+                  <span className='bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-xs font-medium flex items-center'>
+                    <span className='mr-1'>Category:</span>{' '}
+                    {activeCategory.name}
+                  </span>
+                )}
+                {activeBrand && (
+                  <span className='bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-medium flex items-center'>
+                    <span className='mr-1'>Brand:</span> {activeBrand.name}
+                  </span>
+                )}
+                {activeAttribute && (
+                  <span className='bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-medium flex items-center'>
+                    <span className='mr-1'>Attribute:</span>{' '}
+                    {`${activeAttribute.key}: ${activeAttribute.value.name}`}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
-        )}
+
+          {products.length > 0 ? (
+            <ProductGrid
+              products={products}
+              pagination={pagination}
+              basePath={`/collections/${slug}`}
+            />
+          ) : (
+            <div className='text-center py-16 bg-gray-50 rounded-lg'>
+              <h3 className='text-xl font-medium text-gray-600'>
+                No products found with the selected filters
+              </h3>
+              <p className='text-gray-500 mt-2'>
+                Try adjusting your filters or check back later for new
+                additions.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -30,7 +30,7 @@ ORDER BY a.id, av.display_order;
 -- name: GetAttributeByName :one
 SELECT * FROM attributes WHERE name = $1 LIMIT 1;
 
--- name: GetAttributeByIDs :many
+-- name: GetAttributesByIDs :many
 SELECT * FROM attributes WHERE id = ANY(sqlc.arg(ids)::uuid[]) ORDER BY attributes.id;
 
 -- name: UpdateAttribute :one
@@ -55,8 +55,12 @@ SELECT * FROM attribute_values WHERE attribute_id = $1 ORDER BY attribute_values
 -- name: GetAttributeValuesByIDs :many
 SELECT * FROM attribute_values WHERE id = ANY(sqlc.arg(ids)::uuid[]) ORDER BY attribute_values.id;
 
--- name: GetAttrValuesByAttrIDs :many
-SELECT * FROM attribute_values WHERE attribute_id = ANY(sqlc.arg(ids)::uuid[]) ORDER BY attribute_values.id;
+-- name: GetAttributeWithValuesByIDs :many
+SELECT att.name as attribute_name, att.id as attribute_id, atv.name as attribute_value_name, atv.id as attribute_value_id 
+FROM attributes as att
+LEFT JOIN attribute_values as atv ON att.id = atv.attribute_id
+WHERE attribute_id = ANY(sqlc.arg(ids)::uuid[]) 
+ORDER BY atv.id;
 
 -- name: UpdateAttributeValue :one
 UPDATE 

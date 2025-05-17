@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
 // ------------------------------------------ Request and Response ------------------------------------------
@@ -22,12 +21,22 @@ type getCollectionsQueries struct {
 type CollectionProductRequest struct {
 	SortOrder int16 `json:"sort_order,omitempty"`
 }
+type FiltersModel struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+type CollectionDetailResponse struct {
+	Collection CategoryResponse          `json:"collection"`
+	Categories []FiltersModel            `json:"categories"`
+	Brands     []FiltersModel            `json:"brands"`
+	Attributes map[string][]FiltersModel `json:"attributes"`
+}
 
 // ------------------------------------------ API Handlers ------------------------------------------
 
 // --- Public API ---
 
-// getCollectionHandler retrieves a list of Collections.
+// getCollectionBySlugHandler retrieves a list of Collections.
 // @Summary Get a list of Collections
 // @Description Get a list of Collections
 // @ID get-Shop-Collection-by-slug
@@ -38,25 +47,15 @@ type CollectionProductRequest struct {
 // @Success 200 {object} ApiResponse[CategoryResponse]
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
-// @Router /shop/collections/{slug} [get]
-func (sv *Server) getCollectionHandler(c *gin.Context) {
+// @Router /collections/{slug} [get]
+func (sv *Server) getCollectionBySlugHandler(c *gin.Context) {
 	var param SlugParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
 		return
 	}
-	var query PaginationQueryParams
-	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
-		return
-	}
-	var category repository.Collection
-	var err error
-	if id, pErr := uuid.Parse(param.Slug); pErr == nil {
-		category, err = sv.repo.GetCollectionByID(c, id)
-	} else {
-		category, err = sv.repo.GetCollectionBySlug(c, param.Slug)
-	}
+
+	collection, err := sv.repo.GetCollectionBySlug(c, param.Slug)
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
@@ -67,94 +66,111 @@ func (sv *Server) getCollectionHandler(c *gin.Context) {
 		return
 	}
 
-	resp := CategoryResponse{
-		ID:          category.ID.String(),
-		Name:        category.Name,
-		Description: category.Description,
-		Slug:        category.Slug,
-		ImageUrl:    category.ImageUrl,
-		CreatedAt:   category.CreatedAt.String(),
-	}
-	c.JSON(http.StatusOK, createSuccessResponse(c, resp, "", nil, nil))
-}
+	filters, err := sv.repo.GetFilterListForCollectionID(c, collection.ID)
 
-// getCollectionProductsHandler retrieves a list of Products in a Collection.
-// @Summary Get a list of Products in a Collection
-// @Description Get a list of Products in a Collection
-// @ID get-Shop-Collection-Products-by-slug
-// @Accept json
-// @Tags Collections
-// @Produce json
-// @Param slug path string true "Collection slug"
-// @Param request body CollectionProductRequest true "Collection info"
-// @Success 200 {object} ApiResponse[ProductListModel]
-// @Failure 400 {object} gin.H
-// @Failure 500 {object} gin.H
-// @Router /shop/collections/{slug}/products [get]
-func (sv *Server) getCollectionProductsHandler(c *gin.Context) {
-	var param SlugParam
-	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](InvalidBodyCode, "", err))
-		return
+	collectionResp := CollectionDetailResponse{
+		Collection: CategoryResponse{
+			ID:          collection.ID.String(),
+			Name:        collection.Name,
+			Description: collection.Description,
+			Slug:        collection.Slug,
+			ImageUrl:    collection.ImageUrl,
+			CreatedAt:   collection.CreatedAt.String(),
+			Published:   collection.Published,
+			UpdatedAt:   collection.UpdatedAt.String(),
+		},
+		Categories: make([]FiltersModel, 0),
+		Brands:     make([]FiltersModel, 0),
+		Attributes: make(map[string][]FiltersModel),
 	}
-	var query PaginationQueryParams
-	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](InvalidBodyCode, "", err))
-		return
-	}
-
-	var req CollectionProductRequest
-	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](InvalidBodyCode, "", err))
-		return
-	}
-
-	colID, err := sv.repo.GetCollectionBySlug(c, param.Slug)
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[ProductListModel](NotFoundCode, "", fmt.Errorf("collection with slug %s not found", param.Slug)))
-			return
+	listAttrs := make([]uuid.UUID, 0)
+	for _, row := range filters {
+		if row.CategoryID.Valid {
+			idx := -1
+			id, _ := uuid.FromBytes(row.CategoryID.Bytes[:])
+			for i, c := range collectionResp.Categories {
+				if c.ID == id.String() {
+					idx = i
+					break
+				}
+			}
+			if idx == -1 {
+				collectionResp.Categories = append(collectionResp.Categories, FiltersModel{
+					ID:   id.String(),
+					Name: *row.CategoryName,
+				})
+			}
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](InternalServerErrorCode, "", err))
-		return
-	}
+		if row.BrandID.Valid {
+			id, _ := uuid.FromBytes(row.BrandID.Bytes[:])
+			idx := -1
+			for i, b := range collectionResp.Brands {
+				if b.ID == id.String() {
+					idx = i
+					break
+				}
+			}
+			if idx == -1 {
+				collectionResp.Brands = append(collectionResp.Brands, FiltersModel{
+					ID:   id.String(),
+					Name: *row.BrandName,
+				})
+			}
+		}
 
-	getProductsParams := repository.GetProductsParams{
-		CollectionID: []uuid.UUID{colID.ID},
-		IsActive:     utils.BoolPtr(true),
-		Limit:        int64(query.PageSize),
-		Offset:       int64((query.Page - 1) * query.PageSize),
+		if len(row.Attributes) > 0 {
+			for _, attr := range row.Attributes {
+				idx := -1
+				for i, a := range listAttrs {
+					if a == attr {
+						idx = i
+						break
+					}
+				}
+				if idx == -1 {
+					listAttrs = append(listAttrs, attr)
+				}
+			}
+		}
 	}
-
-	productRows, err := sv.repo.GetProducts(c, getProductsParams)
+	attributes, err := sv.repo.GetAttributeWithValuesByIDs(c, listAttrs)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
 		return
 	}
 
-	cnt, err := sv.repo.CountProducts(c, repository.CountProductsParams{
-		IsActive:     utils.BoolPtr(true),
-		Name:         nil,
-		CollectionID: utils.GetPgTypeUUID(colID.ID),
-	})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListModel](InternalServerErrorCode, "", err))
-		return
+	for _, attr := range attributes {
+		if !attr.AttributeValueID.Valid {
+			continue
+		}
+
+		id, _ := uuid.FromBytes(attr.AttributeValueID.Bytes[:])
+		if _, ok := collectionResp.Attributes[attr.AttributeName]; !ok {
+			collectionResp.Attributes[attr.AttributeName] = []FiltersModel{{
+				ID:   id.String(),
+				Name: *attr.AttributeValueName,
+			}}
+
+		}
+		idx := -1
+		for i, a := range collectionResp.Attributes[attr.AttributeName] {
+			if a.ID == id.String() {
+				idx = i
+				break
+			}
+		}
+		if idx == -1 {
+			collectionResp.Attributes[attr.AttributeName] = append(collectionResp.Attributes[attr.AttributeName], FiltersModel{
+				ID:   id.String(),
+				Name: *attr.AttributeValueName,
+			})
+		}
 	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(
-		c,
-		productRows,
-		"products",
-		&Pagination{
-			Page:            query.Page,
-			PageSize:        query.PageSize,
-			Total:           cnt,
-			TotalPages:      cnt / int64(query.PageSize),
-			HasNextPage:     cnt > int64(query.Page*query.PageSize),
-			HasPreviousPage: query.Page > 1,
-		}, nil,
-	))
+	if collection.Remarkable != nil {
+		collectionResp.Collection.Remarkable = *collection.Remarkable
+	}
+	c.JSON(http.StatusOK, createSuccessResponse(c, collectionResp, "", nil, nil))
 }
 
 // --- Admin API ---
@@ -284,7 +300,7 @@ func (sv *Server) getCollectionByIDHandler(c *gin.Context) {
 		return
 	}
 
-	rows, err := sv.repo.GetCollectionByIDWithProducts(c, uuid.MustParse(param.ID))
+	collection, err := sv.repo.GetCollectionByID(c, uuid.MustParse(param.ID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, createErrorResponse[CategoryResponse](NotFoundCode, "", fmt.Errorf("collection with ID %s not found", param.ID)))
@@ -294,40 +310,19 @@ func (sv *Server) getCollectionByIDHandler(c *gin.Context) {
 		return
 	}
 
-	firstRow := rows[0]
 	colResp := CategoryResponse{
-		ID:          firstRow.ID.String(),
-		Slug:        firstRow.Slug,
-		Description: firstRow.Description,
-		Published:   firstRow.Published,
-		Name:        firstRow.Name,
-		ImageUrl:    firstRow.ImageUrl,
-		CreatedAt:   firstRow.CreatedAt.Format("2006-01-02 15:04:05"),
-		UpdatedAt:   firstRow.UpdatedAt.Format("2006-01-02 15:04:05"),
+		ID:          collection.ID.String(),
+		Slug:        collection.Slug,
+		Description: collection.Description,
+		Published:   collection.Published,
+		Name:        collection.Name,
+		ImageUrl:    collection.ImageUrl,
+		CreatedAt:   collection.CreatedAt.Format("2006-01-02 15:04:05"),
+		UpdatedAt:   collection.UpdatedAt.Format("2006-01-02 15:04:05"),
 		Products:    []CategoryLinkedProduct{},
 	}
-	if firstRow.Remarkable != nil {
-		colResp.Remarkable = *firstRow.Remarkable
-	}
-
-	getProductsParams := repository.GetLinkedProductsByCategoryParams{
-		CollectionID: utils.GetPgTypeUUID(uuid.MustParse(param.ID)),
-		Limit:        200,
-		Offset:       0,
-	}
-
-	productRows, err := sv.repo.GetLinkedProductsByCategory(c, getProductsParams)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[[]ProductListModel](InternalServerErrorCode, "", err))
-		return
-	}
-	for _, row := range productRows {
-		colResp.Products = append(colResp.Products, CategoryLinkedProduct{
-			ID:           row.ID.String(),
-			Name:         row.Name,
-			VariantCount: int32(row.VariantCount),
-			ImageUrl:     &row.ImgUrl,
-		})
+	if collection.Remarkable != nil {
+		colResp.Remarkable = *collection.Remarkable
 	}
 
 	c.JSON(http.StatusOK, createSuccessResponse(c, colResp, "collection", nil, nil))

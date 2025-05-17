@@ -162,90 +162,31 @@ func (sv *Server) getCategoryBySlugHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
 		return
 	}
-	var query PaginationQueryParams
-	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
-		return
-	}
 
 	category, err := sv.repo.GetCategoryBySlug(c, param.Slug)
+
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[CategoryResponse](NotFoundCode, "", fmt.Errorf("category with slug %s not found", param.Slug)))
+			c.JSON(http.StatusNotFound, createErrorResponse[CategoryResponse](InvalidBodyCode, "", fmt.Errorf("category with Slug %s not found", param.Slug)))
 			return
 		}
 		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
 		return
 	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(
-		c,
-		CategoryResponse{
-			ID:          category.ID.String(),
-			Name:        category.Name,
-			Description: category.Description,
-			Slug:        category.Slug,
-			ImageUrl:    category.ImageUrl,
-			CreatedAt:   category.CreatedAt.String(),
-		},
-		"",
-		nil,
-		nil,
-	))
-}
-
-// getCategoryProductsHandler retrieves a list of Products by Category ID.
-// @Summary Get a list of Products by Category ID
-// @Description Get a list of Products by Category ID
-// @ID get-Products-by-Category-ID
-// @Accept json
-// @Tags Categories
-// @Produce json
-// @Param id path string true "Category ID"
-// @Param page_size query int false "Page size"
-// @Success 200 {object} ApiResponse[CategoryResponse]
-// @Failure 400 {object} gin.H
-// @Failure 500 {object} gin.H
-// @Router /categories/{id}/products [get]
-func (sv *Server) getCategoryProductsHandler(c *gin.Context) {
-	var param URIParam
-	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
-		return
-	}
-	var query PaginationQueryParams
-	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
-		return
+	resp := CategoryResponse{
+		ID:          category.ID.String(),
+		Name:        category.Name,
+		Slug:        category.Slug,
+		Published:   category.Published,
+		CreatedAt:   category.CreatedAt.String(),
+		UpdatedAt:   category.UpdatedAt.String(),
+		Description: category.Description,
+		Remarkable:  *category.Remarkable,
+		ImageUrl:    category.ImageUrl,
 	}
 
-	category, err := sv.repo.GetCategoryByID(c, uuid.MustParse(param.ID))
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[CategoryResponse](NotFoundCode, "", fmt.Errorf("category with ID %s not found", param.ID)))
-			return
-		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
-		return
-	}
-
-	productRows, err := sv.repo.GetProducts(c, repository.GetProductsParams{
-		Limit:        query.PageSize,
-		Offset:       (query.Page - 1) * query.PageSize,
-		IsActive:     utils.BoolPtr(true),
-		Search:       nil,
-		CategoryIds:  []uuid.UUID{category.ID},
-		CollectionID: nil,
-		Slug:         nil,
-	})
-
-	c.JSON(http.StatusOK, createSuccessResponse(
-		c,
-		productRows,
-		fmt.Sprintf("Total %d products", len(productRows)),
-		nil,
-		nil,
-	))
+	c.JSON(http.StatusOK, createSuccessResponse(c, resp, "", nil, nil))
 }
 
 // --- Admin API ---
@@ -362,19 +303,7 @@ func (sv *Server) getAdminCategoriesHandler(c *gin.Context) {
 			ImageUrl:    category.ImageUrl,
 		}
 	}
-	c.JSON(http.StatusOK, createSuccessResponse(
-		c,
-		categoriesResp,
-		"",
-		&Pagination{
-			Page:            query.Page,
-			PageSize:        query.PageSize,
-			Total:           count,
-			TotalPages:      count / int64(query.PageSize),
-			HasNextPage:     count > int64(query.Page*query.PageSize),
-			HasPreviousPage: query.Page > 1,
-		}, nil,
-	))
+	c.JSON(http.StatusOK, createSuccessResponse(c, categoriesResp, "", createPagination(query.Page, query.PageSize, count), nil))
 }
 
 // getCategoryByID retrieves a Category by its ID.
@@ -389,7 +318,7 @@ func (sv *Server) getAdminCategoriesHandler(c *gin.Context) {
 // @Failure 400 {object} gin.H
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
-// @Router /categories/{id} [get]
+// @Router /admin/categories/{id} [get]
 func (sv *Server) getCategoryByID(c *gin.Context) {
 	var param URIParam
 	if err := c.ShouldBindUri(&param); err != nil {
@@ -397,7 +326,7 @@ func (sv *Server) getCategoryByID(c *gin.Context) {
 		return
 	}
 
-	result, err := sv.repo.GetCategoryByID(c, uuid.MustParse(param.ID))
+	category, err := sv.repo.GetCategoryByID(c, uuid.MustParse(param.ID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, createErrorResponse[CategoryResponse](InvalidBodyCode, "", fmt.Errorf("category with ID %s not found", param.ID)))
@@ -408,36 +337,15 @@ func (sv *Server) getCategoryByID(c *gin.Context) {
 	}
 
 	resp := CategoryResponse{
-		ID:          result.ID.String(),
-		Name:        result.Name,
-		Slug:        result.Slug,
-		Published:   result.Published,
-		CreatedAt:   result.CreatedAt.String(),
-		UpdatedAt:   result.UpdatedAt.String(),
-		Description: result.Description,
-		Remarkable:  *result.Remarkable,
-		ImageUrl:    result.ImageUrl,
-	}
-
-	getProductsParams := repository.GetLinkedProductsByCategoryParams{
-		CategoryID: utils.GetPgTypeUUID(uuid.MustParse(param.ID)),
-		Limit:      200,
-		Offset:     0,
-	}
-
-	productRows, err := sv.repo.GetLinkedProductsByCategory(c, getProductsParams)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[[]ProductListModel](InternalServerErrorCode, "", err))
-		return
-	}
-
-	for _, row := range productRows {
-		resp.Products = append(resp.Products, CategoryLinkedProduct{
-			ID:           row.ID.String(),
-			Name:         row.Name,
-			VariantCount: int32(row.VariantCount),
-			ImageUrl:     &row.ImgUrl,
-		})
+		ID:          category.ID.String(),
+		Name:        category.Name,
+		Slug:        category.Slug,
+		Published:   category.Published,
+		CreatedAt:   category.CreatedAt.String(),
+		UpdatedAt:   category.UpdatedAt.String(),
+		Description: category.Description,
+		Remarkable:  *category.Remarkable,
+		ImageUrl:    category.ImageUrl,
 	}
 
 	c.JSON(http.StatusOK, createSuccessResponse(c, resp, "", nil, nil))

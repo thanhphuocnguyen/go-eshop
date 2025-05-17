@@ -384,7 +384,7 @@ func (sv *Server) getBrandsHandler(c *gin.Context) {
 // @Success 200 {object} ApiResponse[CategoryResponse]
 // @Failure 400 {object} ApiResponse[gin.H]
 // @Failure 500 {object} ApiResponse[gin.H]
-// @Router /brands/{id} [get]
+// @Router /admin/brands/{id} [get]
 func (sv *Server) getBrandByIDHandler(c *gin.Context) {
 	var param URIParam
 	if err := c.ShouldBindUri(&param); err != nil {
@@ -412,28 +412,6 @@ func (sv *Server) getBrandByIDHandler(c *gin.Context) {
 		UpdatedAt:   result.UpdatedAt.Format("2006-01-02 15:04:05"),
 		ImageUrl:    result.ImageUrl,
 		Remarkable:  *result.Remarkable,
-		Products:    []CategoryLinkedProduct{},
-	}
-
-	getProductsParams := repository.GetLinkedProductsByCategoryParams{
-		BrandID: utils.GetPgTypeUUID(uuid.MustParse(param.ID)),
-		Limit:   200,
-		Offset:  0,
-	}
-
-	productRows, err := sv.repo.GetLinkedProductsByCategory(c, getProductsParams)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
-		return
-	}
-
-	for _, row := range productRows {
-		colResp.Products = append(colResp.Products, CategoryLinkedProduct{
-			ID:           row.ID.String(),
-			Name:         row.Name,
-			VariantCount: int32(row.VariantCount),
-			ImageUrl:     &row.ImgUrl,
-		})
 	}
 
 	c.JSON(http.StatusOK, createSuccessResponse(c, colResp, "", nil, nil))
