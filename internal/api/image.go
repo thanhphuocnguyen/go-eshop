@@ -29,10 +29,6 @@ type AssignmentRequest struct {
 	VariantIDs []string `json:"variant_ids" binding:"required"`
 }
 
-type EntityIDParam struct {
-	EntityID string `uri:"entity_id" binding:"required,uuid"`
-}
-
 type ProductVariantImageModel struct {
 	ID        string `json:"id"`
 	VariantID string `json:"variant_id,omitempty"`
@@ -64,7 +60,7 @@ type ImageResponse struct {
 // @Failure 500 {object} gin.H
 // @Router /images/product/{product_id} [post]
 func (sv *Server) uploadProductImagesHandler(c *gin.Context) {
-	var param EntityIDParam
+	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[[]ImageResponse](InvalidBodyCode, "", err))
 		return
@@ -111,7 +107,7 @@ func (sv *Server) uploadProductImagesHandler(c *gin.Context) {
 	}
 
 	existingProduct, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{
-		ID: uuid.MustParse(param.EntityID),
+		ID: uuid.MustParse(param.ID),
 	})
 
 	if err != nil {
@@ -222,13 +218,13 @@ func (sv *Server) uploadProductImagesHandler(c *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /images/product/{product_id} [get]
 func (sv *Server) getProductImagesHandler(c *gin.Context) {
-	var param EntityIDParam
+	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[ImageResponse](InvalidBodyCode, "", err))
 		return
 	}
 
-	images, err := sv.repo.GetImagesByEntityID(c, uuid.MustParse(param.EntityID))
+	images, err := sv.repo.GetImagesByEntityID(c, uuid.MustParse(param.ID))
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[ImageResponse](InternalServerErrorCode, fmt.Sprintf("server error"), err))

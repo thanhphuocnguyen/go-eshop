@@ -136,7 +136,7 @@ func (sv *Server) updateUserHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, createSuccessResponse(c, updatedUser, "", nil, nil))
 }
 
-// getUserHandler godoc
+// getCurrentUserHandler godoc
 // @Summary Get user info
 // @Description Get user info
 // @Tags users
@@ -146,7 +146,7 @@ func (sv *Server) updateUserHandler(c *gin.Context) {
 // @Failure 404 {object} ApiResponse[UserResponse]
 // @Failure 500 {object} ApiResponse[UserResponse]
 // @Router /users [get]
-func (sv *Server) getUserHandler(c *gin.Context) {
+func (sv *Server) getCurrentUserHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", errors.New("authorization payload is not provided")))
@@ -238,6 +238,39 @@ func (sv *Server) getUsersHandler(c *gin.Context) {
 		HasNextPage:     len(userResp) > int(queries.PageSize),
 		HasPreviousPage: queries.Page > 1,
 	}, nil))
+}
+
+// getUserHandler godoc
+// @Summary Get user info
+// @Description Get user info
+// @Tags Admin
+// @Accept  json
+// @Produce  json
+// @Param id path string true "User ID"
+// @Success 200 {object} ApiResponse[UserResponse]
+// @Failure 400 {object} ApiResponse[UserResponse]
+// @Failure 404 {object} ApiResponse[UserResponse]
+// @Failure 500 {object} ApiResponse[UserResponse]
+// @Router /admin/users/{id} [get]
+func (sv *Server) getUserHandler(c *gin.Context) {
+	var param UriIDParam
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(http.StatusBadRequest, createErrorResponse[UserResponse](InvalidBodyCode, "", err))
+		return
+	}
+
+	user, err := sv.repo.GetUserByID(c, uuid.MustParse(param.ID))
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, createErrorResponse[UserResponse](NotFoundCode, "", err))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", err))
+		return
+	}
+
+	userResp := mapToUserResponse(user)
+	c.JSON(http.StatusOK, createSuccessResponse(c, userResp, "", nil, nil))
 }
 
 // sendVerifyEmailHandler godoc

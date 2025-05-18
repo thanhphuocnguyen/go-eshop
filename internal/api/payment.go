@@ -161,7 +161,7 @@ func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[PaymentResponse]
 // @Router /payment/{id} [get]
 func (sv *Server) getPaymentHandler(c *gin.Context) {
-	var param URIParam
+	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](InvalidBodyCode, "", err))
 		return
@@ -214,7 +214,7 @@ func (sv *Server) getPaymentHandler(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[PaymentResponse]
 // @Router /payment/{payment_id} [get]
 func (sv *Server) changePaymentStatus(c *gin.Context) {
-	var param URIParam
+	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](InvalidBodyCode, "", errors.New("order not found")))
 		return

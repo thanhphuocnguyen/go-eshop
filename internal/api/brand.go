@@ -386,7 +386,7 @@ func (sv *Server) getBrandsHandler(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[gin.H]
 // @Router /admin/brands/{id} [get]
 func (sv *Server) getBrandByIDHandler(c *gin.Context) {
-	var param URIParam
+	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[gin.H](InvalidBodyCode, "", err))
 		return
@@ -411,7 +411,9 @@ func (sv *Server) getBrandByIDHandler(c *gin.Context) {
 		CreatedAt:   result.CreatedAt.Format("2006-01-02 15:04:05"),
 		UpdatedAt:   result.UpdatedAt.Format("2006-01-02 15:04:05"),
 		ImageUrl:    result.ImageUrl,
-		Remarkable:  *result.Remarkable,
+	}
+	if result.Remarkable != nil {
+		colResp.Remarkable = *result.Remarkable
 	}
 
 	c.JSON(http.StatusOK, createSuccessResponse(c, colResp, "", nil, nil))
@@ -431,7 +433,7 @@ func (sv *Server) getBrandByIDHandler(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[CategoryResponse]
 // @Router /brands/{id} [put]
 func (sv *Server) updateBrandHandler(c *gin.Context) {
-	var param URIParam
+	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[gin.H](InvalidBodyCode, "", err))
 		return
@@ -518,7 +520,7 @@ func (sv *Server) updateBrandHandler(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[gin.H]
 // @Router /brands/{id} [delete]
 func (sv *Server) deleteBrand(c *gin.Context) {
-	var colID URIParam
+	var colID UriIDParam
 	if err := c.ShouldBindUri(&colID); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[gin.H](InvalidBodyCode, "", err))
 		return

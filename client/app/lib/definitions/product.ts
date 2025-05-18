@@ -11,6 +11,8 @@ export type ProductListModel = {
   image_url?: string;
   min_price: number;
   max_price: number;
+  avg_rating: number;
+  review_count: number;
   sku: string;
   created_at: Date;
   updated_at: Date;

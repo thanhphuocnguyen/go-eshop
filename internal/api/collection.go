@@ -294,7 +294,7 @@ func (sv *Server) getCollectionsHandler(c *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /admin/collections/{id} [get]
 func (sv *Server) getCollectionByIDHandler(c *gin.Context) {
-	var param URIParam
+	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
 		return
@@ -342,7 +342,7 @@ func (sv *Server) getCollectionByIDHandler(c *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /admin/collections/{id} [put]
 func (sv *Server) updateCollectionHandler(c *gin.Context) {
-	var param URIParam
+	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
 		return
@@ -426,7 +426,7 @@ func (sv *Server) updateCollectionHandler(c *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /admin/collections/{id} [delete]
 func (sv *Server) deleteCollection(c *gin.Context) {
-	var colID URIParam
+	var colID UriIDParam
 	if err := c.ShouldBindUri(&colID); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidBodyCode, "", err))
 		return

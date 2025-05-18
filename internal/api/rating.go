@@ -198,7 +198,7 @@ func (s *Server) postRatingHandler(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[bool]
 // @Router /ratings/{rating_id}/helpful [post]
 func (s *Server) postRatingHelpfulHandler(c *gin.Context) {
-	var param URIParam
+	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(400, createErrorResponse[gin.H](InvalidBodyCode, "invalid request", err))
 		return
@@ -249,7 +249,7 @@ func (s *Server) postRatingHelpfulHandler(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[bool]
 // @Router /ratings/{rating_id}/reply [post]
 func (s *Server) postReplyRatingHandler(c *gin.Context) {
-	var param URIParam
+	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(400, createErrorResponse[gin.H](InvalidBodyCode, "invalid request", err))
 		return
@@ -397,7 +397,7 @@ func (s *Server) getRatingsHandler(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[bool]
 // @Router /ratings/products/{product_id} [get]
 func (s *Server) getRatingsByProductHandler(c *gin.Context) {
-	var param URIParam
+	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(400, createErrorResponse[bool](InvalidBodyCode, "invalid request", err))
 		return
@@ -528,7 +528,7 @@ func (s *Server) getOrderRatingsHandler(c *gin.Context) {
 
 // @Summary Delete a rating
 // @Description Delete a product rating by ID
-// @Tags admin, ratings
+// @Tags Admin, ratings
 // @Accept json
 // @Produce json
 // @Param id path string true "Rating ID"
@@ -579,7 +579,7 @@ func (sv *Server) deleteRatingHandler(c *gin.Context) {
 
 // @Summary Approve a rating
 // @Description Approve a product rating by ID
-// @Tags admin, ratings
+// @Tags Admin, ratings
 // @Accept json
 // @Produce json
 // @Param id path string true "Rating ID"
@@ -637,7 +637,7 @@ func (sv *Server) approveRatingHandler(c *gin.Context) {
 
 // @Summary Ban a user from rating
 // @Description Ban a user from rating by setting their rating to invisible
-// @Tags admin, ratings
+// @Tags Admin, ratings
 // @Accept json
 // @Produce json
 // @Param id path string true "Rating ID"

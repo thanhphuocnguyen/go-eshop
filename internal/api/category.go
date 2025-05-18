@@ -320,7 +320,7 @@ func (sv *Server) getAdminCategoriesHandler(c *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /admin/categories/{id} [get]
 func (sv *Server) getCategoryByID(c *gin.Context) {
-	var param URIParam
+	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
 		return
@@ -365,7 +365,7 @@ func (sv *Server) getCategoryByID(c *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /admin/categories/{id} [put]
 func (sv *Server) updateCategoryHandler(c *gin.Context) {
-	var param URIParam
+	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
 		return
@@ -458,7 +458,7 @@ func (sv *Server) updateCategoryHandler(c *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /admin/categories/{id} [delete]
 func (sv *Server) deleteCategoryHandler(c *gin.Context) {
-	var param URIParam
+	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidBodyCode, "", err))
 		return

@@ -32,6 +32,10 @@ const OrderItemRating = dynamic(() => import('./_components/OrderItemRating'), {
   ssr: true,
 });
 
+const CancelOrderButton = dynamic(() => import('./_components/CancelOrderButton'), {
+  ssr: true,
+});
+
 export const getOrderDetails = cache(async (id: string) => {
   const order = await apiFetchServerSide<OrderModel>(
     PUBLIC_API_PATHS.ORDER_DETAIL.replace(':id', id),
@@ -97,6 +101,11 @@ export default async function Page({ params }: Props) {
   const isSpecialStatus =
     orderDetail.status === OrderStatus.Cancelled ||
     orderDetail.status === OrderStatus.Refunded;
+
+  // Check if order can be cancelled (Pending status and not paid)
+  const canCancel = 
+    orderDetail.status === OrderStatus.Pending && 
+    (!orderDetail.payment_info || orderDetail.payment_info.status !== 'paid');
 
   return (
     <div className='h-full container mx-auto my-20'>
@@ -208,10 +217,17 @@ export default async function Page({ params }: Props) {
                 Order {orderDetail.status}
               </span>
             ) : (
-              <span>
-                Last update:{' '}
-                {dayjs(orderDetail.created_at).format('MMMM DD, YYYY')}
-              </span>
+              <div className="flex justify-between items-center">
+                <span>
+                  Last update:{' '}
+                  {dayjs(orderDetail.created_at).format('MMMM DD, YYYY')}
+                </span>
+                
+                {/* Add cancel button for orders that can be cancelled */}
+                {canCancel && (
+                  <CancelOrderButton orderId={orderDetail.id} />
+                )}
+              </div>
             )}
           </div>
 

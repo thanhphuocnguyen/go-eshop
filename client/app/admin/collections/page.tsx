@@ -1,13 +1,13 @@
 'use client';
 
-import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
+import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import Link from 'next/link';
 import { Button } from '@headlessui/react';
 import dayjs from 'dayjs';
 import useSWR from 'swr';
 import { toast } from 'react-toastify';
 import Image from 'next/image';
-import { GeneralCategoryModel, GenericResponse } from '@/app/lib/definitions';
+import { GeneralCategoryModel } from '@/app/lib/definitions';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/Common/Dialogs/ConfirmDialog';
 import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
@@ -21,9 +21,9 @@ export default function Page() {
     isLoading,
     mutate,
   } = useSWR(
-    ADMIN_API_PATHS.COLLECTIONS,
+    PUBLIC_API_PATHS.COLLECTIONS,
     (url) =>
-      apiFetchClientSide<GenericResponse<GeneralCategoryModel[]>>(url, {}).then(
+      apiFetchClientSide<GeneralCategoryModel[]>(url, {}).then(
         (data) => data.data
       ),
     {
@@ -35,8 +35,8 @@ export default function Page() {
 
   async function handleDelete() {
     if (selectedCollection) {
-      const response = await apiFetchClientSide(
-        ADMIN_API_PATHS.COLLECTIONS + '/' + selectedCollection.id,
+      const response = await apiFetchClientSide<boolean>(
+        PUBLIC_API_PATHS.COLLECTION.replace(':slug', selectedCollection.id),
         {
           method: 'DELETE',
           headers: {
@@ -44,7 +44,7 @@ export default function Page() {
           },
         }
       );
-      if (!response.ok) {
+      if (response.error) {
         toast('Failed to delete collection', { type: 'error' });
         return;
       }

@@ -1,75 +1,114 @@
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
-import { GeneralCategoryModel } from '@/app/lib/definitions';
-import { Metadata } from 'next';
-import CategoryDetailClient from './_components/CategoryDetailClient';
-import { cache } from 'react';
 import { apiFetchServerSide } from '@/app/lib/apis/apiServer';
+import { ProductListModel } from '@/app/lib/definitions';
+import CategoryProducts from './_components/CategoryProducts';
+import CategoryFilters from './_components/CategoryFilters';
+import { categoryCache } from './layout';
 
-interface CategoryPageProps {
-  params: Promise<{ slug: string }>;
-}
+// Define the search params type
+type SearchParams = {
+  minPrice?: string;
+  maxPrice?: string;
+  rating?: string;
+  page?: string;
+};
 
-export const getCategory = cache(async (slug: string) => {
-  const { error, data } = await apiFetchServerSide<GeneralCategoryModel>(
-    PUBLIC_API_PATHS.CATEGORY.replace(':slug', slug),
-    {
-      nextOptions: {
-        next: { revalidate: 3600, tags: [`category-${slug}`] }, // Cache for 1 hour
-      },
-    }
+async function getProducts(
+  categoryIds: string,
+  minPrice?: number,
+  maxPrice?: number,
+  rating?: number,
+  page = 1,
+  pageSize = 100
+) {
+  const queryParams: Record<string, string | number> = {
+    category_ids: categoryIds,
+    page,
+    page_size: pageSize,
+  };
+
+  if (minPrice !== undefined) {
+    queryParams.min_price = minPrice;
+  }
+
+  if (maxPrice !== undefined) {
+    queryParams.max_price = maxPrice;
+  }
+
+  if (rating !== undefined) {
+    queryParams.min_rating = rating;
+  }
+
+  const { data, error } = await apiFetchServerSide<ProductListModel[]>(
+    PUBLIC_API_PATHS.PRODUCTS,
+    { queryParams }
   );
+
   if (error) {
-    throw new Error(error.details, {
-      cause: error,
-    });
+    console.error('Failed to fetch products:', error);
+    return [];
   }
-  return data;
-});
 
-// Generate metadata for SEO
-export async function generateMetadata({
-  params,
-}: CategoryPageProps): Promise<Metadata> {
-  const { slug } = await params;
-  // Fetch the category by slug directly
-  try {
-    const category = await getCategory(slug);
-
-    if (!category) {
-      return {
-        title: 'Category Not Found',
-        description: 'The requested category could not be found',
-      };
-    }
-
-    return {
-      title: `${category.name} - Shop by Category`,
-      description:
-        category.description ||
-        `Browse our collection of ${category.name} products`,
-      openGraph: {
-        title: `${category.name} - Shop by Category`,
-        description:
-          category.description ||
-          `Browse our collection of ${category.name} products`,
-        images: category.image_url ? [{ url: category.image_url }] : [],
-      },
-    };
-  } catch (error) {
-    console.error('Error generating metadata:', error);
-    return {
-      title: 'Shop by Category',
-      description: 'Browse our products by category',
-    };
-  }
+  return data || [];
 }
 
-export default async function CategoryDetailPage({
+export default async function CategoryPage({
   params,
-}: CategoryPageProps) {
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<SearchParams>;
+}) {
   const { slug } = await params;
-  const category = await getCategory(slug);
+  const queries = await searchParams;
+  const category = await categoryCache(slug);
 
-  // Pass the fetched data to the client component
-  return <CategoryDetailClient category={category} />;
+  if (!category) {
+    return null; // This should never happen because of the layout check
+  }
+
+  // Parse search params
+  const minPrice = queries.minPrice ? Number(queries.minPrice) : undefined;
+  const maxPrice = queries.maxPrice ? Number(queries.maxPrice) : undefined;
+  const rating = queries.rating ? Number(queries.rating) : undefined;
+  const page = queries.page ? Number(queries.page) : 1;
+  // Fetch products with filters
+  const products = await getProducts(
+    category.id,
+    minPrice,
+    maxPrice,
+    rating,
+    page
+  );
+
+  // Calculate price range for filters
+  let priceRange = { min: 0, max: 10000 };
+
+  if (products.length > 0) {
+    const minProductPrice = Math.min(...products.map((p) => p.min_price));
+    const maxProductPrice = Math.max(...products.map((p) => p.max_price));
+    priceRange = { min: minProductPrice, max: maxProductPrice };
+  }
+
+  return (
+    <div className='flex h-max flex-col lg:flex-row gap-8'>
+      {/* Client-side filters component that controls URL parameters */}
+      <CategoryFilters
+        priceRange={priceRange}
+        minPrice={minPrice}
+        maxPrice={maxPrice}
+        selectedRating={rating}
+        categoryId={category.id}
+      />
+
+      {/* Use the CategoryProducts component correctly */}
+      <CategoryProducts
+        products={products}
+        loadingProducts={false}
+        minPrice={minPrice}
+        maxPrice={maxPrice}
+        selectedRating={rating}
+      />
+    </div>
+  );
 }

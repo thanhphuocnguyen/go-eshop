@@ -1,5 +1,5 @@
 -- Create shipping_methods table
-CREATE TABLE
+CREATE TABLE IF NOT EXISTS
     shipping_methods (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         name VARCHAR(100) NOT NULL,
@@ -13,7 +13,7 @@ CREATE TABLE
     );
 
 -- Create shipping_zones table to handle geographical regions
-CREATE TABLE
+CREATE TABLE IF NOT EXISTS
     shipping_zones (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         name VARCHAR(100) NOT NULL,
@@ -27,7 +27,7 @@ CREATE TABLE
     );
 
 -- Create shipping_rates table for pricing
-CREATE TABLE
+CREATE TABLE IF NOT EXISTS
     shipping_rates (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         shipping_method_id UUID NOT NULL REFERENCES shipping_methods(id) ON DELETE CASCADE,
@@ -44,7 +44,7 @@ CREATE TABLE
     );
 
 -- Create shipping_rate_conditions table for special pricing rules
-CREATE TABLE
+CREATE TABLE IF NOT EXISTS
     shipping_rate_conditions (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         shipping_rate_id UUID NOT NULL REFERENCES shipping_rates(id) ON DELETE CASCADE,
@@ -69,7 +69,7 @@ ADD COLUMN shipping_provider VARCHAR(100),
 ADD COLUMN shipping_notes TEXT;
 
 -- Create a table to track shipment status
-CREATE TABLE
+CREATE TABLE IF NOT EXISTS
     shipments (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
@@ -85,7 +85,7 @@ CREATE TABLE
     );
 
 -- Create table for shipment items
-CREATE TABLE
+CREATE TABLE IF NOT EXISTS
     shipment_items (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         shipment_id UUID NOT NULL REFERENCES shipments(id) ON DELETE CASCADE,

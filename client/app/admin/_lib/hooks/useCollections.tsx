@@ -1,12 +1,12 @@
 import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
-import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
+import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { GeneralCategoryModel } from '@/app/lib/definitions';
 import { toast } from 'react-toastify';
 import useSWR from 'swr';
 
 export function useCollections() {
   const { data, error } = useSWR(
-    ADMIN_API_PATHS.COLLECTIONS,
+    PUBLIC_API_PATHS.COLLECTIONS,
     (url) =>
       apiFetchClientSide<GeneralCategoryModel[]>(url, {}).then((res) => {
         if (res.error) {

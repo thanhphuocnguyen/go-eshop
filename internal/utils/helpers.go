@@ -41,3 +41,13 @@ func CalculateTotalPages(total int64, pageSize int64) int64 {
 func TimeDurationPtr(value time.Duration) *time.Duration {
 	return &value
 }
+
+func GetAvgRating(ratingCnt int32, oneStarCnt,
+	twoStarCnt, threeStarCnt, fourStarCnt, fiveStarCnt int32) float64 {
+	if ratingCnt == 0 {
+		return 0
+	}
+	avg := float64(oneStarCnt*1+twoStarCnt*2+threeStarCnt*3+
+		fourStarCnt*4+fiveStarCnt*5) / float64(ratingCnt)
+	return avg
+}

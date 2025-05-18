@@ -11,6 +11,7 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 		users := admin.Group("users")
 		{
 			users.GET("", sv.getUsersHandler)
+			users.GET(":id", sv.getUserHandler)
 		}
 
 		productGroup := admin.Group("products")
@@ -50,8 +51,8 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 		{
 
 			brands.GET("", sv.getBrandsHandler)
-			brands.POST("", sv.createBrandHandler)
 			brands.GET(":id", sv.getBrandByIDHandler)
+			brands.POST("", sv.createBrandHandler)
 			brands.PUT(":id", sv.updateBrandHandler)
 			brands.DELETE(":id", sv.deleteBrand)
 		}
@@ -68,8 +69,8 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 		images := admin.Group("images")
 		{
 			productImages := images.Group("products")
-			productImages.POST(":entity_id", sv.uploadProductImagesHandler)
-			productImages.DELETE(":entity_id", sv.removeImageHandler)
+			productImages.POST(":id", sv.uploadProductImagesHandler)
+			productImages.DELETE(":id", sv.removeImageHandler)
 		}
 
 		ratings := admin.Group("ratings")
@@ -96,7 +97,7 @@ func (sv *Server) setupAuthRoutes(rg *gin.RouterGroup) {
 func (sv *Server) setupUserRoutes(rg *gin.RouterGroup) {
 	user := rg.Group("user", authMiddleware(sv.tokenGenerator))
 	{
-		user.GET("me", sv.getUserHandler)
+		user.GET("me", sv.getCurrentUserHandler)
 		user.PATCH("me", sv.updateUserHandler)
 		user.POST("send-verify-email", sv.sendVerifyEmailHandler)
 		userAddress := user.Group("addresses")

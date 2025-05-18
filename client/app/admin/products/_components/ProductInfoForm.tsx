@@ -36,6 +36,15 @@ export const ProductInfoForm: React.FC<{
   }, [categories]);
 
   useEffect(() => {
+    if (!productDetail && collections && collections.length > 0) {
+      setValue('product_info.collection', collections[0], {
+        shouldDirty: false,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [collections]);
+
+  useEffect(() => {
     if (!productDetail && brands && brands.length > 0) {
       setValue('product_info.brand', brands[0], {
         shouldDirty: false,

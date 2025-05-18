@@ -6,11 +6,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type ProductDetailParam struct {
+type URISlugParam struct {
 	ID string `uri:"id" binding:"required"`
 }
 
-type URIParam struct {
+type UriIDParam struct {
 	ID string `uri:"id" binding:"required,uuid"`
 }
 

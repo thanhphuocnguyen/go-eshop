@@ -74,7 +74,7 @@ export const registerSchema = z
       phone: z.string().min(10).max(15),
       district: z.string().min(2).max(50),
       ward: z.string().min(1).max(50).optional(),
-    }),
+    }).optional(),
   })
   .superRefine((data) => {
     if (data.password !== data.confirmPassword) {

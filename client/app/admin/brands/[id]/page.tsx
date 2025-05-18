@@ -5,11 +5,9 @@ import { toast } from 'react-toastify';
 import useSWR from 'swr';
 import Link from 'next/link';
 import { ArrowLeftCircleIcon } from '@heroicons/react/24/outline';
-import { GeneralCategoryModel, ProductCategory } from '@/app/lib/definitions';
+import { GeneralCategoryModel } from '@/app/lib/definitions';
 import Loading from '@/app/loading';
 import { CategoryEditForm } from '../../_components/CategoryEditForm';
-import LoadingInline from '@/components/Common/Loadings/LoadingInline';
-import CategoryProductList from '../../_components/CategoryProductList';
 import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
 
 export default function AdminBrandDetail({
@@ -27,19 +25,6 @@ export default function AdminBrandDetail({
     {
       onError: (error) => {
         toast('Failed to fetch brand', { type: 'error', data: error });
-      },
-    }
-  );
-
-  const { data: products, isLoading: isLoadingProducts } = useSWR(
-    ADMIN_API_PATHS.BRAND_PRODUCTS.replace(':id', id),
-    async (url) => {
-      const response = await apiFetchClientSide<ProductCategory[]>(url, {});
-      return response.data;
-    },
-    {
-      onError: (error) => {
-        toast('Failed to fetch products', { type: 'error', data: error });
       },
     }
   );
@@ -80,11 +65,11 @@ export default function AdminBrandDetail({
         handleSave={handleSave}
         title='Brand Detail'
       />
-      {isLoadingProducts ? (
+      {/* {isLoadingProducts ? (
         <LoadingInline />
       ) : (
         <CategoryProductList products={products ?? []} />
-      )}
+      )} */}
     </div>
   );
 }

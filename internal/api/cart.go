@@ -204,7 +204,7 @@ func (sv *Server) getCartHandler(c *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /cart/item/{variant_id} [post]
 func (sv *Server) updateCartItemQtyHandler(c *gin.Context) {
-	var param URIParam
+	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[uuid.UUID](InvalidBodyCode, "", errors.New("invalid variant id")))
 		return

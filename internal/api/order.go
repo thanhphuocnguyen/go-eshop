@@ -393,14 +393,6 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, createErrorResponse[OrderListResponse](UnauthorizedCode, "", errors.New("authorization payload is not provided")))
 		return
 	}
-	user, err := sv.repo.GetUserByID(c, tokenPayload.UserID)
-	if err != nil {
-		if err == repository.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, createErrorResponse[OrderListResponse](NotFoundCode, "", err))
-		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](InternalServerErrorCode, "", err))
-		return
-	}
 	var params OrderIDParams
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[OrderListResponse](InvalidBodyCode, "", err))
@@ -411,6 +403,16 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, createErrorResponse[OrderListResponse](InvalidBodyCode, "", err))
 		return
 	}
+
+	user, err := sv.repo.GetUserByID(c, tokenPayload.UserID)
+	if err != nil {
+		if err == repository.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, createErrorResponse[OrderListResponse](NotFoundCode, "", err))
+		}
+		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](InternalServerErrorCode, "", err))
+		return
+	}
+
 	order, err := sv.repo.GetOrder(c, uuid.MustParse(params.ID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](InternalServerErrorCode, "", err))
@@ -422,8 +424,13 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 		return
 	}
 
+	paymentRow, err := sv.repo.GetPaymentByOrderID(c, order.ID)
+	if err != nil && !errors.Is(err, repository.ErrRecordNotFound) {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](InternalServerErrorCode, "", err))
+	}
+
 	// if order status is not pending or user is not admin
-	if order.Status != repository.OrderStatusPending || user.Role != repository.UserRoleAdmin {
+	if order.Status != repository.OrderStatusPending || (paymentRow != repository.Payment{} && paymentRow.Status != repository.PaymentStatusPending) {
 		c.JSON(http.StatusBadRequest, createErrorResponse[OrderListResponse](PermissionDeniedCode, "", errors.New("order cannot be cancelled")))
 		return
 	}

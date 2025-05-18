@@ -33,13 +33,16 @@ const _apiPaths = {
   PRODUCT_IMAGES_UPLOAD: 'images/product/:id',
   RATING: 'ratings',
   RATING_VOTE: 'ratings/:id/helpful',
+  CANCEL_ORDER: 'orders/:id/cancel',
 } as const;
 
 const _adminPaths = {
   ATTRIBUTES: 'attributes',
+  UPLOADS: 'uploads',
   ATTRIBUTE: 'attributes/:id',
   BRANDS: 'brands',
   BRAND: 'brands/:id',
+  BRAND_PRODUCTS: 'brands/:id/products',
   CATEGORIES: 'categories',
   PRODUCTS: 'products',
   PRODUCT_DETAIL: 'products/:id',

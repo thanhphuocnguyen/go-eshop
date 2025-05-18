@@ -91,18 +91,20 @@ type ProductModel struct {
 }
 
 type ProductListModel struct {
-	ID           string  `json:"id"`
-	Name         string  `json:"name"`
-	Description  string  `json:"description"`
-	VariantCount int64   `json:"variant_count,omitzero"`
-	MinPrice     float64 `json:"min_price,omitzero"`
-	MaxPrice     float64 `json:"max_price,omitzero"`
-	Slug         string  `json:"slug,omitempty"`
-	Sku          string  `json:"sku"`
-	ImgUrl       *string `json:"image_url,omitempty"`
-	ImgID        *string `json:"image_id,omitempty"`
-	CreatedAt    string  `json:"created_at,omitempty"`
-	UpdatedAt    string  `json:"updated_at,omitempty"`
+	ID           string   `json:"id"`
+	Name         string   `json:"name"`
+	Description  string   `json:"description"`
+	VariantCount int64    `json:"variant_count,omitzero"`
+	MinPrice     float64  `json:"min_price,omitzero"`
+	MaxPrice     float64  `json:"max_price,omitzero"`
+	Slug         string   `json:"slug,omitempty"`
+	Sku          string   `json:"sku"`
+	ImgUrl       *string  `json:"image_url,omitempty"`
+	AvgRating    *float64 `json:"avg_rating,omitempty"`
+	ReviewCount  *int32   `json:"review_count,omitempty"`
+	ImgID        *string  `json:"image_id,omitempty"`
+	CreatedAt    string   `json:"created_at,omitempty"`
+	UpdatedAt    string   `json:"updated_at,omitempty"`
 }
 
 type ProductCreateResp struct {
@@ -156,7 +158,7 @@ func (sv *Server) addProductHandler(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[ProductListModel]
 // @Router /products/{product_id} [get]
 func (sv *Server) getProductDetailHandler(c *gin.Context) {
-	var params ProductDetailParam
+	var params URISlugParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[ProductModel](InvalidBodyCode, "", err))
 		return
@@ -301,7 +303,7 @@ func (sv *Server) getProductsHandler(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[ProductListModel]
 // @Router /products/{product_id} [put]
 func (sv *Server) updateProductHandler(c *gin.Context) {
-	var param URIParam
+	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](InvalidBodyCode, "", err))
 		return
@@ -340,7 +342,7 @@ func (sv *Server) updateProductHandler(c *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /products/{product_id} [delete]
 func (sv *Server) deleteProductHandler(c *gin.Context) {
-	var params URIParam
+	var params UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidBodyCode, "", err))
 		return
@@ -598,6 +600,7 @@ func mapToListProductResponse(productRow repository.GetProductsRow) ProductListM
 	if maxPrice.Float64 == 0 {
 		maxPrice = basePrice
 	}
+	avgRating := utils.GetAvgRating(productRow.RatingCount, productRow.OneStarCount, productRow.TwoStarCount, productRow.ThreeStarCount, productRow.FourStarCount, productRow.FiveStarCount)
 	product := ProductListModel{
 		ID:           productRow.ID.String(),
 		Name:         productRow.Name,
@@ -607,6 +610,8 @@ func mapToListProductResponse(productRow repository.GetProductsRow) ProductListM
 		Sku:          productRow.BaseSku,
 		Slug:         productRow.Slug,
 		ImgUrl:       productRow.ImgUrl,
+		AvgRating:    &avgRating,
+		ReviewCount:  &productRow.RatingCount,
 		VariantCount: productRow.VariantCount,
 		CreatedAt:    productRow.CreatedAt.String(),
 		UpdatedAt:    productRow.UpdatedAt.String(),
