@@ -302,7 +302,7 @@ func (q *Queries) GetDefaultAddress(ctx context.Context, userID uuid.UUID) (User
 
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT
-    id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at
+    id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at, locked, avatar_url, avatar_image_id
 FROM
     users
 WHERE
@@ -326,12 +326,15 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.PasswordChangedAt,
 		&i.UpdatedAt,
 		&i.CreatedAt,
+		&i.Locked,
+		&i.AvatarUrl,
+		&i.AvatarImageID,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at FROM users WHERE id = $1 LIMIT 1
+SELECT id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at, locked, avatar_url, avatar_image_id FROM users WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
@@ -350,13 +353,16 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.PasswordChangedAt,
 		&i.UpdatedAt,
 		&i.CreatedAt,
+		&i.Locked,
+		&i.AvatarUrl,
+		&i.AvatarImageID,
 	)
 	return i, err
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
 SELECT
-    id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at
+    id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at, locked, avatar_url, avatar_image_id
 FROM
     users
 WHERE
@@ -380,6 +386,9 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.PasswordChangedAt,
 		&i.UpdatedAt,
 		&i.CreatedAt,
+		&i.Locked,
+		&i.AvatarUrl,
+		&i.AvatarImageID,
 	)
 	return i, err
 }
@@ -423,7 +432,7 @@ func (q *Queries) GetVerifyEmailByVerifyCode(ctx context.Context, verifyCode str
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at FROM users ORDER BY id LIMIT $1 OFFSET $2
+SELECT id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at, locked, avatar_url, avatar_image_id FROM users ORDER BY id LIMIT $1 OFFSET $2
 `
 
 type ListUsersParams struct {
@@ -453,6 +462,9 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 			&i.PasswordChangedAt,
 			&i.UpdatedAt,
 			&i.CreatedAt,
+			&i.Locked,
+			&i.AvatarUrl,
+			&i.AvatarImageID,
 		); err != nil {
 			return nil, err
 		}

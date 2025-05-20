@@ -817,18 +817,21 @@ type ShippingZone struct {
 }
 
 type User struct {
-	ID                uuid.UUID `json:"id"`
-	Role              UserRole  `json:"role"`
-	Username          string    `json:"username"`
-	Email             string    `json:"email"`
-	Phone             string    `json:"phone"`
-	Fullname          string    `json:"fullname"`
-	HashedPassword    string    `json:"hashed_password"`
-	VerifiedEmail     bool      `json:"verified_email"`
-	VerifiedPhone     bool      `json:"verified_phone"`
-	PasswordChangedAt time.Time `json:"password_changed_at"`
-	UpdatedAt         time.Time `json:"updated_at"`
-	CreatedAt         time.Time `json:"created_at"`
+	ID                uuid.UUID   `json:"id"`
+	Role              UserRole    `json:"role"`
+	Username          string      `json:"username"`
+	Email             string      `json:"email"`
+	Phone             string      `json:"phone"`
+	Fullname          string      `json:"fullname"`
+	HashedPassword    string      `json:"hashed_password"`
+	VerifiedEmail     bool        `json:"verified_email"`
+	VerifiedPhone     bool        `json:"verified_phone"`
+	PasswordChangedAt time.Time   `json:"password_changed_at"`
+	UpdatedAt         time.Time   `json:"updated_at"`
+	CreatedAt         time.Time   `json:"created_at"`
+	Locked            bool        `json:"locked"`
+	AvatarUrl         *string     `json:"avatar_url"`
+	AvatarImageID     pgtype.UUID `json:"avatar_image_id"`
 }
 
 type UserAddress struct {

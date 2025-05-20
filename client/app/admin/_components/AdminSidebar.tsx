@@ -11,6 +11,7 @@ import {
   ShoppingCartIcon,
   UsersIcon,
   StarIcon,
+  TagIcon,
 } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -65,6 +66,12 @@ const NavBarItems = [
     icon: ShoppingCartIcon,
     path: '/admin/orders',
     href: '/admin/orders',
+  },
+  {
+    name: 'Discounts',
+    icon: TagIcon,
+    path: '/admin/discounts',
+    href: '/admin/discounts',
   },
   {
     name: 'Ratings',

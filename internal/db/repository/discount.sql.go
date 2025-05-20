@@ -7,180 +7,31 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const addDiscountToCategory = `-- name: AddDiscountToCategory :one
-INSERT INTO discount_categories (
-    id,
-    discount_id,
-    category_id
-) VALUES (
-    $1, $2, $3
-) RETURNING id, discount_id, category_id, created_at
+const deleteDiscount = `-- name: DeleteDiscount :exec
+UPDATE discounts
+SET deleted_at = NOW()
+WHERE id = $1
 `
 
-type AddDiscountToCategoryParams struct {
-	ID         uuid.UUID `json:"id"`
-	DiscountID uuid.UUID `json:"discount_id"`
-	CategoryID uuid.UUID `json:"category_id"`
+func (q *Queries) DeleteDiscount(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteDiscount, id)
+	return err
 }
 
-func (q *Queries) AddDiscountToCategory(ctx context.Context, arg AddDiscountToCategoryParams) (DiscountCategory, error) {
-	row := q.db.QueryRow(ctx, addDiscountToCategory, arg.ID, arg.DiscountID, arg.CategoryID)
-	var i DiscountCategory
-	err := row.Scan(
-		&i.ID,
-		&i.DiscountID,
-		&i.CategoryID,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
-const addDiscountToProduct = `-- name: AddDiscountToProduct :one
-INSERT INTO discount_products (
-    id,
-    discount_id,
-    product_id
-) VALUES (
-    $1, $2, $3
-) RETURNING id, discount_id, product_id, created_at
+const getDiscount = `-- name: GetDiscount :one
+SELECT id, code, description, discount_type, discount_value, min_purchase_amount, max_discount_amount, usage_limit, used_count, is_active, starts_at, expires_at, created_at, updated_at, deleted_at
+FROM discounts
+WHERE id = $1
 `
 
-type AddDiscountToProductParams struct {
-	ID         uuid.UUID `json:"id"`
-	DiscountID uuid.UUID `json:"discount_id"`
-	ProductID  uuid.UUID `json:"product_id"`
-}
-
-func (q *Queries) AddDiscountToProduct(ctx context.Context, arg AddDiscountToProductParams) (DiscountProduct, error) {
-	row := q.db.QueryRow(ctx, addDiscountToProduct, arg.ID, arg.DiscountID, arg.ProductID)
-	var i DiscountProduct
-	err := row.Scan(
-		&i.ID,
-		&i.DiscountID,
-		&i.ProductID,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
-const addDiscountToUser = `-- name: AddDiscountToUser :one
-INSERT INTO discount_users (
-    id,
-    discount_id,
-    user_id
-) VALUES (
-    $1, $2, $3
-) RETURNING id, discount_id, user_id, created_at
-`
-
-type AddDiscountToUserParams struct {
-	ID         uuid.UUID `json:"id"`
-	DiscountID uuid.UUID `json:"discount_id"`
-	UserID     uuid.UUID `json:"user_id"`
-}
-
-func (q *Queries) AddDiscountToUser(ctx context.Context, arg AddDiscountToUserParams) (DiscountUser, error) {
-	row := q.db.QueryRow(ctx, addDiscountToUser, arg.ID, arg.DiscountID, arg.UserID)
-	var i DiscountUser
-	err := row.Scan(
-		&i.ID,
-		&i.DiscountID,
-		&i.UserID,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
-const associateDiscountWithOrder = `-- name: AssociateDiscountWithOrder :one
-INSERT INTO order_discounts (
-    id,
-    order_id,
-    discount_id,
-    discount_amount
-) VALUES (
-    $1, $2, $3, $4
-) RETURNING id, order_id, discount_id, discount_amount, created_at
-`
-
-type AssociateDiscountWithOrderParams struct {
-	ID             uuid.UUID      `json:"id"`
-	OrderID        uuid.UUID      `json:"order_id"`
-	DiscountID     uuid.UUID      `json:"discount_id"`
-	DiscountAmount pgtype.Numeric `json:"discount_amount"`
-}
-
-func (q *Queries) AssociateDiscountWithOrder(ctx context.Context, arg AssociateDiscountWithOrderParams) (OrderDiscount, error) {
-	row := q.db.QueryRow(ctx, associateDiscountWithOrder,
-		arg.ID,
-		arg.OrderID,
-		arg.DiscountID,
-		arg.DiscountAmount,
-	)
-	var i OrderDiscount
-	err := row.Scan(
-		&i.ID,
-		&i.OrderID,
-		&i.DiscountID,
-		&i.DiscountAmount,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
-const createDiscount = `-- name: CreateDiscount :one
-INSERT INTO discounts (
-    id,
-    code,
-    description,
-    discount_type,
-    discount_value,
-    min_purchase_amount,
-    max_discount_amount,
-    usage_limit,
-    used_count,
-    is_active,
-    starts_at,
-    expires_at
-) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
-) RETURNING id, code, description, discount_type, discount_value, min_purchase_amount, max_discount_amount, usage_limit, used_count, is_active, starts_at, expires_at, created_at, updated_at, deleted_at
-`
-
-type CreateDiscountParams struct {
-	ID                uuid.UUID          `json:"id"`
-	Code              string             `json:"code"`
-	Description       *string            `json:"description"`
-	DiscountType      string             `json:"discount_type"`
-	DiscountValue     pgtype.Numeric     `json:"discount_value"`
-	MinPurchaseAmount pgtype.Numeric     `json:"min_purchase_amount"`
-	MaxDiscountAmount pgtype.Numeric     `json:"max_discount_amount"`
-	UsageLimit        *int32             `json:"usage_limit"`
-	UsedCount         *int32             `json:"used_count"`
-	IsActive          *bool              `json:"is_active"`
-	StartsAt          pgtype.Timestamptz `json:"starts_at"`
-	ExpiresAt         pgtype.Timestamptz `json:"expires_at"`
-}
-
-func (q *Queries) CreateDiscount(ctx context.Context, arg CreateDiscountParams) (Discount, error) {
-	row := q.db.QueryRow(ctx, createDiscount,
-		arg.ID,
-		arg.Code,
-		arg.Description,
-		arg.DiscountType,
-		arg.DiscountValue,
-		arg.MinPurchaseAmount,
-		arg.MaxDiscountAmount,
-		arg.UsageLimit,
-		arg.UsedCount,
-		arg.IsActive,
-		arg.StartsAt,
-		arg.ExpiresAt,
-	)
+func (q *Queries) GetDiscount(ctx context.Context, id uuid.UUID) (Discount, error) {
+	row := q.db.QueryRow(ctx, getDiscount, id)
 	var i Discount
 	err := row.Scan(
 		&i.ID,
@@ -202,242 +53,11 @@ func (q *Queries) CreateDiscount(ctx context.Context, arg CreateDiscountParams) 
 	return i, err
 }
 
-const getAvailableDiscountsForCategory = `-- name: GetAvailableDiscountsForCategory :many
-SELECT d.id, d.code, d.description, d.discount_type, d.discount_value, d.min_purchase_amount, d.max_discount_amount, d.usage_limit, d.used_count, d.is_active, d.starts_at, d.expires_at, d.created_at, d.updated_at, d.deleted_at FROM discounts d
-JOIN discount_categories dc ON d.id = dc.discount_id
-WHERE 
-    dc.category_id = $1
-    AND d.is_active = true
-    AND d.starts_at <= NOW()
-    AND d.expires_at > NOW()
-    AND (d.usage_limit IS NULL OR d.used_count < d.usage_limit)
-    AND d.deleted_at IS NULL
-ORDER BY d.created_at DESC
-LIMIT $2 OFFSET $3
-`
-
-type GetAvailableDiscountsForCategoryParams struct {
-	CategoryID uuid.UUID `json:"category_id"`
-	Limit      int64     `json:"limit"`
-	Offset     int64     `json:"offset"`
-}
-
-func (q *Queries) GetAvailableDiscountsForCategory(ctx context.Context, arg GetAvailableDiscountsForCategoryParams) ([]Discount, error) {
-	rows, err := q.db.Query(ctx, getAvailableDiscountsForCategory, arg.CategoryID, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Discount{}
-	for rows.Next() {
-		var i Discount
-		if err := rows.Scan(
-			&i.ID,
-			&i.Code,
-			&i.Description,
-			&i.DiscountType,
-			&i.DiscountValue,
-			&i.MinPurchaseAmount,
-			&i.MaxDiscountAmount,
-			&i.UsageLimit,
-			&i.UsedCount,
-			&i.IsActive,
-			&i.StartsAt,
-			&i.ExpiresAt,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.DeletedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getAvailableDiscountsForProduct = `-- name: GetAvailableDiscountsForProduct :many
-SELECT d.id, d.code, d.description, d.discount_type, d.discount_value, d.min_purchase_amount, d.max_discount_amount, d.usage_limit, d.used_count, d.is_active, d.starts_at, d.expires_at, d.created_at, d.updated_at, d.deleted_at FROM discounts d
-JOIN discount_products dp ON d.id = dp.discount_id
-WHERE 
-    dp.product_id = $1
-    AND d.is_active = true
-    AND d.starts_at <= NOW()
-    AND d.expires_at > NOW()
-    AND (d.usage_limit IS NULL OR d.used_count < d.usage_limit)
-    AND d.deleted_at IS NULL
-ORDER BY d.created_at DESC
-LIMIT $2 OFFSET $3
-`
-
-type GetAvailableDiscountsForProductParams struct {
-	ProductID uuid.UUID `json:"product_id"`
-	Limit     int64     `json:"limit"`
-	Offset    int64     `json:"offset"`
-}
-
-func (q *Queries) GetAvailableDiscountsForProduct(ctx context.Context, arg GetAvailableDiscountsForProductParams) ([]Discount, error) {
-	rows, err := q.db.Query(ctx, getAvailableDiscountsForProduct, arg.ProductID, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Discount{}
-	for rows.Next() {
-		var i Discount
-		if err := rows.Scan(
-			&i.ID,
-			&i.Code,
-			&i.Description,
-			&i.DiscountType,
-			&i.DiscountValue,
-			&i.MinPurchaseAmount,
-			&i.MaxDiscountAmount,
-			&i.UsageLimit,
-			&i.UsedCount,
-			&i.IsActive,
-			&i.StartsAt,
-			&i.ExpiresAt,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.DeletedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getAvailableDiscountsForUser = `-- name: GetAvailableDiscountsForUser :many
-SELECT d.id, d.code, d.description, d.discount_type, d.discount_value, d.min_purchase_amount, d.max_discount_amount, d.usage_limit, d.used_count, d.is_active, d.starts_at, d.expires_at, d.created_at, d.updated_at, d.deleted_at FROM discounts d
-LEFT JOIN discount_users du ON d.id = du.discount_id AND du.user_id = $1
-WHERE 
-    (du.user_id IS NOT NULL OR NOT EXISTS (
-        SELECT 1 FROM discount_users WHERE discount_id = d.id
-    ))
-    AND d.is_active = true
-    AND d.starts_at <= NOW()
-    AND d.expires_at > NOW()
-    AND (d.usage_limit IS NULL OR d.used_count < d.usage_limit)
-    AND d.deleted_at IS NULL
-ORDER BY d.created_at DESC
-LIMIT $2 OFFSET $3
-`
-
-type GetAvailableDiscountsForUserParams struct {
-	UserID uuid.UUID `json:"user_id"`
-	Limit  int64     `json:"limit"`
-	Offset int64     `json:"offset"`
-}
-
-func (q *Queries) GetAvailableDiscountsForUser(ctx context.Context, arg GetAvailableDiscountsForUserParams) ([]Discount, error) {
-	rows, err := q.db.Query(ctx, getAvailableDiscountsForUser, arg.UserID, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Discount{}
-	for rows.Next() {
-		var i Discount
-		if err := rows.Scan(
-			&i.ID,
-			&i.Code,
-			&i.Description,
-			&i.DiscountType,
-			&i.DiscountValue,
-			&i.MinPurchaseAmount,
-			&i.MaxDiscountAmount,
-			&i.UsageLimit,
-			&i.UsedCount,
-			&i.IsActive,
-			&i.StartsAt,
-			&i.ExpiresAt,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.DeletedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getCategoriesForDiscount = `-- name: GetCategoriesForDiscount :many
-SELECT c.id, c.name, c.description, c.image_url, c.image_id, c.published, c.remarkable, c.slug, c.display_order, c.created_at, c.updated_at FROM categories c
-JOIN discount_categories dc ON c.id = dc.category_id
-WHERE dc.discount_id = $1
-AND c.published = true
-LIMIT $2 OFFSET $3
-`
-
-type GetCategoriesForDiscountParams struct {
-	DiscountID uuid.UUID `json:"discount_id"`
-	Limit      int64     `json:"limit"`
-	Offset     int64     `json:"offset"`
-}
-
-func (q *Queries) GetCategoriesForDiscount(ctx context.Context, arg GetCategoriesForDiscountParams) ([]Category, error) {
-	rows, err := q.db.Query(ctx, getCategoriesForDiscount, arg.DiscountID, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Category{}
-	for rows.Next() {
-		var i Category
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Description,
-			&i.ImageUrl,
-			&i.ImageID,
-			&i.Published,
-			&i.Remarkable,
-			&i.Slug,
-			&i.DisplayOrder,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getDiscountAmount = `-- name: GetDiscountAmount :one
-SELECT discount_amount FROM order_discounts
-WHERE order_id = $1 AND discount_id = $2
-`
-
-type GetDiscountAmountParams struct {
-	OrderID    uuid.UUID `json:"order_id"`
-	DiscountID uuid.UUID `json:"discount_id"`
-}
-
-func (q *Queries) GetDiscountAmount(ctx context.Context, arg GetDiscountAmountParams) (pgtype.Numeric, error) {
-	row := q.db.QueryRow(ctx, getDiscountAmount, arg.OrderID, arg.DiscountID)
-	var discount_amount pgtype.Numeric
-	err := row.Scan(&discount_amount)
-	return discount_amount, err
-}
-
 const getDiscountByCode = `-- name: GetDiscountByCode :one
-SELECT id, code, description, discount_type, discount_value, min_purchase_amount, max_discount_amount, usage_limit, used_count, is_active, starts_at, expires_at, created_at, updated_at, deleted_at FROM discounts
-WHERE code = $1 AND deleted_at IS NULL
+SELECT id, code, description, discount_type, discount_value, min_purchase_amount, max_discount_amount, usage_limit, used_count, is_active, starts_at, expires_at, created_at, updated_at, deleted_at
+FROM discounts
+WHERE code = $1
+LIMIT 1
 `
 
 func (q *Queries) GetDiscountByCode(ctx context.Context, code string) (Discount, error) {
@@ -463,397 +83,60 @@ func (q *Queries) GetDiscountByCode(ctx context.Context, code string) (Discount,
 	return i, err
 }
 
-const getDiscountByID = `-- name: GetDiscountByID :one
-SELECT id, code, description, discount_type, discount_value, min_purchase_amount, max_discount_amount, usage_limit, used_count, is_active, starts_at, expires_at, created_at, updated_at, deleted_at FROM discounts
-WHERE id = $1 AND deleted_at IS NULL
+const getDiscounts = `-- name: GetDiscounts :many
+SELECT id, code, "description", discount_type, discount_value, min_purchase_amount, max_discount_amount, usage_limit, used_count, is_active, starts_at, expires_at
+FROM discounts
+WHERE code ILIKE COALESCE($3, discounts.code)
+  AND "description" ILIKE COALESCE($4, discounts."description")
+  AND discount_type = COALESCE($5, discounts.discount_type)
+  AND discount_value = COALESCE($6, discounts.discount_value)
+  AND min_purchase_amount = COALESCE($7, discounts.min_purchase_amount)
+  AND max_discount_amount = COALESCE($8, discounts.max_discount_amount)
+  AND usage_limit = COALESCE($9, discounts.usage_limit)
+  AND used_count = COALESCE($10, discounts.used_count)
+  AND is_active = COALESCE($11, discounts.is_active)
+  AND starts_at >= COALESCE($12, discounts.starts_at)
+  AND starts_at <= COALESCE($13, discounts.starts_at)
+ORDER BY id
+LIMIT $1
+OFFSET $2
 `
 
-func (q *Queries) GetDiscountByID(ctx context.Context, id uuid.UUID) (Discount, error) {
-	row := q.db.QueryRow(ctx, getDiscountByID, id)
-	var i Discount
-	err := row.Scan(
-		&i.ID,
-		&i.Code,
-		&i.Description,
-		&i.DiscountType,
-		&i.DiscountValue,
-		&i.MinPurchaseAmount,
-		&i.MaxDiscountAmount,
-		&i.UsageLimit,
-		&i.UsedCount,
-		&i.IsActive,
-		&i.StartsAt,
-		&i.ExpiresAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
-}
-
-const getDiscountsForOrder = `-- name: GetDiscountsForOrder :many
-SELECT d.id, d.code, d.description, d.discount_type, d.discount_value, d.min_purchase_amount, d.max_discount_amount, d.usage_limit, d.used_count, d.is_active, d.starts_at, d.expires_at, d.created_at, d.updated_at, d.deleted_at FROM discounts d
-JOIN order_discounts od ON d.id = od.discount_id
-WHERE od.order_id = $1
-AND d.deleted_at IS NULL
-`
-
-func (q *Queries) GetDiscountsForOrder(ctx context.Context, orderID uuid.UUID) ([]Discount, error) {
-	rows, err := q.db.Query(ctx, getDiscountsForOrder, orderID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Discount{}
-	for rows.Next() {
-		var i Discount
-		if err := rows.Scan(
-			&i.ID,
-			&i.Code,
-			&i.Description,
-			&i.DiscountType,
-			&i.DiscountValue,
-			&i.MinPurchaseAmount,
-			&i.MaxDiscountAmount,
-			&i.UsageLimit,
-			&i.UsedCount,
-			&i.IsActive,
-			&i.StartsAt,
-			&i.ExpiresAt,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.DeletedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getProductsForDiscount = `-- name: GetProductsForDiscount :many
-SELECT p.id, p.name, p.description, p.short_description, p.attributes, p.base_price, p.base_sku, p.slug, p.is_active, p.category_id, p.collection_id, p.brand_id, p.created_at, p.updated_at, p.avg_rating, p.rating_count, p.one_star_count, p.two_star_count, p.three_star_count, p.four_star_count, p.five_star_count FROM products p
-JOIN discount_products dp ON p.id = dp.product_id
-WHERE dp.discount_id = $1
-AND p.is_active = true
-LIMIT $2 OFFSET $3
-`
-
-type GetProductsForDiscountParams struct {
-	DiscountID uuid.UUID `json:"discount_id"`
-	Limit      int64     `json:"limit"`
-	Offset     int64     `json:"offset"`
-}
-
-func (q *Queries) GetProductsForDiscount(ctx context.Context, arg GetProductsForDiscountParams) ([]Product, error) {
-	rows, err := q.db.Query(ctx, getProductsForDiscount, arg.DiscountID, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Product{}
-	for rows.Next() {
-		var i Product
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Description,
-			&i.ShortDescription,
-			&i.Attributes,
-			&i.BasePrice,
-			&i.BaseSku,
-			&i.Slug,
-			&i.IsActive,
-			&i.CategoryID,
-			&i.CollectionID,
-			&i.BrandID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.AvgRating,
-			&i.RatingCount,
-			&i.OneStarCount,
-			&i.TwoStarCount,
-			&i.ThreeStarCount,
-			&i.FourStarCount,
-			&i.FiveStarCount,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getUsersForDiscount = `-- name: GetUsersForDiscount :many
-SELECT u.id, u.role, u.username, u.email, u.phone, u.fullname, u.hashed_password, u.verified_email, u.verified_phone, u.password_changed_at, u.updated_at, u.created_at FROM users u
-JOIN discount_users du ON u.id = du.user_id
-WHERE du.discount_id = $1
-LIMIT $2 OFFSET $3
-`
-
-type GetUsersForDiscountParams struct {
-	DiscountID uuid.UUID `json:"discount_id"`
-	Limit      int64     `json:"limit"`
-	Offset     int64     `json:"offset"`
-}
-
-func (q *Queries) GetUsersForDiscount(ctx context.Context, arg GetUsersForDiscountParams) ([]User, error) {
-	rows, err := q.db.Query(ctx, getUsersForDiscount, arg.DiscountID, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []User{}
-	for rows.Next() {
-		var i User
-		if err := rows.Scan(
-			&i.ID,
-			&i.Role,
-			&i.Username,
-			&i.Email,
-			&i.Phone,
-			&i.Fullname,
-			&i.HashedPassword,
-			&i.VerifiedEmail,
-			&i.VerifiedPhone,
-			&i.PasswordChangedAt,
-			&i.UpdatedAt,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const incrementDiscountUsage = `-- name: IncrementDiscountUsage :one
-UPDATE discounts
-SET used_count = used_count + 1
-WHERE id = $1 AND deleted_at IS NULL
-RETURNING id, code, description, discount_type, discount_value, min_purchase_amount, max_discount_amount, usage_limit, used_count, is_active, starts_at, expires_at, created_at, updated_at, deleted_at
-`
-
-func (q *Queries) IncrementDiscountUsage(ctx context.Context, id uuid.UUID) (Discount, error) {
-	row := q.db.QueryRow(ctx, incrementDiscountUsage, id)
-	var i Discount
-	err := row.Scan(
-		&i.ID,
-		&i.Code,
-		&i.Description,
-		&i.DiscountType,
-		&i.DiscountValue,
-		&i.MinPurchaseAmount,
-		&i.MaxDiscountAmount,
-		&i.UsageLimit,
-		&i.UsedCount,
-		&i.IsActive,
-		&i.StartsAt,
-		&i.ExpiresAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
-}
-
-const listActiveDiscounts = `-- name: ListActiveDiscounts :many
-SELECT id, code, description, discount_type, discount_value, min_purchase_amount, max_discount_amount, usage_limit, used_count, is_active, starts_at, expires_at, created_at, updated_at, deleted_at FROM discounts
-WHERE is_active = true 
-AND starts_at <= NOW()
-AND expires_at > NOW()
-AND deleted_at IS NULL
-ORDER BY created_at DESC
-LIMIT $1 OFFSET $2
-`
-
-type ListActiveDiscountsParams struct {
-	Limit  int64 `json:"limit"`
-	Offset int64 `json:"offset"`
-}
-
-func (q *Queries) ListActiveDiscounts(ctx context.Context, arg ListActiveDiscountsParams) ([]Discount, error) {
-	rows, err := q.db.Query(ctx, listActiveDiscounts, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Discount{}
-	for rows.Next() {
-		var i Discount
-		if err := rows.Scan(
-			&i.ID,
-			&i.Code,
-			&i.Description,
-			&i.DiscountType,
-			&i.DiscountValue,
-			&i.MinPurchaseAmount,
-			&i.MaxDiscountAmount,
-			&i.UsageLimit,
-			&i.UsedCount,
-			&i.IsActive,
-			&i.StartsAt,
-			&i.ExpiresAt,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.DeletedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listAllDiscounts = `-- name: ListAllDiscounts :many
-SELECT id, code, description, discount_type, discount_value, min_purchase_amount, max_discount_amount, usage_limit, used_count, is_active, starts_at, expires_at, created_at, updated_at, deleted_at FROM discounts
-WHERE deleted_at IS NULL
-ORDER BY created_at DESC
-LIMIT $1 OFFSET $2
-`
-
-type ListAllDiscountsParams struct {
-	Limit  int64 `json:"limit"`
-	Offset int64 `json:"offset"`
-}
-
-func (q *Queries) ListAllDiscounts(ctx context.Context, arg ListAllDiscountsParams) ([]Discount, error) {
-	rows, err := q.db.Query(ctx, listAllDiscounts, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Discount{}
-	for rows.Next() {
-		var i Discount
-		if err := rows.Scan(
-			&i.ID,
-			&i.Code,
-			&i.Description,
-			&i.DiscountType,
-			&i.DiscountValue,
-			&i.MinPurchaseAmount,
-			&i.MaxDiscountAmount,
-			&i.UsageLimit,
-			&i.UsedCount,
-			&i.IsActive,
-			&i.StartsAt,
-			&i.ExpiresAt,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.DeletedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const removeDiscountFromCategory = `-- name: RemoveDiscountFromCategory :exec
-DELETE FROM discount_categories
-WHERE discount_id = $1 AND category_id = $2
-`
-
-type RemoveDiscountFromCategoryParams struct {
-	DiscountID uuid.UUID `json:"discount_id"`
-	CategoryID uuid.UUID `json:"category_id"`
-}
-
-func (q *Queries) RemoveDiscountFromCategory(ctx context.Context, arg RemoveDiscountFromCategoryParams) error {
-	_, err := q.db.Exec(ctx, removeDiscountFromCategory, arg.DiscountID, arg.CategoryID)
-	return err
-}
-
-const removeDiscountFromProduct = `-- name: RemoveDiscountFromProduct :exec
-DELETE FROM discount_products
-WHERE discount_id = $1 AND product_id = $2
-`
-
-type RemoveDiscountFromProductParams struct {
-	DiscountID uuid.UUID `json:"discount_id"`
-	ProductID  uuid.UUID `json:"product_id"`
-}
-
-func (q *Queries) RemoveDiscountFromProduct(ctx context.Context, arg RemoveDiscountFromProductParams) error {
-	_, err := q.db.Exec(ctx, removeDiscountFromProduct, arg.DiscountID, arg.ProductID)
-	return err
-}
-
-const removeDiscountFromUser = `-- name: RemoveDiscountFromUser :exec
-DELETE FROM discount_users
-WHERE discount_id = $1 AND user_id = $2
-`
-
-type RemoveDiscountFromUserParams struct {
-	DiscountID uuid.UUID `json:"discount_id"`
-	UserID     uuid.UUID `json:"user_id"`
-}
-
-func (q *Queries) RemoveDiscountFromUser(ctx context.Context, arg RemoveDiscountFromUserParams) error {
-	_, err := q.db.Exec(ctx, removeDiscountFromUser, arg.DiscountID, arg.UserID)
-	return err
-}
-
-const softDeleteDiscount = `-- name: SoftDeleteDiscount :exec
-UPDATE discounts
-SET deleted_at = NOW()
-WHERE id = $1 AND deleted_at IS NULL
-`
-
-func (q *Queries) SoftDeleteDiscount(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.Exec(ctx, softDeleteDiscount, id)
-	return err
-}
-
-const updateDiscount = `-- name: UpdateDiscount :one
-UPDATE discounts SET
-    code = COALESCE($2, code),
-    description = COALESCE($3, description),
-    discount_type = COALESCE($4, discount_type),
-    discount_value = COALESCE($5, discount_value),
-    min_purchase_amount = $6,
-    max_discount_amount = $7,
-    usage_limit = $8,
-    is_active = COALESCE($9, is_active),
-    starts_at = COALESCE($10, starts_at),
-    expires_at = COALESCE($11, expires_at)
-WHERE id = $1 AND deleted_at IS NULL
-RETURNING id, code, description, discount_type, discount_value, min_purchase_amount, max_discount_amount, usage_limit, used_count, is_active, starts_at, expires_at, created_at, updated_at, deleted_at
-`
-
-type UpdateDiscountParams struct {
-	ID                uuid.UUID          `json:"id"`
-	Code              string             `json:"code"`
+type GetDiscountsParams struct {
+	Limit             int64              `json:"limit"`
+	Offset            int64              `json:"offset"`
+	Code              *string            `json:"code"`
 	Description       *string            `json:"description"`
-	DiscountType      string             `json:"discount_type"`
+	DiscountType      *string            `json:"discount_type"`
 	DiscountValue     pgtype.Numeric     `json:"discount_value"`
 	MinPurchaseAmount pgtype.Numeric     `json:"min_purchase_amount"`
 	MaxDiscountAmount pgtype.Numeric     `json:"max_discount_amount"`
 	UsageLimit        *int32             `json:"usage_limit"`
+	UsedCount         *int32             `json:"used_count"`
 	IsActive          *bool              `json:"is_active"`
-	StartsAt          pgtype.Timestamptz `json:"starts_at"`
-	ExpiresAt         pgtype.Timestamptz `json:"expires_at"`
+	FormDate          pgtype.Timestamptz `json:"form_date"`
+	ToDate            pgtype.Timestamptz `json:"to_date"`
 }
 
-func (q *Queries) UpdateDiscount(ctx context.Context, arg UpdateDiscountParams) (Discount, error) {
-	row := q.db.QueryRow(ctx, updateDiscount,
-		arg.ID,
+type GetDiscountsRow struct {
+	ID                uuid.UUID      `json:"id"`
+	Code              string         `json:"code"`
+	Description       *string        `json:"description"`
+	DiscountType      string         `json:"discount_type"`
+	DiscountValue     pgtype.Numeric `json:"discount_value"`
+	MinPurchaseAmount pgtype.Numeric `json:"min_purchase_amount"`
+	MaxDiscountAmount pgtype.Numeric `json:"max_discount_amount"`
+	UsageLimit        *int32         `json:"usage_limit"`
+	UsedCount         *int32         `json:"used_count"`
+	IsActive          *bool          `json:"is_active"`
+	StartsAt          time.Time      `json:"starts_at"`
+	ExpiresAt         time.Time      `json:"expires_at"`
+}
+
+func (q *Queries) GetDiscounts(ctx context.Context, arg GetDiscountsParams) ([]GetDiscountsRow, error) {
+	rows, err := q.db.Query(ctx, getDiscounts,
+		arg.Limit,
+		arg.Offset,
 		arg.Code,
 		arg.Description,
 		arg.DiscountType,
@@ -861,71 +144,201 @@ func (q *Queries) UpdateDiscount(ctx context.Context, arg UpdateDiscountParams) 
 		arg.MinPurchaseAmount,
 		arg.MaxDiscountAmount,
 		arg.UsageLimit,
+		arg.UsedCount,
+		arg.IsActive,
+		arg.FormDate,
+		arg.ToDate,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetDiscountsRow{}
+	for rows.Next() {
+		var i GetDiscountsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Code,
+			&i.Description,
+			&i.DiscountType,
+			&i.DiscountValue,
+			&i.MinPurchaseAmount,
+			&i.MaxDiscountAmount,
+			&i.UsageLimit,
+			&i.UsedCount,
+			&i.IsActive,
+			&i.StartsAt,
+			&i.ExpiresAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const insertDiscount = `-- name: InsertDiscount :one
+INSERT INTO discounts 
+    (code, description, discount_type, discount_value, min_purchase_amount, max_discount_amount, is_active, usage_limit, used_count, starts_at, expires_at)
+VALUES 
+    ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+RETURNING id
+`
+
+type InsertDiscountParams struct {
+	Code              string             `json:"code"`
+	Description       *string            `json:"description"`
+	DiscountType      string             `json:"discount_type"`
+	DiscountValue     pgtype.Numeric     `json:"discount_value"`
+	MinPurchaseAmount pgtype.Numeric     `json:"min_purchase_amount"`
+	MaxDiscountAmount pgtype.Numeric     `json:"max_discount_amount"`
+	IsActive          *bool              `json:"is_active"`
+	UsageLimit        *int32             `json:"usage_limit"`
+	UsedCount         *int32             `json:"used_count"`
+	StartsAt          pgtype.Timestamptz `json:"starts_at"`
+	ExpiresAt         pgtype.Timestamptz `json:"expires_at"`
+}
+
+func (q *Queries) InsertDiscount(ctx context.Context, arg InsertDiscountParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, insertDiscount,
+		arg.Code,
+		arg.Description,
+		arg.DiscountType,
+		arg.DiscountValue,
+		arg.MinPurchaseAmount,
+		arg.MaxDiscountAmount,
+		arg.IsActive,
+		arg.UsageLimit,
+		arg.UsedCount,
+		arg.StartsAt,
+		arg.ExpiresAt,
+	)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertDiscountCategory = `-- name: InsertDiscountCategory :one
+INSERT INTO discount_categories (discount_id, category_id)
+VALUES ($1, $2)
+RETURNING id
+`
+
+type InsertDiscountCategoryParams struct {
+	DiscountID uuid.UUID `json:"discount_id"`
+	CategoryID uuid.UUID `json:"category_id"`
+}
+
+func (q *Queries) InsertDiscountCategory(ctx context.Context, arg InsertDiscountCategoryParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, insertDiscountCategory, arg.DiscountID, arg.CategoryID)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertDiscountProduct = `-- name: InsertDiscountProduct :one
+INSERT INTO discount_products (discount_id, product_id)
+VALUES ($1, $2)
+RETURNING id
+`
+
+type InsertDiscountProductParams struct {
+	DiscountID uuid.UUID `json:"discount_id"`
+	ProductID  uuid.UUID `json:"product_id"`
+}
+
+func (q *Queries) InsertDiscountProduct(ctx context.Context, arg InsertDiscountProductParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, insertDiscountProduct, arg.DiscountID, arg.ProductID)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertDiscountUser = `-- name: InsertDiscountUser :one
+INSERT INTO discount_users (discount_id, user_id)
+VALUES ($1, $2)
+RETURNING id
+`
+
+type InsertDiscountUserParams struct {
+	DiscountID uuid.UUID `json:"discount_id"`
+	UserID     uuid.UUID `json:"user_id"`
+}
+
+func (q *Queries) InsertDiscountUser(ctx context.Context, arg InsertDiscountUserParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, insertDiscountUser, arg.DiscountID, arg.UserID)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
+const insertOrderDiscount = `-- name: InsertOrderDiscount :one
+INSERT INTO order_discounts (order_id, discount_id, discount_amount)
+VALUES ($1, $2, $3)
+RETURNING id
+`
+
+type InsertOrderDiscountParams struct {
+	OrderID        uuid.UUID      `json:"order_id"`
+	DiscountID     uuid.UUID      `json:"discount_id"`
+	DiscountAmount pgtype.Numeric `json:"discount_amount"`
+}
+
+func (q *Queries) InsertOrderDiscount(ctx context.Context, arg InsertOrderDiscountParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, insertOrderDiscount, arg.OrderID, arg.DiscountID, arg.DiscountAmount)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
+const updateDiscount = `-- name: UpdateDiscount :one
+UPDATE discounts
+SET "description" = COALESCE($2, discounts.description),
+    discount_type = COALESCE($3, discounts.discount_type),
+    discount_value = COALESCE($4, discounts.discount_value),
+    min_purchase_amount = COALESCE($5, discounts.min_purchase_amount),
+    max_discount_amount = COALESCE($6, discounts.max_discount_amount),
+    usage_limit = COALESCE($7, discounts.usage_limit),
+    used_count = COALESCE($8, discounts.used_count),
+    is_active = COALESCE($9, discounts.is_active),
+    starts_at = COALESCE($10, discounts.starts_at),
+    expires_at = COALESCE($11, discounts.expires_at)
+WHERE id = $1
+RETURNING id
+`
+
+type UpdateDiscountParams struct {
+	ID                uuid.UUID          `json:"id"`
+	Description       *string            `json:"description"`
+	DiscountType      *string            `json:"discount_type"`
+	DiscountValue     pgtype.Numeric     `json:"discount_value"`
+	MinPurchaseAmount pgtype.Numeric     `json:"min_purchase_amount"`
+	MaxDiscountAmount pgtype.Numeric     `json:"max_discount_amount"`
+	UsageLimit        *int32             `json:"usage_limit"`
+	UsedCount         *int32             `json:"used_count"`
+	IsActive          *bool              `json:"is_active"`
+	StartsAt          pgtype.Timestamptz `json:"starts_at"`
+	ExpiresAt         pgtype.Timestamptz `json:"expires_at"`
+}
+
+func (q *Queries) UpdateDiscount(ctx context.Context, arg UpdateDiscountParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, updateDiscount,
+		arg.ID,
+		arg.Description,
+		arg.DiscountType,
+		arg.DiscountValue,
+		arg.MinPurchaseAmount,
+		arg.MaxDiscountAmount,
+		arg.UsageLimit,
+		arg.UsedCount,
 		arg.IsActive,
 		arg.StartsAt,
 		arg.ExpiresAt,
 	)
-	var i Discount
-	err := row.Scan(
-		&i.ID,
-		&i.Code,
-		&i.Description,
-		&i.DiscountType,
-		&i.DiscountValue,
-		&i.MinPurchaseAmount,
-		&i.MaxDiscountAmount,
-		&i.UsageLimit,
-		&i.UsedCount,
-		&i.IsActive,
-		&i.StartsAt,
-		&i.ExpiresAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
-}
-
-const updateOrderTotal = `-- name: UpdateOrderTotal :one
-UPDATE orders
-SET total_price = $2
-WHERE id = $1
-RETURNING id, customer_id, customer_email, customer_name, customer_phone, shipping_address, total_price, status, confirmed_at, delivered_at, cancelled_at, shipping_method, refunded_at, order_date, updated_at, created_at, shipping_method_id, shipping_rate_id, shipping_cost, estimated_delivery_date, tracking_number, tracking_url, shipping_provider, shipping_notes
-`
-
-type UpdateOrderTotalParams struct {
-	ID         uuid.UUID      `json:"id"`
-	TotalPrice pgtype.Numeric `json:"total_price"`
-}
-
-func (q *Queries) UpdateOrderTotal(ctx context.Context, arg UpdateOrderTotalParams) (Order, error) {
-	row := q.db.QueryRow(ctx, updateOrderTotal, arg.ID, arg.TotalPrice)
-	var i Order
-	err := row.Scan(
-		&i.ID,
-		&i.CustomerID,
-		&i.CustomerEmail,
-		&i.CustomerName,
-		&i.CustomerPhone,
-		&i.ShippingAddress,
-		&i.TotalPrice,
-		&i.Status,
-		&i.ConfirmedAt,
-		&i.DeliveredAt,
-		&i.CancelledAt,
-		&i.ShippingMethod,
-		&i.RefundedAt,
-		&i.OrderDate,
-		&i.UpdatedAt,
-		&i.CreatedAt,
-		&i.ShippingMethodID,
-		&i.ShippingRateID,
-		&i.ShippingCost,
-		&i.EstimatedDeliveryDate,
-		&i.TrackingNumber,
-		&i.TrackingUrl,
-		&i.ShippingProvider,
-		&i.ShippingNotes,
-	)
-	return i, err
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
 }
