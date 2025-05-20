@@ -24,6 +24,7 @@ type Querier interface {
 	CountCartItems(ctx context.Context, id uuid.UUID) (int64, error)
 	CountCategories(ctx context.Context) (int64, error)
 	CountCollections(ctx context.Context) (int64, error)
+	CountDiscounts(ctx context.Context) (int64, error)
 	CountOrders(ctx context.Context, arg CountOrdersParams) (int64, error)
 	CountProductRatings(ctx context.Context, productID pgtype.UUID) (int64, error)
 	CountProducts(ctx context.Context, arg CountProductsParams) (int64, error)
@@ -59,13 +60,16 @@ type Querier interface {
 	DeleteAttributeValue(ctx context.Context, id uuid.UUID) error
 	DeleteBrand(ctx context.Context, id uuid.UUID) error
 	DeleteCategory(ctx context.Context, id uuid.UUID) error
+	DeleteCategoryDiscountsByDiscountID(ctx context.Context, discountID uuid.UUID) error
 	DeleteCollection(ctx context.Context, id uuid.UUID) error
 	DeleteDiscount(ctx context.Context, id uuid.UUID) error
+	DeleteDiscountCategory(ctx context.Context, arg DeleteDiscountCategoryParams) error
 	DeleteImageAssignments(ctx context.Context, arg DeleteImageAssignmentsParams) error
 	DeleteOrder(ctx context.Context, id uuid.UUID) error
 	DeletePayment(ctx context.Context, id uuid.UUID) error
 	DeletePaymentTransaction(ctx context.Context, id uuid.UUID) error
 	DeleteProduct(ctx context.Context, id uuid.UUID) error
+	DeleteProductDiscountsByDiscountID(ctx context.Context, discountID uuid.UUID) error
 	DeleteProductImage(ctx context.Context, id uuid.UUID) error
 	DeleteProductImageAssignment(ctx context.Context, arg DeleteProductImageAssignmentParams) error
 	DeleteProductRating(ctx context.Context, id uuid.UUID) error
@@ -74,6 +78,7 @@ type Querier interface {
 	DeleteRatingReplies(ctx context.Context, id uuid.UUID) error
 	DeleteRatingVotes(ctx context.Context, id uuid.UUID) error
 	DeleteUser(ctx context.Context, id uuid.UUID) error
+	DeleteUserDiscountsByDiscountID(ctx context.Context, discountID uuid.UUID) error
 	GetAddress(ctx context.Context, arg GetAddressParams) (UserAddress, error)
 	GetAddresses(ctx context.Context, userID uuid.UUID) ([]UserAddress, error)
 	GetAttributeByID(ctx context.Context, id uuid.UUID) ([]GetAttributeByIDRow, error)
@@ -102,8 +107,8 @@ type Querier interface {
 	GetCollections(ctx context.Context, arg GetCollectionsParams) ([]Collection, error)
 	GetCollectionsByIDs(ctx context.Context, arg GetCollectionsByIDsParams) ([]GetCollectionsByIDsRow, error)
 	GetDefaultAddress(ctx context.Context, userID uuid.UUID) (UserAddress, error)
-	GetDiscount(ctx context.Context, id uuid.UUID) (Discount, error)
 	GetDiscountByCode(ctx context.Context, code string) (Discount, error)
+	GetDiscountByID(ctx context.Context, id uuid.UUID) (Discount, error)
 	GetDiscounts(ctx context.Context, arg GetDiscountsParams) ([]GetDiscountsRow, error)
 	GetFilterListForCollectionID(ctx context.Context, id uuid.UUID) ([]GetFilterListForCollectionIDRow, error)
 	GetImageFromExternalID(ctx context.Context, externalID string) (GetImageFromExternalIDRow, error)
@@ -150,8 +155,11 @@ type Querier interface {
 	GetUserByUsername(ctx context.Context, username string) (User, error)
 	GetVerifyEmailByID(ctx context.Context, id uuid.UUID) (VerifyEmail, error)
 	GetVerifyEmailByVerifyCode(ctx context.Context, verifyCode string) (VerifyEmail, error)
+	InsertBulkCategoryDiscounts(ctx context.Context, arg []InsertBulkCategoryDiscountsParams) (int64, error)
 	InsertBulkImageAssignments(ctx context.Context, arg []InsertBulkImageAssignmentsParams) (int64, error)
 	InsertBulkImages(ctx context.Context, arg []InsertBulkImagesParams) (int64, error)
+	InsertBulkProductDiscounts(ctx context.Context, arg []InsertBulkProductDiscountsParams) (int64, error)
+	InsertBulkUserDiscounts(ctx context.Context, arg []InsertBulkUserDiscountsParams) (int64, error)
 	InsertDiscount(ctx context.Context, arg InsertDiscountParams) (uuid.UUID, error)
 	InsertDiscountCategory(ctx context.Context, arg InsertDiscountCategoryParams) (uuid.UUID, error)
 	InsertDiscountProduct(ctx context.Context, arg InsertDiscountProductParams) (uuid.UUID, error)

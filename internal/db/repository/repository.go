@@ -24,6 +24,7 @@ type Repository interface {
 	CreateProductTx(ctx context.Context, arg CreateProductTxArgs) (uuid.UUID, error)
 	UpdateProductTx(ctx context.Context, productID uuid.UUID, arg UpdateProductTxParams) error
 	VoteHelpfulRatingTx(ctx context.Context, arg VoteHelpfulRatingTxArgs) (uuid.UUID, error)
+	UpdateDiscountTx(ctx context.Context, id uuid.UUID, arg UpdateDiscountTxArgs) error
 	Close()
 }
 

@@ -261,3 +261,45 @@ type CheckoutResponse struct {
 	ClientSecret    *string   `json:"client_secret,omitempty"`
 	TotalPrice      float64   `json:"total_price"`
 }
+
+type DiscountListItemResponseModel struct {
+	ID            string  `json:"id"`
+	Code          string  `json:"code"`
+	Description   string  `json:"description"`
+	DiscountType  string  `json:"discount_type"`
+	DiscountValue float64 `json:"discount_value"`
+	ExpiredAt     string  `json:"expired_at"`
+	StartsAt      string  `json:"starts_at"`
+	UsedCount     int32   `json:"used_count"`
+	UsageLimit    int32   `json:"usage_limit"`
+	IsActive      bool    `json:"is_active"`
+	CreatedAt     string  `json:"created_at"`
+	UpdatedAt     string  `json:"updated_at"`
+	MinPurchase   int32   `json:"min_purchase"`
+	MaxDiscount   int32   `json:"max_discount"`
+}
+
+type DiscountLinkObject struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type DiscountDetailResponseModel struct {
+	ID            string               `json:"id"`
+	Code          string               `json:"code"`
+	Description   string               `json:"description"`
+	DiscountType  string               `json:"discount_type"`
+	DiscountValue float64              `json:"discount_value"`
+	ExpiredAt     string               `json:"expired_at"`
+	StartsAt      string               `json:"starts_at"`
+	UsedCount     int32                `json:"used_count"`
+	UsageLimit    int32                `json:"usage_limit"`
+	IsActive      bool                 `json:"is_active"`
+	CreatedAt     string               `json:"created_at"`
+	UpdatedAt     string               `json:"updated_at"`
+	MinPurchase   int32                `json:"min_purchase"`
+	MaxDiscount   int32                `json:"max_discount"`
+	Products      []DiscountLinkObject `json:"products"`
+	Categories    []DiscountLinkObject `json:"categories"`
+	Users         []DiscountLinkObject `json:"variants"`
+}

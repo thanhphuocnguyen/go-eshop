@@ -1,0 +1,148 @@
+'use client';
+
+import React, { useState, useMemo } from 'react';
+import { UseFormWatch, UseFormSetValue } from 'react-hook-form';
+import { TabPanel, Button } from '@headlessui/react';
+import { XMarkIcon, PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { CategoryType, DiscountFormData } from '../_types';
+
+interface CategoriesPanelProps {
+  watch: UseFormWatch<DiscountFormData>;
+  setValue: UseFormSetValue<DiscountFormData>;
+  availableCategories: CategoryType[];
+  setAvailableCategories: React.Dispatch<React.SetStateAction<CategoryType[]>>;
+}
+
+export const CategoriesPanel: React.FC<CategoriesPanelProps> = ({
+  watch,
+  setValue,
+  availableCategories,
+  setAvailableCategories,
+}) => {
+  const selectedCategories = watch('categories') || [];
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleAddCategory = (category: CategoryType) => {
+    const currentCategories = [...selectedCategories];
+    currentCategories.push(category);
+    setValue('categories', currentCategories);
+    
+    // Remove from available categories
+    setAvailableCategories(availableCategories.filter(c => c.id !== category.id));
+  };
+
+  const handleRemoveCategory = (categoryId: string) => {
+    const removedCategory = selectedCategories.find(c => c.id === categoryId);
+    if (removedCategory) {
+      setValue('categories', selectedCategories.filter(c => c.id !== categoryId));
+      setAvailableCategories([...availableCategories, removedCategory]);
+    }
+  };
+
+  // Filter available categories based on search query
+  const filteredAvailableCategories = useMemo(() => {
+    if (!searchQuery.trim()) return availableCategories;
+    
+    const query = searchQuery.toLowerCase().trim();
+    return availableCategories.filter(category => 
+      category.name.toLowerCase().includes(query)
+    );
+  }, [availableCategories, searchQuery]);
+
+  // Filter selected categories based on search query
+  const filteredSelectedCategories = useMemo(() => {
+    if (!searchQuery.trim()) return selectedCategories;
+    
+    const query = searchQuery.toLowerCase().trim();
+    return selectedCategories.filter(category => 
+      category.name.toLowerCase().includes(query)
+    );
+  }, [selectedCategories, searchQuery]);
+
+  return (
+    <TabPanel className='pt-6'>
+      <div className='flex justify-between items-center mb-4'>
+        <h3 className='text-lg font-medium'>Applied Categories</h3>
+        <p className='text-sm text-gray-500'>
+          If no categories are selected, this discount applies to all products.
+        </p>
+      </div>
+      
+      {/* Search Input */}
+      <div className='relative mb-4'>
+        <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
+          <MagnifyingGlassIcon className='h-5 w-5 text-gray-400' />
+        </div>
+        <input
+          type='text'
+          placeholder='Search categories by name...'
+          className='w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent'
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+      
+      {/* Selected Categories */}
+      <div className='border-b border-gray-200 pb-5 mb-5'>
+        <h4 className='font-medium text-sm text-gray-700 mb-2'>Selected Categories</h4>
+        {selectedCategories.length > 0 ? (
+          <div className='mb-6 grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3'>
+            {filteredSelectedCategories.map((category) => (
+              <div
+                key={category.id}
+                className='relative flex items-center border rounded-md p-3 shadow-sm hover:shadow-md transition-shadow duration-200'
+              >
+                <div className='flex-1'>
+                  <p className='font-medium'>{category.name}</p>
+                </div>
+                <Button
+                  type='button'
+                  onClick={() => handleRemoveCategory(category.id)}
+                  className='text-gray-400 hover:text-red-500 transition-colors'
+                >
+                  <XMarkIcon className='h-5 w-5' />
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className='mb-6 bg-gray-50 rounded-md p-6 text-center border border-gray-100'>
+            <p className='text-gray-500'>No categories selected. This discount applies to all products.</p>
+          </div>
+        )}
+      </div>
+      
+      {/* Available Categories */}
+      <h4 className='font-medium text-sm text-gray-700 mb-2'>Add Categories</h4>
+      {filteredAvailableCategories.length > 0 ? (
+        <div className='grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3'>
+          {filteredAvailableCategories.map((category) => (
+            <div
+              key={category.id}
+              className='flex items-center border rounded-md p-3 cursor-pointer hover:border-primary hover:bg-gray-50 transition-all duration-200 shadow-sm'
+              onClick={() => handleAddCategory(category)}
+            >
+              <div className='flex-1'>
+                <p className='font-medium'>{category.name}</p>
+              </div>
+              <Button
+                type='button'
+                className='text-gray-400 hover:text-green-500 transition-colors'
+              >
+                <PlusIcon className='h-5 w-5' />
+              </Button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className='bg-gray-50 rounded-md p-6 text-center border border-gray-100'>
+          <p className='text-gray-500'>
+            {availableCategories.length === 0 
+              ? 'All available categories have been added to this discount.' 
+              : 'No categories match your search criteria.'}
+          </p>
+        </div>
+      )}
+    </TabPanel>
+  );
+};

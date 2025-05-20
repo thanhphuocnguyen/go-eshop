@@ -13,6 +13,27 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countDiscounts = `-- name: CountDiscounts :one
+SELECT COUNT(*) FROM discounts
+`
+
+func (q *Queries) CountDiscounts(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countDiscounts)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const deleteCategoryDiscountsByDiscountID = `-- name: DeleteCategoryDiscountsByDiscountID :exec
+DELETE FROM discount_categories
+WHERE discount_id = $1
+`
+
+func (q *Queries) DeleteCategoryDiscountsByDiscountID(ctx context.Context, discountID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteCategoryDiscountsByDiscountID, discountID)
+	return err
+}
+
 const deleteDiscount = `-- name: DeleteDiscount :exec
 UPDATE discounts
 SET deleted_at = NOW()
@@ -24,33 +45,40 @@ func (q *Queries) DeleteDiscount(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-const getDiscount = `-- name: GetDiscount :one
-SELECT id, code, description, discount_type, discount_value, min_purchase_amount, max_discount_amount, usage_limit, used_count, is_active, starts_at, expires_at, created_at, updated_at, deleted_at
-FROM discounts
-WHERE id = $1
+const deleteDiscountCategory = `-- name: DeleteDiscountCategory :exec
+DELETE FROM discount_categories
+WHERE discount_id = $1
+  AND category_id = $2
 `
 
-func (q *Queries) GetDiscount(ctx context.Context, id uuid.UUID) (Discount, error) {
-	row := q.db.QueryRow(ctx, getDiscount, id)
-	var i Discount
-	err := row.Scan(
-		&i.ID,
-		&i.Code,
-		&i.Description,
-		&i.DiscountType,
-		&i.DiscountValue,
-		&i.MinPurchaseAmount,
-		&i.MaxDiscountAmount,
-		&i.UsageLimit,
-		&i.UsedCount,
-		&i.IsActive,
-		&i.StartsAt,
-		&i.ExpiresAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
+type DeleteDiscountCategoryParams struct {
+	DiscountID uuid.UUID `json:"discount_id"`
+	CategoryID uuid.UUID `json:"category_id"`
+}
+
+func (q *Queries) DeleteDiscountCategory(ctx context.Context, arg DeleteDiscountCategoryParams) error {
+	_, err := q.db.Exec(ctx, deleteDiscountCategory, arg.DiscountID, arg.CategoryID)
+	return err
+}
+
+const deleteProductDiscountsByDiscountID = `-- name: DeleteProductDiscountsByDiscountID :exec
+DELETE FROM discount_products
+WHERE discount_id = $1
+`
+
+func (q *Queries) DeleteProductDiscountsByDiscountID(ctx context.Context, discountID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteProductDiscountsByDiscountID, discountID)
+	return err
+}
+
+const deleteUserDiscountsByDiscountID = `-- name: DeleteUserDiscountsByDiscountID :exec
+DELETE FROM discount_users
+WHERE discount_id = $1
+`
+
+func (q *Queries) DeleteUserDiscountsByDiscountID(ctx context.Context, discountID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteUserDiscountsByDiscountID, discountID)
+	return err
 }
 
 const getDiscountByCode = `-- name: GetDiscountByCode :one
@@ -83,20 +111,49 @@ func (q *Queries) GetDiscountByCode(ctx context.Context, code string) (Discount,
 	return i, err
 }
 
+const getDiscountByID = `-- name: GetDiscountByID :one
+SELECT id, code, description, discount_type, discount_value, min_purchase_amount, max_discount_amount, usage_limit, used_count, is_active, starts_at, expires_at, created_at, updated_at, deleted_at
+FROM discounts
+WHERE id = $1
+`
+
+func (q *Queries) GetDiscountByID(ctx context.Context, id uuid.UUID) (Discount, error) {
+	row := q.db.QueryRow(ctx, getDiscountByID, id)
+	var i Discount
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.Description,
+		&i.DiscountType,
+		&i.DiscountValue,
+		&i.MinPurchaseAmount,
+		&i.MaxDiscountAmount,
+		&i.UsageLimit,
+		&i.UsedCount,
+		&i.IsActive,
+		&i.StartsAt,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const getDiscounts = `-- name: GetDiscounts :many
 SELECT id, code, "description", discount_type, discount_value, min_purchase_amount, max_discount_amount, usage_limit, used_count, is_active, starts_at, expires_at
 FROM discounts
-WHERE code ILIKE COALESCE($3, discounts.code)
-  AND "description" ILIKE COALESCE($4, discounts."description")
-  AND discount_type = COALESCE($5, discounts.discount_type)
-  AND discount_value = COALESCE($6, discounts.discount_value)
-  AND min_purchase_amount = COALESCE($7, discounts.min_purchase_amount)
-  AND max_discount_amount = COALESCE($8, discounts.max_discount_amount)
-  AND usage_limit = COALESCE($9, discounts.usage_limit)
-  AND used_count = COALESCE($10, discounts.used_count)
-  AND is_active = COALESCE($11, discounts.is_active)
-  AND starts_at >= COALESCE($12, discounts.starts_at)
-  AND starts_at <= COALESCE($13, discounts.starts_at)
+WHERE 
+    (code ILIKE COALESCE($3, discounts.code) OR "description" ILIKE COALESCE($3, discounts."description"))
+    AND discount_type = COALESCE($4, discounts.discount_type)
+    AND discount_value = COALESCE($5, discounts.discount_value)
+    AND min_purchase_amount = COALESCE($6, discounts.min_purchase_amount)
+    AND max_discount_amount = COALESCE($7, discounts.max_discount_amount)
+    AND usage_limit = COALESCE($8, discounts.usage_limit)
+    AND used_count = COALESCE($9, discounts.used_count)
+    AND is_active = COALESCE($10, discounts.is_active)
+    AND starts_at >= COALESCE($11, discounts.starts_at)
+    AND starts_at <= COALESCE($12, discounts.starts_at)
 ORDER BY id
 LIMIT $1
 OFFSET $2
@@ -105,8 +162,7 @@ OFFSET $2
 type GetDiscountsParams struct {
 	Limit             int64              `json:"limit"`
 	Offset            int64              `json:"offset"`
-	Code              *string            `json:"code"`
-	Description       *string            `json:"description"`
+	Search            *string            `json:"search"`
 	DiscountType      *string            `json:"discount_type"`
 	DiscountValue     pgtype.Numeric     `json:"discount_value"`
 	MinPurchaseAmount pgtype.Numeric     `json:"min_purchase_amount"`
@@ -114,7 +170,7 @@ type GetDiscountsParams struct {
 	UsageLimit        *int32             `json:"usage_limit"`
 	UsedCount         *int32             `json:"used_count"`
 	IsActive          *bool              `json:"is_active"`
-	FormDate          pgtype.Timestamptz `json:"form_date"`
+	FromDate          pgtype.Timestamptz `json:"from_date"`
 	ToDate            pgtype.Timestamptz `json:"to_date"`
 }
 
@@ -137,8 +193,7 @@ func (q *Queries) GetDiscounts(ctx context.Context, arg GetDiscountsParams) ([]G
 	rows, err := q.db.Query(ctx, getDiscounts,
 		arg.Limit,
 		arg.Offset,
-		arg.Code,
-		arg.Description,
+		arg.Search,
 		arg.DiscountType,
 		arg.DiscountValue,
 		arg.MinPurchaseAmount,
@@ -146,7 +201,7 @@ func (q *Queries) GetDiscounts(ctx context.Context, arg GetDiscountsParams) ([]G
 		arg.UsageLimit,
 		arg.UsedCount,
 		arg.IsActive,
-		arg.FormDate,
+		arg.FromDate,
 		arg.ToDate,
 	)
 	if err != nil {
@@ -180,11 +235,26 @@ func (q *Queries) GetDiscounts(ctx context.Context, arg GetDiscountsParams) ([]G
 	return items, nil
 }
 
+type InsertBulkCategoryDiscountsParams struct {
+	DiscountID uuid.UUID `json:"discount_id"`
+	CategoryID uuid.UUID `json:"category_id"`
+}
+
+type InsertBulkProductDiscountsParams struct {
+	DiscountID uuid.UUID `json:"discount_id"`
+	ProductID  uuid.UUID `json:"product_id"`
+}
+
+type InsertBulkUserDiscountsParams struct {
+	DiscountID uuid.UUID `json:"discount_id"`
+	UserID     uuid.UUID `json:"user_id"`
+}
+
 const insertDiscount = `-- name: InsertDiscount :one
 INSERT INTO discounts 
-    (code, description, discount_type, discount_value, min_purchase_amount, max_discount_amount, is_active, usage_limit, used_count, starts_at, expires_at)
+    (code, description, discount_type, discount_value, min_purchase_amount, max_discount_amount, is_active, usage_limit, starts_at, expires_at)
 VALUES 
-    ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+    ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 RETURNING id
 `
 
@@ -197,7 +267,6 @@ type InsertDiscountParams struct {
 	MaxDiscountAmount pgtype.Numeric     `json:"max_discount_amount"`
 	IsActive          *bool              `json:"is_active"`
 	UsageLimit        *int32             `json:"usage_limit"`
-	UsedCount         *int32             `json:"used_count"`
 	StartsAt          pgtype.Timestamptz `json:"starts_at"`
 	ExpiresAt         pgtype.Timestamptz `json:"expires_at"`
 }
@@ -212,7 +281,6 @@ func (q *Queries) InsertDiscount(ctx context.Context, arg InsertDiscountParams) 
 		arg.MaxDiscountAmount,
 		arg.IsActive,
 		arg.UsageLimit,
-		arg.UsedCount,
 		arg.StartsAt,
 		arg.ExpiresAt,
 	)

@@ -4,8 +4,9 @@ import clsx from 'clsx';
 import React from 'react';
 
 interface TextFieldProps extends HookFormProps {
-  label: string;
+  label?: React.ReactNode;
   icon?: React.ReactNode;
+  step?: string;
   className?: string;
   placeholder?: string;
   error?: string;
@@ -28,6 +29,7 @@ export const TextField: React.FC<TextFieldProps> = (props) => {
       <div className='relative'>
         <Input
           {...rest}
+          step={props.step}
           type={type}
           className={clsx(
             'border border-gray-300 mt-1 transition-all duration-500 rounded-md p-3 w-full shadow-none',

@@ -133,20 +133,30 @@ type PostRatingFormData struct {
 }
 
 type CreateDiscountRequest struct {
-	ID                string                  `json:"id" binding:"required,uuid"`
-	Code              string                  `json:"code" binding:"required,min=5,max=32"`
-	Description       string                  `json:"description" binding:"required"`
-	DiscountType      repository.DiscountType `json:"discount_type" binding:"required,oneof=percentage fixed_amount"`
-	DiscountValue     float64                 `json:"discount_value" binding:"required,gt=0"`
-	MinPurchaseAmount *float64                `json:"min_purchase_amount,omitempty" binding:"omitempty,gt=0"`
-	MaxDiscountAmount *float64                `json:"max_discount_amount,omitempty" binding:"omitempty,gt=0"`
-	UsageLimit        *int                    `json:"usage_limit,omitempty" binding:"omitempty,gte=0"`
-	IsActive          bool                    `json:"is_active" binding:"required"`
-	StartsAt          time.Time               `json:"starts_at" binding:"required"`
-	ExpiresAt         time.Time               `json:"expires_at" binding:"required"`
+	ID                string    `json:"id" binding:"required,uuid"`
+	Code              string    `json:"code" binding:"required,min=5,max=32"`
+	Description       string    `json:"description" binding:"required"`
+	DiscountType      string    `json:"discount_type" binding:"required,oneof=percentage fixed_amount"`
+	DiscountValue     float64   `json:"discount_value" binding:"required,gt=0"`
+	MinPurchaseAmount *float64  `json:"min_purchase_amount" binding:"omitempty,gt=0"`
+	MaxDiscountAmount *float64  `json:"max_discount_amount" binding:"omitempty,gt=0"`
+	UsageLimit        *int32    `json:"usage_limit" binding:"omitempty,gte=0"`
+	IsActive          bool      `json:"is_active" binding:"required"`
+	StartsAt          time.Time `json:"starts_at" binding:"required"`
+	ExpiresAt         time.Time `json:"expires_at" binding:"required"`
 
 	// Related entities
 	Products   []string `json:"products,omitempty" binding:"omitempty,uuidslice"`
 	Categories []string `json:"categories,omitempty" binding:"omitempty,uuidslice"`
 	Users      []string `json:"users,omitempty" binding:"omitempty,uuidslice"`
+}
+
+type DiscountListQuery struct {
+	PaginationQueryParams
+	Search        *string    `form:"search" binding:"omitempty,max=1000"`
+	DiscountType  *string    `form:"discount_type" binding:"omitempty,oneof=percentage fixed_amount"`
+	IsActive      *bool      `from:"is_active" binding:"omitempty"`
+	DiscountValue *float64   `form:"discount_value" binding:"omitempty,gt=0"`
+	FromDate      *time.Time `form:"from_date" binding:"omitempty"`
+	ToDate        *time.Time `form:"to_date" binding:"omitempty"`
 }

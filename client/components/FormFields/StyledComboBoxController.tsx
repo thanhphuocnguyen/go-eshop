@@ -15,7 +15,7 @@ import { CheckIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { Control, Controller, FieldValues, Path } from 'react-hook-form';
 
 interface StyledComboBoxControllerProps<T extends FieldValues> {
-  label: string;
+  label?: React.ReactNode;
   options: any[];
   error?: string;
   name: Path<T>;
