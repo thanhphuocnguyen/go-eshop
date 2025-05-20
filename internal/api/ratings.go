@@ -15,49 +15,6 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
 
-// ----- Types -----
-type PostRatingFormData struct {
-	OrderItemID string                  `form:"order_item_id" binding:"required"`
-	Rating      float64                 `form:"rating" binding:"required,min=1,max=5"`
-	Title       string                  `form:"title" binding:"required"`
-	Content     string                  `form:"content" binding:"required"`
-	Files       []*multipart.FileHeader `form:"files" binding:"omitempty"`
-}
-type RatingsQueryParams struct {
-	PaginationQueryParams
-	Status *string `form:"status" binding:"omitempty,oneof=approved rejected pending"`
-}
-type PostHelpfulRatingRequest struct {
-	Helpful bool `json:"helpful"`
-}
-
-type PostReplyRatingRequest struct {
-	RatingID string `json:"rating_id" binding:"required"`
-	Content  string `json:"content" binding:"required"`
-}
-
-type RatingImageModel struct {
-	ID  string `json:"id"`
-	URL string `json:"url"`
-}
-
-type ProductRatingModel struct {
-	ID               uuid.UUID          `json:"id"`
-	Name             string             `json:"name"`
-	ProductName      string             `json:"product_name,omitempty"`
-	UserID           uuid.UUID          `json:"user_id"`
-	Rating           float64            `json:"rating"`
-	ReviewTitle      string             `json:"review_title"`
-	IsVisible        bool               `json:"is_visible"`
-	IsApproved       bool               `json:"is_approved"`
-	ReviewContent    string             `json:"review_content"`
-	VerifiedPurchase bool               `json:"verified_purchase"`
-	HelpfulVotes     int32              `json:"helpful_votes"`
-	UnhelpfulVotes   int32              `json:"unhelpful_votes"`
-	Images           []RatingImageModel `json:"images"`
-}
-
-// ----- Rating Handlers -----
 // @Summary Post a rating
 // @Description Post a product rating
 // @Tags ratings

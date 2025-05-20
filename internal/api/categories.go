@@ -3,7 +3,6 @@ package api
 import (
 	"errors"
 	"fmt"
-	"mime/multipart"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -11,71 +10,6 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
-
-// ------------------------------------------ Request and Response ------------------------------------------
-type UpdateCategoryRequest struct {
-	Name         *string               `form:"name" binding:"omitempty,min=3,max=255"`
-	Description  *string               `form:"description" binding:"omitempty,max=1000"`
-	Slug         *string               `form:"slug" binding:"omitempty,min=3,max=255"`
-	Published    *bool                 `form:"published" binding:"omitempty"`
-	Remarkable   *bool                 `form:"remarkable" binding:"omitempty"`
-	DisplayOrder *int16                `form:"display_order" binding:"omitempty"`
-	Image        *multipart.FileHeader `form:"image" binding:"omitempty"`
-}
-
-type CreateCategoryRequest struct {
-	Name         string                `form:"name" binding:"required,min=3,max=255"`
-	Slug         string                `form:"slug" binding:"required,min=3,max=255"`
-	Description  *string               `form:"description" binding:"omitempty,max=1000"`
-	DisplayOrder *int16                `form:"display_order" binding:"omitempty"`
-	Remarkable   *bool                 `form:"remarkable" binding:"omitempty"`
-	Image        *multipart.FileHeader `form:"image" binding:"omitempty"`
-}
-
-type CategoryLinkedProduct struct {
-	ID           string  `json:"id"`
-	Name         string  `json:"name"`
-	VariantCount int32   `json:"variant_count"`
-	ImageUrl     *string `json:"image_url,omitempty"`
-}
-
-type CategoryListResponse struct {
-	ID          string             `json:"id"`
-	Name        string             `json:"name"`
-	Description *string            `json:"description,omitempty"`
-	Slug        string             `json:"slug"`
-	Published   bool               `json:"published,omitempty"`
-	Remarkable  bool               `json:"remarkable,omitempty"`
-	CreatedAt   string             `json:"created_at,omitempty"`
-	UpdatedAt   string             `json:"updated_at,omitempty"`
-	ImageUrl    *string            `json:"image_url,omitempty"`
-	Products    []ProductListModel `json:"products,omitempty"`
-}
-
-type CategoryResponse struct {
-	ID          string                  `json:"id"`
-	Name        string                  `json:"name"`
-	Description *string                 `json:"description,omitempty"`
-	Slug        string                  `json:"slug"`
-	Published   bool                    `json:"published,omitempty"`
-	Remarkable  bool                    `json:"remarkable,omitempty"`
-	CreatedAt   string                  `json:"created_at,omitempty"`
-	UpdatedAt   string                  `json:"updated_at,omitempty"`
-	ImageUrl    *string                 `json:"image_url,omitempty"`
-	Products    []CategoryLinkedProduct `json:"products"`
-}
-
-type SlugParam struct {
-	Slug string `uri:"slug" binding:"required"`
-}
-
-type CategoryProductRequest struct {
-	SortOrder int16 `json:"sort_order,omitempty"`
-}
-
-// ------------------------------------------ API Handlers ------------------------------------------
-
-// --- Public API ---
 
 // getCategoriesHandler retrieves a list of Categories.
 // @Summary Get a list of Categories

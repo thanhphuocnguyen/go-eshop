@@ -24,7 +24,7 @@ import (
 // @Failure 400 {object} ApiResponse[bool]
 // @Failure 500 {object} ApiResponse[bool]
 // @Router /webhook/stripe [post]
-func (server *Server) stripeWebhook(c *gin.Context) {
+func (server *Server) stripeEventHandler(c *gin.Context) {
 	var evt stripe.Event
 	if err := c.ShouldBindJSON(&evt); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidEventCode, "", err))

@@ -1,4 +1,4 @@
-package cache
+package cacheservice
 
 import (
 	"context"
@@ -34,10 +34,6 @@ func (r *RedisCache) Set(c context.Context, key string, value interface{}, expir
 		Value: value,
 		TTL:   *expireIn,
 	})
-}
-
-func (r *RedisCache) FlushAll(c context.Context) error {
-	return r.FlushAll(c)
 }
 
 func NewRedisCache(cfg config.Config) Cache {

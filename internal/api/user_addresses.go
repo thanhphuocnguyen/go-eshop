@@ -4,67 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
-
-// ------------------------------ Params ------------------------------
-type CreateAddressReq struct {
-	Phone     string  `json:"phone" binding:"required,min=10,max=15"`
-	Street    string  `json:"street" binding:"required"`
-	District  string  `json:"district" binding:"required"`
-	City      string  `json:"city" binding:"required"`
-	Ward      *string `json:"ward,omitempty" binding:"omitempty,max=100"`
-	IsDefault bool    `json:"is_default,omitempty" binding:"omitempty"`
-}
-
-type UpdateAddressReq struct {
-	Phone     *string `json:"phone" binding:"omitempty"`
-	Address   *string `json:"address_1" binding:"omitempty"`
-	Ward      *string `json:"ward" binding:"omitempty"`
-	District  *string `json:"district" binding:"omitempty"`
-	City      *string `json:"city" binding:"omitempty"`
-	IsDefault *bool   `json:"is_default" binding:"omitempty"`
-}
-
-// ------------------------------ API Models ------------------------------
-type Address struct {
-	Phone    string  `json:"phone"`
-	Street   string  `json:"street"`
-	Ward     *string `json:"ward,omitempty"`
-	District string  `json:"district"`
-	City     string  `json:"city"`
-}
-type AddressResponse struct {
-	ID        string    `json:"id"`
-	Default   bool      `json:"default"`
-	CreatedAt time.Time `json:"created_at"`
-	Phone     string    `json:"phone"`
-	Street    string    `json:"street"`
-	Ward      *string   `json:"ward,omitempty"`
-	District  string    `json:"district"`
-	City      string    `json:"city"`
-}
-
-// ------------------------------ Mapper ------------------------------
-func mapAddressResponse(address repository.UserAddress) AddressResponse {
-	return AddressResponse{
-		ID:        address.ID.String(),
-		Default:   address.Default,
-		CreatedAt: address.CreatedAt,
-		Phone:     address.Phone,
-		Street:    address.Street,
-		Ward:      address.Ward,
-		District:  address.District,
-		City:      address.City,
-	}
-}
-
-// ------------------------------ Handlers ------------------------------
 
 // createAddressHandler godoc
 // @Summary Create a new address

@@ -13,85 +13,8 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/paymentservice"
 )
-
-// ---------------------------------------------- API Models ----------------------------------------------
-type OrderListQuery struct {
-	PaginationQueryParams
-	Status        *string `form:"status,omitempty" binding:"omitempty,oneof=pending confirmed delivering delivered completed cancelled refunded"`
-	PaymentStatus *string `form:"payment_status,omitempty" binding:"omitempty,oneof=pending succeeded failed cancelled refunded"`
-}
-
-type OrderIDParams struct {
-	ID string `uri:"id" binding:"required,min=1"`
-}
-
-type OrderStatusRequest struct {
-	Status string `json:"status" binding:"required,oneof=pending confirmed delivering delivered completed"`
-	Reason string `json:"reason,omitempty"`
-}
-
-type Rating struct {
-	ID        string    `json:"id"`
-	Title     string    `json:"title"`
-	Content   string    `json:"content"`
-	Rating    float64   `json:"rating"`
-	CreatedAt time.Time `json:"created_at"`
-}
-
-type OrderItemResponse struct {
-	ID                 string                             `json:"id"`
-	VariantID          string                             `json:"variant_id"`
-	Name               string                             `json:"name"`
-	ImageUrl           *string                            `json:"image_url"`
-	LineTotal          float64                            `json:"line_total"`
-	Quantity           int16                              `json:"quantity"`
-	AttributesSnapshot []repository.AttributeDataSnapshot `json:"attributes_snapshot"`
-	Rating             *Rating                            `json:"rating,omitempty"`
-}
-type PaymentInfo struct {
-	ID           string  `json:"id"`
-	RefundID     *string `json:"refund_id"`
-	Amount       float64 `json:"amount"`
-	IntendID     *string `json:"intent_id"`
-	ClientSecret *string `json:"client_secret"`
-	GateWay      *string `json:"gateway"`
-	Method       string  `json:"method"`
-	Status       string  `json:"status"`
-}
-
-type OrderDetailResponse struct {
-	ID            uuid.UUID                          `json:"id"`
-	Total         float64                            `json:"total"`
-	Status        repository.OrderStatus             `json:"status"`
-	CustomerName  string                             `json:"customer_name"`
-	CustomerEmail string                             `json:"customer_email"`
-	PaymentInfo   *PaymentInfo                       `json:"payment_info,omitempty"`
-	ShippingInfo  repository.ShippingAddressSnapshot `json:"shipping_info"`
-	Products      []OrderItemResponse                `json:"products"`
-	CreatedAt     time.Time                          `json:"created_at"`
-}
-type OrderListResponse struct {
-	ID            uuid.UUID                `json:"id"`
-	Total         float64                  `json:"total"`
-	TotalItems    int32                    `json:"total_items"`
-	Status        repository.OrderStatus   `json:"status"`
-	PaymentStatus repository.PaymentStatus `json:"payment_status"`
-	CustomerName  string                   `json:"customer_name"`
-	CustomerEmail string                   `json:"customer_email"`
-	CreatedAt     time.Time                `json:"created_at"`
-	UpdatedAt     time.Time                `json:"updated_at"`
-}
-
-type RefundOrderRequest struct {
-	Reason string `json:"reason" binding:"required,oneof=defective damaged fraudulent requested_by_customer"`
-}
-type CancelOrderRequest struct {
-	Reason string `json:"reason" binding:"required,oneof=duplicate fraudulent requested_by_customer abandoned"`
-}
-
-//---------------------------------------------- API Handlers ----------------------------------------------
 
 // @Summary List orders
 // @Description List orders of the current user
@@ -179,7 +102,7 @@ func (sv *Server) getOrdersHandler(c *gin.Context) {
 // @Failure 500 {object} OrderDetailResponse
 // @Router /order/{order_id} [get]
 func (sv *Server) getOrderDetailHandler(c *gin.Context) {
-	var params OrderIDParams
+	var params UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[OrderDetailResponse](InvalidBodyCode, "", err))
 		return
@@ -248,7 +171,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 		}
 		if paymentInfo.Status == repository.PaymentStatusPending && paymentInfo.GatewayPaymentIntentID != nil && paymentInfo.PaymentMethod == repository.PaymentMethodStripe {
 			resp.PaymentInfo.IntendID = paymentInfo.GatewayPaymentIntentID
-			stripeInstance, err := payment.NewStripePayment(sv.config.StripeSecretKey)
+			stripeInstance, err := paymentservice.NewStripePayment(sv.config.StripeSecretKey)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
 				return
@@ -324,7 +247,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 // @Router /order/{order_id}/confirm-received [put]
 func (sv *Server) confirmOrderPayment(c *gin.Context) {
 	tokenPayload, _ := c.MustGet(authorizationPayload).(*auth.Payload)
-	var params OrderIDParams
+	var params UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[gin.H](InvalidBodyCode, "", err))
 		return
@@ -393,7 +316,7 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, createErrorResponse[OrderListResponse](UnauthorizedCode, "", errors.New("authorization payload is not provided")))
 		return
 	}
-	var params OrderIDParams
+	var params UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[OrderListResponse](InvalidBodyCode, "", err))
 		return
@@ -435,18 +358,18 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 		return
 	}
 
-	var reason payment.CancelReason
+	var reason paymentservice.CancelReason
 	switch req.Reason {
 	case "duplicate":
-		reason = payment.CancelReasonDuplicate
+		reason = paymentservice.CancelReasonDuplicate
 	case "fraudulent":
-		reason = payment.CancelReasonFraudulent
+		reason = paymentservice.CancelReasonFraudulent
 	case "abandoned":
-		reason = payment.CancelReasonAbandoned
+		reason = paymentservice.CancelReasonAbandoned
 	case "requested_by_customer":
-		reason = payment.CancelReasonRequestedByCustomer
+		reason = paymentservice.CancelReasonRequestedByCustomer
 	default:
-		reason = payment.CancelReasonRequestedByCustomer
+		reason = paymentservice.CancelReasonRequestedByCustomer
 	}
 
 	// if order
@@ -455,7 +378,7 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 		CancelPaymentFromGateway: func(paymentID string, gateway repository.PaymentGateway) error {
 			switch gateway {
 			case repository.PaymentGatewayStripe:
-				stripeInstance, err := payment.NewStripePayment(sv.config.StripeSecretKey)
+				stripeInstance, err := paymentservice.NewStripePayment(sv.config.StripeSecretKey)
 				if err != nil {
 					c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](InternalServerErrorCode, "", err))
 					return err
@@ -491,7 +414,7 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[OrderListResponse]
 // @Router /order/{order_id}/status [put]
 func (sv *Server) changeOrderStatus(c *gin.Context) {
-	var params OrderIDParams
+	var params UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[OrderListResponse](InvalidBodyCode, "", err))
 		return
@@ -566,7 +489,7 @@ func (sv *Server) changeOrderStatus(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[OrderListResponse]
 // @Router /order/{order_id}/refund [put]
 func (sv *Server) refundOrder(c *gin.Context) {
-	var params OrderIDParams
+	var params UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[OrderListResponse](InvalidBodyCode, "", err))
 		return
@@ -589,28 +512,28 @@ func (sv *Server) refundOrder(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, createErrorResponse[OrderListResponse](InvalidPaymentCode, "", errors.New("order cannot be refunded")))
 		return
 	}
-	var reason payment.RefundReason
+	var reason paymentservice.RefundReason
 	var amountRefund int64
 	switch req.Reason {
 	case "defective":
-		reason = payment.RefundReasonByDefectiveOrDamaged
+		reason = paymentservice.RefundReasonByDefectiveOrDamaged
 		amountRefund = order.TotalPrice.Int.Int64()
 	case "damaged":
-		reason = payment.RefundReasonByDefectiveOrDamaged
+		reason = paymentservice.RefundReasonByDefectiveOrDamaged
 		amountRefund = order.TotalPrice.Int.Int64()
 	case "fraudulent":
-		reason = payment.RefundReasonByFraudulent
+		reason = paymentservice.RefundReasonByFraudulent
 		amountRefund = order.TotalPrice.Int.Int64()
 	case "requested_by_customer":
 		amountRefund = order.TotalPrice.Int.Int64() * 90 / 100
-		reason = payment.RefundReasonRequestedByCustomer
+		reason = paymentservice.RefundReasonRequestedByCustomer
 	}
 	err = sv.repo.RefundOrderTx(c, repository.RefundOrderTxArgs{
 		OrderID: uuid.MustParse(params.ID),
 		RefundPaymentFromGateway: func(paymentID string, gateway repository.PaymentGateway) (string, error) {
 			switch gateway {
 			case repository.PaymentGatewayStripe:
-				stripeInstance, err := payment.NewStripePayment(sv.config.StripeSecretKey)
+				stripeInstance, err := paymentservice.NewStripePayment(sv.config.StripeSecretKey)
 				if err != nil {
 					c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](InternalServerErrorCode, "", err))
 					return "", err

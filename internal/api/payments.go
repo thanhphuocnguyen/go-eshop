@@ -11,33 +11,8 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
-	paymentService "github.com/thanhphuocnguyen/go-eshop/pkg/payment"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/paymentservice"
 )
-
-type PaymentRequest struct {
-	OrderID       string `json:"order_id" binding:"required,uuid"`
-	PaymentMethod string `json:"payment_method" binding:"required,oneof=cod stripe"`
-}
-
-type GetPaymentByOrderIDParam struct {
-	OrderID uuid.UUID `uri:"order_id" binding:"required,uuid"`
-}
-
-type CreatePaymentIntentResult struct {
-	PaymentID    string  `json:"payment_id"`
-	ClientSecret *string `json:"client_secret"`
-}
-
-type PaymentResponse struct {
-	ID      string                    `json:"id"`
-	Gateway repository.PaymentGateway `json:"gateway,omitempty"`
-	Status  repository.PaymentStatus  `json:"status,omitempty"`
-	Details interface{}               `json:"details"`
-}
-
-type ChangePaymentStatusReq struct {
-	Status repository.PaymentStatus `json:"status" binding:"required"`
-}
 
 func (sv *Server) getStripeConfig(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"public_key": sv.config.StripePublishableKey})
@@ -114,7 +89,7 @@ func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
 	var resp CreatePaymentIntentResult
 	switch req.PaymentMethod {
 	case string(repository.PaymentGatewayStripe):
-		stripeInstance, err := paymentService.NewStripePayment(sv.config.StripeSecretKey)
+		stripeInstance, err := paymentservice.NewStripePayment(sv.config.StripeSecretKey)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
 			return
@@ -175,7 +150,7 @@ func (sv *Server) getPaymentHandler(c *gin.Context) {
 
 	var details interface{}
 	if payment.PaymentGateway.Valid {
-		stripeInstance, err := paymentService.NewStripePayment(sv.config.StripeSecretKey)
+		stripeInstance, err := paymentservice.NewStripePayment(sv.config.StripeSecretKey)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
 			return
@@ -213,7 +188,7 @@ func (sv *Server) getPaymentHandler(c *gin.Context) {
 // @Failure 404 {object} ApiResponse[PaymentResponse]
 // @Failure 500 {object} ApiResponse[PaymentResponse]
 // @Router /payment/{payment_id} [get]
-func (sv *Server) changePaymentStatus(c *gin.Context) {
+func (sv *Server) changePaymentStatusHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](InvalidBodyCode, "", errors.New("order not found")))

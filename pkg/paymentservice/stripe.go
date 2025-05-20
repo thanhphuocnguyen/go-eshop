@@ -1,4 +1,4 @@
-package payment
+package paymentservice
 
 import (
 	"github.com/rs/zerolog/log"

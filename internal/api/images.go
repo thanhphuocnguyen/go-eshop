@@ -15,38 +15,6 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
 
-// ------------------------------------------ Request and Response ------------------------------------------
-type PublicIDParam struct {
-	PublicID string `uri:"public_id" binding:"required"`
-}
-type RemoveImageParams struct {
-	ID        string  `uri:"id" binding:"required,uuid"`
-	VariantID *string `uri:"id" binding:"omitempty,uuid"`
-	ImageID   string  `uri:"image_id" binding:"required,uuid"`
-}
-
-type AssignmentRequest struct {
-	VariantIDs []string `json:"variant_ids" binding:"required"`
-}
-
-type ProductVariantImageModel struct {
-	ID        string `json:"id"`
-	VariantID string `json:"variant_id,omitempty"`
-	ImageUrl  string `json:"image_url"`
-	ImageID   string `json:"image_id"`
-}
-
-type ImageResponse struct {
-	ID          string   `json:"id"`
-	ExternalID  string   `json:"external_id"`
-	Url         string   `json:"url"`
-	MimeType    string   `json:"mime_type,omitempty"`
-	FileSize    int64    `json:"file_size,omitzero"`
-	Assignments []string `json:"assignments,omitempty"`
-}
-
-// ------------------------------------------ Handlers ------------------------------------------
-
 // @Summary Upload product images
 // @Schemes http
 // @Description upload product images by ID

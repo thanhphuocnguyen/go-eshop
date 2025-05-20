@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
@@ -17,7 +18,7 @@ const (
 	authorizationPayload = "authorization_payload"
 )
 
-func authMiddleware(tokenGenerator auth.TokenGenerator) gin.HandlerFunc {
+func authenticateMiddleware(tokenGenerator auth.TokenGenerator) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		authorization := ctx.GetHeader(authorization)
 		if len(authorization) == 0 {
@@ -42,7 +43,7 @@ func authMiddleware(tokenGenerator auth.TokenGenerator) gin.HandlerFunc {
 	}
 }
 
-func roleMiddleware(repo repository.Repository, roles ...repository.UserRole) gin.HandlerFunc {
+func authorizeMiddleware(repo repository.Repository, roles ...repository.UserRole) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 		if !ok {
@@ -68,5 +69,28 @@ func roleMiddleware(repo repository.Repository, roles ...repository.UserRole) gi
 			return
 		}
 		c.Next()
+	}
+}
+
+// Setup CORS configuration
+func (sv *Server) corsMiddleware() gin.HandlerFunc {
+	return cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3001", "http://localhost:8080"},
+		AllowHeaders:     []string{"Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With"},
+		AllowFiles:       true,
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowCredentials: true,
+		// AllowAllOrigins:  sv.config.Env == "development",
+	})
+}
+
+// Setup environment mode based on configuration
+func (sv *Server) setEnvModeMiddleware(router *gin.Engine) {
+	router.Use(gin.Recovery())
+	if sv.config.Env == "production" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+	if sv.config.Env == "development" {
+		router.Use(gin.Logger())
 	}
 }

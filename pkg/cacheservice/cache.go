@@ -1,4 +1,4 @@
-package cache
+package cacheservice
 
 import (
 	"context"
@@ -9,7 +9,6 @@ type Cache interface {
 	Set(c context.Context, key string, value interface{}, expireIn *time.Duration) error
 	Get(c context.Context, key string, value interface{}) error
 	Delete(c context.Context, key string) error
-	FlushAll(c context.Context) error
 }
 
 var DEFAULT_EXPIRATION time.Duration = 5 * time.Minute

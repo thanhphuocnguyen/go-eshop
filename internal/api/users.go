@@ -12,68 +12,8 @@ import (
 	repository "github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/cache"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/cacheservice"
 )
-
-// ------------------------------ Structs ------------------------------
-type UserResponse struct {
-	ID                uuid.UUID           `json:"id"`
-	Role              repository.UserRole `json:"role"`
-	Username          string              `json:"username"`
-	FullName          string              `json:"fullname"`
-	Email             string              `json:"email,omitempty"`
-	Phone             string              `json:"phone,omitempty"`
-	VerifiedEmail     bool                `json:"verified_email,omitempty"`
-	VerifiedPhone     bool                `json:"verified_phone,omitempty"`
-	PasswordChangedAt string              `json:"password_changed_at,omitempty"`
-	Addresses         []AddressResponse   `json:"addresses"`
-	CreatedAt         string              `json:"created_at,omitempty"`
-	UpdatedAt         string              `json:"updated_at,omitempty"`
-}
-
-type UpdateUserRequest struct {
-	UserID   uuid.UUID `json:"user_id" binding:"required,uuid"`
-	FullName *string   `json:"fullname,omitempty" binding:"omitempty,min=3,max=32"`
-	Email    *string   `json:"email" binding:"email,max=255,min=6"`
-	Phone    *string   `json:"phone" binding:"omitempty,min=8,max=15"`
-}
-
-type VerifyEmailQuery struct {
-	VerifyCode string `form:"verify_code" binding:"required,min=1"`
-}
-
-// ------------------------------ Mappers ------------------------------
-
-func mapToUserResponse(user repository.User) *UserResponse {
-	return &UserResponse{
-		ID:                user.ID,
-		Addresses:         []AddressResponse{},
-		Email:             user.Email,
-		FullName:          user.Fullname,
-		Role:              user.Role,
-		Phone:             user.Phone,
-		Username:          user.Username,
-		VerifiedEmail:     user.VerifiedEmail,
-		VerifiedPhone:     user.VerifiedPhone,
-		CreatedAt:         user.CreatedAt.String(),
-		UpdatedAt:         user.UpdatedAt.String(),
-		PasswordChangedAt: user.PasswordChangedAt.String(),
-	}
-}
-
-func mapAddressToAddressResponse(address repository.UserAddress) AddressResponse {
-	return AddressResponse{
-		Phone:    address.Phone,
-		Street:   address.Street,
-		Ward:     address.Ward,
-		District: address.District,
-		City:     address.City,
-		Default:  address.Default,
-		ID:       address.ID.String(),
-	}
-}
-
-// ------------------------------ Handlers ------------------------------
 
 // updateUserHandler godoc
 // @Summary Update user info
@@ -154,7 +94,7 @@ func (sv *Server) getCurrentUserHandler(c *gin.Context) {
 	}
 
 	var userResp *UserResponse
-	err := sv.cacheService.Get(c, cache.USER_KEY_PREFIX+authPayload.UserID.String(), &userResp)
+	err := sv.cacheService.Get(c, cacheservice.USER_KEY_PREFIX+authPayload.UserID.String(), &userResp)
 	if err == nil {
 		c.JSON(http.StatusOK, createSuccessResponse(c, *userResp, "", nil, nil))
 		return
@@ -183,7 +123,7 @@ func (sv *Server) getCurrentUserHandler(c *gin.Context) {
 	userResp = mapToUserResponse(user)
 	userResp.Addresses = addressResp
 
-	if err = sv.cacheService.Set(c, cache.USER_KEY_PREFIX+authPayload.UserID.String(), userResp, &cache.DEFAULT_EXPIRATION); err != nil {
+	if err = sv.cacheService.Set(c, cacheservice.USER_KEY_PREFIX+authPayload.UserID.String(), userResp, &cacheservice.DEFAULT_EXPIRATION); err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", err))
 		return
 	}
@@ -361,7 +301,7 @@ func (sv *Server) verifyEmailHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 		return
 	}
-	if err := sv.cacheService.Set(c, cache.USER_KEY_PREFIX+user.ID.String(), mapToUserResponse(user), &cache.DEFAULT_EXPIRATION); err != nil {
+	if err := sv.cacheService.Set(c, cacheservice.USER_KEY_PREFIX+user.ID.String(), mapToUserResponse(user), &cacheservice.DEFAULT_EXPIRATION); err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 		return
 	}

@@ -1,12 +1,21 @@
 package api
 
 import (
+	"encoding/gob"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
+	"github.com/stripe/stripe-go/v81"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	docs "github.com/thanhphuocnguyen/go-eshop/docs"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 )
 
 func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
-	admin := rg.Group("/admin", authMiddleware(sv.tokenGenerator), roleMiddleware(sv.repo, repository.UserRoleAdmin))
+	admin := rg.Group("/admin", authenticateMiddleware(sv.tokenGenerator), authorizeMiddleware(sv.repo, repository.UserRoleAdmin))
 	{
 		users := admin.Group("users")
 		{
@@ -63,7 +72,7 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 			collections.POST("", sv.createCollectionHandler)
 			collections.GET(":id", sv.getCollectionByIDHandler)
 			collections.PUT(":id", sv.updateCollectionHandler)
-			collections.DELETE(":id", sv.deleteCollection)
+			collections.DELETE(":id", sv.deleteCollectionHandler)
 		}
 
 		images := admin.Group("images")
@@ -95,39 +104,39 @@ func (sv *Server) setupAuthRoutes(rg *gin.RouterGroup) {
 
 // Setup user-related routes
 func (sv *Server) setupUserRoutes(rg *gin.RouterGroup) {
-	user := rg.Group("user", authMiddleware(sv.tokenGenerator))
+	users := rg.Group("user", authenticateMiddleware(sv.tokenGenerator))
 	{
-		user.GET("me", sv.getCurrentUserHandler)
-		user.PATCH("me", sv.updateUserHandler)
-		user.POST("send-verify-email", sv.sendVerifyEmailHandler)
-		userAddress := user.Group("addresses")
+		users.GET("me", sv.getCurrentUserHandler)
+		users.PATCH("me", sv.updateUserHandler)
+		users.POST("send-verify-email", sv.sendVerifyEmailHandler)
+		userAddresses := users.Group("addresses")
 		{
-			userAddress.POST("", sv.createAddressHandler)
-			userAddress.PATCH(":id/default", sv.setDefaultAddressHandler)
-			userAddress.GET("", sv.getAddressesHandlers)
-			userAddress.PATCH(":id", sv.updateAddressHandlers)
-			userAddress.DELETE(":id", sv.removeAddressHandlers)
+			userAddresses.POST("", sv.createAddressHandler)
+			userAddresses.PATCH(":id/default", sv.setDefaultAddressHandler)
+			userAddresses.GET("", sv.getAddressesHandlers)
+			userAddresses.PATCH(":id", sv.updateAddressHandlers)
+			userAddresses.DELETE(":id", sv.removeAddressHandlers)
 		}
 	}
 }
 
 // Setup product-related routes
 func (sv *Server) setupProductRoutes(rg *gin.RouterGroup) {
-	product := rg.Group("products")
+	products := rg.Group("products")
 	{
-		product.GET("", sv.getProductsHandler)
-		product.GET(":id", sv.getProductDetailHandler)
-		product.GET(":id/ratings", sv.getRatingsByProductHandler)
+		products.GET("", sv.getProductsHandler)
+		products.GET(":id", sv.getProductDetailHandler)
+		products.GET(":id/ratings", sv.getRatingsByProductHandler)
 	}
 }
 
 // Setup image-related routes
 func (sv *Server) setupImageRoutes(rg *gin.RouterGroup) {
-	images := rg.Group("images", authMiddleware(sv.tokenGenerator))
+	images := rg.Group("images", authenticateMiddleware(sv.tokenGenerator))
 	{
 		images.DELETE(
 			"remove-external/:public_id",
-			roleMiddleware(sv.repo, repository.UserRoleAdmin),
+			authorizeMiddleware(sv.repo, repository.UserRoleAdmin),
 			sv.removeImageByPublicIDHandler)
 		images.GET("", sv.getProductImagesHandler)
 	}
@@ -135,47 +144,47 @@ func (sv *Server) setupImageRoutes(rg *gin.RouterGroup) {
 
 // Setup cart-related routes
 func (sv *Server) setupCartRoutes(rg *gin.RouterGroup) {
-	cart := rg.Group("/cart", authMiddleware(sv.tokenGenerator))
+	cart := rg.Group("/cart", authenticateMiddleware(sv.tokenGenerator))
 	{
 		cart.POST("", sv.createCart)
 		cart.GET("", sv.getCartHandler)
 		cart.POST("checkout", sv.checkoutHandler)
 		cart.PUT("clear", sv.clearCart)
-		cartItem := cart.Group("item")
-		cartItem.DELETE(":id", sv.removeCartItem)
-		cartItem.PUT(":id/quantity", sv.updateCartItemQtyHandler)
+		cartItems := cart.Group("item")
+		cartItems.DELETE(":id", sv.removeCartItem)
+		cartItems.PUT(":id/quantity", sv.updateCartItemQtyHandler)
 	}
 }
 
 // Setup order-related routes
 func (sv *Server) setupOrderRoutes(rg *gin.RouterGroup) {
-	order := rg.Group("/orders", authMiddleware(sv.tokenGenerator))
+	orders := rg.Group("/orders", authenticateMiddleware(sv.tokenGenerator))
 	{
-		order.GET("", sv.getOrdersHandler)
-		order.GET(":id", sv.getOrderDetailHandler)
-		order.PUT(":id/confirm-received", sv.confirmOrderPayment)
-		order.PUT(":id/cancel", sv.cancelOrder)
+		orders.GET("", sv.getOrdersHandler)
+		orders.GET(":id", sv.getOrderDetailHandler)
+		orders.PUT(":id/confirm-received", sv.confirmOrderPayment)
+		orders.PUT(":id/cancel", sv.cancelOrder)
 	}
 }
 
 // Setup payment-related routes
 func (sv *Server) setupPaymentRoutes(rg *gin.RouterGroup) {
-	payment := rg.Group("/payments").Use(authMiddleware(sv.tokenGenerator))
+	payments := rg.Group("/payments").Use(authenticateMiddleware(sv.tokenGenerator))
 	{
-		payment.GET(":id", sv.getPaymentHandler)
-		payment.GET("stripe-config", sv.getStripeConfig)
-		payment.POST("", sv.createPaymentIntentHandler)
-		payment.PUT(":order_id", sv.changePaymentStatus)
+		payments.GET(":id", sv.getPaymentHandler)
+		payments.GET("stripe-config", sv.getStripeConfig)
+		payments.POST("", sv.createPaymentIntentHandler)
+		payments.PUT(":order_id", sv.changePaymentStatusHandler)
 	}
 }
 
 // Setup category-related routes
 func (sv *Server) setupCategoryRoutes(rg *gin.RouterGroup) {
-	category := rg.Group("categories")
+	categories := rg.Group("categories")
 	{
-		category.GET("", sv.getCategoriesHandler)
-		category.GET(":slug", sv.getCategoryBySlugHandler)
-		category.GET(":slug/products", sv.getCategoryBySlugHandler)
+		categories.GET("", sv.getCategoriesHandler)
+		categories.GET(":slug", sv.getCategoryBySlugHandler)
+		categories.GET(":slug/products", sv.getCategoryBySlugHandler)
 	}
 }
 
@@ -199,7 +208,7 @@ func (sv *Server) setupBrandRoutes(rg *gin.RouterGroup) {
 
 // Setup brand-related routes
 func (sv *Server) setupRatingRoutes(rg *gin.RouterGroup) {
-	ratings := rg.Group("ratings", authMiddleware(sv.tokenGenerator))
+	ratings := rg.Group("ratings", authenticateMiddleware(sv.tokenGenerator))
 	{
 		ratings.POST("", sv.postRatingHandler)
 		ratings.GET(":order_id", sv.getOrderRatingsHandler)
@@ -210,8 +219,66 @@ func (sv *Server) setupRatingRoutes(rg *gin.RouterGroup) {
 
 // Setup webhook routes
 func (sv *Server) setupWebhookRoutes(router *gin.Engine) {
-	webhook := router.Group("/webhook/v1")
+	webhooks := router.Group("/webhook/v1")
 	{
-		webhook.POST("stripe", sv.stripeWebhook)
+		webhooks.POST("stripe", sv.stripeEventHandler)
 	}
+}
+
+func (sv *Server) initializeRouter() {
+	router := gin.Default()
+	gob.Register(&stripe.PaymentIntent{})
+
+	// Setup environment mode
+	sv.setEnvModeMiddleware(router)
+
+	// Load HTML templates
+	router.LoadHTMLGlob("static/templates/*")
+
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		v.RegisterValidation("uuidslice", uuidSlice)
+	}
+
+	// Setup CORS
+	router.Use(sv.corsMiddleware())
+
+	router.MaxMultipartMemory = 8 << 20 // 8 MiB
+	docs.SwaggerInfo.BasePath = "/api/v1"
+
+	router.Static("/assets", "./assets")
+
+	router.GET("verify-email", sv.verifyEmailHandler)
+
+	// Setup API routes
+	v1 := router.Group("/api/v1")
+	{
+		// Health check endpoint
+		v1.GET("health", func(ctx *gin.Context) {
+			ctx.JSON(http.StatusOK, gin.H{"status ": "ok"})
+		})
+
+		v1.GET("homepage", sv.getHomePageHandler)
+
+		// Register API route groups
+		sv.setupAuthRoutes(v1)
+		sv.setupAdminRoutes(v1)
+		sv.setupUserRoutes(v1)
+		sv.setupProductRoutes(v1)
+		sv.setupImageRoutes(v1)
+		sv.setupCartRoutes(v1)
+		sv.setupOrderRoutes(v1)
+		sv.setupPaymentRoutes(v1)
+		sv.setupCategoryRoutes(v1)
+		sv.setupCollectionRoutes(v1)
+		sv.setupBrandRoutes(v1)
+		sv.setupRatingRoutes(v1)
+	}
+
+	// Setup webhook routes
+	sv.setupWebhookRoutes(router)
+
+	// Setup Swagger
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+
+	sv.router = router
 }

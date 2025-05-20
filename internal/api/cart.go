@@ -4,7 +4,6 @@ import (
 	"errors"
 	"math"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -13,67 +12,8 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/paymentservice"
 )
-
-type ProductVariantParam struct {
-	ID string `uri:"variant_id" binding:"required,uuid"`
-}
-
-type OrderItemAttribute struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
-}
-
-type CartItemResponse struct {
-	ID         string                             `json:"id" binding:"required,uuid"`
-	ProductID  string                             `json:"product_id" binding:"required,uuid"`
-	VariantID  string                             `json:"variant_id" binding:"required,uuid"`
-	Name       string                             `json:"name"`
-	Quantity   int16                              `json:"quantity"`
-	Price      float64                            `json:"price"`
-	Discount   int16                              `json:"discount"`
-	StockQty   int32                              `json:"stock"`
-	Sku        *string                            `json:"sku,omitempty"`
-	ImageURL   *string                            `json:"image_url,omitempty"`
-	Attributes []repository.AttributeDataSnapshot `json:"attributes"`
-}
-
-type CartDetailResponse struct {
-	ID         uuid.UUID          `json:"id"`
-	TotalPrice float64            `json:"total_price"`
-	CartItems  []CartItemResponse `json:"cart_items"`
-	UpdatedAt  time.Time          `json:"updated_at,omitempty"`
-	CreatedAt  time.Time          `json:"created_at"`
-}
-
-type UpdateCartItemQtyReq struct {
-	Quantity int16 `json:"quantity" binding:"required,gt=0"`
-}
-
-type GetCartItemParam struct {
-	ID string `uri:"id" binding:"required,uuid"`
-}
-
-type CheckoutRequest struct {
-	PaymentMethod      string   `json:"payment_method" binding:"required,oneof=code stripe"`
-	PaymentGateway     *string  `json:"payment_gateway" binding:"omitempty,oneof=stripe"`
-	AddressID          *string  `json:"address_id" binding:"omitempty,uuid"`
-	Email              *string  `json:"email" binding:"omitempty,email"`
-	FullName           *string  `json:"full_name" binding:"omitempty"`
-	Address            *Address `json:"address" binding:"omitempty"`
-	PaymentRecipeEmail *string  `json:"payment_receipt_email" binding:"omitempty,email"`
-}
-
-type CheckoutResponse struct {
-	OrderID         uuid.UUID `json:"order_id"`
-	PaymentID       string    `json:"payment_id"`
-	PaymentIntentID *string   `json:"payment_intent_id,omitempty"`
-	ClientSecret    *string   `json:"client_secret,omitempty"`
-	TotalPrice      float64   `json:"total_price"`
-}
-
-// ------------------------------ Handlers ------------------------------
 
 // @Summary Create a new cart
 // @Schemes http
@@ -304,7 +244,7 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 		return
 	}
 
-	var param GetCartItemParam
+	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[string](InternalServerErrorCode, "", err))
 		return
@@ -536,7 +476,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 			Valid:          true,
 		}
 
-		stripeInstance, err := payment.NewStripePayment(sv.config.StripeSecretKey)
+		stripeInstance, err := paymentservice.NewStripePayment(sv.config.StripeSecretKey)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
 			return

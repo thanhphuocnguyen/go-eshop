@@ -11,29 +11,6 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 )
 
-// ------------------------------------------ Request and Response ------------------------------------------
-
-type getCollectionsQueries struct {
-	PaginationQueryParams
-	Collections *[]int32 `form:"collection_ids,omitempty"`
-}
-
-type CollectionProductRequest struct {
-	SortOrder int16 `json:"sort_order,omitempty"`
-}
-type FiltersModel struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-}
-type CollectionDetailResponse struct {
-	Collection CategoryResponse          `json:"collection"`
-	Categories []FiltersModel            `json:"categories"`
-	Brands     []FiltersModel            `json:"brands"`
-	Attributes map[string][]FiltersModel `json:"attributes"`
-}
-
-// ------------------------------------------ API Handlers ------------------------------------------
-
 // --- Public API ---
 
 // getCollectionBySlugHandler retrieves a list of Collections.
@@ -413,7 +390,7 @@ func (sv *Server) updateCollectionHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, createSuccessResponse(c, col, "", nil, nil))
 }
 
-// deleteCollection delete a Collection.
+// deleteCollectionHandler delete a Collection.
 // @Summary Delete a Collection
 // @Description Delete a Collection
 // @ID delete-Collection
@@ -425,7 +402,7 @@ func (sv *Server) updateCollectionHandler(c *gin.Context) {
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /admin/collections/{id} [delete]
-func (sv *Server) deleteCollection(c *gin.Context) {
+func (sv *Server) deleteCollectionHandler(c *gin.Context) {
 	var colID UriIDParam
 	if err := c.ShouldBindUri(&colID); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidBodyCode, "", err))
