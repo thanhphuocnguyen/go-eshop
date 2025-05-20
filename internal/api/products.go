@@ -24,8 +24,8 @@ import (
 // @Param input body repository.CreateProductTxArgs true "Product input"
 // @Produce json
 // @Success 200 {object} ApiResponse[ProductListModel]
-// @Failure 400 {object} ApiResponse[ProductListModel]
-// @Failure 500 {object} ApiResponse[ProductListModel]
+// @Failure 400 {object} ApiResponse[gin.H]
+// @Failure 500 {object} ApiResponse[gin.H]
 // @Router /products [post]
 func (sv *Server) addProductHandler(c *gin.Context) {
 	var req repository.CreateProductTxArgs
@@ -42,11 +42,7 @@ func (sv *Server) addProductHandler(c *gin.Context) {
 		return
 	}
 
-	resp := ProductCreateResp{
-		ID: productID.String(),
-	}
-
-	c.JSON(http.StatusCreated, createSuccessResponse(c, resp, "", nil, nil))
+	c.JSON(http.StatusCreated, createSuccessResponse(c, productID.String(), "", nil, nil))
 }
 
 // @Summary Get a product detail by ID
@@ -63,7 +59,7 @@ func (sv *Server) addProductHandler(c *gin.Context) {
 func (sv *Server) getProductDetailHandler(c *gin.Context) {
 	var params URISlugParam
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[ProductModel](InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListItemResponse](InvalidBodyCode, "", err))
 		return
 	}
 	sqlParams := repository.GetProductDetailParams{}
@@ -76,12 +72,12 @@ func (sv *Server) getProductDetailHandler(c *gin.Context) {
 
 	productRows, err := sv.repo.GetProductDetail(c, sqlParams)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductModel](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListItemResponse](InternalServerErrorCode, "", err))
 		return
 	}
 
 	if len(productRows) == 0 {
-		c.JSON(http.StatusNotFound, createErrorResponse[ProductModel](NotFoundCode, "", errors.New("product not found")))
+		c.JSON(http.StatusNotFound, createErrorResponse[ProductListItemResponse](NotFoundCode, "", errors.New("product not found")))
 		return
 	}
 	prodID := productRows[0].ProductID
@@ -92,7 +88,7 @@ func (sv *Server) getProductDetailHandler(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductModel](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListItemResponse](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -230,7 +226,7 @@ func (sv *Server) updateProductHandler(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(c, ProductCreateResp{ID: uuid.String()}, "product updated", nil, nil))
+	c.JSON(http.StatusOK, createSuccessResponse(c, struct{}{}, "product updated", nil, nil))
 }
 
 // @Summary Remove a product by ID
@@ -241,8 +237,8 @@ func (sv *Server) updateProductHandler(c *gin.Context) {
 // @Param product_id path int true "Product ID"
 // @Produce json
 // @Success 200 {object} ApiResponse[bool]
-// @Failure 404 {object} gin.H
-// @Failure 500 {object} gin.H
+// @Failure 404 {object} ApiResponse[gin.H]
+// @Failure 500 {object} ApiResponse[gin.H]
 // @Router /products/{product_id} [delete]
 func (sv *Server) deleteProductHandler(c *gin.Context) {
 	var params UriIDParam
@@ -276,7 +272,7 @@ func (sv *Server) deleteProductHandler(c *gin.Context) {
 		errGroup.Go(func() (err error) {
 			img, err := sv.repo.GetImageFromID(c, repository.GetImageFromIDParams{
 				ID:         image.ID,
-				EntityType: repository.VariantEntityType,
+				EntityType: string(repository.EntityTypeProductVariant),
 			})
 
 			if err != nil {

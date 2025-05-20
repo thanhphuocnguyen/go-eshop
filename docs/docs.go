@@ -70,7 +70,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.CreateAddressReq"
+                            "$ref": "#/definitions/api.CreateAddressRequest"
                         }
                     }
                 ],
@@ -84,13 +84,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     }
                 }
@@ -123,7 +123,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.UpdateAddressReq"
+                            "$ref": "#/definitions/api.UpdateAddressRequest"
                         }
                     }
                 ],
@@ -132,6 +132,30 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/api.ApiResponse-api_AddressResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     }
                 }
@@ -159,27 +183,24 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-bool"
-                        }
+                        "description": "OK"
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     }
                 }
@@ -209,27 +230,69 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-bool"
-                        }
+                        "description": "OK"
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/brands/{id}": {
+            "get": {
+                "description": "Get a Brand by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Get a Brand by ID",
+                "operationId": "get-Brand-by-id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Brand ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-api_CategoryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     }
                 }
@@ -283,6 +346,55 @@ const docTemplate = `{
             }
         },
         "/admin/categories/{id}": {
+            "get": {
+                "description": "Get a Category by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Get a Category by ID",
+                "operationId": "get-Category-by-id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Category ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-api_CategoryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            },
             "put": {
                 "description": "Update a Category",
                 "consumes": [
@@ -826,7 +938,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "admin",
+                    "Admin",
                     "ratings"
                 ],
                 "summary": "Delete a rating",
@@ -882,7 +994,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "admin",
+                    "Admin",
                     "ratings"
                 ],
                 "summary": "Approve a rating",
@@ -938,7 +1050,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "admin",
+                    "Admin",
                     "ratings"
                 ],
                 "summary": "Ban a user from rating",
@@ -974,6 +1086,56 @@ const docTemplate = `{
                         "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/api.ApiResponse-bool"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/users/{id}": {
+            "get": {
+                "description": "Get user info",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Get user info",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-api_UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-api_UserResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-api_UserResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-api_UserResponse"
                         }
                     }
                 }
@@ -1276,49 +1438,6 @@ const docTemplate = `{
             }
         },
         "/brands/{id}": {
-            "get": {
-                "description": "Get a Brand by ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Admin"
-                ],
-                "summary": "Get a Brand by ID",
-                "operationId": "get-Brand-by-id",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Brand ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-gin_H"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-gin_H"
-                        }
-                    }
-                }
-            },
             "put": {
                 "description": "Update a Brand",
                 "consumes": [
@@ -1718,7 +1837,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.UpdateCartItemQtyReq"
+                            "$ref": "#/definitions/api.UpdateCartItemQtyRequest"
                         }
                     }
                 ],
@@ -1732,13 +1851,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     }
                 }
@@ -1845,9 +1964,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/categories/{id}": {
+        "/collections/{slug}": {
             "get": {
-                "description": "Get a Category by ID",
+                "description": "Get a list of Collections",
                 "consumes": [
                     "application/json"
                 ],
@@ -1855,15 +1974,15 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Categories"
+                    "Collections"
                 ],
-                "summary": "Get a Category by ID",
-                "operationId": "get-Category-by-id",
+                "summary": "Get a list of Collections",
+                "operationId": "get-Shop-Collection-by-slug",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Category ID",
-                        "name": "id",
+                        "type": "string",
+                        "description": "Collection slug",
+                        "name": "slug",
                         "in": "path",
                         "required": true
                     }
@@ -1877,12 +1996,6 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/gin.H"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/gin.H"
                         }
@@ -2470,31 +2583,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_PaymentResponse"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_PaymentResponse"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_PaymentResponse"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_PaymentResponse"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_PaymentResponse"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     }
                 }
@@ -2537,31 +2650,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_PaymentResponse"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_PaymentResponse"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_PaymentResponse"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_PaymentResponse"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_PaymentResponse"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     }
                 }
@@ -2604,31 +2717,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_PaymentResponse"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_PaymentResponse"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_PaymentResponse"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_PaymentResponse"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_PaymentResponse"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     }
                 }
@@ -2720,13 +2833,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_ProductListModel"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_ProductListModel"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     }
                 }
@@ -2857,13 +2970,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     }
                 }
@@ -3296,101 +3409,6 @@ const docTemplate = `{
                         "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/api.ApiResponse-gin_H"
-                        }
-                    }
-                }
-            }
-        },
-        "/shop/collections": {
-            "get": {
-                "description": "Get a list of Collections",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Collections"
-                ],
-                "summary": "Get a list of Collections",
-                "operationId": "get-Shop-Collections",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "page_size",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/gin.H"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/gin.H"
-                        }
-                    }
-                }
-            }
-        },
-        "/shop/collections/{slug}": {
-            "get": {
-                "description": "Get a list of Collections",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Collections"
-                ],
-                "summary": "Get a list of Collections",
-                "operationId": "get-Shop-Collection-by-slug",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Collection slug",
-                        "name": "slug",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/gin.H"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/gin.H"
                         }
                     }
                 }
@@ -4635,7 +4653,7 @@ const docTemplate = `{
                 }
             }
         },
-        "api.CreateAddressReq": {
+        "api.CreateAddressRequest": {
             "type": "object",
             "required": [
                 "city",
@@ -4705,6 +4723,9 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 255,
                     "minLength": 3
+                },
+                "remarkable": {
+                    "type": "boolean"
                 },
                 "slug": {
                     "type": "string",
@@ -4815,7 +4836,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "payment_info": {
-                    "$ref": "#/definitions/api.PaymentInfo"
+                    "$ref": "#/definitions/api.PaymentInfoModel"
                 },
                 "products": {
                     "type": "array",
@@ -4859,7 +4880,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "rating": {
-                    "$ref": "#/definitions/api.Rating"
+                    "$ref": "#/definitions/api.RatingModel"
                 },
                 "variant_id": {
                     "type": "string"
@@ -4921,7 +4942,7 @@ const docTemplate = `{
                 }
             }
         },
-        "api.PaymentInfo": {
+        "api.PaymentInfoModel": {
             "type": "object",
             "properties": {
                 "amount": {
@@ -4987,6 +5008,9 @@ const docTemplate = `{
         "api.ProductListModel": {
             "type": "object",
             "properties": {
+                "avg_rating": {
+                    "type": "number"
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -5010,6 +5034,9 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "review_count": {
+                    "type": "integer"
                 },
                 "sku": {
                     "type": "string"
@@ -5072,7 +5099,18 @@ const docTemplate = `{
                 }
             }
         },
-        "api.Rating": {
+        "api.RatingImageModel": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.RatingModel": {
             "type": "object",
             "properties": {
                 "content": {
@@ -5088,17 +5126,6 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "title": {
-                    "type": "string"
-                }
-            }
-        },
-        "api.RatingImageModel": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "url": {
                     "type": "string"
                 }
             }
@@ -5126,7 +5153,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "address": {
-                    "$ref": "#/definitions/api.CreateAddressReq"
+                    "$ref": "#/definitions/api.CreateAddressRequest"
                 },
                 "email": {
                     "type": "string",
@@ -5155,7 +5182,7 @@ const docTemplate = `{
                 }
             }
         },
-        "api.UpdateAddressReq": {
+        "api.UpdateAddressRequest": {
             "type": "object",
             "properties": {
                 "address_1": {
@@ -5219,7 +5246,7 @@ const docTemplate = `{
                 }
             }
         },
-        "api.UpdateCartItemQtyReq": {
+        "api.UpdateCartItemQtyRequest": {
             "type": "object",
             "required": [
                 "quantity"

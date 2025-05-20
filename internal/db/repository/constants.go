@@ -1,15 +1,5 @@
 package repository
 
-// Entity Types
-const (
-	AttributeEntityType = "attribute"
-	ProductEntityType   = "product"
-	CategoryEntityType  = "category"
-	BrandEntityType     = "brand"
-	TagEntityType       = "tag"
-	VariantEntityType   = "variant"
-)
-
 const (
 	ThumbnailRole = "thumbnail"
 	SmallRole     = "small"
@@ -18,4 +8,11 @@ const (
 	IconRole      = "icon"
 	LogoRole      = "logo"
 	AvatarRole    = "avatar"
+)
+
+type DiscountType string
+
+const (
+	PercentageDiscount  DiscountType = "percentage"
+	FixedAmountDiscount DiscountType = "fixed_amount"
 )

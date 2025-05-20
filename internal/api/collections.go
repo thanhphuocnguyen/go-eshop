@@ -217,7 +217,7 @@ func (sv *Server) createCollectionHandler(c *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /admin/collections [get]
 func (sv *Server) getCollectionsHandler(c *gin.Context) {
-	var queries getCollectionsQueries
+	var queries CollectionsQueryParams
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
 		return

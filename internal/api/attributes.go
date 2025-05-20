@@ -181,7 +181,7 @@ func (sv *Server) getAttributesHandler(c *gin.Context) {
 		return
 	}
 	var cached *[]AttributeResponse
-	err := sv.cacheService.Get(c, fmt.Sprintf("attributes-%s", queries.IDs), &cached)
+	err := sv.cachesrv.Get(c, fmt.Sprintf("attributes-%s", queries.IDs), &cached)
 	if cached != nil {
 		c.JSON(http.StatusOK, createSuccessResponse(c, &cached, "", nil, nil))
 		return
@@ -230,7 +230,7 @@ func (sv *Server) getAttributesHandler(c *gin.Context) {
 			})
 		}
 	}
-	if err := sv.cacheService.Set(c, fmt.Sprintf("attributes-%s", queries.IDs), attributeResp, nil); err != nil {
+	if err := sv.cachesrv.Set(c, fmt.Sprintf("attributes-%s", queries.IDs), attributeResp, nil); err != nil {
 		log.Error().Err(err).Msg("failed to cache attributes")
 	}
 
@@ -368,7 +368,7 @@ func (sv *Server) updateAttributeHandler(c *gin.Context) {
 		CreatedAt: attribute.CreatedAt.String(),
 	}
 
-	if err := sv.cacheService.Set(c, fmt.Sprintf("attributes-%s", []uuid.UUID{attribute.ID}), attributeResp, nil); err != nil {
+	if err := sv.cachesrv.Set(c, fmt.Sprintf("attributes-%s", []uuid.UUID{attribute.ID}), attributeResp, nil); err != nil {
 		log.Error().Err(err).Msg("failed to cache attributes")
 	}
 
@@ -406,7 +406,7 @@ func (sv *Server) deleteAttributeHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 		return
 	}
-	if err := sv.cacheService.Delete(c, fmt.Sprintf("attributes-%s", []uuid.UUID{attribute[0].ID})); err != nil {
+	if err := sv.cachesrv.Delete(c, fmt.Sprintf("attributes-%s", []uuid.UUID{attribute[0].ID})); err != nil {
 		log.Error().Err(err).Msg("failed to delete attributes cache")
 	}
 	c.Status(http.StatusNoContent)

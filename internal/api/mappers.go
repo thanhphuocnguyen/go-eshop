@@ -35,9 +35,9 @@ func mapAddressToAddressResponse(address repository.UserAddress) AddressResponse
 	}
 }
 
-func mapToProductResponse(productRows []repository.GetProductDetailRow) ProductModel {
+func mapToProductResponse(productRows []repository.GetProductDetailRow) ProductListItemResponse {
 	if len(productRows) == 0 {
-		return ProductModel{}
+		return ProductListItemResponse{}
 	}
 	product := productRows[0]
 	basePrice, _ := product.BasePrice.Float64Value()
@@ -46,7 +46,7 @@ func mapToProductResponse(productRows []repository.GetProductDetailRow) ProductM
 		attributes[i] = attr.String()
 	}
 
-	resp := ProductModel{
+	resp := ProductListItemResponse{
 		ID:               product.ProductID.String(),
 		Name:             product.Name,
 		BasePrice:        basePrice.Float64,
@@ -119,7 +119,7 @@ func mapToVariantResp(variantRows []repository.GetProductVariantsRow) []ProductV
 				continue
 			}
 
-			variants[variantIdx].Attributes = append(variants[variantIdx].Attributes, ProductAttributeDetail{
+			variants[variantIdx].Attributes = append(variants[variantIdx].Attributes, ProductAttributeModel{
 				ID:   row.AttrID.String(),
 				Name: row.AttrName,
 				ValueObject: AttributeValue{
@@ -139,7 +139,7 @@ func mapToVariantResp(variantRows []repository.GetProductVariantsRow) []ProductV
 				StockQty: row.Stock,
 				IsActive: *row.IsActive,
 				Sku:      &row.Sku,
-				Attributes: []ProductAttributeDetail{
+				Attributes: []ProductAttributeModel{
 					{
 						ID:   row.AttrID.String(),
 						Name: row.AttrName,
@@ -172,7 +172,7 @@ func mapToProductImages(productID uuid.UUID, imageRows []repository.GetProductIm
 			}
 		}
 		if existingImageIdx != -1 {
-			image := ImageAssignment{
+			image := ImageAssignmentModel{
 				ID:           row.ID.String(),
 				EntityID:     row.EntityID.String(),
 				EntityType:   row.EntityType,
@@ -190,11 +190,11 @@ func mapToProductImages(productID uuid.UUID, imageRows []repository.GetProductIm
 				Url:                row.Url,
 				ExternalID:         row.ExternalID,
 				Role:               row.Role,
-				VariantAssignments: make([]ImageAssignment, 0),
+				VariantAssignments: make([]ImageAssignmentModel, 0),
 			}
 
 			if row.EntityID != productID {
-				image.VariantAssignments = append(image.VariantAssignments, ImageAssignment{
+				image.VariantAssignments = append(image.VariantAssignments, ImageAssignmentModel{
 					ID:           row.ID.String(),
 					EntityID:     row.EntityID.String(),
 					EntityType:   row.EntityType,

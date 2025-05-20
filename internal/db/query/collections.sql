@@ -37,7 +37,9 @@ LIMIT $1 OFFSET $2;
 SELECT 
     c.*
 FROM collections AS c
-WHERE c.published = COALESCE(sqlc.narg('published'), c.published)
+WHERE 
+    c.published = COALESCE(sqlc.narg('published'), c.published)
+    AND c.remarkable = COALESCE(sqlc.narg('remarkable'), c.remarkable)
 LIMIT $1 OFFSET $2;
 
 -- name: UpdateCollectionWith :one

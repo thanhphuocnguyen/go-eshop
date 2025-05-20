@@ -58,7 +58,7 @@ func (sv *Server) getShopBrandsHandler(c *gin.Context) {
 		Pagination *Pagination        `json:"pagination"`
 	}
 
-	if err := sv.cacheService.Get(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), &cached); err == nil {
+	if err := sv.cachesrv.Get(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), &cached); err == nil {
 		if cached != nil {
 			resp := createSuccessResponse(c, cached.Data, "Cached", cached.Pagination, nil)
 			c.JSON(http.StatusOK, resp)
@@ -115,7 +115,7 @@ func (sv *Server) getShopBrandsHandler(c *gin.Context) {
 	}
 
 	resp := createSuccessResponse(c, cached.Data, "", cached.Pagination, nil)
-	if err = sv.cacheService.Set(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), resp, nil); err != nil {
+	if err = sv.cachesrv.Set(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), resp, nil); err != nil {
 		log.Error().Err(err).Msg("error when set brands to cache")
 	}
 	c.JSON(http.StatusOK, resp)
@@ -185,7 +185,7 @@ func (sv *Server) getShopBrandBySlugHandler(c *gin.Context) {
 		Pagination *Pagination        `json:"pagination"`
 	}
 
-	if err := sv.cacheService.Get(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), &cached); err == nil {
+	if err := sv.cachesrv.Get(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), &cached); err == nil {
 		if cached != nil {
 			resp := createSuccessResponse(c, cached.Data, "Cached", cached.Pagination, nil)
 			c.JSON(http.StatusOK, resp)
@@ -233,7 +233,7 @@ func (sv *Server) getShopBrandBySlugHandler(c *gin.Context) {
 	}
 
 	resp := createSuccessResponse(c, cached.Data, "", cached.Pagination, nil)
-	if err = sv.cacheService.Set(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), resp, nil); err != nil {
+	if err = sv.cachesrv.Set(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), resp, nil); err != nil {
 		log.Error().Err(err).Msg("error when set brands to cache")
 	}
 	c.JSON(http.StatusOK, resp)
@@ -315,7 +315,7 @@ func (sv *Server) getBrandsHandler(c *gin.Context) {
 		Data       []CategoryResponse `json:"data"`
 		Pagination *Pagination        `json:"pagination"`
 	}
-	if err := sv.cacheService.Get(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), &cached); err == nil {
+	if err := sv.cachesrv.Get(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), &cached); err == nil {
 		if cached != nil {
 			resp := createSuccessResponse(c, cached.Data, "Cached", cached.Pagination, nil)
 			c.JSON(http.StatusOK, resp)
@@ -365,7 +365,7 @@ func (sv *Server) getBrandsHandler(c *gin.Context) {
 		Pagination: pagination,
 	}
 
-	if err = sv.cacheService.Set(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), cached, nil); err != nil {
+	if err = sv.cachesrv.Set(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), cached, nil); err != nil {
 		log.Error().Err(err).Msg("error when set brands to cache")
 	}
 

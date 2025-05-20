@@ -11,7 +11,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/paymentservice"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/paymentsrv"
 )
 
 func (sv *Server) getStripeConfig(c *gin.Context) {
@@ -26,11 +26,11 @@ func (sv *Server) getStripeConfig(c *gin.Context) {
 // @Param request body PaymentRequest true "Payment request"
 // @Security BearerAuth
 // @Success 200 {object} ApiResponse[PaymentResponse]
-// @Failure 400 {object} ApiResponse[PaymentResponse]
-// @Failure 401 {object} ApiResponse[PaymentResponse]
-// @Failure 403 {object} ApiResponse[PaymentResponse]
-// @Failure 404 {object} ApiResponse[PaymentResponse]
-// @Failure 500 {object} ApiResponse[PaymentResponse]
+// @Failure 400 {object} ApiResponse[gin.H]
+// @Failure 401 {object} ApiResponse[gin.H]
+// @Failure 403 {object} ApiResponse[gin.H]
+// @Failure 404 {object} ApiResponse[gin.H]
+// @Failure 500 {object} ApiResponse[gin.H]
 // @Router /payment [post]
 func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
@@ -86,10 +86,10 @@ func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
 		Amount:        utils.GetPgNumericFromFloat(total.Float64),
 		PaymentMethod: repository.PaymentMethod(req.PaymentMethod),
 	}
-	var resp CreatePaymentIntentResult
+	var resp CreatePaymentIntentResponse
 	switch req.PaymentMethod {
 	case string(repository.PaymentGatewayStripe):
-		stripeInstance, err := paymentservice.NewStripePayment(sv.config.StripeSecretKey)
+		stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
 			return
@@ -129,11 +129,11 @@ func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
 // @Param id path int true "Order ID"
 // @Security BearerAuth
 // @Success 200 {object} ApiResponse[PaymentResponse]
-// @Failure 400 {object} ApiResponse[PaymentResponse]
-// @Failure 401 {object} ApiResponse[PaymentResponse]
-// @Failure 403 {object} ApiResponse[PaymentResponse]
-// @Failure 404 {object} ApiResponse[PaymentResponse]
-// @Failure 500 {object} ApiResponse[PaymentResponse]
+// @Failure 400 {object} ApiResponse[gin.H]
+// @Failure 401 {object} ApiResponse[gin.H]
+// @Failure 403 {object} ApiResponse[gin.H]
+// @Failure 404 {object} ApiResponse[gin.H]
+// @Failure 500 {object} ApiResponse[gin.H]
 // @Router /payment/{id} [get]
 func (sv *Server) getPaymentHandler(c *gin.Context) {
 	var param UriIDParam
@@ -150,7 +150,7 @@ func (sv *Server) getPaymentHandler(c *gin.Context) {
 
 	var details interface{}
 	if payment.PaymentGateway.Valid {
-		stripeInstance, err := paymentservice.NewStripePayment(sv.config.StripeSecretKey)
+		stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
 			return
@@ -182,11 +182,11 @@ func (sv *Server) getPaymentHandler(c *gin.Context) {
 // @Param payment_id path string true "Payment ID"
 // @Security BearerAuth
 // @Success 200 {object} ApiResponse[PaymentResponse]
-// @Failure 400 {object} ApiResponse[PaymentResponse]
-// @Failure 401 {object} ApiResponse[PaymentResponse]
-// @Failure 403 {object} ApiResponse[PaymentResponse]
-// @Failure 404 {object} ApiResponse[PaymentResponse]
-// @Failure 500 {object} ApiResponse[PaymentResponse]
+// @Failure 400 {object} ApiResponse[gin.H]
+// @Failure 401 {object} ApiResponse[gin.H]
+// @Failure 403 {object} ApiResponse[gin.H]
+// @Failure 404 {object} ApiResponse[gin.H]
+// @Failure 500 {object} ApiResponse[gin.H]
 // @Router /payment/{payment_id} [get]
 func (sv *Server) changePaymentStatusHandler(c *gin.Context) {
 	var param UriIDParam
@@ -194,7 +194,7 @@ func (sv *Server) changePaymentStatusHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](InvalidBodyCode, "", errors.New("order not found")))
 		return
 	}
-	var req ChangePaymentStatusReq
+	var req UpdatePaymentStatusRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](InvalidBodyCode, "", errors.New("order not found")))
 		return

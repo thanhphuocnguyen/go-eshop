@@ -12,7 +12,7 @@ import (
 	repository "github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/cacheservice"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/cachesrv"
 )
 
 // updateUserHandler godoc
@@ -94,7 +94,7 @@ func (sv *Server) getCurrentUserHandler(c *gin.Context) {
 	}
 
 	var userResp *UserResponse
-	err := sv.cacheService.Get(c, cacheservice.USER_KEY_PREFIX+authPayload.UserID.String(), &userResp)
+	err := sv.cachesrv.Get(c, cachesrv.USER_KEY_PREFIX+authPayload.UserID.String(), &userResp)
 	if err == nil {
 		c.JSON(http.StatusOK, createSuccessResponse(c, *userResp, "", nil, nil))
 		return
@@ -123,7 +123,7 @@ func (sv *Server) getCurrentUserHandler(c *gin.Context) {
 	userResp = mapToUserResponse(user)
 	userResp.Addresses = addressResp
 
-	if err = sv.cacheService.Set(c, cacheservice.USER_KEY_PREFIX+authPayload.UserID.String(), userResp, &cacheservice.DEFAULT_EXPIRATION); err != nil {
+	if err = sv.cachesrv.Set(c, cachesrv.USER_KEY_PREFIX+authPayload.UserID.String(), userResp, &cachesrv.DEFAULT_EXPIRATION); err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", err))
 		return
 	}
@@ -301,7 +301,7 @@ func (sv *Server) verifyEmailHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 		return
 	}
-	if err := sv.cacheService.Set(c, cacheservice.USER_KEY_PREFIX+user.ID.String(), mapToUserResponse(user), &cacheservice.DEFAULT_EXPIRATION); err != nil {
+	if err := sv.cachesrv.Set(c, cachesrv.USER_KEY_PREFIX+user.ID.String(), mapToUserResponse(user), &cachesrv.DEFAULT_EXPIRATION); err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 		return
 	}

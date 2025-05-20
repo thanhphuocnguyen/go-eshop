@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
 func (s *Server) getHomePageHandler(ctx *gin.Context) {
@@ -20,8 +21,10 @@ func (s *Server) getHomePageHandler(ctx *gin.Context) {
 	go func() {
 		defer wg.Done()
 		categoryRows, err := s.repo.GetCategories(ctx, repository.GetCategoriesParams{
-			Limit:  5,
-			Offset: 0,
+			Limit:      5,
+			Offset:     0,
+			Published:  utils.BoolPtr(true),
+			Remarkable: utils.BoolPtr(true),
 		})
 
 		if err != nil {
@@ -39,7 +42,6 @@ func (s *Server) getHomePageHandler(ctx *gin.Context) {
 				Slug:        category.Slug,
 			}
 		}
-
 		categoriesChan <- categoryModel
 	}()
 
@@ -47,8 +49,10 @@ func (s *Server) getHomePageHandler(ctx *gin.Context) {
 	go func() {
 		defer wg.Done()
 		collectionRows, err := s.repo.GetCollections(ctx, repository.GetCollectionsParams{
-			Limit:  5,
-			Offset: 0,
+			Limit:      5,
+			Offset:     0,
+			Published:  utils.BoolPtr(true),
+			Remarkable: utils.BoolPtr(true),
 		})
 
 		if err != nil {

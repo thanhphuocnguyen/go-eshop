@@ -125,7 +125,7 @@ func (sv *Server) uploadProductImagesHandler(c *gin.Context) {
 			createImageAssignmentReq = append(createImageAssignmentReq, repository.InsertBulkImageAssignmentsParams{
 				ImageID:      img.ID,
 				EntityID:     existingProduct.ID,
-				EntityType:   repository.ProductEntityType,
+				EntityType:   string(repository.EntityTypeProduct),
 				DisplayOrder: int16(i) + 1,
 				Role:         strings.ToLower(roles[i]),
 			})
@@ -145,7 +145,7 @@ func (sv *Server) uploadProductImagesHandler(c *gin.Context) {
 				createImageAssignmentReq = append(createImageAssignmentReq, repository.InsertBulkImageAssignmentsParams{
 					ImageID:      img.ID,
 					EntityID:     variantID,
-					EntityType:   repository.VariantEntityType,
+					EntityType:   string(repository.EntityTypeProductVariant),
 					DisplayOrder: int16(i) + 1,
 					Role:         repository.GalleryRole,
 				})
@@ -240,7 +240,7 @@ func (sv *Server) removeImageHandler(c *gin.Context) {
 
 	image, err := sv.repo.GetImageFromID(c, repository.GetImageFromIDParams{
 		ID:         uuid.MustParse(params.ImageID),
-		EntityType: repository.ProductEntityType,
+		EntityType: string(repository.EntityTypeProduct),
 	})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
@@ -250,7 +250,7 @@ func (sv *Server) removeImageHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 		return
 	}
-	if image.EntityType != repository.ProductEntityType {
+	if image.EntityType != string(repository.EntityTypeProductVariant) {
 		c.JSON(http.StatusNotFound, createErrorResponse[bool](NotFoundCode, "", errors.New("image not found")))
 		return
 	}

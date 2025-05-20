@@ -9,8 +9,8 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/cacheservice"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/paymentservice"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/cachesrv"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/paymentsrv"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/upload"
 )
 
@@ -28,18 +28,18 @@ type Server struct {
 	repo            repository.Repository
 	tokenGenerator  auth.TokenGenerator
 	uploadService   upload.UploadService
-	paymentCtx      *paymentservice.PaymentContext
-	cacheService    cacheservice.Cache
+	paymentCtx      *paymentsrv.PaymentContext
+	cachesrv        cachesrv.Cache
 	taskDistributor worker.TaskDistributor
 }
 
 func NewAPI(
 	cfg config.Config,
 	repo repository.Repository,
-	cacheService cacheservice.Cache,
+	cachesrv cachesrv.Cache,
 	taskDistributor worker.TaskDistributor,
 	uploadService upload.UploadService,
-	paymentCtx *paymentservice.PaymentContext,
+	paymentCtx *paymentsrv.PaymentContext,
 ) (*Server, error) {
 	tokenGenerator, err := auth.NewJwtGenerator(cfg.SymmetricKey)
 	if err != nil {
@@ -51,7 +51,7 @@ func NewAPI(
 		config:          cfg,
 		taskDistributor: taskDistributor,
 		uploadService:   uploadService,
-		cacheService:    cacheService,
+		cachesrv:        cachesrv,
 		paymentCtx:      paymentCtx,
 	}
 	server.initializeRouter()

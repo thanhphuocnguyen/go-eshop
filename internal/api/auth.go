@@ -16,12 +16,12 @@ import (
 )
 
 type RegisterRequestBody struct {
-	Username string            `json:"username" binding:"required,min=3,max=32,lowercase"`
-	Password string            `json:"password" binding:"required,min=6,max=32"`
-	FullName string            `json:"fullname" binding:"required,min=3,max=32"`
-	Phone    string            `json:"phone" binding:"required,min=10,max=15"`
-	Email    string            `json:"email" binding:"required,email,max=255,min=6"`
-	Address  *CreateAddressReq `json:"address" binding:"omitempty,required"`
+	Username string                `json:"username" binding:"required,min=3,max=32,lowercase"`
+	Password string                `json:"password" binding:"required,min=6,max=32"`
+	FullName string                `json:"fullname" binding:"required,min=3,max=32"`
+	Phone    string                `json:"phone" binding:"required,min=10,max=15"`
+	Email    string                `json:"email" binding:"required,email,max=255,min=6"`
+	Address  *CreateAddressRequest `json:"address" binding:"omitempty,required"`
 }
 
 type LoginRequest struct {

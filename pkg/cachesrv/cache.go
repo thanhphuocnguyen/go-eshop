@@ -1,4 +1,4 @@
-package cacheservice
+package cachesrv
 
 import (
 	"context"

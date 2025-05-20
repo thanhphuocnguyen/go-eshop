@@ -93,7 +93,7 @@ func (s *pgRepo) UpdateProductTx(ctx context.Context, productID uuid.UUID, arg U
 					errGroup.Go(func() (err error) {
 						img, err := q.GetImageFromID(ctx, GetImageFromIDParams{
 							ID:         uuid.MustParse(image.ID),
-							EntityType: ProductEntityType,
+							EntityType: string(EntityTypeProduct),
 						})
 
 						if err != nil {
@@ -127,7 +127,7 @@ func (s *pgRepo) UpdateProductTx(ctx context.Context, productID uuid.UUID, arg U
 						ImageID:    image.ID,
 						Role:       image.Role,
 						EntityID:   productID,
-						EntityType: ProductEntityType,
+						EntityType: string(EntityTypeProduct),
 						VariantIDs: assignmentIds,
 					}
 
@@ -316,7 +316,7 @@ func updateProductImages(ctx context.Context, q *Queries, arg []UpdateProdImages
 		// Remove all old image assignments
 		err := q.DeleteImageAssignments(ctx, DeleteImageAssignmentsParams{
 			ImageID:    uuid.MustParse(image.ImageID),
-			EntityType: VariantEntityType,
+			EntityType: string(EntityTypeProductVariant),
 		})
 
 		if err != nil {
@@ -333,7 +333,7 @@ func updateProductImages(ctx context.Context, q *Queries, arg []UpdateProdImages
 					ImageID:      uuid.MustParse(image.ImageID),
 					EntityID:     variantID,
 					Role:         "gallery",
-					EntityType:   VariantEntityType,
+					EntityType:   string(EntityTypeProductVariant),
 					DisplayOrder: 1,
 				}
 				if image.Role != nil {

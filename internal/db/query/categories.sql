@@ -36,6 +36,7 @@ WHERE
 SELECT * FROM categories
 WHERE
     published = COALESCE(sqlc.narg('published'), true)
+    AND remarkable = COALESCE(sqlc.narg('remarkable'), remarkable)
 ORDER BY id
 LIMIT $1
 OFFSET $2;

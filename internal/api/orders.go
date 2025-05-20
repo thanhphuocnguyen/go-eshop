@@ -13,7 +13,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/paymentservice"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/paymentsrv"
 )
 
 // @Summary List orders
@@ -110,7 +110,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 
 	var resp *OrderDetailResponse
 
-	if err := sv.cacheService.Get(c, "order_detail:"+params.ID, &resp); err == nil {
+	if err := sv.cachesrv.Get(c, "order_detail:"+params.ID, &resp); err == nil {
 		if resp != nil {
 			c.JSON(http.StatusOK, createSuccessResponse(c, resp, "success", nil, nil))
 			return
@@ -161,7 +161,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 	}
 	if err == nil {
 		amount, _ := paymentInfo.Amount.Float64Value()
-		resp.PaymentInfo = &PaymentInfo{
+		resp.PaymentInfo = &PaymentInfoModel{
 			ID:       paymentInfo.ID.String(),
 			RefundID: paymentInfo.RefundID,
 			GateWay:  (*string)(&paymentInfo.PaymentGateway.PaymentGateway),
@@ -171,7 +171,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 		}
 		if paymentInfo.Status == repository.PaymentStatusPending && paymentInfo.GatewayPaymentIntentID != nil && paymentInfo.PaymentMethod == repository.PaymentMethodStripe {
 			resp.PaymentInfo.IntendID = paymentInfo.GatewayPaymentIntentID
-			stripeInstance, err := paymentservice.NewStripePayment(sv.config.StripeSecretKey)
+			stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
 				return
@@ -208,7 +208,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 		if item.RatingID.Valid {
 			id, _ := uuid.FromBytes(item.RatingID.Bytes[:])
 			rating, _ := item.Rating.Float64Value()
-			itemResp.Rating = &Rating{
+			itemResp.Rating = &RatingModel{
 				ID:        id.String(),
 				Title:     *item.ReviewTitle,
 				Content:   *item.ReviewContent,
@@ -221,7 +221,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 
 	resp.Products = orderItems
 
-	if err := sv.cacheService.Set(c, "order_detail:"+params.ID, resp, utils.TimeDurationPtr(5*time.Minute)); err != nil {
+	if err := sv.cachesrv.Set(c, "order_detail:"+params.ID, resp, utils.TimeDurationPtr(5*time.Minute)); err != nil {
 		log.Err(err).Msg("failed to cache order detail")
 		apiErr = &ApiError{
 			Code:    InternalServerErrorCode,
@@ -287,7 +287,7 @@ func (sv *Server) confirmOrderPayment(c *gin.Context) {
 		return
 	}
 	var apiErr *ApiError
-	if err := sv.cacheService.Delete(c, "order_detail:"+params.ID); err != nil {
+	if err := sv.cachesrv.Delete(c, "order_detail:"+params.ID); err != nil {
 		log.Err(err).Msg("failed to delete order detail cache")
 		apiErr = &ApiError{
 			Code:    InternalServerErrorCode,
@@ -358,18 +358,18 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 		return
 	}
 
-	var reason paymentservice.CancelReason
+	var reason paymentsrv.CancelReason
 	switch req.Reason {
 	case "duplicate":
-		reason = paymentservice.CancelReasonDuplicate
+		reason = paymentsrv.CancelReasonDuplicate
 	case "fraudulent":
-		reason = paymentservice.CancelReasonFraudulent
+		reason = paymentsrv.CancelReasonFraudulent
 	case "abandoned":
-		reason = paymentservice.CancelReasonAbandoned
+		reason = paymentsrv.CancelReasonAbandoned
 	case "requested_by_customer":
-		reason = paymentservice.CancelReasonRequestedByCustomer
+		reason = paymentsrv.CancelReasonRequestedByCustomer
 	default:
-		reason = paymentservice.CancelReasonRequestedByCustomer
+		reason = paymentsrv.CancelReasonRequestedByCustomer
 	}
 
 	// if order
@@ -378,7 +378,7 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 		CancelPaymentFromGateway: func(paymentID string, gateway repository.PaymentGateway) error {
 			switch gateway {
 			case repository.PaymentGatewayStripe:
-				stripeInstance, err := paymentservice.NewStripePayment(sv.config.StripeSecretKey)
+				stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
 				if err != nil {
 					c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](InternalServerErrorCode, "", err))
 					return err
@@ -467,7 +467,7 @@ func (sv *Server) changeOrderStatus(c *gin.Context) {
 		return
 	}
 
-	if err := sv.cacheService.Delete(c, "order_detail:"+params.ID); err != nil {
+	if err := sv.cachesrv.Delete(c, "order_detail:"+params.ID); err != nil {
 		log.Err(err).Msg("failed to delete order detail cache")
 		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](InternalServerErrorCode, "", err))
 		return
@@ -512,28 +512,28 @@ func (sv *Server) refundOrder(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, createErrorResponse[OrderListResponse](InvalidPaymentCode, "", errors.New("order cannot be refunded")))
 		return
 	}
-	var reason paymentservice.RefundReason
+	var reason paymentsrv.RefundReason
 	var amountRefund int64
 	switch req.Reason {
 	case "defective":
-		reason = paymentservice.RefundReasonByDefectiveOrDamaged
+		reason = paymentsrv.RefundReasonByDefectiveOrDamaged
 		amountRefund = order.TotalPrice.Int.Int64()
 	case "damaged":
-		reason = paymentservice.RefundReasonByDefectiveOrDamaged
+		reason = paymentsrv.RefundReasonByDefectiveOrDamaged
 		amountRefund = order.TotalPrice.Int.Int64()
 	case "fraudulent":
-		reason = paymentservice.RefundReasonByFraudulent
+		reason = paymentsrv.RefundReasonByFraudulent
 		amountRefund = order.TotalPrice.Int.Int64()
 	case "requested_by_customer":
 		amountRefund = order.TotalPrice.Int.Int64() * 90 / 100
-		reason = paymentservice.RefundReasonRequestedByCustomer
+		reason = paymentsrv.RefundReasonRequestedByCustomer
 	}
 	err = sv.repo.RefundOrderTx(c, repository.RefundOrderTxArgs{
 		OrderID: uuid.MustParse(params.ID),
 		RefundPaymentFromGateway: func(paymentID string, gateway repository.PaymentGateway) (string, error) {
 			switch gateway {
 			case repository.PaymentGatewayStripe:
-				stripeInstance, err := paymentservice.NewStripePayment(sv.config.StripeSecretKey)
+				stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
 				if err != nil {
 					c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](InternalServerErrorCode, "", err))
 					return "", err

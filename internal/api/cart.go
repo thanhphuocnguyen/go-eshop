@@ -12,7 +12,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/paymentservice"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/paymentsrv"
 )
 
 // @Summary Create a new cart
@@ -137,11 +137,11 @@ func (sv *Server) getCartHandler(c *gin.Context) {
 // @Description add a product to the cart
 // @Tags carts
 // @Accept json
-// @Param input body UpdateCartItemQtyReq true "Add product to cart input"
+// @Param input body UpdateCartItemQtyRequest true "Add product to cart input"
 // @Produce json
 // @Success 200 {object} ApiResponse[uuid.UUID]
-// @Failure 400 {object} gin.H
-// @Failure 500 {object} gin.H
+// @Failure 400 {object} ApiResponse[gin.H]
+// @Failure 500 {object} ApiResponse[gin.H]
 // @Router /cart/item/{variant_id} [post]
 func (sv *Server) updateCartItemQtyHandler(c *gin.Context) {
 	var param UriIDParam
@@ -156,7 +156,7 @@ func (sv *Server) updateCartItemQtyHandler(c *gin.Context) {
 		return
 	}
 
-	var req UpdateCartItemQtyReq
+	var req UpdateCartItemQtyRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[uuid.UUID](InternalServerErrorCode, "", err))
 		return
@@ -476,7 +476,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 			Valid:          true,
 		}
 
-		stripeInstance, err := paymentservice.NewStripePayment(sv.config.StripeSecretKey)
+		stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
 			return

@@ -547,7 +547,7 @@ definitions:
     required:
     - payment_method
     type: object
-  api.CreateAddressReq:
+  api.CreateAddressRequest:
     properties:
       city:
         type: string
@@ -594,6 +594,8 @@ definitions:
         maxLength: 255
         minLength: 3
         type: string
+      remarkable:
+        type: boolean
       slug:
         maxLength: 255
         minLength: 3
@@ -671,7 +673,7 @@ definitions:
       id:
         type: string
       payment_info:
-        $ref: '#/definitions/api.PaymentInfo'
+        $ref: '#/definitions/api.PaymentInfoModel'
       products:
         items:
           $ref: '#/definitions/api.OrderItemResponse'
@@ -700,7 +702,7 @@ definitions:
       quantity:
         type: integer
       rating:
-        $ref: '#/definitions/api.Rating'
+        $ref: '#/definitions/api.RatingModel'
       variant_id:
         type: string
     type: object
@@ -740,7 +742,7 @@ definitions:
       totalPages:
         type: integer
     type: object
-  api.PaymentInfo:
+  api.PaymentInfoModel:
     properties:
       amount:
         type: number
@@ -784,6 +786,8 @@ definitions:
     type: object
   api.ProductListModel:
     properties:
+      avg_rating:
+        type: number
       created_at:
         type: string
       description:
@@ -800,6 +804,8 @@ definitions:
         type: number
       name:
         type: string
+      review_count:
+        type: integer
       sku:
         type: string
       slug:
@@ -840,7 +846,14 @@ definitions:
       verified_purchase:
         type: boolean
     type: object
-  api.Rating:
+  api.RatingImageModel:
+    properties:
+      id:
+        type: string
+      url:
+        type: string
+    type: object
+  api.RatingModel:
     properties:
       content:
         type: string
@@ -853,13 +866,6 @@ definitions:
       title:
         type: string
     type: object
-  api.RatingImageModel:
-    properties:
-      id:
-        type: string
-      url:
-        type: string
-    type: object
   api.RefreshTokenResponse:
     properties:
       access_token:
@@ -870,7 +876,7 @@ definitions:
   api.RegisterRequestBody:
     properties:
       address:
-        $ref: '#/definitions/api.CreateAddressReq'
+        $ref: '#/definitions/api.CreateAddressRequest'
       email:
         maxLength: 255
         minLength: 6
@@ -899,7 +905,7 @@ definitions:
     - phone
     - username
     type: object
-  api.UpdateAddressReq:
+  api.UpdateAddressRequest:
     properties:
       address_1:
         type: string
@@ -941,7 +947,7 @@ definitions:
     required:
     - code
     type: object
-  api.UpdateCartItemQtyReq:
+  api.UpdateCartItemQtyRequest:
     properties:
       quantity:
         type: integer
@@ -1335,7 +1341,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/api.CreateAddressReq'
+          $ref: '#/definitions/api.CreateAddressRequest'
       produces:
       - application/json
       responses:
@@ -1346,11 +1352,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
       summary: Create a new address
       tags:
       - address
@@ -1370,20 +1376,18 @@ paths:
       responses:
         "200":
           description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
       summary: Remove an address
       tags:
       - address
@@ -1402,7 +1406,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/api.UpdateAddressReq'
+          $ref: '#/definitions/api.UpdateAddressRequest'
       produces:
       - application/json
       responses:
@@ -1410,6 +1414,22 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/api.ApiResponse-api_AddressResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
       summary: Update an address
       tags:
       - address
@@ -1429,23 +1449,51 @@ paths:
       responses:
         "200":
           description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
       summary: Set default address
       tags:
       - address
+  /admin/brands/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get a Brand by ID
+      operationId: get-Brand-by-id
+      parameters:
+      - description: Brand ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+      summary: Get a Brand by ID
+      tags:
+      - Admin
   /admin/categories:
     post:
       consumes:
@@ -1507,6 +1555,39 @@ paths:
       summary: Delete a Category
       tags:
       - Admin
+    get:
+      consumes:
+      - application/json
+      description: Get a Category by ID
+      operationId: get-Category-by-id
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get a Category by ID
+      tags:
+      - Categories
     put:
       consumes:
       - application/json
@@ -1861,7 +1942,7 @@ paths:
       - BearerAuth: []
       summary: Delete a rating
       tags:
-      - admin
+      - Admin
       - ratings
   /admin/ratings/{id}/approve:
     post:
@@ -1897,7 +1978,7 @@ paths:
       - BearerAuth: []
       summary: Approve a rating
       tags:
-      - admin
+      - Admin
       - ratings
   /admin/ratings/{id}/ban:
     post:
@@ -1933,8 +2014,41 @@ paths:
       - BearerAuth: []
       summary: Ban a user from rating
       tags:
-      - admin
+      - Admin
       - ratings
+  /admin/users/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get user info
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_UserResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_UserResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_UserResponse'
+      summary: Get user info
+      tags:
+      - Admin
   /attributes:
     get:
       consumes:
@@ -2159,35 +2273,6 @@ paths:
           schema:
             $ref: '#/definitions/api.ApiResponse-gin_H'
       summary: Delete a Brand
-      tags:
-      - Admin
-    get:
-      consumes:
-      - application/json
-      description: Get a Brand by ID
-      operationId: get-Brand-by-id
-      parameters:
-      - description: Brand ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
-      summary: Get a Brand by ID
       tags:
       - Admin
     put:
@@ -2423,7 +2508,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/api.UpdateCartItemQtyReq'
+          $ref: '#/definitions/api.UpdateCartItemQtyRequest'
       produces:
       - application/json
       responses:
@@ -2434,11 +2519,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
       summary: Add a product to the cart
       tags:
       - carts
@@ -2475,40 +2560,6 @@ paths:
       summary: Get a list of Categories
       tags:
       - Categories
-  /categories/{id}:
-    get:
-      consumes:
-      - application/json
-      description: Get a Category by ID
-      operationId: get-Category-by-id
-      parameters:
-      - description: Category ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/gin.H'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/gin.H'
-      summary: Get a Category by ID
-      tags:
-      - Categories
   /categories/slug/{slug}:
     get:
       consumes:
@@ -2543,6 +2594,36 @@ paths:
       summary: Get a list of Products by Category Slug
       tags:
       - Categories
+  /collections/{slug}:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of Collections
+      operationId: get-Shop-Collection-by-slug
+      parameters:
+      - description: Collection slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gin.H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gin.H'
+      summary: Get a list of Collections
+      tags:
+      - Collections
   /images/{publicID}:
     delete:
       consumes:
@@ -2911,23 +2992,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
       security:
       - BearerAuth: []
       summary: Initiate payment
@@ -2954,23 +3035,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
       security:
       - BearerAuth: []
       summary: Get payment  by order ID
@@ -2997,23 +3078,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_PaymentResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
       security:
       - BearerAuth: []
       summary: Change payment status
@@ -3076,11 +3157,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
       summary: Create a new product
       tags:
       - products
@@ -3105,11 +3186,11 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
       summary: Remove a product by ID
       tags:
       - products
@@ -3457,69 +3538,6 @@ paths:
       summary: Get a list of brands for the shop
       tags:
       - Brands
-  /shop/collections:
-    get:
-      consumes:
-      - application/json
-      description: Get a list of Collections
-      operationId: get-Shop-Collections
-      parameters:
-      - description: Page number
-        in: query
-        name: page
-        type: integer
-      - description: Page size
-        in: query
-        name: page_size
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/gin.H'
-      summary: Get a list of Collections
-      tags:
-      - Collections
-  /shop/collections/{slug}:
-    get:
-      consumes:
-      - application/json
-      description: Get a list of Collections
-      operationId: get-Shop-Collection-by-slug
-      parameters:
-      - description: Collection slug
-        in: path
-        name: slug
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/gin.H'
-      summary: Get a list of Collections
-      tags:
-      - Collections
   /users:
     get:
       consumes:
