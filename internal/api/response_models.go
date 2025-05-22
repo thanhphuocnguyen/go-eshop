@@ -286,12 +286,12 @@ type DiscountLinkObject struct {
 }
 
 type DiscountUsageHistory struct {
-	ID             string  `json:"id"`
-	OrderID        string  `json:"orderId"`
-	CustomerName   string  `json:"customerName"`
-	Amount         float64 `json:"amount"`
-	DiscountAmount float64 `json:"discountAmount"`
-	Date           string  `json:"date"`
+	ID             string    `json:"id"`
+	OrderID        string    `json:"orderId"`
+	CustomerName   string    `json:"customerName"`
+	Amount         float64   `json:"amount"`
+	DiscountAmount float64   `json:"discountAmount"`
+	Date           time.Time `json:"date" format:"2006-01-02"`
 }
 
 type DiscountDetailResponseModel struct {
@@ -310,7 +310,137 @@ type DiscountDetailResponseModel struct {
 	MinPurchase   float64                `json:"minPurchase"`
 	MaxDiscount   float64                `json:"maxDiscount"`
 	UsageHistory  []DiscountUsageHistory `json:"usageHistory"`
-	Products      []DiscountLinkObject   `json:"products"`
-	Categories    []DiscountLinkObject   `json:"categories"`
-	Users         []DiscountLinkObject   `json:"variants"`
+}
+
+type LoginResponse struct {
+	ID                    uuid.UUID `json:"sessionId"`
+	AccessToken           string    `json:"accessToken"`
+	AccessTokenExpiresAt  time.Time `json:"accessTokenExpiresIn"`
+	RefreshToken          string    `json:"refreshToken"`
+	RefreshTokenExpiresAt time.Time `json:"refreshTokenExpiresAt"`
+}
+
+type RefreshTokenResponse struct {
+	AccessToken          string    `json:"accessToken"`
+	AccessTokenExpiresAt time.Time `json:"accessTokenExpiresAt"`
+}
+
+type ProductRatingModel struct {
+	ID               uuid.UUID          `json:"id"`
+	Name             string             `json:"name"`
+	ProductName      string             `json:"productName,omitempty"`
+	UserID           uuid.UUID          `json:"userId"`
+	Rating           float64            `json:"rating"`
+	ReviewTitle      string             `json:"reviewTitle"`
+	IsVisible        bool               `json:"isVisible"`
+	IsApproved       bool               `json:"isApproved"`
+	ReviewContent    string             `json:"reviewContent"`
+	VerifiedPurchase bool               `json:"verifiedPurchase"`
+	HelpfulVotes     int32              `json:"helpfulVotes"`
+	UnhelpfulVotes   int32              `json:"unhelpfulVotes"`
+	Images           []RatingImageModel `json:"images"`
+}
+
+type ProductListModel struct {
+	ID           string   `json:"id"`
+	Name         string   `json:"name"`
+	Description  string   `json:"description"`
+	VariantCount int64    `json:"variant_count,omitzero"`
+	MinPrice     float64  `json:"minPrice,omitzero"`
+	MaxPrice     float64  `json:"max_price,omitzero"`
+	Slug         string   `json:"slug,omitempty"`
+	Sku          string   `json:"sku"`
+	ImgUrl       *string  `json:"imageUrl,omitempty"`
+	AvgRating    *float64 `json:"avgRating,omitempty"`
+	ReviewCount  *int32   `json:"review_count,omitempty"`
+	ImgID        *string  `json:"imageId,omitempty"`
+	CreatedAt    string   `json:"createdAt,omitempty"`
+	UpdatedAt    string   `json:"updatedAt,omitempty"`
+}
+
+type FiltersModel struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type ProductVariantImageModel struct {
+	ID        string `json:"id"`
+	VariantID string `json:"variant_id,omitempty"`
+	ImageUrl  string `json:"imageUrl"`
+	ImageID   string `json:"imageId"`
+}
+
+type CategoryLinkedProduct struct {
+	ID           string  `json:"id"`
+	Name         string  `json:"name"`
+	VariantCount int32   `json:"variant_count"`
+	ImageUrl     *string `json:"imageUrl,omitempty"`
+}
+
+type ProductVariantModel struct {
+	ID         string                  `json:"id"`
+	Price      float64                 `json:"price"`
+	StockQty   int32                   `json:"stock_qty"`
+	IsActive   bool                    `json:"is_active"`
+	Sku        *string                 `json:"sku,omitempty"`
+	Attributes []ProductAttributeModel `json:"attributes"`
+}
+
+type ImageAssignmentModel struct {
+	ID           string `json:"id"`
+	EntityID     string `json:"entity_id"`
+	EntityType   string `json:"entity_type"`
+	DisplayOrder int16  `json:"display_order"`
+	Role         string `json:"role"`
+}
+
+type ProductImageModel struct {
+	ID                 string                 `json:"id"`
+	Url                string                 `json:"url"`
+	ExternalID         string                 `json:"externalId"`
+	Role               string                 `json:"role"`
+	VariantAssignments []ImageAssignmentModel `json:"assignments"`
+}
+
+type Address struct {
+	Phone    string  `json:"phone"`
+	Street   string  `json:"street"`
+	Ward     *string `json:"ward,omitempty"`
+	District string  `json:"district"`
+	City     string  `json:"city"`
+}
+
+type OrderItemAttribute struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+type PaymentInfoModel struct {
+	ID           string  `json:"id"`
+	RefundID     *string `json:"refundId"`
+	Amount       float64 `json:"amount"`
+	IntendID     *string `json:"intent_id"`
+	ClientSecret *string `json:"clientSecret"`
+	GateWay      *string `json:"gateway"`
+	Method       string  `json:"method"`
+	Status       string  `json:"status"`
+}
+
+type RatingModel struct {
+	ID        string    `json:"id"`
+	Title     string    `json:"title"`
+	Content   string    `json:"content"`
+	Rating    float64   `json:"rating"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+type RatingImageModel struct {
+	ID  string `json:"id"`
+	URL string `json:"url"`
+}
+
+type ProductAttributeModel struct {
+	ID          string         `json:"id"`
+	Name        string         `json:"name"`
+	ValueObject AttributeValue `json:"value_object"`
 }

@@ -251,14 +251,12 @@ func (sv *Server) initializeRouter() {
 	}
 
 	// Setup CORS
-	router.Use(sv.corsMiddleware())
+	router.Use(corsMiddleware())
 
 	router.MaxMultipartMemory = 8 << 20 // 8 MiB
 	docs.SwaggerInfo.BasePath = "/api/v1"
 
 	router.Static("/assets", "./assets")
-
-	router.GET("verify-email", sv.verifyEmailHandler)
 
 	// Setup API routes
 	v1 := router.Group("/api/v1")
@@ -269,6 +267,7 @@ func (sv *Server) initializeRouter() {
 		})
 
 		v1.GET("homepage", sv.getHomePageHandler)
+		v1.GET("verify-email", sv.verifyEmailHandler)
 
 		// Register API route groups
 		sv.setupAuthRoutes(v1)

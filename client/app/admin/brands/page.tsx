@@ -78,12 +78,12 @@ export default function Page() {
         return b.name.localeCompare(a.name);
       case 'date-asc':
         return (
-          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
         );
       case 'date-desc':
       default:
         return (
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
     }
   });
@@ -233,10 +233,10 @@ export default function Page() {
             {sortedBrands.map((brand) => (
               <TableRow key={brand.id}>
                 <TableCell className='w-16'>
-                  {brand.image_url ? (
+                  {brand.imageUrl ? (
                     <div className='relative h-10 w-10 rounded-md overflow-hidden'>
                       <Image
-                        src={brand.image_url}
+                        src={brand.imageUrl}
                         alt={brand.name}
                         fill
                         className='object-cover'
@@ -270,11 +270,9 @@ export default function Page() {
                     {brand.published ? 'Published' : 'Draft'}
                   </span>
                 </TableCell>
-                <TableCell className='text-center'>
-                  {brand.products?.length || 0}
-                </TableCell>
+                <TableCell className='text-center'>{0}</TableCell>
                 <TableCell>
-                  {dayjs(brand.created_at).format('YYYY/MM/DD')}
+                  {dayjs(brand.createdAt).format('YYYY/MM/DD')}
                 </TableCell>
                 <TableCell>
                   <div className='flex space-x-2 justify-end'>

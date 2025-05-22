@@ -119,6 +119,27 @@ func (sv *Server) getDiscountByIDHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "Failed to get discount", err))
 		return
 	}
+
+	discountUsageRows, err := sv.repo.GetDiscountUsages(c, discount.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "Failed to get discount usages", err))
+		return
+	}
+
+	discountUsages := make([]DiscountUsageHistory, len(discountUsageRows))
+	for i, usage := range discountUsageRows {
+		discountAmount, _ := usage.DiscountAmount.Float64Value()
+		amount, _ := usage.TotalPrice.Float64Value()
+		discountUsages[i] = DiscountUsageHistory{
+			OrderID:        usage.OrderID.String(),
+			ID:             discount.ID.String(),
+			CustomerName:   usage.CustomerName,
+			Amount:         amount.Float64,
+			DiscountAmount: discountAmount.Float64,
+			Date:           usage.CreatedAt.Time,
+		}
+	}
+
 	discountValue, _ := discount.DiscountValue.Float64Value()
 
 	resp := DiscountDetailResponseModel{
@@ -134,14 +155,14 @@ func (sv *Server) getDiscountByIDHandler(c *gin.Context) {
 		ExpiredAt:     discount.ExpiresAt.String(),
 		CreatedAt:     discount.CreatedAt.String(),
 		UpdatedAt:     discount.UpdatedAt.String(),
-		Products:      []DiscountLinkObject{},
-		Categories:    []DiscountLinkObject{},
-		Users:         []DiscountLinkObject{},
+		UsageHistory:  discountUsages,
 	}
+
 	if discount.MinPurchaseAmount.Valid {
 		minPurchaseAmount, _ := discount.MinPurchaseAmount.Float64Value()
 		resp.MinPurchase = minPurchaseAmount.Float64
 	}
+
 	if discount.MaxDiscountAmount.Valid {
 		maxDiscountAmount, _ := discount.MaxDiscountAmount.Float64Value()
 		resp.MaxDiscount = maxDiscountAmount.Float64

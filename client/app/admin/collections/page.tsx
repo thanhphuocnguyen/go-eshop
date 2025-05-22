@@ -40,7 +40,7 @@ export default function Page() {
         {
           method: 'DELETE',
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
           },
         }
       );
@@ -101,10 +101,10 @@ export default function Page() {
                 className='odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200'
               >
                 <td className='px-6 py-4'>
-                  {collection.image_url && (
+                  {collection.imageUrl && (
                     <div className='h-10 w-10 relative'>
                       <Image
-                        src={collection.image_url}
+                        src={collection.imageUrl}
                         alt={collection.name}
                         fill
                         className='object-cover rounded'
@@ -126,7 +126,7 @@ export default function Page() {
                 <td className='px-6 py-4'>{collection.slug}</td>
                 <td className='px-6 py-4'>{collection.description}</td>
                 <td className='px-6 py-4'>
-                  {dayjs(collection.created_at).format('YYYY/MM/DD')}
+                  {dayjs(collection.createdAt).format('YYYY/MM/DD')}
                 </td>
                 <td className='px-6 py-4'>
                   <div className='flex space-x-2'>

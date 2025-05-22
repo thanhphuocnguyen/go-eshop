@@ -55,7 +55,7 @@ export function CartContextProvider({
   const updateCartItemQuantity = async (itemId: string, quantity: number) => {
     if (!user || quantity < 1) return;
     setIsLoading(true);
-    const cartItem = cart?.cart_items.find((item) => item.id === itemId);
+    const cartItem = cart?.cartItems.find((item) => item.id === itemId);
 
     if (cartItem) {
       quantity = cartItem.quantity + quantity;
@@ -86,8 +86,8 @@ export function CartContextProvider({
           prev
             ? {
                 ...prev,
-                cart_items:
-                  prev.cart_items.map((item) =>
+                cartItems:
+                  prev.cartItems.map((item) =>
                     item.id === itemId ? { ...item, quantity: quantity } : item
                   ) ?? [],
               }
@@ -126,7 +126,7 @@ export function CartContextProvider({
       value={{
         cart,
         cartLoading: cartLoading || isLoading,
-        cartItemsCount: cart?.cart_items.length ?? 0,
+        cartItemsCount: cart?.cartItems.length ?? 0,
         removeFromCart,
         updateCartItemQuantity,
         clearCart,

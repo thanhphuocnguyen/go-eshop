@@ -73,7 +73,7 @@ func authorizeMiddleware(repo repository.Repository, roles ...repository.UserRol
 }
 
 // Setup CORS configuration
-func (sv *Server) corsMiddleware() gin.HandlerFunc {
+func corsMiddleware() gin.HandlerFunc {
 	return cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:3001", "http://localhost:8080"},
 		AllowHeaders:     []string{"Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With"},

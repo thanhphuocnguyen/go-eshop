@@ -18,9 +18,9 @@ export default function AdminNavbar() {
   const router = useRouter();
   const logout = async () => {
     await logoutAction();
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('session_id');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('sessionId');
     mutateUser(undefined, { revalidate: false });
     router.refresh();
     redirect('/login');

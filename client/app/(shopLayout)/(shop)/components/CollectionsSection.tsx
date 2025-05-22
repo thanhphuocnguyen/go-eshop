@@ -21,7 +21,7 @@ export default function CollectionsSection({
                 <Image
                   className='object-cover'
                   alt={`${collection.name} collection`}
-                  src={collection.image_url ?? '/images/product-placeholder.webp'}
+                  src={collection.imageUrl ?? '/images/product-placeholder.webp'}
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />

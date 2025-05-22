@@ -32,7 +32,7 @@ export default function CategoriesSection({
                     fill
                     alt={`${e.name} category`}
                     className='object-cover'
-                    src={e.image_url ?? '/images/product-placeholder.webp'}
+                    src={e.imageUrl ?? '/images/product-placeholder.webp'}
                   />
                   <div className='absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent rounded-b-lg opacity-50 group-hover:opacity-80 transition-opacity duration-300'></div>
                   <div className='absolute bottom-0 left-0 right-0 p-4 text-center z-10'>

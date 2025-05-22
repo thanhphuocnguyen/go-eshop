@@ -109,7 +109,7 @@ type Querier interface {
 	GetDefaultAddress(ctx context.Context, userID uuid.UUID) (UserAddress, error)
 	GetDiscountByCode(ctx context.Context, code string) (Discount, error)
 	GetDiscountByID(ctx context.Context, id uuid.UUID) (Discount, error)
-	// WHERE
+	GetDiscountUsages(ctx context.Context, id uuid.UUID) ([]GetDiscountUsagesRow, error)
 	GetDiscounts(ctx context.Context, arg GetDiscountsParams) ([]GetDiscountsRow, error)
 	GetFilterListForCollectionID(ctx context.Context, id uuid.UUID) ([]GetFilterListForCollectionIDRow, error)
 	GetImageFromExternalID(ctx context.Context, externalID string) (GetImageFromExternalIDRow, error)

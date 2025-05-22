@@ -7,41 +7,12 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	repository "github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
-
-type RegisterRequestBody struct {
-	Username string                `json:"username" binding:"required,min=3,max=32,lowercase"`
-	Password string                `json:"password" binding:"required,min=6,max=32"`
-	FullName string                `json:"fullname" binding:"required,min=3,max=32"`
-	Phone    string                `json:"phone" binding:"required,min=10,max=15"`
-	Email    string                `json:"email" binding:"required,email,max=255,min=6"`
-	Address  *CreateAddressRequest `json:"address" binding:"omitempty,required"`
-}
-
-type LoginRequest struct {
-	Username *string `form:"username" binding:"omitempty,min=3,max=32"`
-	Email    *string `form:"email" binding:"omitempty,email,max=255,min=6"`
-	Password string  `form:"password" binding:"required,min=6,max=32"`
-}
-
-type LoginResponse struct {
-	ID                    uuid.UUID `json:"session_id"`
-	AccessToken           string    `json:"access_token"`
-	AccessTokenExpiresAt  time.Time `json:"access_token_expires_in"`
-	RefreshToken          string    `json:"refresh_token"`
-	RefreshTokenExpiresAt time.Time `json:"refresh_token_expires_at"`
-}
-
-type RefreshTokenResponse struct {
-	AccessToken          string    `json:"access_token"`
-	AccessTokenExpiresAt time.Time `json:"access_token_expires_at"`
-}
 
 // ------------------------------ Handlers ------------------------------
 

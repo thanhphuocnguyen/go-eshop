@@ -108,10 +108,10 @@ export default function Page() {
                 className='odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200'
               >
                 <td className='px-6 py-4'>
-                  {category.image_url && (
+                  {category.imageUrl && (
                     <div className='h-10 w-10 relative'>
                       <Image
-                        src={category.image_url}
+                        src={category.imageUrl}
                         sizes='100%'
                         alt={category.name}
                         fill

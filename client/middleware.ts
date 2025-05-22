@@ -15,8 +15,8 @@ const AdminPath = '/admin';
 export async function middleware(request: NextRequest) {
   const privatePaths = ['/profile', '/checkout', '/cart', '/orders'];
   const path = request.nextUrl.pathname;
-  const accessToken = request.cookies.get('access_token')?.value;
-  const refreshToken = request.cookies.get('refresh_token')?.value;
+  const accessToken = request.cookies.get('accessToken')?.value;
+  const refreshToken = request.cookies.get('refreshToken')?.value;
   const response = NextResponse.next();
   if (!accessToken && refreshToken) {
     const refreshResult = await fetch(PUBLIC_API_PATHS.REFRESH_TOKEN, {
@@ -29,23 +29,23 @@ export async function middleware(request: NextRequest) {
       const response = NextResponse.redirect(
         new URL('/login', request.nextUrl)
       );
-      response.cookies.delete('access_token');
-      response.cookies.delete('refresh_token');
-      response.cookies.delete('session_id');
+      response.cookies.delete('accessToken');
+      response.cookies.delete('refreshToken');
+      response.cookies.delete('sessionId');
       return response;
     }
 
     const { data, error }: GenericResponse<RefreshTokenResponse> =
       await refreshResult.json();
     if (error) {
-      request.cookies.delete('access_token');
-      request.cookies.delete('refresh_token');
-      request.cookies.delete('session_id');
+      request.cookies.delete('accessToken');
+      request.cookies.delete('refreshToken');
+      request.cookies.delete('sessionId');
       return NextResponse.redirect(new URL('/login', request.nextUrl));
     }
 
-    response.cookies.set('access_token', data.access_token, {
-      expires: new Date(data.access_token_expires_at),
+    response.cookies.set('accessToken', data.accessToken, {
+      expires: new Date(data.accessTokenExpiresAt),
     });
     return response;
   }
@@ -57,7 +57,7 @@ export async function middleware(request: NextRequest) {
   }
   const isProtectedRoute = privatePaths.some((route) => path.startsWith(route));
 
-  if (isProtectedRoute && !request.cookies.get('access_token')?.value) {
+  if (isProtectedRoute && !request.cookies.get('accessToken')?.value) {
     return NextResponse.redirect(new URL('/login', request.nextUrl));
   }
 

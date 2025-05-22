@@ -60,7 +60,7 @@ export default async function CollectionsPage({
                   fill
                   alt={`${collection.name} collection`}
                   className='object-cover'
-                  src={collection.image_url ?? '/images/product-placeholder.webp'}
+                  src={collection.imageUrl ?? '/images/product-placeholder.webp'}
                   sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
                 />
                 <div className='absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent opacity-60 group-hover:opacity-70 transition-opacity duration-300'></div>

@@ -17,14 +17,14 @@ interface Category {
   id: string;
   name: string;
   slug: string;
-  image_url?: string;
+  imageUrl?: string;
 }
 
 interface Collection {
   id: string;
   name: string;
   slug: string;
-  image_url?: string;
+  imageUrl?: string;
 }
 
 interface Brand {
@@ -120,7 +120,7 @@ export default function MainNavigation() {
 
 interface NavDropdownProps {
   title: string;
-  items: { id: string; name: string; slug: string; image_url?: string; logo_url?: string }[];
+  items: { id: string; name: string; slug: string; imageUrl?: string; logo_url?: string }[];
   viewAllLink: string;
   icon: React.ReactNode;
   isLoading: boolean;
@@ -172,10 +172,10 @@ function NavDropdown({ title, items, viewAllLink, icon, isLoading }: NavDropdown
                         href={`${viewAllLink}/${item.slug}`}
                         className="flex items-center p-2 -m-3 transition duration-150 ease-in-out rounded-lg hover:bg-gray-50"
                       >
-                        {(item.image_url || item.logo_url) && (
+                        {(item.imageUrl || item.logo_url) && (
                           <div className="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-md bg-indigo-50 text-indigo-600">
                             <Image
-                              src={item.image_url || item.logo_url || ''}
+                              src={item.imageUrl || item.logo_url || ''}
                               alt={item.name}
                               width={30}
                               height={30}

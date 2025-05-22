@@ -65,7 +65,7 @@ export async function clientSideFetch<T = any>(
 
   const isFormData = body instanceof FormData;
 
-  const token = localStorage.getItem('access_token');
+  const token = localStorage.getItem('accessToken');
   const finalHeaders: Record<string, string> = {
     ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -82,7 +82,7 @@ export async function clientSideFetch<T = any>(
   if (response.status === 401 && retryOnUnauthorized) {
     const newToken = await refreshTokenAction();
     if (newToken) {
-      localStorage.setItem('access_token', newToken);
+      localStorage.setItem('accessToken', newToken);
       return clientSideFetch<T>(endpoint, {
         method,
         body,

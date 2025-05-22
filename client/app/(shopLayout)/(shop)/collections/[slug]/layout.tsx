@@ -52,10 +52,10 @@ export async function generateMetadata({
         description:
           collection.description ||
           `Browse the ${collection.name} collection at eShop.`,
-        images: collection.image_url
+        images: collection.imageUrl
           ? [
               {
-                url: collection.image_url,
+                url: collection.imageUrl,
                 width: 1200,
                 height: 630,
                 alt: `${collection.name} Collection`,
@@ -89,10 +89,10 @@ export default async function CollectionLayout({
         <div className='flex flex-col md:flex-row md:h-48 lg:h-56'>
           {/* Avatar Image */}
           <div className='w-full md:w-48 lg:w-56 relative'>
-            {collection.image_url ? (
+            {collection.imageUrl ? (
               <div className='relative h-48 md:h-full w-full'>
                 <Image
-                  src={collection.image_url}
+                  src={collection.imageUrl}
                   alt={collection.name}
                   fill
                   priority

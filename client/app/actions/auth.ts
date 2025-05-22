@@ -11,33 +11,34 @@ import { redirect } from 'next/navigation';
 
 export async function refreshTokenAction() {
   const cookieStore = await cookies();
-  return fetch(PUBLIC_API_PATHS.REFRESH_TOKEN, {
+  const refreshToken = cookieStore.get('refreshToken')?.value;
+  if (!refreshToken) {
+    redirect('/login');
+  }
+  const response = await fetch(PUBLIC_API_PATHS.REFRESH_TOKEN, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${cookieStore.get('refreshToken')?.value}`,
+      Authorization: `Bearer ${refreshToken}`,
     },
-  })
-    .then<GenericResponse<RefreshTokenResponse>>((response) => {
-      if (!response.ok) {
-        throw new Error('Failed to refresh token');
-      }
-      return response.json();
-    })
-    .then((data) => {
-      if (data.error) {
-        cookieStore.delete('accessToken');
-        cookieStore.delete('refreshToken');
-        cookieStore.delete('sessionId');
-        redirect('/login');
-      }
-      if (data) {
-        const { accessToken, accessTokenExpiresAt } = data.data;
-        cookieStore.set('accessToken', accessToken, {
-          expires: new Date(accessTokenExpiresAt),
-        });
-        return accessToken;
-      }
+  });
+  if (!response.ok) {
+    throw new Error('Failed to refresh token');
+  }
+  const data = (await response.json()) as GenericResponse<RefreshTokenResponse>;
+
+  if (data.error) {
+    cookieStore.delete('accessToken');
+    cookieStore.delete('refreshToken');
+    cookieStore.delete('sessionId');
+    redirect('/login');
+  }
+  if (data) {
+    const { accessToken, accessTokenExpiresAt } = data.data;
+    cookieStore.set('accessToken', accessToken, {
+      expires: new Date(accessTokenExpiresAt),
     });
+    return accessToken;
+  }
 }
 
 export async function loginAction(data: FormData) {

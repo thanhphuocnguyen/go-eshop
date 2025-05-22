@@ -201,7 +201,7 @@ export const CategoryEditForm: React.FC<CategoryEditFormProps> = ({
 
         <div className='flex-2'>
           <ImageUploader
-            defaultImage={data?.image_url}
+            defaultImage={data?.imageUrl}
             name='image'
             label='Upload image'
             onChange={(newFile) => {

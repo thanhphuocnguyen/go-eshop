@@ -56,9 +56,9 @@ export default async function CategoryPage({
           >
             <div className='bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 h-full flex flex-col'>
               <div className='relative h-96 w-full bg-gray-100'>
-                {category.image_url ? (
+                {category.imageUrl ? (
                   <Image
-                    src={category.image_url}
+                    src={category.imageUrl}
                     alt={category.name}
                     fill
                     sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
