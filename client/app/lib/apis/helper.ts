@@ -22,3 +22,19 @@ export function serializeQueryParams(params: Record<string, any>): string {
 
   return searchParams.toString();
 }
+
+export async function badRequestHandler(response: Response) {
+  if (response.status > 299) {
+    const errorText = await response.text();
+    let errorMessage = 'An error occurred';
+
+    try {
+      const errorData = JSON.parse(errorText);
+      errorMessage = errorData.message || errorText;
+    } catch (e) {
+      console.error('Failed to parse error response:', e);
+    }
+
+    throw new Error(`Error ${response.status}: ${errorMessage}`);
+  }
+}

@@ -9,7 +9,7 @@ import { ConfirmDialog } from '@/components/Common/Dialogs/ConfirmDialog';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
 import Link from 'next/link';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 
 export default function Page() {
   const [attributes, setAttributes] = useState<AttributeDetailModel[]>([]);
@@ -19,7 +19,7 @@ export default function Page() {
     useState<AttributeDetailModel | null>(null);
 
   const fetchAttributes = async () => {
-    const response = await apiFetchClientSide<AttributeDetailModel[]>(
+    const response = await clientSideFetch<AttributeDetailModel[]>(
       ADMIN_API_PATHS.ATTRIBUTES,
       {
         nextOptions: {
@@ -39,7 +39,7 @@ export default function Page() {
 
   const handleDelete = async () => {
     if (selectedAttribute?.id) {
-      const response = await apiFetchClientSide<AttributeDetailModel[]>(
+      const response = await clientSideFetch<AttributeDetailModel[]>(
         ADMIN_API_PATHS.ATTRIBUTE.replace(
           ':id',
           selectedAttribute.id.toString()

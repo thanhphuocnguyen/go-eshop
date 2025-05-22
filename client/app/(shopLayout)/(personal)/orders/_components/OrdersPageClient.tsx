@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { OrderStatus } from '@/app/lib/definitions/common';
 import { OrderListModel, OrdersStats } from '@/app/lib/definitions/order';
@@ -53,7 +53,7 @@ export default function OrdersPageClient() {
   // Fetch orders data
   const { data, isLoading, error } = useSWR(
     PUBLIC_API_PATHS.ORDERS,
-    apiFetchClientSide<OrderListModel[]>
+    clientSideFetch<OrderListModel[]>
   );
 
   const orders = data?.data || [];
@@ -298,7 +298,7 @@ export default function OrdersPageClient() {
                     #{order.id.substring(0, 8)}
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                    {dayjs(order.created_at).format('MMM DD, YYYY')}
+                    {dayjs(order.createdAt).format('MMM DD, YYYY')}
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap'>
                     <span
@@ -311,7 +311,7 @@ export default function OrdersPageClient() {
                     </span>
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                    {order.total_items}
+                    {order.totalItems}
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium'>
                     ${formatCurrency(order.total)}

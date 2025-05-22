@@ -1,7 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { serializeQueryParams } from './helper';
+import { badRequestHandler, serializeQueryParams } from './helper';
 import { redirect } from 'next/navigation';
 import { refreshTokenAction } from '@/app/actions/auth';
 import { GenericResponse } from '../definitions/index';
@@ -18,7 +18,7 @@ type RequestOptions = {
   queryParams?: Record<string, any>; // Added queryParams option
 };
 
-export async function apiFetchServerSide<T = any>(
+export async function serverSideFetch<T = any>(
   endpoint: string,
   {
     method = 'GET',
@@ -44,7 +44,7 @@ export async function apiFetchServerSide<T = any>(
 
   const isFormData = body instanceof FormData;
   const cookiesStore = await cookies();
-  const token = cookiesStore.get('access_token')?.value;
+  const token = cookiesStore.get('accessToken')?.value;
   const finalHeaders: Record<string, string> = {
     ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -58,7 +58,7 @@ export async function apiFetchServerSide<T = any>(
     ...nextOptions,
   });
   const cookieStore = await cookies();
-  const refreshToken = cookieStore.get('refresh_token')?.value;
+  const refreshToken = cookieStore.get('refreshToken')?.value;
 
   if (
     response.status === 401 &&
@@ -68,7 +68,7 @@ export async function apiFetchServerSide<T = any>(
   ) {
     const newToken = await refreshTokenAction();
     if (newToken) {
-      return apiFetchServerSide<T>(endpoint, {
+      return serverSideFetch<T>(endpoint, {
         method,
         body,
         headers,
@@ -82,6 +82,8 @@ export async function apiFetchServerSide<T = any>(
       redirect('/login');
     }
   }
+
+  badRequestHandler(response);
 
   return response.json();
 }

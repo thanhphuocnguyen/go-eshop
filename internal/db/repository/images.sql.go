@@ -17,8 +17,8 @@ DELETE FROM image_assignments WHERE image_id = $1 AND entity_type = $2
 `
 
 type DeleteImageAssignmentsParams struct {
-	ImageID    uuid.UUID `json:"image_id"`
-	EntityType string    `json:"entity_type"`
+	ImageID    uuid.UUID `json:"imageId"`
+	EntityType string    `json:"entityType"`
 }
 
 func (q *Queries) DeleteImageAssignments(ctx context.Context, arg DeleteImageAssignmentsParams) error {
@@ -40,9 +40,9 @@ DELETE FROM image_assignments WHERE image_id = $1 AND entity_id = $2 AND entity_
 `
 
 type DeleteProductImageAssignmentParams struct {
-	ImageID    uuid.UUID `json:"image_id"`
-	EntityID   uuid.UUID `json:"entity_id"`
-	EntityType string    `json:"entity_type"`
+	ImageID    uuid.UUID `json:"imageId"`
+	EntityID   uuid.UUID `json:"entityId"`
+	EntityType string    `json:"entityType"`
 }
 
 func (q *Queries) DeleteProductImageAssignment(ctx context.Context, arg DeleteProductImageAssignmentParams) error {
@@ -58,23 +58,23 @@ WHERE external_id = $1 LIMIT 1
 
 type GetImageFromExternalIDRow struct {
 	ID           uuid.UUID `json:"id"`
-	ExternalID   string    `json:"external_id"`
+	ExternalID   string    `json:"externalId"`
 	Url          string    `json:"url"`
-	AltText      *string   `json:"alt_text"`
+	AltText      *string   `json:"altText"`
 	Caption      *string   `json:"caption"`
-	MimeType     *string   `json:"mime_type"`
-	FileSize     *int64    `json:"file_size"`
+	MimeType     *string   `json:"mimeType"`
+	FileSize     *int64    `json:"fileSize"`
 	Width        *int32    `json:"width"`
 	Height       *int32    `json:"height"`
-	UploadedAt   time.Time `json:"uploaded_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
-	ID_2         uuid.UUID `json:"id_2"`
-	ImageID      uuid.UUID `json:"image_id"`
-	EntityID     uuid.UUID `json:"entity_id"`
-	EntityType   string    `json:"entity_type"`
-	DisplayOrder int16     `json:"display_order"`
+	UploadedAt   time.Time `json:"uploadedAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
+	ID_2         uuid.UUID `json:"id2"`
+	ImageID      uuid.UUID `json:"imageId"`
+	EntityID     uuid.UUID `json:"entityId"`
+	EntityType   string    `json:"entityType"`
+	DisplayOrder int16     `json:"displayOrder"`
 	Role         string    `json:"role"`
-	CreatedAt    time.Time `json:"created_at"`
+	CreatedAt    time.Time `json:"createdAt"`
 }
 
 func (q *Queries) GetImageFromExternalID(ctx context.Context, externalID string) (GetImageFromExternalIDRow, error) {
@@ -111,28 +111,28 @@ WHERE images.id = $1 AND entity_type = $2 LIMIT 1
 
 type GetImageFromIDParams struct {
 	ID         uuid.UUID `json:"id"`
-	EntityType string    `json:"entity_type"`
+	EntityType string    `json:"entityType"`
 }
 
 type GetImageFromIDRow struct {
 	ID           uuid.UUID `json:"id"`
-	ExternalID   string    `json:"external_id"`
+	ExternalID   string    `json:"externalId"`
 	Url          string    `json:"url"`
-	AltText      *string   `json:"alt_text"`
+	AltText      *string   `json:"altText"`
 	Caption      *string   `json:"caption"`
-	MimeType     *string   `json:"mime_type"`
-	FileSize     *int64    `json:"file_size"`
+	MimeType     *string   `json:"mimeType"`
+	FileSize     *int64    `json:"fileSize"`
 	Width        *int32    `json:"width"`
 	Height       *int32    `json:"height"`
-	UploadedAt   time.Time `json:"uploaded_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
-	ID_2         uuid.UUID `json:"id_2"`
-	ImageID      uuid.UUID `json:"image_id"`
-	EntityID     uuid.UUID `json:"entity_id"`
-	EntityType   string    `json:"entity_type"`
-	DisplayOrder int16     `json:"display_order"`
+	UploadedAt   time.Time `json:"uploadedAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
+	ID_2         uuid.UUID `json:"id2"`
+	ImageID      uuid.UUID `json:"imageId"`
+	EntityID     uuid.UUID `json:"entityId"`
+	EntityType   string    `json:"entityType"`
+	DisplayOrder int16     `json:"displayOrder"`
 	Role         string    `json:"role"`
-	CreatedAt    time.Time `json:"created_at"`
+	CreatedAt    time.Time `json:"createdAt"`
 }
 
 func (q *Queries) GetImageFromID(ctx context.Context, arg GetImageFromIDParams) (GetImageFromIDRow, error) {
@@ -169,23 +169,23 @@ WHERE entity_id = $1 ORDER BY display_order
 
 type GetImagesByEntityIDRow struct {
 	ID           uuid.UUID `json:"id"`
-	ImageID      uuid.UUID `json:"image_id"`
-	EntityID     uuid.UUID `json:"entity_id"`
-	EntityType   string    `json:"entity_type"`
-	DisplayOrder int16     `json:"display_order"`
+	ImageID      uuid.UUID `json:"imageId"`
+	EntityID     uuid.UUID `json:"entityId"`
+	EntityType   string    `json:"entityType"`
+	DisplayOrder int16     `json:"displayOrder"`
 	Role         string    `json:"role"`
-	CreatedAt    time.Time `json:"created_at"`
-	ID_2         uuid.UUID `json:"id_2"`
-	ExternalID   string    `json:"external_id"`
+	CreatedAt    time.Time `json:"createdAt"`
+	ID_2         uuid.UUID `json:"id2"`
+	ExternalID   string    `json:"externalId"`
 	Url          string    `json:"url"`
-	AltText      *string   `json:"alt_text"`
+	AltText      *string   `json:"altText"`
 	Caption      *string   `json:"caption"`
-	MimeType     *string   `json:"mime_type"`
-	FileSize     *int64    `json:"file_size"`
+	MimeType     *string   `json:"mimeType"`
+	FileSize     *int64    `json:"fileSize"`
 	Width        *int32    `json:"width"`
 	Height       *int32    `json:"height"`
-	UploadedAt   time.Time `json:"uploaded_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	UploadedAt   time.Time `json:"uploadedAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
 }
 
 func (q *Queries) GetImagesByEntityID(ctx context.Context, entityID uuid.UUID) ([]GetImagesByEntityIDRow, error) {
@@ -235,23 +235,23 @@ WHERE entity_id = $1 LIMIT 1
 
 type GetProductImageByEntityIDRow struct {
 	ID           uuid.UUID `json:"id"`
-	ImageID      uuid.UUID `json:"image_id"`
-	EntityID     uuid.UUID `json:"entity_id"`
-	EntityType   string    `json:"entity_type"`
-	DisplayOrder int16     `json:"display_order"`
+	ImageID      uuid.UUID `json:"imageId"`
+	EntityID     uuid.UUID `json:"entityId"`
+	EntityType   string    `json:"entityType"`
+	DisplayOrder int16     `json:"displayOrder"`
 	Role         string    `json:"role"`
-	CreatedAt    time.Time `json:"created_at"`
-	ID_2         uuid.UUID `json:"id_2"`
-	ExternalID   string    `json:"external_id"`
+	CreatedAt    time.Time `json:"createdAt"`
+	ID_2         uuid.UUID `json:"id2"`
+	ExternalID   string    `json:"externalId"`
 	Url          string    `json:"url"`
-	AltText      *string   `json:"alt_text"`
+	AltText      *string   `json:"altText"`
 	Caption      *string   `json:"caption"`
-	MimeType     *string   `json:"mime_type"`
-	FileSize     *int64    `json:"file_size"`
+	MimeType     *string   `json:"mimeType"`
+	FileSize     *int64    `json:"fileSize"`
 	Width        *int32    `json:"width"`
 	Height       *int32    `json:"height"`
-	UploadedAt   time.Time `json:"uploaded_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	UploadedAt   time.Time `json:"uploadedAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
 }
 
 func (q *Queries) GetProductImageByEntityID(ctx context.Context, entityID uuid.UUID) (GetProductImageByEntityIDRow, error) {
@@ -302,17 +302,17 @@ WHERE entity_id = ANY($1::UUID[]) ORDER BY entity_id, display_order
 
 type GetProductImagesAssignedRow struct {
 	ID           uuid.UUID `json:"id"`
-	ExternalID   string    `json:"external_id"`
+	ExternalID   string    `json:"externalId"`
 	Url          string    `json:"url"`
-	AltText      *string   `json:"alt_text"`
+	AltText      *string   `json:"altText"`
 	Caption      *string   `json:"caption"`
-	MimeType     *string   `json:"mime_type"`
-	FileSize     *int64    `json:"file_size"`
+	MimeType     *string   `json:"mimeType"`
+	FileSize     *int64    `json:"fileSize"`
 	Width        *int32    `json:"width"`
 	Height       *int32    `json:"height"`
-	EntityID     uuid.UUID `json:"entity_id"`
-	EntityType   string    `json:"entity_type"`
-	DisplayOrder int16     `json:"display_order"`
+	EntityID     uuid.UUID `json:"entityId"`
+	EntityType   string    `json:"entityType"`
+	DisplayOrder int16     `json:"displayOrder"`
 	Role         string    `json:"role"`
 }
 
@@ -351,20 +351,20 @@ func (q *Queries) GetProductImagesAssigned(ctx context.Context, entityIds []uuid
 }
 
 type InsertBulkImageAssignmentsParams struct {
-	ImageID      uuid.UUID `json:"image_id"`
-	EntityID     uuid.UUID `json:"entity_id"`
-	EntityType   string    `json:"entity_type"`
-	DisplayOrder int16     `json:"display_order"`
+	ImageID      uuid.UUID `json:"imageId"`
+	EntityID     uuid.UUID `json:"entityId"`
+	EntityType   string    `json:"entityType"`
+	DisplayOrder int16     `json:"displayOrder"`
 	Role         string    `json:"role"`
 }
 
 type InsertBulkImagesParams struct {
-	ExternalID string  `json:"external_id"`
+	ExternalID string  `json:"externalId"`
 	Url        string  `json:"url"`
-	AltText    *string `json:"alt_text"`
+	AltText    *string `json:"altText"`
 	Caption    *string `json:"caption"`
-	MimeType   *string `json:"mime_type"`
-	FileSize   *int64  `json:"file_size"`
+	MimeType   *string `json:"mimeType"`
+	FileSize   *int64  `json:"fileSize"`
 	Width      *int32  `json:"width"`
 	Height     *int32  `json:"height"`
 }
@@ -374,12 +374,12 @@ INSERT INTO images (external_id, url, alt_text, caption, mime_type, file_size, w
 `
 
 type InsertImageParams struct {
-	ExternalID string  `json:"external_id"`
+	ExternalID string  `json:"externalId"`
 	Url        string  `json:"url"`
-	AltText    *string `json:"alt_text"`
+	AltText    *string `json:"altText"`
 	Caption    *string `json:"caption"`
-	MimeType   *string `json:"mime_type"`
-	FileSize   *int64  `json:"file_size"`
+	MimeType   *string `json:"mimeType"`
+	FileSize   *int64  `json:"fileSize"`
 	Width      *int32  `json:"width"`
 	Height     *int32  `json:"height"`
 }
@@ -417,10 +417,10 @@ INSERT INTO image_assignments (image_id, entity_id, entity_type, display_order, 
 `
 
 type InsertImageAssignmentParams struct {
-	ImageID      uuid.UUID `json:"image_id"`
-	EntityID     uuid.UUID `json:"entity_id"`
-	EntityType   string    `json:"entity_type"`
-	DisplayOrder int16     `json:"display_order"`
+	ImageID      uuid.UUID `json:"imageId"`
+	EntityID     uuid.UUID `json:"entityId"`
+	EntityType   string    `json:"entityType"`
+	DisplayOrder int16     `json:"displayOrder"`
 	Role         string    `json:"role"`
 }
 
@@ -456,7 +456,7 @@ WHERE id = $1
 type UpdateProductImageParams struct {
 	ID         uuid.UUID `json:"id"`
 	Url        *string   `json:"url"`
-	ExternalID *string   `json:"external_id"`
+	ExternalID *string   `json:"externalId"`
 }
 
 func (q *Queries) UpdateProductImage(ctx context.Context, arg UpdateProductImageParams) error {
@@ -473,10 +473,10 @@ WHERE image_id = $1 AND entity_id = $2 AND entity_type = $3
 `
 
 type UpdateProductImageAssignmentParams struct {
-	ImageID      uuid.UUID `json:"image_id"`
-	EntityID     uuid.UUID `json:"entity_id"`
-	EntityType   string    `json:"entity_type"`
-	DisplayOrder *int16    `json:"display_order"`
+	ImageID      uuid.UUID `json:"imageId"`
+	EntityID     uuid.UUID `json:"entityId"`
+	EntityType   string    `json:"entityType"`
+	DisplayOrder *int16    `json:"displayOrder"`
 	Role         *string   `json:"role"`
 }
 

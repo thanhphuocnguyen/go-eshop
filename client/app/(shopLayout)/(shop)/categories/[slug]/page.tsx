@@ -1,5 +1,5 @@
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
-import { apiFetchServerSide } from '@/app/lib/apis/apiServer';
+import { serverSideFetch } from '@/app/lib/apis/apiServer';
 import { ProductListModel } from '@/app/lib/definitions';
 import CategoryProducts from './_components/CategoryProducts';
 import CategoryFilters from './_components/CategoryFilters';
@@ -22,24 +22,24 @@ async function getProducts(
   pageSize = 100
 ) {
   const queryParams: Record<string, string | number> = {
-    category_ids: categoryIds,
+    categoryIds: categoryIds,
     page,
-    page_size: pageSize,
+    pageSize: pageSize,
   };
 
   if (minPrice !== undefined) {
-    queryParams.min_price = minPrice;
+    queryParams.minPrice = minPrice;
   }
 
   if (maxPrice !== undefined) {
-    queryParams.max_price = maxPrice;
+    queryParams.maxPrice = maxPrice;
   }
 
   if (rating !== undefined) {
-    queryParams.min_rating = rating;
+    queryParams.minRating = rating;
   }
 
-  const { data, error } = await apiFetchServerSide<ProductListModel[]>(
+  const { data, error } = await serverSideFetch<ProductListModel[]>(
     PUBLIC_API_PATHS.PRODUCTS,
     { queryParams }
   );
@@ -85,8 +85,8 @@ export default async function CategoryPage({
   let priceRange = { min: 0, max: 10000 };
 
   if (products.length > 0) {
-    const minProductPrice = Math.min(...products.map((p) => p.min_price));
-    const maxProductPrice = Math.max(...products.map((p) => p.max_price));
+    const minProductPrice = Math.min(...products.map((p) => p.minPrice));
+    const maxProductPrice = Math.max(...products.map((p) => p.maxPrice));
     priceRange = { min: minProductPrice, max: maxProductPrice };
   }
 

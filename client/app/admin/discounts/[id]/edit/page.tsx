@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -13,9 +13,14 @@ import {
   DetailsPanel,
   ProductsPanel,
   CategoriesPanel,
-  TabNavigation
+  TabNavigation,
 } from '../../_components';
-import { discountSchema, DiscountFormData, ProductType, CategoryType } from '../../_types';
+import {
+  discountSchema,
+  DiscountFormData,
+  ProductType,
+  CategoryType,
+} from '../../_types';
 
 // Mock data for a specific discount
 const mockDiscount = {
@@ -91,8 +96,9 @@ const mockAllCategories = [
 export default function EditDiscountPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = use(params);
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -100,7 +106,9 @@ export default function EditDiscountPage({
   const [error, setError] = useState<string | null>(null);
 
   const [availableProducts, setAvailableProducts] = useState<ProductType[]>([]);
-  const [availableCategories, setAvailableCategories] = useState<CategoryType[]>([]);
+  const [availableCategories, setAvailableCategories] = useState<
+    CategoryType[]
+  >([]);
 
   // Initialize react-hook-form with Zod resolver
   const {
@@ -115,16 +123,14 @@ export default function EditDiscountPage({
     defaultValues: {
       code: '',
       description: '',
-      discountType: 'percentage',
+      discountType: { id: 'percentage', name: 'Percentage' },
       discountValue: 0,
       minPurchaseAmount: null,
       maxDiscountAmount: null,
       usageLimit: null,
       isActive: true,
       startsAt: '',
-      expiresAt: new Date(),
-      products: [],
-      categories: [],
+      expiresAt: dayjs().add(1, 'month').format('YYYY-MM-DDTHH:mm'),
     },
   });
 
@@ -138,7 +144,12 @@ export default function EditDiscountPage({
         // Set form values from the fetched discount
         setValue('code', mockDiscount.code);
         setValue('description', mockDiscount.description);
-        setValue('discountType', mockDiscount.discountType as 'percentage' | 'fixed_amount');
+        setValue(
+          'discountType',
+          mockDiscount.discountType
+            ? { id: mockDiscount.discountType, name: mockDiscount.discountType }
+            : { id: 'percentage', name: 'Percentage' }
+        );
         setValue('discountValue', mockDiscount.discountValue);
         setValue('minPurchaseAmount', mockDiscount.minPurchaseAmount);
         setValue('maxDiscountAmount', mockDiscount.maxDiscountAmount);
@@ -150,10 +161,10 @@ export default function EditDiscountPage({
         );
         setValue(
           'expiresAt',
-          dayjs(mockDiscount.expiresAt).toDate()
+          dayjs(mockDiscount.expiresAt).format('YYYY-MM-DDTHH:mm')
         );
-        setValue('products', mockDiscount.products);
-        setValue('categories', mockDiscount.categories);
+        // setValue('products', mockDiscount.products);
+        // setValue('categories', mockDiscount.categories);
 
         // Set available products/categories (excluding already selected ones)
         setAvailableProducts(
@@ -176,20 +187,20 @@ export default function EditDiscountPage({
     };
 
     fetchData();
-  }, [setValue, params.id]);
+  }, [setValue, id]);
 
   // Submit handler
   const onSubmit = async (data: DiscountFormData) => {
     setSubmitting(true);
     setError(null);
-    
+
     try {
       // Mock API call with a delay
       await new Promise((resolve) => setTimeout(resolve, 800));
       console.log('Submitted data:', data);
 
       // Redirect to the discount details page after successful update
-      router.push(`/admin/discounts/${params.id}`);
+      router.push(`/admin/discounts/${id}`);
     } catch (error) {
       console.error('Error updating discount:', error);
       setError('Failed to update discount. Please try again.');
@@ -211,7 +222,7 @@ export default function EditDiscountPage({
   return (
     <div className='p-4'>
       <div className='mb-4 flex items-center justify-between'>
-        <div className="flex items-center">
+        <div className='flex items-center'>
           <Button
             onClick={() => router.back()}
             className='mr-4 p-2 rounded-full hover:bg-gray-100'
@@ -233,31 +244,16 @@ export default function EditDiscountPage({
           <TabGroup>
             <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
             <TabPanels>
-              <DetailsPanel 
-                register={register} 
-                control={control} 
-                errors={errors} 
-                watch={watch}
-              />
-              
-              <ProductsPanel 
-                watch={watch} 
-                setValue={setValue} 
-                availableProducts={availableProducts} 
-                setAvailableProducts={setAvailableProducts}
-              />
-              
-              <CategoriesPanel 
-                watch={watch} 
-                setValue={setValue} 
-                availableCategories={availableCategories} 
-                setAvailableCategories={setAvailableCategories}
-              />
+              <DetailsPanel />
+
+              <ProductsPanel />
+
+              <CategoriesPanel />
             </TabPanels>
           </TabGroup>
 
           <div className='mt-8 flex justify-end border-t pt-6'>
-            <Link href={`/admin/discounts/${params.id}`}>
+            <Link href={`/admin/discounts/${id}`}>
               <Button
                 type='button'
                 className='mr-3 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50'

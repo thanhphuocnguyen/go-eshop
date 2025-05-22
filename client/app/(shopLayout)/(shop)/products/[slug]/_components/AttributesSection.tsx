@@ -40,7 +40,7 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({ variants }) => {
     return variants.some((variant) => {
       // First, check if this variant has the attribute value we're checking
       const hasAttributeValue = variant.attributes.some(
-        (attr) => attr.id === attributeId && attr.value_object.id === valueId
+        (attr) => attr.id === attributeId && attr.valueObject.id === valueId
       );
 
       if (!hasAttributeValue) return false;
@@ -50,12 +50,12 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({ variants }) => {
         const selectedValueId = potentialSelection[attrId];
         return variant.attributes.some(
           (attr) =>
-            attr.id === attrId && attr.value_object.id === selectedValueId
+            attr.id === attrId && attr.valueObject.id === selectedValueId
         );
       });
 
       // This variant is a potential match if it has the attribute value and matches other selections
-      return hasAttributeValue && otherAttributesMatch && variant.stock_qty > 0;
+      return hasAttributeValue && otherAttributesMatch && variant.stockQty > 0;
     });
   };
 
@@ -63,7 +63,7 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({ variants }) => {
     const variant = variants.find((variant) =>
       variant.attributes.every((attribute) => {
         return (
-          selectedAttributeValues[attribute.id] === attribute.value_object.id
+          selectedAttributeValues[attribute.id] === attribute.valueObject.id
         );
       })
     );
@@ -87,18 +87,18 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({ variants }) => {
             // If the attribute already exists, add the value if it doesn't exist
             if (
               !existingAttribute.values.some(
-                (value) => value.id === attribute.value_object.id
+                (value) => value.id === attribute.valueObject.id
               )
             ) {
-              existingAttribute.values.push(attribute.value_object);
+              existingAttribute.values.push(attribute.valueObject);
             }
           } else {
             // If the attribute doesn't exist, create a new one
             acc.push({
               id: attribute.id,
               name: attribute.name,
-              created_at: attribute.created_at,
-              values: [attribute.value_object],
+              createdAt: attribute.createdAt,
+              values: [attribute.valueObject],
             });
           }
         });

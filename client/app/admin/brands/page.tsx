@@ -13,7 +13,7 @@ import {
   ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/navigation';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { toast } from 'react-toastify';
 
@@ -30,7 +30,7 @@ export default function Page() {
     if (window.confirm('Are you sure you want to delete this brand?')) {
       setDeletingId(id);
       try {
-        const response = await apiFetchClientSide<boolean>(
+        const response = await clientSideFetch<boolean>(
           ADMIN_API_PATHS.BRAND.replace(':id', id),
           {
             method: 'DELETE',

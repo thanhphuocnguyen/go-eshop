@@ -9,7 +9,7 @@ import {
   BuildingStorefrontIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import Image from 'next/image';
 
@@ -46,7 +46,7 @@ export default function MainNavigation() {
       
       try {
         // Fetch categories
-        const categoriesResponse = await apiFetchClientSide<Category[]>(
+        const categoriesResponse = await clientSideFetch<Category[]>(
           `${PUBLIC_API_PATHS.CATEGORIES}?limit=10`
         );
         if (categoriesResponse.data) {
@@ -54,7 +54,7 @@ export default function MainNavigation() {
         }
         
         // Fetch collections
-        const collectionsResponse = await apiFetchClientSide<Collection[]>(
+        const collectionsResponse = await clientSideFetch<Collection[]>(
           `${PUBLIC_API_PATHS.COLLECTIONS}?limit=8`
         );
         if (collectionsResponse.data) {
@@ -62,7 +62,7 @@ export default function MainNavigation() {
         }
         
         // Fetch brands
-        const brandsResponse = await apiFetchClientSide<Brand[]>(
+        const brandsResponse = await clientSideFetch<Brand[]>(
           `${PUBLIC_API_PATHS.BRANDS}?limit=8`
         );
         if (brandsResponse.data) {

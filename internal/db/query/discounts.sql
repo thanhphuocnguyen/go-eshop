@@ -32,19 +32,21 @@ WHERE code = $1
 LIMIT 1;
 
 -- name: GetDiscounts :many
-SELECT id, code, "description", discount_type, discount_value, min_purchase_amount, max_discount_amount, usage_limit, used_count, is_active, starts_at, expires_at
+SELECT id, code, "description", discount_type, discount_value, 
+    min_purchase_amount, max_discount_amount, 
+    usage_limit, used_count, is_active, starts_at, expires_at
 FROM discounts
-WHERE 
-    (code ILIKE COALESCE(sqlc.narg('search'), discounts.code) OR "description" ILIKE COALESCE(sqlc.narg('search'), discounts."description"))
-    AND discount_type = COALESCE(sqlc.narg('discount_type'), discounts.discount_type)
-    AND discount_value = COALESCE(sqlc.narg('discount_value'), discounts.discount_value)
-    AND min_purchase_amount = COALESCE(sqlc.narg('min_purchase_amount'), discounts.min_purchase_amount)
-    AND max_discount_amount = COALESCE(sqlc.narg('max_discount_amount'), discounts.max_discount_amount)
-    AND usage_limit = COALESCE(sqlc.narg('usage_limit'), discounts.usage_limit)
-    AND used_count = COALESCE(sqlc.narg('used_count'), discounts.used_count)
-    AND is_active = COALESCE(sqlc.narg('is_active'), discounts.is_active)
-    AND starts_at >= COALESCE(sqlc.narg('from_date'), discounts.starts_at)
-    AND starts_at <= COALESCE(sqlc.narg('to_date'), discounts.starts_at)
+-- WHERE 
+    -- discount_type = COALESCE(sqlc.narg('discount_type'), discounts.discount_type)
+    -- AND discount_value = COALESCE(sqlc.narg('discount_value'), discounts.discount_value)
+    -- AND min_purchase_amount = COALESCE(sqlc.narg('min_purchase_amount'), discounts.min_purchase_amount)
+    -- AND max_discount_amount = COALESCE(sqlc.narg('max_discount_amount'), discounts.max_discount_amount)
+    -- AND usage_limit = COALESCE(sqlc.narg('usage_limit'), discounts.usage_limit)
+    -- AND used_count = COALESCE(sqlc.narg('used_count'), discounts.used_count)
+    -- AND is_active = COALESCE(sqlc.narg('is_active'), discounts.is_active)
+    -- AND starts_at >= COALESCE(sqlc.narg('from_date'), discounts.starts_at)
+    -- AND starts_at <= COALESCE(sqlc.narg('to_date'), discounts.starts_at)
+    -- AND (code ILIKE '%' || COALESCE(sqlc.narg('search'), discounts.code) || '%' OR "description" ILIKE '%' || COALESCE(sqlc.narg('search') || '%', discounts."description"))
 ORDER BY id
 LIMIT $1
 OFFSET $2;

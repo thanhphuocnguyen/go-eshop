@@ -244,7 +244,7 @@ func (s *Server) postReplyRatingHandler(c *gin.Context) {
 // @Produce json
 // @Param product_id path string true "Product ID"
 // @Param page query int false "Page number" default(1)
-// @Param page_size query int false "Page size" default(10)
+// @Param pageSize query int false "Page size" default(10)
 // @Success 200 {object} ApiResponse[[]ProductRatingModel]
 // @Failure 400 {object} ApiResponse[bool]
 // @Failure 404 {object} ApiResponse[bool]
@@ -347,7 +347,7 @@ func (s *Server) getRatingsHandler(c *gin.Context) {
 // @Produce json
 // @Param product_id path string true "Product ID"
 // @Param page query int false "Page number" default(1)
-// @Param page_size query int false "Page size" default(10)
+// @Param pageSize query int false "Page size" default(10)
 // @Success 200 {object} ApiResponse[[]ProductRatingModel]
 // @Failure 400 {object} ApiResponse[bool]
 // @Failure 404 {object} ApiResponse[bool]

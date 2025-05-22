@@ -22,7 +22,7 @@ import (
 // @Accept json
 // @Produce json
 // @Param page query int false "Page number"
-// @Param page_size query int false "Page size"
+// @Param pageSize query int false "Page size"
 // @Param status query string false "Filter by status"
 // @Param payment_status query string false "Filter by payment status"
 // @Security BearerAuth
@@ -562,7 +562,7 @@ func (sv *Server) refundOrder(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param page query int false "Page number"
-// @Param page_size query int false "Page size"
+// @Param pageSize query int false "Page size"
 // @Param status query string false "Filter by status"
 // @Security BearerAuth
 // @Success 200 {object} ApiResponse[[]OrderListResponse]

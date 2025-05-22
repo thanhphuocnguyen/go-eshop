@@ -10,7 +10,7 @@ import useSWR from 'swr';
 import Loading from '@/app/loading';
 import { GeneralCategoryModel } from '@/app/lib/definitions';
 import CategoryProductList from '../../_components/CategoryProductList';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 
 export default function AdminCollectionDetail({
   params,
@@ -21,7 +21,7 @@ export default function AdminCollectionDetail({
   const { data: category, isLoading } = useSWR(
     ADMIN_API_PATHS.COLLECTION.replace(':id', id),
     async (url) => {
-      const response = await apiFetchClientSide<GeneralCategoryModel>(url, {});
+      const response = await clientSideFetch<GeneralCategoryModel>(url, {});
       if (response.error) {
         toast('Failed to fetch category', { type: 'error' });
         return;
@@ -31,7 +31,7 @@ export default function AdminCollectionDetail({
   );
 
   async function handleSave(data: FormData) {
-    const response = await apiFetchClientSide<number>(
+    const response = await clientSideFetch<number>(
       ADMIN_API_PATHS.COLLECTION.replace(':id', id),
       {
         method: 'PUT',
@@ -63,7 +63,7 @@ export default function AdminCollectionDetail({
         handleSave={handleSave}
         title='Collection Detail'
       />
-      <CategoryProductList products={category?.products ?? []} />
+      <CategoryProductList />
     </div>
   );
 }

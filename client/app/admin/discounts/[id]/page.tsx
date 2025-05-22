@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { use, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -12,88 +12,76 @@ import {
   ChartBarIcon,
 } from '@heroicons/react/24/outline';
 import dayjs from 'dayjs';
+import { ProductsTable, CategoriesTable, UsageTable } from '../_components';
+import useSWR from 'swr';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
+import { toast } from 'react-toastify';
 
 // Mock data for a specific discount
-const mockDiscount = {
-  id: '1',
-  code: 'SUMMER25',
-  description: 'Summer sale discount',
-  discountType: 'percentage',
-  discountValue: 25,
-  minPurchaseAmount: 50,
-  maxDiscountAmount: 100,
-  usageLimit: 1000,
-  usedCount: 342,
-  isActive: true,
-  startsAt: '2025-05-01T00:00:00Z',
-  expiresAt: '2025-08-31T23:59:59Z',
-  createdAt: '2025-04-15T08:30:00Z',
-  updatedAt: '2025-04-20T14:45:30Z',
-  products: [
-    { id: 'prod1', name: 'Summer T-Shirt', price: 29.99 },
-    { id: 'prod2', name: 'Beach Shorts', price: 39.99 },
-    { id: 'prod3', name: 'Sunglasses', price: 25.0 },
-  ],
-  categories: [
-    { id: 'cat1', name: 'Summer Collection' },
-    { id: 'cat2', name: 'Beachwear' },
-  ],
-  usageHistory: [
-    {
-      id: 'order1',
-      orderId: 'ORD-12345',
-      customerName: 'John Doe',
-      amount: 89.97,
-      discountAmount: 22.49,
-      date: '2025-05-10T15:30:00Z',
-    },
-    {
-      id: 'order2',
-      orderId: 'ORD-12346',
-      customerName: 'Jane Smith',
-      amount: 129.99,
-      discountAmount: 32.5,
-      date: '2025-05-12T09:15:00Z',
-    },
-    {
-      id: 'order3',
-      orderId: 'ORD-12350',
-      customerName: 'Robert Johnson',
-      amount: 75.5,
-      discountAmount: 18.88,
-      date: '2025-05-14T17:22:00Z',
-    },
-  ],
+type Discount = {
+  id: string;
+  code: string;
+  description: string;
+  discountType: string;
+  discountValue: number;
+  minPurchase?: number;
+  maxDiscount?: number;
+  usageLimit?: number;
+  usedCount?: number;
+  isActive: boolean;
+  startsAt: string;
+  expiresAt: string;
+  createdAt: string;
+  updatedAt: string;
+  products: Array<{ id: string; name: string; price: number }>;
+  categories: Array<{ id: string; name: string }>;
+  usageHistory: Array<{
+    id: string;
+    orderId: string;
+    customerName: string;
+    amount: number;
+    discountAmount: number;
+    date: string;
+  }>;
 };
 
 export default function DiscountDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = use(params);
   const router = useRouter();
-  const [discount, setDiscount] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('details');
 
-  useEffect(() => {
-    // In a real implementation, this would fetch the discount data from an API
-    const fetchDiscount = async () => {
-      try {
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        setDiscount(mockDiscount);
-      } catch (error) {
-        console.error('Error fetching discount:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Use mock data for demonstration
+  // const discount = mockDiscount;
 
-    fetchDiscount();
-  }, [params.id]);
+  // /* Uncomment to use real API
+  const { data: discount, isLoading } = useSWR(
+    ADMIN_API_PATHS.DISCOUNT.replace(':id', id),
+    (url) =>
+      clientSideFetch<Discount>(url).then((res) => {
+        if (res.error) {
+          throw new Error(res.error.details);
+        }
+        return res.data;
+      }),
+    {
+      onError: (err) => {
+        toast.error(
+          <div>
+            Failed to fetch discount details.
+            <div>{JSON.stringify(err)}</div>
+          </div>
+        );
+      },
+    }
+  );
+  // */
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className='p-4'>
         <div className='flex justify-center items-center h-64'>
@@ -147,7 +135,7 @@ export default function DiscountDetailPage({
   };
 
   const usagePercentage = discount.usageLimit
-    ? Math.min(100, (discount.usedCount / discount.usageLimit) * 100)
+    ? Math.min(100, ((discount.usedCount ?? 0) / discount.usageLimit) * 100)
     : 0;
 
   return (
@@ -170,7 +158,7 @@ export default function DiscountDetailPage({
         </div>
 
         <div className='flex space-x-2'>
-          <Link href={`/admin/discounts/${params.id}/edit`}>
+          <Link href={`/admin/discounts/${id}/edit`}>
             <button className='flex items-center gap-1 px-3 py-1.5 border border-gray-300 rounded bg-white hover:bg-gray-50'>
               <PencilIcon className='h-4 w-4' />
               Edit
@@ -290,8 +278,8 @@ export default function DiscountDetailPage({
                       Minimum Purchase
                     </span>
                     <span className='mt-1 block'>
-                      {discount.minPurchaseAmount
-                        ? `$${discount.minPurchaseAmount.toFixed(2)}`
+                      {discount.minPurchase
+                        ? `$${discount.minPurchase.toFixed(2)}`
                         : 'No minimum'}
                     </span>
                   </div>
@@ -300,8 +288,8 @@ export default function DiscountDetailPage({
                       Maximum Discount
                     </span>
                     <span className='mt-1 block'>
-                      {discount.maxDiscountAmount
-                        ? `$${discount.maxDiscountAmount.toFixed(2)}`
+                      {discount.maxDiscount
+                        ? `$${discount.maxDiscount.toFixed(2)}`
                         : 'No maximum'}
                     </span>
                   </div>
@@ -375,62 +363,11 @@ export default function DiscountDetailPage({
                 </button>
               </div>
 
-              {discount.products && discount.products.length > 0 ? (
-                <div className='overflow-x-auto'>
-                  <table className='min-w-full divide-y divide-gray-200'>
-                    <thead className='bg-gray-50'>
-                      <tr>
-                        <th
-                          scope='col'
-                          className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
-                        >
-                          Product
-                        </th>
-                        <th
-                          scope='col'
-                          className='px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider'
-                        >
-                          Price
-                        </th>
-                        <th
-                          scope='col'
-                          className='px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider'
-                        >
-                          Discounted Price
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className='bg-white divide-y divide-gray-200'>
-                      {discount.products.map((product: any) => (
-                        <tr key={product.id}>
-                          <td className='px-6 py-4 whitespace-nowrap'>
-                            <div className='text-sm font-medium text-gray-900'>
-                              {product.name}
-                            </div>
-                            <div className='text-xs text-gray-500'>
-                              {product.id}
-                            </div>
-                          </td>
-                          <td className='px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500'>
-                            ${product.price.toFixed(2)}
-                          </td>
-                          <td className='px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900'>
-                            {discount.discountType === 'percentage'
-                              ? `$${(product.price * (1 - discount.discountValue / 100)).toFixed(2)}`
-                              : `$${Math.max(0, product.price - discount.discountValue).toFixed(2)}`}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className='bg-gray-50 rounded-md p-8 text-center'>
-                  <p className='text-gray-500'>
-                    This discount applies to all products.
-                  </p>
-                </div>
-              )}
+              <ProductsTable
+                products={discount.products}
+                discountType={discount.discountType}
+                discountValue={discount.discountValue}
+              />
             </div>
           )}
 
@@ -443,155 +380,18 @@ export default function DiscountDetailPage({
                 </button>
               </div>
 
-              {discount.categories && discount.categories.length > 0 ? (
-                <div className='overflow-x-auto'>
-                  <table className='min-w-full divide-y divide-gray-200'>
-                    <thead className='bg-gray-50'>
-                      <tr>
-                        <th
-                          scope='col'
-                          className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
-                        >
-                          Category Name
-                        </th>
-                        <th
-                          scope='col'
-                          className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
-                        >
-                          Category ID
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className='bg-white divide-y divide-gray-200'>
-                      {discount.categories.map((category: any) => (
-                        <tr key={category.id}>
-                          <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>
-                            {category.name}
-                          </td>
-                          <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                            {category.id}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className='bg-gray-50 rounded-md p-8 text-center'>
-                  <p className='text-gray-500'>
-                    No specific categories selected for this discount.
-                  </p>
-                </div>
-              )}
+              <CategoriesTable categories={discount.categories} />
             </div>
           )}
 
           {activeTab === 'usage' && (
-            <div>
-              <div className='mb-6'>
-                <h3 className='text-lg font-medium mb-3'>Usage Overview</h3>
-                <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-                  <div className='p-4 border rounded-md'>
-                    <div className='text-sm font-medium text-gray-500'>
-                      Total Uses
-                    </div>
-                    <div className='mt-1 text-3xl font-semibold'>
-                      {discount.usedCount}
-                    </div>
-                  </div>
-                  <div className='p-4 border rounded-md'>
-                    <div className='text-sm font-medium text-gray-500'>
-                      Remaining
-                    </div>
-                    <div className='mt-1 text-3xl font-semibold'>
-                      {discount.usageLimit
-                        ? discount.usageLimit - discount.usedCount
-                        : '∞'}
-                    </div>
-                  </div>
-                  <div className='p-4 border rounded-md'>
-                    <div className='text-sm font-medium text-gray-500'>
-                      Usage Limit
-                    </div>
-                    <div className='mt-1 text-3xl font-semibold'>
-                      {discount.usageLimit || '∞'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className='text-lg font-medium mb-3'>Recent Usage</h3>
-
-                {discount.usageHistory && discount.usageHistory.length > 0 ? (
-                  <div className='overflow-x-auto'>
-                    <table className='min-w-full divide-y divide-gray-200'>
-                      <thead className='bg-gray-50'>
-                        <tr>
-                          <th
-                            scope='col'
-                            className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
-                          >
-                            Order ID
-                          </th>
-                          <th
-                            scope='col'
-                            className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
-                          >
-                            Customer
-                          </th>
-                          <th
-                            scope='col'
-                            className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
-                          >
-                            Date
-                          </th>
-                          <th
-                            scope='col'
-                            className='px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider'
-                          >
-                            Order Total
-                          </th>
-                          <th
-                            scope='col'
-                            className='px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider'
-                          >
-                            Discount Applied
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className='bg-white divide-y divide-gray-200'>
-                        {discount.usageHistory.map((usage: any) => (
-                          <tr key={usage.id}>
-                            <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>
-                              {usage.orderId}
-                            </td>
-                            <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                              {usage.customerName}
-                            </td>
-                            <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                              {dayjs(usage.date).format('MMM D, YYYY h:mm A')}
-                            </td>
-                            <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right'>
-                              ${usage.amount.toFixed(2)}
-                            </td>
-                            <td className='px-6 py-4 whitespace-nowrap text-sm text-red-600 font-medium text-right'>
-                              -${usage.discountAmount.toFixed(2)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className='bg-gray-50 rounded-md p-8 text-center'>
-                    <p className='text-gray-500'>
-                      This discount hasn't been used yet.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
+            <UsageTable
+              usageHistory={discount.usageHistory}
+              overview={{
+                usedCount: discount.usedCount || 0,
+                usageLimit: discount.usageLimit,
+              }}
+            />
           )}
         </div>
       </div>

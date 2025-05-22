@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 import { PUBLIC_API_PATHS } from '../constants/api';
-import { apiFetchClientSide } from '../apis/apiClient';
+import { clientSideFetch } from '../apis/apiClient';
 import { CartModel } from '../definitions/cart';
 import { toast } from 'react-toastify';
 
@@ -8,7 +8,7 @@ export const useCart = (userId?: string) => {
   const { data, isLoading, error, mutate } = useSWR(
     userId ? [PUBLIC_API_PATHS.CART, userId] : null,
     ([url]) =>
-      apiFetchClientSide<CartModel>(url, {
+      clientSideFetch<CartModel>(url, {
         method: 'GET',
       }).then((res) => {
         if (res.error) {

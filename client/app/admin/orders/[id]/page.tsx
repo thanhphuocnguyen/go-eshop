@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Breadcrumb } from '@/components/Common';
 import LoadingButton from '@/components/Common/LoadingButton';
 import LoadingInline from '@/components/Common/Loadings/LoadingInline';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { OrderDetail, GenericResponse } from '@/app/lib/definitions';
 
@@ -29,7 +29,7 @@ export default function OrderDetailPage({
     setError(null);
 
     try {
-      const { data, error } = await apiFetchClientSide<OrderDetail>(
+      const { data, error } = await clientSideFetch<OrderDetail>(
         ADMIN_API_PATHS.ORDER_DETAIL.replace(':id', id),
         {}
       );
@@ -57,7 +57,7 @@ export default function OrderDetailPage({
     setError(null);
 
     try {
-      const { data, error } = await apiFetchClientSide<
+      const { data, error } = await clientSideFetch<
         GenericResponse<boolean>
       >(ADMIN_API_PATHS.ORDER_DETAIL_STATUS.replace(':id', id), {
         method: 'PUT',
@@ -221,7 +221,7 @@ export default function OrderDetailPage({
               </p>
               <p>
                 <span className='font-medium'>Date:</span>{' '}
-                {formatDate(orderDetail.created_at)}
+                {formatDate(orderDetail.createdAt)}
               </p>
               <p>
                 <span className='font-medium'>Total:</span>{' '}
@@ -245,31 +245,31 @@ export default function OrderDetailPage({
             <div className='bg-gray-50 p-4 rounded-md'>
               <p>
                 <span className='font-medium'>Name:</span>{' '}
-                {orderDetail.customer_name}
+                {orderDetail.customerName}
               </p>
               <p>
                 <span className='font-medium'>Email:</span>{' '}
-                {orderDetail.customer_email}
+                {orderDetail.customerEmail}
               </p>
               <p>
                 <span className='font-medium'>Shipping Address:</span>
               </p>
               <p className='ml-4'>
-                {orderDetail.shipping_info.street},{' '}
-                {orderDetail.shipping_info.ward},
+                {orderDetail.shippingInfo.street},{' '}
+                {orderDetail.shippingInfo.ward},
                 <br />
-                {orderDetail.shipping_info.district},{' '}
-                {orderDetail.shipping_info.city}
+                {orderDetail.shippingInfo.district},{' '}
+                {orderDetail.shippingInfo.city}
               </p>
               <p>
                 <span className='font-medium'>Phone:</span>{' '}
-                {orderDetail.shipping_info.phone}
+                {orderDetail.shippingInfo.phone}
               </p>
             </div>
           </div>
         </div>
 
-        {orderDetail.payment_info && (
+        {orderDetail.paymentInfo && (
           <div className='mb-6'>
             <h3 className='font-semibold text-gray-700 mb-2'>
               Payment Information
@@ -277,34 +277,34 @@ export default function OrderDetailPage({
             <div className='bg-gray-50 p-4 rounded-md'>
               <p>
                 <span className='font-medium'>Payment ID:</span>{' '}
-                {orderDetail.payment_info.id}
+                {orderDetail.paymentInfo.id}
               </p>
               <p>
                 <span className='font-medium'>Amount:</span>{' '}
-                {formatCurrency(orderDetail.payment_info.amount)}
+                {formatCurrency(orderDetail.paymentInfo.amount)}
               </p>
               <p>
                 <span className='font-medium'>Method:</span>{' '}
-                {orderDetail.payment_info.method}
+                {orderDetail.paymentInfo.method}
               </p>
               <p className='flex items-center mt-1'>
                 <span className='font-medium mr-2'>Status:</span>
                 <span
-                  className={`px-2 py-1 text-xs leading-5 font-semibold rounded-full ${getStatusColor(orderDetail.payment_info.status)}`}
+                  className={`px-2 py-1 text-xs leading-5 font-semibold rounded-full ${getStatusColor(orderDetail.paymentInfo.status)}`}
                 >
-                  {orderDetail.payment_info.status}
+                  {orderDetail.paymentInfo.status}
                 </span>
               </p>
-              {orderDetail.payment_info.gateway && (
+              {orderDetail.paymentInfo.gateway && (
                 <p>
                   <span className='font-medium'>Gateway:</span>{' '}
-                  {orderDetail.payment_info.gateway}
+                  {orderDetail.paymentInfo.gateway}
                 </p>
               )}
-              {orderDetail.payment_info.refund_id && (
+              {orderDetail.paymentInfo.refundId && (
                 <p>
                   <span className='font-medium'>Refund ID:</span>{' '}
-                  {orderDetail.payment_info.refund_id}
+                  {orderDetail.paymentInfo.refundId}
                 </p>
               )}
             </div>
@@ -362,11 +362,11 @@ export default function OrderDetailPage({
                   <tr key={product.id}>
                     <td className='px-6 py-4 whitespace-nowrap'>
                       <div className='flex items-center'>
-                        {product.image_url && (
+                        {product.imageUrl && (
                           <div className='flex-shrink-0 h-10 w-10 mr-4'>
                             <img
                               className='h-10 w-10 rounded-md object-cover'
-                              src={product.image_url}
+                              src={product.imageUrl}
                               alt={product.name}
                             />
                           </div>
@@ -380,7 +380,7 @@ export default function OrderDetailPage({
                     </td>
                     <td className='px-6 py-4'>
                       <div className='text-sm text-gray-900'>
-                        {product.attributes_snapshot?.map((attr, index) => (
+                        {product.attributesSnapshot?.map((attr, index) => (
                           <span
                             key={index}
                             className='px-2 py-1 mr-1 text-xs bg-gray-100 rounded'
@@ -394,7 +394,7 @@ export default function OrderDetailPage({
                       {product.quantity}
                     </td>
                     <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                      {formatCurrency(product.line_total)}
+                      {formatCurrency(product.lineTotal)}
                     </td>
                   </tr>
                 ))}

@@ -17,7 +17,7 @@ UPDATE carts SET order_id = $1 WHERE id = $2 RETURNING id, user_id, session_id, 
 `
 
 type CheckoutCartParams struct {
-	OrderID pgtype.UUID `json:"order_id"`
+	OrderID pgtype.UUID `json:"orderId"`
 	ID      uuid.UUID   `json:"id"`
 }
 
@@ -51,8 +51,8 @@ INSERT INTO carts (user_id, session_id) VALUES ($1, $2) RETURNING id, user_id, s
 `
 
 type CreateCartParams struct {
-	UserID    pgtype.UUID `json:"user_id"`
-	SessionID *string     `json:"session_id"`
+	UserID    pgtype.UUID `json:"userId"`
+	SessionID *string     `json:"sessionId"`
 }
 
 func (q *Queries) CreateCart(ctx context.Context, arg CreateCartParams) (Cart, error) {
@@ -75,8 +75,8 @@ INSERT INTO cart_items (id, cart_id, variant_id, quantity) VALUES ($1, $2, $3, $
 
 type CreateCartItemParams struct {
 	ID        uuid.UUID `json:"id"`
-	CartID    uuid.UUID `json:"cart_id"`
-	VariantID uuid.UUID `json:"variant_id"`
+	CartID    uuid.UUID `json:"cartId"`
+	VariantID uuid.UUID `json:"variantId"`
 	Quantity  int16     `json:"quantity"`
 }
 
@@ -111,8 +111,8 @@ LIMIT 1
 `
 
 type GetCartParams struct {
-	UserID    pgtype.UUID `json:"user_id"`
-	SessionID *string     `json:"session_id"`
+	UserID    pgtype.UUID `json:"userId"`
+	SessionID *string     `json:"sessionId"`
 }
 
 func (q *Queries) GetCart(ctx context.Context, arg GetCartParams) (Cart, error) {
@@ -135,7 +135,7 @@ SELECT id, cart_id, variant_id, quantity, added_at FROM cart_items WHERE id = $1
 
 type GetCartItemParams struct {
 	ID     uuid.UUID `json:"id"`
-	CartID uuid.UUID `json:"cart_id"`
+	CartID uuid.UUID `json:"cartId"`
 }
 
 func (q *Queries) GetCartItem(ctx context.Context, arg GetCartItemParams) (CartItem, error) {
@@ -156,8 +156,8 @@ SELECT id, cart_id, variant_id, quantity, added_at FROM cart_items WHERE variant
 `
 
 type GetCartItemByProductVariantIDParams struct {
-	VariantID uuid.UUID `json:"variant_id"`
-	CartID    uuid.UUID `json:"cart_id"`
+	VariantID uuid.UUID `json:"variantId"`
+	CartID    uuid.UUID `json:"cartId"`
 }
 
 func (q *Queries) GetCartItemByProductVariantID(ctx context.Context, arg GetCartItemByProductVariantIDParams) (CartItem, error) {
@@ -194,23 +194,23 @@ ORDER BY ci.added_at, ci.id, pv.id DESC
 `
 
 type GetCartItemsRow struct {
-	CartItem    CartItem       `json:"cart_item"`
-	VariantID   uuid.UUID      `json:"variant_id"`
+	CartItem    CartItem       `json:"cartItem"`
+	VariantID   uuid.UUID      `json:"variantId"`
 	Price       pgtype.Numeric `json:"price"`
 	Stock       int32          `json:"stock"`
 	Sku         string         `json:"sku"`
-	StockQty    int32          `json:"stock_qty"`
-	ProductID   uuid.UUID      `json:"product_id"`
-	ProductName string         `json:"product_name"`
-	CartItemID  uuid.UUID      `json:"cart_item_id"`
+	StockQty    int32          `json:"stockQty"`
+	ProductID   uuid.UUID      `json:"productId"`
+	ProductName string         `json:"productName"`
+	CartItemID  uuid.UUID      `json:"cartItemId"`
 	Quantity    int16          `json:"quantity"`
-	AttrValID   uuid.UUID      `json:"attr_val_id"`
-	AttrValCode string         `json:"attr_val_code"`
-	AttrValName string         `json:"attr_val_name"`
-	AttrName    string         `json:"attr_name"`
-	AttrID      uuid.UUID      `json:"attr_id"`
-	ImageID     pgtype.UUID    `json:"image_id"`
-	ImageUrl    *string        `json:"image_url"`
+	AttrValID   uuid.UUID      `json:"attrValId"`
+	AttrValCode string         `json:"attrValCode"`
+	AttrValName string         `json:"attrValName"`
+	AttrName    string         `json:"attrName"`
+	AttrID      uuid.UUID      `json:"attrId"`
+	ImageID     pgtype.UUID    `json:"imageId"`
+	ImageUrl    *string        `json:"imageUrl"`
 }
 
 func (q *Queries) GetCartItems(ctx context.Context, cartID uuid.UUID) ([]GetCartItemsRow, error) {
@@ -272,16 +272,16 @@ ORDER BY ci.added_at, ci.id, pv.id DESC
 `
 
 type GetCartItemsForOrderRow struct {
-	CartItem    CartItem       `json:"cart_item"`
-	VariantID   uuid.UUID      `json:"variant_id"`
+	CartItem    CartItem       `json:"cartItem"`
+	VariantID   uuid.UUID      `json:"variantId"`
 	Price       pgtype.Numeric `json:"price"`
 	Stock       int32          `json:"stock"`
 	Sku         string         `json:"sku"`
-	StockQty    int32          `json:"stock_qty"`
-	ProductName string         `json:"product_name"`
-	AttrValCode string         `json:"attr_val_code"`
-	AttrValName string         `json:"attr_val_name"`
-	AttrName    string         `json:"attr_name"`
+	StockQty    int32          `json:"stockQty"`
+	ProductName string         `json:"productName"`
+	AttrValCode string         `json:"attrValCode"`
+	AttrValName string         `json:"attrValName"`
+	AttrName    string         `json:"attrName"`
 }
 
 func (q *Queries) GetCartItemsForOrder(ctx context.Context, cartID uuid.UUID) ([]GetCartItemsForOrderRow, error) {
@@ -324,7 +324,7 @@ DELETE FROM cart_items WHERE cart_id = $1 AND id = $2
 `
 
 type RemoveProductFromCartParams struct {
-	CartID uuid.UUID `json:"cart_id"`
+	CartID uuid.UUID `json:"cartId"`
 	ID     uuid.UUID `json:"id"`
 }
 

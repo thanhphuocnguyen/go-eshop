@@ -1,6 +1,6 @@
 'use client';
 
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { useUser } from '@/app/lib/hooks/useUser';
 import { useState } from 'react';
@@ -57,7 +57,7 @@ export const RatingHelpfulButtons = ({
     setIsSubmitting(true);
 
     try {
-      const response = await apiFetchClientSide(
+      const response = await clientSideFetch(
         PUBLIC_API_PATHS.RATING_VOTE.replaceAll(':id', ratingId),
         {
           method: 'POST',

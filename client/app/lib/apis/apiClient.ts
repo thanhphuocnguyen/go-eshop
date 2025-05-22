@@ -1,5 +1,6 @@
 import { GenericResponse } from '../definitions/index';
 import { refreshTokenAction } from '@/app/actions/auth';
+import { badRequestHandler } from './helper';
 
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
@@ -38,7 +39,7 @@ function serializeQueryParams(params: Record<string, any>): string {
   return searchParams.toString();
 }
 
-export async function apiFetchClientSide<T = any>(
+export async function clientSideFetch<T = any>(
   endpoint: string,
   {
     method = 'GET',
@@ -82,7 +83,7 @@ export async function apiFetchClientSide<T = any>(
     const newToken = await refreshTokenAction();
     if (newToken) {
       localStorage.setItem('access_token', newToken);
-      return apiFetchClientSide<T>(endpoint, {
+      return clientSideFetch<T>(endpoint, {
         method,
         body,
         headers,
@@ -95,6 +96,8 @@ export async function apiFetchClientSide<T = any>(
       throw new Error('Unauthorized, redirecting to login');
     }
   }
+
+  badRequestHandler(response);
 
   return response.json();
 }

@@ -6,7 +6,7 @@ import { Metadata } from 'next';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { GeneralCategoryModel } from '@/app/lib/definitions';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
-import { apiFetchServerSide } from '@/app/lib/apis/apiServer';
+import { serverSideFetch } from '@/app/lib/apis/apiServer';
 
 export const metadata: Metadata = {
   title: 'Homepage',
@@ -36,10 +36,10 @@ const NoDataPlaceholder = ({ type }: { type: string }) => {
 };
 
 export default async function Home() {
-  const { data, error } = await apiFetchServerSide<{
+  const { data, error } = await serverSideFetch<{
     categories: GeneralCategoryModel[];
     collections: GeneralCategoryModel[];
-  }>(PUBLIC_API_PATHS.HOME_PAGE_DATA, {
+  }>(PUBLIC_API_PATHS.ADVERTISE_CATEGORIES, {
     nextOptions: {
       next: {
         tags: ['home'],

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Dialog } from '@headlessui/react';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { toast } from 'react-toastify';
 
@@ -16,7 +16,7 @@ export default function CancelOrderButton({ orderId }: { orderId: string }) {
   const handleCancelOrder = async () => {
     setIsLoading(true);
     try {
-      const response = await apiFetchClientSide(
+      const response = await clientSideFetch(
         PUBLIC_API_PATHS.CANCEL_ORDER.replace(':id', orderId),
         {
           method: 'POST',

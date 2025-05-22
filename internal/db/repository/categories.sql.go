@@ -36,8 +36,8 @@ type CreateCategoryParams struct {
 	Slug        string  `json:"slug"`
 	Description *string `json:"description"`
 	Remarkable  *bool   `json:"remarkable"`
-	ImageUrl    *string `json:"image_url"`
-	ImageID     *string `json:"image_id"`
+	ImageUrl    *string `json:"imageUrl"`
+	ImageID     *string `json:"imageId"`
 }
 
 func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) (Category, error) {
@@ -200,8 +200,8 @@ WHERE
 type GetCategoryProductsByIDRow struct {
 	Category           Category    `json:"category"`
 	ID                 pgtype.UUID `json:"id"`
-	ProductName        *string     `json:"product_name"`
-	ProductDescription *string     `json:"product_description"`
+	ProductName        *string     `json:"productName"`
+	ProductDescription *string     `json:"productDescription"`
 }
 
 func (q *Queries) GetCategoryProductsByID(ctx context.Context, id uuid.UUID) ([]GetCategoryProductsByIDRow, error) {
@@ -243,8 +243,8 @@ type SeedCategoriesParams struct {
 	Name        string  `json:"name"`
 	Slug        string  `json:"slug"`
 	Description *string `json:"description"`
-	ImageUrl    *string `json:"image_url"`
-	ImageID     *string `json:"image_id"`
+	ImageUrl    *string `json:"imageUrl"`
+	ImageID     *string `json:"imageId"`
 }
 
 const updateCategory = `-- name: UpdateCategory :one
@@ -269,8 +269,8 @@ type UpdateCategoryParams struct {
 	Name        *string   `json:"name"`
 	Slug        *string   `json:"slug"`
 	Description *string   `json:"description"`
-	ImageID     *string   `json:"image_id"`
-	ImageUrl    *string   `json:"image_url"`
+	ImageID     *string   `json:"imageId"`
+	ImageUrl    *string   `json:"imageUrl"`
 	Remarkable  *bool     `json:"remarkable"`
 	Published   *bool     `json:"published"`
 }

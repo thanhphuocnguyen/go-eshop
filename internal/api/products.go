@@ -120,7 +120,7 @@ func (sv *Server) getProductDetailHandler(c *gin.Context) {
 // @Tags products
 // @Accept json
 // @Param page query int true "Page number"
-// @Param page_size query int true "Page size"
+// @Param pageSize query int true "Page size"
 // @Produce json
 // @Success 200 {array} ApiResponse[ProductListModel]
 // @Failure 404 {object} ApiResponse[ProductListModel]

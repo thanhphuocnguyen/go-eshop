@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import StyledModal from '../StyledModal';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import { redirect, useRouter } from 'next/navigation';
 import LoadingButton from '../Common/LoadingButton';
 import { toast } from 'react-toastify';
@@ -39,7 +39,7 @@ const PaymentSetupModal: React.FC<PaymentSetupModalProps> = ({
 
     setIsLoading(true);
     try {
-      const response = await apiFetchClientSide<Partial<CheckoutDataResponse>>(
+      const response = await clientSideFetch<Partial<CheckoutDataResponse>>(
         PUBLIC_API_PATHS.PAYMENTS,
         {
           method: 'POST',

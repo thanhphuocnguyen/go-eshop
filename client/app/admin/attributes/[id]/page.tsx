@@ -27,7 +27,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import ValueItem from './_components/ValueItem';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -64,7 +64,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const { data: attribute } = useSWR(
     id ? ADMIN_API_PATHS.ATTRIBUTE.replace(':id', id) : null,
     async (url) => {
-      const response = await apiFetchClientSide<AttributeFormModel>(url, {});
+      const response = await clientSideFetch<AttributeFormModel>(url, {});
       if (response.error) {
         toast('Failed to fetch attribute', { type: 'error' });
         return;
@@ -79,7 +79,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       display_order: i + 1,
     }));
 
-    const response = await apiFetchClientSide<AttributeFormModel>(
+    const response = await clientSideFetch<AttributeFormModel>(
       ADMIN_API_PATHS.ATTRIBUTE.replace(':id', id),
       {
         method: 'PUT',

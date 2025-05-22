@@ -13,7 +13,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { TextField } from '@/components/FormFields';
 import { AddressModel } from '@/app/lib/definitions/user';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { GenericResponse } from '@/app/lib/definitions';
 import { toast } from 'react-toastify';
@@ -98,7 +98,7 @@ export default function AddressesClient() {
     try {
       if (selectedAddress) {
         // Edit existing address
-        const response = await apiFetchClientSide<GenericResponse<AddressModel>>(
+        const response = await clientSideFetch<GenericResponse<AddressModel>>(
           PUBLIC_API_PATHS.USER_ADDRESS.replace(
             ':id',
             selectedAddress.id.toString()
@@ -117,7 +117,7 @@ export default function AddressesClient() {
         toast.success('Address updated successfully');
       } else {
         // Add new address
-        const response = await apiFetchClientSide<GenericResponse<AddressModel>>(
+        const response = await clientSideFetch<GenericResponse<AddressModel>>(
           PUBLIC_API_PATHS.USER_ADDRESSES,
           {
             method: 'POST',
@@ -149,7 +149,7 @@ export default function AddressesClient() {
 
     setIsSubmitting(true);
     try {
-      const response = await apiFetchClientSide<GenericResponse<null>>(
+      const response = await clientSideFetch<GenericResponse<null>>(
         PUBLIC_API_PATHS.USER_ADDRESS.replace(
           ':id',
           selectedAddress.id.toString()
@@ -177,7 +177,7 @@ export default function AddressesClient() {
 
   const handleSetDefaultAddress = async (addressId: string) => {
     try {
-      const response = await apiFetchClientSide<GenericResponse<AddressModel>>(
+      const response = await clientSideFetch<GenericResponse<AddressModel>>(
         PUBLIC_API_PATHS.USER_ADDRESS_DEFAULT.replace(
           ':id',
           addressId.toString()

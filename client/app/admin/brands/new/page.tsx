@@ -7,11 +7,11 @@ import { toast } from 'react-toastify';
 import { redirect } from 'next/navigation';
 import { GeneralCategoryModel } from '@/app/lib/definitions';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 
 export default function Page() {
   const handleSave = async (form: FormData) => {
-    const response = await apiFetchClientSide<GeneralCategoryModel>(
+    const response = await clientSideFetch<GeneralCategoryModel>(
       ADMIN_API_PATHS.BRANDS,
       {
         method: 'POST',

@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { apiFetchServerSide } from '@/app/lib/apis/apiServer';
+import { serverSideFetch } from '@/app/lib/apis/apiServer';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import UserProfileForm from '../_components/UserProfileForm';
 import dayjs from 'dayjs';
@@ -56,7 +56,7 @@ export async function generateMetadata({
 
 async function getUserDetails(userId: string): Promise<UserDetails | null> {
   try {
-    const { data, error } = await apiFetchServerSide<UserDetails>(
+    const { data, error } = await serverSideFetch<UserDetails>(
       `${ADMIN_API_PATHS.USERS}/${userId}`
     );
 

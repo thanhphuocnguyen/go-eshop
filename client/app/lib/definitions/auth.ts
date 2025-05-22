@@ -8,16 +8,16 @@ export const LoginFormSchema = z.object({
 export type LoginFormData = z.infer<typeof LoginFormSchema>;
 
 export type LoginResponse = {
-  session_id: string;
-  access_token: string;
-  access_token_expires_in: Date;
-  refresh_token: string;
-  refresh_token_expires_at: Date;
+  sessionId: string;
+  accessToken: string;
+  accessTokenExpiresIn: Date;
+  refreshToken: string;
+  refreshTokenExpiresAt: Date;
 };
 
 export type RefreshTokenResponse = {
-  access_token: string;
-  access_token_expires_at: string;
+  accessToken: string;
+  accessTokenExpiresAt: string;
 };
 
 export type LoginFormState =

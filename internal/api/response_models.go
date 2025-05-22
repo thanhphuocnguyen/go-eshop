@@ -63,30 +63,31 @@ type Pagination struct {
 }
 
 type PaginationQueryParams struct {
-	Page     int64 `form:"page,default=1" binding:"omitempty,min=1"`
-	PageSize int64 `form:"page_size,default=20" binding:"omitempty,min=1,max=100"`
+	Page     int64   `form:"page,default=1" binding:"omitempty,min=1"`
+	PageSize int64   `form:"pageSize,default=20" binding:"omitempty,min=1,max=100"`
+	Search   *string `form:"search" binding:"omitempty,omitzero,max=1000"`
 }
 
 type ProductListItemResponse struct {
 	ID               string                   `json:"id"`
 	Name             string                   `json:"name"`
 	Description      string                   `json:"description"`
-	ShortDescription *string                  `json:"short_description"`
+	ShortDescription *string                  `json:"shortDescription"`
 	Attributes       []string                 `json:"attributes"`
 	BasePrice        float64                  `json:"price,omitzero"`
 	BaseSku          string                   `json:"sku"`
-	UpdatedAt        string                   `json:"updated_at"`
-	IsActive         bool                     `json:"is_active"`
+	UpdatedAt        string                   `json:"updatedAt"`
+	IsActive         bool                     `json:"isActive"`
 	Slug             string                   `json:"slug"`
-	CreatedAt        string                   `json:"created_at"`
-	RatingCount      int32                    `json:"rating_count"`
-	OneStarCount     int32                    `json:"one_star_count"`
-	TwoStarCount     int32                    `json:"two_star_count"`
-	ThreeStarCount   int32                    `json:"three_star_count"`
-	FourStarCount    int32                    `json:"four_star_count"`
-	FiveStarCount    int32                    `json:"five_star_count"`
+	CreatedAt        string                   `json:"createdAt"`
+	RatingCount      int32                    `json:"ratingCount"`
+	OneStarCount     int32                    `json:"oneStarCount"`
+	TwoStarCount     int32                    `json:"twoStarCount"`
+	ThreeStarCount   int32                    `json:"threeStarCount"`
+	FourStarCount    int32                    `json:"fourStarCount"`
+	FiveStarCount    int32                    `json:"fiveStarCount"`
 	Variants         []ProductVariantModel    `json:"variants"`
-	ProductImages    []ProductImageModel      `json:"product_images"`
+	ProductImages    []ProductImageModel      `json:"productImages"`
 	Collection       *GeneralCategoryResponse `json:"collection,omitempty"`
 	Brand            *GeneralCategoryResponse `json:"brand,omitempty"`
 	Category         *GeneralCategoryResponse `json:"category,omitempty"`
@@ -104,9 +105,9 @@ type CategoryListResponse struct {
 	Slug        string             `json:"slug"`
 	Published   bool               `json:"published,omitempty"`
 	Remarkable  bool               `json:"remarkable,omitempty"`
-	CreatedAt   string             `json:"created_at,omitempty"`
-	UpdatedAt   string             `json:"updated_at,omitempty"`
-	ImageUrl    *string            `json:"image_url,omitempty"`
+	CreatedAt   string             `json:"createdAt,omitempty"`
+	UpdatedAt   string             `json:"updatedAt,omitempty"`
+	ImageUrl    *string            `json:"imageUrl,omitempty"`
 	Products    []ProductListModel `json:"products,omitempty"`
 }
 
@@ -117,9 +118,9 @@ type CategoryResponse struct {
 	Slug        string                  `json:"slug"`
 	Published   bool                    `json:"published,omitempty"`
 	Remarkable  bool                    `json:"remarkable,omitempty"`
-	CreatedAt   string                  `json:"created_at,omitempty"`
-	UpdatedAt   string                  `json:"updated_at,omitempty"`
-	ImageUrl    *string                 `json:"image_url,omitempty"`
+	CreatedAt   string                  `json:"createdAt,omitempty"`
+	UpdatedAt   string                  `json:"updatedAt,omitempty"`
+	ImageUrl    *string                 `json:"imageUrl,omitempty"`
 	Products    []CategoryLinkedProduct `json:"products"`
 }
 
@@ -135,10 +136,10 @@ type RemoveImageParams struct {
 
 type ImageResponse struct {
 	ID          string   `json:"id"`
-	ExternalID  string   `json:"external_id"`
+	ExternalID  string   `json:"externalId"`
 	Url         string   `json:"url"`
-	MimeType    string   `json:"mime_type,omitempty"`
-	FileSize    int64    `json:"file_size,omitzero"`
+	MimeType    string   `json:"mimeType,omitempty"`
+	FileSize    int64    `json:"fileSize,omitzero"`
 	Assignments []string `json:"assignments,omitempty"`
 }
 
@@ -173,12 +174,12 @@ type PaymentResponse struct {
 
 type OrderItemResponse struct {
 	ID                 string                             `json:"id"`
-	VariantID          string                             `json:"variant_id"`
+	VariantID          string                             `json:"variantId"`
 	Name               string                             `json:"name"`
-	ImageUrl           *string                            `json:"image_url"`
-	LineTotal          float64                            `json:"line_total"`
+	ImageUrl           *string                            `json:"imageUrl"`
+	LineTotal          float64                            `json:"lineTotal"`
 	Quantity           int16                              `json:"quantity"`
-	AttributesSnapshot []repository.AttributeDataSnapshot `json:"attributes_snapshot"`
+	AttributesSnapshot []repository.AttributeDataSnapshot `json:"attributesSnapshot"`
 	Rating             *RatingModel                       `json:"rating,omitempty"`
 }
 
@@ -186,30 +187,30 @@ type OrderDetailResponse struct {
 	ID            uuid.UUID                          `json:"id"`
 	Total         float64                            `json:"total"`
 	Status        repository.OrderStatus             `json:"status"`
-	CustomerName  string                             `json:"customer_name"`
-	CustomerEmail string                             `json:"customer_email"`
-	PaymentInfo   *PaymentInfoModel                  `json:"payment_info,omitempty"`
-	ShippingInfo  repository.ShippingAddressSnapshot `json:"shipping_info"`
+	CustomerName  string                             `json:"customerName"`
+	CustomerEmail string                             `json:"customerEmail"`
+	PaymentInfo   *PaymentInfoModel                  `json:"paymentInfo,omitempty"`
+	ShippingInfo  repository.ShippingAddressSnapshot `json:"shippingInfo"`
 	Products      []OrderItemResponse                `json:"products"`
-	CreatedAt     time.Time                          `json:"created_at"`
+	CreatedAt     time.Time                          `json:"createdAt"`
 }
 
 type OrderListResponse struct {
 	ID            uuid.UUID                `json:"id"`
 	Total         float64                  `json:"total"`
-	TotalItems    int32                    `json:"total_items"`
+	TotalItems    int32                    `json:"totalItems"`
 	Status        repository.OrderStatus   `json:"status"`
-	PaymentStatus repository.PaymentStatus `json:"payment_status"`
-	CustomerName  string                   `json:"customer_name"`
-	CustomerEmail string                   `json:"customer_email"`
-	CreatedAt     time.Time                `json:"created_at"`
-	UpdatedAt     time.Time                `json:"updated_at"`
+	PaymentStatus repository.PaymentStatus `json:"paymentStatus"`
+	CustomerName  string                   `json:"customerName"`
+	CustomerEmail string                   `json:"customerEmail"`
+	CreatedAt     time.Time                `json:"createdAt"`
+	UpdatedAt     time.Time                `json:"updatedAt"`
 }
 
 type AddressResponse struct {
 	ID        string    `json:"id"`
 	Default   bool      `json:"default"`
-	CreatedAt time.Time `json:"created_at"`
+	CreatedAt time.Time `json:"createdAt"`
 	Phone     string    `json:"phone"`
 	Street    string    `json:"street"`
 	Ward      *string   `json:"ward,omitempty"`
@@ -224,59 +225,59 @@ type UserResponse struct {
 	FullName          string              `json:"fullname"`
 	Email             string              `json:"email,omitempty"`
 	Phone             string              `json:"phone,omitempty"`
-	VerifiedEmail     bool                `json:"verified_email,omitempty"`
-	VerifiedPhone     bool                `json:"verified_phone,omitempty"`
-	PasswordChangedAt string              `json:"password_changed_at,omitempty"`
+	VerifiedEmail     bool                `json:"verifiedEmail,omitempty"`
+	VerifiedPhone     bool                `json:"verifiedPhone,omitempty"`
+	PasswordChangedAt string              `json:"passwordChangedAt,omitempty"`
 	Addresses         []AddressResponse   `json:"addresses"`
-	CreatedAt         string              `json:"created_at,omitempty"`
-	UpdatedAt         string              `json:"updated_at,omitempty"`
+	CreatedAt         string              `json:"createdAt,omitempty"`
+	UpdatedAt         string              `json:"updatedAt,omitempty"`
 }
 
 type CartItemResponse struct {
 	ID         string                             `json:"id" binding:"required,uuid"`
-	ProductID  string                             `json:"product_id" binding:"required,uuid"`
-	VariantID  string                             `json:"variant_id" binding:"required,uuid"`
+	ProductID  string                             `json:"productId" binding:"required,uuid"`
+	VariantID  string                             `json:"variantId" binding:"required,uuid"`
 	Name       string                             `json:"name"`
 	Quantity   int16                              `json:"quantity"`
 	Price      float64                            `json:"price"`
 	Discount   int16                              `json:"discount"`
 	StockQty   int32                              `json:"stock"`
 	Sku        *string                            `json:"sku,omitempty"`
-	ImageURL   *string                            `json:"image_url,omitempty"`
+	ImageURL   *string                            `json:"imageUrl,omitempty"`
 	Attributes []repository.AttributeDataSnapshot `json:"attributes"`
 }
 
 type CartDetailResponse struct {
 	ID         uuid.UUID          `json:"id"`
-	TotalPrice float64            `json:"total_price"`
-	CartItems  []CartItemResponse `json:"cart_items"`
-	UpdatedAt  time.Time          `json:"updated_at,omitempty"`
-	CreatedAt  time.Time          `json:"created_at"`
+	TotalPrice float64            `json:"totalPrice"`
+	CartItems  []CartItemResponse `json:"cartItems"`
+	UpdatedAt  time.Time          `json:"updatedAt,omitempty"`
+	CreatedAt  time.Time          `json:"createdAt"`
 }
 
 type CheckoutResponse struct {
-	OrderID         uuid.UUID `json:"order_id"`
-	PaymentID       string    `json:"payment_id"`
-	PaymentIntentID *string   `json:"payment_intent_id,omitempty"`
-	ClientSecret    *string   `json:"client_secret,omitempty"`
-	TotalPrice      float64   `json:"total_price"`
+	OrderID         uuid.UUID `json:"orderId"`
+	PaymentID       string    `json:"paymentId"`
+	PaymentIntentID *string   `json:"paymentIntentId,omitempty"`
+	ClientSecret    *string   `json:"clientSecret,omitempty"`
+	TotalPrice      float64   `json:"totalPrice"`
 }
 
 type DiscountListItemResponseModel struct {
 	ID            string  `json:"id"`
 	Code          string  `json:"code"`
-	Description   string  `json:"description"`
-	DiscountType  string  `json:"discount_type"`
-	DiscountValue float64 `json:"discount_value"`
-	ExpiredAt     string  `json:"expired_at"`
-	StartsAt      string  `json:"starts_at"`
-	UsedCount     int32   `json:"used_count"`
-	UsageLimit    int32   `json:"usage_limit"`
-	IsActive      bool    `json:"is_active"`
-	CreatedAt     string  `json:"created_at"`
-	UpdatedAt     string  `json:"updated_at"`
-	MinPurchase   int32   `json:"min_purchase"`
-	MaxDiscount   int32   `json:"max_discount"`
+	Description   *string `json:"description"`
+	DiscountType  string  `json:"discountType"`
+	DiscountValue float64 `json:"discountValue"`
+	ExpiredAt     string  `json:"expiredAt"`
+	StartsAt      string  `json:"startsAt"`
+	UsedCount     int32   `json:"usedCount"`
+	UsageLimit    *int32  `json:"usageLimit"`
+	IsActive      bool    `json:"isActive"`
+	CreatedAt     string  `json:"createdAt"`
+	UpdatedAt     string  `json:"updatedAt"`
+	MinPurchase   float64 `json:"minPurchase"`
+	MaxDiscount   float64 `json:"maxDiscount"`
 }
 
 type DiscountLinkObject struct {
@@ -284,22 +285,32 @@ type DiscountLinkObject struct {
 	Name string `json:"name"`
 }
 
+type DiscountUsageHistory struct {
+	ID             string  `json:"id"`
+	OrderID        string  `json:"orderId"`
+	CustomerName   string  `json:"customerName"`
+	Amount         float64 `json:"amount"`
+	DiscountAmount float64 `json:"discountAmount"`
+	Date           string  `json:"date"`
+}
+
 type DiscountDetailResponseModel struct {
-	ID            string               `json:"id"`
-	Code          string               `json:"code"`
-	Description   string               `json:"description"`
-	DiscountType  string               `json:"discount_type"`
-	DiscountValue float64              `json:"discount_value"`
-	ExpiredAt     string               `json:"expired_at"`
-	StartsAt      string               `json:"starts_at"`
-	UsedCount     int32                `json:"used_count"`
-	UsageLimit    int32                `json:"usage_limit"`
-	IsActive      bool                 `json:"is_active"`
-	CreatedAt     string               `json:"created_at"`
-	UpdatedAt     string               `json:"updated_at"`
-	MinPurchase   int32                `json:"min_purchase"`
-	MaxDiscount   int32                `json:"max_discount"`
-	Products      []DiscountLinkObject `json:"products"`
-	Categories    []DiscountLinkObject `json:"categories"`
-	Users         []DiscountLinkObject `json:"variants"`
+	ID            string                 `json:"id"`
+	Code          string                 `json:"code"`
+	Description   *string                `json:"description"`
+	DiscountType  string                 `json:"discountType"`
+	DiscountValue float64                `json:"discountValue"`
+	ExpiredAt     string                 `json:"expiredAt"`
+	StartsAt      string                 `json:"startsAt"`
+	UsedCount     int32                  `json:"usedCount"`
+	UsageLimit    *int32                 `json:"usageLimit"`
+	IsActive      bool                   `json:"isActive"`
+	CreatedAt     string                 `json:"createdAt"`
+	UpdatedAt     string                 `json:"updatedAt"`
+	MinPurchase   float64                `json:"minPurchase"`
+	MaxDiscount   float64                `json:"maxDiscount"`
+	UsageHistory  []DiscountUsageHistory `json:"usageHistory"`
+	Products      []DiscountLinkObject   `json:"products"`
+	Categories    []DiscountLinkObject   `json:"categories"`
+	Users         []DiscountLinkObject   `json:"variants"`
 }

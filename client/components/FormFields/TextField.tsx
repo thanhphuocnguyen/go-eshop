@@ -23,9 +23,13 @@ export const TextField: React.FC<TextFieldProps> = (props) => {
   } = props;
   return (
     <Field className={clsx(className, 'w-full ease-in-out')}>
-      <Label className={'text-base/6 text-gray-500 font-semibold'}>
-        {label}
-      </Label>
+      {typeof label === 'string' ? (
+        <Label className={'text-base/6 text-gray-500 font-semibold'}>
+          {label}
+        </Label>
+      ) : (
+        label
+      )}
       <div className='relative'>
         <Input
           {...rest}

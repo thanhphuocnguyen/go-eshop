@@ -89,7 +89,7 @@ func (sv *Server) createAddressHandler(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param page query int false "Page number"
-// @Param page_size query int false "Page size"
+// @Param pageSize query int false "Page size"
 // @Success 200 {object} ApiResponse[[]AddressResponse]
 // @Router /address [get]
 func (sv *Server) getAddressesHandlers(c *gin.Context) {

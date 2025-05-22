@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { UserModel } from '@/app/lib/definitions';
 import { Button } from '@headlessui/react';
@@ -28,8 +28,8 @@ export default function Page() {
     setLoading(true);
     try {
       // Using the admin users API endpoint
-      const response = await apiFetchClientSide<UserModel[]>(
-        `${ADMIN_API_PATHS.USERS}?page=${page}&page_size=${pageSize}${search ? `&search=${search}` : ''}`,
+      const response = await clientSideFetch<UserModel[]>(
+        `${ADMIN_API_PATHS.USERS}?page=${page}&pageSize=${pageSize}${search ? `&search=${search}` : ''}`,
         {
           method: 'GET',
           headers: {
@@ -71,7 +71,7 @@ export default function Page() {
     if (!selectedUser) return;
 
     try {
-      const response = await apiFetchClientSide<boolean>(
+      const response = await clientSideFetch<boolean>(
         ADMIN_API_PATHS.USER.replace(':id', selectedUser.id),
         {
           method: 'DELETE',

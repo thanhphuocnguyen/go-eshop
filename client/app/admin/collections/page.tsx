@@ -10,7 +10,7 @@ import Image from 'next/image';
 import { GeneralCategoryModel } from '@/app/lib/definitions';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/Common/Dialogs/ConfirmDialog';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 
 export default function Page() {
   const [selectedCollection, setSelectedCollection] =
@@ -23,7 +23,7 @@ export default function Page() {
   } = useSWR(
     PUBLIC_API_PATHS.COLLECTIONS,
     (url) =>
-      apiFetchClientSide<GeneralCategoryModel[]>(url, {}).then(
+      clientSideFetch<GeneralCategoryModel[]>(url, {}).then(
         (data) => data.data
       ),
     {
@@ -35,7 +35,7 @@ export default function Page() {
 
   async function handleDelete() {
     if (selectedCollection) {
-      const response = await apiFetchClientSide<boolean>(
+      const response = await clientSideFetch<boolean>(
         PUBLIC_API_PATHS.COLLECTION.replace(':slug', selectedCollection.id),
         {
           method: 'DELETE',

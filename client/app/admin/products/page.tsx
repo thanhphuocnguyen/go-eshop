@@ -10,7 +10,7 @@ import useSWR from 'swr';
 
 import dayjs from 'dayjs';
 import Image from 'next/image';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -29,8 +29,8 @@ export default function Page() {
   const { data, isLoading } = useSWR(
     [PUBLIC_API_PATHS.PRODUCTS, page, limit, debouncedSearch],
     ([url, page, limit, search]) =>
-      apiFetchClientSide<ProductListModel[]>(
-        `${url}?page=${page}&page_size=${limit}&search=${search}`,
+      clientSideFetch<ProductListModel[]>(
+        `${url}?page=${page}&pageSize=${limit}&search=${search}`,
         {}
       ).then((response) => {
         // Store pagination data
@@ -133,10 +133,10 @@ export default function Page() {
                 className='odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200'
               >
                 <td className='px-6 py-4'>
-                  {product?.image_url && (
+                  {product?.imageUrl && (
                     <div className='h-10 w-10 relative'>
                       <Image
-                        src={product.image_url}
+                        src={product.imageUrl}
                         alt={product.name}
                         fill
                         className='object-cover rounded'
@@ -151,13 +151,13 @@ export default function Page() {
                   {product.name}
                 </th>
                 <td className='px-6 py-4'>
-                  ${product.min_price.toFixed(2)} - $
-                  {product.max_price.toFixed(2)}
+                  ${product.minPrice.toFixed(2)} - $
+                  {product.maxPrice.toFixed(2)}
                 </td>
                 <td className='px-6 py-4'>{product.sku}</td>
                 <td className='px-6 py-4'>
-                  {product.created_at &&
-                    dayjs(product.created_at).format('MMM D, YYYY')}
+                  {product.createdAt &&
+                    dayjs(product.createdAt).format('MMM D, YYYY')}
                 </td>
                 <td className='px-6 py-4'>
                   <Link

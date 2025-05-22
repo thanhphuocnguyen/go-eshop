@@ -85,9 +85,9 @@ export function ProductCard({ product }: { product: ProductListModel }) {
       className='group border rounded-lg p-4 hover:shadow-md transition-shadow duration-200 flex flex-col h-full'
     >
       <div className='relative h-48 mb-4 bg-gray-100 rounded-md overflow-hidden'>
-        {product.image_url ? (
+        {product.imageUrl ? (
           <Image
-            src={product.image_url}
+            src={product.imageUrl}
             alt={product.name}
             fill
             sizes='(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
@@ -104,20 +104,20 @@ export function ProductCard({ product }: { product: ProductListModel }) {
         {product.name}
       </h3>
 
-      {product.review_count > 0 ? (
+      {product.reviewCount > 0 ? (
         <div className='flex items-center mb-2'>
           {[...Array(5)].map((_, i) => (
             <StarIcon
               key={i}
               className={`h-4 w-4 ${
-                i < Math.round(product.avg_rating)
+                i < Math.round(product.avgRating)
                   ? 'text-yellow-400'
                   : 'text-gray-300'
               }`}
             />
           ))}
           <span className='text-xs text-gray-500 ml-1'>
-            ({product.review_count || 0})
+            ({product.reviewCount || 0})
           </span>
         </div>
       ) : (
@@ -128,9 +128,9 @@ export function ProductCard({ product }: { product: ProductListModel }) {
 
       <div className='mt-auto'>
         <span className='text-sm font-medium text-gray-900'>
-          {product.min_price === product.max_price
-            ? formatCurrency(product.min_price)
-            : `${formatCurrency(product.min_price)} - ${formatCurrency(product.max_price)}`}
+          {product.minPrice === product.maxPrice
+            ? formatCurrency(product.minPrice)
+            : `${formatCurrency(product.minPrice)} - ${formatCurrency(product.maxPrice)}`}
         </span>
       </div>
     </Link>

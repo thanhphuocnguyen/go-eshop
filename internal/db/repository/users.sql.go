@@ -49,7 +49,7 @@ VALUES
 `
 
 type CreateAddressParams struct {
-	UserID   uuid.UUID `json:"user_id"`
+	UserID   uuid.UUID `json:"userId"`
 	Phone    string    `json:"phone"`
 	Street   string    `json:"street"`
 	Ward     *string   `json:"ward"`
@@ -99,7 +99,7 @@ type CreateUserParams struct {
 	Username       string   `json:"username"`
 	Phone          string   `json:"phone"`
 	Fullname       string   `json:"fullname"`
-	HashedPassword string   `json:"hashed_password"`
+	HashedPassword string   `json:"hashedPassword"`
 	Role           UserRole `json:"role"`
 }
 
@@ -109,10 +109,10 @@ type CreateUserRow struct {
 	Username      string    `json:"username"`
 	Fullname      string    `json:"fullname"`
 	Role          UserRole  `json:"role"`
-	VerifiedEmail bool      `json:"verified_email"`
-	VerifiedPhone bool      `json:"verified_phone"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	VerifiedEmail bool      `json:"verifiedEmail"`
+	VerifiedPhone bool      `json:"verifiedPhone"`
+	CreatedAt     time.Time `json:"createdAt"`
+	UpdatedAt     time.Time `json:"updatedAt"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
@@ -144,9 +144,9 @@ INSERT INTO verify_emails (user_id, email, verify_code) VALUES ($1, $2, $3) RETU
 `
 
 type CreateVerifyEmailParams struct {
-	UserID     uuid.UUID `json:"user_id"`
+	UserID     uuid.UUID `json:"userId"`
 	Email      string    `json:"email"`
-	VerifyCode string    `json:"verify_code"`
+	VerifyCode string    `json:"verifyCode"`
 }
 
 // Verification Token Queries
@@ -177,7 +177,7 @@ WHERE
 
 type DeleteAddressParams struct {
 	ID     uuid.UUID `json:"id"`
-	UserID uuid.UUID `json:"user_id"`
+	UserID uuid.UUID `json:"userId"`
 }
 
 func (q *Queries) DeleteAddress(ctx context.Context, arg DeleteAddressParams) error {
@@ -206,7 +206,7 @@ LIMIT 1
 
 type GetAddressParams struct {
 	ID     uuid.UUID `json:"id"`
-	UserID uuid.UUID `json:"user_id"`
+	UserID uuid.UUID `json:"userId"`
 }
 
 func (q *Queries) GetAddress(ctx context.Context, arg GetAddressParams) (UserAddress, error) {
@@ -491,7 +491,7 @@ func (q *Queries) ResetPrimaryAddress(ctx context.Context, userID uuid.UUID) err
 }
 
 type SeedAddressesParams struct {
-	UserID   uuid.UUID `json:"user_id"`
+	UserID   uuid.UUID `json:"userId"`
 	Phone    string    `json:"phone"`
 	Street   string    `json:"street"`
 	Ward     *string   `json:"ward"`
@@ -505,7 +505,7 @@ type SeedUsersParams struct {
 	Username       string   `json:"username"`
 	Phone          string   `json:"phone"`
 	Fullname       string   `json:"fullname"`
-	HashedPassword string   `json:"hashed_password"`
+	HashedPassword string   `json:"hashedPassword"`
 	Role           UserRole `json:"role"`
 }
 
@@ -521,7 +521,7 @@ WHERE
 type SetPrimaryAddressParams struct {
 	Default bool      `json:"default"`
 	ID      uuid.UUID `json:"id"`
-	UserID  uuid.UUID `json:"user_id"`
+	UserID  uuid.UUID `json:"userId"`
 }
 
 func (q *Queries) SetPrimaryAddress(ctx context.Context, arg SetPrimaryAddressParams) error {
@@ -552,7 +552,7 @@ type UpdateAddressParams struct {
 	City     *string   `json:"city"`
 	Default  *bool     `json:"default"`
 	ID       uuid.UUID `json:"id"`
-	UserID   uuid.UUID `json:"user_id"`
+	UserID   uuid.UUID `json:"userId"`
 }
 
 func (q *Queries) UpdateAddress(ctx context.Context, arg UpdateAddressParams) (UserAddress, error) {
@@ -606,11 +606,11 @@ type UpdateUserParams struct {
 	Fullname          *string            `json:"fullname"`
 	Role              NullUserRole       `json:"role"`
 	Phone             *string            `json:"phone"`
-	VerifiedEmail     *bool              `json:"verified_email"`
-	VerifiedPhone     *bool              `json:"verified_phone"`
-	HashedPassword    *string            `json:"hashed_password"`
-	PasswordChangedAt pgtype.Timestamptz `json:"password_changed_at"`
-	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+	VerifiedEmail     *bool              `json:"verifiedEmail"`
+	VerifiedPhone     *bool              `json:"verifiedPhone"`
+	HashedPassword    *string            `json:"hashedPassword"`
+	PasswordChangedAt pgtype.Timestamptz `json:"passwordChangedAt"`
+	UpdatedAt         pgtype.Timestamptz `json:"updatedAt"`
 	ID                uuid.UUID          `json:"id"`
 }
 
@@ -620,10 +620,10 @@ type UpdateUserRow struct {
 	Username      string    `json:"username"`
 	Fullname      string    `json:"fullname"`
 	Role          UserRole  `json:"role"`
-	VerifiedEmail bool      `json:"verified_email"`
-	VerifiedPhone bool      `json:"verified_phone"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	VerifiedEmail bool      `json:"verifiedEmail"`
+	VerifiedPhone bool      `json:"verifiedPhone"`
+	CreatedAt     time.Time `json:"createdAt"`
+	UpdatedAt     time.Time `json:"updatedAt"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateUserRow, error) {
@@ -663,7 +663,7 @@ RETURNING id, user_id, email, verify_code, is_used, created_at, expired_at
 
 type UpdateVerifyEmailParams struct {
 	ID         uuid.UUID `json:"id"`
-	VerifyCode string    `json:"verify_code"`
+	VerifyCode string    `json:"verifyCode"`
 }
 
 func (q *Queries) UpdateVerifyEmail(ctx context.Context, arg UpdateVerifyEmailParams) (VerifyEmail, error) {

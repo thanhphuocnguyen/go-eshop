@@ -29,14 +29,14 @@ const CategoryProductList: React.FC<CategoryProductList> = ({ products, onRemove
                     fill
                     alt={`${e.name} product image`}
                     className='rounded-md object-cover'
-                    src={e.image_url || '/images/product-placeholder.webp'}
+                    src={e.imageUrl || '/images/product-placeholder.webp'}
                     sizes="80px"
                   />
                 </div>
                 <div className='flex flex-col space-y-2'>
                   <h3 className='text-gray-800 text-lg font-bold'>{e.name}</h3>
                   <div className='text-sm text-gray-600 bg-gray-100 inline-block px-3 py-1 rounded-full'>
-                    {e.variant_count} {e.variant_count === 1 ? 'Variant' : 'Variants'}
+                    {e.variantCount} {e.variantCount === 1 ? 'Variant' : 'Variants'}
                   </div>
                 </div>
               </Link>

@@ -37,7 +37,7 @@ export const ProductImagesUploader: React.FC<ProductImagesUploaderProps> = (
 
   const productImages = useWatch({
     control,
-    name: 'product_info.images',
+    name: 'productInfo.images',
   });
 
   const { tempProductImages, setTempProductImages } =
@@ -86,7 +86,7 @@ export const ProductImagesUploader: React.FC<ProductImagesUploaderProps> = (
           name: variant.attributes
             .map(
               (attr) =>
-                `${attr.name}: ${attr.value_object.name || attr.value_object.code}`
+                `${attr.name}: ${attr.valueObject.name || attr.valueObject.code}`
             )
             .join(', '),
         });
@@ -147,7 +147,7 @@ export const ProductImagesUploader: React.FC<ProductImagesUploaderProps> = (
                   <div className='grid grid-cols-1 gap-6 mt-4'>
                     {!!productImages.length
                       ? productImages.map((image, index) =>
-                          image.is_removed ? null : (
+                          image.isRemoved ? null : (
                             <div
                               key={image.id}
                               className='border border-gray-200 rounded-lg p-4 bg-white shadow-sm'
@@ -155,7 +155,7 @@ export const ProductImagesUploader: React.FC<ProductImagesUploaderProps> = (
                               <ImagePreview
                                 handleSelectRole={(idx, role) => {
                                   setValue(
-                                    `product_info.images.${idx}.role`,
+                                    `productInfo.images.${idx}.role`,
                                     role,
                                     {
                                       shouldDirty: true,
@@ -169,7 +169,7 @@ export const ProductImagesUploader: React.FC<ProductImagesUploaderProps> = (
                                 selectedRole={image.role}
                                 onRemove={() => {
                                   setValue(
-                                    `product_info.images.${index}.is_removed`,
+                                    `productInfo.images.${index}.isRemoved`,
                                     true,
                                     {
                                       shouldDirty: true,
@@ -178,7 +178,7 @@ export const ProductImagesUploader: React.FC<ProductImagesUploaderProps> = (
                                 }}
                                 onAssignVariants={(idx, values) => {
                                   setValue(
-                                    `product_info.images.${idx}.assignments`,
+                                    `productInfo.images.${idx}.assignments`,
                                     values,
                                     {
                                       shouldDirty: true,
@@ -220,7 +220,7 @@ export const ProductImagesUploader: React.FC<ProductImagesUploaderProps> = (
                       </div>
                     ))}
 
-                    {!productDetail?.product_images.length &&
+                    {!productDetail?.productImages.length &&
                       !tempProductImages.length && (
                         <div className='text-center p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50'>
                           <p className='text-gray-500'>

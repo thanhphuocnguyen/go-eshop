@@ -8,7 +8,7 @@ import { ArrowLeftCircleIcon } from '@heroicons/react/24/outline';
 import { GeneralCategoryModel } from '@/app/lib/definitions';
 import Loading from '@/app/loading';
 import { CategoryEditForm } from '../../_components/CategoryEditForm';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 
 export default function AdminBrandDetail({
   params,
@@ -19,7 +19,7 @@ export default function AdminBrandDetail({
   const { data: brand, isLoading } = useSWR(
     ADMIN_API_PATHS.BRAND.replace(':id', id),
     async (url) => {
-      const response = await apiFetchClientSide<GeneralCategoryModel>(url, {});
+      const response = await clientSideFetch<GeneralCategoryModel>(url, {});
       return response.data;
     },
     {
@@ -30,7 +30,7 @@ export default function AdminBrandDetail({
   );
 
   async function handleSave(data: FormData) {
-    const response = await apiFetchClientSide<GeneralCategoryModel>(
+    const response = await clientSideFetch<GeneralCategoryModel>(
       ADMIN_API_PATHS.BRAND.replace(':id', id),
       {
         method: 'PUT',

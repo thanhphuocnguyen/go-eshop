@@ -15,10 +15,10 @@ export interface AttributeSnapshot {
 export interface OrderProduct {
   id: string;
   name: string;
-  image_url?: string;
+  imageUrl?: string;
   quantity: number;
-  line_total: number;
-  attributes_snapshot: AttributeSnapshot[];
+  lineTotal: number;
+  attributesSnapshot: AttributeSnapshot[];
 }
 
 /**
@@ -41,10 +41,10 @@ export interface PaymentInfo {
   method: string;
   status: string;
   gateway?: string;
-  refund_id?: string;
-  intent_id?: string;
-  client_secret?: string;
-  transaction_id?: string;
+  refundId?: string;
+  intentId?: string;
+  clientSecret?: string;
+  transactionId?: string;
 }
 
 /**
@@ -52,14 +52,14 @@ export interface PaymentInfo {
  */
 export interface Order {
   id: string;
-  customer_name: string;
-  customer_email: string;
+  customerName: string;
+  customerEmail: string;
   total: number;
-  total_items: number;
+  totalItems: number;
   status: string;
-  payment_status: string;
-  created_at: string;
-  updated_at?: string;
+  paymentStatus: string;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 /**
@@ -67,15 +67,15 @@ export interface Order {
  */
 export interface OrderDetail {
   id: string;
-  customer_name: string;
-  customer_email: string;
+  customerName: string;
+  customerEmail: string;
   total: number;
   status: string;
-  payment_status: string;
-  created_at: string;
+  paymentStatus: string;
+  createdAt: string;
   products: OrderProduct[];
-  shipping_info: ShippingInfo;
-  payment_info?: PaymentInfo;
+  shippingInfo: ShippingInfo;
+  paymentInfo?: PaymentInfo;
 }
 
 /**
@@ -85,12 +85,12 @@ export type OrderModel = {
   id: string;
   total: number;
   status: OrderStatus;
-  customer_name: string;
-  customer_email: string;
-  payment_info: PaymentInfo;
-  shipping_info: ShippingInfoModel;
+  customerName: string;
+  customerEmail: string;
+  paymentInfo: PaymentInfo;
+  shippingInfo: ShippingInfoModel;
   products: OrderItemModel[];
-  created_at: string;
+  createdAt: string;
 };
 
 /**
@@ -98,20 +98,20 @@ export type OrderModel = {
  */
 export type OrderItemModel = {
   id: string;
-  variant_id: string;
+  variantId: string;
   name: string;
-  image_url: string;
-  line_total: number;
+  imageUrl: string;
+  lineTotal: number;
   quantity: number;
   rating?: {
     id: string;
     rating: number;
     title: string;
     content: string;
-    image_url?: string;
-    created_at: string;
+    imageUrl?: string;
+    createdAt: string;
   };
-  attribute_snapshot: AttributeSnapshot[];
+  attributeSnapshot: AttributeSnapshot[];
 };
 
 /**
@@ -132,11 +132,11 @@ export type ShippingInfoModel = {
 export type OrderListModel = {
   id: string;
   total: number;
-  total_items: number;
+  totalItems: number;
   status: OrderStatus;
-  payment_status: string;
-  created_at: string;
-  updated_at: string;
+  paymentStatus: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 /**

@@ -6,28 +6,28 @@ export type ProductListModel = {
   id: number;
   name: string;
   description: string;
-  variant_count: number;
+  variantCount: number;
   slug: string;
-  image_url?: string;
-  min_price: number;
-  max_price: number;
-  avg_rating: number;
-  review_count: number;
+  imageUrl?: string;
+  minPrice: number;
+  maxPrice: number;
+  avgRating: number;
+  reviewCount: number;
   sku: string;
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export type CategoryProductModel = {
   id: number;
   name: string;
   description: string;
-  variant_count: number;
-  image_url: string;
-  price_from: number;
-  price_to: number;
-  discount_to: number;
-  created_at: string;
+  variantCount: number;
+  imageUrl: string;
+  priceFrom: number;
+  priceTo: number;
+  discountTo: number;
+  createdAt: string;
 };
 
 export interface ProductCreateBody {
@@ -38,20 +38,20 @@ export interface ProductCreateBody {
   stock: number;
   sku: string;
   slug: string;
-  category_id?: number;
-  collection_id?: number;
-  brand_id?: number;
+  categoryId?: number;
+  collectionId?: number;
+  brandId?: number;
   attributes: {
-    attribute_id: number;
-    value_ids: number[];
+    attributeId: number;
+    valueIds: number[];
   }[];
 }
 
 export const BaseAttributeValueFormSchema = z.object({
   name: z.string().optional(),
   code: z.string().optional(),
-  display_order: z.number().optional(),
-  is_active: z.boolean().optional(),
+  displayOrder: z.number().optional(),
+  isActive: z.boolean().optional(),
 });
 
 export const BaseAttributeFormSchema = z.object({
@@ -70,7 +70,7 @@ export const AttributeFormSchema = BaseAttributeFormSchema.extend({
 
 export const ProductVariantAttributeFormSchema = BaseAttributeFormSchema.extend(
   {
-    value_object: BaseAttributeValueFormSchema.extend({
+    valueObject: BaseAttributeValueFormSchema.extend({
       id: z
         .string()
         .uuid({
@@ -84,7 +84,7 @@ export const ProductVariantAttributeFormSchema = BaseAttributeFormSchema.extend(
 export const VariantFormSchema = z.object({
   id: z.string().uuid().optional(),
   price: z.coerce.number().gt(0),
-  stock_qty: z.coerce.number().gte(0),
+  stockQty: z.coerce.number().gte(0),
   sku: z.string().optional().readonly(),
   weight: z.coerce
     .number()
@@ -93,22 +93,22 @@ export const VariantFormSchema = z.object({
       return v;
     })
     .nullish(),
-  is_active: z.boolean(),
+  isActive: z.boolean(),
   attributes: ProductVariantAttributeFormSchema.extend({
     id: z.string().uuid().optional(),
   }).array(),
 });
 
 export const ProductFormSchema = z.object({
-  product_info: z.object({
+  productInfo: z.object({
     name: z.string().min(3).max(100),
     description: z.string().min(10).max(5000),
-    short_description: z.string().optional(),
+    shortDescription: z.string().optional(),
     attributes: z.string().uuid().array(),
     price: z.coerce.number().gt(0),
     sku: z.string().nonempty(),
     slug: z.string().nonempty(),
-    is_active: z.boolean(),
+    isActive: z.boolean(),
     category: BaseOptionSchema,
     brand: BaseOptionSchema,
     collection: BaseOptionSchema.nullish(),
@@ -118,7 +118,7 @@ export const ProductFormSchema = z.object({
         url: z.string(),
         role: z.string().nullish(),
         assignments: z.string().array(),
-        is_removed: z.boolean().optional(),
+        isRemoved: z.boolean().optional(),
       })
       .array(),
   }),
@@ -140,49 +140,49 @@ export type AttributeValueDetailModel = {
   id: string;
   name: string;
   code: string;
-  display_order: number;
-  created_at: Date;
-  is_active: boolean;
-  out_of_stock?: boolean;
+  displayOrder: number;
+  createdAt: Date;
+  isActive: boolean;
+  outOfStock?: boolean;
 };
 
 export type AttributeDetailModel = {
   id: string;
   name: string;
   values: AttributeValueDetailModel[];
-  created_at: Date;
+  createdAt: Date;
 };
 
 export type ProductVariantAttributeModel = Omit<
   AttributeDetailModel,
   'values'
 > & {
-  value_object: AttributeValueDetailModel;
+  valueObject: AttributeValueDetailModel;
 };
 
 export type VariantDetailModel = {
   attributes: ProductVariantAttributeModel[];
   id: string;
   price: number;
-  stock_qty: number;
+  stockQty: number;
   sku: string;
   weight: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type AssignmentImageModel = {
-  id: number;
-  entity_id: string;
-  entity_type: string;
-  display_order: number;
+  id: string;
+  entityId: string;
+  entityType: string;
+  displayOrder: number;
   role: string;
 };
 
 export type ProductImageModel = {
   id: string;
-  external_id: string;
+  externalId: string;
   url: string;
   role: string;
   assignments: AssignmentImageModel[];
@@ -192,10 +192,10 @@ export type ProductDetailModel = {
   id: string;
   name: string;
   description: string;
-  short_description: string;
+  shortDescription: string;
   attributes: string[];
   slug: string;
-  is_active: boolean;
+  isActive: boolean;
   price: number;
   sku: string;
   category: GeneralCategoryModel;
@@ -203,13 +203,13 @@ export type ProductDetailModel = {
   brand: GeneralCategoryModel;
   published: boolean;
   variants: VariantDetailModel[];
-  product_images: ProductImageModel[];
-  created_at: string; // date
-  updated_at: string; // date
-  rating_count: number;
-  one_star_count: number;
-  two_star_count: number;
-  three_star_count: number;
-  four_star_count: number;
-  five_star_count: number;
+  productImages: ProductImageModel[];
+  createdAt: string; // date
+  updatedAt: string; // date
+  ratingCount: number;
+  oneStarCount: number;
+  twoStarCount: number;
+  threeStarCount: number;
+  fourStarCount: number;
+  fiveStarCount: number;
 };

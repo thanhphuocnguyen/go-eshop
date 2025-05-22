@@ -15,7 +15,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { cache } from 'react';
 import dynamic from 'next/dynamic';
-import { apiFetchServerSide } from '@/app/lib/apis/apiServer';
+import { serverSideFetch } from '@/app/lib/apis/apiServer';
 
 // Import the client component with dynamic to avoid SSR issues
 const PaymentInfoSection = dynamic(
@@ -37,8 +37,8 @@ const CancelOrderButton = dynamic(() => import('./_components/CancelOrderButton'
 });
 
 export const getOrderDetails = cache(async (id: string) => {
-  const order = await apiFetchServerSide<OrderModel>(
-    PUBLIC_API_PATHS.ORDER_DETAIL.replace(':id', id),
+  const order = await serverSideFetch<OrderModel>(
+    PUBLIC_API_PATHS.ORDER.replace(':id', id),
     {
       nextOptions: {
         next: {
@@ -105,7 +105,7 @@ export default async function Page({ params }: Props) {
   // Check if order can be cancelled (Pending status and not paid)
   const canCancel = 
     orderDetail.status === OrderStatus.Pending && 
-    (!orderDetail.payment_info || orderDetail.payment_info.status !== 'paid');
+    (!orderDetail.paymentInfo || orderDetail.paymentInfo.status !== 'paid');
 
   return (
     <div className='h-full container mx-auto my-20'>
@@ -132,7 +132,7 @@ export default async function Page({ params }: Props) {
         <div className='flex gap-1'>
           <span>Order placed</span>
           <span className='font-semibold'>
-            {dayjs(orderDetail.created_at).format('MMM DD, YYYY')}
+            {dayjs(orderDetail.createdAt).format('MMM DD, YYYY')}
           </span>
         </div>
       </div>
@@ -147,7 +147,7 @@ export default async function Page({ params }: Props) {
                   className='flex gap-4 border-b pb-4 border-gray-200'
                 >
                   <Image
-                    src={e.image_url}
+                    src={e.imageUrl}
                     alt={e.name}
                     className='object-cover border border-lime-400 rounded-md'
                     width={90}
@@ -157,10 +157,10 @@ export default async function Page({ params }: Props) {
                   <div className='flex flex-col gap-0.5'>
                     <div className='text-lg font-bold'>{e.name}</div>
                     <div className='text-base text-gray-600'>
-                      ${e.line_total}
+                      ${e.lineTotal}
                     </div>
                     <div className='flex gap-3'>
-                      {e?.attribute_snapshot?.map((e) => (
+                      {e?.attributeSnapshot?.map((e) => (
                         <div className='text-sm text-indigo-400' key={e.name}>
                           <span className='font-medium'>{e.name}: </span>
                           <span>{e.value}</span>
@@ -185,18 +185,18 @@ export default async function Page({ params }: Props) {
               <div className='flex-1'>
                 <div className='font-medium mb-2'>Delivery address</div>
                 <div className='text-gray-500 text-sm'>
-                  <div>{orderDetail.shipping_info.name}</div>
-                  <div>{orderDetail.shipping_info.address}</div>
-                  <div>Ward {orderDetail.shipping_info.ward}</div>
-                  <div>District {orderDetail.shipping_info.district}</div>
-                  <div>City {orderDetail.shipping_info.city}</div>
+                  <div>{orderDetail.shippingInfo.name}</div>
+                  <div>{orderDetail.shippingInfo.address}</div>
+                  <div>Ward {orderDetail.shippingInfo.ward}</div>
+                  <div>District {orderDetail.shippingInfo.district}</div>
+                  <div>City {orderDetail.shippingInfo.city}</div>
                 </div>
               </div>
               <div className='flex-1'>
                 <div className='font-medium mb-2'>Shipping updates</div>
                 <div className='text-gray-500 text-sm'>
-                  <div>{orderDetail.shipping_info.phone}</div>
-                  <div>{orderDetail.customer_email}</div>
+                  <div>{orderDetail.shippingInfo.phone}</div>
+                  <div>{orderDetail.customerEmail}</div>
                 </div>
               </div>
             </div>
@@ -220,7 +220,7 @@ export default async function Page({ params }: Props) {
               <div className="flex justify-between items-center">
                 <span>
                   Last update:{' '}
-                  {dayjs(orderDetail.created_at).format('MMMM DD, YYYY')}
+                  {dayjs(orderDetail.createdAt).format('MMMM DD, YYYY')}
                 </span>
                 
                 {/* Add cancel button for orders that can be cancelled */}
@@ -303,7 +303,7 @@ export default async function Page({ params }: Props) {
           </div>
           <div className='w-1/2'>
             <PaymentInfoSection
-              paymentInfo={orderDetail.payment_info || null}
+              paymentInfo={orderDetail.paymentInfo || null}
               orderId={orderDetail.id}
               total={orderDetail.total}
             />

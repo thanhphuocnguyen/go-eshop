@@ -2,7 +2,7 @@
 import React, { useCallback, useState } from 'react';
 import { CartModel, GenericResponse } from '../definitions';
 import { useCart } from '../hooks';
-import { apiFetchClientSide } from '../apis/apiClient';
+import { clientSideFetch } from '../apis/apiClient';
 import { PUBLIC_API_PATHS } from '../constants/api';
 import { toast } from 'react-toastify';
 import { useUser } from '../hooks/useUser';
@@ -38,7 +38,7 @@ export function CartContextProvider({
 
       try {
         setIsLoading(true);
-        await apiFetchClientSide(`${PUBLIC_API_PATHS.CART_ITEM}/${itemId}`, {
+        await clientSideFetch(`${PUBLIC_API_PATHS.CART_ITEM}/${itemId}`, {
           method: 'DELETE',
         });
         await mutateCart();
@@ -61,8 +61,8 @@ export function CartContextProvider({
       quantity = cartItem.quantity + quantity;
     }
 
-    const { data, error } = await apiFetchClientSide<GenericResponse<boolean>>(
-      PUBLIC_API_PATHS.CART_ITEM_QUANTITY.replace(':id', itemId),
+    const { data, error } = await clientSideFetch<GenericResponse<boolean>>(
+      PUBLIC_API_PATHS.UPDATE_CART_ITEM_QUANTITY.replace(':id', itemId),
       {
         method: 'PUT',
         body: {
@@ -111,7 +111,7 @@ export function CartContextProvider({
   const clearCart = useCallback(async () => {
     try {
       setIsLoading(true);
-      await apiFetchClientSide(`${PUBLIC_API_PATHS.CART}/clear`, {
+      await clientSideFetch(`${PUBLIC_API_PATHS.CART}/clear`, {
         method: 'PUT',
       });
     } catch (error) {

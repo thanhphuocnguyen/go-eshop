@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { Dialog, DialogBackdrop } from '@headlessui/react';
 import { toast } from 'react-toastify';
@@ -25,7 +25,7 @@ export default function AdminActions({ user }: { user: UserDetails }) {
   // Toggle user locked status
   const toggleLockStatus = async () => {
     setLoading(true);
-    const { error } = await apiFetchClientSide<boolean>(
+    const { error } = await clientSideFetch<boolean>(
       `${ADMIN_API_PATHS.USERS}/${user.id}/lock`,
       {
         method: user.locked ? 'DELETE' : 'POST',
@@ -50,7 +50,7 @@ export default function AdminActions({ user }: { user: UserDetails }) {
   const sendPasswordReset = async () => {
     setLoading(true);
     try {
-      const response = await apiFetchClientSide<boolean>(
+      const response = await clientSideFetch<boolean>(
         `${ADMIN_API_PATHS.USERS}/${user.id}/reset-password`,
         {
           method: 'POST',
@@ -78,7 +78,7 @@ export default function AdminActions({ user }: { user: UserDetails }) {
   const deleteUser = async () => {
     setLoading(true);
     try {
-      const response = await apiFetchClientSide<boolean>(
+      const response = await clientSideFetch<boolean>(
         `${ADMIN_API_PATHS.USERS}/${user.id}`,
         {
           method: 'DELETE',
@@ -103,7 +103,7 @@ export default function AdminActions({ user }: { user: UserDetails }) {
   const promoteToModerator = async () => {
     setLoading(true);
     try {
-      const response = await apiFetchClientSide<boolean>(
+      const response = await clientSideFetch<boolean>(
         `${ADMIN_API_PATHS.USERS}/${user.id}/role`,
         {
           method: 'PUT',

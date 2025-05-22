@@ -18,7 +18,7 @@ export const CartItemSection = () => {
       </div>
     );
   }
-  if (!cart || !cart.cart_items.length) {
+  if (!cart || !cart.cartItems.length) {
     return (
       <div className='flex justify-center my-20 items-center h-full'>
         <div className='text-center'>
@@ -33,12 +33,12 @@ export const CartItemSection = () => {
 
   return (
     <>
-      {cart.cart_items.map((e) => (
+      {cart.cartItems.map((e) => (
         <div className='mt-6 pb-4 border-b border-gray-300' key={e.id}>
           <div className='flex gap-4'>
             <div className='relative'>
               <Image
-                src={e.image_url || '/images/placeholder.webp'}
+                src={e.imageUrl || '/images/placeholder.webp'}
                 alt={e.name}
                 height={100}
                 width={100}
@@ -114,7 +114,7 @@ export const CartItemSection = () => {
           <div>Subtotal</div>
           <div>
             $
-            {cart.cart_items.reduce(
+            {cart.cartItems.reduce(
               (acc, curr) => (acc += curr.price * curr.quantity),
               0
             )}

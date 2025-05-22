@@ -30,7 +30,7 @@ export const VariantForm: React.FC<AttributeFormProps> = ({
 
   const isActive = useWatch({
     control,
-    name: `variants.${index}.is_active`,
+    name: `variants.${index}.isActive`,
   });
 
   return (
@@ -44,7 +44,7 @@ export const VariantForm: React.FC<AttributeFormProps> = ({
             <Switch
               checked={!!isActive}
               onChange={(checked) =>
-                setValue(`variants.${index}.is_active`, checked)
+                setValue(`variants.${index}.isActive`, checked)
               }
               className={clsx(
                 'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
@@ -62,7 +62,7 @@ export const VariantForm: React.FC<AttributeFormProps> = ({
             <span
               className='font-semibold cursor-pointer'
               onClick={() => {
-                setValue(`variants.${index}.is_active`, !isActive);
+                setValue(`variants.${index}.isActive`, !isActive);
               }}
             >
               Active
@@ -91,7 +91,7 @@ export const VariantForm: React.FC<AttributeFormProps> = ({
                 control={control}
                 key={attribute}
                 error={
-                  errors.variants?.[index]?.attributes?.[idx]?.value_object?.id
+                  errors.variants?.[index]?.attributes?.[idx]?.valueObject?.id
                     ?.message
                 }
                 getDisplayValue={(attrOpt) =>
@@ -99,7 +99,7 @@ export const VariantForm: React.FC<AttributeFormProps> = ({
                     ? attrOpt?.name
                     : attrOpt.code
                 }
-                name={`variants.${index}.attributes.${idx}.value_object`}
+                name={`variants.${index}.attributes.${idx}.valueObject`}
                 label={attr?.name ?? ''}
                 options={
                   attributes?.find((e) => e.id === attr?.id)?.values ?? []
@@ -116,10 +116,10 @@ export const VariantForm: React.FC<AttributeFormProps> = ({
             disabled={false}
           />
           <TextField
-            {...register(`variants.${index}.stock_qty`)}
+            {...register(`variants.${index}.stockQty`)}
             label='Stock'
             placeholder='Enter Stock'
-            error={errors.variants?.[index]?.stock_qty?.message}
+            error={errors.variants?.[index]?.stockQty?.message}
             type='number'
             disabled={false}
           />

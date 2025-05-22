@@ -98,9 +98,9 @@ export default function LoginFormComponent() {
       return;
     }
 
-    if (rs.access_token) {
-      localStorage.setItem('access_token', rs.access_token);
-      localStorage.setItem('refresh_token', rs.refresh_token);
+    if (rs.accessToken) {
+      localStorage.setItem('accessToken', rs.accessToken);
+      localStorage.setItem('refreshToken', rs.refreshToken);
       toast.success('Login successful!');
       router.refresh();
       router.push('/');

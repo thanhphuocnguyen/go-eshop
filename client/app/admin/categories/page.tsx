@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { ConfirmDialog } from '@/components/Common/Dialogs/ConfirmDialog';
 import { toast } from 'react-toastify';
 import Image from 'next/image';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 
 export default function Page() {
   const [categories, setCategories] = useState<GeneralCategoryModel[]>([]);
@@ -19,7 +19,7 @@ export default function Page() {
 
   async function handleDelete() {
     if (selectedCategory) {
-      const { error } = await apiFetchClientSide<boolean>(
+      const { error } = await clientSideFetch<boolean>(
         ADMIN_API_PATHS.CATEGORIES + '/' + selectedCategory.id,
         {
           method: 'DELETE',
@@ -44,7 +44,7 @@ export default function Page() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data, error } = await apiFetchClientSide<GeneralCategoryModel[]>(
+      const { data, error } = await clientSideFetch<GeneralCategoryModel[]>(
         ADMIN_API_PATHS.CATEGORIES,
         {
           nextOptions: {

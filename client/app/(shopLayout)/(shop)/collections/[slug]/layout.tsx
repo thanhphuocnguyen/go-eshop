@@ -1,5 +1,5 @@
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
-import { apiFetchServerSide } from '@/app/lib/apis/apiServer';
+import { serverSideFetch } from '@/app/lib/apis/apiServer';
 import { Metadata } from 'next';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
@@ -15,7 +15,7 @@ type Params = {
 async function getCollectionBySlug(
   slug: string
 ): Promise<GetCollectionBySlugModel> {
-  const result = await apiFetchServerSide<GetCollectionBySlugModel>(
+  const result = await serverSideFetch<GetCollectionBySlugModel>(
     PUBLIC_API_PATHS.COLLECTION.replace(':slug', slug)
   );
 

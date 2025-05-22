@@ -1,14 +1,14 @@
 export interface CartItem {
   id: string;
-  product_id: string;
-  variant_id: string;
+  productId: string;
+  variantId: string;
   name: string;
   quantity: number;
   price: number;
   discount: number;
   stock: number;
   sku: string;
-  image_url?: string;
+  imageUrl?: string;
   attributes: Array<{
     name: string;
     value: string;
@@ -17,12 +17,12 @@ export interface CartItem {
 
 export interface CartModel {
   id: string;
-  user_id: string;
-  total_price: number;
-  shipping_fee?: number;
+  userId: string;
+  totalPrice: number;
+  shippingFee?: number;
   tax?: number;
   discount?: number;
-  cart_items: CartItem[];
-  updated_at: string;
-  created_at: string;
+  cartItems: CartItem[];
+  updatedAt: string;
+  createdAt: string;
 }

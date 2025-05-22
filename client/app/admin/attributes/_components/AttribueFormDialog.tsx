@@ -20,7 +20,7 @@ import {
   AttributeDetailModel,
 } from '@/app/lib/definitions';
 import { XCircleIcon } from '@heroicons/react/24/outline';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 
 interface AddNewDialogProps {
   open: boolean;
@@ -64,7 +64,7 @@ export const AddNewDialog: React.FC<AddNewDialogProps> = ({
       })),
     };
 
-    const resp = await apiFetchClientSide<AttributeDetailModel>(
+    const resp = await clientSideFetch<AttributeDetailModel>(
       ADMIN_API_PATHS.ATTRIBUTES,
       {
         method: 'POST',

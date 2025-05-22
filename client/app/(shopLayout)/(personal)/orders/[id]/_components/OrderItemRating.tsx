@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, Fragment } from 'react';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { StarIcon } from '@heroicons/react/24/solid';
 import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
@@ -43,7 +43,7 @@ export default function OrderItemRating({
     defaultValues: {
       headline: ratingModel?.title ?? '',
       comment: ratingModel?.content ?? '',
-      imageUrls: ratingModel?.image_url ? [ratingModel.image_url] : [],
+      imageUrls: ratingModel?.imageUrl ? [ratingModel.imageUrl] : [],
     },
   });
 
@@ -113,13 +113,13 @@ export default function OrderItemRating({
       }
 
       // Add other form fields
-      formData.append('order_item_id', orderItemId);
+      formData.append('orderItemId', orderItemId);
       formData.append('rating', rating.toString());
       formData.append('title', data.headline.trim());
       formData.append('content', data.comment.trim());
 
       // Submit the review with image URL if available
-      const response = await apiFetchClientSide(PUBLIC_API_PATHS.RATING, {
+      const response = await clientSideFetch(PUBLIC_API_PATHS.RATING, {
         method: 'POST',
         body: formData,
       });

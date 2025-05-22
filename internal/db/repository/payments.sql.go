@@ -35,12 +35,12 @@ RETURNING id, order_id, amount, status, payment_method, payment_gateway, refund_
 `
 
 type CreatePaymentParams struct {
-	OrderID                uuid.UUID          `json:"order_id"`
+	OrderID                uuid.UUID          `json:"orderId"`
 	Amount                 pgtype.Numeric     `json:"amount"`
-	PaymentMethod          PaymentMethod      `json:"payment_method"`
-	PaymentGateway         NullPaymentGateway `json:"payment_gateway"`
-	GatewayPaymentIntentID *string            `json:"gateway_payment_intent_id"`
-	GatewayChargeID        *string            `json:"gateway_charge_id"`
+	PaymentMethod          PaymentMethod      `json:"paymentMethod"`
+	PaymentGateway         NullPaymentGateway `json:"paymentGateway"`
+	GatewayPaymentIntentID *string            `json:"gatewayPaymentIntentId"`
+	GatewayChargeID        *string            `json:"gatewayChargeId"`
 }
 
 func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payment, error) {
@@ -94,12 +94,12 @@ RETURNING id, payment_id, amount, status, gateway_transaction_id, gateway_respon
 `
 
 type CreatePaymentTransactionParams struct {
-	PaymentID              uuid.UUID      `json:"payment_id"`
+	PaymentID              uuid.UUID      `json:"paymentId"`
 	Amount                 pgtype.Numeric `json:"amount"`
 	Status                 PaymentStatus  `json:"status"`
-	GatewayTransactionID   *string        `json:"gateway_transaction_id"`
-	GatewayResponseCode    *string        `json:"gateway_response_code"`
-	GatewayResponseMessage *string        `json:"gateway_response_message"`
+	GatewayTransactionID   *string        `json:"gatewayTransactionId"`
+	GatewayResponseCode    *string        `json:"gatewayResponseCode"`
+	GatewayResponseMessage *string        `json:"gatewayResponseMessage"`
 }
 
 // Payment Transactions --
@@ -319,14 +319,14 @@ WHERE
 type UpdatePaymentParams struct {
 	ID                     uuid.UUID          `json:"id"`
 	Amount                 pgtype.Numeric     `json:"amount"`
-	PaymentMethod          NullPaymentMethod  `json:"payment_method"`
-	RefundID               *string            `json:"refund_id"`
+	PaymentMethod          NullPaymentMethod  `json:"paymentMethod"`
+	RefundID               *string            `json:"refundId"`
 	Status                 NullPaymentStatus  `json:"status"`
-	PaymentGateway         NullPaymentGateway `json:"payment_gateway"`
-	GatewayPaymentIntentID *string            `json:"gateway_payment_intent_id"`
-	GatewayChargeID        *string            `json:"gateway_charge_id"`
-	ErrorCode              *string            `json:"error_code"`
-	ErrorMessage           *string            `json:"error_message"`
+	PaymentGateway         NullPaymentGateway `json:"paymentGateway"`
+	GatewayPaymentIntentID *string            `json:"gatewayPaymentIntentId"`
+	GatewayChargeID        *string            `json:"gatewayChargeId"`
+	ErrorCode              *string            `json:"errorCode"`
+	ErrorMessage           *string            `json:"errorMessage"`
 }
 
 func (q *Queries) UpdatePayment(ctx context.Context, arg UpdatePaymentParams) error {
@@ -362,9 +362,9 @@ type UpdatePaymentTransactionParams struct {
 	ID                     uuid.UUID         `json:"id"`
 	Amount                 pgtype.Numeric    `json:"amount"`
 	Status                 NullPaymentStatus `json:"status"`
-	GatewayTransactionID   *string           `json:"gateway_transaction_id"`
-	GatewayResponseCode    *string           `json:"gateway_response_code"`
-	GatewayResponseMessage *string           `json:"gateway_response_message"`
+	GatewayTransactionID   *string           `json:"gatewayTransactionId"`
+	GatewayResponseCode    *string           `json:"gatewayResponseCode"`
+	GatewayResponseMessage *string           `json:"gatewayResponseMessage"`
 }
 
 func (q *Queries) UpdatePaymentTransaction(ctx context.Context, arg UpdatePaymentTransactionParams) error {

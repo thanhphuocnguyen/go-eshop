@@ -33,7 +33,7 @@ func (e *CardType) Scan(src interface{}) error {
 }
 
 type NullCardType struct {
-	CardType CardType `json:"card_type"`
+	CardType CardType `json:"cardType"`
 	Valid    bool     `json:"valid"` // Valid is true if CardType is not NULL
 }
 
@@ -75,7 +75,7 @@ func (e *CartStatus) Scan(src interface{}) error {
 }
 
 type NullCartStatus struct {
-	CartStatus CartStatus `json:"cart_status"`
+	CartStatus CartStatus `json:"cartStatus"`
 	Valid      bool       `json:"valid"` // Valid is true if CartStatus is not NULL
 }
 
@@ -123,7 +123,7 @@ func (e *EntityType) Scan(src interface{}) error {
 }
 
 type NullEntityType struct {
-	EntityType EntityType `json:"entity_type"`
+	EntityType EntityType `json:"entityType"`
 	Valid      bool       `json:"valid"` // Valid is true if EntityType is not NULL
 }
 
@@ -171,7 +171,7 @@ func (e *ImageRole) Scan(src interface{}) error {
 }
 
 type NullImageRole struct {
-	ImageRole ImageRole `json:"image_role"`
+	ImageRole ImageRole `json:"imageRole"`
 	Valid     bool      `json:"valid"` // Valid is true if ImageRole is not NULL
 }
 
@@ -218,7 +218,7 @@ func (e *OrderStatus) Scan(src interface{}) error {
 }
 
 type NullOrderStatus struct {
-	OrderStatus OrderStatus `json:"order_status"`
+	OrderStatus OrderStatus `json:"orderStatus"`
 	Valid       bool        `json:"valid"` // Valid is true if OrderStatus is not NULL
 }
 
@@ -267,7 +267,7 @@ func (e *PaymentGateway) Scan(src interface{}) error {
 }
 
 type NullPaymentGateway struct {
-	PaymentGateway PaymentGateway `json:"payment_gateway"`
+	PaymentGateway PaymentGateway `json:"paymentGateway"`
 	Valid          bool           `json:"valid"` // Valid is true if PaymentGateway is not NULL
 }
 
@@ -313,7 +313,7 @@ func (e *PaymentMethod) Scan(src interface{}) error {
 }
 
 type NullPaymentMethod struct {
-	PaymentMethod PaymentMethod `json:"payment_method"`
+	PaymentMethod PaymentMethod `json:"paymentMethod"`
 	Valid         bool          `json:"valid"` // Valid is true if PaymentMethod is not NULL
 }
 
@@ -359,7 +359,7 @@ func (e *PaymentStatus) Scan(src interface{}) error {
 }
 
 type NullPaymentStatus struct {
-	PaymentStatus PaymentStatus `json:"payment_status"`
+	PaymentStatus PaymentStatus `json:"paymentStatus"`
 	Valid         bool          `json:"valid"` // Valid is true if PaymentStatus is not NULL
 }
 
@@ -402,7 +402,7 @@ func (e *UserRole) Scan(src interface{}) error {
 }
 
 type NullUserRole struct {
-	UserRole UserRole `json:"user_role"`
+	UserRole UserRole `json:"userRole"`
 	Valid    bool     `json:"valid"` // Valid is true if UserRole is not NULL
 }
 
@@ -427,381 +427,381 @@ func (ns NullUserRole) Value() (driver.Value, error) {
 type Attribute struct {
 	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
-	CreatedAt time.Time `json:"created_at"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 type AttributeValue struct {
 	ID           uuid.UUID `json:"id"`
-	AttributeID  uuid.UUID `json:"attribute_id"`
+	AttributeID  uuid.UUID `json:"attributeId"`
 	Name         string    `json:"name"`
 	Code         string    `json:"code"`
-	IsActive     *bool     `json:"is_active"`
-	DisplayOrder int16     `json:"display_order"`
-	CreatedAt    time.Time `json:"created_at"`
+	IsActive     *bool     `json:"isActive"`
+	DisplayOrder int16     `json:"displayOrder"`
+	CreatedAt    time.Time `json:"createdAt"`
 }
 
 type Brand struct {
 	ID           uuid.UUID `json:"id"`
 	Name         string    `json:"name"`
-	ImageUrl     *string   `json:"image_url"`
-	ImageID      *string   `json:"image_id"`
+	ImageUrl     *string   `json:"imageUrl"`
+	ImageID      *string   `json:"imageId"`
 	Description  *string   `json:"description"`
 	Slug         string    `json:"slug"`
 	Remarkable   *bool     `json:"remarkable"`
-	DisplayOrder *int32    `json:"display_order"`
+	DisplayOrder *int32    `json:"displayOrder"`
 	Published    bool      `json:"published"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
 }
 
 type Cart struct {
 	ID        uuid.UUID   `json:"id"`
-	UserID    pgtype.UUID `json:"user_id"`
-	SessionID *string     `json:"session_id"`
-	OrderID   pgtype.UUID `json:"order_id"`
-	UpdatedAt time.Time   `json:"updated_at"`
-	CreatedAt time.Time   `json:"created_at"`
+	UserID    pgtype.UUID `json:"userId"`
+	SessionID *string     `json:"sessionId"`
+	OrderID   pgtype.UUID `json:"orderId"`
+	UpdatedAt time.Time   `json:"updatedAt"`
+	CreatedAt time.Time   `json:"createdAt"`
 }
 
 type CartItem struct {
 	ID        uuid.UUID `json:"id"`
-	CartID    uuid.UUID `json:"cart_id"`
-	VariantID uuid.UUID `json:"variant_id"`
+	CartID    uuid.UUID `json:"cartId"`
+	VariantID uuid.UUID `json:"variantId"`
 	Quantity  int16     `json:"quantity"`
-	AddedAt   time.Time `json:"added_at"`
+	AddedAt   time.Time `json:"addedAt"`
 }
 
 type Category struct {
 	ID           uuid.UUID `json:"id"`
 	Name         string    `json:"name"`
 	Description  *string   `json:"description"`
-	ImageUrl     *string   `json:"image_url"`
-	ImageID      *string   `json:"image_id"`
+	ImageUrl     *string   `json:"imageUrl"`
+	ImageID      *string   `json:"imageId"`
 	Published    bool      `json:"published"`
 	Remarkable   *bool     `json:"remarkable"`
 	Slug         string    `json:"slug"`
-	DisplayOrder *int32    `json:"display_order"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	DisplayOrder *int32    `json:"displayOrder"`
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
 }
 
 type Collection struct {
 	ID           uuid.UUID `json:"id"`
 	Name         string    `json:"name"`
-	ImageUrl     *string   `json:"image_url"`
-	ImageID      *string   `json:"image_id"`
+	ImageUrl     *string   `json:"imageUrl"`
+	ImageID      *string   `json:"imageId"`
 	Description  *string   `json:"description"`
 	Slug         string    `json:"slug"`
 	Remarkable   *bool     `json:"remarkable"`
-	DisplayOrder *int32    `json:"display_order"`
+	DisplayOrder *int32    `json:"displayOrder"`
 	Published    bool      `json:"published"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
 }
 
 type Discount struct {
 	ID                uuid.UUID          `json:"id"`
 	Code              string             `json:"code"`
 	Description       *string            `json:"description"`
-	DiscountType      string             `json:"discount_type"`
-	DiscountValue     pgtype.Numeric     `json:"discount_value"`
-	MinPurchaseAmount pgtype.Numeric     `json:"min_purchase_amount"`
-	MaxDiscountAmount pgtype.Numeric     `json:"max_discount_amount"`
-	UsageLimit        *int32             `json:"usage_limit"`
-	UsedCount         *int32             `json:"used_count"`
-	IsActive          *bool              `json:"is_active"`
-	StartsAt          time.Time          `json:"starts_at"`
-	ExpiresAt         time.Time          `json:"expires_at"`
-	CreatedAt         pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
-	DeletedAt         pgtype.Timestamptz `json:"deleted_at"`
+	DiscountType      string             `json:"discountType"`
+	DiscountValue     pgtype.Numeric     `json:"discountValue"`
+	MinPurchaseAmount pgtype.Numeric     `json:"minPurchaseAmount"`
+	MaxDiscountAmount pgtype.Numeric     `json:"maxDiscountAmount"`
+	UsageLimit        *int32             `json:"usageLimit"`
+	UsedCount         int32              `json:"usedCount"`
+	IsActive          bool               `json:"isActive"`
+	StartsAt          time.Time          `json:"startsAt"`
+	ExpiresAt         time.Time          `json:"expiresAt"`
+	CreatedAt         time.Time          `json:"createdAt"`
+	UpdatedAt         time.Time          `json:"updatedAt"`
+	DeletedAt         pgtype.Timestamptz `json:"deletedAt"`
 }
 
 type DiscountCategory struct {
 	ID         uuid.UUID          `json:"id"`
-	DiscountID uuid.UUID          `json:"discount_id"`
-	CategoryID uuid.UUID          `json:"category_id"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	DiscountID uuid.UUID          `json:"discountId"`
+	CategoryID uuid.UUID          `json:"categoryId"`
+	CreatedAt  pgtype.Timestamptz `json:"createdAt"`
 }
 
 type DiscountProduct struct {
 	ID         uuid.UUID          `json:"id"`
-	DiscountID uuid.UUID          `json:"discount_id"`
-	ProductID  uuid.UUID          `json:"product_id"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	DiscountID uuid.UUID          `json:"discountId"`
+	ProductID  uuid.UUID          `json:"productId"`
+	CreatedAt  pgtype.Timestamptz `json:"createdAt"`
 }
 
 type DiscountUser struct {
 	ID         uuid.UUID          `json:"id"`
-	DiscountID uuid.UUID          `json:"discount_id"`
-	UserID     uuid.UUID          `json:"user_id"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	DiscountID uuid.UUID          `json:"discountId"`
+	UserID     uuid.UUID          `json:"userId"`
+	CreatedAt  pgtype.Timestamptz `json:"createdAt"`
 }
 
 type FeaturedProduct struct {
 	ID         uuid.UUID   `json:"id"`
-	FeaturedID pgtype.UUID `json:"featured_id"`
-	ProductID  pgtype.UUID `json:"product_id"`
-	SortOrder  int16       `json:"sort_order"`
+	FeaturedID pgtype.UUID `json:"featuredId"`
+	ProductID  pgtype.UUID `json:"productId"`
+	SortOrder  int16       `json:"sortOrder"`
 }
 
 type FeaturedSection struct {
 	ID          uuid.UUID `json:"id"`
 	Name        string    `json:"name"`
 	Slug        string    `json:"slug"`
-	ImageUrl    *string   `json:"image_url"`
-	ImageID     *string   `json:"image_id"`
+	ImageUrl    *string   `json:"imageUrl"`
+	ImageID     *string   `json:"imageId"`
 	Description *string   `json:"description"`
 	Remarkable  *bool     `json:"remarkable"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
 type Image struct {
 	ID         uuid.UUID `json:"id"`
-	ExternalID string    `json:"external_id"`
+	ExternalID string    `json:"externalId"`
 	Url        string    `json:"url"`
-	AltText    *string   `json:"alt_text"`
+	AltText    *string   `json:"altText"`
 	Caption    *string   `json:"caption"`
-	MimeType   *string   `json:"mime_type"`
-	FileSize   *int64    `json:"file_size"`
+	MimeType   *string   `json:"mimeType"`
+	FileSize   *int64    `json:"fileSize"`
 	Width      *int32    `json:"width"`
 	Height     *int32    `json:"height"`
-	UploadedAt time.Time `json:"uploaded_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	UploadedAt time.Time `json:"uploadedAt"`
+	UpdatedAt  time.Time `json:"updatedAt"`
 }
 
 type ImageAssignment struct {
 	ID           uuid.UUID `json:"id"`
-	ImageID      uuid.UUID `json:"image_id"`
-	EntityID     uuid.UUID `json:"entity_id"`
-	EntityType   string    `json:"entity_type"`
-	DisplayOrder int16     `json:"display_order"`
+	ImageID      uuid.UUID `json:"imageId"`
+	EntityID     uuid.UUID `json:"entityId"`
+	EntityType   string    `json:"entityType"`
+	DisplayOrder int16     `json:"displayOrder"`
 	Role         string    `json:"role"`
-	CreatedAt    time.Time `json:"created_at"`
+	CreatedAt    time.Time `json:"createdAt"`
 }
 
 type Order struct {
 	ID                    uuid.UUID               `json:"id"`
-	CustomerID            uuid.UUID               `json:"customer_id"`
-	CustomerEmail         string                  `json:"customer_email"`
-	CustomerName          string                  `json:"customer_name"`
-	CustomerPhone         string                  `json:"customer_phone"`
-	ShippingAddress       ShippingAddressSnapshot `json:"shipping_address"`
-	TotalPrice            pgtype.Numeric          `json:"total_price"`
+	CustomerID            uuid.UUID               `json:"customerId"`
+	CustomerEmail         string                  `json:"customerEmail"`
+	CustomerName          string                  `json:"customerName"`
+	CustomerPhone         string                  `json:"customerPhone"`
+	ShippingAddress       ShippingAddressSnapshot `json:"shippingAddress"`
+	TotalPrice            pgtype.Numeric          `json:"totalPrice"`
 	Status                OrderStatus             `json:"status"`
-	ConfirmedAt           pgtype.Timestamptz      `json:"confirmed_at"`
-	DeliveredAt           pgtype.Timestamptz      `json:"delivered_at"`
-	CancelledAt           pgtype.Timestamptz      `json:"cancelled_at"`
-	ShippingMethod        *string                 `json:"shipping_method"`
-	RefundedAt            pgtype.Timestamptz      `json:"refunded_at"`
-	OrderDate             time.Time               `json:"order_date"`
-	UpdatedAt             time.Time               `json:"updated_at"`
-	CreatedAt             time.Time               `json:"created_at"`
-	ShippingMethodID      pgtype.UUID             `json:"shipping_method_id"`
-	ShippingRateID        pgtype.UUID             `json:"shipping_rate_id"`
-	ShippingCost          pgtype.Numeric          `json:"shipping_cost"`
-	EstimatedDeliveryDate pgtype.Timestamptz      `json:"estimated_delivery_date"`
-	TrackingNumber        *string                 `json:"tracking_number"`
-	TrackingUrl           *string                 `json:"tracking_url"`
-	ShippingProvider      *string                 `json:"shipping_provider"`
-	ShippingNotes         *string                 `json:"shipping_notes"`
+	ConfirmedAt           pgtype.Timestamptz      `json:"confirmedAt"`
+	DeliveredAt           pgtype.Timestamptz      `json:"deliveredAt"`
+	CancelledAt           pgtype.Timestamptz      `json:"cancelledAt"`
+	ShippingMethod        *string                 `json:"shippingMethod"`
+	RefundedAt            pgtype.Timestamptz      `json:"refundedAt"`
+	OrderDate             time.Time               `json:"orderDate"`
+	UpdatedAt             time.Time               `json:"updatedAt"`
+	CreatedAt             time.Time               `json:"createdAt"`
+	ShippingMethodID      pgtype.UUID             `json:"shippingMethodId"`
+	ShippingRateID        pgtype.UUID             `json:"shippingRateId"`
+	ShippingCost          pgtype.Numeric          `json:"shippingCost"`
+	EstimatedDeliveryDate pgtype.Timestamptz      `json:"estimatedDeliveryDate"`
+	TrackingNumber        *string                 `json:"trackingNumber"`
+	TrackingUrl           *string                 `json:"trackingUrl"`
+	ShippingProvider      *string                 `json:"shippingProvider"`
+	ShippingNotes         *string                 `json:"shippingNotes"`
 }
 
 type OrderDiscount struct {
 	ID             uuid.UUID          `json:"id"`
-	OrderID        uuid.UUID          `json:"order_id"`
-	DiscountID     uuid.UUID          `json:"discount_id"`
-	DiscountAmount pgtype.Numeric     `json:"discount_amount"`
-	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	OrderID        uuid.UUID          `json:"orderId"`
+	DiscountID     uuid.UUID          `json:"discountId"`
+	DiscountAmount pgtype.Numeric     `json:"discountAmount"`
+	CreatedAt      pgtype.Timestamptz `json:"createdAt"`
 }
 
 type OrderItem struct {
 	ID                   uuid.UUID               `json:"id"`
-	OrderID              uuid.UUID               `json:"order_id"`
-	VariantID            uuid.UUID               `json:"variant_id"`
+	OrderID              uuid.UUID               `json:"orderId"`
+	VariantID            uuid.UUID               `json:"variantId"`
 	Quantity             int16                   `json:"quantity"`
-	PricePerUnitSnapshot pgtype.Numeric          `json:"price_per_unit_snapshot"`
-	LineTotalSnapshot    pgtype.Numeric          `json:"line_total_snapshot"`
-	ProductNameSnapshot  string                  `json:"product_name_snapshot"`
-	VariantSkuSnapshot   string                  `json:"variant_sku_snapshot"`
-	AttributesSnapshot   []AttributeDataSnapshot `json:"attributes_snapshot"`
-	CreatedAt            time.Time               `json:"created_at"`
-	UpdatedAt            time.Time               `json:"updated_at"`
-	DiscountedPrice      pgtype.Numeric          `json:"discounted_price"`
+	PricePerUnitSnapshot pgtype.Numeric          `json:"pricePerUnitSnapshot"`
+	LineTotalSnapshot    pgtype.Numeric          `json:"lineTotalSnapshot"`
+	ProductNameSnapshot  string                  `json:"productNameSnapshot"`
+	VariantSkuSnapshot   string                  `json:"variantSkuSnapshot"`
+	AttributesSnapshot   []AttributeDataSnapshot `json:"attributesSnapshot"`
+	CreatedAt            time.Time               `json:"createdAt"`
+	UpdatedAt            time.Time               `json:"updatedAt"`
+	DiscountedPrice      pgtype.Numeric          `json:"discountedPrice"`
 }
 
 type Payment struct {
 	ID                     uuid.UUID          `json:"id"`
-	OrderID                uuid.UUID          `json:"order_id"`
+	OrderID                uuid.UUID          `json:"orderId"`
 	Amount                 pgtype.Numeric     `json:"amount"`
 	Status                 PaymentStatus      `json:"status"`
-	PaymentMethod          PaymentMethod      `json:"payment_method"`
-	PaymentGateway         NullPaymentGateway `json:"payment_gateway"`
-	RefundID               *string            `json:"refund_id"`
-	GatewayPaymentIntentID *string            `json:"gateway_payment_intent_id"`
-	GatewayChargeID        *string            `json:"gateway_charge_id"`
-	ErrorCode              *string            `json:"error_code"`
-	ErrorMessage           *string            `json:"error_message"`
-	CreatedAt              pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt              pgtype.Timestamptz `json:"updated_at"`
+	PaymentMethod          PaymentMethod      `json:"paymentMethod"`
+	PaymentGateway         NullPaymentGateway `json:"paymentGateway"`
+	RefundID               *string            `json:"refundId"`
+	GatewayPaymentIntentID *string            `json:"gatewayPaymentIntentId"`
+	GatewayChargeID        *string            `json:"gatewayChargeId"`
+	ErrorCode              *string            `json:"errorCode"`
+	ErrorMessage           *string            `json:"errorMessage"`
+	CreatedAt              pgtype.Timestamptz `json:"createdAt"`
+	UpdatedAt              pgtype.Timestamptz `json:"updatedAt"`
 }
 
 type PaymentTransaction struct {
 	ID                     uuid.UUID          `json:"id"`
-	PaymentID              uuid.UUID          `json:"payment_id"`
+	PaymentID              uuid.UUID          `json:"paymentId"`
 	Amount                 pgtype.Numeric     `json:"amount"`
 	Status                 PaymentStatus      `json:"status"`
-	GatewayTransactionID   *string            `json:"gateway_transaction_id"`
-	GatewayResponseCode    *string            `json:"gateway_response_code"`
-	GatewayResponseMessage *string            `json:"gateway_response_message"`
-	TransactionDate        pgtype.Timestamptz `json:"transaction_date"`
-	CreatedAt              pgtype.Timestamptz `json:"created_at"`
+	GatewayTransactionID   *string            `json:"gatewayTransactionId"`
+	GatewayResponseCode    *string            `json:"gatewayResponseCode"`
+	GatewayResponseMessage *string            `json:"gatewayResponseMessage"`
+	TransactionDate        pgtype.Timestamptz `json:"transactionDate"`
+	CreatedAt              pgtype.Timestamptz `json:"createdAt"`
 }
 
 type Product struct {
 	ID               uuid.UUID      `json:"id"`
 	Name             string         `json:"name"`
 	Description      string         `json:"description"`
-	ShortDescription *string        `json:"short_description"`
+	ShortDescription *string        `json:"shortDescription"`
 	Attributes       []uuid.UUID    `json:"attributes"`
-	BasePrice        pgtype.Numeric `json:"base_price"`
-	BaseSku          string         `json:"base_sku"`
+	BasePrice        pgtype.Numeric `json:"basePrice"`
+	BaseSku          string         `json:"baseSku"`
 	Slug             string         `json:"slug"`
-	IsActive         *bool          `json:"is_active"`
-	CategoryID       pgtype.UUID    `json:"category_id"`
-	CollectionID     pgtype.UUID    `json:"collection_id"`
-	BrandID          pgtype.UUID    `json:"brand_id"`
-	CreatedAt        time.Time      `json:"created_at"`
-	UpdatedAt        time.Time      `json:"updated_at"`
-	AvgRating        pgtype.Numeric `json:"avg_rating"`
-	RatingCount      int32          `json:"rating_count"`
-	OneStarCount     int32          `json:"one_star_count"`
-	TwoStarCount     int32          `json:"two_star_count"`
-	ThreeStarCount   int32          `json:"three_star_count"`
-	FourStarCount    int32          `json:"four_star_count"`
-	FiveStarCount    int32          `json:"five_star_count"`
+	IsActive         *bool          `json:"isActive"`
+	CategoryID       pgtype.UUID    `json:"categoryId"`
+	CollectionID     pgtype.UUID    `json:"collectionId"`
+	BrandID          pgtype.UUID    `json:"brandId"`
+	CreatedAt        time.Time      `json:"createdAt"`
+	UpdatedAt        time.Time      `json:"updatedAt"`
+	AvgRating        pgtype.Numeric `json:"avgRating"`
+	RatingCount      int32          `json:"ratingCount"`
+	OneStarCount     int32          `json:"oneStarCount"`
+	TwoStarCount     int32          `json:"twoStarCount"`
+	ThreeStarCount   int32          `json:"threeStarCount"`
+	FourStarCount    int32          `json:"fourStarCount"`
+	FiveStarCount    int32          `json:"fiveStarCount"`
 }
 
 type ProductRating struct {
 	ID               uuid.UUID      `json:"id"`
-	ProductID        uuid.UUID      `json:"product_id"`
-	UserID           uuid.UUID      `json:"user_id"`
-	OrderItemID      pgtype.UUID    `json:"order_item_id"`
+	ProductID        uuid.UUID      `json:"productId"`
+	UserID           uuid.UUID      `json:"userId"`
+	OrderItemID      pgtype.UUID    `json:"orderItemId"`
 	Rating           pgtype.Numeric `json:"rating"`
-	ReviewTitle      *string        `json:"review_title"`
-	ReviewContent    *string        `json:"review_content"`
-	VerifiedPurchase bool           `json:"verified_purchase"`
-	IsVisible        bool           `json:"is_visible"`
-	IsApproved       bool           `json:"is_approved"`
-	HelpfulVotes     int32          `json:"helpful_votes"`
-	UnhelpfulVotes   int32          `json:"unhelpful_votes"`
-	CreatedAt        time.Time      `json:"created_at"`
-	UpdatedAt        time.Time      `json:"updated_at"`
+	ReviewTitle      *string        `json:"reviewTitle"`
+	ReviewContent    *string        `json:"reviewContent"`
+	VerifiedPurchase bool           `json:"verifiedPurchase"`
+	IsVisible        bool           `json:"isVisible"`
+	IsApproved       bool           `json:"isApproved"`
+	HelpfulVotes     int32          `json:"helpfulVotes"`
+	UnhelpfulVotes   int32          `json:"unhelpfulVotes"`
+	CreatedAt        time.Time      `json:"createdAt"`
+	UpdatedAt        time.Time      `json:"updatedAt"`
 }
 
 type ProductVariant struct {
 	ID          uuid.UUID      `json:"id"`
-	ProductID   uuid.UUID      `json:"product_id"`
+	ProductID   uuid.UUID      `json:"productId"`
 	Description *string        `json:"description"`
 	Sku         string         `json:"sku"`
 	Price       pgtype.Numeric `json:"price"`
 	Stock       int32          `json:"stock"`
 	Weight      pgtype.Numeric `json:"weight"`
-	IsActive    *bool          `json:"is_active"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
+	IsActive    *bool          `json:"isActive"`
+	CreatedAt   time.Time      `json:"createdAt"`
+	UpdatedAt   time.Time      `json:"updatedAt"`
 }
 
 type RatingReply struct {
 	ID        uuid.UUID `json:"id"`
-	RatingID  uuid.UUID `json:"rating_id"`
-	ReplyBy   uuid.UUID `json:"reply_by"`
+	RatingID  uuid.UUID `json:"ratingId"`
+	ReplyBy   uuid.UUID `json:"replyBy"`
 	Content   string    `json:"content"`
-	IsVisible bool      `json:"is_visible"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	IsVisible bool      `json:"isVisible"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 type RatingVote struct {
 	ID        uuid.UUID `json:"id"`
-	RatingID  uuid.UUID `json:"rating_id"`
-	UserID    uuid.UUID `json:"user_id"`
-	IsHelpful bool      `json:"is_helpful"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	RatingID  uuid.UUID `json:"ratingId"`
+	UserID    uuid.UUID `json:"userId"`
+	IsHelpful bool      `json:"isHelpful"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 type Session struct {
 	ID           uuid.UUID `json:"id"`
-	UserID       uuid.UUID `json:"user_id"`
-	RefreshToken string    `json:"refresh_token"`
-	UserAgent    string    `json:"user_agent"`
-	ClientIp     string    `json:"client_ip"`
+	UserID       uuid.UUID `json:"userId"`
+	RefreshToken string    `json:"refreshToken"`
+	UserAgent    string    `json:"userAgent"`
+	ClientIp     string    `json:"clientIp"`
 	Blocked      bool      `json:"blocked"`
-	ExpiredAt    time.Time `json:"expired_at"`
-	CreatedAt    time.Time `json:"created_at"`
+	ExpiredAt    time.Time `json:"expiredAt"`
+	CreatedAt    time.Time `json:"createdAt"`
 }
 
 type Shipment struct {
 	ID               uuid.UUID          `json:"id"`
-	OrderID          uuid.UUID          `json:"order_id"`
+	OrderID          uuid.UUID          `json:"orderId"`
 	Status           string             `json:"status"`
-	ShippedAt        pgtype.Timestamptz `json:"shipped_at"`
-	DeliveredAt      pgtype.Timestamptz `json:"delivered_at"`
-	TrackingNumber   *string            `json:"tracking_number"`
-	TrackingUrl      *string            `json:"tracking_url"`
-	ShippingProvider *string            `json:"shipping_provider"`
-	ShippingNotes    *string            `json:"shipping_notes"`
-	CreatedAt        time.Time          `json:"created_at"`
-	UpdatedAt        time.Time          `json:"updated_at"`
+	ShippedAt        pgtype.Timestamptz `json:"shippedAt"`
+	DeliveredAt      pgtype.Timestamptz `json:"deliveredAt"`
+	TrackingNumber   *string            `json:"trackingNumber"`
+	TrackingUrl      *string            `json:"trackingUrl"`
+	ShippingProvider *string            `json:"shippingProvider"`
+	ShippingNotes    *string            `json:"shippingNotes"`
+	CreatedAt        time.Time          `json:"createdAt"`
+	UpdatedAt        time.Time          `json:"updatedAt"`
 }
 
 type ShipmentItem struct {
 	ID          uuid.UUID `json:"id"`
-	ShipmentID  uuid.UUID `json:"shipment_id"`
-	OrderItemID uuid.UUID `json:"order_item_id"`
+	ShipmentID  uuid.UUID `json:"shipmentId"`
+	OrderItemID uuid.UUID `json:"orderItemId"`
 	Quantity    int32     `json:"quantity"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
 type ShippingMethod struct {
 	ID                    uuid.UUID `json:"id"`
 	Name                  string    `json:"name"`
 	Description           *string   `json:"description"`
-	IsActive              bool      `json:"is_active"`
-	RequiresAddress       bool      `json:"requires_address"`
-	EstimatedDeliveryTime *string   `json:"estimated_delivery_time"`
-	IconUrl               *string   `json:"icon_url"`
-	CreatedAt             time.Time `json:"created_at"`
-	UpdatedAt             time.Time `json:"updated_at"`
+	IsActive              bool      `json:"isActive"`
+	RequiresAddress       bool      `json:"requiresAddress"`
+	EstimatedDeliveryTime *string   `json:"estimatedDeliveryTime"`
+	IconUrl               *string   `json:"iconUrl"`
+	CreatedAt             time.Time `json:"createdAt"`
+	UpdatedAt             time.Time `json:"updatedAt"`
 }
 
 type ShippingRate struct {
 	ID                    uuid.UUID      `json:"id"`
-	ShippingMethodID      uuid.UUID      `json:"shipping_method_id"`
-	ShippingZoneID        uuid.UUID      `json:"shipping_zone_id"`
+	ShippingMethodID      uuid.UUID      `json:"shippingMethodId"`
+	ShippingZoneID        uuid.UUID      `json:"shippingZoneId"`
 	Name                  string         `json:"name"`
-	BaseRate              pgtype.Numeric `json:"base_rate"`
-	MinOrderAmount        pgtype.Numeric `json:"min_order_amount"`
-	MaxOrderAmount        pgtype.Numeric `json:"max_order_amount"`
-	FreeShippingThreshold pgtype.Numeric `json:"free_shipping_threshold"`
-	IsActive              bool           `json:"is_active"`
-	CreatedAt             time.Time      `json:"created_at"`
-	UpdatedAt             time.Time      `json:"updated_at"`
+	BaseRate              pgtype.Numeric `json:"baseRate"`
+	MinOrderAmount        pgtype.Numeric `json:"minOrderAmount"`
+	MaxOrderAmount        pgtype.Numeric `json:"maxOrderAmount"`
+	FreeShippingThreshold pgtype.Numeric `json:"freeShippingThreshold"`
+	IsActive              bool           `json:"isActive"`
+	CreatedAt             time.Time      `json:"createdAt"`
+	UpdatedAt             time.Time      `json:"updatedAt"`
 }
 
 type ShippingRateCondition struct {
 	ID             uuid.UUID      `json:"id"`
-	ShippingRateID uuid.UUID      `json:"shipping_rate_id"`
-	ConditionType  string         `json:"condition_type"`
-	MinValue       pgtype.Numeric `json:"min_value"`
-	MaxValue       pgtype.Numeric `json:"max_value"`
-	AdditionalFee  pgtype.Numeric `json:"additional_fee"`
-	CategoryIds    []uuid.UUID    `json:"category_ids"`
-	CreatedAt      time.Time      `json:"created_at"`
-	UpdatedAt      time.Time      `json:"updated_at"`
+	ShippingRateID uuid.UUID      `json:"shippingRateId"`
+	ConditionType  string         `json:"conditionType"`
+	MinValue       pgtype.Numeric `json:"minValue"`
+	MaxValue       pgtype.Numeric `json:"maxValue"`
+	AdditionalFee  pgtype.Numeric `json:"additionalFee"`
+	CategoryIds    []uuid.UUID    `json:"categoryIds"`
+	CreatedAt      time.Time      `json:"createdAt"`
+	UpdatedAt      time.Time      `json:"updatedAt"`
 }
 
 type ShippingZone struct {
@@ -810,10 +810,10 @@ type ShippingZone struct {
 	Description *string   `json:"description"`
 	Countries   []string  `json:"countries"`
 	States      []string  `json:"states"`
-	ZipCodes    []string  `json:"zip_codes"`
-	IsActive    bool      `json:"is_active"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ZipCodes    []string  `json:"zipCodes"`
+	IsActive    bool      `json:"isActive"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
 type User struct {
@@ -823,20 +823,20 @@ type User struct {
 	Email             string      `json:"email"`
 	Phone             string      `json:"phone"`
 	Fullname          string      `json:"fullname"`
-	HashedPassword    string      `json:"hashed_password"`
-	VerifiedEmail     bool        `json:"verified_email"`
-	VerifiedPhone     bool        `json:"verified_phone"`
-	PasswordChangedAt time.Time   `json:"password_changed_at"`
-	UpdatedAt         time.Time   `json:"updated_at"`
-	CreatedAt         time.Time   `json:"created_at"`
+	HashedPassword    string      `json:"hashedPassword"`
+	VerifiedEmail     bool        `json:"verifiedEmail"`
+	VerifiedPhone     bool        `json:"verifiedPhone"`
+	PasswordChangedAt time.Time   `json:"passwordChangedAt"`
+	UpdatedAt         time.Time   `json:"updatedAt"`
+	CreatedAt         time.Time   `json:"createdAt"`
 	Locked            bool        `json:"locked"`
-	AvatarUrl         *string     `json:"avatar_url"`
-	AvatarImageID     pgtype.UUID `json:"avatar_image_id"`
+	AvatarUrl         *string     `json:"avatarUrl"`
+	AvatarImageID     pgtype.UUID `json:"avatarImageId"`
 }
 
 type UserAddress struct {
 	ID        uuid.UUID `json:"id"`
-	UserID    uuid.UUID `json:"user_id"`
+	UserID    uuid.UUID `json:"userId"`
 	Phone     string    `json:"phone"`
 	Street    string    `json:"street"`
 	Ward      *string   `json:"ward"`
@@ -844,33 +844,33 @@ type UserAddress struct {
 	City      string    `json:"city"`
 	Default   bool      `json:"default"`
 	Deleted   bool      `json:"deleted"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 type UserPaymentInfo struct {
 	ID             uuid.UUID          `json:"id"`
-	UserID         pgtype.UUID        `json:"user_id"`
-	CardNumber     string             `json:"card_number"`
-	CardholderName string             `json:"cardholder_name"`
-	ExpirationDate pgtype.Date        `json:"expiration_date"`
-	BillingAddress string             `json:"billing_address"`
+	UserID         pgtype.UUID        `json:"userId"`
+	CardNumber     string             `json:"cardNumber"`
+	CardholderName string             `json:"cardholderName"`
+	ExpirationDate pgtype.Date        `json:"expirationDate"`
+	BillingAddress string             `json:"billingAddress"`
 	Default        *bool              `json:"default"`
-	CreatedAt      pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+	CreatedAt      pgtype.Timestamptz `json:"createdAt"`
+	UpdatedAt      pgtype.Timestamptz `json:"updatedAt"`
 }
 
 type VariantAttributeValue struct {
-	VariantID        uuid.UUID `json:"variant_id"`
-	AttributeValueID uuid.UUID `json:"attribute_value_id"`
+	VariantID        uuid.UUID `json:"variantId"`
+	AttributeValueID uuid.UUID `json:"attributeValueId"`
 }
 
 type VerifyEmail struct {
 	ID         uuid.UUID `json:"id"`
-	UserID     uuid.UUID `json:"user_id"`
+	UserID     uuid.UUID `json:"userId"`
 	Email      string    `json:"email"`
-	VerifyCode string    `json:"verify_code"`
-	IsUsed     bool      `json:"is_used"`
-	CreatedAt  time.Time `json:"created_at"`
-	ExpiredAt  time.Time `json:"expired_at"`
+	VerifyCode string    `json:"verifyCode"`
+	IsUsed     bool      `json:"isUsed"`
+	CreatedAt  time.Time `json:"createdAt"`
+	ExpiredAt  time.Time `json:"expiredAt"`
 }

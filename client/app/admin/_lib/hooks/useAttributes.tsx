@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 import { toast } from 'react-toastify';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { AttributeDetailModel } from '@/app/lib/definitions';
 
@@ -8,7 +8,7 @@ export function useAttributes(ids: number[] = [], productId?: number) {
   const { data, isLoading, error } = useSWR(
     [ADMIN_API_PATHS.ATTRIBUTES, ids, productId],
     ([url]) => {
-      return apiFetchClientSide<AttributeDetailModel[]>(
+      return clientSideFetch<AttributeDetailModel[]>(
         `${url}?ids[]=${ids.join(',')}`,
         {}
       ).then((res) => {

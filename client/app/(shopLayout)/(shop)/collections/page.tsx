@@ -2,7 +2,7 @@ import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { GeneralCategoryModel } from '@/app/lib/definitions';
 import Link from 'next/link';
 import Image from 'next/image';
-import { apiFetchServerSide } from '@/app/lib/apis/apiServer';
+import { serverSideFetch } from '@/app/lib/apis/apiServer';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 // Define the search params type
@@ -12,13 +12,13 @@ type SearchParams = {
 
 async function getCollections(page = 1, pageSize = 9) {
   // Using apiFetch utility with pagination
-  const result = await apiFetchServerSide<GeneralCategoryModel[]>(
-    `${PUBLIC_API_PATHS.COLLECTIONS}?page=${page}&page_size=${pageSize}`
+  const result = await serverSideFetch<GeneralCategoryModel[]>(
+    `${PUBLIC_API_PATHS.COLLECTIONS}?page=${page}&pageSize=${pageSize}`
   );
 
   return {
     data: result.data || [],
-    pagination: result.pagination || { total: 0, page, page_size: pageSize },
+    pagination: result.pagination || { total: 0, page, pageSize: pageSize },
   };
 }
 

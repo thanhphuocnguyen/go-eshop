@@ -1,6 +1,6 @@
 'use client';
 
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { GenericResponse, UserModel } from '@/app/lib/definitions';
 import { TextField } from '@/components/FormFields';
@@ -62,12 +62,12 @@ export default function PersonalInfoTab() {
   // Profile update handler
   const onProfileSubmit = async (data: ProfileFormValues) => {
     try {
-      const response = await apiFetchClientSide<UserModel>(
+      const response = await clientSideFetch<UserModel>(
         PUBLIC_API_PATHS.GET_ME,
         {
           method: 'PATCH',
           body: {
-            user_id: user?.id,
+            userId: user?.id,
             fullname: data.fullname,
             email: data.email,
             // phone: data.phone, // Add if your API supports phone updates
@@ -90,11 +90,11 @@ export default function PersonalInfoTab() {
 
   // Send verification email handler
   const handleSendVerificationEmail = async () => {
-    if (!user || user.verified_email) return;
+    if (!user || user.verifiedEmail) return;
 
     setIsSendingVerification(true);
     try {
-      const response = await apiFetchClientSide<GenericResponse<null>>(
+      const response = await clientSideFetch<GenericResponse<null>>(
         PUBLIC_API_PATHS.GET_ME + '/send-verify-email',
         {
           method: 'POST',
@@ -212,11 +212,11 @@ export default function PersonalInfoTab() {
               </dt>
               <dd className='mt-1 text-sm text-gray-900 flex items-center gap-2'>
                 <span
-                  className={`inline-flex items-center px-3 py-1 rounded-md text-sm font-medium ${user?.verified_email ? 'bg-green-100 text-green-800' : 'bg-yellow-200 text-orange-800'}`}
+                  className={`inline-flex items-center px-3 py-1 rounded-md text-sm font-medium ${user?.verifiedEmail ? 'bg-green-100 text-green-800' : 'bg-yellow-200 text-orange-800'}`}
                 >
-                  {user?.verified_email ? 'Verified' : 'Not verified'}
+                  {user?.verifiedEmail ? 'Verified' : 'Not verified'}
                 </span>
-                {!user?.verified_email && (
+                {!user?.verifiedEmail && (
                   <Button
                     onClick={handleSendVerificationEmail}
                     disabled={isSendingVerification}
@@ -234,9 +234,9 @@ export default function PersonalInfoTab() {
               </dt>
               <dd className='mt-1 text-sm text-gray-900 flex items-center gap-2'>
                 <span
-                  className={`inline-flex items-center px-3 py-1 rounded-md text-sm font-medium ${user?.verified_phone ? 'bg-green-100 text-green-800' : 'bg-yellow-200 text-orange-800'}`}
+                  className={`inline-flex items-center px-3 py-1 rounded-md text-sm font-medium ${user?.verifiedPhone ? 'bg-green-100 text-green-800' : 'bg-yellow-200 text-orange-800'}`}
                 >
-                  {user?.verified_phone ? 'Verified' : 'Not verified'}
+                  {user?.verifiedPhone ? 'Verified' : 'Not verified'}
                 </span>
               </dd>
             </div>
@@ -245,8 +245,8 @@ export default function PersonalInfoTab() {
                 Member since
               </dt>
               <dd className='mt-1 text-sm text-gray-900'>
-                {user?.created_at
-                  ? new Date(user.created_at).toLocaleDateString()
+                {user?.createdAt
+                  ? new Date(user.createdAt).toLocaleDateString()
                   : 'Unknown'}
               </dd>
             </div>

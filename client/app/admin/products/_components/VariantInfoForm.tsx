@@ -87,16 +87,16 @@ export const VariantInfoForm: React.FC<{
                               return {
                                 id: attribute.id,
                                 name: attribute.name,
-                                value_object: {
+                                valueObject: {
                                   id: undefined,
                                 },
                               };
                             })
                           : [],
-                        price: getValues('product_info.price'),
-                        stock_qty: 0,
+                        price: getValues('productInfo.price'),
+                        stockQty: 0,
                         weight: undefined,
-                        is_active: true,
+                        isActive: true,
                       });
                     }}
                     className={clsx('btn btn-primary flex gap-2')}

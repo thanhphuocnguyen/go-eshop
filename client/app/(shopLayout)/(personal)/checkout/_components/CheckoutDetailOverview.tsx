@@ -17,9 +17,8 @@ import { useForm, useWatch } from 'react-hook-form';
 
 import { useEffect, useState } from 'react';
 import { redirect, RedirectType, useRouter } from 'next/navigation';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
-import { GenericResponse } from '@/app/lib/definitions';
 import { toast } from 'react-toastify';
 import { useCartCtx } from '@/app/lib/contexts/CartContext';
 import {
@@ -124,7 +123,7 @@ const CheckoutDetailOverview: React.FC = () => {
 
   const onSubmit = async (body: CheckoutFormValues) => {
     // Save form data to session storage for the next step
-    const { data, error } = await apiFetchClientSide<CheckoutDataResponse>(
+    const { data, error } = await clientSideFetch<CheckoutDataResponse>(
       PUBLIC_API_PATHS.CHECKOUT,
       {
         method: 'POST',
@@ -423,22 +422,22 @@ const CheckoutDetailOverview: React.FC = () => {
           Order summary
         </h3>
         <div className='border border-gray-200 bg-white rounded-md'>
-          {cart?.cart_items.map((e) => (
+          {cart?.cartItems.map((e) => (
             <div
-              key={e.variant_id}
+              key={e.variantId}
               className='flex gap-4 p-6 border-b border-gray-200'
             >
               <div className='h-28 w-24 relative'>
                 <Image
                   fill
                   objectFit='contains'
-                  src={e.image_url ?? '/images/logos/logo.webp'}
+                  src={e.imageUrl ?? '/images/logos/logo.webp'}
                   alt='Product Image'
                   className='rounded-md border border-lime-300'
                 />
               </div>
               <div
-                key={e.variant_id}
+                key={e.variantId}
                 className='flex-1 flex flex-col justify-between'
               >
                 <div>
@@ -471,7 +470,7 @@ const CheckoutDetailOverview: React.FC = () => {
             <div className='flex flex-col gap-6'>
               <div className='flex justify-between'>
                 <span>Subtotal</span>
-                <span>${cart?.total_price}</span>
+                <span>${cart?.totalPrice}</span>
               </div>
               <div className='flex justify-between'>
                 <span>Shipping</span>
@@ -485,7 +484,7 @@ const CheckoutDetailOverview: React.FC = () => {
             <hr className='my-6' />
             <div className='flex justify-between font-semibold'>
               <span>Total</span>
-              <span>${cart?.total_price ?? 0}</span>
+              <span>${cart?.totalPrice ?? 0}</span>
             </div>
           </div>
           <hr className='my-6' />

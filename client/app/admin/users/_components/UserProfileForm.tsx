@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { toast } from 'react-toastify';
 
@@ -59,7 +59,7 @@ export default function UserProfileForm({ user }: { user: UserDetails }) {
         formData.append('file', avatar);
         formData.append('type', 'avatar');
 
-        const uploadResponse = await apiFetchClientSide(
+        const uploadResponse = await clientSideFetch(
           `${ADMIN_API_PATHS.UPLOADS}`,
           {
             method: 'POST',
@@ -78,7 +78,7 @@ export default function UserProfileForm({ user }: { user: UserDetails }) {
       }
 
       // Update the user data
-      const response = await apiFetchClientSide(
+      const response = await clientSideFetch(
         `${ADMIN_API_PATHS.USERS}/${user.id}`,
         {
           method: 'PUT',

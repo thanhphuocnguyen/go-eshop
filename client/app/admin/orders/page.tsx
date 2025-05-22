@@ -4,7 +4,7 @@ import { useState, useEffect, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
 import LoadingInline from '@/components/Common/Loadings/LoadingInline';
 import { Breadcrumb } from '@/components/Common';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { GenericResponse, Order } from '@/app/lib/definitions';
 import { Button, Menu, Transition } from '@headlessui/react';
@@ -29,15 +29,16 @@ export default function AdminOrdersPage() {
 
     try {
       // Adjust this API endpoint to your actual backend endpoint
-      const { data, error, pagination } = await apiFetchClientSide<
-        GenericResponse<Order[]>
-      >(ADMIN_API_PATHS.ORDERS, {
-        queryParams: {
-          page: currentPage,
-          page_size: 10,
-          status: statusFilter !== 'all' ? statusFilter : undefined,
-        },
-      });
+      const { data, error, pagination } = await clientSideFetch<Order[]>(
+        ADMIN_API_PATHS.ORDERS,
+        {
+          queryParams: {
+            page: currentPage,
+            pageSize: 10,
+            status: statusFilter !== 'all' ? statusFilter : undefined,
+          },
+        }
+      );
 
       if (error) {
         setError(error.details || 'Failed to fetch orders');
@@ -268,16 +269,16 @@ export default function AdminOrdersPage() {
                   {order.id.substring(0, 8)}...
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap text-sm'>
-                  <div>{order.customer_name}</div>
+                  <div>{order.customerName}</div>
                   <div className='text-xs text-gray-500'>
-                    {order.customer_email}
+                    {order.customerEmail}
                   </div>
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap text-sm'>
                   {formatCurrency(order.total)}
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap text-sm text-center'>
-                  {order.total_items}
+                  {order.totalItems}
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap'>
                   <span
@@ -289,14 +290,14 @@ export default function AdminOrdersPage() {
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap'>
                   <span
-                    className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getPaymentStatusColor(order.payment_status)}`}
+                    className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getPaymentStatusColor(order.paymentStatus)}`}
                   >
-                    {order.payment_status.charAt(0).toUpperCase() +
-                      order.payment_status.slice(1)}
+                    {order.paymentStatus.charAt(0).toUpperCase() +
+                      order.paymentStatus.slice(1)}
                   </span>
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                  {formatDate(order.created_at)}
+                  {formatDate(order.createdAt)}
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap text-sm text-right'>
                   <Button

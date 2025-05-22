@@ -1,5 +1,5 @@
 export type CreatePaymentIntentResponse = {
-  client_secret: string;
-  payment_id: string;
-  order_id: string;
+  clientSecret: string;
+  paymentId: string;
+  orderId: string;
 };

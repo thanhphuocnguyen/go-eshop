@@ -1,5 +1,5 @@
 'use client';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { OrderStatus } from '@/app/lib/definitions';
 import Link from 'next/link';
@@ -12,11 +12,11 @@ import clsx from 'clsx';
 type OrderModel = {
   id: string;
   total: number;
-  total_items: number;
+  totalItems: number;
   status: OrderStatus;
-  payment_status: string;
-  created_at: string;
-  updated_at: string;
+  paymentStatus: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 const getStatusBadgeColor = (status: OrderStatus) => {
@@ -43,7 +43,7 @@ const getStatusBadgeColor = (status: OrderStatus) => {
 export default function OrderHistoryTab() {
   const { data, isLoading, error } = useSWR(
     PUBLIC_API_PATHS.ORDERS,
-    apiFetchClientSide<OrderModel[]>
+    clientSideFetch<OrderModel[]>
   );
 
   if (isLoading) {
@@ -133,7 +133,7 @@ export default function OrderHistoryTab() {
                   #{order.id.substring(0, 8)}
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                  {dayjs(order.created_at).format('MMM DD, YYYY')}
+                  {dayjs(order.createdAt).format('MMM DD, YYYY')}
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap'>
                   <span
@@ -146,7 +146,7 @@ export default function OrderHistoryTab() {
                   </span>
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
-                  {order.total_items}
+                  {order.totalItems}
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium'>
                   ${formatCurrency(order.total)}

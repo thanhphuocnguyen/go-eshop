@@ -14,7 +14,7 @@ export async function refreshTokenAction() {
   return fetch(PUBLIC_API_PATHS.REFRESH_TOKEN, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${cookieStore.get('refresh_token')?.value}`,
+      Authorization: `Bearer ${cookieStore.get('refreshToken')?.value}`,
     },
   })
     .then<GenericResponse<RefreshTokenResponse>>((response) => {
@@ -25,17 +25,17 @@ export async function refreshTokenAction() {
     })
     .then((data) => {
       if (data.error) {
-        cookieStore.delete('access_token');
-        cookieStore.delete('refresh_token');
-        cookieStore.delete('session_id');
+        cookieStore.delete('accessToken');
+        cookieStore.delete('refreshToken');
+        cookieStore.delete('sessionId');
         redirect('/login');
       }
       if (data) {
-        const { access_token, access_token_expires_at } = data.data;
-        cookieStore.set('access_token', access_token, {
-          expires: new Date(access_token_expires_at),
+        const { accessToken, accessTokenExpiresAt } = data.data;
+        cookieStore.set('accessToken', accessToken, {
+          expires: new Date(accessTokenExpiresAt),
         });
-        return access_token;
+        return accessToken;
       }
     });
 }
@@ -56,25 +56,25 @@ export async function loginAction(data: FormData) {
     const { data } = (await result.json()) as GenericResponse<LoginResponse>;
     if (data) {
       const {
-        access_token,
-        access_token_expires_in,
-        refresh_token,
-        refresh_token_expires_at,
-        session_id,
+        accessToken,
+        accessTokenExpiresIn,
+        refreshToken,
+        refreshTokenExpiresAt,
+        sessionId,
       } = data;
       const cookieStore = await cookies();
-      cookieStore.set('access_token', access_token, {
-        expires: new Date(access_token_expires_in),
+      cookieStore.set('accessToken', accessToken, {
+        expires: new Date(accessTokenExpiresIn),
       });
-      cookieStore.set('refresh_token', refresh_token, {
-        expires: new Date(refresh_token_expires_at),
+      cookieStore.set('refreshToken', refreshToken, {
+        expires: new Date(refreshTokenExpiresAt),
       });
-      cookieStore.set('session_id', session_id, {
-        expires: new Date(refresh_token_expires_at),
+      cookieStore.set('sessionId', sessionId, {
+        expires: new Date(refreshTokenExpiresAt),
       });
       return {
-        access_token,
-        refresh_token,
+        accessToken,
+        refreshToken,
       };
     } else {
       return {
@@ -89,7 +89,7 @@ export async function loginAction(data: FormData) {
 
 export async function logoutAction() {
   const cookieStore = await cookies();
-  cookieStore.delete('access_token');
-  cookieStore.delete('refresh_token');
-  cookieStore.delete('session_id');
+  cookieStore.delete('accessToken');
+  cookieStore.delete('refreshToken');
+  cookieStore.delete('sessionId');
 }

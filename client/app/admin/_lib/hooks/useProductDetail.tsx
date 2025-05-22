@@ -1,4 +1,4 @@
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { ProductDetailModel } from '@/app/lib/definitions';
 import { toast } from 'react-toastify';
@@ -12,7 +12,7 @@ export function useProductDetail(slug: string) {
   } = useSWR(
     slug ? PUBLIC_API_PATHS.PRODUCT_DETAIL.replace(':id', slug) : null,
     (url) =>
-      apiFetchClientSide<ProductDetailModel>(url).then((data) => data.data),
+      clientSideFetch<ProductDetailModel>(url).then((data) => data.data),
     {
       refreshInterval: 0,
       revalidateOnFocus: false,

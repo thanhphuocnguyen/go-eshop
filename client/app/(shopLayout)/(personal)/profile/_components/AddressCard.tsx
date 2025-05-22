@@ -7,8 +7,8 @@ import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 interface AddressCardProps {
   address: AddressModel;
   onEdit: (address: AddressModel) => void;
-  onDelete: (addressId: number) => void;
-  onSetDefault: (addressId: number) => void;
+  onDelete: (addressId: string) => void;
+  onSetDefault: (addressId: string) => void;
 }
 
 export default function AddressCard({

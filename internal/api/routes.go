@@ -89,6 +89,15 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 			ratings.PUT(":id/approve", sv.approveRatingHandler)
 			ratings.PUT(":id/ban", sv.banUserRatingHandler)
 		}
+
+		discounts := admin.Group("discounts")
+		{
+			discounts.POST("", sv.createDiscountHandler)
+			discounts.GET("", sv.getDiscountsHandler)
+			discounts.GET(":id", sv.getDiscountByIDHandler)
+			discounts.PUT(":id", sv.updateDiscountHandler)
+			discounts.DELETE(":id", sv.deleteDiscountHandler)
+		}
 	}
 }
 
@@ -218,16 +227,6 @@ func (sv *Server) setupRatingRoutes(rg *gin.RouterGroup) {
 }
 
 // Setup discount-related routes
-func (sv *Server) setupDiscountRoutes(rg *gin.RouterGroup) {
-	discounts := rg.Group("discounts")
-	{
-		discounts.POST("", sv.createDiscountHandler)
-		discounts.GET("", sv.getDiscountsHandler)
-		discounts.GET(":id", sv.getDiscountByIDHandler)
-		discounts.PUT(":id", sv.updateDiscountHandler)
-		discounts.DELETE(":id", sv.deleteDiscountHandler)
-	}
-}
 
 // Setup webhook routes
 func (sv *Server) setupWebhookRoutes(router *gin.Engine) {

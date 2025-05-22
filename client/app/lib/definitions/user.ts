@@ -5,11 +5,11 @@ export type UserModel = {
   fullname: string;
   email: string;
   phone: string;
-  created_at?: Date;
-  verified_email?: boolean;
-  verified_phone?: boolean;
-  updated_at?: Date;
-  password_changed_at?: Date;
+  createdAt?: Date;
+  verifiedEmail?: boolean;
+  verifiedPhone?: boolean;
+  updatedAt?: Date;
+  passwordChangedAt?: Date;
   addresses?: AddressModel[];
 };
 

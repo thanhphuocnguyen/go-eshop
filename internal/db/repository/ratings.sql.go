@@ -93,32 +93,32 @@ LEFT JOIN images AS img ON img.id = ia.image_id
 type GetProductRatingsParams struct {
 	Limit      int64       `json:"limit"`
 	Offset     int64       `json:"offset"`
-	ProductID  pgtype.UUID `json:"product_id"`
-	IsVisible  *bool       `json:"is_visible"`
-	IsApproved *bool       `json:"is_approved"`
+	ProductID  pgtype.UUID `json:"productId"`
+	IsVisible  *bool       `json:"isVisible"`
+	IsApproved *bool       `json:"isApproved"`
 }
 
 type GetProductRatingsRow struct {
 	ID               uuid.UUID      `json:"id"`
-	ProductID        uuid.UUID      `json:"product_id"`
-	UserID           uuid.UUID      `json:"user_id"`
-	OrderItemID      pgtype.UUID    `json:"order_item_id"`
+	ProductID        uuid.UUID      `json:"productId"`
+	UserID           uuid.UUID      `json:"userId"`
+	OrderItemID      pgtype.UUID    `json:"orderItemId"`
 	Rating           pgtype.Numeric `json:"rating"`
-	ReviewTitle      *string        `json:"review_title"`
-	ReviewContent    *string        `json:"review_content"`
-	VerifiedPurchase bool           `json:"verified_purchase"`
-	IsVisible        bool           `json:"is_visible"`
-	IsApproved       bool           `json:"is_approved"`
-	HelpfulVotes     int32          `json:"helpful_votes"`
-	UnhelpfulVotes   int32          `json:"unhelpful_votes"`
-	CreatedAt        time.Time      `json:"created_at"`
-	UpdatedAt        time.Time      `json:"updated_at"`
+	ReviewTitle      *string        `json:"reviewTitle"`
+	ReviewContent    *string        `json:"reviewContent"`
+	VerifiedPurchase bool           `json:"verifiedPurchase"`
+	IsVisible        bool           `json:"isVisible"`
+	IsApproved       bool           `json:"isApproved"`
+	HelpfulVotes     int32          `json:"helpfulVotes"`
+	UnhelpfulVotes   int32          `json:"unhelpfulVotes"`
+	CreatedAt        time.Time      `json:"createdAt"`
+	UpdatedAt        time.Time      `json:"updatedAt"`
 	Fullname         string         `json:"fullname"`
 	Email            string         `json:"email"`
-	ProductName      string         `json:"product_name"`
-	ImageID          pgtype.UUID    `json:"image_id"`
-	ImageUrl         *string        `json:"image_url"`
-	ImageRole        *string        `json:"image_role"`
+	ProductName      string         `json:"productName"`
+	ImageID          pgtype.UUID    `json:"imageId"`
+	ImageUrl         *string        `json:"imageUrl"`
+	ImageRole        *string        `json:"imageRole"`
 }
 
 func (q *Queries) GetProductRatings(ctx context.Context, arg GetProductRatingsParams) ([]GetProductRatingsRow, error) {
@@ -179,8 +179,8 @@ ORDER BY pr.created_at DESC
 `
 
 type GetProductRatingsByOrderItemIDsRow struct {
-	ProductRating ProductRating `json:"product_rating"`
-	UserID        uuid.UUID     `json:"user_id"`
+	ProductRating ProductRating `json:"productRating"`
+	UserID        uuid.UUID     `json:"userId"`
 	Fullname      string        `json:"fullname"`
 	Email         string        `json:"email"`
 }
@@ -235,14 +235,14 @@ LIMIT $2 OFFSET $3
 `
 
 type GetProductRatingsByUserIDParams struct {
-	UserID uuid.UUID `json:"user_id"`
+	UserID uuid.UUID `json:"userId"`
 	Limit  int64     `json:"limit"`
 	Offset int64     `json:"offset"`
 }
 
 type GetProductRatingsByUserIDRow struct {
-	ProductRating ProductRating `json:"product_rating"`
-	UserID        uuid.UUID     `json:"user_id"`
+	ProductRating ProductRating `json:"productRating"`
+	UserID        uuid.UUID     `json:"userId"`
 	Fullname      string        `json:"fullname"`
 	Email         string        `json:"email"`
 }
@@ -325,8 +325,8 @@ WHERE rr.rating_id = $1
 `
 
 type GetRatingRepliesByRatingIDRow struct {
-	RatingReply RatingReply `json:"rating_reply"`
-	ReplyBy     uuid.UUID   `json:"reply_by"`
+	RatingReply RatingReply `json:"ratingReply"`
+	ReplyBy     uuid.UUID   `json:"replyBy"`
 	Fullname    string      `json:"fullname"`
 	Email       string      `json:"email"`
 }
@@ -372,8 +372,8 @@ WHERE rr.reply_by = $1
 `
 
 type GetRatingRepliesByUserIDRow struct {
-	RatingReply RatingReply `json:"rating_reply"`
-	ReplyBy     uuid.UUID   `json:"reply_by"`
+	RatingReply RatingReply `json:"ratingReply"`
+	ReplyBy     uuid.UUID   `json:"replyBy"`
 	Fullname    string      `json:"fullname"`
 	Email       string      `json:"email"`
 }
@@ -414,8 +414,8 @@ SELECT id, rating_id, user_id, is_helpful, created_at, updated_at FROM rating_vo
 `
 
 type GetRatingVoteParams struct {
-	RatingID uuid.UUID `json:"rating_id"`
-	UserID   uuid.UUID `json:"user_id"`
+	RatingID uuid.UUID `json:"ratingId"`
+	UserID   uuid.UUID `json:"userId"`
 }
 
 func (q *Queries) GetRatingVote(ctx context.Context, arg GetRatingVoteParams) (RatingVote, error) {
@@ -539,13 +539,13 @@ INSERT INTO product_ratings (product_id, user_id, order_item_id, rating, review_
 `
 
 type InsertProductRatingParams struct {
-	ProductID        uuid.UUID      `json:"product_id"`
-	UserID           uuid.UUID      `json:"user_id"`
-	OrderItemID      pgtype.UUID    `json:"order_item_id"`
+	ProductID        uuid.UUID      `json:"productId"`
+	UserID           uuid.UUID      `json:"userId"`
+	OrderItemID      pgtype.UUID    `json:"orderItemId"`
 	Rating           pgtype.Numeric `json:"rating"`
-	ReviewTitle      *string        `json:"review_title"`
-	ReviewContent    *string        `json:"review_content"`
-	VerifiedPurchase bool           `json:"verified_purchase"`
+	ReviewTitle      *string        `json:"reviewTitle"`
+	ReviewContent    *string        `json:"reviewContent"`
+	VerifiedPurchase bool           `json:"verifiedPurchase"`
 }
 
 func (q *Queries) InsertProductRating(ctx context.Context, arg InsertProductRatingParams) (ProductRating, error) {
@@ -583,8 +583,8 @@ INSERT INTO rating_replies (rating_id, reply_by, content) VALUES ($1, $2, $3) RE
 `
 
 type InsertRatingReplyParams struct {
-	RatingID uuid.UUID `json:"rating_id"`
-	ReplyBy  uuid.UUID `json:"reply_by"`
+	RatingID uuid.UUID `json:"ratingId"`
+	ReplyBy  uuid.UUID `json:"replyBy"`
 	Content  string    `json:"content"`
 }
 
@@ -608,9 +608,9 @@ INSERT INTO rating_votes (rating_id, user_id, is_helpful) VALUES ($1, $2, $3) RE
 `
 
 type InsertRatingVotesParams struct {
-	RatingID  uuid.UUID `json:"rating_id"`
-	UserID    uuid.UUID `json:"user_id"`
-	IsHelpful bool      `json:"is_helpful"`
+	RatingID  uuid.UUID `json:"ratingId"`
+	UserID    uuid.UUID `json:"userId"`
+	IsHelpful bool      `json:"isHelpful"`
 }
 
 func (q *Queries) InsertRatingVotes(ctx context.Context, arg InsertRatingVotesParams) (RatingVote, error) {
@@ -644,13 +644,13 @@ WHERE id = $1 RETURNING id, product_id, user_id, order_item_id, rating, review_t
 type UpdateProductRatingParams struct {
 	ID               uuid.UUID      `json:"id"`
 	Rating           pgtype.Numeric `json:"rating"`
-	ReviewTitle      *string        `json:"review_title"`
-	ReviewContent    *string        `json:"review_content"`
-	IsVisible        *bool          `json:"is_visible"`
-	IsApproved       *bool          `json:"is_approved"`
-	VerifiedPurchase *bool          `json:"verified_purchase"`
-	HelpfulVotes     *int32         `json:"helpful_votes"`
-	UnhelpfulVotes   *int32         `json:"unhelpful_votes"`
+	ReviewTitle      *string        `json:"reviewTitle"`
+	ReviewContent    *string        `json:"reviewContent"`
+	IsVisible        *bool          `json:"isVisible"`
+	IsApproved       *bool          `json:"isApproved"`
+	VerifiedPurchase *bool          `json:"verifiedPurchase"`
+	HelpfulVotes     *int32         `json:"helpfulVotes"`
+	UnhelpfulVotes   *int32         `json:"unhelpfulVotes"`
 }
 
 func (q *Queries) UpdateProductRating(ctx context.Context, arg UpdateProductRatingParams) (ProductRating, error) {
@@ -693,7 +693,7 @@ WHERE id = $1 RETURNING id, rating_id, reply_by, content, is_visible, created_at
 
 type UpdateRatingRepliesParams struct {
 	ID           uuid.UUID `json:"id"`
-	ReplyContent *string   `json:"reply_content"`
+	ReplyContent *string   `json:"replyContent"`
 }
 
 func (q *Queries) UpdateRatingReplies(ctx context.Context, arg UpdateRatingRepliesParams) (RatingReply, error) {
@@ -719,7 +719,7 @@ WHERE id = $1 RETURNING id, rating_id, user_id, is_helpful, created_at, updated_
 
 type UpdateRatingVoteParams struct {
 	ID        uuid.UUID `json:"id"`
-	IsHelpful *bool     `json:"is_helpful"`
+	IsHelpful *bool     `json:"isHelpful"`
 }
 
 func (q *Queries) UpdateRatingVote(ctx context.Context, arg UpdateRatingVoteParams) (RatingVote, error) {

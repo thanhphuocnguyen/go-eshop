@@ -28,7 +28,7 @@ export const ProductInfoForm: React.FC<{
 
   useEffect(() => {
     if (!productDetail && categories && categories.length > 0) {
-      setValue('product_info.category', categories[0], {
+      setValue('productInfo.category', categories[0], {
         shouldDirty: false,
       });
     }
@@ -37,7 +37,7 @@ export const ProductInfoForm: React.FC<{
 
   useEffect(() => {
     if (!productDetail && collections && collections.length > 0) {
-      setValue('product_info.collection', collections[0], {
+      setValue('productInfo.collection', collections[0], {
         shouldDirty: false,
       });
     }
@@ -46,7 +46,7 @@ export const ProductInfoForm: React.FC<{
 
   useEffect(() => {
     if (!productDetail && brands && brands.length > 0) {
-      setValue('product_info.brand', brands[0], {
+      setValue('productInfo.brand', brands[0], {
         shouldDirty: false,
       });
     }
@@ -59,8 +59,8 @@ export const ProductInfoForm: React.FC<{
         <h2 className='text-xl font-bold text-primary'>Product Information</h2>
         <Field className='flex items-center gap-2'>
           <Switch
-            checked={watch('product_info.is_active')}
-            onChange={(value) => setValue('product_info.is_active', value)}
+            checked={watch('productInfo.isActive')}
+            onChange={(value) => setValue('productInfo.isActive', value)}
             className={({ checked }) =>
               clsx(
                 'relative inline-flex h-6 w-11 items-center rounded-full',
@@ -87,34 +87,34 @@ export const ProductInfoForm: React.FC<{
       <div className='grid grid-cols-4 gap-4 mb-6'>
         <TextField
           label={'Product name'}
-          {...register('product_info.name')}
-          error={formState.errors.product_info?.name?.message}
+          {...register('productInfo.name')}
+          error={formState.errors.productInfo?.name?.message}
           placeholder='Enter product name...'
           type='text'
           required
         />
         <TextField
-          {...register('product_info.sku')}
+          {...register('productInfo.sku')}
           label={'Sku'}
           placeholder='Enter sku...'
           type='text'
-          error={formState.errors.product_info?.sku?.message}
+          error={formState.errors.productInfo?.sku?.message}
         />
         <TextField
-          {...register('product_info.price', {
+          {...register('productInfo.price', {
             valueAsNumber: true,
           })}
           label={'Price'}
           placeholder='Enter price...'
           type='number'
-          error={formState.errors.product_info?.price?.message}
+          error={formState.errors.productInfo?.price?.message}
         />
         <TextField
           label={'Slug'}
           placeholder='Enter slug...'
           type='text'
-          error={formState.errors.product_info?.slug?.message}
-          {...register('product_info.slug')}
+          error={formState.errors.productInfo?.slug?.message}
+          {...register('productInfo.slug')}
         />
         {attributesLoading ? (
           <div className='flex justify-center items-center'>
@@ -128,7 +128,7 @@ export const ProductInfoForm: React.FC<{
             label='Select an attribute'
             setSelected={(values) => {
               setValue(
-                'product_info.attributes',
+                'productInfo.attributes',
                 values.map((e) => e.id),
                 {
                   shouldDirty: false,
@@ -139,7 +139,7 @@ export const ProductInfoForm: React.FC<{
             getDisplayValue={(option) => {
               return option?.name || '';
             }}
-            selected={watch('product_info.attributes', []).map((e) => {
+            selected={watch('productInfo.attributes', []).map((e) => {
               const attribute = attributes.find((a) => a.id === e)!;
               return {
                 id: attribute.id,
@@ -156,9 +156,9 @@ export const ProductInfoForm: React.FC<{
         ) : (
           <StyledComboBoxController
             control={control}
-            name='product_info.category'
+            name='productInfo.category'
             label='Category'
-            error={formState.errors.product_info?.category?.message}
+            error={formState.errors.productInfo?.category?.message}
             options={
               categories?.map((e) => ({
                 id: e.id,
@@ -173,10 +173,10 @@ export const ProductInfoForm: React.FC<{
           </div>
         ) : (
           <StyledComboBoxController
-            name='product_info.brand'
+            name='productInfo.brand'
             nullable
             control={control}
-            error={formState.errors.product_info?.brand?.message}
+            error={formState.errors.productInfo?.brand?.message}
             label='Brand'
             options={
               brands?.map((e) => ({
@@ -193,10 +193,10 @@ export const ProductInfoForm: React.FC<{
         ) : (
           <StyledComboBoxController
             control={control}
-            name='product_info.collection'
+            name='productInfo.collection'
             nullable
             label='Collection'
-            error={formState.errors.product_info?.brand?.message}
+            error={formState.errors.productInfo?.brand?.message}
             options={
               collections?.map((e) => ({
                 id: e.id,
@@ -210,10 +210,10 @@ export const ProductInfoForm: React.FC<{
       <Field className='w-full mb-4'>
         <TextField
           label='Short Description'
-          {...register('product_info.short_description')}
+          {...register('productInfo.shortDescription')}
           placeholder='Enter short product description...'
           type='text'
-          error={formState.errors.product_info?.short_description?.message}
+          error={formState.errors.productInfo?.shortDescription?.message}
           className='w-full'
         />
       </Field>
@@ -221,9 +221,9 @@ export const ProductInfoForm: React.FC<{
       <Field className='w-full'>
         <Label className='font-semibold'>Description</Label>
         <TiptapController
-          name='product_info.description'
+          name='productInfo.description'
           control={control}
-          error={formState.errors.product_info?.description?.message}
+          error={formState.errors.productInfo?.description?.message}
         />
       </Field>
 

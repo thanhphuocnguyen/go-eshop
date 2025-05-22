@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { Button } from '@headlessui/react';
 import Loading from '@/app/loading';
@@ -61,8 +61,8 @@ export default function Page() {
     setLoading(true);
     try {
       // Using the admin ratings API endpoint
-      const response = await apiFetchClientSide<AdminRatingModel[]>(
-        `${ADMIN_API_PATHS.RATINGS}?page=${page}&page_size=${pageSize}${search ? `&search=${search}` : ''}${status !== 'all' ? `&status=${status}` : ''}`,
+      const response = await clientSideFetch<AdminRatingModel[]>(
+        `${ADMIN_API_PATHS.RATINGS}?page=${page}&pageSize=${pageSize}${search ? `&search=${search}` : ''}${status !== 'all' ? `&status=${status}` : ''}`,
         {
           method: 'GET',
           headers: {
@@ -109,7 +109,7 @@ export default function Page() {
     if (!selectedRating) return;
 
     try {
-      const response = await apiFetchClientSide<boolean>(
+      const response = await clientSideFetch<boolean>(
         ADMIN_API_PATHS.RATING_DETAIL.replace(':id', selectedRating.id),
         {
           method: 'DELETE',
@@ -133,7 +133,7 @@ export default function Page() {
 
   const handleApprove = async (rating: AdminRatingModel) => {
     try {
-      const response = await apiFetchClientSide<boolean>(
+      const response = await clientSideFetch<boolean>(
         ADMIN_API_PATHS.RATING_APPROVE.replace(':id', rating.id),
         {
           method: 'PUT',
@@ -160,7 +160,7 @@ export default function Page() {
 
   const handleReject = async (rating: AdminRatingModel) => {
     try {
-      const response = await apiFetchClientSide<boolean>(
+      const response = await clientSideFetch<boolean>(
         ADMIN_API_PATHS.RATING_REJECT.replace(':id', rating.id),
         {
           method: 'PUT',

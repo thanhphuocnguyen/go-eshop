@@ -5,7 +5,7 @@ import { redirect, useRouter } from 'next/navigation';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe, StripeError } from '@stripe/stripe-js';
 import StripeCheckoutForm from './StripeCheckoutForm';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { toast } from 'react-toastify';
 import { CheckoutDataResponse, PaymentResponse } from '../../_lib/definitions';
@@ -24,8 +24,8 @@ export default function StripePage() {
 
   async function getPaymentById(paymentId: string) {
     setIsLoading(true);
-    const { data, error } = await apiFetchClientSide<PaymentResponse>(
-      PUBLIC_API_PATHS.PAYMENT_DETAIL.replace(':id', paymentId)
+    const { data, error } = await clientSideFetch<PaymentResponse>(
+      PUBLIC_API_PATHS.PAYMENT.replace(':id', paymentId)
     );
 
     if (error) {

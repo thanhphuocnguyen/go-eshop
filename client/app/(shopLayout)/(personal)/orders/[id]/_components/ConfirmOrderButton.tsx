@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { useRouter } from 'next/navigation';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
@@ -25,8 +25,8 @@ export default function ConfirmOrderButton({
     setLoading(true);
     setError(null);
 
-    const { data, error } = await apiFetchClientSide<GenericResponse<boolean>>(
-      PUBLIC_API_PATHS.RECEIVED_ORDER_ITEM.replace(':id', orderId),
+    const { data, error } = await clientSideFetch<GenericResponse<boolean>>(
+      PUBLIC_API_PATHS.CONFIRM_RECEIVED_ORDER.replace(':id', orderId),
       {
         method: 'PUT',
       }

@@ -13,13 +13,13 @@ import {
 } from '@headlessui/react';
 import clsx from 'clsx';
 import { CheckIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
-import { BaseOption } from '@/app/lib/definitions';
 import { Control, Controller, FieldValues, Path } from 'react-hook-form';
 
-interface StyledMultipleComboBoxControllerProps<T extends FieldValues> {
+interface StyledMultipleComboBoxControllerProps<T extends FieldValues, D> {
   label: string;
-  options: any[];
-  getDisplayValue: (option: any) => string;
+  options: D[];
+  getDisplayValue: (options: D[]) => string;
+  getKey: (option: D) => string;
   error?: boolean;
   message?: string;
   name: Path<T>;
@@ -28,7 +28,7 @@ interface StyledMultipleComboBoxControllerProps<T extends FieldValues> {
   control: Control<T>;
 }
 
-export const StyledMultipleComboBoxController = <T extends FieldValues>({
+export const StyledMultipleComboBoxController = <T extends FieldValues, D>({
   control,
   label,
   error,
@@ -36,9 +36,11 @@ export const StyledMultipleComboBoxController = <T extends FieldValues>({
   disabled,
   placeholder = 'Select options...',
   options,
-  getDisplayValue,
+  getDisplayValue = (option: D[]) =>
+    option.map((e) => e.name as unknown as string).join(', '),
+  getKey = (option: D) => option as unknown as string,
   name,
-}: StyledMultipleComboBoxControllerProps<T>) => {
+}: StyledMultipleComboBoxControllerProps<T, D>) => {
   const [query, setQuery] = useState('');
   const [filteredOptions, setFilteredOptions] = useState(options);
 
@@ -75,9 +77,7 @@ export const StyledMultipleComboBoxController = <T extends FieldValues>({
                   'w-full rounded-lg border border-gray-300 bg-white py-3 pr-8 pl-3 text-sm/6 text-gray-500 transition-all duration-500 shadow-none ease-in-out',
                   'focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 focus:ring-1 focus:ring-sky-400 focus:shadow-lg'
                 )}
-                displayValue={(option: BaseOption[]) =>
-                  option?.map((opt) => getDisplayValue(opt)).join(', ')
-                }
+                displayValue={(options: D) => getDisplayValue(options)}
                 onChange={(event) => setQuery(event.target.value)}
               />
               <ComboboxButton className='group absolute inset-y-0 right-0 px-2.5'>
@@ -95,12 +95,14 @@ export const StyledMultipleComboBoxController = <T extends FieldValues>({
             >
               {filteredOptions.map((opt) => (
                 <ComboboxOption
-                  key={opt.id}
+                  key={getKey(opt)}
                   value={opt}
                   className='group flex cursor-default items-center gap-2 rounded-lg py-1.5 px-3 select-none data-[focus]:bg-tertiary'
                 >
                   <CheckIcon className='invisible size-4 group-data-[selected]:visible text-green-300' />
-                  <div className='text-sm/6 text-gray-500'>{getDisplayValue(opt)}</div>
+                  <div className='text-sm/6 text-gray-500'>
+                    {getDisplayValue(opt)}
+                  </div>
                 </ComboboxOption>
               ))}
             </ComboboxOptions>

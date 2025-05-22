@@ -5,7 +5,7 @@ import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import CategoryProductSkeleton from '@/components/Product/CategoryProductSkeleton';
 import { GeneralCategoryModel } from '@/app/lib/definitions';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
-import { apiFetchServerSide } from '@/app/lib/apis/apiServer';
+import { serverSideFetch } from '@/app/lib/apis/apiServer';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
@@ -35,7 +35,7 @@ export async function generateMetadata({
       description:
         category.description ||
         `Browse our selection of ${category.name} products.`,
-      images: category.image_url ? [{ url: category.image_url }] : [],
+      images: category.imageUrl ? [{ url: category.imageUrl }] : [],
     },
     twitter: {
       card: 'summary_large_image',
@@ -43,7 +43,7 @@ export async function generateMetadata({
       description:
         category.description ||
         `Browse our selection of ${category.name} products.`,
-      images: category.image_url ? [category.image_url] : [],
+      images: category.imageUrl ? [category.imageUrl] : [],
     },
   };
 }
@@ -51,7 +51,7 @@ export async function generateMetadata({
 export async function getCategoryBySlug(
   slug: string
 ): Promise<GeneralCategoryModel | null> {
-  const { data, error } = await apiFetchServerSide<GeneralCategoryModel>(
+  const { data, error } = await serverSideFetch<GeneralCategoryModel>(
     `${PUBLIC_API_PATHS.CATEGORIES}/${slug}`
   );
 
@@ -108,10 +108,10 @@ export default async function CategoryLayout({
       </Link>
 
       <div className='flex items-center mb-8'>
-        {category.image_url && (
+        {category.imageUrl && (
           <div className='h-24 w-24 mr-6 relative overflow-hidden rounded-lg shadow-md'>
             <Image
-              src={category.image_url}
+              src={category.imageUrl}
               alt={category.name}
               fill
               className='object-cover'

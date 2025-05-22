@@ -18,11 +18,11 @@ func (sv *Server) createDiscountHandler(c *gin.Context) {
 	}
 	sqlParams := repository.InsertDiscountParams{
 		Code:          req.Code,
-		Description:   &req.Description,
 		DiscountType:  req.DiscountType,
 		DiscountValue: utils.GetPgNumericFromFloat(req.DiscountValue),
-		IsActive:      &req.IsActive,
+		IsActive:      req.IsActive,
 		UsageLimit:    req.UsageLimit,
+		Description:   req.Description,
 		StartsAt:      utils.GetPgTypeTimestamp(req.StartsAt),
 		ExpiresAt:     utils.GetPgTypeTimestamp(req.ExpiresAt),
 	}
@@ -52,18 +52,19 @@ func (sv *Server) getDiscountsHandler(c *gin.Context) {
 
 	// Get all discounts
 	sqlParams := repository.GetDiscountsParams{
-		Limit:        queries.PageSize,
-		Offset:       (queries.Page - 1) * queries.PageSize,
-		Search:       queries.Search,
-		DiscountType: queries.DiscountType,
-		IsActive:     queries.IsActive,
+		Limit:  queries.PageSize,
+		Offset: (queries.Page - 1) * queries.PageSize,
+		// Search:       queries.Search,
+		// DiscountType: queries.DiscountType,
+		// IsActive:     queries.IsActive,
 	}
-	if queries.FromDate != nil {
-		sqlParams.FromDate = utils.GetPgTypeTimestamp(*queries.FromDate)
-	}
-	if queries.ToDate != nil {
-		sqlParams.ToDate = utils.GetPgTypeTimestamp(*queries.ToDate)
-	}
+
+	// if queries.FromDate != nil {
+	// 	sqlParams.FromDate = utils.GetPgTypeTimestamp(*queries.FromDate)
+	// }
+	// if queries.ToDate != nil {
+	// 	sqlParams.ToDate = utils.GetPgTypeTimestamp(*queries.ToDate)
+	// }
 
 	discounts, err := sv.repo.GetDiscounts(c, sqlParams)
 	if err != nil {
@@ -75,9 +76,34 @@ func (sv *Server) getDiscountsHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "Failed to count discounts", err))
 		return
 	}
+	listData := make([]DiscountListItemResponseModel, len(discounts))
+	for i, discount := range discounts {
+		discountValue, _ := discount.DiscountValue.Float64Value()
+
+		listData[i] = DiscountListItemResponseModel{
+			ID:            discount.ID.String(),
+			Code:          discount.Code,
+			DiscountType:  discount.DiscountType,
+			DiscountValue: discountValue.Float64,
+			IsActive:      discount.IsActive,
+			UsedCount:     discount.UsedCount,
+			UsageLimit:    discount.UsageLimit,
+			Description:   discount.Description,
+			StartsAt:      discount.StartsAt.String(),
+			ExpiredAt:     discount.ExpiresAt.String(),
+		}
+		if discount.MinPurchaseAmount.Valid {
+			minPurchaseAmount, _ := discount.MinPurchaseAmount.Float64Value()
+			listData[i].MinPurchase = minPurchaseAmount.Float64
+		}
+		if discount.MaxDiscountAmount.Valid {
+			maxDiscountAmount, _ := discount.MaxDiscountAmount.Float64Value()
+			listData[i].MaxDiscount = maxDiscountAmount.Float64
+		}
+	}
 	pagination := createPagination(queries.Page, queries.PageSize, total)
 
-	c.JSON(http.StatusOK, createSuccessResponse(c, discounts, "Discounts retrieved successfully", pagination, nil))
+	c.JSON(http.StatusOK, createSuccessResponse(c, listData, "Discounts retrieved successfully", pagination, nil))
 }
 
 func (sv *Server) getDiscountByIDHandler(c *gin.Context) {
@@ -93,8 +119,35 @@ func (sv *Server) getDiscountByIDHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "Failed to get discount", err))
 		return
 	}
+	discountValue, _ := discount.DiscountValue.Float64Value()
 
-	c.JSON(http.StatusOK, createSuccessResponse(c, discount, "Discount retrieved successfully", nil, nil))
+	resp := DiscountDetailResponseModel{
+		ID:            discount.ID.String(),
+		Code:          discount.Code,
+		DiscountType:  discount.DiscountType,
+		DiscountValue: discountValue.Float64,
+		IsActive:      discount.IsActive,
+		UsedCount:     discount.UsedCount,
+		UsageLimit:    discount.UsageLimit,
+		Description:   discount.Description,
+		StartsAt:      discount.StartsAt.String(),
+		ExpiredAt:     discount.ExpiresAt.String(),
+		CreatedAt:     discount.CreatedAt.String(),
+		UpdatedAt:     discount.UpdatedAt.String(),
+		Products:      []DiscountLinkObject{},
+		Categories:    []DiscountLinkObject{},
+		Users:         []DiscountLinkObject{},
+	}
+	if discount.MinPurchaseAmount.Valid {
+		minPurchaseAmount, _ := discount.MinPurchaseAmount.Float64Value()
+		resp.MinPurchase = minPurchaseAmount.Float64
+	}
+	if discount.MaxDiscountAmount.Valid {
+		maxDiscountAmount, _ := discount.MaxDiscountAmount.Float64Value()
+		resp.MaxDiscount = maxDiscountAmount.Float64
+	}
+
+	c.JSON(http.StatusOK, createSuccessResponse(c, resp, "Discount retrieved successfully", nil, nil))
 }
 
 func (sv *Server) updateDiscountHandler(c *gin.Context) {

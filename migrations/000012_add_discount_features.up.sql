@@ -8,12 +8,12 @@ CREATE TABLE IF NOT EXISTS discounts (
     min_purchase_amount NUMERIC(10, 2),
     max_discount_amount NUMERIC(10, 2),
     usage_limit INTEGER,
-    used_count INTEGER DEFAULT 0,
-    is_active BOOLEAN DEFAULT true,
+    used_count INTEGER NOT NULL DEFAULT 0,
+    is_active BOOLEAN NOT NULL DEFAULT true,
     starts_at TIMESTAMPTZ NOT NULL,
     expires_at TIMESTAMPTZ NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMPTZ
 );
 

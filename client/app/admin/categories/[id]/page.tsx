@@ -10,7 +10,7 @@ import useSWR from 'swr';
 import Loading from '@/app/loading';
 import { GeneralCategoryModel, GenericResponse } from '@/app/lib/definitions';
 import CategoryProductList from '../../_components/CategoryProductList';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 
 export default function AdminCategoryDetail({
   params,
@@ -21,7 +21,7 @@ export default function AdminCategoryDetail({
   const { data: category, isLoading } = useSWR(
     ADMIN_API_PATHS.CATEGORY.replaceAll(':id', id),
     async (url) => {
-      const response = await apiFetchClientSide<GeneralCategoryModel>(url, {});
+      const response = await clientSideFetch<GeneralCategoryModel>(url, {});
       return response.data;
     },
     {
@@ -37,7 +37,7 @@ export default function AdminCategoryDetail({
   );
 
   async function handleSave(data: FormData) {
-    const response = await apiFetchClientSide<GenericResponse<number>>(
+    const response = await clientSideFetch<GenericResponse<number>>(
       ADMIN_API_PATHS.CATEGORY.replace(':id', id),
       {
         method: 'PUT',

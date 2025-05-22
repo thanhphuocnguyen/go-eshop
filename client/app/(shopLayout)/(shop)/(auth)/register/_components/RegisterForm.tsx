@@ -13,7 +13,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { TextField } from '@/components/FormFields';
 import { useRouter } from 'next/navigation';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { toast } from 'react-toastify';
 
@@ -32,7 +32,7 @@ export default function RegisterFormComponent() {
 
   const onSubmit = async (body: RegisterForm) => {
     try {
-      const { data, error } = await apiFetchClientSide<GenericResponse<unknown>>(
+      const { data, error } = await clientSideFetch<GenericResponse<unknown>>(
         PUBLIC_API_PATHS.REGISTER,
         {
           method: 'POST',

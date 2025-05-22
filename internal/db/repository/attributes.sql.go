@@ -40,10 +40,10 @@ INSERT INTO attribute_values (attribute_id, "name", code, display_order) VALUES 
 `
 
 type CreateAttributeValueParams struct {
-	AttributeID  uuid.UUID `json:"attribute_id"`
+	AttributeID  uuid.UUID `json:"attributeId"`
 	Name         string    `json:"name"`
 	Code         string    `json:"code"`
-	DisplayOrder int16     `json:"display_order"`
+	DisplayOrder int16     `json:"displayOrder"`
 }
 
 // Attribute values
@@ -68,8 +68,8 @@ func (q *Queries) CreateAttributeValue(ctx context.Context, arg CreateAttributeV
 }
 
 type CreateBulkProductVariantAttributeParams struct {
-	VariantID        uuid.UUID `json:"variant_id"`
-	AttributeValueID uuid.UUID `json:"attribute_value_id"`
+	VariantID        uuid.UUID `json:"variantId"`
+	AttributeValueID uuid.UUID `json:"attributeValueId"`
 }
 
 const createProductVariantAttribute = `-- name: CreateProductVariantAttribute :one
@@ -77,8 +77,8 @@ INSERT INTO variant_attribute_values (variant_id, attribute_value_id) VALUES ($1
 `
 
 type CreateProductVariantAttributeParams struct {
-	VariantID        uuid.UUID `json:"variant_id"`
-	AttributeValueID uuid.UUID `json:"attribute_value_id"`
+	VariantID        uuid.UUID `json:"variantId"`
+	AttributeValueID uuid.UUID `json:"attributeValueId"`
 }
 
 // Product Variant attributes
@@ -129,13 +129,13 @@ ORDER BY a.id, av.display_order
 type GetAttributeByIDRow struct {
 	ID                      uuid.UUID          `json:"id"`
 	Name                    string             `json:"name"`
-	CreatedAt               time.Time          `json:"created_at"`
-	AttrValName             *string            `json:"attr_val_name"`
-	AttributeValueID        pgtype.UUID        `json:"attribute_value_id"`
-	AttributeValueIsActive  *bool              `json:"attribute_value_is_active"`
-	AttrValCode             *string            `json:"attr_val_code"`
-	AttributeValueCreatedAt pgtype.Timestamptz `json:"attribute_value_created_at"`
-	DisplayOrder            *int16             `json:"display_order"`
+	CreatedAt               time.Time          `json:"createdAt"`
+	AttrValName             *string            `json:"attrValName"`
+	AttributeValueID        pgtype.UUID        `json:"attributeValueId"`
+	AttributeValueIsActive  *bool              `json:"attributeValueIsActive"`
+	AttrValCode             *string            `json:"attrValCode"`
+	AttributeValueCreatedAt pgtype.Timestamptz `json:"attributeValueCreatedAt"`
+	DisplayOrder            *int16             `json:"displayOrder"`
 }
 
 func (q *Queries) GetAttributeByID(ctx context.Context, id uuid.UUID) ([]GetAttributeByIDRow, error) {
@@ -271,10 +271,10 @@ ORDER BY atv.id
 `
 
 type GetAttributeWithValuesByIDsRow struct {
-	AttributeName      string      `json:"attribute_name"`
-	AttributeID        uuid.UUID   `json:"attribute_id"`
-	AttributeValueName *string     `json:"attribute_value_name"`
-	AttributeValueID   pgtype.UUID `json:"attribute_value_id"`
+	AttributeName      string      `json:"attributeName"`
+	AttributeID        uuid.UUID   `json:"attributeId"`
+	AttributeValueName *string     `json:"attributeValueName"`
+	AttributeValueID   pgtype.UUID `json:"attributeValueId"`
 }
 
 func (q *Queries) GetAttributeWithValuesByIDs(ctx context.Context, ids []uuid.UUID) ([]GetAttributeWithValuesByIDsRow, error) {
@@ -320,13 +320,13 @@ ORDER BY a.id, av.display_order
 type GetAttributesRow struct {
 	ID                      uuid.UUID          `json:"id"`
 	Name                    string             `json:"name"`
-	CreatedAt               time.Time          `json:"created_at"`
-	AttrValName             *string            `json:"attr_val_name"`
-	AttributeValueID        pgtype.UUID        `json:"attribute_value_id"`
-	AttributeValueIsActive  *bool              `json:"attribute_value_is_active"`
-	AttrValCode             *string            `json:"attr_val_code"`
-	AttributeValueCreatedAt pgtype.Timestamptz `json:"attribute_value_created_at"`
-	DisplayOrder            *int16             `json:"display_order"`
+	CreatedAt               time.Time          `json:"createdAt"`
+	AttrValName             *string            `json:"attrValName"`
+	AttributeValueID        pgtype.UUID        `json:"attributeValueId"`
+	AttributeValueIsActive  *bool              `json:"attributeValueIsActive"`
+	AttrValCode             *string            `json:"attrValCode"`
+	AttributeValueCreatedAt pgtype.Timestamptz `json:"attributeValueCreatedAt"`
+	DisplayOrder            *int16             `json:"displayOrder"`
 }
 
 func (q *Queries) GetAttributes(ctx context.Context, ids []uuid.UUID) ([]GetAttributesRow, error) {
@@ -449,9 +449,9 @@ RETURNING id, attribute_id, name, code, is_active, display_order, created_at
 type UpdateAttributeValueParams struct {
 	ID           uuid.UUID `json:"id"`
 	Code         *string   `json:"code"`
-	IsActive     *bool     `json:"is_active"`
+	IsActive     *bool     `json:"isActive"`
 	Name         *string   `json:"name"`
-	DisplayOrder *int16    `json:"display_order"`
+	DisplayOrder *int16    `json:"displayOrder"`
 }
 
 func (q *Queries) UpdateAttributeValue(ctx context.Context, arg UpdateAttributeValueParams) (AttributeValue, error) {

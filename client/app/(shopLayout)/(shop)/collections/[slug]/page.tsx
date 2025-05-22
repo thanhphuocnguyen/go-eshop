@@ -1,5 +1,5 @@
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
-import { apiFetchServerSide } from '@/app/lib/apis/apiServer';
+import { serverSideFetch } from '@/app/lib/apis/apiServer';
 import { Pagination, ProductDetailModel } from '@/app/lib/definitions';
 import ProductGrid from '@/components/Product/ProductGrid';
 // Import the CategoryFilter component
@@ -49,8 +49,8 @@ async function getCollectionProducts(
     queryParams.attribute = attributeSlug;
   }
 
-  const result = await apiFetchServerSide<ProductDetailModel[]>(
-    `${PUBLIC_API_PATHS.PRODUCTS}?page=${page}&page_size=${pageSize}`,
+  const result = await serverSideFetch<ProductDetailModel[]>(
+    `${PUBLIC_API_PATHS.PRODUCTS}?page=${page}&pageSize=${pageSize}`,
     {
       queryParams,
     }

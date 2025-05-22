@@ -3,19 +3,19 @@ export type GeneralCategoryModel = {
   name: string;
   description: string;
   slug: string;
-  image_url: string;
+  imageUrl: string;
   published: boolean;
   remarkable: boolean;
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export type ProductCategory = {
   id: string;
   name: string;
-  image_url?: string;
-  min_price: number;
-  max_price: number;
+  imageUrl?: string;
+  minPrice: number;
+  maxPrice: number;
   slug: string;
-  variant_count: number;
+  variantCount: number;
 };

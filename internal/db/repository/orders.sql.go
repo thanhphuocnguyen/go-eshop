@@ -29,10 +29,10 @@ WHERE
 
 type CountOrdersParams struct {
 	Status        NullOrderStatus    `json:"status"`
-	CustomerID    pgtype.UUID        `json:"customer_id"`
-	PaymentStatus NullPaymentStatus  `json:"payment_status"`
-	StartDate     pgtype.Timestamptz `json:"start_date"`
-	EndDate       pgtype.Timestamptz `json:"end_date"`
+	CustomerID    pgtype.UUID        `json:"customerId"`
+	PaymentStatus NullPaymentStatus  `json:"paymentStatus"`
+	StartDate     pgtype.Timestamptz `json:"startDate"`
+	EndDate       pgtype.Timestamptz `json:"endDate"`
 }
 
 func (q *Queries) CountOrders(ctx context.Context, arg CountOrdersParams) (int64, error) {
@@ -49,14 +49,14 @@ func (q *Queries) CountOrders(ctx context.Context, arg CountOrdersParams) (int64
 }
 
 type CreateBulkOrderItemsParams struct {
-	OrderID              uuid.UUID               `json:"order_id"`
-	VariantID            uuid.UUID               `json:"variant_id"`
+	OrderID              uuid.UUID               `json:"orderId"`
+	VariantID            uuid.UUID               `json:"variantId"`
 	Quantity             int16                   `json:"quantity"`
-	PricePerUnitSnapshot pgtype.Numeric          `json:"price_per_unit_snapshot"`
-	VariantSkuSnapshot   string                  `json:"variant_sku_snapshot"`
-	ProductNameSnapshot  string                  `json:"product_name_snapshot"`
-	LineTotalSnapshot    pgtype.Numeric          `json:"line_total_snapshot"`
-	AttributesSnapshot   []AttributeDataSnapshot `json:"attributes_snapshot"`
+	PricePerUnitSnapshot pgtype.Numeric          `json:"pricePerUnitSnapshot"`
+	VariantSkuSnapshot   string                  `json:"variantSkuSnapshot"`
+	ProductNameSnapshot  string                  `json:"productNameSnapshot"`
+	LineTotalSnapshot    pgtype.Numeric          `json:"lineTotalSnapshot"`
+	AttributesSnapshot   []AttributeDataSnapshot `json:"attributesSnapshot"`
 }
 
 const createOrder = `-- name: CreateOrder :one
@@ -74,12 +74,12 @@ RETURNING id, customer_id, customer_email, customer_name, customer_phone, shippi
 `
 
 type CreateOrderParams struct {
-	CustomerID      uuid.UUID               `json:"customer_id"`
-	CustomerEmail   string                  `json:"customer_email"`
-	CustomerName    string                  `json:"customer_name"`
-	CustomerPhone   string                  `json:"customer_phone"`
-	TotalPrice      pgtype.Numeric          `json:"total_price"`
-	ShippingAddress ShippingAddressSnapshot `json:"shipping_address"`
+	CustomerID      uuid.UUID               `json:"customerId"`
+	CustomerEmail   string                  `json:"customerEmail"`
+	CustomerName    string                  `json:"customerName"`
+	CustomerPhone   string                  `json:"customerPhone"`
+	TotalPrice      pgtype.Numeric          `json:"totalPrice"`
+	ShippingAddress ShippingAddressSnapshot `json:"shippingAddress"`
 }
 
 func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {
@@ -130,14 +130,14 @@ RETURNING id, order_id, variant_id, quantity, price_per_unit_snapshot, line_tota
 `
 
 type CreateOrderItemParams struct {
-	OrderID              uuid.UUID               `json:"order_id"`
-	VariantID            uuid.UUID               `json:"variant_id"`
+	OrderID              uuid.UUID               `json:"orderId"`
+	VariantID            uuid.UUID               `json:"variantId"`
 	Quantity             int16                   `json:"quantity"`
-	PricePerUnitSnapshot pgtype.Numeric          `json:"price_per_unit_snapshot"`
-	VariantSkuSnapshot   string                  `json:"variant_sku_snapshot"`
-	ProductNameSnapshot  string                  `json:"product_name_snapshot"`
-	LineTotalSnapshot    pgtype.Numeric          `json:"line_total_snapshot"`
-	AttributesSnapshot   []AttributeDataSnapshot `json:"attributes_snapshot"`
+	PricePerUnitSnapshot pgtype.Numeric          `json:"pricePerUnitSnapshot"`
+	VariantSkuSnapshot   string                  `json:"variantSkuSnapshot"`
+	ProductNameSnapshot  string                  `json:"productNameSnapshot"`
+	LineTotalSnapshot    pgtype.Numeric          `json:"lineTotalSnapshot"`
+	AttributesSnapshot   []AttributeDataSnapshot `json:"attributesSnapshot"`
 }
 
 func (q *Queries) CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (OrderItem, error) {
@@ -244,11 +244,11 @@ LIMIT 1
 `
 
 type GetOrderItemByIDRow struct {
-	OrderItemID uuid.UUID `json:"order_item_id"`
-	OrderID     uuid.UUID `json:"order_id"`
-	ProductID   uuid.UUID `json:"product_id"`
-	VariantID   uuid.UUID `json:"variant_id"`
-	CustomerID  uuid.UUID `json:"customer_id"`
+	OrderItemID uuid.UUID `json:"orderItemId"`
+	OrderID     uuid.UUID `json:"orderId"`
+	ProductID   uuid.UUID `json:"productId"`
+	VariantID   uuid.UUID `json:"variantId"`
+	CustomerID  uuid.UUID `json:"customerId"`
 }
 
 func (q *Queries) GetOrderItemByID(ctx context.Context, id uuid.UUID) (GetOrderItemByIDRow, error) {
@@ -284,24 +284,24 @@ WHERE
 
 type GetOrderItemsRow struct {
 	ID                   uuid.UUID               `json:"id"`
-	OrderID              uuid.UUID               `json:"order_id"`
-	VariantID            uuid.UUID               `json:"variant_id"`
+	OrderID              uuid.UUID               `json:"orderId"`
+	VariantID            uuid.UUID               `json:"variantId"`
 	Quantity             int16                   `json:"quantity"`
-	PricePerUnitSnapshot pgtype.Numeric          `json:"price_per_unit_snapshot"`
-	LineTotalSnapshot    pgtype.Numeric          `json:"line_total_snapshot"`
-	ProductNameSnapshot  string                  `json:"product_name_snapshot"`
-	VariantSkuSnapshot   string                  `json:"variant_sku_snapshot"`
-	AttributesSnapshot   []AttributeDataSnapshot `json:"attributes_snapshot"`
-	CreatedAt            time.Time               `json:"created_at"`
-	UpdatedAt            time.Time               `json:"updated_at"`
-	DiscountedPrice      pgtype.Numeric          `json:"discounted_price"`
-	ProductName          string                  `json:"product_name"`
-	ImageUrl             *string                 `json:"image_url"`
-	RatingID             pgtype.UUID             `json:"rating_id"`
+	PricePerUnitSnapshot pgtype.Numeric          `json:"pricePerUnitSnapshot"`
+	LineTotalSnapshot    pgtype.Numeric          `json:"lineTotalSnapshot"`
+	ProductNameSnapshot  string                  `json:"productNameSnapshot"`
+	VariantSkuSnapshot   string                  `json:"variantSkuSnapshot"`
+	AttributesSnapshot   []AttributeDataSnapshot `json:"attributesSnapshot"`
+	CreatedAt            time.Time               `json:"createdAt"`
+	UpdatedAt            time.Time               `json:"updatedAt"`
+	DiscountedPrice      pgtype.Numeric          `json:"discountedPrice"`
+	ProductName          string                  `json:"productName"`
+	ImageUrl             *string                 `json:"imageUrl"`
+	RatingID             pgtype.UUID             `json:"ratingId"`
 	Rating               pgtype.Numeric          `json:"rating"`
-	ReviewTitle          *string                 `json:"review_title"`
-	ReviewContent        *string                 `json:"review_content"`
-	RatingCreatedAt      pgtype.Timestamptz      `json:"rating_created_at"`
+	ReviewTitle          *string                 `json:"reviewTitle"`
+	ReviewContent        *string                 `json:"reviewContent"`
+	RatingCreatedAt      pgtype.Timestamptz      `json:"ratingCreatedAt"`
 }
 
 func (q *Queries) GetOrderItems(ctx context.Context, orderID uuid.UUID) ([]GetOrderItemsRow, error) {
@@ -366,11 +366,11 @@ ORDER BY
 `
 
 type GetOrderItemsByOrderIDRow struct {
-	OrderItemID uuid.UUID `json:"order_item_id"`
-	OrderID     uuid.UUID `json:"order_id"`
-	ProductID   uuid.UUID `json:"product_id"`
-	VariantID   uuid.UUID `json:"variant_id"`
-	CustomerID  uuid.UUID `json:"customer_id"`
+	OrderItemID uuid.UUID `json:"orderItemId"`
+	OrderID     uuid.UUID `json:"orderId"`
+	ProductID   uuid.UUID `json:"productId"`
+	VariantID   uuid.UUID `json:"variantId"`
+	CustomerID  uuid.UUID `json:"customerId"`
 }
 
 func (q *Queries) GetOrderItemsByOrderID(ctx context.Context, orderID uuid.UUID) ([]GetOrderItemsByOrderIDRow, error) {
@@ -422,40 +422,40 @@ OFFSET $2
 type GetOrdersParams struct {
 	Limit         int64              `json:"limit"`
 	Offset        int64              `json:"offset"`
-	CustomerID    pgtype.UUID        `json:"customer_id"`
+	CustomerID    pgtype.UUID        `json:"customerId"`
 	Status        NullOrderStatus    `json:"status"`
-	StartDate     pgtype.Timestamptz `json:"start_date"`
-	EndDate       pgtype.Timestamptz `json:"end_date"`
-	PaymentStatus NullPaymentStatus  `json:"payment_status"`
+	StartDate     pgtype.Timestamptz `json:"startDate"`
+	EndDate       pgtype.Timestamptz `json:"endDate"`
+	PaymentStatus NullPaymentStatus  `json:"paymentStatus"`
 }
 
 type GetOrdersRow struct {
 	ID                    uuid.UUID               `json:"id"`
-	CustomerID            uuid.UUID               `json:"customer_id"`
-	CustomerEmail         string                  `json:"customer_email"`
-	CustomerName          string                  `json:"customer_name"`
-	CustomerPhone         string                  `json:"customer_phone"`
-	ShippingAddress       ShippingAddressSnapshot `json:"shipping_address"`
-	TotalPrice            pgtype.Numeric          `json:"total_price"`
+	CustomerID            uuid.UUID               `json:"customerId"`
+	CustomerEmail         string                  `json:"customerEmail"`
+	CustomerName          string                  `json:"customerName"`
+	CustomerPhone         string                  `json:"customerPhone"`
+	ShippingAddress       ShippingAddressSnapshot `json:"shippingAddress"`
+	TotalPrice            pgtype.Numeric          `json:"totalPrice"`
 	Status                OrderStatus             `json:"status"`
-	ConfirmedAt           pgtype.Timestamptz      `json:"confirmed_at"`
-	DeliveredAt           pgtype.Timestamptz      `json:"delivered_at"`
-	CancelledAt           pgtype.Timestamptz      `json:"cancelled_at"`
-	ShippingMethod        *string                 `json:"shipping_method"`
-	RefundedAt            pgtype.Timestamptz      `json:"refunded_at"`
-	OrderDate             time.Time               `json:"order_date"`
-	UpdatedAt             time.Time               `json:"updated_at"`
-	CreatedAt             time.Time               `json:"created_at"`
-	ShippingMethodID      pgtype.UUID             `json:"shipping_method_id"`
-	ShippingRateID        pgtype.UUID             `json:"shipping_rate_id"`
-	ShippingCost          pgtype.Numeric          `json:"shipping_cost"`
-	EstimatedDeliveryDate pgtype.Timestamptz      `json:"estimated_delivery_date"`
-	TrackingNumber        *string                 `json:"tracking_number"`
-	TrackingUrl           *string                 `json:"tracking_url"`
-	ShippingProvider      *string                 `json:"shipping_provider"`
-	ShippingNotes         *string                 `json:"shipping_notes"`
-	PaymentStatus         NullPaymentStatus       `json:"payment_status"`
-	TotalItems            int64                   `json:"total_items"`
+	ConfirmedAt           pgtype.Timestamptz      `json:"confirmedAt"`
+	DeliveredAt           pgtype.Timestamptz      `json:"deliveredAt"`
+	CancelledAt           pgtype.Timestamptz      `json:"cancelledAt"`
+	ShippingMethod        *string                 `json:"shippingMethod"`
+	RefundedAt            pgtype.Timestamptz      `json:"refundedAt"`
+	OrderDate             time.Time               `json:"orderDate"`
+	UpdatedAt             time.Time               `json:"updatedAt"`
+	CreatedAt             time.Time               `json:"createdAt"`
+	ShippingMethodID      pgtype.UUID             `json:"shippingMethodId"`
+	ShippingRateID        pgtype.UUID             `json:"shippingRateId"`
+	ShippingCost          pgtype.Numeric          `json:"shippingCost"`
+	EstimatedDeliveryDate pgtype.Timestamptz      `json:"estimatedDeliveryDate"`
+	TrackingNumber        *string                 `json:"trackingNumber"`
+	TrackingUrl           *string                 `json:"trackingUrl"`
+	ShippingProvider      *string                 `json:"shippingProvider"`
+	ShippingNotes         *string                 `json:"shippingNotes"`
+	PaymentStatus         NullPaymentStatus       `json:"paymentStatus"`
+	TotalItems            int64                   `json:"totalItems"`
 }
 
 func (q *Queries) GetOrders(ctx context.Context, arg GetOrdersParams) ([]GetOrdersRow, error) {
@@ -527,7 +527,7 @@ OFFSET $3
 `
 
 type ListOrderItemsParams struct {
-	OrderID uuid.UUID `json:"order_id"`
+	OrderID uuid.UUID `json:"orderId"`
 	Limit   int64     `json:"limit"`
 	Offset  int64     `json:"offset"`
 }
@@ -581,9 +581,9 @@ RETURNING id, customer_id, customer_email, customer_name, customer_phone, shippi
 
 type UpdateOrderParams struct {
 	Status      NullOrderStatus    `json:"status"`
-	ConfirmedAt pgtype.Timestamptz `json:"confirmed_at"`
-	CancelledAt pgtype.Timestamptz `json:"cancelled_at"`
-	DeliveredAt pgtype.Timestamptz `json:"delivered_at"`
+	ConfirmedAt pgtype.Timestamptz `json:"confirmedAt"`
+	CancelledAt pgtype.Timestamptz `json:"cancelledAt"`
+	DeliveredAt pgtype.Timestamptz `json:"deliveredAt"`
 	ID          uuid.UUID          `json:"id"`
 }
 

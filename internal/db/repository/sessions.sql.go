@@ -70,12 +70,12 @@ INSERT INTO sessions (
 
 type InsertSessionParams struct {
 	ID           uuid.UUID          `json:"id"`
-	UserID       uuid.UUID          `json:"user_id"`
-	RefreshToken string             `json:"refresh_token"`
-	UserAgent    string             `json:"user_agent"`
-	ClientIp     string             `json:"client_ip"`
+	UserID       uuid.UUID          `json:"userId"`
+	RefreshToken string             `json:"refreshToken"`
+	UserAgent    string             `json:"userAgent"`
+	ClientIp     string             `json:"clientIp"`
 	Blocked      bool               `json:"blocked"`
-	ExpiredAt    pgtype.Timestamptz `json:"expired_at"`
+	ExpiredAt    pgtype.Timestamptz `json:"expiredAt"`
 }
 
 func (q *Queries) InsertSession(ctx context.Context, arg InsertSessionParams) (Session, error) {
@@ -115,10 +115,10 @@ RETURNING id, user_id, refresh_token, user_agent, client_ip, blocked, expired_at
 
 type UpdateSessionParams struct {
 	ID        uuid.UUID          `json:"id"`
-	UserAgent *string            `json:"user_agent"`
-	ClientIp  *string            `json:"client_ip"`
+	UserAgent *string            `json:"userAgent"`
+	ClientIp  *string            `json:"clientIp"`
 	Blocked   *bool              `json:"blocked"`
-	ExpiredAt pgtype.Timestamptz `json:"expired_at"`
+	ExpiredAt pgtype.Timestamptz `json:"expiredAt"`
 }
 
 func (q *Queries) UpdateSession(ctx context.Context, arg UpdateSessionParams) (Session, error) {

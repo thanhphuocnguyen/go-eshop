@@ -34,7 +34,7 @@ type BrandProductRequest struct {
 // @Tags Brands
 // @Produce json
 // @Param page query int false "Page number"
-// @Param page_size query int false "Page size"
+// @Param pageSize query int false "Page size"
 // @Success 200 {object} ApiResponse[CategoryResponse]
 // @Failure 400 {object} ApiResponse[gin.H]
 // @Failure 500 {object} ApiResponse[gin.H]
@@ -293,7 +293,7 @@ func (sv *Server) createBrandHandler(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param page query int false "Page number"
-// @Param page_size query int false "Page size"
+// @Param pageSize query int false "Page size"
 // @Success 200 {object} ApiResponse[gin.H]
 // @Failure 400 {object} ApiResponse[gin.H]
 // @Failure 500 {object} ApiResponse[CategoryResponse]

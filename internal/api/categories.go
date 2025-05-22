@@ -19,7 +19,7 @@ import (
 // @Tags Categories
 // @Produce json
 // @Param page query int false "Page number"
-// @Param page_size query int false "Page size"
+// @Param pageSize query int false "Page size"
 // @Success 200 {object} ApiResponse[CategoryResponse]
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
@@ -85,7 +85,7 @@ func (sv *Server) getCategoriesHandler(c *gin.Context) {
 // @Tags Categories
 // @Produce json
 // @Param slug path string true "Category Slug"
-// @Param page_size query int false "Page size"
+// @Param pageSize query int false "Page size"
 // @Success 200 {object} ApiResponse[CategoryResponse]
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
@@ -193,7 +193,7 @@ func (sv *Server) createCategoryHandler(c *gin.Context) {
 // @Tags Categories
 // @Produce json
 // @Param page query int false "Page number"
-// @Param page_size query int false "Page size"
+// @Param pageSize query int false "Page size"
 // @Success 200 {object} ApiResponse[CategoryResponse]
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H

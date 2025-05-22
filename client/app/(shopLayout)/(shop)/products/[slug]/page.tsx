@@ -14,14 +14,14 @@ import {
   TabsSection,
 } from './_components';
 import { Metadata } from 'next';
-import { apiFetchServerSide } from '@/app/lib/apis/apiServer';
+import { serverSideFetch } from '@/app/lib/apis/apiServer';
 
 type Props = {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 export const getCacheProduct = cache(async (slug: string) => {
-  const { data, error } = await apiFetchServerSide<ProductDetailModel>(
+  const { data, error } = await serverSideFetch<ProductDetailModel>(
     PUBLIC_API_PATHS.PRODUCT_DETAIL.replace(':id', slug),
     {
       nextOptions: {

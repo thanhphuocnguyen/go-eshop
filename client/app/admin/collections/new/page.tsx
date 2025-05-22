@@ -7,11 +7,11 @@ import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { toast } from 'react-toastify';
 import { redirect } from 'next/navigation';
 import { GeneralCategoryModel, GenericResponse } from '@/app/lib/definitions';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 
 export default function Page() {
   const handleSave = async (form: FormData) => {
-    const { data, error } = await apiFetchClientSide<
+    const { data, error } = await clientSideFetch<
       GenericResponse<GeneralCategoryModel>
     >(PUBLIC_API_PATHS.COLLECTIONS, {
       method: 'POST',

@@ -27,12 +27,15 @@ export const ControlledStyledCheckbox = <T extends FieldValues>(
           <Checkbox
             {...rest}
             onChange={onChange}
+            checked={rest.value}
             className='flex items-center cursor-pointer'
           >
             {({ checked }) => (
               <>
                 <div className='flex h-5 w-5 items-center justify-center rounded border border-gray-300 bg-white'>
-                  {checked && <CheckIcon className='h-6 w-6 text-indigo-600 font-bold' />}
+                  {checked && (
+                    <CheckIcon className='h-6 w-6 text-indigo-600 font-bold' />
+                  )}
                 </div>
                 <span className='ml-3 text-sm text-gray-600'>{label}</span>
               </>

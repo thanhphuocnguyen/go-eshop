@@ -1,4 +1,4 @@
-import { apiFetchServerSide } from '@/app/lib/apis/apiServer';
+import { serverSideFetch } from '@/app/lib/apis/apiServer';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { RatingModel } from '@/app/lib/definitions/rating';
 import { StarIcon } from '@heroicons/react/24/solid';
@@ -10,8 +10,8 @@ import RatingHelpfulButtons from './RatingHelpfulButtons';
 
 // Client component to render ratings with interactive elements
 export async function ReviewsList({ productID }: { productID: string }) {
-  const { data: ratings, error } = await apiFetchServerSide<RatingModel[]>(
-    PUBLIC_API_PATHS.PRODUCT_RATING.replaceAll(':id', productID)
+  const { data: ratings, error } = await serverSideFetch<RatingModel[]>(
+    PUBLIC_API_PATHS.PRODUCT_RATINGS.replaceAll(':id', productID)
   );
 
   if (error) {
@@ -53,14 +53,14 @@ export async function ReviewsList({ productID }: { productID: string }) {
             <div className='md:col-span-1 mt-2'>
               <div className='font-medium text-gray-800 flex items-center gap-x-2'>
                 <span>{rating.name}</span>
-                {rating.verified_purchase && (
+                {rating.verifiedPurchase && (
                   <div className='inline-block bg-green-50 text-green-700 text-xs px-2 py-1 rounded-md border border-green-700'>
                     Verified Purchase
                   </div>
                 )}
               </div>
               <div className='text-gray-400 text-base mt-2'>
-                {formatDate(new Date(rating.created_at || Date.now()))}
+                {formatDate(new Date(rating.createdAt || Date.now()))}
               </div>
             </div>
 
@@ -78,10 +78,10 @@ export async function ReviewsList({ productID }: { productID: string }) {
 
             <div className='md:col-span-2 mt-4 md:mt-0 flex flex-col items-start'>
               <div className='text-lg font-semibold text-gray-800'>
-                {rating.review_title}
+                {rating.reviewTitle}
               </div>
               <p className='mt-2 text-gray-600 whitespace-pre-line'>
-                {rating.review_content}
+                {rating.reviewContent}
               </p>
 
               {rating.images && rating.images.length > 0 && (
@@ -108,9 +108,9 @@ export async function ReviewsList({ productID }: { productID: string }) {
               <div className='mt-4 self-start'>
                 <RatingHelpfulButtons
                   ratingId={rating.id}
-                  userId={rating.user_id}
-                  helpfulVotes={rating.helpful_votes}
-                  unhelpfulVotes={rating.unhelpful_votes}
+                  userId={rating.userId}
+                  helpfulVotes={rating.helpfulVotes}
+                  unhelpfulVotes={rating.unhelpfulVotes}
                 />
               </div>
             </div>

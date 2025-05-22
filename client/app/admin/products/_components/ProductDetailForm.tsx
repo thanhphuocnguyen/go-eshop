@@ -23,7 +23,7 @@ import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { toast } from 'react-toastify';
 import { ConfirmDialog } from '@/components/Common/Dialogs/ConfirmDialog';
 import { KeyedMutator } from 'swr';
-import { apiFetchClientSide } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
 
 interface ProductEditFormProps {
   productDetail?: ProductDetailModel;
@@ -45,7 +45,7 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
     defaultValues: productDetail
       ? {
           variants: productDetail.variants,
-          product_info: {
+          productInfo: {
             category: productDetail.category,
             attributes: productDetail.attributes,
             brand: productDetail.brand,
@@ -54,21 +54,19 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
             name: productDetail.name,
             price: productDetail.price,
             sku: productDetail.sku,
-            is_active: productDetail.is_active,
+            isActive: productDetail.isActive,
             slug: productDetail.slug,
-            images: productDetail.product_images.map((image) => ({
+            images: productDetail.productImages.map((image) => ({
               id: image.id,
               url: image.url,
               role: image.role,
-              assignments: image.assignments.map(
-                (assignment) => assignment.entity_id
-              ),
+              assignments: image.assignments.map((assignment) => assignment.id),
             })),
           },
         }
       : {
           variants: [],
-          product_info: {
+          productInfo: {
             brand: {
               id: '',
               name: '',
@@ -84,7 +82,7 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
             sku: '',
             slug: '',
             price: 1,
-            is_active: true,
+            isActive: true,
             images: [],
           },
         },
@@ -98,7 +96,7 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
 
   const selectedAttributes = useWatch({
     control,
-    name: 'product_info.attributes',
+    name: 'productInfo.attributes',
     defaultValue: [],
   });
 
@@ -107,7 +105,7 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
 
     setIsDeleting(true);
     try {
-      const { error } = await apiFetchClientSide<GenericResponse<unknown>>(
+      const { error } = await clientSideFetch<GenericResponse<unknown>>(
         ADMIN_API_PATHS.PRODUCT_DETAIL.replace(':id', productDetail.id),
         {
           method: 'DELETE',
@@ -133,25 +131,23 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
     if (productDetail) {
       reset({
         variants: productDetail.variants,
-        product_info: {
+        productInfo: {
           category: productDetail.category,
           brand: productDetail.brand,
           collection: productDetail.collection,
           attributes: productDetail.attributes,
           description: productDetail.description,
           name: productDetail.name,
-          short_description: productDetail.short_description,
+          shortDescription: productDetail.shortDescription,
           price: productDetail.price,
           sku: productDetail.sku,
-          is_active: productDetail.is_active,
+          isActive: productDetail.isActive,
           slug: productDetail.slug,
-          images: productDetail.product_images.map((image) => ({
+          images: productDetail.productImages.map((image) => ({
             id: image.id,
             url: image.url,
             role: image.role,
-            assignments: image.assignments.map(
-              (assignment) => assignment.entity_id
-            ),
+            assignments: image.assignments.map((assignment) => assignment.id),
           })),
         },
       });
@@ -259,7 +255,7 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
   async function submitHandler(data: ProductModelForm) {
     let productID = productDetail?.id;
     let isAllSuccess = true;
-    if (dirtyFields.product_info) {
+    if (dirtyFields.productInfo) {
       const rs = await onSubmitProductDetail(data);
       productID = rs;
       isAllSuccess &&= !!rs;
@@ -295,7 +291,7 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
       }
     });
 
-    const { error, data } = await apiFetchClientSide<
+    const { error, data } = await clientSideFetch<
       GenericResponse<UploadImageResponseModel>
     >(ADMIN_API_PATHS.PRODUCT_IMAGES_UPLOAD.replaceAll(':id', productId), {
       method: 'POST',
@@ -320,22 +316,22 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
       ...variant,
       attributes: variant.attributes.map((attribute) => ({
         id: attribute.id,
-        value_id: attribute.value_object?.id,
+        value_id: attribute.valueObject?.id,
       })),
     }));
-    const { data, error } = await apiFetchClientSide<{ id: string }>(
+    const { data, error } = await clientSideFetch<{ id: string }>(
       productDetail
         ? ADMIN_API_PATHS.PRODUCT_DETAIL.replace(':id', productDetail.id)
         : ADMIN_API_PATHS.PRODUCTS,
       {
         method: productDetail ? 'PUT' : 'POST',
         body: {
-          ...payload.product_info,
+          ...payload.productInfo,
           variants,
-          collection_id: payload.product_info.collection?.id || null,
-          attributes: payload.product_info.attributes,
-          brand_id: payload.product_info.brand?.id || null,
-          category_id: payload.product_info.category?.id || null,
+          collection_id: payload.productInfo.collection?.id || null,
+          attributes: payload.productInfo.attributes,
+          brand_id: payload.productInfo.brand?.id || null,
+          category_id: payload.productInfo.category?.id || null,
         },
       }
     );
