@@ -95,6 +95,9 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 			discounts.POST("", sv.createDiscountHandler)
 			discounts.GET("", sv.getDiscountsHandler)
 			discounts.GET(":id", sv.getDiscountByIDHandler)
+			discounts.GET(":id/products", sv.getDiscountProductsByIDHandler)
+			discounts.GET(":id/categories", sv.getDiscountCategoriesByIDHandler)
+			discounts.GET(":id/users", sv.getDiscountUsersByIDHandler)
 			discounts.PUT(":id", sv.updateDiscountHandler)
 			discounts.DELETE(":id", sv.deleteDiscountHandler)
 		}

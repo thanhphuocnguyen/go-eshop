@@ -46,8 +46,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
         {
           code: '',
           name: '',
-          display_order: 1,
-          is_active: true,
+          displayOrder: 1,
+          isActive: true,
         },
       ],
     },
@@ -76,7 +76,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   async function submitHandler(data: AttributeFormModel) {
     data.values = data.values?.map((item, i) => ({
       ...item,
-      display_order: i + 1,
+      displayOrder: i + 1,
     }));
 
     const response = await clientSideFetch<AttributeFormModel>(
@@ -145,8 +145,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
                   append({
                     code: '',
                     name: '',
-                    display_order: fields.length,
-                    is_active: true,
+                    displayOrder: fields.length,
+                    isActive: true,
                   })
                 }
                 className='btn btn-primary'
@@ -200,7 +200,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
         // This is more efficient than using setValue for field arrays
         const newValues = updatedFields.map((field, index) => ({
           ...field,
-          display_order: index + 1, // Update display order based on new position
+          displayOrder: index + 1, // Update display order based on new position
         }));
 
         replace(newValues);

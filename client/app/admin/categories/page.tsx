@@ -94,7 +94,7 @@ export default function Page() {
                 Slug
               </th>
               <th scope='col' className='px-6 py-3'>
-                Published
+                Status
               </th>
               <th scope='col' className='px-6 py-3'>
                 Action
@@ -133,7 +133,20 @@ export default function Page() {
                 </th>
                 <td className='px-6 py-4'>{category.slug}</td>
                 <td className='px-6 py-4'>
-                  {category.published ? 'Published' : 'Unpublished'}
+                  <span
+                    className={`px-2 py-1 text-xs font-medium rounded-full ${
+                      category.published
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}
+                  >
+                    {category.published ? 'Published' : 'Draft'}
+                  </span>
+                  {category.remarkable && (
+                    <span className='ml-2 px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full'>
+                      Featured
+                    </span>
+                  )}
                 </td>
                 <td className='px-6 py-4'>
                   <div className='flex space-x-2'>

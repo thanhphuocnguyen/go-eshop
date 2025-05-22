@@ -196,27 +196,27 @@ export default function Page() {
                     <div className='flex space-x-1'>
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                          user.verified_email
+                          user.verifiedEmail
                             ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
+                            : 'bg-yellow-100 text-amber-800'
                         }`}
                       >
-                        {user.verified_email ? 'Email ✓' : 'Email ✗'}
+                        {user.verifiedEmail ? 'Email ✓' : 'Email ✗'}
                       </span>
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                          user.verified_phone
+                          user.verifiedPhone
                             ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
+                            : 'bg-yellow-100 text-amber-500'
                         }`}
                       >
-                        {user.verified_phone ? 'Phone ✓' : 'Phone ✗'}
+                        {user.verifiedPhone ? 'Phone ✓' : 'Phone ✗'}
                       </span>
                     </div>
                   </td>
                   <td className='px-6 py-4'>
-                    {user.created_at
-                      ? dayjs(user.created_at).format('YYYY/MM/DD')
+                    {user.createdAt
+                      ? dayjs(user.createdAt).format('YYYY/MM/DD')
                       : 'Unknown'}
                   </td>
                   <td className='px-6 py-4'>

@@ -38,7 +38,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "Page size",
-                        "name": "page_size",
+                        "name": "pageSize",
                         "in": "query"
                     }
                 ],
@@ -515,7 +515,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "Page size",
-                        "name": "page_size",
+                        "name": "pageSize",
                         "in": "query"
                     }
                 ],
@@ -760,7 +760,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "Page size",
-                        "name": "page_size",
+                        "name": "pageSize",
                         "in": "query"
                     },
                     {
@@ -891,7 +891,7 @@ const docTemplate = `{
                         "type": "integer",
                         "default": 10,
                         "description": "Page size",
-                        "name": "page_size",
+                        "name": "pageSize",
                         "in": "query"
                     }
                 ],
@@ -1366,7 +1366,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "Page size",
-                        "name": "page_size",
+                        "name": "pageSize",
                         "in": "query"
                     }
                 ],
@@ -1887,7 +1887,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "Page size",
-                        "name": "page_size",
+                        "name": "pageSize",
                         "in": "query"
                     }
                 ],
@@ -1938,7 +1938,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "Page size",
-                        "name": "page_size",
+                        "name": "pageSize",
                         "in": "query"
                     }
                 ],
@@ -2004,6 +2004,171 @@ const docTemplate = `{
                         "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/gin.H"
+                        }
+                    }
+                }
+            }
+        },
+        "/discounts": {
+            "get": {
+                "description": "Get all discounts",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "discounts"
+                ],
+                "summary": "Get all discounts",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search by code",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "percentage",
+                        "description": "Discount type",
+                        "name": "discountType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Is active",
+                        "name": "isActive",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-api_DiscountListItemResponseModel"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new discount",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "discounts"
+                ],
+                "summary": "Create a new discount",
+                "parameters": [
+                    {
+                        "description": "Discount info",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.CreateDiscountRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-api_DiscountDetailResponseModel"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
+                        }
+                    }
+                }
+            }
+        },
+        "/discounts/{id}": {
+            "get": {
+                "description": "Get discount by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "discounts"
+                ],
+                "summary": "Get discount by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Discount ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-api_DiscountDetailResponseModel"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     }
                 }
@@ -2216,7 +2381,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "Page size",
-                        "name": "page_size",
+                        "name": "pageSize",
                         "in": "query"
                     },
                     {
@@ -2771,7 +2936,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "Page size",
-                        "name": "page_size",
+                        "name": "pageSize",
                         "in": "query",
                         "required": true
                     }
@@ -3157,7 +3322,7 @@ const docTemplate = `{
                         "type": "integer",
                         "default": 10,
                         "description": "Page size",
-                        "name": "page_size",
+                        "name": "pageSize",
                         "in": "query"
                     }
                 ],
@@ -3343,7 +3508,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "Page size",
-                        "name": "page_size",
+                        "name": "pageSize",
                         "in": "query"
                     }
                 ],
@@ -3437,13 +3602,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_UserResponse"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_UserResponse"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     }
                 }
@@ -3527,10 +3692,22 @@ const docTemplate = `{
                             "$ref": "#/definitions/api.ApiResponse-array_api_UserResponse"
                         }
                     },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-array_api_UserResponse"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     }
                 }
@@ -3763,19 +3940,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-repository_UpdateUserRow"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-repository_UpdateUserRow"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-repository_UpdateUserRow"
+                            "$ref": "#/definitions/api.ApiResponse-gin_H"
                         }
                     }
                 }
@@ -3844,7 +4021,7 @@ const docTemplate = `{
                 "city": {
                     "type": "string"
                 },
-                "created_at": {
+                "createdAt": {
                     "type": "string"
                 },
                 "default": {
@@ -3956,6 +4133,52 @@ const docTemplate = `{
             "properties": {
                 "data": {
                     "$ref": "#/definitions/api.CategoryResponse"
+                },
+                "error": {
+                    "$ref": "#/definitions/api.ApiError"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/api.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/api.Pagination"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "api.ApiResponse-api_DiscountDetailResponseModel": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/api.DiscountDetailResponseModel"
+                },
+                "error": {
+                    "$ref": "#/definitions/api.ApiError"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/api.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/api.Pagination"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "api.ApiResponse-api_DiscountListItemResponseModel": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/api.DiscountListItemResponseModel"
                 },
                 "error": {
                     "$ref": "#/definitions/api.ApiError"
@@ -4432,7 +4655,7 @@ const docTemplate = `{
         "api.AttributeResponse": {
             "type": "object",
             "properties": {
-                "created_at": {
+                "createdAt": {
                     "type": "string"
                 },
                 "id": {
@@ -4441,7 +4664,7 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "updated_at": {
+                "updatedAt": {
                     "type": "string"
                 },
                 "values": {
@@ -4458,13 +4681,13 @@ const docTemplate = `{
                 "code": {
                     "type": "string"
                 },
-                "display_order": {
+                "displayOrder": {
                     "type": "integer"
                 },
                 "id": {
                     "type": "string"
                 },
-                "is_active": {
+                "isActive": {
                     "type": "boolean"
                 },
                 "name": {
@@ -4481,11 +4704,11 @@ const docTemplate = `{
                 "code": {
                     "type": "string"
                 },
-                "display_order": {
+                "displayOrder": {
                     "type": "integer",
                     "minimum": 0
                 },
-                "is_active": {
+                "isActive": {
                     "type": "boolean"
                 },
                 "name": {
@@ -4496,22 +4719,22 @@ const docTemplate = `{
         "api.CartDetailResponse": {
             "type": "object",
             "properties": {
-                "cart_items": {
+                "cartItems": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/api.CartItemResponse"
                     }
                 },
-                "created_at": {
+                "createdAt": {
                     "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
-                "total_price": {
+                "totalPrice": {
                     "type": "number"
                 },
-                "updated_at": {
+                "updatedAt": {
                     "type": "string"
                 }
             }
@@ -4520,8 +4743,8 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "id",
-                "product_id",
-                "variant_id"
+                "productId",
+                "variantId"
             ],
             "properties": {
                 "attributes": {
@@ -4536,7 +4759,7 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "image_url": {
+                "imageUrl": {
                     "type": "string"
                 },
                 "name": {
@@ -4545,7 +4768,7 @@ const docTemplate = `{
                 "price": {
                     "type": "number"
                 },
-                "product_id": {
+                "productId": {
                     "type": "string"
                 },
                 "quantity": {
@@ -4557,7 +4780,7 @@ const docTemplate = `{
                 "stock": {
                     "type": "integer"
                 },
-                "variant_id": {
+                "variantId": {
                     "type": "string"
                 }
             }
@@ -4568,13 +4791,13 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "image_url": {
+                "imageUrl": {
                     "type": "string"
                 },
                 "name": {
                     "type": "string"
                 },
-                "variant_count": {
+                "variantCount": {
                     "type": "integer"
                 }
             }
@@ -4582,7 +4805,7 @@ const docTemplate = `{
         "api.CategoryResponse": {
             "type": "object",
             "properties": {
-                "created_at": {
+                "createdAt": {
                     "type": "string"
                 },
                 "description": {
@@ -4591,7 +4814,7 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "image_url": {
+                "imageUrl": {
                     "type": "string"
                 },
                 "name": {
@@ -4612,7 +4835,7 @@ const docTemplate = `{
                 "slug": {
                     "type": "string"
                 },
-                "updated_at": {
+                "updatedAt": {
                     "type": "string"
                 }
             }
@@ -4620,35 +4843,35 @@ const docTemplate = `{
         "api.CheckoutRequest": {
             "type": "object",
             "required": [
-                "payment_method"
+                "paymentMethod"
             ],
             "properties": {
                 "address": {
                     "$ref": "#/definitions/api.Address"
                 },
-                "address_id": {
+                "addressId": {
                     "type": "string"
                 },
                 "email": {
                     "type": "string"
                 },
-                "full_name": {
+                "fullName": {
                     "type": "string"
                 },
-                "payment_gateway": {
+                "paymentGateway": {
                     "type": "string",
                     "enum": [
                         "stripe"
                     ]
                 },
-                "payment_method": {
+                "paymentMethod": {
                     "type": "string",
                     "enum": [
                         "code",
                         "stripe"
                     ]
                 },
-                "payment_receipt_email": {
+                "paymentReceiptEmail": {
                     "type": "string"
                 }
             }
@@ -4668,7 +4891,7 @@ const docTemplate = `{
                 "district": {
                     "type": "string"
                 },
-                "is_default": {
+                "isDefault": {
                     "type": "boolean"
                 },
                 "phone": {
@@ -4713,7 +4936,7 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 1000
                 },
-                "display_order": {
+                "displayOrder": {
                     "type": "integer"
                 },
                 "image": {
@@ -4734,6 +4957,199 @@ const docTemplate = `{
                 }
             }
         },
+        "api.CreateDiscountRequest": {
+            "type": "object",
+            "required": [
+                "code",
+                "discountType",
+                "discountValue",
+                "isActive",
+                "startsAt"
+            ],
+            "properties": {
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "code": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 5
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 1000
+                },
+                "discountType": {
+                    "type": "string",
+                    "enum": [
+                        "percentage",
+                        "fixed_amount"
+                    ]
+                },
+                "discountValue": {
+                    "type": "number"
+                },
+                "expiresAt": {
+                    "type": "string"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "maxDiscountAmount": {
+                    "type": "number"
+                },
+                "minPurchaseAmount": {
+                    "type": "number"
+                },
+                "products": {
+                    "description": "Related entities",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "startsAt": {
+                    "type": "string"
+                },
+                "usageLimit": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "api.DiscountDetailResponseModel": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "discountType": {
+                    "type": "string"
+                },
+                "discountValue": {
+                    "type": "number"
+                },
+                "expiresAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "maxDiscount": {
+                    "type": "number"
+                },
+                "minPurchase": {
+                    "type": "number"
+                },
+                "startsAt": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "usageHistory": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.DiscountUsageHistory"
+                    }
+                },
+                "usageLimit": {
+                    "type": "integer"
+                },
+                "usedCount": {
+                    "type": "integer"
+                }
+            }
+        },
+        "api.DiscountListItemResponseModel": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "discountType": {
+                    "type": "string"
+                },
+                "discountValue": {
+                    "type": "number"
+                },
+                "expiresAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "maxDiscount": {
+                    "type": "number"
+                },
+                "minPurchase": {
+                    "type": "number"
+                },
+                "startsAt": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "usageLimit": {
+                    "type": "integer"
+                },
+                "usedCount": {
+                    "type": "integer"
+                }
+            }
+        },
+        "api.DiscountUsageHistory": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "customerName": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string",
+                    "format": "2006-01-02"
+                },
+                "discountAmount": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "orderId": {
+                    "type": "string"
+                }
+            }
+        },
         "api.ImageResponse": {
             "type": "object",
             "properties": {
@@ -4743,16 +5159,16 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
-                "external_id": {
+                "externalId": {
                     "type": "string"
                 },
-                "file_size": {
+                "fileSize": {
                     "type": "integer"
                 },
                 "id": {
                     "type": "string"
                 },
-                "mime_type": {
+                "mimeType": {
                     "type": "string"
                 },
                 "url": {
@@ -4786,19 +5202,19 @@ const docTemplate = `{
         "api.LoginResponse": {
             "type": "object",
             "properties": {
-                "access_token": {
+                "accessToken": {
                     "type": "string"
                 },
-                "access_token_expires_in": {
+                "accessTokenExpiresIn": {
                     "type": "string"
                 },
-                "refresh_token": {
+                "refreshToken": {
                     "type": "string"
                 },
-                "refresh_token_expires_at": {
+                "refreshTokenExpiresAt": {
                     "type": "string"
                 },
-                "session_id": {
+                "sessionId": {
                     "type": "string"
                 }
             }
@@ -4823,19 +5239,19 @@ const docTemplate = `{
         "api.OrderDetailResponse": {
             "type": "object",
             "properties": {
-                "created_at": {
+                "createdAt": {
                     "type": "string"
                 },
-                "customer_email": {
+                "customerEmail": {
                     "type": "string"
                 },
-                "customer_name": {
+                "customerName": {
                     "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
-                "payment_info": {
+                "paymentInfo": {
                     "$ref": "#/definitions/api.PaymentInfoModel"
                 },
                 "products": {
@@ -4844,7 +5260,7 @@ const docTemplate = `{
                         "$ref": "#/definitions/api.OrderItemResponse"
                     }
                 },
-                "shipping_info": {
+                "shippingInfo": {
                     "$ref": "#/definitions/repository.ShippingAddressSnapshot"
                 },
                 "status": {
@@ -4858,7 +5274,7 @@ const docTemplate = `{
         "api.OrderItemResponse": {
             "type": "object",
             "properties": {
-                "attributes_snapshot": {
+                "attributesSnapshot": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/repository.AttributeDataSnapshot"
@@ -4867,10 +5283,10 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "image_url": {
+                "imageUrl": {
                     "type": "string"
                 },
-                "line_total": {
+                "lineTotal": {
                     "type": "number"
                 },
                 "name": {
@@ -4882,7 +5298,7 @@ const docTemplate = `{
                 "rating": {
                     "$ref": "#/definitions/api.RatingModel"
                 },
-                "variant_id": {
+                "variantId": {
                     "type": "string"
                 }
             }
@@ -4890,19 +5306,19 @@ const docTemplate = `{
         "api.OrderListResponse": {
             "type": "object",
             "properties": {
-                "created_at": {
+                "createdAt": {
                     "type": "string"
                 },
-                "customer_email": {
+                "customerEmail": {
                     "type": "string"
                 },
-                "customer_name": {
+                "customerName": {
                     "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
-                "payment_status": {
+                "paymentStatus": {
                     "$ref": "#/definitions/repository.PaymentStatus"
                 },
                 "status": {
@@ -4911,10 +5327,10 @@ const docTemplate = `{
                 "total": {
                     "type": "number"
                 },
-                "total_items": {
+                "totalItems": {
                     "type": "integer"
                 },
-                "updated_at": {
+                "updatedAt": {
                     "type": "string"
                 }
             }
@@ -4948,7 +5364,7 @@ const docTemplate = `{
                 "amount": {
                     "type": "number"
                 },
-                "client_secret": {
+                "clientSecret": {
                     "type": "string"
                 },
                 "gateway": {
@@ -4957,13 +5373,13 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "intent_id": {
+                "intentId": {
                     "type": "string"
                 },
                 "method": {
                     "type": "string"
                 },
-                "refund_id": {
+                "refundId": {
                     "type": "string"
                 },
                 "status": {
@@ -4974,14 +5390,14 @@ const docTemplate = `{
         "api.PaymentRequest": {
             "type": "object",
             "required": [
-                "order_id",
-                "payment_method"
+                "orderId",
+                "paymentMethod"
             ],
             "properties": {
-                "order_id": {
+                "orderId": {
                     "type": "string"
                 },
-                "payment_method": {
+                "paymentMethod": {
                     "type": "string",
                     "enum": [
                         "cod",
@@ -5008,10 +5424,10 @@ const docTemplate = `{
         "api.ProductListModel": {
             "type": "object",
             "properties": {
-                "avg_rating": {
+                "avgRating": {
                     "type": "number"
                 },
-                "created_at": {
+                "createdAt": {
                     "type": "string"
                 },
                 "description": {
@@ -5020,22 +5436,22 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "image_id": {
+                "imageId": {
                     "type": "string"
                 },
-                "image_url": {
+                "imageUrl": {
                     "type": "string"
                 },
-                "max_price": {
+                "maxPrice": {
                     "type": "number"
                 },
-                "min_price": {
+                "minPrice": {
                     "type": "number"
                 },
                 "name": {
                     "type": "string"
                 },
-                "review_count": {
+                "reviewCount": {
                     "type": "integer"
                 },
                 "sku": {
@@ -5044,10 +5460,10 @@ const docTemplate = `{
                 "slug": {
                     "type": "string"
                 },
-                "updated_at": {
+                "updatedAt": {
                     "type": "string"
                 },
-                "variant_count": {
+                "variantCount": {
                     "type": "integer"
                 }
             }
@@ -5055,7 +5471,7 @@ const docTemplate = `{
         "api.ProductRatingModel": {
             "type": "object",
             "properties": {
-                "helpful_votes": {
+                "helpfulVotes": {
                     "type": "integer"
                 },
                 "id": {
@@ -5067,34 +5483,34 @@ const docTemplate = `{
                         "$ref": "#/definitions/api.RatingImageModel"
                     }
                 },
-                "is_approved": {
+                "isApproved": {
                     "type": "boolean"
                 },
-                "is_visible": {
+                "isVisible": {
                     "type": "boolean"
                 },
                 "name": {
                     "type": "string"
                 },
-                "product_name": {
+                "productName": {
                     "type": "string"
                 },
                 "rating": {
                     "type": "number"
                 },
-                "review_content": {
+                "reviewContent": {
                     "type": "string"
                 },
-                "review_title": {
+                "reviewTitle": {
                     "type": "string"
                 },
-                "unhelpful_votes": {
+                "unhelpfulVotes": {
                     "type": "integer"
                 },
-                "user_id": {
+                "userId": {
                     "type": "string"
                 },
-                "verified_purchase": {
+                "verifiedPurchase": {
                     "type": "boolean"
                 }
             }
@@ -5116,7 +5532,7 @@ const docTemplate = `{
                 "content": {
                     "type": "string"
                 },
-                "created_at": {
+                "createdAt": {
                     "type": "string"
                 },
                 "id": {
@@ -5133,10 +5549,10 @@ const docTemplate = `{
         "api.RefreshTokenResponse": {
             "type": "object",
             "properties": {
-                "access_token": {
+                "accessToken": {
                     "type": "string"
                 },
-                "access_token_expires_at": {
+                "accessTokenExpiresAt": {
                     "type": "string"
                 }
             }
@@ -5185,7 +5601,7 @@ const docTemplate = `{
         "api.UpdateAddressRequest": {
             "type": "object",
             "properties": {
-                "address_1": {
+                "address1": {
                     "type": "string"
                 },
                 "city": {
@@ -5194,7 +5610,7 @@ const docTemplate = `{
                 "district": {
                     "type": "string"
                 },
-                "is_default": {
+                "isDefault": {
                     "type": "boolean"
                 },
                 "phone": {
@@ -5231,14 +5647,14 @@ const docTemplate = `{
                 "code": {
                     "type": "string"
                 },
-                "display_order": {
+                "displayOrder": {
                     "type": "integer",
                     "minimum": 0
                 },
                 "id": {
                     "type": "string"
                 },
-                "is_active": {
+                "isActive": {
                     "type": "boolean"
                 },
                 "name": {
@@ -5264,7 +5680,7 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 1000
                 },
-                "display_order": {
+                "displayOrder": {
                     "type": "integer"
                 },
                 "image": {
@@ -5291,7 +5707,7 @@ const docTemplate = `{
         "api.UpdateUserRequest": {
             "type": "object",
             "required": [
-                "user_id"
+                "userId"
             ],
             "properties": {
                 "email": {
@@ -5309,7 +5725,7 @@ const docTemplate = `{
                     "maxLength": 15,
                     "minLength": 8
                 },
-                "user_id": {
+                "userId": {
                     "type": "string"
                 }
             }
@@ -5323,7 +5739,7 @@ const docTemplate = `{
                         "$ref": "#/definitions/api.AddressResponse"
                     }
                 },
-                "created_at": {
+                "createdAt": {
                     "type": "string"
                 },
                 "email": {
@@ -5335,7 +5751,7 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "password_changed_at": {
+                "passwordChangedAt": {
                     "type": "string"
                 },
                 "phone": {
@@ -5344,16 +5760,16 @@ const docTemplate = `{
                 "role": {
                     "$ref": "#/definitions/repository.UserRole"
                 },
-                "updated_at": {
+                "updatedAt": {
                     "type": "string"
                 },
                 "username": {
                     "type": "string"
                 },
-                "verified_email": {
+                "verifiedEmail": {
                     "type": "boolean"
                 },
-                "verified_phone": {
+                "verifiedPhone": {
                     "type": "boolean"
                 }
             }
@@ -5693,7 +6109,7 @@ const docTemplate = `{
         "repository.UpdateUserRow": {
             "type": "object",
             "properties": {
-                "created_at": {
+                "createdAt": {
                     "type": "string"
                 },
                 "email": {
@@ -5708,16 +6124,16 @@ const docTemplate = `{
                 "role": {
                     "$ref": "#/definitions/repository.UserRole"
                 },
-                "updated_at": {
+                "updatedAt": {
                     "type": "string"
                 },
                 "username": {
                     "type": "string"
                 },
-                "verified_email": {
+                "verifiedEmail": {
                     "type": "boolean"
                 },
-                "verified_phone": {
+                "verifiedPhone": {
                     "type": "boolean"
                 }
             }

@@ -55,26 +55,26 @@ async function ProductDetailPage({ params }: Props) {
 
   // Calculate average rating
   const {
-    one_star_count,
-    two_star_count,
-    three_star_count,
-    four_star_count,
-    five_star_count,
+    oneStarCount,
+    twoStarCount,
+    threeStarCount,
+    fourStarCount,
+    fiveStarCount,
   } = productDetail;
 
   const totalRatings =
-    one_star_count +
-    two_star_count +
-    three_star_count +
-    four_star_count +
-    five_star_count;
-  const avg_rating =
+    oneStarCount +
+    twoStarCount +
+    threeStarCount +
+    fourStarCount +
+    fiveStarCount;
+  const avgRating =
     totalRatings > 0
-      ? (one_star_count * 1 +
-          two_star_count * 2 +
-          three_star_count * 3 +
-          four_star_count * 4 +
-          five_star_count * 5) /
+      ? (oneStarCount * 1 +
+          twoStarCount * 2 +
+          threeStarCount * 3 +
+          fourStarCount * 4 +
+          fiveStarCount * 5) /
         totalRatings
       : 0;
 
@@ -120,7 +120,7 @@ async function ProductDetailPage({ params }: Props) {
 
       <div className='lg:grid lg:grid-cols-3 lg:gap-x-12 lg:items-start'>
         {/* Image gallery */}
-        <ImagesSection images={productDetail.product_images} />
+        <ImagesSection images={productDetail.productImages} />
 
         {/* Product info */}
         <div className='mt-10 px-4 sm:px-0 sm:mt-16 lg:mt-0'>
@@ -159,15 +159,15 @@ async function ProductDetailPage({ params }: Props) {
           <div className='mb-6'>
             {/* Reviews */}
             <ReviewSection
-              rating={avg_rating ?? 0}
-              reviewsCount={productDetail.rating_count}
+              rating={avgRating ?? 0}
+              reviewsCount={productDetail.ratingCount}
             />
           </div>
 
           {/* Short description */}
-          {productDetail.short_description && (
+          {productDetail.shortDescription && (
             <div className='mt-4 text-gray-500'>
-              <p>{productDetail.short_description}</p>
+              <p>{productDetail.shortDescription}</p>
             </div>
           )}
           {/* Attribute selection with visual improvements */}

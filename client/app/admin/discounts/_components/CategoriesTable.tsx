@@ -1,17 +1,54 @@
+import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import React from 'react';
+import { toast } from 'react-toastify';
+import useSWR from 'swr';
 
 type Category = {
   id: string;
   name: string;
 };
 
-type CategoriesTableProps = {
-  categories?: Category[];
-};
+export const CategoriesTable: React.FC<{ id: string }> = ({ id }) => {
+  const { data: categories, isLoading } = useSWR(
+    ADMIN_API_PATHS.DISCOUNT_CATEGORIES.replace(':id', id),
+    (url) =>
+      clientSideFetch<Category[]>(url, {
+        queryParams: {
+          page: 1,
+          limit: 10,
+        },
+      }).then((res) => {
+        if (res.error) {
+          throw new Error(res.error.details);
+        }
 
-export const CategoriesTable: React.FC<CategoriesTableProps> = ({
-  categories,
-}) => {
+        return res.data;
+      }),
+    {
+      onError: (error) => {
+        console.error(`Failed to fetch categories: ${error.message}`);
+        toast.error(`Failed to fetch categories: ${error.message}`, {
+          position: 'top-right',
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        });
+      },
+    }
+  );
+
+  if (isLoading) {
+    return (
+      <div className='bg-gray-50 rounded-md p-8 text-center'>
+        <p className='text-gray-500'>Loading categories...</p>
+      </div>
+    );
+  }
+
   if (!categories || categories.length === 0) {
     return (
       <div className='bg-gray-50 rounded-md p-8 text-center'>

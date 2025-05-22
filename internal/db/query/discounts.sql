@@ -71,6 +71,19 @@ RETURNING id;
 INSERT INTO discount_products (discount_id, product_id)
 VALUES ($1, $2);
 
+-- name: GetDiscountProducts :many
+SELECT dp.id, dp.discount_id, dp.product_id, p.name
+FROM discount_products dp
+JOIN products p ON dp.product_id = p.id
+WHERE dp.discount_id = $1
+ORDER BY dp.id
+LIMIT $2
+OFFSET $3;
+
+-- name: CountDiscountProducts :one
+SELECT COUNT(*) FROM discount_products
+WHERE discount_id = $1;
+
 -- name: DeleteProductDiscountsByDiscountID :exec
 DELETE FROM discount_products
 WHERE discount_id = $1;
@@ -88,6 +101,19 @@ WHERE discount_id = $1;
 INSERT INTO discount_categories (discount_id, category_id)
 VALUES ($1, $2);
 
+-- name: GetDiscountCategories :many
+SELECT dc.id, dc.discount_id, dc.category_id, c.name
+FROM discount_categories dc
+JOIN categories c ON dc.category_id = c.id
+WHERE dc.discount_id = $1
+ORDER BY dc.id
+LIMIT $2
+OFFSET $3;
+
+-- name: CountDiscountCategories :one
+SELECT COUNT(*) FROM discount_categories
+WHERE discount_id = $1;
+
 -- name: DeleteDiscountCategory :exec
 DELETE FROM discount_categories
 WHERE discount_id = $1
@@ -101,6 +127,19 @@ RETURNING id;
 -- name: InsertBulkUserDiscounts :copyfrom
 INSERT INTO discount_users (discount_id, user_id)
 VALUES ($1, $2);
+
+-- name: GetDiscountUsers :many
+SELECT du.id, du.discount_id, du.user_id, u.fullname, u.username
+FROM discount_users du
+JOIN users u ON du.user_id = u.id
+WHERE du.discount_id = $1
+ORDER BY du.id
+LIMIT $2
+OFFSET $3;
+
+-- name: CountDiscountUsers :one
+SELECT COUNT(*) FROM discount_users
+WHERE discount_id = $1;
 
 -- name: DeleteUserDiscountsByDiscountID :exec
 DELETE FROM discount_users

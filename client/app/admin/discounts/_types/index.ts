@@ -14,7 +14,7 @@ export interface CategoryType {
 }
 
 // Define Zod schema for form validation
-export const discountSchema = z.object({
+export const createDiscountSchema = z.object({
   code: z.string().min(1, 'Discount code is required'),
   discountType: z.object({
     id: z.enum(['percentage', 'fixed_amount']),
@@ -46,5 +46,26 @@ export const discountSchema = z.object({
     .nullish(),
 });
 
+export const editDiscountSchema = createDiscountSchema.extend({
+  products: z.array(z.string()).optional(),
+  categories: z.array(z.string()).optional(),
+  users: z.array(z.string()).optional(),
+});
+
+export const discountTypes = z.enum(['percentage', 'fixed_amount']);
+export const discountTypeNames = z.enum(['Percentage', 'Fixed Amount']);
+
+export const discountTypeOptions = [
+  {
+    id: discountTypes.Enum.percentage,
+    name: discountTypeNames.Enum.Percentage,
+  },
+  {
+    id: discountTypes.Enum.fixed_amount,
+    name: discountTypeNames.Enum['Fixed Amount'],
+  },
+];
+
 // TypeScript type derived from the schema
-export type DiscountFormData = z.infer<typeof discountSchema>;
+export type CreateDiscountFormData = z.infer<typeof createDiscountSchema>;
+export type EditDiscountFormData = z.infer<typeof editDiscountSchema>;

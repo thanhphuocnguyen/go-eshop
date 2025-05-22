@@ -7,7 +7,7 @@ import { TabPanel } from '@headlessui/react';
 import { TextAreaField, TextField } from '@/components/FormFields';
 import { StyledComboBoxController } from '@/components/FormFields/StyledComboBoxController';
 import { ControlledStyledCheckbox } from '@/components/FormFields/ControlledStyledCheckbox';
-import { DiscountFormData } from '../_types';
+import { CreateDiscountFormData, discountTypeOptions } from '../_types';
 import { AnimatePresence, motion } from 'framer-motion';
 
 interface DetailsPanelProps {}
@@ -17,7 +17,7 @@ export const DetailsPanel: React.FC<DetailsPanelProps> = ({}) => {
     register,
     control,
     formState: { errors },
-  } = useFormContext<DiscountFormData>();
+  } = useFormContext<CreateDiscountFormData>();
   const discountType = useWatch({ control, name: 'discountType' });
 
   return (
@@ -64,10 +64,7 @@ export const DetailsPanel: React.FC<DetailsPanelProps> = ({}) => {
               }
               placeholder='Select discount type'
               name='discountType'
-              options={[
-                { id: 'percentage', name: 'Percentage' },
-                { id: 'fixed_amount', name: 'Fixed Amount' },
-              ]}
+              options={discountTypeOptions}
               error={errors.discountType?.message}
             />
 

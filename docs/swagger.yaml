@@ -17,7 +17,7 @@ definitions:
     properties:
       city:
         type: string
-      created_at:
+      createdAt:
         type: string
       default:
         type: boolean
@@ -91,6 +91,36 @@ definitions:
     properties:
       data:
         $ref: '#/definitions/api.CategoryResponse'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-api_DiscountDetailResponseModel:
+    properties:
+      data:
+        $ref: '#/definitions/api.DiscountDetailResponseModel'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-api_DiscountListItemResponseModel:
+    properties:
+      data:
+        $ref: '#/definitions/api.DiscountListItemResponseModel'
       error:
         $ref: '#/definitions/api.ApiError'
       message:
@@ -401,13 +431,13 @@ definitions:
     type: object
   api.AttributeResponse:
     properties:
-      created_at:
+      createdAt:
         type: string
       id:
         type: string
       name:
         type: string
-      updated_at:
+      updatedAt:
         type: string
       values:
         items:
@@ -418,11 +448,11 @@ definitions:
     properties:
       code:
         type: string
-      display_order:
+      displayOrder:
         type: integer
       id:
         type: string
-      is_active:
+      isActive:
         type: boolean
       name:
         type: string
@@ -431,10 +461,10 @@ definitions:
     properties:
       code:
         type: string
-      display_order:
+      displayOrder:
         minimum: 0
         type: integer
-      is_active:
+      isActive:
         type: boolean
       name:
         type: string
@@ -443,17 +473,17 @@ definitions:
     type: object
   api.CartDetailResponse:
     properties:
-      cart_items:
+      cartItems:
         items:
           $ref: '#/definitions/api.CartItemResponse'
         type: array
-      created_at:
+      createdAt:
         type: string
       id:
         type: string
-      total_price:
+      totalPrice:
         type: number
-      updated_at:
+      updatedAt:
         type: string
     type: object
   api.CartItemResponse:
@@ -466,13 +496,13 @@ definitions:
         type: integer
       id:
         type: string
-      image_url:
+      imageUrl:
         type: string
       name:
         type: string
       price:
         type: number
-      product_id:
+      productId:
         type: string
       quantity:
         type: integer
@@ -480,33 +510,33 @@ definitions:
         type: string
       stock:
         type: integer
-      variant_id:
+      variantId:
         type: string
     required:
     - id
-    - product_id
-    - variant_id
+    - productId
+    - variantId
     type: object
   api.CategoryLinkedProduct:
     properties:
       id:
         type: string
-      image_url:
+      imageUrl:
         type: string
       name:
         type: string
-      variant_count:
+      variantCount:
         type: integer
     type: object
   api.CategoryResponse:
     properties:
-      created_at:
+      createdAt:
         type: string
       description:
         type: string
       id:
         type: string
-      image_url:
+      imageUrl:
         type: string
       name:
         type: string
@@ -520,32 +550,32 @@ definitions:
         type: boolean
       slug:
         type: string
-      updated_at:
+      updatedAt:
         type: string
     type: object
   api.CheckoutRequest:
     properties:
       address:
         $ref: '#/definitions/api.Address'
-      address_id:
+      addressId:
         type: string
       email:
         type: string
-      full_name:
+      fullName:
         type: string
-      payment_gateway:
+      paymentGateway:
         enum:
         - stripe
         type: string
-      payment_method:
+      paymentMethod:
         enum:
         - code
         - stripe
         type: string
-      payment_receipt_email:
+      paymentReceiptEmail:
         type: string
     required:
-    - payment_method
+    - paymentMethod
     type: object
   api.CreateAddressRequest:
     properties:
@@ -553,7 +583,7 @@ definitions:
         type: string
       district:
         type: string
-      is_default:
+      isDefault:
         type: boolean
       phone:
         maxLength: 15
@@ -586,7 +616,7 @@ definitions:
       description:
         maxLength: 1000
         type: string
-      display_order:
+      displayOrder:
         type: integer
       image:
         $ref: '#/definitions/multipart.FileHeader'
@@ -604,19 +634,150 @@ definitions:
     - name
     - slug
     type: object
+  api.CreateDiscountRequest:
+    properties:
+      categories:
+        items:
+          type: string
+        type: array
+      code:
+        maxLength: 32
+        minLength: 5
+        type: string
+      description:
+        maxLength: 1000
+        type: string
+      discountType:
+        enum:
+        - percentage
+        - fixed_amount
+        type: string
+      discountValue:
+        type: number
+      expiresAt:
+        type: string
+      isActive:
+        type: boolean
+      maxDiscountAmount:
+        type: number
+      minPurchaseAmount:
+        type: number
+      products:
+        description: Related entities
+        items:
+          type: string
+        type: array
+      startsAt:
+        type: string
+      usageLimit:
+        minimum: 0
+        type: integer
+      users:
+        items:
+          type: string
+        type: array
+    required:
+    - code
+    - discountType
+    - discountValue
+    - isActive
+    - startsAt
+    type: object
+  api.DiscountDetailResponseModel:
+    properties:
+      code:
+        type: string
+      createdAt:
+        type: string
+      description:
+        type: string
+      discountType:
+        type: string
+      discountValue:
+        type: number
+      expiresAt:
+        type: string
+      id:
+        type: string
+      isActive:
+        type: boolean
+      maxDiscount:
+        type: number
+      minPurchase:
+        type: number
+      startsAt:
+        type: string
+      updatedAt:
+        type: string
+      usageHistory:
+        items:
+          $ref: '#/definitions/api.DiscountUsageHistory'
+        type: array
+      usageLimit:
+        type: integer
+      usedCount:
+        type: integer
+    type: object
+  api.DiscountListItemResponseModel:
+    properties:
+      code:
+        type: string
+      createdAt:
+        type: string
+      description:
+        type: string
+      discountType:
+        type: string
+      discountValue:
+        type: number
+      expiresAt:
+        type: string
+      id:
+        type: string
+      isActive:
+        type: boolean
+      maxDiscount:
+        type: number
+      minPurchase:
+        type: number
+      startsAt:
+        type: string
+      updatedAt:
+        type: string
+      usageLimit:
+        type: integer
+      usedCount:
+        type: integer
+    type: object
+  api.DiscountUsageHistory:
+    properties:
+      amount:
+        type: number
+      customerName:
+        type: string
+      date:
+        format: "2006-01-02"
+        type: string
+      discountAmount:
+        type: number
+      id:
+        type: string
+      orderId:
+        type: string
+    type: object
   api.ImageResponse:
     properties:
       assignments:
         items:
           type: string
         type: array
-      external_id:
+      externalId:
         type: string
-      file_size:
+      fileSize:
         type: integer
       id:
         type: string
-      mime_type:
+      mimeType:
         type: string
       url:
         type: string
@@ -640,15 +801,15 @@ definitions:
     type: object
   api.LoginResponse:
     properties:
-      access_token:
+      accessToken:
         type: string
-      access_token_expires_in:
+      accessTokenExpiresIn:
         type: string
-      refresh_token:
+      refreshToken:
         type: string
-      refresh_token_expires_at:
+      refreshTokenExpiresAt:
         type: string
-      session_id:
+      sessionId:
         type: string
     type: object
   api.MetaInfo:
@@ -664,21 +825,21 @@ definitions:
     type: object
   api.OrderDetailResponse:
     properties:
-      created_at:
+      createdAt:
         type: string
-      customer_email:
+      customerEmail:
         type: string
-      customer_name:
+      customerName:
         type: string
       id:
         type: string
-      payment_info:
+      paymentInfo:
         $ref: '#/definitions/api.PaymentInfoModel'
       products:
         items:
           $ref: '#/definitions/api.OrderItemResponse'
         type: array
-      shipping_info:
+      shippingInfo:
         $ref: '#/definitions/repository.ShippingAddressSnapshot'
       status:
         $ref: '#/definitions/repository.OrderStatus'
@@ -687,15 +848,15 @@ definitions:
     type: object
   api.OrderItemResponse:
     properties:
-      attributes_snapshot:
+      attributesSnapshot:
         items:
           $ref: '#/definitions/repository.AttributeDataSnapshot'
         type: array
       id:
         type: string
-      image_url:
+      imageUrl:
         type: string
-      line_total:
+      lineTotal:
         type: number
       name:
         type: string
@@ -703,28 +864,28 @@ definitions:
         type: integer
       rating:
         $ref: '#/definitions/api.RatingModel'
-      variant_id:
+      variantId:
         type: string
     type: object
   api.OrderListResponse:
     properties:
-      created_at:
+      createdAt:
         type: string
-      customer_email:
+      customerEmail:
         type: string
-      customer_name:
+      customerName:
         type: string
       id:
         type: string
-      payment_status:
+      paymentStatus:
         $ref: '#/definitions/repository.PaymentStatus'
       status:
         $ref: '#/definitions/repository.OrderStatus'
       total:
         type: number
-      total_items:
+      totalItems:
         type: integer
-      updated_at:
+      updatedAt:
         type: string
     type: object
   api.Pagination:
@@ -746,33 +907,33 @@ definitions:
     properties:
       amount:
         type: number
-      client_secret:
+      clientSecret:
         type: string
       gateway:
         type: string
       id:
         type: string
-      intent_id:
+      intentId:
         type: string
       method:
         type: string
-      refund_id:
+      refundId:
         type: string
       status:
         type: string
     type: object
   api.PaymentRequest:
     properties:
-      order_id:
+      orderId:
         type: string
-      payment_method:
+      paymentMethod:
         enum:
         - cod
         - stripe
         type: string
     required:
-    - order_id
-    - payment_method
+    - orderId
+    - paymentMethod
     type: object
   api.PaymentResponse:
     properties:
@@ -786,38 +947,38 @@ definitions:
     type: object
   api.ProductListModel:
     properties:
-      avg_rating:
+      avgRating:
         type: number
-      created_at:
+      createdAt:
         type: string
       description:
         type: string
       id:
         type: string
-      image_id:
+      imageId:
         type: string
-      image_url:
+      imageUrl:
         type: string
-      max_price:
+      maxPrice:
         type: number
-      min_price:
+      minPrice:
         type: number
       name:
         type: string
-      review_count:
+      reviewCount:
         type: integer
       sku:
         type: string
       slug:
         type: string
-      updated_at:
+      updatedAt:
         type: string
-      variant_count:
+      variantCount:
         type: integer
     type: object
   api.ProductRatingModel:
     properties:
-      helpful_votes:
+      helpfulVotes:
         type: integer
       id:
         type: string
@@ -825,25 +986,25 @@ definitions:
         items:
           $ref: '#/definitions/api.RatingImageModel'
         type: array
-      is_approved:
+      isApproved:
         type: boolean
-      is_visible:
+      isVisible:
         type: boolean
       name:
         type: string
-      product_name:
+      productName:
         type: string
       rating:
         type: number
-      review_content:
+      reviewContent:
         type: string
-      review_title:
+      reviewTitle:
         type: string
-      unhelpful_votes:
+      unhelpfulVotes:
         type: integer
-      user_id:
+      userId:
         type: string
-      verified_purchase:
+      verifiedPurchase:
         type: boolean
     type: object
   api.RatingImageModel:
@@ -857,7 +1018,7 @@ definitions:
     properties:
       content:
         type: string
-      created_at:
+      createdAt:
         type: string
       id:
         type: string
@@ -868,9 +1029,9 @@ definitions:
     type: object
   api.RefreshTokenResponse:
     properties:
-      access_token:
+      accessToken:
         type: string
-      access_token_expires_at:
+      accessTokenExpiresAt:
         type: string
     type: object
   api.RegisterRequestBody:
@@ -907,13 +1068,13 @@ definitions:
     type: object
   api.UpdateAddressRequest:
     properties:
-      address_1:
+      address1:
         type: string
       city:
         type: string
       district:
         type: string
-      is_default:
+      isDefault:
         type: boolean
       phone:
         type: string
@@ -935,12 +1096,12 @@ definitions:
     properties:
       code:
         type: string
-      display_order:
+      displayOrder:
         minimum: 0
         type: integer
       id:
         type: string
-      is_active:
+      isActive:
         type: boolean
       name:
         type: string
@@ -959,7 +1120,7 @@ definitions:
       description:
         maxLength: 1000
         type: string
-      display_order:
+      displayOrder:
         type: integer
       image:
         $ref: '#/definitions/multipart.FileHeader'
@@ -990,10 +1151,10 @@ definitions:
         maxLength: 15
         minLength: 8
         type: string
-      user_id:
+      userId:
         type: string
     required:
-    - user_id
+    - userId
     type: object
   api.UserResponse:
     properties:
@@ -1001,7 +1162,7 @@ definitions:
         items:
           $ref: '#/definitions/api.AddressResponse'
         type: array
-      created_at:
+      createdAt:
         type: string
       email:
         type: string
@@ -1009,19 +1170,19 @@ definitions:
         type: string
       id:
         type: string
-      password_changed_at:
+      passwordChangedAt:
         type: string
       phone:
         type: string
       role:
         $ref: '#/definitions/repository.UserRole'
-      updated_at:
+      updatedAt:
         type: string
       username:
         type: string
-      verified_email:
+      verifiedEmail:
         type: boolean
-      verified_phone:
+      verifiedPhone:
         type: boolean
     type: object
   gin.H:
@@ -1266,7 +1427,7 @@ definitions:
     type: object
   repository.UpdateUserRow:
     properties:
-      created_at:
+      createdAt:
         type: string
       email:
         type: string
@@ -1276,13 +1437,13 @@ definitions:
         type: string
       role:
         $ref: '#/definitions/repository.UserRole'
-      updated_at:
+      updatedAt:
         type: string
       username:
         type: string
-      verified_email:
+      verifiedEmail:
         type: boolean
-      verified_phone:
+      verifiedPhone:
         type: boolean
     type: object
   repository.UserRole:
@@ -1319,7 +1480,7 @@ paths:
         type: integer
       - description: Page size
         in: query
-        name: page_size
+        name: pageSize
         type: integer
       produces:
       - application/json
@@ -1636,7 +1797,7 @@ paths:
         type: integer
       - description: Page size
         in: query
-        name: page_size
+        name: pageSize
         type: integer
       produces:
       - application/json
@@ -1796,7 +1957,7 @@ paths:
         type: integer
       - description: Page size
         in: query
-        name: page_size
+        name: pageSize
         type: integer
       - description: Filter by status
         in: query
@@ -1884,7 +2045,7 @@ paths:
       - default: 10
         description: Page size
         in: query
-        name: page_size
+        name: pageSize
         type: integer
       produces:
       - application/json
@@ -2195,7 +2356,7 @@ paths:
         type: integer
       - description: Page size
         in: query
-        name: page_size
+        name: pageSize
         type: integer
       produces:
       - application/json
@@ -2540,7 +2701,7 @@ paths:
         type: integer
       - description: Page size
         in: query
-        name: page_size
+        name: pageSize
         type: integer
       produces:
       - application/json
@@ -2574,7 +2735,7 @@ paths:
         type: string
       - description: Page size
         in: query
-        name: page_size
+        name: pageSize
         type: integer
       produces:
       - application/json
@@ -2624,6 +2785,116 @@ paths:
       summary: Get a list of Collections
       tags:
       - Collections
+  /discounts:
+    get:
+      consumes:
+      - application/json
+      description: Get all discounts
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      - description: Search by code
+        in: query
+        name: search
+        type: string
+      - default: percentage
+        description: Discount type
+        in: query
+        name: discountType
+        type: string
+      - default: true
+        description: Is active
+        in: query
+        name: isActive
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_DiscountListItemResponseModel'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+      summary: Get all discounts
+      tags:
+      - discounts
+    post:
+      consumes:
+      - application/json
+      description: Create a new discount
+      parameters:
+      - description: Discount info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/api.CreateDiscountRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_DiscountDetailResponseModel'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+      summary: Create a new discount
+      tags:
+      - discounts
+  /discounts/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get discount by ID
+      parameters:
+      - description: Discount ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_DiscountDetailResponseModel'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+      summary: Get discount by ID
+      tags:
+      - discounts
   /images/{publicID}:
     delete:
       consumes:
@@ -2936,7 +3207,7 @@ paths:
         type: integer
       - description: Page size
         in: query
-        name: page_size
+        name: pageSize
         type: integer
       - description: Filter by status
         in: query
@@ -3113,7 +3384,7 @@ paths:
         type: integer
       - description: Page size
         in: query
-        name: page_size
+        name: pageSize
         required: true
         type: integer
       produces:
@@ -3451,7 +3722,7 @@ paths:
       - default: 10
         description: Page size
         in: query
-        name: page_size
+        name: pageSize
         type: integer
       produces:
       - application/json
@@ -3488,7 +3759,7 @@ paths:
         type: integer
       - description: Page size
         in: query
-        name: page_size
+        name: pageSize
         type: integer
       produces:
       - application/json
@@ -3553,11 +3824,11 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_UserResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_UserResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
       summary: Get user info
       tags:
       - users
@@ -3612,15 +3883,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-repository_UpdateUserRow'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.ApiResponse-repository_UpdateUserRow'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-repository_UpdateUserRow'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
       summary: Update user info
       tags:
       - users
@@ -3645,10 +3916,18 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/api.ApiResponse-array_api_UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_UserResponse'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
       summary: List users
       tags:
       - users

@@ -60,7 +60,7 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
               id: image.id,
               url: image.url,
               role: image.role,
-              assignments: image.assignments.map((assignment) => assignment.id),
+              assignments: image.assignments.map((assignment) => assignment.entityId),
             })),
           },
         }
@@ -147,7 +147,7 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
             id: image.id,
             url: image.url,
             role: image.role,
-            assignments: image.assignments.map((assignment) => assignment.id),
+            assignments: image.assignments.map((assignment) => assignment.entityId),
           })),
         },
       });

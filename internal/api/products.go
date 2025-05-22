@@ -14,8 +14,6 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// ------------------------------ Handlers ------------------------------
-
 // @Summary Create a new product
 // @Schemes http
 // @Description create a new product with the input payload

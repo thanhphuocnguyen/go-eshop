@@ -393,6 +393,51 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 	return i, err
 }
 
+const getUsers = `-- name: GetUsers :many
+SELECT id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at, locked, avatar_url, avatar_image_id FROM users ORDER BY id LIMIT $1 OFFSET $2
+`
+
+type GetUsersParams struct {
+	Limit  int64 `json:"limit"`
+	Offset int64 `json:"offset"`
+}
+
+func (q *Queries) GetUsers(ctx context.Context, arg GetUsersParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, getUsers, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []User{}
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Role,
+			&i.Username,
+			&i.Email,
+			&i.Phone,
+			&i.Fullname,
+			&i.HashedPassword,
+			&i.VerifiedEmail,
+			&i.VerifiedPhone,
+			&i.PasswordChangedAt,
+			&i.UpdatedAt,
+			&i.CreatedAt,
+			&i.Locked,
+			&i.AvatarUrl,
+			&i.AvatarImageID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getVerifyEmailByID = `-- name: GetVerifyEmailByID :one
 SELECT id, user_id, email, verify_code, is_used, created_at, expired_at FROM verify_emails WHERE id = $1
 `
@@ -429,51 +474,6 @@ func (q *Queries) GetVerifyEmailByVerifyCode(ctx context.Context, verifyCode str
 		&i.ExpiredAt,
 	)
 	return i, err
-}
-
-const listUsers = `-- name: ListUsers :many
-SELECT id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at, locked, avatar_url, avatar_image_id FROM users ORDER BY id LIMIT $1 OFFSET $2
-`
-
-type ListUsersParams struct {
-	Limit  int64 `json:"limit"`
-	Offset int64 `json:"offset"`
-}
-
-func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error) {
-	rows, err := q.db.Query(ctx, listUsers, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []User{}
-	for rows.Next() {
-		var i User
-		if err := rows.Scan(
-			&i.ID,
-			&i.Role,
-			&i.Username,
-			&i.Email,
-			&i.Phone,
-			&i.Fullname,
-			&i.HashedPassword,
-			&i.VerifiedEmail,
-			&i.VerifiedPhone,
-			&i.PasswordChangedAt,
-			&i.UpdatedAt,
-			&i.CreatedAt,
-			&i.Locked,
-			&i.AvatarUrl,
-			&i.AvatarImageID,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const resetPrimaryAddress = `-- name: ResetPrimaryAddress :exec

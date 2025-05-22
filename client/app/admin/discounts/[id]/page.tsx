@@ -19,11 +19,11 @@ import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { toast } from 'react-toastify';
 
 // Mock data for a specific discount
-type Discount = {
+export type Discount = {
   id: string;
   code: string;
   description: string;
-  discountType: string;
+  discountType: 'percentage' | 'fixed_amount';
   discountValue: number;
   minPurchase?: number;
   maxDiscount?: number;
@@ -34,8 +34,6 @@ type Discount = {
   expiresAt: string;
   createdAt: string;
   updatedAt: string;
-  products: Array<{ id: string; name: string; price: number }>;
-  categories: Array<{ id: string; name: string }>;
   usageHistory: Array<{
     id: string;
     orderId: string;
@@ -79,7 +77,6 @@ export default function DiscountDetailPage({
       },
     }
   );
-  // */
 
   if (isLoading) {
     return (
@@ -111,9 +108,11 @@ export default function DiscountDetailPage({
   }
 
   const isActive =
-    discount.isActive && new Date(discount.expiresAt) > new Date();
-  const isExpired = new Date(discount.expiresAt) < new Date();
-  const isUpcoming = new Date(discount.startsAt) > new Date();
+    discount.isActive &&
+    dayjs(discount.startsAt).isBefore(dayjs()) &&
+    dayjs(discount.expiresAt).isAfter(dayjs());
+  const isExpired = dayjs(discount.expiresAt).isBefore(dayjs());
+  const isUpcoming = dayjs(discount.startsAt).isAfter(dayjs());
 
   let statusClasses =
     'px-2 py-1 inline-flex items-center text-xs font-medium rounded-full ';
@@ -364,7 +363,7 @@ export default function DiscountDetailPage({
               </div>
 
               <ProductsTable
-                products={discount.products}
+                id={discount.id}
                 discountType={discount.discountType}
                 discountValue={discount.discountValue}
               />
@@ -380,7 +379,7 @@ export default function DiscountDetailPage({
                 </button>
               </div>
 
-              <CategoriesTable categories={discount.categories} />
+              <CategoriesTable id={discount.id} />
             </div>
           )}
 

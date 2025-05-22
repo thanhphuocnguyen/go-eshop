@@ -10,7 +10,11 @@ import dayjs from 'dayjs';
 import { Button, TabGroup, TabPanels } from '@headlessui/react';
 
 import { DetailsPanel, TabNavigation } from '../_components';
-import { discountSchema, DiscountFormData } from '../_types';
+import {
+  createDiscountSchema,
+  CreateDiscountFormData,
+  editDiscountSchema,
+} from '../_types';
 import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { toast } from 'react-toastify';
@@ -20,10 +24,10 @@ export default function NewDiscountPage() {
   const [activeTab, setActiveTab] = useState('details');
 
   // Initialize react-hook-form with Zod resolver
-  const discountForm = useForm<DiscountFormData>({
+  const discountForm = useForm<CreateDiscountFormData>({
     reValidateMode: 'onBlur',
     mode: 'onBlur',
-    resolver: zodResolver(discountSchema),
+    resolver: zodResolver(editDiscountSchema),
     defaultValues: {
       code: 'FREESHIP5',
       discountType: {
@@ -44,7 +48,7 @@ export default function NewDiscountPage() {
   } = discountForm;
 
   // Submit handler
-  const onSubmit = async (formData: DiscountFormData) => {
+  const onSubmit = async (formData: CreateDiscountFormData) => {
     console.log(formData);
     try {
       const { error } = await clientSideFetch<string>(

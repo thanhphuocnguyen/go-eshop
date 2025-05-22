@@ -11,55 +11,6 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 )
 
-// ------------------------------ API Models ------------------------------
-type AttributeValue struct {
-	ID           uuid.UUID `json:"id"`
-	Code         string    `json:"code"`
-	Name         *string   `json:"name"`
-	IsActive     *bool     `json:"is_active"`
-	DisplayOrder *int16    `json:"display_order"`
-}
-
-type AttributeValueRequest struct {
-	Code         string  `json:"code" binding:"required"`
-	Name         *string `json:"name" binding:"omitempty"`
-	DisplayOrder *int16  `json:"display_order" binding:"omitempty,min=0"`
-	IsActive     *bool   `json:"is_active" binding:"omitempty"`
-}
-
-type UpdateAttributeValueRequest struct {
-	ID                    *string `json:"id" binding:"omitempty,uuid"`
-	AttributeValueRequest `json:",inline"`
-}
-
-type AttributeResponse struct {
-	ID        uuid.UUID        `json:"id"`
-	Name      string           `json:"name"`
-	Values    []AttributeValue `json:"values,omitempty"`
-	CreatedAt string           `json:"created_at"`
-	UpdatedAt string           `json:"updated_at"`
-}
-
-type CreateAttributeRequest struct {
-	Name   string                  `json:"name" binding:"required"`
-	Values []AttributeValueRequest `json:"values,omitempty"`
-}
-
-type UpdateAttributeRequest struct {
-	Name   string                        `json:"name" binding:"required"`
-	Values []UpdateAttributeValueRequest `json:"values,omitempty"`
-}
-
-type AttributeParam struct {
-	ID string `uri:"id" binding:"required,uuid"`
-}
-
-type GetAttributesQuery struct {
-	IDs []uuid.UUID `form:"ids" binding:"omitempty"`
-}
-
-// ------------------------------ API Handlers ------------------------------
-
 // @Summary Create an attribute
 // @Description Create an attribute
 // @Tags attributes

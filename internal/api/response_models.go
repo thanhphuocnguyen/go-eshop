@@ -161,8 +161,8 @@ type RatingsQueryParams struct {
 }
 
 type CreatePaymentIntentResponse struct {
-	PaymentID    string  `json:"payment_id"`
-	ClientSecret *string `json:"client_secret"`
+	PaymentID    string  `json:"paymentId"`
+	ClientSecret *string `json:"clientSecret"`
 }
 
 type PaymentResponse struct {
@@ -269,7 +269,7 @@ type DiscountListItemResponseModel struct {
 	Description   *string `json:"description"`
 	DiscountType  string  `json:"discountType"`
 	DiscountValue float64 `json:"discountValue"`
-	ExpiredAt     string  `json:"expiredAt"`
+	ExpiresAt     string  `json:"expiresAt"`
 	StartsAt      string  `json:"startsAt"`
 	UsedCount     int32   `json:"usedCount"`
 	UsageLimit    *int32  `json:"usageLimit"`
@@ -300,7 +300,7 @@ type DiscountDetailResponseModel struct {
 	Description   *string                `json:"description"`
 	DiscountType  string                 `json:"discountType"`
 	DiscountValue float64                `json:"discountValue"`
-	ExpiredAt     string                 `json:"expiredAt"`
+	ExpiresAt     string                 `json:"expiresAt"`
 	StartsAt      string                 `json:"startsAt"`
 	UsedCount     int32                  `json:"usedCount"`
 	UsageLimit    *int32                 `json:"usageLimit"`
@@ -345,14 +345,14 @@ type ProductListModel struct {
 	ID           string   `json:"id"`
 	Name         string   `json:"name"`
 	Description  string   `json:"description"`
-	VariantCount int64    `json:"variant_count,omitzero"`
+	VariantCount int64    `json:"variantCount,omitzero"`
 	MinPrice     float64  `json:"minPrice,omitzero"`
-	MaxPrice     float64  `json:"max_price,omitzero"`
+	MaxPrice     float64  `json:"maxPrice,omitzero"`
 	Slug         string   `json:"slug,omitempty"`
 	Sku          string   `json:"sku"`
 	ImgUrl       *string  `json:"imageUrl,omitempty"`
 	AvgRating    *float64 `json:"avgRating,omitempty"`
-	ReviewCount  *int32   `json:"review_count,omitempty"`
+	ReviewCount  *int32   `json:"reviewCount,omitempty"`
 	ImgID        *string  `json:"imageId,omitempty"`
 	CreatedAt    string   `json:"createdAt,omitempty"`
 	UpdatedAt    string   `json:"updatedAt,omitempty"`
@@ -365,7 +365,7 @@ type FiltersModel struct {
 
 type ProductVariantImageModel struct {
 	ID        string `json:"id"`
-	VariantID string `json:"variant_id,omitempty"`
+	VariantID string `json:"variantId,omitempty"`
 	ImageUrl  string `json:"imageUrl"`
 	ImageID   string `json:"imageId"`
 }
@@ -373,24 +373,24 @@ type ProductVariantImageModel struct {
 type CategoryLinkedProduct struct {
 	ID           string  `json:"id"`
 	Name         string  `json:"name"`
-	VariantCount int32   `json:"variant_count"`
+	VariantCount int32   `json:"variantCount"`
 	ImageUrl     *string `json:"imageUrl,omitempty"`
 }
 
 type ProductVariantModel struct {
 	ID         string                  `json:"id"`
 	Price      float64                 `json:"price"`
-	StockQty   int32                   `json:"stock_qty"`
-	IsActive   bool                    `json:"is_active"`
+	StockQty   int32                   `json:"stockQty"`
+	IsActive   bool                    `json:"isActive"`
 	Sku        *string                 `json:"sku,omitempty"`
 	Attributes []ProductAttributeModel `json:"attributes"`
 }
 
 type ImageAssignmentModel struct {
 	ID           string `json:"id"`
-	EntityID     string `json:"entity_id"`
-	EntityType   string `json:"entity_type"`
-	DisplayOrder int16  `json:"display_order"`
+	EntityID     string `json:"entityId"`
+	EntityType   string `json:"entityType"`
+	DisplayOrder int16  `json:"displayOrder"`
 	Role         string `json:"role"`
 }
 
@@ -419,7 +419,7 @@ type PaymentInfoModel struct {
 	ID           string  `json:"id"`
 	RefundID     *string `json:"refundId"`
 	Amount       float64 `json:"amount"`
-	IntendID     *string `json:"intent_id"`
+	IntendID     *string `json:"intentId"`
 	ClientSecret *string `json:"clientSecret"`
 	GateWay      *string `json:"gateway"`
 	Method       string  `json:"method"`
@@ -442,5 +442,21 @@ type RatingImageModel struct {
 type ProductAttributeModel struct {
 	ID          string         `json:"id"`
 	Name        string         `json:"name"`
-	ValueObject AttributeValue `json:"value_object"`
+	ValueObject AttributeValue `json:"valueObject"`
+}
+
+type AttributeValue struct {
+	ID           uuid.UUID `json:"id"`
+	Code         string    `json:"code"`
+	Name         *string   `json:"name"`
+	IsActive     *bool     `json:"isActive"`
+	DisplayOrder *int16    `json:"displayOrder"`
+}
+
+type AttributeResponse struct {
+	ID        uuid.UUID        `json:"id"`
+	Name      string           `json:"name"`
+	Values    []AttributeValue `json:"values,omitempty"`
+	CreatedAt string           `json:"createdAt"`
+	UpdatedAt string           `json:"updatedAt"`
 }

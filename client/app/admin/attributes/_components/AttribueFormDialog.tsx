@@ -60,7 +60,7 @@ export const AddNewDialog: React.FC<AddNewDialogProps> = ({
       name,
       values: newValues.map((e, idx) => ({
         ...e,
-        display_order: idx + 1,
+        displayOrder: idx + 1,
       })),
     };
 

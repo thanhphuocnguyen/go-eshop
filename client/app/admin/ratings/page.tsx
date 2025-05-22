@@ -18,22 +18,22 @@ import dayjs from 'dayjs';
 // Extended rating model for admin page with additional fields
 type AdminRatingModel = {
   id: string;
-  product_id: string;
-  product_name?: string;
-  product_image?: string;
-  user_id: string;
-  user_name: string;
-  order_item_id: string;
+  productId: string;
+  productName?: string;
+  productImage?: string;
+  userId: string;
+  userName: string;
+  orderItemId: string;
   rating: number;
-  review_title: string;
-  review_content: string;
-  verified_purchase: boolean;
-  is_visible: boolean;
-  is_approved: boolean;
-  helpful_votes: number;
-  unhelpful_votes: number;
-  created_at: string;
-  updated_at: string;
+  reviewTitle: string;
+  reviewContent: string;
+  verifiedPurchase: boolean;
+  isVisible: boolean;
+  isApproved: boolean;
+  helpfulVotes: number;
+  unhelpfulVotes: number;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export default function Page() {
@@ -149,7 +149,7 @@ export default function Page() {
       // Update the rating in the list
       setRatings(
         ratings.map((r) =>
-          r.id === rating.id ? { ...r, is_approved: true } : r
+          r.id === rating.id ? { ...r, isApproved: true } : r
         )
       );
     } catch (error) {
@@ -176,7 +176,7 @@ export default function Page() {
       // Update the rating in the list
       setRatings(
         ratings.map((r) =>
-          r.id === rating.id ? { ...r, is_visible: false } : r
+          r.id === rating.id ? { ...r, isVisible: false } : r
         )
       );
     } catch (error) {
@@ -349,24 +349,24 @@ export default function Page() {
                   key={rating.id}
                   className='bg-white border-b hover:bg-gray-50'
                 >
-                  <td className='px-6 py-4'>{rating.product_name}</td>
+                  <td className='px-6 py-4'>{rating.productName}</td>
                   <td className='px-6 py-4'>
-                    {rating.user_name ||
-                      `User: ${rating.user_id.substring(0, 8)}...`}
+                    {rating.userName ||
+                      `User: ${rating.userId.substring(0, 8)}...`}
                   </td>
                   <td className='px-6 py-4'>{renderStars(rating.rating)}</td>
                   <td className='px-6 py-4'>
-                    {rating.review_title || 'No title'}
+                    {rating.reviewTitle || 'No title'}
                   </td>
                   <td className='px-6 py-4 max-w-xs truncate'>
-                    {rating.review_content || 'No content'}
+                    {rating.reviewContent || 'No content'}
                   </td>
                   <td className='px-6 py-4'>
-                    {rating.is_approved ? (
+                    {rating.isApproved ? (
                       <span className='px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs'>
                         Approved
                       </span>
-                    ) : !rating.is_visible ? (
+                    ) : !rating.isVisible ? (
                       <span className='px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs'>
                         Rejected
                       </span>
@@ -377,11 +377,11 @@ export default function Page() {
                     )}
                   </td>
                   <td className='px-6 py-4'>
-                    {dayjs(rating.created_at).format('MMM D, YYYY')}
+                    {dayjs(rating.createdAt).format('MMM D, YYYY')}
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap'>
                     <div className='flex space-x-2'>
-                      {!rating.is_approved && rating.is_visible && (
+                      {!rating.isApproved && rating.isVisible && (
                         <button
                           onClick={() => handleApprove(rating)}
                           className='text-blue-500 hover:text-blue-700'
@@ -390,7 +390,7 @@ export default function Page() {
                           <CheckCircleIcon className='h-5 w-5' />
                         </button>
                       )}
-                      {!rating.is_approved && rating.is_visible && (
+                      {!rating.isApproved && rating.isVisible && (
                         <button
                           onClick={() => handleReject(rating)}
                           className='text-red-500 hover:text-red-700'

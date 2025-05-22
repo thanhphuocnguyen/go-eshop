@@ -171,5 +171,44 @@ type RegisterRequestBody struct {
 type LoginRequest struct {
 	Username *string `form:"username" binding:"omitempty,min=3,max=32"`
 	Email    *string `form:"email" binding:"omitempty,email,max=255,min=6"`
-	Password string  `form:"password" binding:"required,min=6,max=32"`
+	Password string  `json:"password" binding:"required,min=6,max=32"`
+}
+
+type BrandsQueries struct {
+	PaginationQueryParams
+	ids []int32 `form:"ids,omitempty"`
+}
+
+type BrandProductRequest struct {
+	SortOrder int16 `json:"sortOrder,omitempty"`
+}
+
+type AttributeValueRequest struct {
+	Code         string  `json:"code" binding:"required"`
+	Name         *string `json:"name" binding:"omitempty"`
+	DisplayOrder *int16  `json:"displayOrder" binding:"omitempty,min=0"`
+	IsActive     *bool   `json:"isActive" binding:"omitempty"`
+}
+
+type UpdateAttributeValueRequest struct {
+	ID                    *string `json:"id" binding:"omitempty,uuid"`
+	AttributeValueRequest `json:",inline"`
+}
+
+type CreateAttributeRequest struct {
+	Name   string                  `json:"name" binding:"required"`
+	Values []AttributeValueRequest `json:"values,omitempty"`
+}
+
+type UpdateAttributeRequest struct {
+	Name   string                        `json:"name" binding:"required"`
+	Values []UpdateAttributeValueRequest `json:"values,omitempty"`
+}
+
+type AttributeParam struct {
+	ID string `uri:"id" binding:"required,uuid"`
+}
+
+type GetAttributesQuery struct {
+	IDs []uuid.UUID `form:"ids" binding:"omitempty"`
 }

@@ -77,7 +77,7 @@ export const ProductInfoForm: React.FC<{
               />
             )}
           </Switch>
-          <Label htmlFor='is_active' className='font-semibold cursor-pointer'>
+          <Label htmlFor='isActive' className='font-semibold cursor-pointer'>
             Active
           </Label>
         </Field>

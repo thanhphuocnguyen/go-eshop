@@ -6,8 +6,8 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
-func mapToUserResponse(user repository.User) *UserResponse {
-	return &UserResponse{
+func mapToUserResponse(user repository.User) UserResponse {
+	return UserResponse{
 		ID:                user.ID,
 		Addresses:         []AddressResponse{},
 		Email:             user.Email,

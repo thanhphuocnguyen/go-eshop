@@ -8,8 +8,13 @@ import {
   PlusIcon,
   MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
-import { DiscountFormData, ProductType } from '../_types';
+import {
+  CreateDiscountFormData,
+  EditDiscountFormData,
+  ProductType,
+} from '../_types';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useProducts } from '@/app/lib/hooks/useProducts';
 
 interface ProductsPanelProps {}
 
@@ -24,53 +29,51 @@ const mockAllProducts = [
 ];
 
 export const ProductsPanel: React.FC<ProductsPanelProps> = ({}) => {
-  const { setValue, watch } = useFormContext<DiscountFormData>();
-  const selectedProducts = watch('products') || [];
-  const [availableProducts, setAvailableProducts] =
-    useState<ProductType[]>(mockAllProducts);
+  const { setValue, watch } = useFormContext<EditDiscountFormData>();
+  const selectedProducts = watch('products', []);
+  const { products, mutate, isLoading } = useProducts({});
 
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleAddProduct = (product: ProductType) => {
-    const currentProducts = [...selectedProducts];
+    const currentProducts = [...selectedProducts!];
     currentProducts.push(product);
     setValue('products', currentProducts);
 
     // Remove from available products
-    setAvailableProducts(availableProducts.filter((p) => p.id !== product.id));
   };
 
   const handleRemoveProduct = (productId: string) => {
-    const removedProduct = selectedProducts.find((p) => p.id === productId);
+    const removedProduct = selectedProducts!.find((p) => p === productId);
     if (removedProduct) {
       setValue(
         'products',
-        selectedProducts.filter((p) => p.id !== productId)
+        selectedProducts!.filter((p) => p.id !== productId)
       );
-      setAvailableProducts([...availableProducts, removedProduct]);
+      mutate([...products, removedProduct]);
     }
   };
 
   // Filter available products based on search query
   const filteredAvailableProducts = useMemo(() => {
-    if (!searchQuery.trim()) return availableProducts;
+    if (!searchQuery.trim()) return products;
 
     const query = searchQuery.toLowerCase().trim();
-    return availableProducts.filter(
+    return products?.filter(
       (product) =>
         product.name.toLowerCase().includes(query) ||
-        product.price.toString().includes(query)
+        product.minPrice.toString().includes(query)
     );
-  }, [availableProducts, searchQuery]);
+  }, [products, searchQuery]);
 
   // Filter selected products based on search query
   const filteredSelectedProducts = useMemo(() => {
     if (!searchQuery.trim()) return selectedProducts;
 
     const query = searchQuery.toLowerCase().trim();
-    return selectedProducts.filter(
+    return selectedProducts!.filter(
       (product) =>
-        product.name.toLowerCase().includes(query) ||
+        product.toLowerCase().includes(query) ||
         product.price.toString().includes(query)
     );
   }, [selectedProducts, searchQuery]);
@@ -170,7 +173,7 @@ export const ProductsPanel: React.FC<ProductsPanelProps> = ({}) => {
         ) : (
           <div className='bg-gray-50 rounded-md p-6 text-center border border-gray-100'>
             <p className='text-gray-500'>
-              {availableProducts.length === 0
+              {products.length === 0
                 ? 'All available products have been added to this discount.'
                 : 'No products match your search criteria.'}
             </p>

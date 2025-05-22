@@ -12,19 +12,6 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
-// ------------------------------------------ Request and Response ------------------------------------------
-
-type BrandsQueries struct {
-	PaginationQueryParams
-	brands []int32 `form:"Brand_ids,omitempty"`
-}
-
-type BrandProductRequest struct {
-	SortOrder int16 `json:"sort_order,omitempty"`
-}
-
-// ------------------------------------------ API Handlers ------------------------------------------
-
 // --- Public API ---
 // getShopBrandsHandler retrieves a list of brands for the shop.
 // @Summary Get a list of brands for the shop

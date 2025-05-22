@@ -1,22 +1,19 @@
 'use client';
 
 import Loading from '@/app/loading';
-import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
-import { ProductListModel } from '@/app/lib/definitions';
 import { Button } from '@headlessui/react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import useSWR from 'swr';
 
 import dayjs from 'dayjs';
 import Image from 'next/image';
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
   MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 import { useDebounce } from '@/app/lib/hooks/useDebounce';
+import { useProducts } from '@/app/lib/hooks/useProducts';
 
 export default function Page() {
   const [page, setPage] = useState(1);
@@ -25,28 +22,11 @@ export default function Page() {
   const debouncedSearch = useDebounce(searchInput, 500); // 500ms delay
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-
-  const { data, isLoading } = useSWR(
-    [PUBLIC_API_PATHS.PRODUCTS, page, limit, debouncedSearch],
-    ([url, page, limit, search]) =>
-      clientSideFetch<ProductListModel[]>(
-        `${url}?page=${page}&pageSize=${limit}&search=${search}`,
-        {}
-      ).then((response) => {
-        // Store pagination data
-        if (response.pagination) {
-          setTotal(response.pagination.total);
-          setTotalPages(response.pagination.totalPages);
-        }
-        return response.data;
-      }),
-    {
-      revalidateOnFocus: false,
-      onError: (err) => {
-        throw err;
-      },
-    }
-  );
+  const { products, pagination, isLoading } = useProducts({
+    page,
+    limit,
+    debouncedSearch,
+  });
 
   const handlePreviousPage = () => {
     if (page > 1) {
@@ -68,6 +48,14 @@ export default function Page() {
     setLimit(Number(e.target.value));
     setPage(1); // Reset to first page when changing limit
   };
+
+  useEffect(() => {
+    if (pagination) {
+      const { total, totalPages } = pagination;
+      setTotal(total);
+      setTotalPages(totalPages);
+    }
+  }, [pagination, limit]);
 
   if (isLoading) return <Loading />;
 
@@ -127,7 +115,7 @@ export default function Page() {
             </tr>
           </thead>
           <tbody>
-            {data?.map((product) => (
+            {products?.map((product) => (
               <tr
                 key={product.id}
                 className='odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200'
@@ -169,7 +157,7 @@ export default function Page() {
                 </td>
               </tr>
             ))}
-            {(!data || data.length === 0) && (
+            {(!products || products.length === 0) && (
               <tr className='odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200'>
                 <td colSpan={6} className='px-6 py-4 text-center'>
                   No products found

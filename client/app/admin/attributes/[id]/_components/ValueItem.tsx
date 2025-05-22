@@ -64,7 +64,7 @@ const ValueItem: React.FC<ValueItemProps> = ({ idx, id, remove }) => {
           <Field className='flex items-center gap-2'>
             <Controller
               control={control}
-              name={`values.${idx}.is_active`}
+              name={`values.${idx}.isActive`}
               render={({ field: { value, onChange, ...rest } }) => (
                 <Switch
                   {...rest}

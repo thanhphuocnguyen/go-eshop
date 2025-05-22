@@ -22,7 +22,7 @@ interface CategoryEditFormProps {
 const UpdateCategoryFormSchema = z.object({
   name: z.string().nonempty(),
   description: z.string().optional(),
-  display_order: z.number().optional(),
+  displayOrder: z.number().optional(),
   slug: z.string().nonempty(),
   published: z.boolean().optional(),
   remarkable: z.boolean().optional(),

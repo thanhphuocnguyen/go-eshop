@@ -87,6 +87,9 @@ export default function Page() {
                 Description
               </th>
               <th scope='col' className='px-6 py-3'>
+                Status
+              </th>
+              <th scope='col' className='px-6 py-3'>
                 Created At
               </th>
               <th scope='col' className='px-6 py-3'>
@@ -126,6 +129,26 @@ export default function Page() {
                 <td className='px-6 py-4'>{collection.slug}</td>
                 <td className='px-6 py-4'>{collection.description}</td>
                 <td className='px-6 py-4'>
+                  <div className='flex flex-col gap-1'>
+                    {collection.published !== undefined && (
+                      <span 
+                        className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          collection.published 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {collection.published ? 'Published' : 'Draft'}
+                      </span>
+                    )}
+                    {collection.remarkable !== undefined && collection.remarkable && (
+                      <span className='px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full'>
+                        Featured
+                      </span>
+                    )}
+                  </div>
+                </td>
+                <td className='px-6 py-4'>
                   {dayjs(collection.createdAt).format('YYYY/MM/DD')}
                 </td>
                 <td className='px-6 py-4'>
@@ -148,7 +171,7 @@ export default function Page() {
             ))}
             {(!collections || collections.length === 0) && (
               <tr className='odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200'>
-                <td colSpan={6} className='px-6 py-4 text-center'>
+                <td colSpan={7} className='px-6 py-4 text-center'>
                   No collections found
                 </td>
               </tr>

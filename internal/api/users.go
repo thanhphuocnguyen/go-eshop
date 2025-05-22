@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
-	repository "github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/cachesrv"
@@ -23,9 +23,9 @@ import (
 // @Produce  json
 // @Param input body UpdateUserRequest true "User info"
 // @Success 200 {object} ApiResponse[repository.UpdateUserRow]
-// @Failure 400 {object} ApiResponse[repository.UpdateUserRow]
-// @Failure 401 {object} ApiResponse[repository.UpdateUserRow]
-// @Failure 500 {object} ApiResponse[repository.UpdateUserRow]
+// @Failure 400 {object} ApiResponse[gin.H]
+// @Failure 401 {object} ApiResponse[gin.H]
+// @Failure 500 {object} ApiResponse[gin.H]
 // @Router /users/{id} [patch]
 func (sv *Server) updateUserHandler(c *gin.Context) {
 	var req UpdateUserRequest
@@ -83,9 +83,9 @@ func (sv *Server) updateUserHandler(c *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @Success 200 {object} ApiResponse[UserResponse]
-// @Failure 404 {object} ApiResponse[UserResponse]
-// @Failure 500 {object} ApiResponse[UserResponse]
-// @Router /users [get]
+// @Failure 404 {object} ApiResponse[gin.H]
+// @Failure 500 {object} ApiResponse[gin.H]
+// @Router /users/me [get]
 func (sv *Server) getCurrentUserHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {
@@ -93,10 +93,10 @@ func (sv *Server) getCurrentUserHandler(c *gin.Context) {
 		return
 	}
 
-	var userResp *UserResponse
+	var userResp UserResponse
 	err := sv.cachesrv.Get(c, cachesrv.USER_KEY_PREFIX+authPayload.UserID.String(), &userResp)
 	if err == nil {
-		c.JSON(http.StatusOK, createSuccessResponse(c, *userResp, "", nil, nil))
+		c.JSON(http.StatusOK, createSuccessResponse(c, userResp, "", nil, nil))
 		return
 	}
 
@@ -140,8 +140,10 @@ func (sv *Server) getCurrentUserHandler(c *gin.Context) {
 // @Param limit query int false "Limit"
 // @Param offset query int false "Offset"
 // @Success 200 {object} ApiResponse[[]UserResponse]
-// @Failure 500 {object} ApiResponse[[]UserResponse]
-// @Router /users/list [get]
+// @Failure 500 {object} ApiResponse[gin.H]
+// @Failure 400 {object} ApiResponse[gin.H]
+// @Failure 401 {object} ApiResponse[gin.H]
+// @Router /admin/users [get]
 func (sv *Server) getUsersHandler(c *gin.Context) {
 	var queries PaginationQueryParams
 	if err := c.ShouldBindQuery(&queries); err != nil {
@@ -149,7 +151,7 @@ func (sv *Server) getUsersHandler(c *gin.Context) {
 		return
 	}
 
-	users, err := sv.repo.ListUsers(c, repository.ListUsersParams{
+	users, err := sv.repo.GetUsers(c, repository.GetUsersParams{
 		Limit:  queries.PageSize,
 		Offset: (queries.Page - 1) * queries.PageSize,
 	})
@@ -167,17 +169,11 @@ func (sv *Server) getUsersHandler(c *gin.Context) {
 
 	userResp := make([]UserResponse, 0)
 	for _, user := range users {
-		userResp = append(userResp, *mapToUserResponse(user))
+		userResp = append(userResp, mapToUserResponse(user))
 	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(c, userResp, "", &Pagination{
-		Total:           int64(len(userResp)),
-		Page:            queries.Page,
-		PageSize:        queries.PageSize,
-		TotalPages:      total / queries.PageSize,
-		HasNextPage:     len(userResp) > int(queries.PageSize),
-		HasPreviousPage: queries.Page > 1,
-	}, nil))
+	pagination := createPagination(queries.Page, queries.PageSize, total)
+	c.JSON(http.StatusOK, createSuccessResponse(c, userResp, "", pagination, nil))
 }
 
 // getUserHandler godoc

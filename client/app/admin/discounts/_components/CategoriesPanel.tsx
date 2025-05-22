@@ -8,7 +8,7 @@ import {
   PlusIcon,
   MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
-import { CategoryType, DiscountFormData } from '../_types';
+import { CategoryType, CreateDiscountFormData } from '../_types';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const mockAllCategories = [
@@ -22,7 +22,7 @@ const mockAllCategories = [
 interface CategoriesPanelProps {}
 
 export const CategoriesPanel: React.FC<CategoriesPanelProps> = ({}) => {
-  const { setValue, watch } = useFormContext<DiscountFormData>();
+  const { setValue, watch } = useFormContext<CreateDiscountFormData>();
   const selectedCategories = watch('categories') || [];
 
   const [searchQuery, setSearchQuery] = useState('');
