@@ -18,7 +18,16 @@ export const useProducts = ({
       clientSideFetch<ProductListModel[]>(
         `${url}?page=${page}&pageSize=${limit}&search=${search}`,
         {}
-      ),
+      ).then((res) => {
+        if (res.error) {
+          throw new Error(res.error.details);
+        }
+        const { data, pagination } = res;
+        return {
+          data,
+          pagination,
+        };
+      }),
     {
       revalidateOnFocus: false,
       onError: (err) => {

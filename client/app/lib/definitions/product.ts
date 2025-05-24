@@ -3,7 +3,7 @@ import { BaseOptionSchema } from './common';
 import { GeneralCategoryModel } from './category';
 
 export type ProductListModel = {
-  id: number;
+  id: string;
   name: string;
   description: string;
   variantCount: number;

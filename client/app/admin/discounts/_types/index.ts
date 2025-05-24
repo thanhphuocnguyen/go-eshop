@@ -16,10 +16,12 @@ export interface CategoryType {
 // Define Zod schema for form validation
 export const createDiscountSchema = z.object({
   code: z.string().min(1, 'Discount code is required'),
-  discountType: z.object({
-    id: z.enum(['percentage', 'fixed_amount']),
-    name: z.enum(['Percentage', 'Fixed Amount']),
-  }),
+  discountType: z
+    .object({
+      id: z.enum(['percentage', 'fixed_amount']),
+      name: z.enum(['Percentage', 'Fixed Amount']),
+    })
+    .transform((v) => v.id),
   discountValue: z
     .number()
     .min(1, 'Value must be positive')
@@ -33,23 +35,49 @@ export const createDiscountSchema = z.object({
   }),
   description: z.string().nullish(),
   usageLimit: z
-    .string()
+    .string().or(z.number())
     .transform((v) => (v === '' ? undefined : Number(v)))
     .nullish(),
   minPurchaseAmount: z
-    .string()
+    .string().or(z.number())
     .transform((v) => (v === '' ? undefined : Number(v)))
     .nullish(),
   maxDiscountAmount: z
     .string()
+    .or(z.number())
     .transform((v) => (v === '' ? undefined : Number(v)))
     .nullish(),
 });
 
 export const editDiscountSchema = createDiscountSchema.extend({
-  products: z.array(z.string()).optional(),
-  categories: z.array(z.string()).optional(),
-  users: z.array(z.string()).optional(),
+  products: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        price: z.number(),
+      })
+    )
+    .optional()
+    .transform((v) => (v ? v.map((e) => e.id) : [])),
+  categories: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+      })
+    )
+    .optional()
+    .transform((v) => (v ? v.map((e) => e.id) : [])),
+  users: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+      })
+    )
+    .optional()
+    .transform((v) => (v ? v.map((e) => e.id) : [])),
 });
 
 export const discountTypes = z.enum(['percentage', 'fixed_amount']);
@@ -67,5 +95,7 @@ export const discountTypeOptions = [
 ];
 
 // TypeScript type derived from the schema
-export type CreateDiscountFormData = z.infer<typeof createDiscountSchema>;
-export type EditDiscountFormData = z.infer<typeof editDiscountSchema>;
+export type CreateDiscountFormData = z.input<typeof createDiscountSchema>;
+export type CreateDiscountOutputData = z.output<typeof createDiscountSchema>;
+export type EditDiscountFormData = z.input<typeof editDiscountSchema>;
+export type EditDiscountOutputData = z.output<typeof editDiscountSchema>;

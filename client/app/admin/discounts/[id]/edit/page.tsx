@@ -15,7 +15,11 @@ import {
   CategoriesPanel,
   TabNavigation,
 } from '../../_components';
-import { createDiscountSchema, CreateDiscountFormData } from '../../_types';
+import {
+  editDiscountSchema,
+  EditDiscountFormData,
+  EditDiscountOutputData,
+} from '../../_types';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import useSWR from 'swr';
 import { clientSideFetch } from '@/app/lib/apis/apiClient';
@@ -57,20 +61,12 @@ export default function EditDiscountPage({
   );
 
   // Initialize react-hook-form with Zod resolver
-  const editForm = useForm<CreateDiscountFormData>({
-    resolver: zodResolver(createDiscountSchema),
-    defaultValues: {
-      code: '',
-      description: '',
-      discountType: { id: 'percentage', name: 'Percentage' },
-      discountValue: 0,
-      minPurchaseAmount: null,
-      maxDiscountAmount: null,
-      usageLimit: null,
-      isActive: true,
-      startsAt: '',
-      expiresAt: dayjs().add(1, 'month').format('YYYY-MM-DDTHH:mm'),
-    },
+  const editForm = useForm<
+    EditDiscountFormData,
+    unknown,
+    EditDiscountOutputData
+  >({
+    resolver: zodResolver(editDiscountSchema),
   });
   const {
     handleSubmit,
@@ -97,17 +93,40 @@ export default function EditDiscountPage({
         isActive: discount.isActive,
         startsAt: dayjs(discount.startsAt).format('YYYY-MM-DDTHH:mm'),
         expiresAt: dayjs(discount.expiresAt).format('YYYY-MM-DDTHH:mm'),
+        categories: discount.categories.map((category) => ({
+          id: category.id,
+          name: category.name,
+        })),
+        products: discount.products.map((product) => ({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+        })),
       });
     }
     // In a real implementation, this would fetch the discount data and available products/categories from an API
   }, [id, discount]);
 
   // Submit handler
-  const onSubmit = async (data: CreateDiscountFormData) => {
+  const onSubmit = async (data: EditDiscountOutputData) => {
     try {
       // Mock API call with a delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      console.log('Submitted data:', data);
+      const resp = await clientSideFetch<boolean>(
+        ADMIN_API_PATHS.DISCOUNT.replace(':id', id),
+        {
+          method: 'PUT',
+          body: data,
+        }
+      );
+      if (resp.error) {
+        toast.error(
+          <div>
+            Failed to update discount.
+            <div>{JSON.stringify(resp.error)}</div>
+          </div>
+        );
+        return;
+      }
 
       // Redirect to the discount details page after successful update
       router.push(`/admin/discounts/${id}`);
@@ -128,7 +147,7 @@ export default function EditDiscountPage({
   }
 
   return (
-    <div className='p-4 h-full'>
+    <div className='p-4 h-full overflow-auto'>
       <div className='mb-4 flex items-center justify-between'>
         <div className='flex items-center'>
           <Button
@@ -141,19 +160,22 @@ export default function EditDiscountPage({
         </div>
       </div>
 
-      <div className=''>
+      <div className='h-ful'>
         <FormProvider {...editForm}>
-          <form onSubmit={handleSubmit(onSubmit)}>
+          <form
+            onSubmit={handleSubmit(onSubmit, (err) => {
+              console.log(err);
+            })}
+          >
             <TabGroup>
               <TabNavigation
+                isEditMode
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
               />
               <TabPanels>
                 <DetailsPanel />
-
                 <ProductsPanel />
-
                 <CategoriesPanel />
               </TabPanels>
             </TabGroup>
@@ -170,7 +192,7 @@ export default function EditDiscountPage({
               <Button
                 type='submit'
                 disabled={isSubmitting || !isDirty}
-                className={`px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 ${
+                className={`px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 cursor-pointer ${
                   isSubmitting ? 'opacity-75 cursor-not-allowed' : ''
                 }`}
               >

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { TabPanel, Button } from '@headlessui/react';
 import {
@@ -8,8 +8,9 @@ import {
   PlusIcon,
   MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
-import { CategoryType, CreateDiscountFormData } from '../_types';
+import { CategoryType, EditDiscountFormData } from '../_types';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useCategories } from '../../_lib/hooks';
 
 const mockAllCategories = [
   { id: 'cat1', name: 'Summer Collection' },
@@ -22,12 +23,14 @@ const mockAllCategories = [
 interface CategoriesPanelProps {}
 
 export const CategoriesPanel: React.FC<CategoriesPanelProps> = ({}) => {
-  const { setValue, watch } = useFormContext<CreateDiscountFormData>();
+  const { setValue, watch } = useFormContext<EditDiscountFormData>();
   const selectedCategories = watch('categories') || [];
 
   const [searchQuery, setSearchQuery] = useState('');
   const [availableCategories, setAvailableCategories] =
     useState<CategoryType[]>(mockAllCategories);
+
+  const { categories, isLoading } = useCategories();
 
   const handleAddCategory = (category: CategoryType) => {
     const currentCategories = [...selectedCategories];
@@ -70,6 +73,14 @@ export const CategoriesPanel: React.FC<CategoriesPanelProps> = ({}) => {
       category.name.toLowerCase().includes(query)
     );
   }, [selectedCategories, searchQuery]);
+
+  useEffect(() => {
+    if (categories) {
+      setAvailableCategories(
+        categories.map((cat) => ({ id: cat.id, name: cat.name }))
+      );
+    }
+  }, [categories]);
 
   return (
     <TabPanel as={AnimatePresence} mode='wait'>
@@ -136,11 +147,17 @@ export const CategoriesPanel: React.FC<CategoriesPanelProps> = ({}) => {
           )}
         </div>
 
-        {/* Available Categories */}
+        {/* Available Categories with Loading State */}
         <h4 className='font-medium text-sm text-gray-700 mb-2'>
           Add Categories
         </h4>
-        {filteredAvailableCategories.length > 0 ? (
+        
+        {isLoading ? (
+          <div className='flex justify-center items-center py-10'>
+            <div className='animate-spin rounded-full h-10 w-10 border-b-2 border-primary'></div>
+            <span className="ml-3 text-sm text-gray-500">Loading categories...</span>
+          </div>
+        ) : filteredAvailableCategories.length > 0 ? (
           <div className='grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3'>
             {filteredAvailableCategories.map((category) => (
               <div

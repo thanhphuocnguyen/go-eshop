@@ -34,6 +34,8 @@ export type Discount = {
   expiresAt: string;
   createdAt: string;
   updatedAt: string;
+  products: Array<{ id: string; name: string; price: number }>;
+  categories: Array<{ id: string; name: string }>;
   usageHistory: Array<{
     id: string;
     orderId: string;

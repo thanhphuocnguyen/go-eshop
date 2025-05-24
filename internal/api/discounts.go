@@ -402,7 +402,7 @@ func (sv *Server) updateDiscountHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "Failed to update discount", err))
 		return
 	}
-	c.Status(http.StatusNoContent)
+	c.JSON(http.StatusOK, createSuccessResponse(c, struct{}{}, "Discount updated successfully", nil, nil))
 }
 
 func (sv *Server) deleteDiscountHandler(c *gin.Context) {

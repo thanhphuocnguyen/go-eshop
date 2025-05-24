@@ -13,7 +13,7 @@ import { DetailsPanel, TabNavigation } from '../_components';
 import {
   createDiscountSchema,
   CreateDiscountFormData,
-  editDiscountSchema,
+  CreateDiscountOutputData,
 } from '../_types';
 import { clientSideFetch } from '@/app/lib/apis/apiClient';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
@@ -24,10 +24,14 @@ export default function NewDiscountPage() {
   const [activeTab, setActiveTab] = useState('details');
 
   // Initialize react-hook-form with Zod resolver
-  const discountForm = useForm<CreateDiscountFormData>({
+  const discountForm = useForm<
+    CreateDiscountFormData,
+    unknown,
+    CreateDiscountOutputData
+  >({
     reValidateMode: 'onBlur',
     mode: 'onBlur',
-    resolver: zodResolver(editDiscountSchema),
+    resolver: zodResolver(createDiscountSchema),
     defaultValues: {
       code: 'FREESHIP5',
       discountType: {
@@ -48,21 +52,14 @@ export default function NewDiscountPage() {
   } = discountForm;
 
   // Submit handler
-  const onSubmit = async (formData: CreateDiscountFormData) => {
+  const onSubmit = async (formData: CreateDiscountOutputData) => {
     console.log(formData);
     try {
       const { error } = await clientSideFetch<string>(
         ADMIN_API_PATHS.DISCOUNTS,
         {
           method: 'POST',
-          body: {
-            ...formData,
-            discountType: formData.discountType.id,
-            startsAt: dayjs(formData.startsAt).format(),
-            expiresAt: formData.expiresAt
-              ? dayjs(formData.expiresAt).format()
-              : undefined,
-          },
+          body: formData,
         }
       );
       // In a real implementation, this would send the data to an API
