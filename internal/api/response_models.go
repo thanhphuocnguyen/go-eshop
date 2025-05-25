@@ -281,8 +281,9 @@ type DiscountListItemResponseModel struct {
 }
 
 type DiscountLinkObject struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID    string   `json:"id"`
+	Name  string   `json:"name"`
+	Price *float64 `json:"price,omitempty"`
 }
 
 type DiscountUsageHistory struct {
@@ -346,6 +347,7 @@ type ProductListModel struct {
 	Name         string   `json:"name"`
 	Description  string   `json:"description"`
 	VariantCount int64    `json:"variantCount,omitzero"`
+	BasePrice    float64  `json:"basePrice,omitzero"`
 	MinPrice     float64  `json:"minPrice,omitzero"`
 	MaxPrice     float64  `json:"maxPrice,omitzero"`
 	Slug         string   `json:"slug,omitempty"`

@@ -1,15 +1,12 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import 'react-multi-carousel/lib/styles.css';
 import ClientToastContainer from '@/components/Common/ToastContainer';
 import clsx from 'clsx';
 import dayjs from 'dayjs';
-var utc = require("dayjs/plugin/utc");
-// import utc from 'dayjs/plugin/utc' // ES 2015
+import utc from 'dayjs/plugin/utc' // ES 2015
+import timezone from 'dayjs/plugin/timezone' // ES 2015
 
-var timezone = require("dayjs/plugin/timezone"); // dependent on utc plugin
-// import timezone from 'dayjs/plugin/timezone' // ES 2015
 dayjs.extend(utc);
 dayjs.extend(timezone);
 

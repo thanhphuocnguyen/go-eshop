@@ -1,14 +1,5 @@
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
-import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import React from 'react';
-import { toast } from 'react-toastify';
-import useSWR from 'swr';
-
-type Product = {
-  id: string;
-  name: string;
-  price: number;
-};
+import useDiscountProducts from '../_lib/useDiscountProducts';
 
 type ProductsTableProps = {
   id: string;
@@ -24,43 +15,7 @@ export const ProductsTable: React.FC<ProductsTableProps> = ({
   const [page, setPage] = React.useState(1);
   const [totalPages, setTotalPages] = React.useState(1);
 
-  const { data: response, isLoading } = useSWR(
-    ADMIN_API_PATHS.DISCOUNT_PRODUCTS.replace(':id', id), // Replace with actual discount ID
-    (url) =>
-      clientSideFetch<{ data: Product[]; pagination: { totalPages: number } }>(
-        url,
-        {
-          queryParams: {
-            page,
-            limit: 10,
-          },
-        }
-      ).then((res) => {
-        if (res.error) {
-          throw new Error(res.error.details);
-        }
-
-        // Set total pages from response pagination data
-        if (res.pagination) {
-          setTotalPages(res.pagination.totalPages || 1);
-        }
-
-        return res.data;
-      }),
-    {
-      onError: (error) => {
-        toast.error(`Failed to fetch products: ${error.message}`, {
-          position: 'top-right',
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-        });
-      },
-    }
-  );
+  const { productDiscounts, isLoading } = useDiscountProducts(id);
 
   // Handle page change
   const handlePageChange = (newPage: number) => {
@@ -95,7 +50,7 @@ export const ProductsTable: React.FC<ProductsTableProps> = ({
     );
   }
 
-  if (!response?.data || response?.data.length === 0) {
+  if (!productDiscounts || productDiscounts.length === 0) {
     return (
       <div className='bg-gray-50 rounded-md p-8 text-center'>
         <p className='text-gray-500'>This discount applies to all products.</p>
@@ -130,7 +85,7 @@ export const ProductsTable: React.FC<ProductsTableProps> = ({
             </tr>
           </thead>
           <tbody className='bg-white divide-y divide-gray-200'>
-            {response?.data.map((product) => (
+            {productDiscounts.map((product) => (
               <tr key={product.id}>
                 <td className='px-6 py-4 whitespace-nowrap'>
                   <div className='text-sm font-medium text-gray-900'>
@@ -143,7 +98,7 @@ export const ProductsTable: React.FC<ProductsTableProps> = ({
                 </td>
                 <td className='px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900'>
                   {discountType === 'percentage'
-                    ? `$${(product.price * (1 - discountValue / 100)).toFixed(2)}`
+                    ? `$${(product.price - product.price * (1 - discountValue / 100)).toFixed(2)}`
                     : `$${Math.max(0, product.price - discountValue).toFixed(2)}`}
                 </td>
               </tr>

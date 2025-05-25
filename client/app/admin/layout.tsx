@@ -1,6 +1,7 @@
 import './admin.css';
 import { Metadata } from 'next';
 import { AdminNavbar, AdminSidebar } from './_components';
+import { SWRConfig } from 'swr';
 
 export const metadata: Metadata = {
   title: {
@@ -21,7 +22,13 @@ export default async function Layout({
       <main className='w-5/6 block bg-white'>
         <AdminNavbar />
         <section className='p-4 m-5 border-2 border-gray-200 shadow-sm flex flex-col h-[90%] rounded-md'>
-          {children}
+          <SWRConfig
+            value={{
+              refreshInterval: 18000,
+            }}
+          >
+            {children}
+          </SWRConfig>
         </section>
       </main>
     </div>

@@ -11,6 +11,8 @@ import {
 import { CategoryType, EditDiscountFormData } from '../_types';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCategories } from '../../_lib/hooks';
+import useDiscountCategories from '../_lib/useDiscountCategores';
+import { useParams } from 'next/navigation';
 
 const mockAllCategories = [
   { id: 'cat1', name: 'Summer Collection' },
@@ -23,6 +25,8 @@ const mockAllCategories = [
 interface CategoriesPanelProps {}
 
 export const CategoriesPanel: React.FC<CategoriesPanelProps> = ({}) => {
+  const { id } = useParams<{ id: string }>();
+  // Use form context to access form methods and state
   const { setValue, watch } = useFormContext<EditDiscountFormData>();
   const selectedCategories = watch('categories') || [];
 
@@ -31,11 +35,15 @@ export const CategoriesPanel: React.FC<CategoriesPanelProps> = ({}) => {
     useState<CategoryType[]>(mockAllCategories);
 
   const { categories, isLoading } = useCategories();
+  const { categoryDiscounts, isLoading: discountLoading } =
+    useDiscountCategories(id);
 
   const handleAddCategory = (category: CategoryType) => {
     const currentCategories = [...selectedCategories];
     currentCategories.push(category);
-    setValue('categories', currentCategories);
+    setValue('categories', currentCategories, {
+      shouldDirty: true,
+    });
 
     // Remove from available categories
     setAvailableCategories(
@@ -48,7 +56,10 @@ export const CategoriesPanel: React.FC<CategoriesPanelProps> = ({}) => {
     if (removedCategory) {
       setValue(
         'categories',
-        selectedCategories.filter((c) => c.id !== categoryId)
+        selectedCategories.filter((c) => c.id !== categoryId),
+        {
+          shouldDirty: true,
+        }
       );
       setAvailableCategories([...availableCategories, removedCategory]);
     }
@@ -81,6 +92,12 @@ export const CategoriesPanel: React.FC<CategoriesPanelProps> = ({}) => {
       );
     }
   }, [categories]);
+
+  useEffect(() => {
+    if (categoryDiscounts) {
+      setValue('categories', categoryDiscounts);
+    }
+  }, [categoryDiscounts]);
 
   return (
     <TabPanel as={AnimatePresence} mode='wait'>
@@ -118,7 +135,13 @@ export const CategoriesPanel: React.FC<CategoriesPanelProps> = ({}) => {
           <h4 className='font-medium text-sm text-gray-700 mb-2'>
             Selected Categories
           </h4>
-          {selectedCategories.length > 0 ? (
+          
+          {discountLoading ? (
+            <div className='flex flex-col items-center justify-center py-8'>
+              <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2'></div>
+              <p className='text-sm text-gray-500'>Loading discount categories...</p>
+            </div>
+          ) : selectedCategories.length > 0 ? (
             <div className='mb-6 grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3'>
               {filteredSelectedCategories.map((category) => (
                 <div
@@ -151,11 +174,13 @@ export const CategoriesPanel: React.FC<CategoriesPanelProps> = ({}) => {
         <h4 className='font-medium text-sm text-gray-700 mb-2'>
           Add Categories
         </h4>
-        
+
         {isLoading ? (
           <div className='flex justify-center items-center py-10'>
             <div className='animate-spin rounded-full h-10 w-10 border-b-2 border-primary'></div>
-            <span className="ml-3 text-sm text-gray-500">Loading categories...</span>
+            <span className='ml-3 text-sm text-gray-500'>
+              Loading categories...
+            </span>
           </div>
         ) : filteredAvailableCategories.length > 0 ? (
           <div className='grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3'>

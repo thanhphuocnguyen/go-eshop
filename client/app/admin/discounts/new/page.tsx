@@ -53,7 +53,6 @@ export default function NewDiscountPage() {
 
   // Submit handler
   const onSubmit = async (formData: CreateDiscountOutputData) => {
-    console.log(formData);
     try {
       const { error } = await clientSideFetch<string>(
         ADMIN_API_PATHS.DISCOUNTS,

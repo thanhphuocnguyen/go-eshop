@@ -223,6 +223,7 @@ func mapToListProductResponse(productRow repository.GetProductsRow) ProductListM
 		ID:           productRow.ID.String(),
 		Name:         productRow.Name,
 		Description:  productRow.Description,
+		BasePrice:    basePrice.Float64,
 		MinPrice:     minPrice.Float64,
 		MaxPrice:     maxPrice.Float64,
 		Sku:          productRow.BaseSku,

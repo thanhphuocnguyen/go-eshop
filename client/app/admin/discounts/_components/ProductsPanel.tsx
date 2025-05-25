@@ -13,10 +13,13 @@ import {
 import { EditDiscountFormData, ProductType } from '../_types';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useProducts } from '@/app/lib/hooks/useProducts';
+import useDiscountProducts from '../_lib/useDiscountProducts';
+import { useParams } from 'next/navigation';
 
 interface ProductsPanelProps {}
 
 export const ProductsPanel: React.FC<ProductsPanelProps> = ({}) => {
+  const { id } = useParams<{ id: string }>();
   const { setValue, watch } = useFormContext<EditDiscountFormData>();
   const selectedProducts = watch('products', []);
   const [page, setPage] = useState(1);
@@ -40,6 +43,8 @@ export const ProductsPanel: React.FC<ProductsPanelProps> = ({}) => {
     limit: 20,
     debouncedSearch,
   });
+  const { productDiscounts, isLoading: isDiscountsLoading } =
+    useDiscountProducts(id as string);
 
   // Calculate total pages whenever totalItems changes
   useEffect(() => {
@@ -125,6 +130,12 @@ export const ProductsPanel: React.FC<ProductsPanelProps> = ({}) => {
     }
   };
 
+  useEffect(() => {
+    if (productDiscounts) {
+      setValue('products', productDiscounts);
+    }
+  }, [productDiscounts]);
+
   return (
     <TabPanel as={AnimatePresence} mode='wait'>
       <motion.div
@@ -155,12 +166,20 @@ export const ProductsPanel: React.FC<ProductsPanelProps> = ({}) => {
           />
         </div>
 
-        {/* Selected Products */}
+        {/* Selected Products with Loading UI for discount products */}
         <div className='border-b border-gray-200 pb-5 mb-5'>
           <h4 className='font-medium text-sm text-gray-700 mb-2'>
             Selected Products
           </h4>
-          {selectedProducts!.length > 0 ? (
+
+          {isDiscountsLoading ? (
+            <div className='flex flex-col items-center justify-center py-8'>
+              <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2'></div>
+              <p className='text-sm text-gray-500'>
+                Loading discount products...
+              </p>
+            </div>
+          ) : selectedProducts!.length > 0 ? (
             <div className='mb-6 grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3'>
               {filteredSelectedProducts!.map((product) => (
                 <div

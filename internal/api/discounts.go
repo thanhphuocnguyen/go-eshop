@@ -255,9 +255,12 @@ func (sv *Server) getDiscountProductsByIDHandler(c *gin.Context) {
 		return
 	}
 	for i, discountProduct := range discountProductRows {
+		basePrice, _ := discountProduct.BasePrice.Float64Value()
+
 		resp[i] = DiscountLinkObject{
-			ID:   discountProduct.ID.String(),
-			Name: discountProduct.Name,
+			ID:    discountProduct.ProductID.String(),
+			Name:  discountProduct.Name,
+			Price: &basePrice.Float64,
 		}
 	}
 
@@ -315,7 +318,7 @@ func (sv *Server) getDiscountCategoriesByIDHandler(c *gin.Context) {
 
 	for i, discountCategory := range discountCategoryRows {
 		resp[i] = DiscountLinkObject{
-			ID:   discountCategory.ID.String(),
+			ID:   discountCategory.CategoryID.String(),
 			Name: discountCategory.Name,
 		}
 	}

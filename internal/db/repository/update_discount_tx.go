@@ -61,7 +61,6 @@ func (s *pgRepo) UpdateDiscountTx(ctx context.Context, id uuid.UUID, arg UpdateD
 
 		if len(arg.Products) > 0 {
 			if err := q.DeleteProductDiscountsByDiscountID(ctx, discountID); err != nil {
-
 				return err
 			}
 

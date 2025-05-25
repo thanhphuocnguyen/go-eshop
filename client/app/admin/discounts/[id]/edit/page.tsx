@@ -67,6 +67,20 @@ export default function EditDiscountPage({
     EditDiscountOutputData
   >({
     resolver: zodResolver(editDiscountSchema),
+    defaultValues: {
+      code: '',
+      description: '',
+      discountType: { id: 'percentage', name: 'Percentage' },
+      discountValue: 0,
+      minPurchaseAmount: 0,
+      maxDiscountAmount: 0,
+      usageLimit: 0,
+      isActive: true,
+      startsAt: dayjs().format('YYYY-MM-DDTHH:mm'),
+      expiresAt: dayjs().add(1, 'year').format('YYYY-MM-DDTHH:mm'),
+      products: [],
+      categories: [],
+    },
   });
   const {
     handleSubmit,
@@ -93,15 +107,6 @@ export default function EditDiscountPage({
         isActive: discount.isActive,
         startsAt: dayjs(discount.startsAt).format('YYYY-MM-DDTHH:mm'),
         expiresAt: dayjs(discount.expiresAt).format('YYYY-MM-DDTHH:mm'),
-        categories: discount.categories.map((category) => ({
-          id: category.id,
-          name: category.name,
-        })),
-        products: discount.products.map((product) => ({
-          id: product.id,
-          name: product.name,
-          price: product.price,
-        })),
       });
     }
     // In a real implementation, this would fetch the discount data and available products/categories from an API
@@ -127,6 +132,8 @@ export default function EditDiscountPage({
         );
         return;
       }
+
+      toast.success('Discount updated successfully');
 
       // Redirect to the discount details page after successful update
       router.push(`/admin/discounts/${id}`);

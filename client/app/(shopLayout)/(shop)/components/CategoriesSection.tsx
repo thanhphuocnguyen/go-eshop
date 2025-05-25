@@ -9,7 +9,7 @@ export default function CategoriesSection({
   categories?: GeneralCategoryModel[];
 }) {
   return (
-    <section className='container pt-24'>
+    <section className='pt-24'>
       <div className=' flex justify-between mb-2'>
         <h4 className='font-bold text-2xl'>Shop by Category</h4>
         <Link

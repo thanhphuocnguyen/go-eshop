@@ -72,9 +72,10 @@ INSERT INTO discount_products (discount_id, product_id)
 VALUES ($1, $2);
 
 -- name: GetDiscountProducts :many
-SELECT dp.id, dp.discount_id, dp.product_id, p.name
+SELECT dp.id, dp.discount_id, dp.product_id, p.name, p.base_price, d.discount_type, d.discount_value
 FROM discount_products dp
 JOIN products p ON dp.product_id = p.id
+JOIN discounts d ON dp.discount_id = d.id
 WHERE dp.discount_id = $1
 ORDER BY dp.id
 LIMIT $2

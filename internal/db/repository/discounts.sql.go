@@ -225,9 +225,10 @@ func (q *Queries) GetDiscountCategories(ctx context.Context, arg GetDiscountCate
 }
 
 const getDiscountProducts = `-- name: GetDiscountProducts :many
-SELECT dp.id, dp.discount_id, dp.product_id, p.name
+SELECT dp.id, dp.discount_id, dp.product_id, p.name, p.base_price, d.discount_type, d.discount_value
 FROM discount_products dp
 JOIN products p ON dp.product_id = p.id
+JOIN discounts d ON dp.discount_id = d.id
 WHERE dp.discount_id = $1
 ORDER BY dp.id
 LIMIT $2
@@ -241,10 +242,13 @@ type GetDiscountProductsParams struct {
 }
 
 type GetDiscountProductsRow struct {
-	ID         uuid.UUID `json:"id"`
-	DiscountID uuid.UUID `json:"discountId"`
-	ProductID  uuid.UUID `json:"productId"`
-	Name       string    `json:"name"`
+	ID            uuid.UUID      `json:"id"`
+	DiscountID    uuid.UUID      `json:"discountId"`
+	ProductID     uuid.UUID      `json:"productId"`
+	Name          string         `json:"name"`
+	BasePrice     pgtype.Numeric `json:"basePrice"`
+	DiscountType  string         `json:"discountType"`
+	DiscountValue pgtype.Numeric `json:"discountValue"`
 }
 
 func (q *Queries) GetDiscountProducts(ctx context.Context, arg GetDiscountProductsParams) ([]GetDiscountProductsRow, error) {
@@ -261,6 +265,9 @@ func (q *Queries) GetDiscountProducts(ctx context.Context, arg GetDiscountProduc
 			&i.DiscountID,
 			&i.ProductID,
 			&i.Name,
+			&i.BasePrice,
+			&i.DiscountType,
+			&i.DiscountValue,
 		); err != nil {
 			return nil, err
 		}

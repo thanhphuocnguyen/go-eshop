@@ -32,9 +32,12 @@ const OrderItemRating = dynamic(() => import('./_components/OrderItemRating'), {
   ssr: true,
 });
 
-const CancelOrderButton = dynamic(() => import('./_components/CancelOrderButton'), {
-  ssr: true,
-});
+const CancelOrderButton = dynamic(
+  () => import('./_components/CancelOrderButton'),
+  {
+    ssr: true,
+  }
+);
 
 export const getOrderDetails = cache(async (id: string) => {
   const order = await serverSideFetch<OrderModel>(
@@ -95,7 +98,7 @@ export default async function Page({ params }: Props) {
     );
     return index >= 0 ? index : 0;
   };
-  console.log(orderDetail);
+
   const currentStepIndex = getCurrentStepIndex(orderDetail.status);
 
   const isSpecialStatus =
@@ -103,8 +106,8 @@ export default async function Page({ params }: Props) {
     orderDetail.status === OrderStatus.Refunded;
 
   // Check if order can be cancelled (Pending status and not paid)
-  const canCancel = 
-    orderDetail.status === OrderStatus.Pending && 
+  const canCancel =
+    orderDetail.status === OrderStatus.Pending &&
     (!orderDetail.paymentInfo || orderDetail.paymentInfo.status !== 'paid');
 
   return (
@@ -217,16 +220,14 @@ export default async function Page({ params }: Props) {
                 Order {orderDetail.status}
               </span>
             ) : (
-              <div className="flex justify-between items-center">
+              <div className='flex justify-between items-center'>
                 <span>
                   Last update:{' '}
                   {dayjs(orderDetail.createdAt).format('MMMM DD, YYYY')}
                 </span>
-                
+
                 {/* Add cancel button for orders that can be cancelled */}
-                {canCancel && (
-                  <CancelOrderButton orderId={orderDetail.id} />
-                )}
+                {canCancel && <CancelOrderButton orderId={orderDetail.id} />}
               </div>
             )}
           </div>
