@@ -2,9 +2,9 @@
 
 import { useState, useEffect, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
-import LoadingInline from '@/components/Common/Loadings/LoadingInline';
-import { Breadcrumb } from '@/components/Common';
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import LoadingInline from '@/app/components/Common/Loadings/LoadingInline';
+import { Breadcrumb } from '@/app/components/Common';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { GenericResponse, Order } from '@/app/lib/definitions';
 import { Button, Menu, Transition } from '@headlessui/react';

@@ -15,7 +15,7 @@ import {
   CreateDiscountFormData,
   CreateDiscountOutputData,
 } from '../_types';
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { toast } from 'react-toastify';
 

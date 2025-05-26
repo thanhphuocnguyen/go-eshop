@@ -27,7 +27,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import ValueItem from './_components/ValueItem';
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);

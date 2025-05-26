@@ -1,5 +1,5 @@
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
-import { serverSideFetch } from '@/app/lib/apis/apiServer';
+import { serverSideFetch } from '@/app/lib/api/apiServer';
 import { Metadata } from 'next';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';

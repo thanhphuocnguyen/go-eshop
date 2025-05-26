@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { Button } from '@headlessui/react';
 import Loading from '@/app/loading';
@@ -12,7 +12,7 @@ import {
   XCircleIcon,
   TrashIcon,
 } from '@heroicons/react/24/outline';
-import { ConfirmDialog } from '@/components/Common/Dialogs/ConfirmDialog';
+import { ConfirmDialog } from '@/app/components/Common/Dialogs/ConfirmDialog';
 import dayjs from 'dayjs';
 
 // Extended rating model for admin page with additional fields

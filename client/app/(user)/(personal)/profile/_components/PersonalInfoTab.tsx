@@ -1,9 +1,9 @@
 'use client';
 
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { GenericResponse, UserModel } from '@/app/lib/definitions';
-import { TextField } from '@/components/FormFields';
+import { TextField } from '@/app/components/FormFields';
 import { Button, Fieldset } from '@headlessui/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';

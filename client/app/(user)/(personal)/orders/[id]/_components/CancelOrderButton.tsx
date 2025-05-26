@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Dialog } from '@headlessui/react';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { toast } from 'react-toastify';
 

@@ -2,10 +2,10 @@ import { cache, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-import CategoryProductSkeleton from '@/components/Product/CategoryProductSkeleton';
+import CategoryProductSkeleton from '@/app/components/Product/CategoryProductSkeleton';
 import { GeneralCategoryModel } from '@/app/lib/definitions';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
-import { serverSideFetch } from '@/app/lib/apis/apiServer';
+import { serverSideFetch } from '@/app/lib/api/apiServer';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 

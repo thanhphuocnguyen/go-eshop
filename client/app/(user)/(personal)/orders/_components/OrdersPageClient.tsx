@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { OrderStatus } from '@/app/lib/definitions/common';
 import { OrderListModel, OrdersStats } from '@/app/lib/definitions/order';

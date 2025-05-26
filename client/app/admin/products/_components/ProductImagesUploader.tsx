@@ -2,8 +2,8 @@
 import { useEffect, useState } from 'react';
 import { XCircleIcon } from '@heroicons/react/16/solid';
 import { ChevronUpIcon } from '@heroicons/react/24/outline';
-import { ImageUploader, StyledComboBox } from '@/components/FormFields';
-import { StyledMultipleComboBox } from '@/components/FormFields/StyledMultipleComboBox';
+import { ImageUploader, StyledComboBox } from '@/app/components/FormFields';
+import { StyledMultipleComboBox } from '@/app/components/FormFields/StyledMultipleComboBox';
 import Image from 'next/image';
 import { ProductDetailModel, ProductModelForm } from '@/app/lib/definitions';
 import {

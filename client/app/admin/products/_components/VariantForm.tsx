@@ -4,8 +4,8 @@ import clsx from 'clsx';
 import { Field, Switch } from '@headlessui/react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { ProductModelForm, VariantModelForm } from '@/app/lib/definitions';
-import { TextField } from '@/components/FormFields';
-import { StyledComboBoxController } from '@/components/FormFields/StyledComboBoxController';
+import { TextField } from '@/app/components/FormFields';
+import { StyledComboBoxController } from '@/app/components/FormFields/StyledComboBoxController';
 import { useAttributes } from '../../hooks/useAttributes';
 
 interface AttributeFormProps {

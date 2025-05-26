@@ -15,7 +15,7 @@ import {
   TabsSection,
 } from './_components';
 import { Metadata } from 'next';
-import { serverSideFetch } from '@/app/lib/apis/apiServer';
+import { serverSideFetch } from '@/app/lib/api/apiServer';
 
 type Props = {
   params: Promise<{ slug: string }>;

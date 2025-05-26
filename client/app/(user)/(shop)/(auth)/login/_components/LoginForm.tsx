@@ -6,7 +6,7 @@ import { FaLock, FaEnvelope, FaUser } from 'react-icons/fa';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { TextField } from '@/components/FormFields';
+import { TextField } from '@/app/components/FormFields';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';

@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 import { PUBLIC_API_PATHS } from '../lib/constants/api';
-import { clientSideFetch } from '../lib/apis/apiClient';
+import { clientSideFetch } from '../lib/api/apiClient';
 import { UserModel } from '../lib/definitions';
 
 export const useUser = () => {

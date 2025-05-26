@@ -6,7 +6,7 @@ import { Metadata } from 'next';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { GeneralCategoryModel } from '@/app/lib/definitions';
 import { ArrowRightIcon } from '@heroicons/react/24/outline';
-import { serverSideFetch } from '@/app/lib/apis/apiServer';
+import { serverSideFetch } from '@/app/lib/api/apiServer';
 
 export const metadata: Metadata = {
   title: 'Homepage',

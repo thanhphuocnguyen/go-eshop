@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { TextField } from '@/components/FormFields';
+import { TextField } from '@/app/components/FormFields';
 import {
   Button,
   Checkbox,
@@ -17,7 +17,7 @@ import { useForm, useWatch } from 'react-hook-form';
 
 import { useEffect, useState } from 'react';
 import { redirect, RedirectType, useRouter } from 'next/navigation';
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { toast } from 'react-toastify';
 import { useCartCtx } from '@/app/lib/contexts/CartContext';

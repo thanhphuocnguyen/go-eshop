@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 import { toast } from 'react-toastify';
-import { clientSideFetch } from '../lib/apis/apiClient';
+import { clientSideFetch } from '../lib/api/apiClient';
 import { CartModel } from '../lib/definitions';
 import { PUBLIC_API_PATHS } from '../lib/constants/api';
 

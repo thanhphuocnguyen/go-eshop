@@ -2,10 +2,10 @@
 
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
-import { Breadcrumb } from '@/components/Common';
-import LoadingButton from '@/components/Common/LoadingButton';
-import LoadingInline from '@/components/Common/Loadings/LoadingInline';
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { Breadcrumb } from '@/app/components/Common';
+import LoadingButton from '@/app/components/Common/LoadingButton';
+import LoadingInline from '@/app/components/Common/Loadings/LoadingInline';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { OrderDetail, GenericResponse } from '@/app/lib/definitions';
 

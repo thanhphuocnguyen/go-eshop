@@ -11,9 +11,9 @@ import {
   registerSchema,
 } from '@/app/lib/definitions';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { TextField } from '@/components/FormFields';
+import { TextField } from '@/app/components/FormFields';
 import { useRouter } from 'next/navigation';
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { toast } from 'react-toastify';
 

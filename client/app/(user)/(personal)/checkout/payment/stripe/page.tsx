@@ -5,7 +5,7 @@ import { redirect, useRouter } from 'next/navigation';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe, StripeError } from '@stripe/stripe-js';
 import StripeCheckoutForm from './StripeCheckoutForm';
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { toast } from 'react-toastify';
 import { CheckoutDataResponse, PaymentResponse } from '../../_lib/definitions';

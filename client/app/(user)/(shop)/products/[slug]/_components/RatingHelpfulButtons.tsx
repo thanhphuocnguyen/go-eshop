@@ -1,6 +1,6 @@
 'use client';
 
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { useUser } from '@/app/lib/hooks/useUser';
 import { useState } from 'react';

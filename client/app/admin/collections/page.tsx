@@ -9,8 +9,8 @@ import { toast } from 'react-toastify';
 import Image from 'next/image';
 import { GeneralCategoryModel } from '@/app/lib/definitions';
 import { useState } from 'react';
-import { ConfirmDialog } from '@/components/Common/Dialogs/ConfirmDialog';
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { ConfirmDialog } from '@/app/components/Common/Dialogs/ConfirmDialog';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 
 export default function Page() {
   const [selectedCollection, setSelectedCollection] =

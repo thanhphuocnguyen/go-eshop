@@ -1,10 +1,6 @@
-'use server';
-
-import { cookies } from 'next/headers';
-import { badRequestHandler, serializeQueryParams } from './helper';
-import { redirect } from 'next/navigation';
-import { refreshTokenAction } from '@/app/actions/auth';
+import { badRequestHandler } from '@/app/utils';
 import { GenericResponse } from '../definitions/index';
+import { refreshTokenAction } from '@/app/actions/auth';
 
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
@@ -18,7 +14,32 @@ type RequestOptions = {
   queryParams?: Record<string, any>; // Added queryParams option
 };
 
-export async function serverSideFetch<T = any>(
+// Helper function to serialize query parameters
+function serializeQueryParams(params: Record<string, any>): string {
+  if (!params || Object.keys(params).length === 0) return '';
+
+  const searchParams = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === null || value === undefined) return;
+
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        if (item !== null && item !== undefined) {
+          searchParams.append(`${key}[]`, String(item));
+        }
+      });
+    } else if (typeof value === 'object') {
+      searchParams.append(key, JSON.stringify(value));
+    } else {
+      searchParams.append(key, String(value));
+    }
+  });
+
+  return searchParams.toString();
+}
+
+export async function clientSideFetch<T = any>(
   endpoint: string,
   {
     method = 'GET',
@@ -43,8 +64,8 @@ export async function serverSideFetch<T = any>(
   }
 
   const isFormData = body instanceof FormData;
-  const cookiesStore = await cookies();
-  const token = cookiesStore.get('accessToken')?.value;
+
+  const token = localStorage.getItem('accessToken');
   const finalHeaders: Record<string, string> = {
     ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -57,18 +78,12 @@ export async function serverSideFetch<T = any>(
     body: body && !isFormData ? JSON.stringify(body) : (body as BodyInit),
     ...nextOptions,
   });
-  const cookieStore = await cookies();
-  const refreshToken = cookieStore.get('refreshToken')?.value;
 
-  if (
-    response.status === 401 &&
-    retryOnUnauthorized &&
-    !token &&
-    refreshToken
-  ) {
+  if (response.status === 401 && retryOnUnauthorized) {
     const newToken = await refreshTokenAction();
     if (newToken) {
-      return serverSideFetch<T>(endpoint, {
+      localStorage.setItem('accessToken', newToken);
+      return clientSideFetch<T>(endpoint, {
         method,
         body,
         headers,
@@ -78,8 +93,7 @@ export async function serverSideFetch<T = any>(
         res,
       });
     } else {
-      console.error('Token refresh failed, redirecting to login');
-      redirect('/login');
+      throw new Error('Unauthorized, redirecting to login');
     }
   }
 

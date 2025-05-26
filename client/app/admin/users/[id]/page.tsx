@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { serverSideFetch } from '@/app/lib/apis/apiServer';
+import { serverSideFetch } from '@/app/lib/api/apiServer';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import UserProfileForm from '../_components/UserProfileForm';
 import dayjs from 'dayjs';

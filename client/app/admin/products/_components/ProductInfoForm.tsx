@@ -1,10 +1,10 @@
 'use client';
 import React, { useEffect } from 'react';
-import { TextField } from '@/components/FormFields';
-import { LoadingSpinner } from '@/components/Common/Loadings/Loading';
-import { StyledComboBoxController } from '@/components/FormFields/StyledComboBoxController';
-import { StyledMultipleComboBox } from '@/components/FormFields/StyledMultipleComboBox';
-import { TiptapController } from '@/components/Common';
+import { TextField } from '@/app/components/FormFields';
+import { LoadingSpinner } from '@/app/components/Common/Loadings/Loading';
+import { StyledComboBoxController } from '@/app/components/FormFields/StyledComboBoxController';
+import { StyledMultipleComboBox } from '@/app/components/FormFields/StyledMultipleComboBox';
+import { TiptapController } from '@/app/components/Common';
 import { Field, Label, Switch } from '@headlessui/react';
 import { useCollections } from '../../hooks/useCollections';
 import { useBrands } from '../../hooks/useBrands';

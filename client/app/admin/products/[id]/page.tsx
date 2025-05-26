@@ -1,5 +1,5 @@
 'use client';
-import LoadingInline from '@/components/Common/Loadings/LoadingInline';
+import LoadingInline from '@/app/components/Common/Loadings/LoadingInline';
 import { use } from 'react';
 import { ProductDetailForm } from '../_components/ProductDetailForm';
 import { ProductDetailFormProvider } from '../_lib/contexts/ProductFormContext';

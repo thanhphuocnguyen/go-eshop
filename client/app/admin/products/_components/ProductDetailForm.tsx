@@ -21,9 +21,9 @@ import { ProductInfoForm } from './ProductInfoForm';
 import { VariantInfoForm } from './VariantInfoForm';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { toast } from 'react-toastify';
-import { ConfirmDialog } from '@/components/Common/Dialogs/ConfirmDialog';
+import { ConfirmDialog } from '@/app/components/Common/Dialogs/ConfirmDialog';
 import { KeyedMutator } from 'swr';
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 
 interface ProductEditFormProps {
   productDetail?: ProductDetailModel;

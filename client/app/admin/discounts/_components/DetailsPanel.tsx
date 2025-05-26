@@ -4,9 +4,9 @@ import React from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { TagIcon } from '@heroicons/react/24/outline';
 import { TabPanel } from '@headlessui/react';
-import { TextAreaField, TextField } from '@/components/FormFields';
-import { StyledComboBoxController } from '@/components/FormFields/StyledComboBoxController';
-import { ControlledStyledCheckbox } from '@/components/FormFields/ControlledStyledCheckbox';
+import { TextAreaField, TextField } from '@/app/components/FormFields';
+import { StyledComboBoxController } from '@/app/components/FormFields/StyledComboBoxController';
+import { ControlledStyledCheckbox } from '@/app/components/FormFields/ControlledStyledCheckbox';
 import { CreateDiscountFormData, discountTypeOptions } from '../_types';
 import { AnimatePresence, motion } from 'framer-motion';
 

@@ -1,5 +1,5 @@
-import Footer from '@/components/Footer';
-import NavBar from '@/components/Nav/NavBar';
+import Footer from '@/app/components/Footer';
+import NavBar from '@/app/components/Nav/NavBar';
 import { CartContextProvider } from '@/app/lib/contexts/CartContext';
 
 export default async function Layout({

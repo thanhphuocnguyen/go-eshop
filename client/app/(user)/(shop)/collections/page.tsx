@@ -2,7 +2,7 @@ import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { GeneralCategoryModel } from '@/app/lib/definitions';
 import Link from 'next/link';
 import Image from 'next/image';
-import { serverSideFetch } from '@/app/lib/apis/apiServer';
+import { serverSideFetch } from '@/app/lib/api/apiServer';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 // Define the search params type

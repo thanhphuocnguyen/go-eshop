@@ -1,6 +1,6 @@
 'use client';
 
-import LoadingInline from '@/components/Common/Loadings/LoadingInline';
+import LoadingInline from '@/app/components/Common/Loadings/LoadingInline';
 import { Button } from '@headlessui/react';
 import { CheckIcon, TrashIcon } from '@heroicons/react/16/solid';
 import Image from 'next/image';

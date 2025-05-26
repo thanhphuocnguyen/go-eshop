@@ -8,7 +8,7 @@ import { ArrowLeftCircleIcon } from '@heroicons/react/24/outline';
 import { GeneralCategoryModel } from '@/app/lib/definitions';
 import Loading from '@/app/loading';
 import { CategoryEditForm } from '../../_components/CategoryEditForm';
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 
 export default function AdminBrandDetail({
   params,

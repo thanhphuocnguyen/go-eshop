@@ -5,11 +5,11 @@ import Loading from '@/app/loading';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { AttributeDetailModel } from '@/app/lib/definitions';
 import { AddNewDialog } from './_components/AttribueFormDialog';
-import { ConfirmDialog } from '@/components/Common/Dialogs/ConfirmDialog';
+import { ConfirmDialog } from '@/app/components/Common/Dialogs/ConfirmDialog';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
 import Link from 'next/link';
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 
 export default function Page() {
   const [attributes, setAttributes] = useState<AttributeDetailModel[]>([]);

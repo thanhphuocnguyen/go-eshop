@@ -1,5 +1,5 @@
 import React from 'react';
-import CategoryProductSkeleton from '@/components/Product/CategoryProductSkeleton';
+import CategoryProductSkeleton from '@/app/components/Product/CategoryProductSkeleton';
 
 export default function HomeLoading() {
   return (

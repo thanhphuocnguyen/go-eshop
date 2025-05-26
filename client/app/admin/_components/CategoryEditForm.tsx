@@ -11,7 +11,7 @@ import {
 import clsx from 'clsx';
 import React from 'react';
 import { z } from 'zod';
-import ImageUploader from '@/components/ImageUploader';
+import ImageUploader from '@/app/components/ImageUploader';
 
 interface CategoryEditFormProps {
   data?: GeneralCategoryModel;

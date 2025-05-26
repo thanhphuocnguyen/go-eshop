@@ -13,7 +13,7 @@ import {
 import dayjs from 'dayjs';
 import useSWR from 'swr';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 import { toast } from 'react-toastify';
 
 type DiscountModel = {

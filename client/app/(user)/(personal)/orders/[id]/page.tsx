@@ -15,11 +15,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { cache } from 'react';
 import dynamic from 'next/dynamic';
-import { serverSideFetch } from '@/app/lib/apis/apiServer';
+import { serverSideFetch } from '@/app/lib/api/apiServer';
 
 // Import the client component with dynamic to avoid SSR issues
 const PaymentInfoSection = dynamic(
-  () => import('@/components/Payment/PaymentInfoSection'),
+  () => import('@/app/components/Payment/PaymentInfoSection'),
   { ssr: true }
 );
 

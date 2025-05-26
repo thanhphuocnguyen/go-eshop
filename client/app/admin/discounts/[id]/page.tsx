@@ -14,7 +14,7 @@ import {
 import dayjs from 'dayjs';
 import { ProductsTable, CategoriesTable, UsageTable } from '../_components';
 import useSWR from 'swr';
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { toast } from 'react-toastify';
 

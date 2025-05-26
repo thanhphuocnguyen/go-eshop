@@ -6,10 +6,10 @@ import { useEffect, useState } from 'react';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { Button } from '@headlessui/react';
 import Link from 'next/link';
-import { ConfirmDialog } from '@/components/Common/Dialogs/ConfirmDialog';
+import { ConfirmDialog } from '@/app/components/Common/Dialogs/ConfirmDialog';
 import { toast } from 'react-toastify';
 import Image from 'next/image';
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 
 export default function Page() {
   const [categories, setCategories] = useState<GeneralCategoryModel[]>([]);

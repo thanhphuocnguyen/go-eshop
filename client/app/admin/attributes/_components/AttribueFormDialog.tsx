@@ -20,7 +20,7 @@ import {
   AttributeDetailModel,
 } from '@/app/lib/definitions';
 import { XCircleIcon } from '@heroicons/react/24/outline';
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 
 interface AddNewDialogProps {
   open: boolean;

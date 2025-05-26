@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, Fragment } from 'react';
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { StarIcon } from '@heroicons/react/24/solid';
 import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
@@ -15,7 +15,7 @@ import {
 import { XCircleIcon } from '@heroicons/react/24/outline';
 import { useForm } from 'react-hook-form';
 import { OrderItemModel } from '@/app/lib/definitions';
-import { ImageUploader } from '@/components/FormFields';
+import { ImageUploader } from '@/app/components/FormFields';
 import { toast } from 'react-toastify';
 
 interface OrderItemRatingProps {

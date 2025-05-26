@@ -2,7 +2,7 @@
 import React, { useCallback, useState } from 'react';
 import { CartModel, GenericResponse } from '../definitions';
 import { useCart } from '../hooks';
-import { clientSideFetch } from '../apis/apiClient';
+import { clientSideFetch } from '../api/apiClient';
 import { PUBLIC_API_PATHS } from '../constants/api';
 import { toast } from 'react-toastify';
 import { useUser } from '../hooks/useUser';

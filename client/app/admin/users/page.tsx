@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { UserModel } from '@/app/lib/definitions';
 import { Button } from '@headlessui/react';
@@ -9,7 +9,7 @@ import Link from 'next/link';
 import Loading from '@/app/loading';
 import { toast } from 'react-toastify';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import { ConfirmDialog } from '@/components/Common/Dialogs/ConfirmDialog';
+import { ConfirmDialog } from '@/app/components/Common/Dialogs/ConfirmDialog';
 import dayjs from 'dayjs';
 
 export default function Page() {

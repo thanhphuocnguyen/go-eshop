@@ -22,7 +22,7 @@ import {
 } from '../../_types';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import useSWR from 'swr';
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 import { Discount } from '../page';
 import { toast } from 'react-toastify';
 

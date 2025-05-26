@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import StyledModal from '../StyledModal';
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 import { redirect, useRouter } from 'next/navigation';
 import LoadingButton from '../Common/LoadingButton';
 import { toast } from 'react-toastify';

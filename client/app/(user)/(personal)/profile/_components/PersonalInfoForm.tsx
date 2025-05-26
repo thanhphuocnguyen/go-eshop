@@ -1,6 +1,6 @@
 'use client';
 
-import { TextField } from '@/components/FormFields';
+import { TextField } from '@/app/components/FormFields';
 import { Button, Fieldset } from '@headlessui/react';
 import { UserModel } from '@/app/lib/definitions/user';
 import { useForm } from 'react-hook-form';

@@ -1,7 +1,7 @@
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
-import { serverSideFetch } from '@/app/lib/apis/apiServer';
+import { serverSideFetch } from '@/app/lib/api/apiServer';
 import { Pagination, ProductDetailModel } from '@/app/lib/definitions';
-import ProductGrid from '@/components/Product/ProductGrid';
+import ProductGrid from '@/app/components/Product/ProductGrid';
 // Import the CategoryFilter component
 import { CheckboxGroup } from './components/CategoryFilter';
 import { collectionBySlugCache } from './layout';

@@ -10,7 +10,7 @@ import useSWR from 'swr';
 import Loading from '@/app/loading';
 import { GeneralCategoryModel } from '@/app/lib/definitions';
 import CategoryProductList from '../../_components/CategoryProductList';
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 
 export default function AdminCollectionDetail({
   params,

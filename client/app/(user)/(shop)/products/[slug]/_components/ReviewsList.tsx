@@ -1,4 +1,4 @@
-import { serverSideFetch } from '@/app/lib/apis/apiServer';
+import { serverSideFetch } from '@/app/lib/api/apiServer';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { RatingModel } from '@/app/lib/definitions/rating';
 import { StarIcon } from '@heroicons/react/24/solid';

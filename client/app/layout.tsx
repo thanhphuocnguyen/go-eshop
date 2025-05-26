@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import ClientToastContainer from '@/components/Common/ToastContainer';
+import ClientToastContainer from '@/app/components/Common/ToastContainer';
 import clsx from 'clsx';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc' // ES 2015

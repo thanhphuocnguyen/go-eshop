@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import ImageUploader from '@/components/ImageUploader';
+import ImageUploader from '@/app/components/ImageUploader';
 
 export default function ImageUploaderExamplePage() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);

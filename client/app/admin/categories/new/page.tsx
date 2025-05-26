@@ -7,7 +7,7 @@ import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { toast } from 'react-toastify';
 import { redirect } from 'next/navigation';
 import { GeneralCategoryModel } from '@/app/lib/definitions';
-import { clientSideFetch } from '@/app/lib/apis/apiClient';
+import { clientSideFetch } from '@/app/lib/api/apiClient';
 
 export default function Page() {
   const handleSave = async (form: FormData) => {

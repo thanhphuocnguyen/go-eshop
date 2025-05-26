@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-import CategoryProductSkeleton from '@/components/Product/CategoryProductSkeleton';
+import CategoryProductSkeleton from '@/app/components/Product/CategoryProductSkeleton';
 
 export default function CategoryLoading() {
   return (
