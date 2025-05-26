@@ -1,8 +1,8 @@
 import useSWR from 'swr';
-import { PUBLIC_API_PATHS } from '../constants/api';
-import { clientSideFetch } from '../apis/apiClient';
-import { CartModel } from '../definitions/cart';
 import { toast } from 'react-toastify';
+import { clientSideFetch } from '../lib/apis/apiClient';
+import { CartModel } from '../lib/definitions';
+import { PUBLIC_API_PATHS } from '../lib/constants/api';
 
 export const useCart = (userId?: string) => {
   const { data, isLoading, error, mutate } = useSWR(
@@ -17,6 +17,7 @@ export const useCart = (userId?: string) => {
         return res.data;
       }),
     {
+      dedupingInterval: 60000, // 1 minute deduplication
       refreshInterval: 0,
       revalidateOnFocus: false,
       onError: (error) => {

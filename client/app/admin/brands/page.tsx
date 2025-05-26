@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import { Button } from '@headlessui/react';
 import Link from 'next/link';
 import { ReactNode, useState } from 'react';
-import { useBrands } from '../_lib/hooks';
+import { useBrands } from '../hooks';
 import Image from 'next/image';
 import {
   PencilIcon,

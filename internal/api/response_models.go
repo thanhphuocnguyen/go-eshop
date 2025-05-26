@@ -68,29 +68,35 @@ type PaginationQueryParams struct {
 	Search   *string `form:"search" binding:"omitempty,omitzero,max=1000"`
 }
 
-type ProductListItemResponse struct {
-	ID               string                   `json:"id"`
-	Name             string                   `json:"name"`
-	Description      string                   `json:"description"`
-	ShortDescription *string                  `json:"shortDescription"`
-	Attributes       []string                 `json:"attributes"`
-	BasePrice        float64                  `json:"price,omitzero"`
-	BaseSku          string                   `json:"sku"`
-	UpdatedAt        string                   `json:"updatedAt"`
-	IsActive         bool                     `json:"isActive"`
-	Slug             string                   `json:"slug"`
-	CreatedAt        string                   `json:"createdAt"`
-	RatingCount      int32                    `json:"ratingCount"`
-	OneStarCount     int32                    `json:"oneStarCount"`
-	TwoStarCount     int32                    `json:"twoStarCount"`
-	ThreeStarCount   int32                    `json:"threeStarCount"`
-	FourStarCount    int32                    `json:"fourStarCount"`
-	FiveStarCount    int32                    `json:"fiveStarCount"`
-	Variants         []ProductVariantModel    `json:"variants"`
-	ProductImages    []ProductImageModel      `json:"productImages"`
-	Collection       *GeneralCategoryResponse `json:"collection,omitempty"`
-	Brand            *GeneralCategoryResponse `json:"brand,omitempty"`
-	Category         *GeneralCategoryResponse `json:"category,omitempty"`
+type ProductDetailItemResponse struct {
+	ID               string   `json:"id"`
+	Name             string   `json:"name"`
+	Description      string   `json:"description"`
+	ShortDescription *string  `json:"shortDescription"`
+	Attributes       []string `json:"attributes"`
+	BasePrice        float64  `json:"price,omitzero"`
+	BaseSku          string   `json:"sku"`
+	IsActive         bool     `json:"isActive"`
+	Slug             string   `json:"slug"`
+
+	RatingCount    int32 `json:"ratingCount"`
+	OneStarCount   int32 `json:"oneStarCount"`
+	TwoStarCount   int32 `json:"twoStarCount"`
+	ThreeStarCount int32 `json:"threeStarCount"`
+	FourStarCount  int32 `json:"fourStarCount"`
+	FiveStarCount  int32 `json:"fiveStarCount"`
+
+	UpdatedAt string `json:"updatedAt"`
+	CreatedAt string `json:"createdAt"`
+
+	MaxDiscountValue float64 `json:"maxDiscountValue,omitzero"`
+	DiscountType     *string `json:"discountType,omitempty"`
+
+	Variants      []ProductVariantModel    `json:"variants"`
+	ProductImages []ProductImageModel      `json:"productImages"`
+	Collection    *GeneralCategoryResponse `json:"collection,omitempty"`
+	Brand         *GeneralCategoryResponse `json:"brand,omitempty"`
+	Category      *GeneralCategoryResponse `json:"category,omitempty"`
 }
 
 type GeneralCategoryResponse struct {

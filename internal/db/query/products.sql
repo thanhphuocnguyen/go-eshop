@@ -47,7 +47,7 @@ WHERE
     id = $1;
 
 
--- name: GetProductDetail :many
+-- name: GetProductDetail :one
 SELECT
     p.id as product_id, p.name, p.description, p.base_price,
     p.base_sku, p.slug, p.updated_at, p.created_at, p.is_active,
@@ -56,17 +56,22 @@ SELECT
     p.three_star_count, p.four_star_count, p.five_star_count,
     c.id AS category_id, c.name AS category_name,
     cl.id AS collection_id, cl.name AS collection_name,
-    b.id AS brand_id, b.name AS brand_name
+    b.id AS brand_id, b.name AS brand_name,
+    d.id as discount_id, MAX(d.discount_value) AS max_discount_value, d.discount_type
 FROM
     products p
+LEFT JOIN discount_products AS pd ON p.id = pd.product_id
+LEFT JOIN discount_categories AS pc ON p.category_id = pc.category_id
 LEFT JOIN categories as c ON p.category_id = c.id
 LEFT JOIN brands AS b ON p.brand_id = b.id
 LEFT JOIN collections as cl ON p.collection_id = cl.id
+LEFT JOIN discounts AS d ON pd.discount_id = d.id OR pc.discount_id = d.id
 WHERE
     (p.id = $1 OR p.slug = $2) AND
     p.is_active = COALESCE(sqlc.narg('is_active'), TRUE)
-ORDER BY
-    p.id;
+GROUP BY
+    p.id, c.id, cl.id, b.id, d.id
+LIMIT 1;
 
 -- name: GetProductVariants :many
 SELECT

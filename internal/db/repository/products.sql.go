@@ -368,7 +368,7 @@ func (q *Queries) GetProductBySlug(ctx context.Context, arg GetProductBySlugPara
 	return i, err
 }
 
-const getProductDetail = `-- name: GetProductDetail :many
+const getProductDetail = `-- name: GetProductDetail :one
 SELECT
     p.id as product_id, p.name, p.description, p.base_price,
     p.base_sku, p.slug, p.updated_at, p.created_at, p.is_active,
@@ -377,17 +377,22 @@ SELECT
     p.three_star_count, p.four_star_count, p.five_star_count,
     c.id AS category_id, c.name AS category_name,
     cl.id AS collection_id, cl.name AS collection_name,
-    b.id AS brand_id, b.name AS brand_name
+    b.id AS brand_id, b.name AS brand_name,
+    d.id as discount_id, MAX(d.discount_value) AS max_discount_value, d.discount_type
 FROM
     products p
+LEFT JOIN discount_products AS pd ON p.id = pd.product_id
+LEFT JOIN discount_categories AS pc ON p.category_id = pc.category_id
 LEFT JOIN categories as c ON p.category_id = c.id
 LEFT JOIN brands AS b ON p.brand_id = b.id
 LEFT JOIN collections as cl ON p.collection_id = cl.id
+LEFT JOIN discounts AS d ON pd.discount_id = d.id OR pc.discount_id = d.id
 WHERE
     (p.id = $1 OR p.slug = $2) AND
     p.is_active = COALESCE($3, TRUE)
-ORDER BY
-    p.id
+GROUP BY
+    p.id, c.id, cl.id, b.id, d.id
+LIMIT 1
 `
 
 type GetProductDetailParams struct {
@@ -420,50 +425,43 @@ type GetProductDetailRow struct {
 	CollectionName   *string        `json:"collectionName"`
 	BrandID          pgtype.UUID    `json:"brandId"`
 	BrandName        *string        `json:"brandName"`
+	DiscountID       pgtype.UUID    `json:"discountId"`
+	MaxDiscountValue pgtype.Numeric `json:"maxDiscountValue"`
+	DiscountType     *string        `json:"discountType"`
 }
 
-func (q *Queries) GetProductDetail(ctx context.Context, arg GetProductDetailParams) ([]GetProductDetailRow, error) {
-	rows, err := q.db.Query(ctx, getProductDetail, arg.ID, arg.Slug, arg.IsActive)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []GetProductDetailRow{}
-	for rows.Next() {
-		var i GetProductDetailRow
-		if err := rows.Scan(
-			&i.ProductID,
-			&i.Name,
-			&i.Description,
-			&i.BasePrice,
-			&i.BaseSku,
-			&i.Slug,
-			&i.UpdatedAt,
-			&i.CreatedAt,
-			&i.IsActive,
-			&i.ShortDescription,
-			&i.Attributes,
-			&i.RatingCount,
-			&i.OneStarCount,
-			&i.TwoStarCount,
-			&i.ThreeStarCount,
-			&i.FourStarCount,
-			&i.FiveStarCount,
-			&i.CategoryID,
-			&i.CategoryName,
-			&i.CollectionID,
-			&i.CollectionName,
-			&i.BrandID,
-			&i.BrandName,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) GetProductDetail(ctx context.Context, arg GetProductDetailParams) (GetProductDetailRow, error) {
+	row := q.db.QueryRow(ctx, getProductDetail, arg.ID, arg.Slug, arg.IsActive)
+	var i GetProductDetailRow
+	err := row.Scan(
+		&i.ProductID,
+		&i.Name,
+		&i.Description,
+		&i.BasePrice,
+		&i.BaseSku,
+		&i.Slug,
+		&i.UpdatedAt,
+		&i.CreatedAt,
+		&i.IsActive,
+		&i.ShortDescription,
+		&i.Attributes,
+		&i.RatingCount,
+		&i.OneStarCount,
+		&i.TwoStarCount,
+		&i.ThreeStarCount,
+		&i.FourStarCount,
+		&i.FiveStarCount,
+		&i.CategoryID,
+		&i.CategoryName,
+		&i.CollectionID,
+		&i.CollectionName,
+		&i.BrandID,
+		&i.BrandName,
+		&i.DiscountID,
+		&i.MaxDiscountValue,
+		&i.DiscountType,
+	)
+	return i, err
 }
 
 const getProductVariantByID = `-- name: GetProductVariantByID :one

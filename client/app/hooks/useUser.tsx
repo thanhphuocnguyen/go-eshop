@@ -1,7 +1,7 @@
 import useSWR from 'swr';
-import { PUBLIC_API_PATHS } from '../constants/api';
-import { clientSideFetch } from '../apis/apiClient';
-import { UserModel } from '../definitions';
+import { PUBLIC_API_PATHS } from '../lib/constants/api';
+import { clientSideFetch } from '../lib/apis/apiClient';
+import { UserModel } from '../lib/definitions';
 
 export const useUser = () => {
   const { data, isLoading, mutate } = useSWR(
@@ -17,6 +17,7 @@ export const useUser = () => {
       }),
     {
       refreshInterval: 0,
+      dedupingInterval: 60000, // 1 minute deduplication
       revalidateOnFocus: false,
     }
   );

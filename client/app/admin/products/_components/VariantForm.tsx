@@ -6,7 +6,7 @@ import { useFormContext, useWatch } from 'react-hook-form';
 import { ProductModelForm, VariantModelForm } from '@/app/lib/definitions';
 import { TextField } from '@/components/FormFields';
 import { StyledComboBoxController } from '@/components/FormFields/StyledComboBoxController';
-import { useAttributes } from '../../_lib/hooks/useAttributes';
+import { useAttributes } from '../../hooks/useAttributes';
 
 interface AttributeFormProps {
   index: number;

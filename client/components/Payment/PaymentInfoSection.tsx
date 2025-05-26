@@ -5,7 +5,7 @@ import { useState } from 'react';
 import PaymentSetupModal from './PaymentSetupModal';
 import { ShoppingBagIcon, CreditCardIcon } from '@heroicons/react/16/solid';
 import { useRouter } from 'next/navigation';
-import { CheckoutDataResponse } from '@/app/(shopLayout)/(personal)/checkout/_lib/definitions';
+import { CheckoutDataResponse } from '@/app/(user)/(personal)/checkout/_lib/definitions';
 
 interface PaymentInfoSectionProps {
   paymentInfo: PaymentInfo | null;

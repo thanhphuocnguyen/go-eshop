@@ -12,7 +12,7 @@ import {
   DisclosurePanel,
   Transition,
 } from '@headlessui/react';
-import { useAttributes } from '../../_lib/hooks';
+import { useAttributes } from '../../hooks';
 
 export const VariantInfoForm: React.FC<{
   selectedAttributes: string[];

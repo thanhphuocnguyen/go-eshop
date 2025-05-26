@@ -50,14 +50,14 @@ func (sv *Server) addProductHandler(c *gin.Context) {
 // @Accept json
 // @Param product_id path int true "Product ID"
 // @Produce json
-// @Success 200 {object} ApiResponse[ProductListModel]
-// @Failure 404 {object} ApiResponse[ProductListModel]
-// @Failure 500 {object} ApiResponse[ProductListModel]
+// @Success 200 {object} ApiResponse[gin.H]
+// @Failure 404 {object} ApiResponse[gin.H]
+// @Failure 500 {object} ApiResponse[gin.H]
 // @Router /products/{product_id} [get]
 func (sv *Server) getProductDetailHandler(c *gin.Context) {
 	var params URISlugParam
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListItemResponse](InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[gin.H](InvalidBodyCode, "", err))
 		return
 	}
 	sqlParams := repository.GetProductDetailParams{}
@@ -68,25 +68,25 @@ func (sv *Server) getProductDetailHandler(c *gin.Context) {
 		sqlParams.Slug = params.ID
 	}
 
-	productRows, err := sv.repo.GetProductDetail(c, sqlParams)
+	productRow, err := sv.repo.GetProductDetail(c, sqlParams)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListItemResponse](InternalServerErrorCode, "", err))
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, createErrorResponse[gin.H](NotFoundCode, "", err))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
 		return
 	}
 
-	if len(productRows) == 0 {
-		c.JSON(http.StatusNotFound, createErrorResponse[ProductListItemResponse](NotFoundCode, "", errors.New("product not found")))
-		return
-	}
-	prodID := productRows[0].ProductID
-	productDetail := mapToProductResponse(productRows)
+	prodID := productRow.ProductID
+	productDetail := mapToProductResponse(productRow)
 
 	variantRows, err := sv.repo.GetProductVariants(c, repository.GetProductVariantsParams{
 		ProductID: prodID,
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[ProductListItemResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
 		return
 	}
 

@@ -203,6 +203,8 @@ export type ProductDetailModel = {
   brand: GeneralCategoryModel;
   published: boolean;
   variants: VariantDetailModel[];
+  maxDiscountValue?: number; // max discount value
+  discountType?: string; // 'percentage' | 'fixed'
   productImages: ProductImageModel[];
   createdAt: string; // date
   updatedAt: string; // date

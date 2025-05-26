@@ -31,15 +31,20 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({
       <div>
         <h3 className='sr-only'>Reviews</h3>
         <div className='flex items-center'>
-          <span className='mr-2 text-sm'>{rating}</span>
           <div className='flex items-center'>{renderStars(rating)}</div>
           <p className='sr-only'>{5} out of 5 stars</p>
-          <Link
-            href={`/products/${'product-slug'}/reviews`}
-            className='ml-8 text-sm font-medium text-indigo-600 hover:text-indigo-500'
-          >
-            See all {reviewsCount} reviews
-          </Link>
+          {reviewsCount > 0 ? (
+            <Link
+              href={`/products/${'product-slug'}/reviews`}
+              className='ml-8 text-sm font-medium text-indigo-600 hover:text-indigo-500'
+            >
+              See all {reviewsCount} reviews
+            </Link>
+          ) : (
+            <span className='ml-8 text-sm text-gray-500'>
+              No reviews yet
+            </span>
+          )}
         </div>
       </div>
     </div>

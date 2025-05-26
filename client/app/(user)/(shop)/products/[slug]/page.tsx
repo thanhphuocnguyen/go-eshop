@@ -3,6 +3,7 @@ import { ProductDetailModel } from '@/app/lib/definitions';
 import {
   CurrencyDollarIcon,
   GlobeAsiaAustraliaIcon,
+  TagIcon,
 } from '@heroicons/react/16/solid';
 import React, { cache, Suspense } from 'react';
 import {
@@ -141,14 +142,58 @@ async function ProductDetailPage({ params }: Props) {
             <div className='flex items-center justify-between'>
               <div>
                 <h2 className='sr-only'>Product price</h2>
-                {minPrice !== maxPrice ? (
-                  <p className='text-2xl font-bold text-gray-900'>
-                    ${minPrice.toFixed(2)} - ${maxPrice.toFixed(2)}
-                  </p>
+                {productDetail.maxDiscountValue && productDetail.maxDiscountValue > 0 ? (
+                  <>
+                    {minPrice !== maxPrice ? (
+                      <div>
+                        <p className='text-sm text-gray-500 line-through'>
+                          ${minPrice.toFixed(2)} - ${maxPrice.toFixed(2)}
+                        </p>
+                        <div className='flex flex-col'>
+                          <p className='text-2xl font-bold text-emerald-700'>
+                            {productDetail.discountType === 'percentage' 
+                              ? `$${(minPrice - (minPrice * productDetail.maxDiscountValue / 100)).toFixed(2)} - $${(maxPrice - (maxPrice * productDetail.maxDiscountValue / 100)).toFixed(2)}`
+                              : `$${(minPrice - productDetail.maxDiscountValue).toFixed(2)} - $${(maxPrice - productDetail.maxDiscountValue).toFixed(2)}`}
+                          </p>
+                          <p className='text-sm font-medium text-emerald-600 mt-1'>
+                            Save {productDetail.discountType === 'percentage' 
+                              ? `$${((minPrice * productDetail.maxDiscountValue / 100)).toFixed(2)} - $${((maxPrice * productDetail.maxDiscountValue / 100)).toFixed(2)}`
+                              : `$${productDetail.maxDiscountValue.toFixed(2)}`}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className='text-sm text-gray-500 line-through'>
+                          ${minPrice.toFixed(2)}
+                        </p>
+                        <div className='flex flex-col'>
+                          <p className='text-2xl font-bold text-emerald-700'>
+                            {productDetail.discountType === 'percentage'
+                              ? `$${(minPrice - (minPrice * productDetail.maxDiscountValue / 100)).toFixed(2)}`
+                              : `$${(minPrice - productDetail.maxDiscountValue).toFixed(2)}`}
+                          </p>
+                          <p className='text-sm font-medium text-emerald-600 mt-1'>
+                            Save {productDetail.discountType === 'percentage'
+                              ? `$${(minPrice * productDetail.maxDiscountValue / 100).toFixed(2)}`
+                              : `$${productDetail.maxDiscountValue.toFixed(2)}`}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 ) : (
-                  <p className='text-2xl font-bold text-gray-900'>
-                    ${minPrice.toFixed(2)}
-                  </p>
+                  <>
+                    {minPrice !== maxPrice ? (
+                      <p className='text-2xl font-bold text-gray-900'>
+                        ${minPrice.toFixed(2)} - ${maxPrice.toFixed(2)}
+                      </p>
+                    ) : (
+                      <p className='text-2xl font-bold text-gray-900'>
+                        ${minPrice.toFixed(2)}
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -242,6 +287,25 @@ async function ProductDetailPage({ params }: Props) {
               </div>
             </div>
           </div>
+
+          {/* Discount information */}
+          {productDetail.maxDiscountValue && productDetail.maxDiscountValue > 0 && (
+            <div className='mt-6 px-6 py-4 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 flex items-center shadow-sm'>
+              <div className='bg-gradient-to-r from-emerald-100 to-teal-100 rounded-full p-3 mr-4 shadow-inner'>
+                <TagIcon className='size-5 text-emerald-700' />
+              </div>
+              <div className='flex flex-col'>
+                <p className='font-semibold text-emerald-800 text-lg'>
+                  Limited Time Offer!
+                </p>
+                <p className='text-sm font-medium text-emerald-700'>
+                  {productDetail.discountType === 'percentage' 
+                    ? `${productDetail.maxDiscountValue}% off (You save $${(minPrice * productDetail.maxDiscountValue / 100).toFixed(2)})` 
+                    : `$${productDetail.maxDiscountValue.toFixed(2)} off your purchase`}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

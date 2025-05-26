@@ -1,7 +1,7 @@
 import useSWR from 'swr';
-import { PUBLIC_API_PATHS } from '../constants/api';
-import { clientSideFetch } from '../apis/apiClient';
-import { ProductListModel } from '../definitions';
+import { PUBLIC_API_PATHS } from '../lib/constants/api';
+import { clientSideFetch } from '../lib/apis/apiClient';
+import { ProductListModel } from '../lib/definitions';
 
 export const useProducts = ({
   page,

@@ -6,10 +6,10 @@ import { StyledComboBoxController } from '@/components/FormFields/StyledComboBox
 import { StyledMultipleComboBox } from '@/components/FormFields/StyledMultipleComboBox';
 import { TiptapController } from '@/components/Common';
 import { Field, Label, Switch } from '@headlessui/react';
-import { useCollections } from '../../_lib/hooks/useCollections';
-import { useBrands } from '../../_lib/hooks/useBrands';
-import { useAttributes } from '../../_lib/hooks/useAttributes';
-import { useCategories } from '../../_lib/hooks/useCategories';
+import { useCollections } from '../../hooks/useCollections';
+import { useBrands } from '../../hooks/useBrands';
+import { useAttributes } from '../../hooks/useAttributes';
+import { useCategories } from '../../hooks/useCategories';
 import { ProductDetailModel, ProductModelForm } from '@/app/lib/definitions';
 import { useFormContext } from 'react-hook-form';
 import clsx from 'clsx';

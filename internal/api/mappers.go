@@ -35,59 +35,61 @@ func mapAddressToAddressResponse(address repository.UserAddress) AddressResponse
 	}
 }
 
-func mapToProductResponse(productRows []repository.GetProductDetailRow) ProductListItemResponse {
-	if len(productRows) == 0 {
-		return ProductListItemResponse{}
-	}
-	product := productRows[0]
-	basePrice, _ := product.BasePrice.Float64Value()
-	attributes := make([]string, len(product.Attributes))
-	for i, attr := range product.Attributes {
+func mapToProductResponse(productRows repository.GetProductDetailRow) ProductDetailItemResponse {
+
+	basePrice, _ := productRows.BasePrice.Float64Value()
+	attributes := make([]string, len(productRows.Attributes))
+	for i, attr := range productRows.Attributes {
 		attributes[i] = attr.String()
 	}
+	discountValue, _ := productRows.MaxDiscountValue.Float64Value()
 
-	resp := ProductListItemResponse{
-		ID:               product.ProductID.String(),
-		Name:             product.Name,
+	resp := ProductDetailItemResponse{
+		ID:               productRows.ProductID.String(),
+		Name:             productRows.Name,
 		BasePrice:        basePrice.Float64,
-		ShortDescription: product.ShortDescription,
+		ShortDescription: productRows.ShortDescription,
 		Attributes:       attributes,
-		Description:      product.Description,
-		BaseSku:          product.BaseSku,
-		Slug:             product.Slug,
-		RatingCount:      product.RatingCount,
-		OneStarCount:     product.OneStarCount,
-		TwoStarCount:     product.TwoStarCount,
-		ThreeStarCount:   product.ThreeStarCount,
-		FourStarCount:    product.FourStarCount,
-		FiveStarCount:    product.FiveStarCount,
+		Description:      productRows.Description,
+		BaseSku:          productRows.BaseSku,
+		Slug:             productRows.Slug,
+		RatingCount:      productRows.RatingCount,
+		OneStarCount:     productRows.OneStarCount,
+		TwoStarCount:     productRows.TwoStarCount,
+		ThreeStarCount:   productRows.ThreeStarCount,
+		FourStarCount:    productRows.FourStarCount,
+		FiveStarCount:    productRows.FiveStarCount,
 
-		UpdatedAt:     product.UpdatedAt.String(),
-		CreatedAt:     product.CreatedAt.String(),
-		IsActive:      *product.IsActive,
+		MaxDiscountValue: discountValue.Float64,
+		DiscountType:     productRows.DiscountType,
+
+		UpdatedAt: productRows.UpdatedAt.String(),
+		CreatedAt: productRows.CreatedAt.String(),
+
+		IsActive:      *productRows.IsActive,
 		Variants:      make([]ProductVariantModel, 0),
 		ProductImages: make([]ProductImageModel, 0),
 	}
 
-	if product.BrandID.Valid {
-		id, _ := uuid.FromBytes(product.BrandID.Bytes[:])
+	if productRows.BrandID.Valid {
+		id, _ := uuid.FromBytes(productRows.BrandID.Bytes[:])
 		resp.Brand = &GeneralCategoryResponse{
 			ID:   id.String(),
-			Name: *product.BrandName,
+			Name: *productRows.BrandName,
 		}
 	}
-	if product.CategoryID.Valid {
-		id, _ := uuid.FromBytes(product.CategoryID.Bytes[:])
+	if productRows.CategoryID.Valid {
+		id, _ := uuid.FromBytes(productRows.CategoryID.Bytes[:])
 		resp.Category = &GeneralCategoryResponse{
 			ID:   id.String(),
-			Name: *product.CategoryName,
+			Name: *productRows.CategoryName,
 		}
 	}
-	if product.CollectionID.Valid {
-		collectionID, _ := uuid.FromBytes(product.CollectionID.Bytes[:])
+	if productRows.CollectionID.Valid {
+		collectionID, _ := uuid.FromBytes(productRows.CollectionID.Bytes[:])
 		resp.Collection = &GeneralCategoryResponse{
 			ID:   collectionID.String(),
-			Name: *product.CollectionName,
+			Name: *productRows.CollectionName,
 		}
 	}
 

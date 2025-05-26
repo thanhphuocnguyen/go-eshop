@@ -3,7 +3,7 @@ import LoadingInline from '@/components/Common/Loadings/LoadingInline';
 import { use } from 'react';
 import { ProductDetailForm } from '../_components/ProductDetailForm';
 import { ProductDetailFormProvider } from '../_lib/contexts/ProductFormContext';
-import { useProductDetail } from '../../_lib/hooks/useProductDetail';
+import { useProductDetail } from '../../hooks/useProductDetail';
 
 export default function ProductFormEditPage({
   params,

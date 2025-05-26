@@ -10,7 +10,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { CategoryType, EditDiscountFormData } from '../_types';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useCategories } from '../../_lib/hooks';
+import { useCategories } from '../../hooks';
 import useDiscountCategories from '../_lib/useDiscountCategores';
 import { useParams } from 'next/navigation';
 

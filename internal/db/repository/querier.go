@@ -133,7 +133,7 @@ type Querier interface {
 	GetPaymentTransactionByPaymentID(ctx context.Context, paymentID uuid.UUID) (PaymentTransaction, error)
 	GetProductByID(ctx context.Context, arg GetProductByIDParams) (Product, error)
 	GetProductBySlug(ctx context.Context, arg GetProductBySlugParams) (Product, error)
-	GetProductDetail(ctx context.Context, arg GetProductDetailParams) ([]GetProductDetailRow, error)
+	GetProductDetail(ctx context.Context, arg GetProductDetailParams) (GetProductDetailRow, error)
 	GetProductImageByEntityID(ctx context.Context, entityID uuid.UUID) (GetProductImageByEntityIDRow, error)
 	GetProductImagesAssigned(ctx context.Context, entityIds []uuid.UUID) ([]GetProductImagesAssignedRow, error)
 	GetProductRating(ctx context.Context, id uuid.UUID) (ProductRating, error)

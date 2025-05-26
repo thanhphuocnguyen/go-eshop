@@ -8,7 +8,7 @@ import LoadingButton from '../Common/LoadingButton';
 import { toast } from 'react-toastify';
 import { Button } from '@headlessui/react';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
-import { CheckoutDataResponse } from '@/app/(shopLayout)/(personal)/checkout/_lib/definitions';
+import { CheckoutDataResponse } from '@/app/(user)/(personal)/checkout/_lib/definitions';
 
 interface PaymentSetupModalProps {
   orderId: string;
