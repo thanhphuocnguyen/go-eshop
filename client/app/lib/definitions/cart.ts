@@ -9,6 +9,7 @@ export interface CartItem {
   stock: number;
   sku: string;
   imageUrl?: string;
+  categoryId?: string; // Add categoryId for category-based discounts
   attributes: Array<{
     name: string;
     value: string;

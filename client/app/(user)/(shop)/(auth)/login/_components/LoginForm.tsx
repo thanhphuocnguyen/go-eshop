@@ -85,7 +85,7 @@ export default function LoginFormComponent() {
     } else {
       formData.append('username', data.username || '');
     }
-    formData.append('password', data.password as string);
+    formData.append('password', data.password);
 
     const rs = await loginAction(formData);
     if (rs?.error) {

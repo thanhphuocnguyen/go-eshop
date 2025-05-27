@@ -132,6 +132,41 @@ func (sv *Server) getCartHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, createSuccessResponse(c, cartDetail, "", nil, nil))
 }
 
+// @Summary Get cart discounts
+// @Schemes http
+// @Description get cart discounts
+// @Tags carts
+// @Accept json
+// @Produce json
+// @Success 200 {object} ApiResponse[gin.H]
+// @Failure 400 {object} ApiResponse[gin.H]
+// @Failure 500 {object} ApiResponse[gin.H]
+// @Router /cart/discounts [get]
+func (sv *Server) getCartDiscountsHandler(c *gin.Context) {
+	authPayload, _ := c.MustGet(authorizationPayload).(*auth.Payload)
+	cart, err := sv.repo.GetCart(c, repository.GetCartParams{
+		UserID: utils.GetPgTypeUUID(authPayload.UserID),
+	})
+
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, createErrorResponse[gin.H](NotFoundCode, "", errors.New("cart not found")))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
+		return
+	}
+
+	cartDiscounts, err := sv.repo.GetAvailableDiscountsForCart(c, cart.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
+		return
+	}
+
+	c.JSON(http.StatusOK, createSuccessResponse(c, cartDiscounts, "Success!", nil, nil))
+
+}
+
 // @Summary Add a product to the cart
 // @Schemes http
 // @Description add a product to the cart
@@ -457,7 +492,58 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 	if req.Email != nil {
 		params.CustomerInfo.Email = *req.Email
 	}
+	var discountPrice float64
+	var discountID *uuid.UUID
+	if req.DiscountCode != nil && *req.DiscountCode != "" {
+		discount, err := sv.repo.GetDiscountByCode(c, *req.DiscountCode)
+		discountProductsAndCategories, err := sv.repo.GetDiscountProductsAndCategories(c, discount.ID)
+		if err != nil {
+			log.Error().Err(err).Msg("GetDiscountByCode")
+			c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
+			return
+		}
+		discountProductIDs := make(map[uuid.UUID]bool)
+		discountCategoryIDs := make(map[uuid.UUID]bool)
+		for _, item := range discountProductsAndCategories {
+			if item.ProductID.Valid {
+				id, _ := uuid.FromBytes(item.ProductID.Bytes[:])
+				discountProductIDs[id] = true
+			} else if item.CategoryID.Valid {
+				id, _ := uuid.FromBytes(item.CategoryID.Bytes[:])
+				discountCategoryIDs[id] = true
+			}
+		}
 
+		discountValue, _ := discount.DiscountValue.Float64Value()
+		for _, item := range cartItemRows {
+			price, _ := item.Price.Float64Value()
+			lineTotal := price.Float64 * float64(item.CartItem.Quantity)
+			if _, ok := discountProductIDs[item.ProductID]; ok {
+				// if the item has a discount price, use it
+				if item.Price.Valid {
+					if discount.DiscountType == string(repository.PercentageDiscount) {
+						discountPrice += lineTotal * (discountValue.Float64 / 100)
+					} else {
+						discountPrice += lineTotal - discountValue.Float64
+					}
+				}
+			} else if item.CategoryID.Valid {
+				catId, _ := uuid.FromBytes(item.CategoryID.Bytes[:])
+				if _, ok := discountCategoryIDs[catId]; ok {
+					if discount.DiscountType == string(repository.PercentageDiscount) {
+						discountPrice += lineTotal * (discountValue.Float64 / 100)
+					} else {
+						discountPrice += lineTotal - discountValue.Float64
+					}
+				} else {
+					log.Warn().Msgf("Category %s not found in discount categories", catId.String())
+				}
+			}
+		}
+
+	}
+	params.DiscountPrice = discountPrice
+	params.DiscountID = discountID
 	orderID, err := sv.repo.CreateOrderTx(c, params)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
@@ -593,7 +679,6 @@ func mapToCartItemsResp(rows []repository.GetCartItemsRow) ([]CartItemResponse, 
 				Name:  row.AttrName,
 				Value: row.AttrValName,
 			}
-
 			cartItem := CartItemResponse{
 				ID:        row.CartItemID.String(),
 				ProductID: row.ProductID.String(),
@@ -601,13 +686,22 @@ func mapToCartItemsResp(rows []repository.GetCartItemsRow) ([]CartItemResponse, 
 				Name:      row.ProductName,
 				Quantity:  row.Quantity,
 				Price:     math.Round(price.Float64*100) / 100,
-				// Discount:      row.Discount.Int16,
-				StockQty: row.StockQty,
-				Sku:      &row.Sku,
+				StockQty:  row.StockQty,
+				Sku:       &row.Sku,
 				Attributes: []repository.AttributeDataSnapshot{
 					attr,
 				},
 				ImageURL: row.ImageUrl,
+			}
+
+			// Populate CategoryID if available
+			if row.CategoryID.Valid {
+				categoryID := row.CategoryID.Bytes
+				categoryUUID, err := uuid.FromBytes(categoryID[:])
+				if err == nil {
+					categoryIDStr := categoryUUID.String()
+					cartItem.CategoryID = &categoryIDStr
+				}
 			}
 			cartItemsResp = append(cartItemsResp, cartItem)
 			totalPrice += cartItem.Price * float64(cartItem.Quantity)

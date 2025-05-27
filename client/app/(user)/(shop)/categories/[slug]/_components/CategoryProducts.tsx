@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ProductListModel } from '@/app/lib/definitions';
 import { StarIcon } from '@heroicons/react/24/solid';
-import { formatCurrency } from '@/app/lib/utils';
+import { formatCurrency } from '@/app/utils';
 
 export default function CategoryProducts({
   products,

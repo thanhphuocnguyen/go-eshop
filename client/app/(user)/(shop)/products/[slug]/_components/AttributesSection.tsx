@@ -268,10 +268,15 @@ const AttributesSection: React.FC<AttributesSectionProps> = ({ variants }) => {
           <Button
             type='button'
             onClick={handleAddToCart}
-            disabled={Object.keys(selectedAttributeValues).length < 2}
+            disabled={
+              Object.keys(selectedAttributeValues).length <
+              attributesData.length
+            }
             className={clsx(
               'flex-1 items-center justify-center rounded-md border border-transparent py-3 px-8 flex text-base font-medium text-white',
-              'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
+              'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500',
+              Object.keys(selectedAttributeValues).length <
+                attributesData.length && 'opacity-50 cursor-not-allowed'
             )}
           >
             <svg

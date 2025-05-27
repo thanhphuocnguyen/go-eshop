@@ -4,9 +4,9 @@ import { RatingModel } from '@/app/lib/definitions/rating';
 import { StarIcon } from '@heroicons/react/24/solid';
 import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
-import { formatDate } from '@/app/lib/utils/index';
 import React from 'react';
 import RatingHelpfulButtons from './RatingHelpfulButtons';
+import { formatDate } from '@/app/utils';
 
 // Client component to render ratings with interactive elements
 export async function ReviewsList({ productID }: { productID: string }) {

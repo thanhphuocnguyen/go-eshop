@@ -13,9 +13,10 @@ export const CheckoutFormSchema = z.object({
       phone: z.string().min(1, { message: 'Phone number is required' }),
     })
     .optional(),
-  payment_method: z.enum(['stripe', 'cod']),
-  payment_receipt_email: z.string().optional(),
-  terms_accepted: z.boolean().refine((val) => val === true, {
+  paymentMethod: z.enum(['stripe', 'cod']),
+  paymentReceiptEmail: z.string().optional(),
+  discountCode: z.string().optional(),
+  termsAccepted: z.boolean().refine((val) => val === true, {
     message: 'You must accept the terms and conditions',
   }),
 });
@@ -34,11 +35,11 @@ export type CheckoutFormProps = {
 };
 
 export type CheckoutDataResponse = {
-  order_id: string;
-  total_price: number;
-  payment_id?: string;
-  client_secret?: string;
-  payment_intent_id?: string;
+  orderId: string;
+  totalPrice: number;
+  paymentId?: string;
+  clientSecret?: string;
+  paymentIntentId?: string;
 };
 
 export type PaymentResponse = {

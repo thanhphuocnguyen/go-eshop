@@ -13,8 +13,8 @@ type RequestOptions = {
   authToken?: string;
   nextOptions?: RequestInit;
   retryOnUnauthorized?: boolean;
-  req?: any; // For SSR cookie access
-  res?: any;
+  req?: Request; // For SSR cookie access
+  res?: Response;
   queryParams?: Record<string, any>; // Added queryParams option
 };
 

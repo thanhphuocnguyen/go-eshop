@@ -12,7 +12,7 @@ import { toast } from 'react-toastify';
 import { PencilIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@/app/lib/hooks/useUser';
+import { useUser } from '@/app/hooks';
 
 // Profile form schema
 const profileSchema = z.object({

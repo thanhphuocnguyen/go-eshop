@@ -20,6 +20,8 @@ type CreateOrderTxArgs struct {
 	CustomerInfo          CustomerInfoTxArgs
 	CreateOrderItemParams []CreateBulkOrderItemsParams
 	TotalPrice            float64
+	DiscountPrice         float64
+	DiscountID            *uuid.UUID
 	ShippingAddress       ShippingAddressSnapshot
 }
 
@@ -36,12 +38,23 @@ func (s *pgRepo) CreateOrderTx(ctx context.Context, arg CreateOrderTxArgs) (uuid
 		}
 
 		order, err := s.CreateOrder(ctx, params)
-
 		if err != nil {
 			log.Error().Err(err).Msg("CreateOrder")
 			return err
 		}
 		result = order.ID
+
+		if arg.DiscountPrice != 0 {
+			_, err := q.InsertOrderDiscount(ctx, InsertOrderDiscountParams{
+				OrderID:        order.ID,
+				DiscountID:     *arg.DiscountID,
+				DiscountAmount: utils.GetPgNumericFromFloat(arg.DiscountPrice),
+			})
+			if err != nil {
+				log.Error().Err(err).Msg("GetDiscountByCode")
+				return err
+			}
+		}
 
 		for i := range arg.CreateOrderItemParams {
 			arg.CreateOrderItemParams[i].OrderID = order.ID

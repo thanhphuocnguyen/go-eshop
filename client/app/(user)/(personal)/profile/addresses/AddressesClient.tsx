@@ -18,7 +18,7 @@ import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { GenericResponse } from '@/app/lib/definitions';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@/app/lib/hooks/useUser';
+import { useUser } from '@/app/hooks';
 
 // Form schema for address validation
 const addressSchema = z.object({

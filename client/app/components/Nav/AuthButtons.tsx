@@ -7,8 +7,8 @@ import clsx from 'clsx';
 import Link from 'next/link';
 import { redirect, useRouter } from 'next/navigation';
 import React from 'react';
-import { useUser } from '@/app/lib/hooks/useUser';
 import { logoutAction } from '@/app/actions/auth';
+import { useUser } from '@/app/hooks';
 
 const AuthButtons: React.FC = ({}) => {
   const { user, isLoading, mutateUser } = useUser();
@@ -92,10 +92,10 @@ const AuthButtons: React.FC = ({}) => {
             </MenuItem>
             <MenuItem>
               <button
-                className='group flex w-full items-center gap-2.5 rounded-md py-2 px-3 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all duration-150'
+                className='group flex w-full items-center gap-2.5 rounded-md py-2 px-3 text-gray-700 hover:bg-red-300 hover:text-red-600 transition-all duration-150'
                 onClick={logout}
               >
-                <ArrowUpTrayIcon className='size-5 text-red-500' />
+                <ArrowUpTrayIcon className='size-5 text-white' />
                 Logout
               </button>
             </MenuItem>

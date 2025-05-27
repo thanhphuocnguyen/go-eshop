@@ -279,6 +279,41 @@ func (q *Queries) GetDiscountProducts(ctx context.Context, arg GetDiscountProduc
 	return items, nil
 }
 
+const getDiscountProductsAndCategories = `-- name: GetDiscountProductsAndCategories :many
+SELECT dp.product_id, dc.category_id
+FROM discounts d
+LEFT JOIN discount_products dp ON d.id = dp.discount_id
+LEFT JOIN discount_categories dc ON d.id = dc.discount_id
+WHERE d.id = $1
+  AND (dp.product_id IS NOT NULL OR dc.category_id IS NOT NULL)
+ORDER BY dp.product_id, dc.category_id
+`
+
+type GetDiscountProductsAndCategoriesRow struct {
+	ProductID  pgtype.UUID `json:"productId"`
+	CategoryID pgtype.UUID `json:"categoryId"`
+}
+
+func (q *Queries) GetDiscountProductsAndCategories(ctx context.Context, id uuid.UUID) ([]GetDiscountProductsAndCategoriesRow, error) {
+	rows, err := q.db.Query(ctx, getDiscountProductsAndCategories, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetDiscountProductsAndCategoriesRow{}
+	for rows.Next() {
+		var i GetDiscountProductsAndCategoriesRow
+		if err := rows.Scan(&i.ProductID, &i.CategoryID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getDiscountUsages = `-- name: GetDiscountUsages :many
 SELECT usage_limit, used_count, discount_amount, customer_name, order_id, total_price, order_discounts.created_at
 FROM discounts
@@ -383,7 +418,7 @@ SELECT id, code, "description", discount_type, discount_value,
 FROM discounts
 WHERE 
     discount_type = COALESCE($3, discounts.discount_type)
-    AND is_active = COALESCE($4, discounts.is_active)
+    AND is_active = COALESCE($4, TRUE)
     AND starts_at >= COALESCE($5, discounts.starts_at)
     AND starts_at <= COALESCE($6, discounts.starts_at)
     AND code ILIKE '%' || COALESCE($7, discounts.code) || '%'

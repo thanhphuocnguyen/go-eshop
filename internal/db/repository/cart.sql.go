@@ -99,6 +99,71 @@ func (q *Queries) CreateCartItem(ctx context.Context, arg CreateCartItemParams) 
 	return i, err
 }
 
+const getAvailableDiscountsForCart = `-- name: GetAvailableDiscountsForCart :many
+SELECT d.id, d.code, d.description, d.discount_type, d.discount_value, d.starts_at, d.expires_at, dc.category_id, dp.product_id,
+       SUM(CASE WHEN dp.product_id IS NOT NULL THEN 1 ELSE 0 END) AS product_count,
+       SUM(CASE WHEN dc.category_id IS NOT NULL THEN 1 ELSE 0 END) AS category_count
+FROM cart_items ci
+JOIN product_variants pv ON ci.variant_id = pv.id
+JOIN products p ON pv.product_id = p.id
+LEFT JOIN discount_products dp ON p.id = dp.product_id
+LEFT JOIN discount_categories dc ON p.category_id = dc.category_id
+LEFT JOIN discounts d ON dp.discount_id = d.id OR dc.discount_id = d.id
+WHERE ci.cart_id = $1
+AND d.deleted_at IS NULL
+AND (d.starts_at IS NULL OR d.starts_at <= NOW())
+AND (d.expires_at IS NULL OR d.expires_at >= NOW())
+GROUP BY d.id, p.id, dc.category_id, dp.product_id
+HAVING COUNT(DISTINCT dp.product_id) > 0 OR COUNT(DISTINCT dc.category_id) > 0
+ORDER BY d.starts_at DESC, d.expires_at DESC
+`
+
+type GetAvailableDiscountsForCartRow struct {
+	ID            pgtype.UUID        `json:"id"`
+	Code          *string            `json:"code"`
+	Description   *string            `json:"description"`
+	DiscountType  *string            `json:"discountType"`
+	DiscountValue pgtype.Numeric     `json:"discountValue"`
+	StartsAt      pgtype.Timestamptz `json:"startsAt"`
+	ExpiresAt     pgtype.Timestamptz `json:"expiresAt"`
+	CategoryID    pgtype.UUID        `json:"categoryId"`
+	ProductID     pgtype.UUID        `json:"productId"`
+	ProductCount  int64              `json:"productCount"`
+	CategoryCount int64              `json:"categoryCount"`
+}
+
+func (q *Queries) GetAvailableDiscountsForCart(ctx context.Context, cartID uuid.UUID) ([]GetAvailableDiscountsForCartRow, error) {
+	rows, err := q.db.Query(ctx, getAvailableDiscountsForCart, cartID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetAvailableDiscountsForCartRow{}
+	for rows.Next() {
+		var i GetAvailableDiscountsForCartRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Code,
+			&i.Description,
+			&i.DiscountType,
+			&i.DiscountValue,
+			&i.StartsAt,
+			&i.ExpiresAt,
+			&i.CategoryID,
+			&i.ProductID,
+			&i.ProductCount,
+			&i.CategoryCount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getCart = `-- name: GetCart :one
 SELECT id, user_id, session_id, order_id, updated_at, created_at
 FROM carts
@@ -174,10 +239,10 @@ func (q *Queries) GetCartItemByProductVariantID(ctx context.Context, arg GetCart
 }
 
 const getCartItems = `-- name: GetCartItems :many
-SELECT 
+SELECT
     ci.id, ci.cart_id, ci.variant_id, ci.quantity, ci.added_at, 
     pv.id AS variant_id, pv.price, pv.stock, pv.sku, pv.stock as stock_qty,
-    p.id AS product_id, p.name AS product_name,
+    p.id AS product_id, p.name AS product_name, p.category_id,
     ci.id as cart_item_id, ci.quantity,
     av.id as attr_val_id, av.code AS attr_val_code, av.name as attr_val_name, a.name AS attr_name, a.id AS attr_id,
     i.id AS image_id, i.url AS image_url
@@ -202,6 +267,7 @@ type GetCartItemsRow struct {
 	StockQty    int32          `json:"stockQty"`
 	ProductID   uuid.UUID      `json:"productId"`
 	ProductName string         `json:"productName"`
+	CategoryID  pgtype.UUID    `json:"categoryId"`
 	CartItemID  uuid.UUID      `json:"cartItemId"`
 	Quantity    int16          `json:"quantity"`
 	AttrValID   uuid.UUID      `json:"attrValId"`
@@ -235,6 +301,7 @@ func (q *Queries) GetCartItems(ctx context.Context, cartID uuid.UUID) ([]GetCart
 			&i.StockQty,
 			&i.ProductID,
 			&i.ProductName,
+			&i.CategoryID,
 			&i.CartItemID,
 			&i.Quantity,
 			&i.AttrValID,
@@ -259,7 +326,7 @@ const getCartItemsForOrder = `-- name: GetCartItemsForOrder :many
 SELECT 
     ci.id, ci.cart_id, ci.variant_id, ci.quantity, ci.added_at, 
     pv.id AS variant_id, pv.price, pv.stock, pv.sku, pv.stock as stock_qty,
-    p.name AS product_name,
+    p.name AS product_name, p.id AS product_id, p.category_id,
     av.code AS attr_val_code, av.name as attr_val_name, a.name AS attr_name
 FROM cart_items AS ci
 JOIN product_variants AS pv ON pv.id = ci.variant_id
@@ -279,6 +346,8 @@ type GetCartItemsForOrderRow struct {
 	Sku         string         `json:"sku"`
 	StockQty    int32          `json:"stockQty"`
 	ProductName string         `json:"productName"`
+	ProductID   uuid.UUID      `json:"productId"`
+	CategoryID  pgtype.UUID    `json:"categoryId"`
 	AttrValCode string         `json:"attrValCode"`
 	AttrValName string         `json:"attrValName"`
 	AttrName    string         `json:"attrName"`
@@ -305,6 +374,8 @@ func (q *Queries) GetCartItemsForOrder(ctx context.Context, cartID uuid.UUID) ([
 			&i.Sku,
 			&i.StockQty,
 			&i.ProductName,
+			&i.ProductID,
+			&i.CategoryID,
 			&i.AttrValCode,
 			&i.AttrValName,
 			&i.AttrName,

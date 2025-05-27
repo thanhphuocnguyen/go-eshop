@@ -7,7 +7,6 @@ import { OrderStatus } from '@/app/lib/definitions/common';
 import { OrderListModel, OrdersStats } from '@/app/lib/definitions/order';
 import Link from 'next/link';
 import useSWR from 'swr';
-import { formatCurrency } from '@/app/lib/utils';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -16,6 +15,7 @@ import {
 import dayjs from 'dayjs';
 import clsx from 'clsx';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { formatCurrency } from '@/app/utils';
 
 const getStatusBadgeColor = (status: OrderStatus) => {
   switch (status) {

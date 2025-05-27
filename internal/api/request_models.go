@@ -82,6 +82,7 @@ type CheckoutRequest struct {
 	FullName           *string  `json:"fullName" binding:"omitempty"`
 	Address            *Address `json:"address" binding:"omitempty"`
 	PaymentRecipeEmail *string  `json:"paymentReceiptEmail" binding:"omitempty,email"`
+	DiscountCode       *string  `json:"discountCode" binding:"omitempty,min=5,max=32,alphanum"`
 }
 
 type AssignmentRequest struct {
@@ -137,8 +138,8 @@ type CreateDiscountRequest struct {
 	DiscountType      string    `json:"discountType" binding:"required,oneof=percentage fixed_amount"`
 	DiscountValue     float64   `json:"discountValue" binding:"required,gt=0"`
 	IsActive          bool      `json:"isActive" binding:"required"`
-	StartsAt          time.Time `json:"startsAt" binding:"required" time_format:"2006-01-02T15:04:05+07:00"`
-	ExpiresAt         time.Time `json:"expiresAt" binding:"omitempty" time_format:"2006-01-02T15:04:05+07:00"`
+	StartsAt          time.Time `json:"startsAt" binding:"required" time_format:"RFC3339"`
+	ExpiresAt         time.Time `json:"expiresAt" binding:"omitempty" time_format:"RFC3339"`
 	Description       *string   `json:"description" binding:"omitempty,max=1000"`
 	MinPurchaseAmount *float64  `json:"minPurchaseAmount" binding:"omitempty,gt=0"`
 	MaxDiscountAmount *float64  `json:"maxDiscountAmount" binding:"omitempty,gt=0"`
@@ -155,7 +156,7 @@ type DiscountListQuery struct {
 	DiscountType  *string    `form:"discountType" binding:"omitempty,oneof=percentage fixed_amount"`
 	IsActive      *bool      `from:"isActive" binding:"omitempty"`
 	DiscountValue *float64   `form:"discountValue" binding:"omitempty,gt=0"`
-	FromDate      *time.Time `form:"fromDate" binding:"omitempty"`
+	FromDate      *time.Time `form:"fromDate, default=" binding:"omitempty"`
 	ToDate        *time.Time `form:"toDate" binding:"omitempty"`
 }
 
@@ -169,9 +170,9 @@ type RegisterRequestBody struct {
 }
 
 type LoginRequest struct {
-	Username *string `form:"username" binding:"omitempty,min=3,max=32"`
-	Email    *string `form:"email" binding:"omitempty,email,max=255,min=6"`
-	Password string  `json:"password" binding:"required,min=6,max=32"`
+	Username *string `form:"username" binding:"omitempty,max=32"`
+	Email    *string `form:"email" binding:"omitempty,email,max=255"`
+	Password string  `form:"password" binding:"required,min=6,max=32"`
 }
 
 type BrandsQueries struct {

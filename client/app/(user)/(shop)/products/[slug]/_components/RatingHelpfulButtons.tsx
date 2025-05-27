@@ -2,13 +2,13 @@
 
 import { clientSideFetch } from '@/app/lib/api/apiClient';
 import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
-import { useUser } from '@/app/lib/hooks/useUser';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 import {
   HandThumbUpIcon as ThumbUpIcon,
   HandThumbDownIcon as ThumbDownIcon,
 } from '@heroicons/react/24/outline';
+import { useUser } from '@/app/hooks';
 
 interface RatingHelpfulButtonsProps {
   ratingId: string;

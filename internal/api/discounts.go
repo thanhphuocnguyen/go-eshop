@@ -85,12 +85,12 @@ func (sv *Server) getDiscountsHandler(c *gin.Context) {
 		// IsActive:     queries.IsActive,
 	}
 
-	// if queries.FromDate != nil {
-	// 	sqlParams.FromDate = utils.GetPgTypeTimestamp(*queries.FromDate)
-	// }
-	// if queries.ToDate != nil {
-	// 	sqlParams.ToDate = utils.GetPgTypeTimestamp(*queries.ToDate)
-	// }
+	if queries.FromDate != nil {
+		sqlParams.FromDate = utils.GetPgTypeTimestamp(*queries.FromDate)
+	}
+	if queries.ToDate != nil {
+		sqlParams.ToDate = utils.GetPgTypeTimestamp(*queries.ToDate)
+	}
 
 	discounts, err := sv.repo.GetDiscounts(c, sqlParams)
 	if err != nil {

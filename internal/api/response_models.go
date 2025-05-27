@@ -246,10 +246,10 @@ type CartItemResponse struct {
 	Name       string                             `json:"name"`
 	Quantity   int16                              `json:"quantity"`
 	Price      float64                            `json:"price"`
-	Discount   int16                              `json:"discount"`
 	StockQty   int32                              `json:"stock"`
 	Sku        *string                            `json:"sku,omitempty"`
 	ImageURL   *string                            `json:"imageUrl,omitempty"`
+	CategoryID *string                            `json:"categoryId,omitempty"`
 	Attributes []repository.AttributeDataSnapshot `json:"attributes"`
 }
 

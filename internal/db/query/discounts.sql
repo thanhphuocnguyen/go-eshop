@@ -38,7 +38,7 @@ SELECT id, code, "description", discount_type, discount_value,
 FROM discounts
 WHERE 
     discount_type = COALESCE(sqlc.narg('discount_type'), discounts.discount_type)
-    AND is_active = COALESCE(sqlc.narg('is_active'), discounts.is_active)
+    AND is_active = COALESCE(sqlc.narg('is_active'), TRUE)
     AND starts_at >= COALESCE(sqlc.narg('from_date'), discounts.starts_at)
     AND starts_at <= COALESCE(sqlc.narg('to_date'), discounts.starts_at)
     AND code ILIKE '%' || COALESCE(sqlc.narg('search'), discounts.code) || '%'
@@ -150,3 +150,12 @@ WHERE discount_id = $1;
 INSERT INTO order_discounts (order_id, discount_id, discount_amount)
 VALUES ($1, $2, $3)
 RETURNING id;
+
+-- name: GetDiscountProductsAndCategories :many
+SELECT dp.product_id, dc.category_id
+FROM discounts d
+LEFT JOIN discount_products dp ON d.id = dp.discount_id
+LEFT JOIN discount_categories dc ON d.id = dc.discount_id
+WHERE d.id = $1
+  AND (dp.product_id IS NOT NULL OR dc.category_id IS NOT NULL)
+ORDER BY dp.product_id, dc.category_id;

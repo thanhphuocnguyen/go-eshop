@@ -12,8 +12,7 @@ import {
   ChevronRightIcon,
   MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
-import { useDebounce } from '@/app/lib/hooks/useDebounce';
-import { useProducts } from '@/app/lib/hooks/useProducts';
+import { useProducts, useDebounce } from '@/app/hooks';
 
 export default function Page() {
   const [page, setPage] = useState(1);

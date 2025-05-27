@@ -24,6 +24,7 @@ const _apiPaths = {
   // cart
   CART: 'cart',
   CART_ITEM: 'cart/item',
+  CART_DISCOUNT_LIST: 'cart/discounts',
   CHECKOUT: 'cart/checkout',
   UPDATE_CART_ITEM_QUANTITY: 'cart/item/:id/quantity',
   // orders

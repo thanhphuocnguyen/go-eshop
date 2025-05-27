@@ -12,9 +12,9 @@ import {
 } from '@heroicons/react/24/outline';
 import { EditDiscountFormData, ProductType } from '../_types';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useProducts } from '@/app/lib/hooks/useProducts';
 import useDiscountProducts from '../_lib/useDiscountProducts';
 import { useParams } from 'next/navigation';
+import { useProducts } from '@/app/hooks';
 
 interface ProductsPanelProps {}
 

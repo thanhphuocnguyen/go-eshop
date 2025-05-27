@@ -10,8 +10,8 @@ import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { redirect, useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import Link from 'next/link';
-import { useUser } from '@/app/lib/hooks/useUser';
 import { logoutAction } from '@/app/actions/auth';
+import { useUser } from '@/app/hooks';
 
 export default function AdminNavbar() {
   const { user, mutateUser } = useUser();
