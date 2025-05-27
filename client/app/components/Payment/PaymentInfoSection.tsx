@@ -6,14 +6,17 @@ import PaymentSetupModal from './PaymentSetupModal';
 import { ShoppingBagIcon, CreditCardIcon } from '@heroicons/react/16/solid';
 import { useRouter } from 'next/navigation';
 import { CheckoutDataResponse } from '@/app/(user)/(personal)/checkout/_lib/definitions';
+import { OrderStatus } from '@/app/lib/definitions';
 
 interface PaymentInfoSectionProps {
   paymentInfo: PaymentInfo | null;
   orderId: string;
   total: number;
+  orderStatus?: OrderStatus; // Optional, if you want to handle different order statuses
 }
 
 const PaymentInfoSection: React.FC<PaymentInfoSectionProps> = ({
+  orderStatus,
   paymentInfo,
   orderId,
   total,
@@ -22,14 +25,14 @@ const PaymentInfoSection: React.FC<PaymentInfoSectionProps> = ({
   const router = useRouter();
 
   const handleContinuePayment = () => {
-    if (paymentInfo && paymentInfo.intent_id && paymentInfo.client_secret) {
+    if (paymentInfo && paymentInfo.intentId && paymentInfo.clientSecret) {
       // Store the checkout data in session storage
       const checkoutData: CheckoutDataResponse = {
-        order_id: orderId,
-        payment_id: paymentInfo.intent_id,
-        client_secret: paymentInfo.client_secret,
-        payment_intent_id: paymentInfo.intent_id,
-        total_price: paymentInfo.amount,
+        orderId: orderId,
+        paymentId: paymentInfo.intentId,
+        clientSecret: paymentInfo.clientSecret,
+        paymentIntentId: paymentInfo.intentId,
+        totalPrice: paymentInfo.amount,
       };
       sessionStorage.setItem('checkoutData', JSON.stringify(checkoutData));
 
@@ -54,7 +57,7 @@ const PaymentInfoSection: React.FC<PaymentInfoSectionProps> = ({
             <span>Setup Payment</span>
           </button>
         </div>
-      ) : (
+      ) : orderStatus !== OrderStatus.Cancelled ? (
         <div className='mt-2 text-sm text-gray-600'>
           <div>
             Method: <span className='font-medium'>{paymentInfo.method}</span>
@@ -67,10 +70,10 @@ const PaymentInfoSection: React.FC<PaymentInfoSectionProps> = ({
               {paymentInfo.status}
             </span>
           </div>
-          {paymentInfo.intent_id && (
+          {paymentInfo.intentId && (
             <div>
               Transaction ID:{' '}
-              <span className='font-medium'>{paymentInfo.intent_id}</span>
+              <span className='font-medium'>{paymentInfo.intentId}</span>
             </div>
           )}
 
@@ -85,7 +88,7 @@ const PaymentInfoSection: React.FC<PaymentInfoSectionProps> = ({
               </button>
             )}
         </div>
-      )}
+      ) : null}
 
       <PaymentSetupModal
         isOpen={isModalOpen}

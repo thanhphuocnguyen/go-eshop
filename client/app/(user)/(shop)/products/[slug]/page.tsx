@@ -88,7 +88,7 @@ async function ProductDetailPage({ params }: Props) {
   return (
     <div className='container mx-auto '>
       {/* Breadcrumbs */}
-      <nav className='flex text-sm text-gray-500 mb-8' aria-label='Breadcrumb'>
+      <nav className='flex text-sm text-gray-500 my-8' aria-label='Breadcrumb'>
         <ol className='flex items-center space-x-2'>
           <li>
             <a href='/' className='hover:text-gray-700'>

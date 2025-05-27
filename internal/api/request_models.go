@@ -49,7 +49,7 @@ type RefundOrderRequest struct {
 }
 
 type CancelOrderRequest struct {
-	Reason string `json:"reason" binding:"required,oneof=duplicate fraudulent requested_by_customer abandoned"`
+	Reason string `json:"reason" binding:"required"`
 }
 
 type CreateAddressRequest struct {
@@ -74,15 +74,22 @@ type UpdateCartItemQtyRequest struct {
 	Quantity int16 `json:"quantity" binding:"required,gt=0"`
 }
 
+type CheckoutAddress struct {
+	Phone    string  `json:"phone"`
+	Street   string  `json:"street"`
+	Ward     *string `json:"ward,omitempty"`
+	District string  `json:"district"`
+	City     string  `json:"city"`
+}
+
 type CheckoutRequest struct {
-	PaymentMethod      string   `json:"paymentMethod" binding:"required,oneof=code stripe"`
-	PaymentGateway     *string  `json:"paymentGateway" binding:"omitempty,oneof=stripe"`
-	AddressID          *string  `json:"addressId" binding:"omitempty,uuid"`
-	Email              *string  `json:"email" binding:"omitempty,email"`
-	FullName           *string  `json:"fullName" binding:"omitempty"`
-	Address            *Address `json:"address" binding:"omitempty"`
-	PaymentRecipeEmail *string  `json:"paymentReceiptEmail" binding:"omitempty,email"`
-	DiscountCode       *string  `json:"discountCode" binding:"omitempty,min=5,max=32,alphanum"`
+	PaymentMethod  string           `json:"paymentMethod" binding:"required,oneof=code stripe"`
+	PaymentGateway *string          `json:"paymentGateway" binding:"omitempty,oneof=stripe"`
+	AddressID      *string          `json:"addressId" binding:"omitempty,uuid"`
+	Email          *string          `json:"email" binding:"omitempty,email"`
+	FullName       *string          `json:"fullName" binding:"omitempty"`
+	Address        *CheckoutAddress `json:"address" binding:"omitempty"`
+	DiscountCode   *string          `json:"discountCode" binding:"omitempty,min=5,max=32,alphanum"`
 }
 
 type AssignmentRequest struct {

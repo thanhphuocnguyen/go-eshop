@@ -37,8 +37,8 @@ export default function StripePage() {
     }
 
     if (data.details) {
-      setClientSecret(data.details.client_secret);
-      setTotalPrice(data.details.total_price);
+      setClientSecret(data.details.clientSecret);
+      setTotalPrice(data.details.totalPrice);
     }
     setIsLoading(false);
   }
@@ -51,11 +51,11 @@ export default function StripePage() {
       redirect('/orders');
     } else {
       const parsedData = JSON.parse(storedData) as CheckoutDataResponse;
-      if (parsedData.client_secret) {
-        setTotalPrice(parsedData.total_price);
-        setClientSecret(parsedData.client_secret);
-      } else if (parsedData.payment_id) {
-        getPaymentById(parsedData.payment_id);
+      if (parsedData.clientSecret) {
+        setTotalPrice(parsedData.totalPrice);
+        setClientSecret(parsedData.clientSecret);
+      } else if (parsedData.paymentId) {
+        getPaymentById(parsedData.paymentId);
       } else {
         redirect('/profiles/orders');
       }

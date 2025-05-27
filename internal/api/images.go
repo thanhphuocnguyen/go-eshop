@@ -20,13 +20,13 @@ import (
 // @Description upload product images by ID
 // @Tags images
 // @Accept json
-// @Param product_id path int true "Product ID"
+// @Param productId path int true "Product ID"
 // @Param files formData file true "Image file"
 // @Produce json
 // @Success 200 {object} ApiResponse[[]ImageResponse]
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
-// @Router /images/product/{product_id} [post]
+// @Router /images/product/{productId} [post]
 func (sv *Server) uploadProductImagesHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
@@ -179,12 +179,12 @@ func (sv *Server) uploadProductImagesHandler(c *gin.Context) {
 // @Description get list of product image by ID
 // @Tags images
 // @Accept json
-// @Param product_id path int true "Product ID"
+// @Param productId path int true "Product ID"
 // @Produce json
 // @Success 200 {object} ApiResponse[[]ImageResponse]
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
-// @Router /images/product/{product_id} [get]
+// @Router /images/product/{productId} [get]
 func (sv *Server) getProductImagesHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
@@ -219,12 +219,12 @@ func (sv *Server) getProductImagesHandler(c *gin.Context) {
 // @Description remove a product image by ID
 // @Tags images
 // @Accept json
-// @Param product_id path int true "Product ID"
+// @Param productId path int true "Product ID"
 // @Produce json
 // @Success 200 {object} ApiResponse[bool]
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
-// @Router /images/product/{product_id} [delete]
+// @Router /images/product/{productId} [delete]
 func (sv *Server) removeImageHandler(c *gin.Context) {
 	_, ok := c.MustGet(authorizationPayload).(*auth.Payload)
 	if !ok {

@@ -48,12 +48,12 @@ func (sv *Server) addProductHandler(c *gin.Context) {
 // @Description get a product detail by ID
 // @Tags products
 // @Accept json
-// @Param product_id path int true "Product ID"
+// @Param productId path int true "Product ID"
 // @Produce json
 // @Success 200 {object} ApiResponse[gin.H]
 // @Failure 404 {object} ApiResponse[gin.H]
 // @Failure 500 {object} ApiResponse[gin.H]
-// @Router /products/{product_id} [get]
+// @Router /products/{productId} [get]
 func (sv *Server) getProductDetailHandler(c *gin.Context) {
 	var params URISlugParam
 	if err := c.ShouldBindUri(&params); err != nil {
@@ -192,13 +192,13 @@ func (sv *Server) getProductsHandler(c *gin.Context) {
 // @Description update a product by ID
 // @Tags products
 // @Accept json
-// @Param product_id path int true "Product ID"
+// @Param productId path int true "Product ID"
 // @Param input body repository.UpdateProductTxParams true "Product input"
 // @Produce json
 // @Success 200 {object} ApiResponse[ProductListModel]
 // @Failure 404 {object} ApiResponse[ProductListModel]
 // @Failure 500 {object} ApiResponse[ProductListModel]
-// @Router /products/{product_id} [put]
+// @Router /products/{productId} [put]
 func (sv *Server) updateProductHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
@@ -232,12 +232,12 @@ func (sv *Server) updateProductHandler(c *gin.Context) {
 // @Description remove a product by ID
 // @Tags products
 // @Accept json
-// @Param product_id path int true "Product ID"
+// @Param productId path int true "Product ID"
 // @Produce json
 // @Success 200 {object} ApiResponse[bool]
 // @Failure 404 {object} ApiResponse[gin.H]
 // @Failure 500 {object} ApiResponse[gin.H]
-// @Router /products/{product_id} [delete]
+// @Router /products/{productId} [delete]
 func (sv *Server) deleteProductHandler(c *gin.Context) {
 	var params UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {

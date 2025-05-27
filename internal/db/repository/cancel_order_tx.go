@@ -29,7 +29,7 @@ func (pg *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (or
 			}
 
 			// cancel payment from gateway if it's not cancelled yet
-			if args.CancelPaymentFromGateway != nil {
+			if args.CancelPaymentFromGateway != nil && payment.GatewayPaymentIntentID != nil {
 				err = args.CancelPaymentFromGateway(*payment.GatewayPaymentIntentID, payment.PaymentGateway.PaymentGateway)
 				if err != nil {
 					log.Error().Err(err).Msg("CancelPaymentFromGateway")

@@ -38,7 +38,10 @@ build-server:
 	go build ./cmd/web
 serve-server:
 	@echo "Running application..."
-	go run ./cmd/web api && stripe listen --forward-to localhost:4000/webhook/v1/stripe
+	go run ./cmd/web api
+listen-stripe:
+	@echo "Listening to Stripe events..."
+	stripe listen --forward-to localhost:4000/webhook/v1/stripe
 gen-sqlc:
 	@echo "Generating sqlc..."
 	sqlc generate

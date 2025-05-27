@@ -1,18 +1,5 @@
 basePath: /api/v1
 definitions:
-  api.Address:
-    properties:
-      city:
-        type: string
-      district:
-        type: string
-      phone:
-        type: string
-      street:
-        type: string
-      ward:
-        type: string
-    type: object
   api.AddressResponse:
     properties:
       city:
@@ -106,6 +93,21 @@ definitions:
     properties:
       data:
         $ref: '#/definitions/api.DiscountDetailResponseModel'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-api_DiscountLinkObject:
+    properties:
+      data:
+        $ref: '#/definitions/api.DiscountLinkObject'
       error:
         $ref: '#/definitions/api.ApiError'
       message:
@@ -492,8 +494,8 @@ definitions:
         items:
           $ref: '#/definitions/repository.AttributeDataSnapshot'
         type: array
-      discount:
-        type: integer
+      categoryId:
+        type: string
       id:
         type: string
       imageUrl:
@@ -553,11 +555,28 @@ definitions:
       updatedAt:
         type: string
     type: object
+  api.CheckoutAddress:
+    properties:
+      city:
+        type: string
+      district:
+        type: string
+      phone:
+        type: string
+      street:
+        type: string
+      ward:
+        type: string
+    type: object
   api.CheckoutRequest:
     properties:
       address:
-        $ref: '#/definitions/api.Address'
+        $ref: '#/definitions/api.CheckoutAddress'
       addressId:
+        type: string
+      discountCode:
+        maxLength: 32
+        minLength: 5
         type: string
       email:
         type: string
@@ -571,8 +590,6 @@ definitions:
         enum:
         - code
         - stripe
-        type: string
-      paymentReceiptEmail:
         type: string
     required:
     - paymentMethod
@@ -718,6 +735,15 @@ definitions:
       usedCount:
         type: integer
     type: object
+  api.DiscountLinkObject:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+    type: object
   api.DiscountListItemResponseModel:
     properties:
       code:
@@ -786,7 +812,6 @@ definitions:
     properties:
       email:
         maxLength: 255
-        minLength: 6
         type: string
       password:
         maxLength: 32
@@ -794,7 +819,6 @@ definitions:
         type: string
       username:
         maxLength: 32
-        minLength: 3
         type: string
     required:
     - password
@@ -948,6 +972,8 @@ definitions:
   api.ProductListModel:
     properties:
       avgRating:
+        type: number
+      basePrice:
         type: number
       createdAt:
         type: string
@@ -1368,11 +1394,11 @@ definitions:
         items:
           type: string
         type: array
-      brand_id:
+      brandId:
         type: string
-      category_id:
+      categoryId:
         type: string
-      collection_id:
+      collectionId:
         type: string
       description:
         maxLength: 5000
@@ -2034,7 +2060,7 @@ paths:
       parameters:
       - description: Product ID
         in: path
-        name: product_id
+        name: productId
         required: true
         type: string
       - default: 1
@@ -2177,6 +2203,42 @@ paths:
       tags:
       - Admin
       - ratings
+  /admin/users:
+    get:
+      consumes:
+      - application/json
+      description: List users
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-array_api_UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+      summary: List users
+      tags:
+      - users
   /admin/users/{id}:
     get:
       consumes:
@@ -2617,6 +2679,29 @@ paths:
       summary: Clear the cart
       tags:
       - carts
+  /cart/discounts:
+    get:
+      consumes:
+      - application/json
+      description: get cart discounts
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+      summary: Get cart discounts
+      tags:
+      - carts
   /cart/item/{id}:
     delete:
       consumes:
@@ -2895,6 +2980,135 @@ paths:
       summary: Get discount by ID
       tags:
       - discounts
+  /discounts/{id}/categories:
+    get:
+      consumes:
+      - application/json
+      description: Get discount categories by ID
+      parameters:
+      - description: Discount ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_DiscountLinkObject'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+      summary: Get discount categories by ID
+      tags:
+      - discounts
+  /discounts/{id}/products:
+    get:
+      consumes:
+      - application/json
+      description: Get discount products by ID
+      parameters:
+      - description: Discount ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_DiscountLinkObject'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+      summary: Get discount products by ID
+      tags:
+      - discounts
+  /discounts/{id}/users:
+    get:
+      consumes:
+      - application/json
+      description: Get discount users by ID
+      parameters:
+      - description: Discount ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_DiscountLinkObject'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+      summary: Get discount users by ID
+      tags:
+      - discounts
   /images/{publicID}:
     delete:
       consumes:
@@ -2924,7 +3138,7 @@ paths:
       summary: Remove a product by external ID
       tags:
       - images
-  /images/product/{product_id}:
+  /images/product/{productId}:
     delete:
       consumes:
       - application/json
@@ -2932,7 +3146,7 @@ paths:
       parameters:
       - description: Product ID
         in: path
-        name: product_id
+        name: productId
         required: true
         type: integer
       produces:
@@ -2960,7 +3174,7 @@ paths:
       parameters:
       - description: Product ID
         in: path
-        name: product_id
+        name: productId
         required: true
         type: integer
       produces:
@@ -2988,7 +3202,7 @@ paths:
       parameters:
       - description: Product ID
         in: path
-        name: product_id
+        name: productId
         required: true
         type: integer
       - description: Image file
@@ -3014,7 +3228,7 @@ paths:
       summary: Upload product images
       tags:
       - images
-  /order/{order_id}:
+  /order/{orderId}:
     get:
       consumes:
       - application/json
@@ -3049,7 +3263,7 @@ paths:
       summary: Get order detail
       tags:
       - orders
-  /order/{order_id}/cancel:
+  /order/{orderId}/cancel:
     put:
       consumes:
       - application/json
@@ -3084,7 +3298,7 @@ paths:
       summary: Cancel order
       tags:
       - orders
-  /order/{order_id}/confirm-received:
+  /order/{orderId}/confirm-received:
     put:
       consumes:
       - application/json
@@ -3119,7 +3333,7 @@ paths:
       summary: confirm received order payment info
       tags:
       - orders
-  /order/{order_id}/refund:
+  /order/{orderId}/refund:
     put:
       consumes:
       - application/json
@@ -3154,7 +3368,7 @@ paths:
       summary: Refund order
       tags:
       - orders
-  /order/{order_id}/status:
+  /order/{orderId}/status:
     put:
       consumes:
       - application/json
@@ -3328,7 +3542,7 @@ paths:
       summary: Get payment  by order ID
       tags:
       - payment
-  /payment/{payment_id}:
+  /payment/{paymentId}:
     get:
       consumes:
       - application/json
@@ -3336,7 +3550,7 @@ paths:
       parameters:
       - description: Payment ID
         in: path
-        name: payment_id
+        name: paymentId
         required: true
         type: string
       produces:
@@ -3436,7 +3650,7 @@ paths:
       summary: Create a new product
       tags:
       - products
-  /products/{product_id}:
+  /products/{productId}:
     delete:
       consumes:
       - application/json
@@ -3444,7 +3658,7 @@ paths:
       parameters:
       - description: Product ID
         in: path
-        name: product_id
+        name: productId
         required: true
         type: integer
       produces:
@@ -3472,7 +3686,7 @@ paths:
       parameters:
       - description: Product ID
         in: path
-        name: product_id
+        name: productId
         required: true
         type: integer
       produces:
@@ -3481,15 +3695,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
+            $ref: '#/definitions/api.ApiResponse-gin_H'
       summary: Get a product detail by ID
       tags:
       - products
@@ -3500,7 +3714,7 @@ paths:
       parameters:
       - description: Product ID
         in: path
-        name: product_id
+        name: productId
         required: true
         type: integer
       - description: Product input
@@ -3535,7 +3749,7 @@ paths:
       parameters:
       - description: Order Item ID
         in: formData
-        name: order_item_id
+        name: orderItemId
         required: true
         type: string
       - description: Rating (1-5)
@@ -3581,7 +3795,7 @@ paths:
       summary: Post a rating
       tags:
       - ratings
-  /ratings/{rating_id}/helpful:
+  /ratings/{ratingId}/helpful:
     post:
       consumes:
       - application/json
@@ -3589,7 +3803,7 @@ paths:
       parameters:
       - description: Rating ID
         in: body
-        name: rating_id
+        name: ratingId
         required: true
         schema:
           type: string
@@ -3623,7 +3837,7 @@ paths:
       summary: Post a helpful rating
       tags:
       - ratings
-  /ratings/{rating_id}/reply:
+  /ratings/{ratingId}/reply:
     post:
       consumes:
       - application/json
@@ -3631,7 +3845,7 @@ paths:
       parameters:
       - description: Rating ID
         in: path
-        name: rating_id
+        name: ratingId
         required: true
         type: string
       - description: Reply Content
@@ -3664,7 +3878,7 @@ paths:
       summary: Post a reply to a rating
       tags:
       - ratings
-  /ratings/orders/{order_id}:
+  /ratings/orders/{orderId}:
     get:
       consumes:
       - application/json
@@ -3672,7 +3886,7 @@ paths:
       parameters:
       - description: Order ID
         in: path
-        name: order_id
+        name: orderId
         required: true
         type: string
       produces:
@@ -3703,7 +3917,7 @@ paths:
       summary: Get order ratings
       tags:
       - ratings
-  /ratings/products/{product_id}:
+  /ratings/products/{productId}:
     get:
       consumes:
       - application/json
@@ -3711,7 +3925,7 @@ paths:
       parameters:
       - description: Product ID
         in: path
-        name: product_id
+        name: productId
         required: true
         type: string
       - default: 1
@@ -3810,28 +4024,6 @@ paths:
       tags:
       - Brands
   /users:
-    get:
-      consumes:
-      - application/json
-      description: Get user info
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_UserResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
-      summary: Get user info
-      tags:
-      - users
     post:
       consumes:
       - application/json
@@ -3895,42 +4087,6 @@ paths:
       summary: Update user info
       tags:
       - users
-  /users/list:
-    get:
-      consumes:
-      - application/json
-      description: List users
-      parameters:
-      - description: Limit
-        in: query
-        name: limit
-        type: integer
-      - description: Offset
-        in: query
-        name: offset
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_UserResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
-      summary: List users
-      tags:
-      - users
   /users/loginHandler:
     post:
       consumes:
@@ -3959,6 +4115,29 @@ paths:
           schema:
             $ref: '#/definitions/api.ApiResponse-api_LoginResponse'
       summary: Login to the system
+      tags:
+      - users
+  /users/me:
+    get:
+      consumes:
+      - application/json
+      description: Get user info
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_UserResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ApiResponse-gin_H'
+      summary: Get user info
       tags:
       - users
   /users/refresh-token:

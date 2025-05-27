@@ -100,7 +100,7 @@ func (sv *Server) getOrdersHandler(c *gin.Context) {
 // @Failure 400 {object} OrderDetailResponse
 // @Failure 401 {object} OrderDetailResponse
 // @Failure 500 {object} OrderDetailResponse
-// @Router /order/{order_id} [get]
+// @Router /order/{orderId} [get]
 func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 	var params UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
@@ -110,12 +110,12 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 
 	var resp *OrderDetailResponse
 
-	if err := sv.cachesrv.Get(c, "order_detail:"+params.ID, &resp); err == nil {
-		if resp != nil {
-			c.JSON(http.StatusOK, createSuccessResponse(c, resp, "success", nil, nil))
-			return
-		}
-	}
+	// if err := sv.cachesrv.Get(c, "order_detail:"+params.ID, &resp); err == nil {
+	// 	if resp != nil {
+	// 		c.JSON(http.StatusOK, createSuccessResponse(c, resp, "success", nil, nil))
+	// 		return
+	// 	}
+	// }
 
 	order, err := sv.repo.GetOrder(c, uuid.MustParse(params.ID))
 	if err != nil {
@@ -244,7 +244,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 // @Failure 400 {object} ApiResponse[gin.H]
 // @Failure 401 {object} ApiResponse[gin.H]
 // @Failure 500 {object} ApiResponse[gin.H]
-// @Router /order/{order_id}/confirm-received [put]
+// @Router /order/{orderId}/confirm-received [put]
 func (sv *Server) confirmOrderPayment(c *gin.Context) {
 	tokenPayload, _ := c.MustGet(authorizationPayload).(*auth.Payload)
 	var params UriIDParam
@@ -309,13 +309,10 @@ func (sv *Server) confirmOrderPayment(c *gin.Context) {
 // @Failure 400 {object} ApiResponse[OrderListResponse]
 // @Failure 401 {object} ApiResponse[OrderListResponse]
 // @Failure 500 {object} ApiResponse[OrderListResponse]
-// @Router /order/{order_id}/cancel [put]
+// @Router /order/{orderId}/cancel [put]
 func (sv *Server) cancelOrder(c *gin.Context) {
-	tokenPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, createErrorResponse[OrderListResponse](UnauthorizedCode, "", errors.New("authorization payload is not provided")))
-		return
-	}
+	tokenPayload, _ := c.MustGet(authorizationPayload).(*auth.Payload)
+
 	var params UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[OrderListResponse](InvalidBodyCode, "", err))
@@ -358,20 +355,6 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 		return
 	}
 
-	var reason paymentsrv.CancelReason
-	switch req.Reason {
-	case "duplicate":
-		reason = paymentsrv.CancelReasonDuplicate
-	case "fraudulent":
-		reason = paymentsrv.CancelReasonFraudulent
-	case "abandoned":
-		reason = paymentsrv.CancelReasonAbandoned
-	case "requested_by_customer":
-		reason = paymentsrv.CancelReasonRequestedByCustomer
-	default:
-		reason = paymentsrv.CancelReasonRequestedByCustomer
-	}
-
 	// if order
 	order, err = sv.repo.CancelOrderTx(c, repository.CancelOrderTxArgs{
 		OrderID: uuid.MustParse(params.ID),
@@ -384,7 +367,7 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 					return err
 				}
 				sv.paymentCtx.SetStrategy(stripeInstance)
-				_, err = sv.paymentCtx.CancelPayment(paymentID, reason)
+				_, err = sv.paymentCtx.CancelPayment(paymentID, req.Reason)
 				return err
 			default:
 				return nil
@@ -396,7 +379,7 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](repository.ErrDeadlockDetected.InternalQuery, "", err))
 		return
 	}
-
+	sv.cachesrv.Delete(c, "order_detail:"+params.ID)
 	c.JSON(http.StatusOK, createSuccessResponse(c, order, "success", nil, nil))
 }
 
@@ -412,7 +395,7 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 // @Failure 400 {object} ApiResponse[OrderListResponse]
 // @Failure 401 {object} ApiResponse[OrderListResponse]
 // @Failure 500 {object} ApiResponse[OrderListResponse]
-// @Router /order/{order_id}/status [put]
+// @Router /order/{orderId}/status [put]
 func (sv *Server) changeOrderStatus(c *gin.Context) {
 	var params UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
@@ -472,6 +455,7 @@ func (sv *Server) changeOrderStatus(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](InternalServerErrorCode, "", err))
 		return
 	}
+	sv.cachesrv.Delete(c, "order_detail:"+params.ID)
 
 	c.JSON(http.StatusOK, createSuccessResponse(c, rs, "success", nil, nil))
 }
@@ -487,7 +471,7 @@ func (sv *Server) changeOrderStatus(c *gin.Context) {
 // @Failure 400 {object} ApiResponse[OrderListResponse]
 // @Failure 401 {object} ApiResponse[OrderListResponse]
 // @Failure 500 {object} ApiResponse[OrderListResponse]
-// @Router /order/{order_id}/refund [put]
+// @Router /order/{orderId}/refund [put]
 func (sv *Server) refundOrder(c *gin.Context) {
 	var params UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
@@ -551,6 +535,8 @@ func (sv *Server) refundOrder(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](InternalServerErrorCode, "", err))
 		return
 	}
+	sv.cachesrv.Delete(c, "order_detail:"+params.ID)
+
 	c.JSON(http.StatusOK, createSuccessResponse(c, order, "success", nil, nil))
 }
 

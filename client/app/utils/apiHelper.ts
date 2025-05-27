@@ -1,3 +1,5 @@
+import { GenericResponse } from '../lib/definitions';
+
 // Helper function to serialize query parameters
 export function serializeQueryParams(params: Record<string, any>): string {
   if (!params || Object.keys(params).length === 0) return '';
@@ -25,13 +27,17 @@ export function serializeQueryParams(params: Record<string, any>): string {
 
 export async function badRequestHandler(response: Response) {
   if (response.status > 299) {
-    const errorText = await response.text();
     let errorMessage = 'An error occurred';
-
     try {
-      const errorData = JSON.parse(errorText);
-      errorMessage = errorData.message || errorText;
+      const errorData = (await response.json()) as GenericResponse<unknown>;
+      errorMessage =
+        errorData.error?.details ||
+        errorData.error?.stack ||
+        errorData.error?.code ||
+        'Unknown error';
     } catch (e) {
+      const errorText = await response.text();
+      errorMessage = errorText;
       console.error('Failed to parse error response:', e);
     }
 

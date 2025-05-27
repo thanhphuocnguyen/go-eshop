@@ -19,7 +19,7 @@ export default function OrderDetailPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [changingStatus, setChangingStatus] = useState(false);
-
+  console.log(orderDetail);
   useEffect(() => {
     fetchOrderDetail();
   }, []);
@@ -57,12 +57,13 @@ export default function OrderDetailPage({
     setError(null);
 
     try {
-      const { data, error } = await clientSideFetch<
-        GenericResponse<boolean>
-      >(ADMIN_API_PATHS.ORDER_DETAIL_STATUS.replace(':id', id), {
-        method: 'PUT',
-        body: { status: newStatus },
-      });
+      const { data, error } = await clientSideFetch<GenericResponse<boolean>>(
+        ADMIN_API_PATHS.ORDER_DETAIL_STATUS.replace(':id', id),
+        {
+          method: 'PUT',
+          body: { status: newStatus },
+        }
+      );
 
       if (error) {
         setError(error.details || 'Failed to change order status');

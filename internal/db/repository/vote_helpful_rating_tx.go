@@ -9,9 +9,9 @@ import (
 )
 
 type VoteHelpfulRatingTxArgs struct {
-	RatingID       uuid.UUID `json:"rating_id" binding:"arguired,uuid"`
-	Helpful        bool      `json:"helpful" binding:"arguired"`
-	UserID         uuid.UUID `json:"user_id" binding:"arguired,uuid"`
+	RatingID       uuid.UUID `json:"ratingId" binding:"required,uuid"`
+	Helpful        bool      `json:"helpful" binding:"required"`
+	UserID         uuid.UUID `json:"userId" binding:"required,uuid"`
 	HelpfulVotes   int32
 	UnhelpfulVotes int32
 }

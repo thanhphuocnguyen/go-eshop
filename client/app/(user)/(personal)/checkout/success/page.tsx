@@ -15,8 +15,8 @@ export default function PaymentSuccessPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Get payment_intent and payment_intent_client_secret from URL if available
-    const paymentIntent = searchParams.get('payment_intent');
+    // Get paymentIntent and paymentIntentClientSecret from URL if available
+    const paymentIntent = searchParams.get('paymentIntent');
 
     // Try to get order details from session storage
     const storedData = sessionStorage.getItem('checkoutData');
@@ -25,7 +25,7 @@ export default function PaymentSuccessPage() {
       try {
         const parsedData = JSON.parse(storedData);
         setOrderDetails({
-          orderId: parsedData.order_id,
+          orderId: parsedData.orderId,
           paymentId: paymentIntent || undefined,
         });
         // Clear the checkout data from session storage

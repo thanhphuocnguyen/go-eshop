@@ -44,7 +44,7 @@ const PaymentSetupModal: React.FC<PaymentSetupModalProps> = ({
         {
           method: 'POST',
           body: {
-            order_id: orderId,
+            orderId: orderId,
             payment_method: selectedMethod,
           },
         }
@@ -60,9 +60,9 @@ const PaymentSetupModal: React.FC<PaymentSetupModalProps> = ({
         localStorage.setItem(
           'checkoutData',
           JSON.stringify({
-            order_id: orderId,
-            client_secret: response.data.client_secret,
-            payment_intent_id: response.data.payment_id,
+            orderId: orderId,
+            clientSecret: response.data.clientSecret,
+            paymentIntentId: response.data.paymentId,
           } as CheckoutDataResponse)
         );
         redirect(`/checkout/payment/stripe`);

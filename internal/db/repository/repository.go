@@ -15,7 +15,7 @@ import (
 
 type Repository interface {
 	Querier
-	CreateOrderTx(ctx context.Context, arg CreateOrderTxArgs) (uuid.UUID, error)
+	CheckoutCartTx(ctx context.Context, arg CheckoutCartTxArgs) (CreatePaymentResult, error)
 	SetPrimaryAddressTx(ctx context.Context, arg SetPrimaryAddressTxArgs) error
 	CancelOrderTx(ctx context.Context, params CancelOrderTxArgs) (Order, error)
 	RefundOrderTx(ctx context.Context, params RefundOrderTxArgs) error

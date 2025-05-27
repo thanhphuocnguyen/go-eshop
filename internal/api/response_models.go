@@ -137,7 +137,7 @@ type PublicIDParam struct {
 type RemoveImageParams struct {
 	ID        string  `uri:"id" binding:"required,uuid"`
 	VariantID *string `uri:"id" binding:"omitempty,uuid"`
-	ImageID   string  `uri:"image_id" binding:"required,uuid"`
+	ImageID   string  `uri:"imageId" binding:"required,uuid"`
 }
 
 type ImageResponse struct {
@@ -151,7 +151,7 @@ type ImageResponse struct {
 
 type CollectionsQueryParams struct {
 	PaginationQueryParams
-	Collections *[]int32 `form:"collection_ids,omitempty"`
+	Collections *[]int32 `form:"collectionIds,omitempty"`
 }
 
 type CollectionDetailResponse struct {
@@ -259,14 +259,6 @@ type CartDetailResponse struct {
 	CartItems  []CartItemResponse `json:"cartItems"`
 	UpdatedAt  time.Time          `json:"updatedAt,omitempty"`
 	CreatedAt  time.Time          `json:"createdAt"`
-}
-
-type CheckoutResponse struct {
-	OrderID         uuid.UUID `json:"orderId"`
-	PaymentID       string    `json:"paymentId"`
-	PaymentIntentID *string   `json:"paymentIntentId,omitempty"`
-	ClientSecret    *string   `json:"clientSecret,omitempty"`
-	TotalPrice      float64   `json:"totalPrice"`
 }
 
 type DiscountListItemResponseModel struct {
@@ -408,14 +400,6 @@ type ProductImageModel struct {
 	ExternalID         string                 `json:"externalId"`
 	Role               string                 `json:"role"`
 	VariantAssignments []ImageAssignmentModel `json:"assignments"`
-}
-
-type Address struct {
-	Phone    string  `json:"phone"`
-	Street   string  `json:"street"`
-	Ward     *string `json:"ward,omitempty"`
-	District string  `json:"district"`
-	City     string  `json:"city"`
 }
 
 type OrderItemAttribute struct {

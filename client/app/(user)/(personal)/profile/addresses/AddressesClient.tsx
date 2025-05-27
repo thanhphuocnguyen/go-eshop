@@ -30,7 +30,7 @@ const addressSchema = z.object({
     .string()
     .min(10, { message: 'Valid phone number is required' })
     .max(15),
-  is_default: z.boolean().optional(),
+  isDefault: z.boolean().optional(),
 });
 
 type AddressFormValues = z.infer<typeof addressSchema>;
@@ -58,7 +58,7 @@ export default function AddressesClient() {
       district: '',
       ward: '',
       phone: '',
-      is_default: false,
+      isDefault: false,
     },
   });
 
@@ -69,7 +69,7 @@ export default function AddressesClient() {
       district: '',
       ward: '',
       phone: '',
-      is_default: false,
+      isDefault: false,
     });
     setSelectedAddress(null);
     setIsAddModalOpen(true);
@@ -82,7 +82,7 @@ export default function AddressesClient() {
       district: address.district,
       ward: address.ward || '',
       phone: address.phone,
-      is_default: address.default,
+      isDefault: address.default,
     });
     setSelectedAddress(address);
     setIsAddModalOpen(true);
@@ -323,12 +323,12 @@ export default function AddressesClient() {
               <div className='flex items-center'>
                 <input
                   type='checkbox'
-                  id='is_default'
-                  {...register('is_default')}
+                  id='isDefault'
+                  {...register('isDefault')}
                   className='h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
                 />
                 <Label
-                  htmlFor='is_default'
+                  htmlFor='isDefault'
                   className='ml-2 block text-sm text-gray-900'
                 >
                   Set as default address

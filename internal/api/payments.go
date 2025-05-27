@@ -179,7 +179,7 @@ func (sv *Server) getPaymentHandler(c *gin.Context) {
 // @Tags payment
 // @Accept json
 // @Produce json
-// @Param payment_id path string true "Payment ID"
+// @Param paymentId path string true "Payment ID"
 // @Security BearerAuth
 // @Success 200 {object} ApiResponse[PaymentResponse]
 // @Failure 400 {object} ApiResponse[gin.H]
@@ -187,7 +187,7 @@ func (sv *Server) getPaymentHandler(c *gin.Context) {
 // @Failure 403 {object} ApiResponse[gin.H]
 // @Failure 404 {object} ApiResponse[gin.H]
 // @Failure 500 {object} ApiResponse[gin.H]
-// @Router /payment/{payment_id} [get]
+// @Router /payment/{paymentId} [get]
 func (sv *Server) changePaymentStatusHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {

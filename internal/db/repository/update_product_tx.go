@@ -25,9 +25,9 @@ type UpdateProductTxParams struct {
 	Sku              *string                        `json:"sku" binding:"omitempty"`
 	Slug             *string                        `json:"slug" binding:"omitempty"`
 	Stock            *int32                         `json:"stock" binding:"omitempty,gt=0"`
-	CategoryID       *string                        `json:"category_id,omitempty" binding:"omitempty,uuid"`
-	BrandID          *string                        `json:"brand_id,omitempty" binding:"omitempty,uuid"`
-	CollectionID     *string                        `json:"collection_id,omitempty" binding:"omitempty,uuid"`
+	CategoryID       *string                        `json:"categoryId,omitempty" binding:"omitempty,uuid"`
+	BrandID          *string                        `json:"brandId,omitempty" binding:"omitempty,uuid"`
+	CollectionID     *string                        `json:"collectionId,omitempty" binding:"omitempty,uuid"`
 	Attributes       []string                       `json:"attributes" binding:"omitempty"`
 	Images           []UpdateProductImages          `json:"images" binding:"omitempty,dive"`
 	Variants         []UpdateProductVariantTxParams `json:"variants" binding:"omitempty,dive"`
@@ -290,11 +290,11 @@ func (s *pgRepo) UpdateProductTx(ctx context.Context, productID uuid.UUID, arg U
 }
 
 type UpdateProdImagesTxArgs struct {
-	ImageID    string      `json:"image_id"`
-	EntityID   uuid.UUID   `json:"entity_id"`
-	EntityType string      `json:"entity_type"`
+	ImageID    string      `json:"imageId"`
+	EntityID   uuid.UUID   `json:"entityId"`
+	EntityType string      `json:"entityType"`
 	Role       *string     `json:"role"`
-	VariantIDs []uuid.UUID `json:"variant_ids"`
+	VariantIDs []uuid.UUID `json:"variantIds"`
 }
 
 func updateProductImages(ctx context.Context, q *Queries, arg []UpdateProdImagesTxArgs) error {

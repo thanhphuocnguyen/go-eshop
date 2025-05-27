@@ -13,13 +13,13 @@ interface UserDetails {
   fullname: string;
   phone: string;
   role: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
   locked: boolean;
-  avatar_url: string | null;
-  avatar_image_id: string | null;
+  avatarUrl: string | null;
+  avatarImageId: string | null;
   // Additional user properties
-  last_login_at: string | null;
+  lastLoginAt: string | null;
   addresses: UserAddress[];
 }
 
@@ -28,9 +28,9 @@ interface UserAddress {
   street: string;
   city: string;
   state: string;
-  postal_code: string;
+  postalCode: string;
   country: string;
-  is_default: boolean;
+  isDefault: boolean;
 }
 
 export async function generateMetadata({
@@ -160,7 +160,7 @@ export default async function UserProfilePage({
                     Member Since
                   </dt>
                   <dd className='text-sm text-gray-900'>
-                    {dayjs(user.created_at).format('MMM D, YYYY')}
+                    {dayjs(user.createdAt).format('MMM D, YYYY')}
                   </dd>
                 </div>
                 <div className='py-3 flex justify-between'>
@@ -168,8 +168,8 @@ export default async function UserProfilePage({
                     Last Login
                   </dt>
                   <dd className='text-sm text-gray-900'>
-                    {user.last_login_at
-                      ? dayjs(user.last_login_at).format('MMM d, yyyy h:mm a')
+                    {user.lastLoginAt
+                      ? dayjs(user.lastLoginAt).format('MMM d, yyyy h:mm a')
                       : 'Never'}
                   </dd>
                 </div>
@@ -185,8 +185,8 @@ export default async function UserProfilePage({
                     Default Shipping Address
                   </dt>
                   <dd className='text-sm text-gray-900'>
-                    {user.addresses && user.addresses.find((a) => a.is_default)
-                      ? `${user.addresses.find((a) => a.is_default)?.city}, ${user.addresses.find((a) => a.is_default)?.country}`
+                    {user.addresses && user.addresses.find((a) => a.isDefault)
+                      ? `${user.addresses.find((a) => a.isDefault)?.city}, ${user.addresses.find((a) => a.isDefault)?.country}`
                       : 'None'}
                   </dd>
                 </div>
@@ -203,7 +203,7 @@ export default async function UserProfilePage({
                       <div
                         key={address.id}
                         className={`p-3 rounded-md text-sm ${
-                          address.is_default
+                          address.isDefault
                             ? 'bg-blue-50 border border-blue-200'
                             : 'bg-gray-50 border border-gray-200'
                         }`}
@@ -213,11 +213,11 @@ export default async function UserProfilePage({
                             <p>{address.street}</p>
                             <p>
                               {address.city}, {address.state}{' '}
-                              {address.postal_code}
+                              {address.postalCode}
                             </p>
                             <p>{address.country}</p>
                           </div>
-                          {address.is_default && (
+                          {address.isDefault && (
                             <span className='bg-blue-100 text-blue-700 px-2.5 py-0.5 rounded-full text-xs font-medium'>
                               Default
                             </span>

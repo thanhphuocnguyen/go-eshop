@@ -6,18 +6,11 @@ import (
 
 // must be one of duplicate, fraudulent, requested_by_customer, or abandoned
 type RefundReason string
-type CancelReason string
 
 const (
 	RefundReasonRequestedByCustomer  RefundReason = "Requested by customer"
 	RefundReasonByDefectiveOrDamaged RefundReason = "Defective or damaged"
 	RefundReasonByFraudulent         RefundReason = "Fraudulent"
-)
-const (
-	CancelReasonDuplicate           CancelReason = "duplicate"
-	CancelReasonFraudulent          CancelReason = "fraudulent"
-	CancelReasonAbandoned           CancelReason = "abandoned"
-	CancelReasonRequestedByCustomer CancelReason = "requested_by_customer"
 )
 
 type PaymentStrategy interface {
@@ -25,7 +18,7 @@ type PaymentStrategy interface {
 	ProcessPayment(transactionID string) (string, error)
 	GetPaymentObject(transactionID string) (interface{}, error)
 	RefundPayment(transactionID string, amount int64, reason RefundReason) (string, error)
-	CancelPayment(transactionID string, reason CancelReason) (string, error)
+	CancelPayment(transactionID string, reason string) (string, error)
 }
 
 var (
@@ -57,7 +50,7 @@ func (p *PaymentContext) RefundPayment(transactionID string, amount int64, reaso
 	return p.strategy.RefundPayment(transactionID, amount, reason)
 }
 
-func (p *PaymentContext) CancelPayment(transactionID string, reason CancelReason) (string, error) {
+func (p *PaymentContext) CancelPayment(transactionID string, reason string) (string, error) {
 	return p.strategy.CancelPayment(transactionID, reason)
 }
 

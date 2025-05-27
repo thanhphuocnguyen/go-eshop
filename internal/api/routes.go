@@ -43,8 +43,9 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 		{
 			adminOrder.GET("", sv.getAdminOrdersHandler)
 			adminOrder.GET(":id", sv.getAdminOrderDetailHandler)
-			adminOrder.PUT(":id/refund", sv.refundOrder)
 			adminOrder.PUT(":id/status", sv.changeOrderStatus)
+			adminOrder.POST(":id/cancel", sv.cancelOrder)
+			adminOrder.POST(":id/refund", sv.refundOrder)
 		}
 
 		categories := admin.Group("categories")
@@ -176,7 +177,7 @@ func (sv *Server) setupOrderRoutes(rg *gin.RouterGroup) {
 		orders.GET("", sv.getOrdersHandler)
 		orders.GET(":id", sv.getOrderDetailHandler)
 		orders.PUT(":id/confirm-received", sv.confirmOrderPayment)
-		orders.PUT(":id/cancel", sv.cancelOrder)
+		orders.POST(":id/cancel", sv.cancelOrder)
 	}
 }
 
@@ -187,7 +188,7 @@ func (sv *Server) setupPaymentRoutes(rg *gin.RouterGroup) {
 		payments.GET(":id", sv.getPaymentHandler)
 		payments.GET("stripe-config", sv.getStripeConfig)
 		payments.POST("", sv.createPaymentIntentHandler)
-		payments.PUT(":order_id", sv.changePaymentStatusHandler)
+		payments.PUT(":orderId", sv.changePaymentStatusHandler)
 	}
 }
 
@@ -224,7 +225,7 @@ func (sv *Server) setupRatingRoutes(rg *gin.RouterGroup) {
 	ratings := rg.Group("ratings", authenticateMiddleware(sv.tokenGenerator))
 	{
 		ratings.POST("", sv.postRatingHandler)
-		ratings.GET(":order_id", sv.getOrderRatingsHandler)
+		ratings.GET(":orderId", sv.getOrderRatingsHandler)
 		ratings.POST(":id/helpful", sv.postRatingHelpfulHandler)
 		ratings.POST(":id/reply", sv.postReplyRatingHandler)
 	}

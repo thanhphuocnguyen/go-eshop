@@ -88,6 +88,7 @@ export default async function Page({ params }: Props) {
   const { id } = await params;
   const { data: orderDetail } = await getOrderDetails(id);
   // Find the current step index based on status
+  console.log({ orderDetail });
   const getCurrentStepIndex = (status: OrderStatus): number => {
     // Special handling for Completed, Cancelled, and Refunded
     if (status === OrderStatus.Completed) return orderProgressSteps.length - 1;
@@ -307,6 +308,7 @@ export default async function Page({ params }: Props) {
               paymentInfo={orderDetail.paymentInfo || null}
               orderId={orderDetail.id}
               total={orderDetail.total}
+              orderStatus={orderDetail.status}
             />
           </div>
         </div>

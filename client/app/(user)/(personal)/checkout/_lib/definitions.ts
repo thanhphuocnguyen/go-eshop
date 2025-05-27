@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const CheckoutFormSchema = z.object({
   email: z.string().email().optional(),
   fullname: z.string().optional(),
-  address_id: z.string().optional(),
+  addressId: z.string().optional(),
   address: z
     .object({
       street: z.string().min(1, { message: 'Address is required' }),
@@ -14,7 +14,6 @@ export const CheckoutFormSchema = z.object({
     })
     .optional(),
   paymentMethod: z.enum(['stripe', 'cod']),
-  paymentReceiptEmail: z.string().optional(),
   discountCode: z.string().optional(),
   termsAccepted: z.boolean().refine((val) => val === true, {
     message: 'You must accept the terms and conditions',

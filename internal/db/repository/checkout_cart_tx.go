@@ -14,7 +14,21 @@ type CustomerInfoTxArgs struct {
 	Phone    string
 }
 
-type CreateOrderTxArgs struct {
+type CreatePaymentResult struct {
+	PaymentID       string    `json:"paymentId"`
+	ClientSecret    *string   `json:"clientSecret,omitempty"`
+	PaymentIntentID string    `json:"paymentIntentId"`
+	TotalPrice      float64   `json:"totalPrice"`
+	OrderID         uuid.UUID `json:"orderId"`
+}
+
+type CreatePaymentArgs struct {
+	Amount  float64
+	Email   string
+	OrderID uuid.UUID
+}
+
+type CheckoutCartTxArgs struct {
 	UserID                uuid.UUID
 	CartID                uuid.UUID
 	CustomerInfo          CustomerInfoTxArgs
@@ -23,10 +37,13 @@ type CreateOrderTxArgs struct {
 	DiscountPrice         float64
 	DiscountID            *uuid.UUID
 	ShippingAddress       ShippingAddressSnapshot
+	PaymentMethod         PaymentMethod
+	PaymentGateway        PaymentGateway
+	CreatePaymentFn       func(orderID uuid.UUID, paymentMethod PaymentMethod) (paymentIntentID string, clientSecret *string, err error)
 }
 
-func (s *pgRepo) CreateOrderTx(ctx context.Context, arg CreateOrderTxArgs) (uuid.UUID, error) {
-	var result uuid.UUID
+func (s *pgRepo) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxArgs) (CreatePaymentResult, error) {
+	var result CreatePaymentResult
 	err := s.execTx(ctx, func(q *Queries) (err error) {
 		params := CreateOrderParams{
 			CustomerID:      arg.UserID,
@@ -42,7 +59,16 @@ func (s *pgRepo) CreateOrderTx(ctx context.Context, arg CreateOrderTxArgs) (uuid
 			log.Error().Err(err).Msg("CreateOrder")
 			return err
 		}
-		result = order.ID
+
+		createPaymentArgs := CreatePaymentParams{
+			OrderID: order.ID,
+			Amount:  utils.GetPgNumericFromFloat(arg.TotalPrice),
+		}
+		createPaymentArgs.PaymentMethod = PaymentMethodStripe
+		createPaymentArgs.PaymentGateway = NullPaymentGateway{
+			PaymentGateway: PaymentGatewayStripe,
+			Valid:          true,
+		}
 
 		if arg.DiscountPrice != 0 {
 			_, err := q.InsertOrderDiscount(ctx, InsertOrderDiscountParams{
@@ -77,6 +103,26 @@ func (s *pgRepo) CreateOrderTx(ctx context.Context, arg CreateOrderTxArgs) (uuid
 			log.Error().Err(err).Msg("CheckoutCart")
 			return err
 		}
+
+		paymentIntentID, clientSecret, err := arg.CreatePaymentFn(order.ID, createPaymentArgs.PaymentMethod)
+		createPaymentArgs.GatewayPaymentIntentID = &paymentIntentID
+
+		if err != nil {
+			log.Error().Err(err).Msg("CreatePaymentFn")
+			return err
+		}
+
+		result.PaymentIntentID = paymentIntentID
+		result.ClientSecret = clientSecret
+		result.TotalPrice = arg.TotalPrice
+
+		// create payment transaction
+		payment, err := q.CreatePayment(ctx, createPaymentArgs)
+		if err != nil {
+			log.Error().Err(err).Msg("CreatePayment")
+			return err
+		}
+		result.PaymentID = payment.ID.String()
 
 		return nil
 	})

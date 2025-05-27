@@ -316,7 +316,7 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
       ...variant,
       attributes: variant.attributes.map((attribute) => ({
         id: attribute.id,
-        value_id: attribute.valueObject?.id,
+        valueId: attribute.valueObject?.id,
       })),
     }));
     const { data, error } = await clientSideFetch<{ id: string }>(
@@ -328,10 +328,10 @@ export const ProductDetailForm: React.FC<ProductEditFormProps> = ({
         body: {
           ...payload.productInfo,
           variants,
-          collection_id: payload.productInfo.collection?.id || null,
+          collectionId: payload.productInfo.collection?.id || null,
           attributes: payload.productInfo.attributes,
-          brand_id: payload.productInfo.brand?.id || null,
-          category_id: payload.productInfo.category?.id || null,
+          brandId: payload.productInfo.brand?.id || null,
+          categoryId: payload.productInfo.category?.id || null,
         },
       }
     );

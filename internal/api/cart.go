@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"math"
 	"net/http"
 
@@ -371,7 +372,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 	if req.AddressID == nil {
 		// create new address
 		if req.Address == nil {
-			c.JSON(http.StatusBadRequest, createErrorResponse[gin.H](InternalServerErrorCode, "", errors.New("address not found")))
+			c.JSON(http.StatusBadRequest, createErrorResponse[gin.H](InternalServerErrorCode, "", errors.New("must provide address or address ID")))
 			return
 		}
 		address, err := sv.repo.CreateAddress(c, repository.CreateAddressParams{
@@ -472,7 +473,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 		}
 	}
 
-	params := repository.CreateOrderTxArgs{
+	params := repository.CheckoutCartTxArgs{
 		CartID:          cart.ID,
 		TotalPrice:      totalPrice,
 		ShippingAddress: shippingAddr,
@@ -494,8 +495,11 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 	}
 	var discountPrice float64
 	var discountID *uuid.UUID
+
+	// check if there is a discount code
 	if req.DiscountCode != nil && *req.DiscountCode != "" {
 		discount, err := sv.repo.GetDiscountByCode(c, *req.DiscountCode)
+		discountID = &discount.ID
 		discountProductsAndCategories, err := sv.repo.GetDiscountProductsAndCategories(c, discount.ID)
 		if err != nil {
 			log.Error().Err(err).Msg("GetDiscountByCode")
@@ -504,11 +508,13 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 		}
 		discountProductIDs := make(map[uuid.UUID]bool)
 		discountCategoryIDs := make(map[uuid.UUID]bool)
+		productIDs := make(map[uuid.UUID]bool)
 		for _, item := range discountProductsAndCategories {
 			if item.ProductID.Valid {
 				id, _ := uuid.FromBytes(item.ProductID.Bytes[:])
 				discountProductIDs[id] = true
-			} else if item.CategoryID.Valid {
+			}
+			if item.CategoryID.Valid {
 				id, _ := uuid.FromBytes(item.CategoryID.Bytes[:])
 				discountCategoryIDs[id] = true
 			}
@@ -516,6 +522,11 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 
 		discountValue, _ := discount.DiscountValue.Float64Value()
 		for _, item := range cartItemRows {
+			if productIDs[item.ProductID] {
+				// skip if the product is already counted
+				continue
+			}
+			productIDs[item.ProductID] = true
 			price, _ := item.Price.Float64Value()
 			lineTotal := price.Float64 * float64(item.CartItem.Quantity)
 			if _, ok := discountProductIDs[item.ProductID]; ok {
@@ -542,74 +553,46 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 		}
 
 	}
+
 	params.DiscountPrice = discountPrice
 	params.DiscountID = discountID
-	orderID, err := sv.repo.CreateOrderTx(c, params)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
-		return
+	params.PaymentMethod = repository.PaymentMethod(req.PaymentMethod)
+	params.TotalPrice -= discountPrice
+	if params.TotalPrice < 0 {
+		params.TotalPrice = 0
 	}
-	createPaymentArgs := repository.CreatePaymentParams{
-		OrderID: orderID,
-		Amount:  utils.GetPgNumericFromFloat(totalPrice),
-	}
-
-	switch req.PaymentMethod {
-	case string(repository.PaymentMethodStripe):
-		createPaymentArgs.PaymentMethod = repository.PaymentMethodStripe
-		createPaymentArgs.PaymentGateway = repository.NullPaymentGateway{
-			PaymentGateway: repository.PaymentGatewayStripe,
-			Valid:          true,
+	params.CreatePaymentFn = func(orderID uuid.UUID, paymentMethod repository.PaymentMethod) (paymentIntentID string, clientSecretID *string, err error) {
+		switch paymentMethod {
+		case repository.PaymentMethodStripe:
+			stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
+			if err != nil {
+				return "", utils.StringPtr(""), err
+			}
+			sv.paymentCtx.SetStrategy(stripeInstance)
+		default:
+			return "", utils.StringPtr(""), fmt.Errorf("unsupported payment method: %s", paymentMethod)
 		}
-
-		stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
+		receiptEmail := user.Email
+		// create payment intent
+		checkoutResult, err := sv.paymentCtx.CreatePaymentIntent(totalPrice, receiptEmail)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
-			return
+			return "", utils.StringPtr(""), err
 		}
-		sv.paymentCtx.SetStrategy(stripeInstance)
-	default:
-		c.JSON(http.StatusBadRequest, createErrorResponse[gin.H](InvalidBodyCode, "", errors.New("payment gateway not supported")))
-		return
+
+		paymentIntent, ok := checkoutResult.(*stripe.PaymentIntent)
+		if !ok {
+			return "", utils.StringPtr(""), fmt.Errorf("unexpected payment intent type: %T", checkoutResult)
+		}
+		return paymentIntent.ID, &paymentIntent.ClientSecret, nil
 	}
 
-	// init payment for custom payment
-
-	receiptEmail := ""
-	if req.PaymentRecipeEmail != nil {
-		receiptEmail = *req.PaymentRecipeEmail
-	} else {
-		receiptEmail = user.Email
-	}
-
-	checkoutResp := CheckoutResponse{
-		OrderID: orderID,
-	}
-	// create payment intent
-	checkoutResult, checkoutErr := sv.paymentCtx.CreatePaymentIntent(totalPrice, receiptEmail)
-	if checkoutErr != nil {
-		c.JSON(http.StatusOK, createSuccessResponse(c, checkoutResp, "", nil, &ApiError{
-			Code:    "payment_gateway_error",
-			Details: checkoutErr.Error(),
-			Stack:   checkoutErr.Error(),
-		}))
-		return
-	}
-
-	paymentIntent := checkoutResult.(*stripe.PaymentIntent)
-	createPaymentArgs.GatewayPaymentIntentID = &paymentIntent.ID
-	checkoutResp.ClientSecret = &paymentIntent.ClientSecret
-	checkoutResp.TotalPrice = float64(paymentIntent.Amount) / 100
-	// create payment transaction
-	payment, err := sv.repo.CreatePayment(c, createPaymentArgs)
+	rs, err := sv.repo.CheckoutCartTx(c, params)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
 		return
 	}
 
-	checkoutResp.PaymentIntentID = &paymentIntent.ID
-	checkoutResp.PaymentID = payment.ID.String()
-	c.JSON(http.StatusOK, createSuccessResponse(c, checkoutResp, "", nil, nil))
+	c.JSON(http.StatusOK, createSuccessResponse(c, rs, "", nil, nil))
 }
 
 // @Summary  Clear the cart

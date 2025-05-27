@@ -13,11 +13,11 @@ interface UserDetails {
   fullname: string;
   phone: string;
   role: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
   locked: boolean;
-  avatar_url: string | null;
-  avatar_image_id: string | null;
+  avatarUrl: string | null;
+  avatarImageId: string | null;
 }
 
 export default function UserProfileForm({ user }: { user: UserDetails }) {
@@ -51,8 +51,8 @@ export default function UserProfileForm({ user }: { user: UserDetails }) {
 
     try {
       // If there's an avatar, upload it first
-      let avatarImageId = user.avatar_image_id;
-      let avatarUrl = user.avatar_url;
+      let avatarImageId = user.avatarImageId;
+      let avatarUrl = user.avatarUrl;
 
       if (avatar) {
         const formData = new FormData();
@@ -84,8 +84,8 @@ export default function UserProfileForm({ user }: { user: UserDetails }) {
           method: 'PUT',
           body: {
             ...userData,
-            avatar_image_id: avatarImageId,
-            avatar_url: avatarUrl,
+            avatarImageId: avatarImageId,
+            avatarUrl: avatarUrl,
           },
         }
       );
@@ -121,9 +121,9 @@ export default function UserProfileForm({ user }: { user: UserDetails }) {
       <form onSubmit={handleSubmit}>
         <div className='flex items-center mb-6'>
           <div className='relative h-24 w-24 rounded-full overflow-hidden bg-gray-100 mr-6'>
-            {user.avatar_url || avatar ? (
+            {user.avatarUrl || avatar ? (
               <Image
-                src={avatar ? URL.createObjectURL(avatar) : user.avatar_url!}
+                src={avatar ? URL.createObjectURL(avatar) : user.avatarUrl!}
                 alt='User avatar'
                 fill
                 className='object-cover'

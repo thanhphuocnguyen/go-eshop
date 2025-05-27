@@ -20,7 +20,7 @@ import (
 // @Tags ratings
 // @Accept json
 // @Produce json
-// @Param order_item_id formData string true "Order Item ID"
+// @Param orderItemId formData string true "Order Item ID"
 // @Param rating formData float64 true "Rating (1-5)"
 // @Param title formData string true "Review Title"
 // @Param content formData string true "Review Content"
@@ -146,14 +146,14 @@ func (s *Server) postRatingHandler(c *gin.Context) {
 // @Tags ratings
 // @Accept json
 // @Produce json
-// @Param rating_id body string true "Rating ID"
+// @Param ratingId body string true "Rating ID"
 // @Param helpful body bool true "Helpful"
 // @Security BearerAuth
 // @Success 200 {object} ApiResponse[bool]
 // @Failure 400 {object} ApiResponse[bool]
 // @Failure 403 {object} ApiResponse[bool]
 // @Failure 500 {object} ApiResponse[bool]
-// @Router /ratings/{rating_id}/helpful [post]
+// @Router /ratings/{ratingId}/helpful [post]
 func (s *Server) postRatingHelpfulHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
@@ -197,14 +197,14 @@ func (s *Server) postRatingHelpfulHandler(c *gin.Context) {
 // @Tags ratings
 // @Accept json
 // @Produce json
-// @Param rating_id path string true "Rating ID"
+// @Param ratingId path string true "Rating ID"
 // @Param content body string true "Reply Content"
 // @Security BearerAuth
 // @Success 200 {object} ApiResponse[bool]
 // @Failure 400 {object} ApiResponse[bool]
 // @Failure 403 {object} ApiResponse[bool]
 // @Failure 500 {object} ApiResponse[bool]
-// @Router /ratings/{rating_id}/reply [post]
+// @Router /ratings/{ratingId}/reply [post]
 func (s *Server) postReplyRatingHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
@@ -242,7 +242,7 @@ func (s *Server) postReplyRatingHandler(c *gin.Context) {
 // @Tags ratings
 // @Accept json
 // @Produce json
-// @Param product_id path string true "Product ID"
+// @Param productId path string true "Product ID"
 // @Param page query int false "Page number" default(1)
 // @Param pageSize query int false "Page size" default(10)
 // @Success 200 {object} ApiResponse[[]ProductRatingModel]
@@ -345,14 +345,14 @@ func (s *Server) getRatingsHandler(c *gin.Context) {
 // @Tags ratings
 // @Accept json
 // @Produce json
-// @Param product_id path string true "Product ID"
+// @Param productId path string true "Product ID"
 // @Param page query int false "Page number" default(1)
 // @Param pageSize query int false "Page size" default(10)
 // @Success 200 {object} ApiResponse[[]ProductRatingModel]
 // @Failure 400 {object} ApiResponse[bool]
 // @Failure 404 {object} ApiResponse[bool]
 // @Failure 500 {object} ApiResponse[bool]
-// @Router /ratings/products/{product_id} [get]
+// @Router /ratings/products/{productId} [get]
 func (s *Server) getRatingsByProductHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
@@ -438,19 +438,19 @@ func (s *Server) getRatingsByProductHandler(c *gin.Context) {
 // @Tags ratings
 // @Accept json
 // @Produce json
-// @Param order_id path string true "Order ID"
+// @Param orderId path string true "Order ID"
 // @Security BearerAuth
 // @Success 200 {object} ApiResponse[[]ProductRatingModel]
 // @Failure 400 {object} ApiResponse[bool]
 // @Failure 403 {object} ApiResponse[bool]
 // @Failure 404 {object} ApiResponse[bool]
 // @Failure 500 {object} ApiResponse[bool]
-// @Router /ratings/orders/{order_id} [get]
+// @Router /ratings/orders/{orderId} [get]
 func (s *Server) getOrderRatingsHandler(c *gin.Context) {
 	auth, _ := c.MustGet(authorizationPayload).(*auth.Payload)
 
 	var param struct {
-		OrderID string `uri:"order_id" binding:"required,uuid"`
+		OrderID string `uri:"orderId" binding:"required,uuid"`
 	}
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(400, createErrorResponse[bool](InvalidBodyCode, "invalid request", err))

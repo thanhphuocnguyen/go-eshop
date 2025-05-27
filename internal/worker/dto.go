@@ -14,7 +14,7 @@ type VerifyEmailData struct {
 }
 
 type PayloadSendOrderCreatedEmailTask struct {
-	PaymentID uuid.UUID `json:"payment_id"`
+	PaymentID uuid.UUID `json:"paymentId"`
 }
 
 type OrderCreatedItems struct {
@@ -23,8 +23,8 @@ type OrderCreatedItems struct {
 	Qty   int     `json:"qty"`
 }
 type OrderCreatedEmailData struct {
-	OrderID  uuid.UUID           `json:"order_id"`
+	OrderID  uuid.UUID           `json:"orderId"`
 	Total    float64             `json:"total"`
-	FullName string              `json:"full_name"`
+	FullName string              `json:"fullName"`
 	Items    []OrderCreatedItems `json:"items"`
 }
