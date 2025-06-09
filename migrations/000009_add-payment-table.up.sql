@@ -4,11 +4,11 @@ CREATE TABLE
         order_id UUID NOT NULL REFERENCES orders (id) ON DELETE CASCADE,
         amount DECIMAL(10, 2) NOT NULL,
         status payment_status NOT NULL DEFAULT 'pending', -- Pending, Success, Failed
-        payment_method payment_method NOT NULL, -- e.g., card, bank_transfer
-        payment_gateway payment_gateway DEFAULT NULL, -- e.g., Stripe, PayPal
+        method payment_method NOT NULL, -- e.g., card, bank_transfer
+        gateway VARCHAR DEFAULT NULL, -- e.g., Stripe, PayPal
         refund_id VARCHAR, -- From the payment gateway, e.g., Stripe
-        gateway_payment_intent_id VARCHAR, -- From the payment gateway, e.g., Stripe
-        gateway_charge_id VARCHAR, -- From the payment gateway, e.g., Stripe
+        payment_intent_id VARCHAR, -- From the payment gateway, e.g., Stripe
+        charge_id VARCHAR, -- From the payment gateway, e.g., Stripe
         error_code VARCHAR, -- From the payment gateway, e.g., Stripe
         error_message VARCHAR, -- From the payment gateway, e.g., Stripe
         created_at TIMESTAMPTZ DEFAULT NOW (),
@@ -32,9 +32,9 @@ CREATE INDEX ON "payments" ("order_id");
 
 CREATE INDEX ON "payments" ("status");
 
-CREATE INDEX ON "payments" ("payment_method");
+CREATE INDEX ON "payments" ("method");
 
-CREATE INDEX ON "payments" ("gateway_payment_intent_id");
+CREATE INDEX ON "payments" ("payment_intent_id");
 
 CREATE INDEX ON "payments" ("gateway_charge_id");
 

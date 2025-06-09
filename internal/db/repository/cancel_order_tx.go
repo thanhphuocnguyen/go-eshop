@@ -11,11 +11,11 @@ import (
 )
 
 type CancelOrderTxArgs struct {
-	OrderID                  uuid.UUID
-	CancelPaymentFromGateway func(ID string, gateway PaymentGateway) error
+	OrderID                 uuid.UUID
+	CancelPaymentFromMethod func(ID string, method PaymentMethod) error
 }
 
-func (pg *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (order Order, err error) {
+func (pg *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (orderID uuid.UUID, err error) {
 	pg.execTx(ctx, func(q *Queries) error {
 		// cancel payment
 		payment, err := q.GetPaymentByOrderID(ctx, args.OrderID)
@@ -23,14 +23,14 @@ func (pg *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (or
 			log.Error().Err(err).Msg("GetPaymentTransactionByOrderID")
 		}
 		// if payment is not found, we don't need to cancel it
-		if err == nil && payment.PaymentGateway.Valid {
+		if err == nil && payment.Gateway != nil {
 			if payment.Status == PaymentStatusSuccess {
 				return errors.New("payment is already successful, need to refund")
 			}
 
 			// cancel payment from gateway if it's not cancelled yet
-			if args.CancelPaymentFromGateway != nil && payment.GatewayPaymentIntentID != nil {
-				err = args.CancelPaymentFromGateway(*payment.GatewayPaymentIntentID, payment.PaymentGateway.PaymentGateway)
+			if args.CancelPaymentFromMethod != nil && payment.PaymentIntentID != nil {
+				err = args.CancelPaymentFromMethod(*payment.PaymentIntentID, payment.Method)
 				if err != nil {
 					log.Error().Err(err).Msg("CancelPaymentFromGateway")
 					return err
@@ -50,7 +50,7 @@ func (pg *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (or
 		}
 
 		// cancel order
-		order, err = q.UpdateOrder(ctx, UpdateOrderParams{
+		_, err = q.UpdateOrder(ctx, UpdateOrderParams{
 			ID: args.OrderID,
 			Status: NullOrderStatus{
 				OrderStatus: OrderStatusCancelled,
@@ -91,5 +91,5 @@ func (pg *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (or
 		return nil
 	})
 
-	return order, err
+	return orderID, err
 }

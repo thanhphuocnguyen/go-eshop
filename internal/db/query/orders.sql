@@ -13,11 +13,23 @@ RETURNING *;
 
 -- name: GetOrder :one
 SELECT
-    *
+    orders.*,
+    pm.id as payment_id,
+    pm.status as payment_status,
+    pm.amount as payment_amount,
+    pm.method,
+    pm.gateway,
+    pm.payment_intent_id,
+    pm.created_at as payment_created_at,
+    d.code,
+    od.discount_amount
 FROM
     orders
+JOIN payments pm ON orders.id = pm.order_id
+LEFT JOIN order_discounts od ON orders.id = od.order_id
+LEFT JOIN discounts d ON od.discount_id = d.id
 WHERE
-    id = $1
+    orders.id = $1
 LIMIT 1;
 
 
@@ -68,7 +80,7 @@ SET
     updated_at = now()
 WHERE
     id = sqlc.arg('id')
-RETURNING *;
+RETURNING orders.id;
 
 -- name: DeleteOrder :exec
 DELETE FROM

@@ -62,17 +62,16 @@ func (server *Server) stripeEventHandler(c *gin.Context) {
 			return
 		}
 		updateTransactionStatus := repository.UpdatePaymentParams{
-			ID:              payment.ID,
-			GatewayChargeID: id,
-			PaymentMethod: repository.NullPaymentMethod{
-				PaymentMethod: payment.PaymentMethod,
+			ID:       payment.ID,
+			ChargeID: id,
+			Method: repository.NullPaymentMethod{
+				PaymentMethod: repository.PaymentMethodStripe,
 				Valid:         true,
 			},
-			PaymentGateway:         payment.PaymentGateway,
-			Amount:                 utils.GetPgNumericFromFloat((float64(piAmount) / 100)),
-			GatewayPaymentIntentID: id,
-			ErrorCode:              failureCode,
-			ErrorMessage:           failureMsg,
+			Amount:          utils.GetPgNumericFromFloat((float64(piAmount) / 100)),
+			PaymentIntentID: id,
+			ErrorCode:       failureCode,
+			ErrorMessage:    failureMsg,
 		}
 
 		switch evt.Type {
@@ -81,6 +80,9 @@ func (server *Server) stripeEventHandler(c *gin.Context) {
 				PaymentStatus: repository.PaymentStatusSuccess,
 				Valid:         true,
 			}
+			// Safely extract card brand from nested map
+			gateway := evt.GetObjectValue("payment_method_details", "brand")
+			updateTransactionStatus.Gateway = &gateway
 			server.taskDistributor.SendOrderCreatedEmailTask(c,
 				&worker.PayloadSendOrderCreatedEmailTask{
 					PaymentID: payment.ID,
@@ -106,6 +108,7 @@ func (server *Server) stripeEventHandler(c *gin.Context) {
 		}
 		err = server.repo.UpdatePayment(c, updateTransactionStatus)
 	}
+
 	if strings.HasPrefix(string(evt.Type), "charge.") {
 		piAmount := evtData["amount"].(float64)
 		var paymentIntentID *string
@@ -136,8 +139,8 @@ func (server *Server) stripeEventHandler(c *gin.Context) {
 		case stripe.EventTypeChargeSucceeded:
 			createPaymentTransactionArg.Status = repository.PaymentStatusSuccess
 			updateTransactionStatus := repository.UpdatePaymentParams{
-				ID:              payment.ID,
-				GatewayChargeID: id,
+				ID:       payment.ID,
+				ChargeID: id,
 			}
 			err = server.repo.UpdatePayment(c, updateTransactionStatus)
 			if err != nil {

@@ -110,12 +110,12 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 
 	var resp *OrderDetailResponse
 
-	// if err := sv.cachesrv.Get(c, "order_detail:"+params.ID, &resp); err == nil {
-	// 	if resp != nil {
-	// 		c.JSON(http.StatusOK, createSuccessResponse(c, resp, "success", nil, nil))
-	// 		return
-	// 	}
-	// }
+	if err := sv.cachesrv.Get(c, "order_detail:"+params.ID, &resp); err == nil {
+		if resp != nil {
+			c.JSON(http.StatusOK, createSuccessResponse(c, resp, "success", nil, nil))
+			return
+		}
+	}
 
 	order, err := sv.repo.GetOrder(c, uuid.MustParse(params.ID))
 	if err != nil {
@@ -128,17 +128,24 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 	}
 
 	total, _ := order.TotalPrice.Float64Value()
-
+	paymentAmount, _ := order.PaymentAmount.Float64Value()
 	resp = &OrderDetailResponse{
 		ID:            order.ID,
 		Total:         total.Float64,
 		CustomerName:  order.CustomerName,
 		CustomerEmail: order.CustomerEmail,
-		PaymentInfo:   nil,
 		Status:        order.Status,
 		ShippingInfo:  order.ShippingAddress,
-		CreatedAt:     order.CreatedAt.UTC(),
-		Products:      []OrderItemResponse{},
+		PaymentInfo: PaymentInfoModel{
+			ID:       order.PaymentID.String(),
+			Amount:   paymentAmount.Float64,
+			IntendID: order.PaymentIntentID,
+			GateWay:  order.Gateway,
+			Method:   string(order.Method),
+			Status:   string(order.PaymentStatus),
+		},
+		CreatedAt: order.CreatedAt.UTC(),
+		Products:  []OrderItemResponse{},
 	}
 
 	orderItemRows, err := sv.repo.GetOrderItems(c, order.ID)
@@ -151,44 +158,27 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 
 	var apiErr *ApiError = nil
 
-	if err != nil {
-		log.Err(err).Msg("Order does not have payment info")
-		apiErr = &ApiError{
-			Code:    InternalServerErrorCode,
-			Details: "failed to get payment info",
-			Stack:   err.Error(),
+	if paymentInfo.Status == repository.PaymentStatusPending &&
+		paymentInfo.PaymentIntentID != nil &&
+		paymentInfo.Method == repository.PaymentMethodStripe {
+		resp.PaymentInfo.IntendID = paymentInfo.PaymentIntentID
+		stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
+			return
 		}
-	}
-	if err == nil {
-		amount, _ := paymentInfo.Amount.Float64Value()
-		resp.PaymentInfo = &PaymentInfoModel{
-			ID:       paymentInfo.ID.String(),
-			RefundID: paymentInfo.RefundID,
-			GateWay:  (*string)(&paymentInfo.PaymentGateway.PaymentGateway),
-			Method:   string(paymentInfo.PaymentMethod),
-			Status:   string(paymentInfo.Status),
-			Amount:   amount.Float64,
-		}
-		if paymentInfo.Status == repository.PaymentStatusPending && paymentInfo.GatewayPaymentIntentID != nil && paymentInfo.PaymentMethod == repository.PaymentMethodStripe {
-			resp.PaymentInfo.IntendID = paymentInfo.GatewayPaymentIntentID
-			stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
-				return
+		sv.paymentCtx.SetStrategy(stripeInstance)
+		paymentDetail, err := sv.paymentCtx.GetPaymentObject(*paymentInfo.PaymentIntentID)
+		if err != nil {
+			log.Err(err).Msg("failed to get payment intent")
+			apiErr = &ApiError{
+				Code:    InternalServerErrorCode,
+				Details: "failed to get payment intent",
+				Stack:   err.Error(),
 			}
-			sv.paymentCtx.SetStrategy(stripeInstance)
-			paymentDetail, err := sv.paymentCtx.GetPaymentObject(*paymentInfo.GatewayPaymentIntentID)
-			if err != nil {
-				log.Err(err).Msg("failed to get payment intent")
-				apiErr = &ApiError{
-					Code:    InternalServerErrorCode,
-					Details: "failed to get payment intent",
-					Stack:   err.Error(),
-				}
-			} else {
-				stripeObject, _ := paymentDetail.(*stripe.PaymentIntent)
-				resp.PaymentInfo.ClientSecret = &stripeObject.ClientSecret
-			}
+		} else {
+			stripeObject, _ := paymentDetail.(*stripe.PaymentIntent)
+			resp.PaymentInfo.ClientSecret = &stripeObject.ClientSecret
 		}
 	}
 
@@ -295,6 +285,7 @@ func (sv *Server) confirmOrderPayment(c *gin.Context) {
 			Stack:   err.Error(),
 		}
 	}
+
 	c.JSON(http.StatusOK, createSuccessResponse(c, true, "success", nil, apiErr))
 }
 
@@ -356,11 +347,11 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 	}
 
 	// if order
-	order, err = sv.repo.CancelOrderTx(c, repository.CancelOrderTxArgs{
+	cancelOrderTxParams := repository.CancelOrderTxArgs{
 		OrderID: uuid.MustParse(params.ID),
-		CancelPaymentFromGateway: func(paymentID string, gateway repository.PaymentGateway) error {
-			switch gateway {
-			case repository.PaymentGatewayStripe:
+		CancelPaymentFromMethod: func(paymentID string, method repository.PaymentMethod) error {
+			switch method {
+			case repository.PaymentMethodStripe:
 				stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
 				if err != nil {
 					c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](InternalServerErrorCode, "", err))
@@ -373,14 +364,15 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 				return nil
 			}
 		},
-	})
+	}
+	ordId, err := sv.repo.CancelOrderTx(c, cancelOrderTxParams)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](repository.ErrDeadlockDetected.InternalQuery, "", err))
 		return
 	}
 	sv.cachesrv.Delete(c, "order_detail:"+params.ID)
-	c.JSON(http.StatusOK, createSuccessResponse(c, order, "success", nil, nil))
+	c.JSON(http.StatusOK, createSuccessResponse(c, ordId, "success", nil, nil))
 }
 
 // @Summary Change order status
@@ -514,12 +506,11 @@ func (sv *Server) refundOrder(c *gin.Context) {
 	}
 	err = sv.repo.RefundOrderTx(c, repository.RefundOrderTxArgs{
 		OrderID: uuid.MustParse(params.ID),
-		RefundPaymentFromGateway: func(paymentID string, gateway repository.PaymentGateway) (string, error) {
-			switch gateway {
-			case repository.PaymentGatewayStripe:
+		RefundPaymentFromMethod: func(paymentID string, method repository.PaymentMethod) (string, error) {
+			switch method {
+			case repository.PaymentMethodStripe:
 				stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
 				if err != nil {
-					c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](InternalServerErrorCode, "", err))
 					return "", err
 				}
 				sv.paymentCtx.SetStrategy(stripeInstance)

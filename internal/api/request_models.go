@@ -83,7 +83,7 @@ type CheckoutAddress struct {
 }
 
 type CheckoutRequest struct {
-	PaymentMethod  string           `json:"paymentMethod" binding:"required,oneof=code stripe"`
+	PaymentMethod  string           `json:"paymentMethod" binding:"required,oneof=cod stripe"`
 	PaymentGateway *string          `json:"paymentGateway" binding:"omitempty,oneof=stripe"`
 	AddressID      *string          `json:"addressId" binding:"omitempty,uuid"`
 	Email          *string          `json:"email" binding:"omitempty,email"`

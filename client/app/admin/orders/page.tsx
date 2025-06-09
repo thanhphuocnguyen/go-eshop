@@ -6,7 +6,7 @@ import LoadingInline from '@/app/components/Common/Loadings/LoadingInline';
 import { Breadcrumb } from '@/app/components/Common';
 import { clientSideFetch } from '@/app/lib/api/apiClient';
 import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
-import { GenericResponse, Order } from '@/app/lib/definitions';
+import { Order } from '@/app/lib/definitions';
 import { Button, Menu, Transition } from '@headlessui/react';
 
 export default function AdminOrdersPage() {

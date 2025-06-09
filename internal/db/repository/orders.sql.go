@@ -183,17 +183,65 @@ func (q *Queries) DeleteOrder(ctx context.Context, id uuid.UUID) error {
 
 const getOrder = `-- name: GetOrder :one
 SELECT
-    id, customer_id, customer_email, customer_name, customer_phone, shipping_address, total_price, status, confirmed_at, delivered_at, cancelled_at, shipping_method, refunded_at, order_date, updated_at, created_at, shipping_method_id, shipping_rate_id, shipping_cost, estimated_delivery_date, tracking_number, tracking_url, shipping_provider, shipping_notes
+    orders.id, orders.customer_id, orders.customer_email, orders.customer_name, orders.customer_phone, orders.shipping_address, orders.total_price, orders.status, orders.confirmed_at, orders.delivered_at, orders.cancelled_at, orders.shipping_method, orders.refunded_at, orders.order_date, orders.updated_at, orders.created_at, orders.shipping_method_id, orders.shipping_rate_id, orders.shipping_cost, orders.estimated_delivery_date, orders.tracking_number, orders.tracking_url, orders.shipping_provider, orders.shipping_notes,
+    pm.id as payment_id,
+    pm.status as payment_status,
+    pm.amount as payment_amount,
+    pm.method,
+    pm.gateway,
+    pm.payment_intent_id,
+    pm.created_at as payment_created_at,
+    d.code,
+    od.discount_amount
 FROM
     orders
+JOIN payments pm ON orders.id = pm.order_id
+LEFT JOIN order_discounts od ON orders.id = od.order_id
+LEFT JOIN discounts d ON od.discount_id = d.id
 WHERE
-    id = $1
+    orders.id = $1
 LIMIT 1
 `
 
-func (q *Queries) GetOrder(ctx context.Context, id uuid.UUID) (Order, error) {
+type GetOrderRow struct {
+	ID                    uuid.UUID               `json:"id"`
+	CustomerID            uuid.UUID               `json:"customerId"`
+	CustomerEmail         string                  `json:"customerEmail"`
+	CustomerName          string                  `json:"customerName"`
+	CustomerPhone         string                  `json:"customerPhone"`
+	ShippingAddress       ShippingAddressSnapshot `json:"shippingAddress"`
+	TotalPrice            pgtype.Numeric          `json:"totalPrice"`
+	Status                OrderStatus             `json:"status"`
+	ConfirmedAt           pgtype.Timestamptz      `json:"confirmedAt"`
+	DeliveredAt           pgtype.Timestamptz      `json:"deliveredAt"`
+	CancelledAt           pgtype.Timestamptz      `json:"cancelledAt"`
+	ShippingMethod        *string                 `json:"shippingMethod"`
+	RefundedAt            pgtype.Timestamptz      `json:"refundedAt"`
+	OrderDate             time.Time               `json:"orderDate"`
+	UpdatedAt             time.Time               `json:"updatedAt"`
+	CreatedAt             time.Time               `json:"createdAt"`
+	ShippingMethodID      pgtype.UUID             `json:"shippingMethodId"`
+	ShippingRateID        pgtype.UUID             `json:"shippingRateId"`
+	ShippingCost          pgtype.Numeric          `json:"shippingCost"`
+	EstimatedDeliveryDate pgtype.Timestamptz      `json:"estimatedDeliveryDate"`
+	TrackingNumber        *string                 `json:"trackingNumber"`
+	TrackingUrl           *string                 `json:"trackingUrl"`
+	ShippingProvider      *string                 `json:"shippingProvider"`
+	ShippingNotes         *string                 `json:"shippingNotes"`
+	PaymentID             uuid.UUID               `json:"paymentId"`
+	PaymentStatus         PaymentStatus           `json:"paymentStatus"`
+	PaymentAmount         pgtype.Numeric          `json:"paymentAmount"`
+	Method                PaymentMethod           `json:"method"`
+	Gateway               *string                 `json:"gateway"`
+	PaymentIntentID       *string                 `json:"paymentIntentId"`
+	PaymentCreatedAt      pgtype.Timestamptz      `json:"paymentCreatedAt"`
+	Code                  *string                 `json:"code"`
+	DiscountAmount        pgtype.Numeric          `json:"discountAmount"`
+}
+
+func (q *Queries) GetOrder(ctx context.Context, id uuid.UUID) (GetOrderRow, error) {
 	row := q.db.QueryRow(ctx, getOrder, id)
-	var i Order
+	var i GetOrderRow
 	err := row.Scan(
 		&i.ID,
 		&i.CustomerID,
@@ -219,6 +267,15 @@ func (q *Queries) GetOrder(ctx context.Context, id uuid.UUID) (Order, error) {
 		&i.TrackingUrl,
 		&i.ShippingProvider,
 		&i.ShippingNotes,
+		&i.PaymentID,
+		&i.PaymentStatus,
+		&i.PaymentAmount,
+		&i.Method,
+		&i.Gateway,
+		&i.PaymentIntentID,
+		&i.PaymentCreatedAt,
+		&i.Code,
+		&i.DiscountAmount,
 	)
 	return i, err
 }
@@ -576,7 +633,7 @@ SET
     updated_at = now()
 WHERE
     id = $5
-RETURNING id, customer_id, customer_email, customer_name, customer_phone, shipping_address, total_price, status, confirmed_at, delivered_at, cancelled_at, shipping_method, refunded_at, order_date, updated_at, created_at, shipping_method_id, shipping_rate_id, shipping_cost, estimated_delivery_date, tracking_number, tracking_url, shipping_provider, shipping_notes
+RETURNING orders.id
 `
 
 type UpdateOrderParams struct {
@@ -587,7 +644,7 @@ type UpdateOrderParams struct {
 	ID          uuid.UUID          `json:"id"`
 }
 
-func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order, error) {
+func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (uuid.UUID, error) {
 	row := q.db.QueryRow(ctx, updateOrder,
 		arg.Status,
 		arg.ConfirmedAt,
@@ -595,32 +652,7 @@ func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order
 		arg.DeliveredAt,
 		arg.ID,
 	)
-	var i Order
-	err := row.Scan(
-		&i.ID,
-		&i.CustomerID,
-		&i.CustomerEmail,
-		&i.CustomerName,
-		&i.CustomerPhone,
-		&i.ShippingAddress,
-		&i.TotalPrice,
-		&i.Status,
-		&i.ConfirmedAt,
-		&i.DeliveredAt,
-		&i.CancelledAt,
-		&i.ShippingMethod,
-		&i.RefundedAt,
-		&i.OrderDate,
-		&i.UpdatedAt,
-		&i.CreatedAt,
-		&i.ShippingMethodID,
-		&i.ShippingRateID,
-		&i.ShippingCost,
-		&i.EstimatedDeliveryDate,
-		&i.TrackingNumber,
-		&i.TrackingUrl,
-		&i.ShippingProvider,
-		&i.ShippingNotes,
-	)
-	return i, err
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
 }

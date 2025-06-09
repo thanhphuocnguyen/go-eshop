@@ -15,11 +15,12 @@ type CustomerInfoTxArgs struct {
 }
 
 type CreatePaymentResult struct {
-	PaymentID       string    `json:"paymentId"`
-	ClientSecret    *string   `json:"clientSecret,omitempty"`
-	PaymentIntentID string    `json:"paymentIntentId"`
-	TotalPrice      float64   `json:"totalPrice"`
-	OrderID         uuid.UUID `json:"orderId"`
+	PaymentID       string        `json:"paymentId"`
+	ClientSecret    *string       `json:"clientSecret,omitempty"`
+	PaymentIntentID string        `json:"paymentIntentId"`
+	TotalPrice      float64       `json:"totalPrice"`
+	OrderID         uuid.UUID     `json:"orderId"`
+	Status          PaymentStatus `json:"status"`
 }
 
 type CreatePaymentArgs struct {
@@ -38,7 +39,7 @@ type CheckoutCartTxArgs struct {
 	DiscountID            *uuid.UUID
 	ShippingAddress       ShippingAddressSnapshot
 	PaymentMethod         PaymentMethod
-	PaymentGateway        PaymentGateway
+	PaymentGateway        *string
 	CreatePaymentFn       func(orderID uuid.UUID, paymentMethod PaymentMethod) (paymentIntentID string, clientSecret *string, err error)
 }
 
@@ -59,18 +60,24 @@ func (s *pgRepo) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxArgs) (Cr
 			log.Error().Err(err).Msg("CreateOrder")
 			return err
 		}
+		paymentAmount := arg.TotalPrice - arg.DiscountPrice
+		if paymentAmount < 0 {
+			paymentAmount = 0
+		}
+		result.TotalPrice = paymentAmount
 
 		createPaymentArgs := CreatePaymentParams{
 			OrderID: order.ID,
-			Amount:  utils.GetPgNumericFromFloat(arg.TotalPrice),
-		}
-		createPaymentArgs.PaymentMethod = PaymentMethodStripe
-		createPaymentArgs.PaymentGateway = NullPaymentGateway{
-			PaymentGateway: PaymentGatewayStripe,
-			Valid:          true,
+			Amount:  utils.GetPgNumericFromFloat(paymentAmount),
 		}
 
+		createPaymentArgs.Method = arg.PaymentMethod
+		createPaymentArgs.Gateway = arg.PaymentGateway
+
 		if arg.DiscountPrice != 0 {
+			if arg.DiscountPrice > arg.TotalPrice {
+				arg.DiscountPrice = arg.TotalPrice
+			}
 			_, err := q.InsertOrderDiscount(ctx, InsertOrderDiscountParams{
 				OrderID:        order.ID,
 				DiscountID:     *arg.DiscountID,
@@ -103,18 +110,20 @@ func (s *pgRepo) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxArgs) (Cr
 			log.Error().Err(err).Msg("CheckoutCart")
 			return err
 		}
+		if paymentAmount > 0 {
+			paymentIntentID, clientSecret, err := arg.CreatePaymentFn(order.ID, createPaymentArgs.Method)
+			createPaymentArgs.PaymentIntentID = &paymentIntentID
+			if err != nil {
+				log.Error().Err(err).Msg("CreatePaymentFn")
+				return err
+			}
+			result.ClientSecret = clientSecret
+			result.PaymentIntentID = paymentIntentID
+		} else {
+			createPaymentArgs.PaymentIntentID = nil
+			createPaymentArgs.Status = PaymentStatusSuccess
 
-		paymentIntentID, clientSecret, err := arg.CreatePaymentFn(order.ID, createPaymentArgs.PaymentMethod)
-		createPaymentArgs.GatewayPaymentIntentID = &paymentIntentID
-
-		if err != nil {
-			log.Error().Err(err).Msg("CreatePaymentFn")
-			return err
 		}
-
-		result.PaymentIntentID = paymentIntentID
-		result.ClientSecret = clientSecret
-		result.TotalPrice = arg.TotalPrice
 
 		// create payment transaction
 		payment, err := q.CreatePayment(ctx, createPaymentArgs)
@@ -122,6 +131,7 @@ func (s *pgRepo) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxArgs) (Cr
 			log.Error().Err(err).Msg("CreatePayment")
 			return err
 		}
+
 		result.PaymentID = payment.ID.String()
 
 		return nil

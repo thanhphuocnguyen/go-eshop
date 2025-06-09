@@ -9,8 +9,8 @@ import (
 )
 
 type RefundOrderTxArgs struct {
-	OrderID                  uuid.UUID
-	RefundPaymentFromGateway func(paymentID string, gateway PaymentGateway) (string, error)
+	OrderID                 uuid.UUID
+	RefundPaymentFromMethod func(paymentID string, method PaymentMethod) (string, error)
 }
 
 func (pg *pgRepo) RefundOrderTx(ctx context.Context, args RefundOrderTxArgs) (err error) {
@@ -22,33 +22,31 @@ func (pg *pgRepo) RefundOrderTx(ctx context.Context, args RefundOrderTxArgs) (er
 			return err
 		}
 		// if payment is not found, we don't need to refund it
-		if payment.PaymentGateway.Valid {
-			if payment.Status != PaymentStatusSuccess {
-				return errors.New("payment is not successful, can't refund")
-			}
+		if payment.Status != PaymentStatusSuccess {
+			return errors.New("payment is not successful, can't refund")
+		}
 
-			// refund payment from gateway if it's not refunded yet
-			if args.RefundPaymentFromGateway != nil {
-				refundID, err := args.RefundPaymentFromGateway(*payment.GatewayPaymentIntentID, payment.PaymentGateway.PaymentGateway)
-				if err != nil {
-					log.Error().Err(err).Msg("RefundPaymentFromGateway")
-					return err
-				}
-				updateParams := UpdatePaymentParams{
-					ID: payment.ID,
-					Status: NullPaymentStatus{
-						PaymentStatus: PaymentStatusRefunded,
-						Valid:         true,
-					},
-				}
-				if refundID != "" {
-					updateParams.RefundID = &refundID
-				}
-				err = q.UpdatePayment(ctx, updateParams)
-				if err != nil {
-					log.Error().Err(err).Msg("UpdatePaymentTransaction")
-					return err
-				}
+		// refund payment from gateway if it's not refunded yet
+		if args.RefundPaymentFromMethod != nil {
+			refundID, err := args.RefundPaymentFromMethod(*payment.PaymentIntentID, payment.Method)
+			if err != nil {
+				log.Error().Err(err).Msg("RefundPaymentFromGateway")
+				return err
+			}
+			updateParams := UpdatePaymentParams{
+				ID: payment.ID,
+				Status: NullPaymentStatus{
+					PaymentStatus: PaymentStatusRefunded,
+					Valid:         true,
+				},
+			}
+			if refundID != "" {
+				updateParams.RefundID = &refundID
+			}
+			err = q.UpdatePayment(ctx, updateParams)
+			if err != nil {
+				log.Error().Err(err).Msg("UpdatePaymentTransaction")
+				return err
 			}
 		}
 

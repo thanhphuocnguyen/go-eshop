@@ -24,23 +24,12 @@ CREATE TYPE "payment_status" AS ENUM (
 
 CREATE TYPE "payment_method" AS ENUM (
   'credit_card',
+  'debit_card',
   'paypal',
   'stripe',
   'apple_pay',
   'bank_transfer',
   'cod'
-);
-
-CREATE TYPE "payment_gateway" AS ENUM (
-  'stripe',
-  'paypal',
-  'visa',
-  'mastercard',
-  'apple_pay',
-  'postpaid',
-  'momo',
-  'zalo_pay',
-  'vn_pay'
 );
 
 CREATE TYPE "cart_status" AS ENUM ('active', 'checked_out');

@@ -172,10 +172,10 @@ type CreatePaymentIntentResponse struct {
 }
 
 type PaymentResponse struct {
-	ID      string                    `json:"id"`
-	Gateway repository.PaymentGateway `json:"gateway,omitempty"`
-	Status  repository.PaymentStatus  `json:"status,omitempty"`
-	Details interface{}               `json:"details"`
+	ID      string                   `json:"id"`
+	Gateway *string                  `json:"gateway,omitempty"`
+	Status  repository.PaymentStatus `json:"status,omitempty"`
+	Details interface{}              `json:"details"`
 }
 
 type OrderItemResponse struct {
@@ -195,7 +195,7 @@ type OrderDetailResponse struct {
 	Status        repository.OrderStatus             `json:"status"`
 	CustomerName  string                             `json:"customerName"`
 	CustomerEmail string                             `json:"customerEmail"`
-	PaymentInfo   *PaymentInfoModel                  `json:"paymentInfo,omitempty"`
+	PaymentInfo   PaymentInfoModel                   `json:"paymentInfo,omitempty"`
 	ShippingInfo  repository.ShippingAddressSnapshot `json:"shippingInfo"`
 	Products      []OrderItemResponse                `json:"products"`
 	CreatedAt     time.Time                          `json:"createdAt"`

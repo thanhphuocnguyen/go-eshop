@@ -4,10 +4,10 @@ import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
 import { OrderStatus } from '@/app/lib/definitions';
 import Link from 'next/link';
 import useSWR from 'swr';
-import { formatCurrency } from '@/app/lib/utils';
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
 import dayjs from 'dayjs';
 import clsx from 'clsx';
+import { formatCurrency } from '@/app/utils';
 
 type OrderModel = {
   id: string;

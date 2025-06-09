@@ -440,15 +440,16 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 	var totalPrice float64
 
 	for _, item := range cartItemRows {
-		price, _ := item.Price.Float64Value()
-		paramIdx := -1
+		variantIdx := -1
 		for j, param := range createOrderItemParams {
 			if param.VariantID == item.CartItem.VariantID {
-				paramIdx = j
+				variantIdx = j
 				break
 			}
 		}
-		if paramIdx == -1 {
+
+		if variantIdx == -1 {
+			price, _ := item.Price.Float64Value()
 			itemParam := repository.CreateBulkOrderItemsParams{
 				VariantID:            item.CartItem.VariantID,
 				Quantity:             item.CartItem.Quantity,
@@ -461,11 +462,12 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 					Value: item.AttrValCode,
 				}},
 			}
+
 			createOrderItemParams = append(createOrderItemParams, itemParam)
 			totalPrice += price.Float64 * float64(item.CartItem.Quantity)
 		} else {
-			createOrderItemParams[paramIdx].AttributesSnapshot = append(
-				createOrderItemParams[paramIdx].AttributesSnapshot,
+			createOrderItemParams[variantIdx].AttributesSnapshot = append(
+				createOrderItemParams[variantIdx].AttributesSnapshot,
 				repository.AttributeDataSnapshot{
 					Name:  item.AttrName,
 					Value: item.AttrValCode,
@@ -557,10 +559,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 	params.DiscountPrice = discountPrice
 	params.DiscountID = discountID
 	params.PaymentMethod = repository.PaymentMethod(req.PaymentMethod)
-	params.TotalPrice -= discountPrice
-	if params.TotalPrice < 0 {
-		params.TotalPrice = 0
-	}
+
 	params.CreatePaymentFn = func(orderID uuid.UUID, paymentMethod repository.PaymentMethod) (paymentIntentID string, clientSecretID *string, err error) {
 		switch paymentMethod {
 		case repository.PaymentMethodStripe:

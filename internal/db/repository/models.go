@@ -240,59 +240,11 @@ func (ns NullOrderStatus) Value() (driver.Value, error) {
 	return string(ns.OrderStatus), nil
 }
 
-type PaymentGateway string
-
-const (
-	PaymentGatewayStripe     PaymentGateway = "stripe"
-	PaymentGatewayPaypal     PaymentGateway = "paypal"
-	PaymentGatewayVisa       PaymentGateway = "visa"
-	PaymentGatewayMastercard PaymentGateway = "mastercard"
-	PaymentGatewayApplePay   PaymentGateway = "apple_pay"
-	PaymentGatewayPostpaid   PaymentGateway = "postpaid"
-	PaymentGatewayMomo       PaymentGateway = "momo"
-	PaymentGatewayZaloPay    PaymentGateway = "zalo_pay"
-	PaymentGatewayVnPay      PaymentGateway = "vn_pay"
-)
-
-func (e *PaymentGateway) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = PaymentGateway(s)
-	case string:
-		*e = PaymentGateway(s)
-	default:
-		return fmt.Errorf("unsupported scan type for PaymentGateway: %T", src)
-	}
-	return nil
-}
-
-type NullPaymentGateway struct {
-	PaymentGateway PaymentGateway `json:"paymentGateway"`
-	Valid          bool           `json:"valid"` // Valid is true if PaymentGateway is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullPaymentGateway) Scan(value interface{}) error {
-	if value == nil {
-		ns.PaymentGateway, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.PaymentGateway.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullPaymentGateway) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.PaymentGateway), nil
-}
-
 type PaymentMethod string
 
 const (
 	PaymentMethodCreditCard   PaymentMethod = "credit_card"
+	PaymentMethodDebitCard    PaymentMethod = "debit_card"
 	PaymentMethodPaypal       PaymentMethod = "paypal"
 	PaymentMethodStripe       PaymentMethod = "stripe"
 	PaymentMethodApplePay     PaymentMethod = "apple_pay"
@@ -632,19 +584,19 @@ type OrderItem struct {
 }
 
 type Payment struct {
-	ID                     uuid.UUID          `json:"id"`
-	OrderID                uuid.UUID          `json:"orderId"`
-	Amount                 pgtype.Numeric     `json:"amount"`
-	Status                 PaymentStatus      `json:"status"`
-	PaymentMethod          PaymentMethod      `json:"paymentMethod"`
-	PaymentGateway         NullPaymentGateway `json:"paymentGateway"`
-	RefundID               *string            `json:"refundId"`
-	GatewayPaymentIntentID *string            `json:"gatewayPaymentIntentId"`
-	GatewayChargeID        *string            `json:"gatewayChargeId"`
-	ErrorCode              *string            `json:"errorCode"`
-	ErrorMessage           *string            `json:"errorMessage"`
-	CreatedAt              pgtype.Timestamptz `json:"createdAt"`
-	UpdatedAt              pgtype.Timestamptz `json:"updatedAt"`
+	ID              uuid.UUID          `json:"id"`
+	OrderID         uuid.UUID          `json:"orderId"`
+	Amount          pgtype.Numeric     `json:"amount"`
+	Status          PaymentStatus      `json:"status"`
+	Method          PaymentMethod      `json:"method"`
+	Gateway         *string            `json:"gateway"`
+	RefundID        *string            `json:"refundId"`
+	PaymentIntentID *string            `json:"paymentIntentId"`
+	ChargeID        *string            `json:"chargeId"`
+	ErrorCode       *string            `json:"errorCode"`
+	ErrorMessage    *string            `json:"errorMessage"`
+	CreatedAt       pgtype.Timestamptz `json:"createdAt"`
+	UpdatedAt       pgtype.Timestamptz `json:"updatedAt"`
 }
 
 type PaymentTransaction struct {

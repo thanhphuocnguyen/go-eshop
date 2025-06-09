@@ -3,10 +3,11 @@ INSERT INTO
     payments (
         order_id,
         amount,
-        payment_method,
-        payment_gateway,
-        gateway_payment_intent_id,
-        gateway_charge_id
+        method,
+        gateway,
+        status,
+        payment_intent_id,
+        charge_id
     )
 VALUES
     (
@@ -15,7 +16,8 @@ VALUES
         $3,
         $4,
         $5,
-        $6
+        $6,
+        $7
     )
 RETURNING *;
 
@@ -43,7 +45,7 @@ SELECT
 FROM
     payments
 WHERE
-    gateway_payment_intent_id = $1
+    payment_intent_id = $1
 LIMIT 1;
 
 -- name: UpdatePayment :exec
@@ -51,12 +53,12 @@ UPDATE
     payments
 SET
     amount = COALESCE(sqlc.narg(amount), amount),
-    payment_method = COALESCE(sqlc.narg(payment_method), payment_method),
+    method = COALESCE(sqlc.narg(method), method),
     refund_id = COALESCE(sqlc.narg(refund_id), refund_id),
     status = COALESCE(sqlc.narg(status), status),
-    payment_gateway = COALESCE(sqlc.narg(payment_gateway), payment_gateway),
-    gateway_payment_intent_id = COALESCE(sqlc.narg(gateway_payment_intent_id), gateway_payment_intent_id),
-    gateway_charge_id = COALESCE(sqlc.narg(gateway_charge_id), gateway_charge_id),
+    gateway = COALESCE(sqlc.narg(gateway), gateway),
+    payment_intent_id = COALESCE(sqlc.narg(payment_intent_id), payment_intent_id),
+    charge_id = COALESCE(sqlc.narg(charge_id), charge_id),
     error_code = COALESCE(sqlc.narg(error_code), error_code),
     error_message = COALESCE(sqlc.narg(error_message), error_message),
     updated_at = NOW()

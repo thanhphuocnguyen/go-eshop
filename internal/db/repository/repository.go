@@ -17,7 +17,7 @@ type Repository interface {
 	Querier
 	CheckoutCartTx(ctx context.Context, arg CheckoutCartTxArgs) (CreatePaymentResult, error)
 	SetPrimaryAddressTx(ctx context.Context, arg SetPrimaryAddressTxArgs) error
-	CancelOrderTx(ctx context.Context, params CancelOrderTxArgs) (Order, error)
+	CancelOrderTx(ctx context.Context, params CancelOrderTxArgs) (uuid.UUID, error)
 	RefundOrderTx(ctx context.Context, params RefundOrderTxArgs) error
 	VerifyEmailTx(ctx context.Context, arg VerifyEmailTxArgs) error
 	QueryRaw(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error)

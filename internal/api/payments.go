@@ -82,13 +82,13 @@ func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
 	total, _ := ord.TotalPrice.Float64Value()
 	// create new payment
 	createPaymentParams := repository.CreatePaymentParams{
-		OrderID:       ord.ID,
-		Amount:        utils.GetPgNumericFromFloat(total.Float64),
-		PaymentMethod: repository.PaymentMethod(req.PaymentMethod),
+		OrderID: ord.ID,
+		Amount:  utils.GetPgNumericFromFloat(total.Float64),
+		Method:  repository.PaymentMethod(req.PaymentMethod),
 	}
 	var resp CreatePaymentIntentResponse
 	switch req.PaymentMethod {
-	case string(repository.PaymentGatewayStripe):
+	case string(repository.PaymentMethodStripe):
 		stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
@@ -101,11 +101,8 @@ func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
 			return
 		}
 		paymentIntent := createPaymentIntentResult.(*stripe.PaymentIntent)
-		createPaymentParams.PaymentGateway = repository.NullPaymentGateway{
-			PaymentGateway: repository.PaymentGatewayStripe,
-			Valid:          true,
-		}
-		createPaymentParams.GatewayPaymentIntentID = &paymentIntent.ID
+
+		createPaymentParams.PaymentIntentID = &paymentIntent.ID
 		resp.ClientSecret = &paymentIntent.ClientSecret
 	}
 
@@ -149,7 +146,7 @@ func (sv *Server) getPaymentHandler(c *gin.Context) {
 	}
 
 	var details interface{}
-	if payment.PaymentGateway.Valid {
+	if payment.Method == repository.PaymentMethodStripe {
 		stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
@@ -157,7 +154,7 @@ func (sv *Server) getPaymentHandler(c *gin.Context) {
 		}
 		sv.paymentCtx.SetStrategy(stripeInstance)
 
-		details, err = sv.paymentCtx.GetPaymentObject(*payment.GatewayPaymentIntentID)
+		details, err = sv.paymentCtx.GetPaymentObject(*payment.PaymentIntentID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
 			return
@@ -166,7 +163,7 @@ func (sv *Server) getPaymentHandler(c *gin.Context) {
 
 	resp := PaymentResponse{
 		ID:      payment.ID.String(),
-		Gateway: payment.PaymentGateway.PaymentGateway,
+		Gateway: payment.Gateway,
 		Status:  payment.Status,
 		Details: details,
 	}
@@ -220,7 +217,7 @@ func (sv *Server) changePaymentStatusHandler(c *gin.Context) {
 		return
 	}
 
-	if payment.PaymentGateway.Valid {
+	if payment.Gateway != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](InvalidPaymentCode, "", errors.New("cannot change payment status for stripe payment")))
 		return
 	}
