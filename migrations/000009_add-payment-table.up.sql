@@ -36,7 +36,7 @@ CREATE INDEX ON "payments" ("method");
 
 CREATE INDEX ON "payments" ("payment_intent_id");
 
-CREATE INDEX ON "payments" ("gateway_charge_id");
+CREATE INDEX ON "payments" ("charge_id");
 
 CREATE INDEX ON "payment_transactions" ("payment_id");
 

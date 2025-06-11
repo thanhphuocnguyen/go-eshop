@@ -18,7 +18,11 @@ export async function middleware(request: NextRequest) {
   const accessToken = request.cookies.get('accessToken')?.value;
   const refreshToken = request.cookies.get('refreshToken')?.value;
   const response = NextResponse.next();
-  if (!accessToken && refreshToken) {
+  if (
+    !accessToken &&
+    refreshToken &&
+    privatePaths.some((route) => path.startsWith(route))
+  ) {
     const refreshResult = await fetch(PUBLIC_API_PATHS.REFRESH_TOKEN, {
       method: 'POST',
       headers: {

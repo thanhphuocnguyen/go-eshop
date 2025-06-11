@@ -779,9 +779,9 @@ type User struct {
 	VerifiedEmail     bool        `json:"verifiedEmail"`
 	VerifiedPhone     bool        `json:"verifiedPhone"`
 	PasswordChangedAt time.Time   `json:"passwordChangedAt"`
+	Locked            bool        `json:"locked"`
 	UpdatedAt         time.Time   `json:"updatedAt"`
 	CreatedAt         time.Time   `json:"createdAt"`
-	Locked            bool        `json:"locked"`
 	AvatarUrl         *string     `json:"avatarUrl"`
 	AvatarImageID     pgtype.UUID `json:"avatarImageId"`
 }

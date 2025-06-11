@@ -19,6 +19,7 @@ export const useUser = () => {
       refreshInterval: 0,
       dedupingInterval: 60000, // 1 minute deduplication
       revalidateOnFocus: false,
+      shouldRetryOnError: false,
     }
   );
   return {

@@ -3,34 +3,40 @@
 import { ArrowLeftCircleIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { CategoryEditForm } from '../../_components/CategoryEditForm';
-import { PUBLIC_API_PATHS } from '@/app/lib/constants/api';
+import { ADMIN_API_PATHS } from '@/app/lib/constants/api';
 import { toast } from 'react-toastify';
 import { redirect } from 'next/navigation';
-import { GeneralCategoryModel, GenericResponse } from '@/app/lib/definitions';
+import { GeneralCategoryModel } from '@/app/lib/definitions';
 import { clientSideFetch } from '@/app/lib/api/apiClient';
 
 export default function Page() {
   const handleSave = async (form: FormData) => {
-    const { data, error } = await clientSideFetch<
-      GenericResponse<GeneralCategoryModel>
-    >(PUBLIC_API_PATHS.COLLECTIONS, {
-      method: 'POST',
-      body: form,
-    });
-
-    if (error) {
-      console.error(error);
-      toast.error(
-        <div>
-          <p className='text-red-500'>Failed to create collection</p>
-          <p className='text-red-500'>{JSON.stringify(error)}</p>
-        </div>
+    try {
+      const { data, error } = await clientSideFetch<GeneralCategoryModel>(
+        ADMIN_API_PATHS.COLLECTIONS,
+        {
+          method: 'POST',
+          body: form,
+        }
       );
-      return;
+
+      if (error) {
+        console.error(error);
+        toast.error(
+          <div>
+            <p className='text-red-500'>Failed to create collection</p>
+            <p className='text-red-500'>{JSON.stringify(error)}</p>
+          </div>
+        );
+        return;
+      }
+      toast.success('Collection created');
+      redirect('/admin/collections/' + data.id);
+    } catch (error) {
+      console.error(error);
     }
-    toast.success('Collection created');
-    redirect('/admin/collections/' + data.id);
   };
+
   return (
     <div className=''>
       <Link

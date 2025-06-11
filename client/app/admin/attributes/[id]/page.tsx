@@ -70,6 +70,10 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
         return;
       }
       return response.data;
+    },
+    {
+      refreshInterval: 0,
+      dedupingInterval: 60000, // 1 minute deduplication
     }
   );
 

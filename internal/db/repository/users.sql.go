@@ -302,7 +302,7 @@ func (q *Queries) GetDefaultAddress(ctx context.Context, userID uuid.UUID) (User
 
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT
-    id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at, locked, avatar_url, avatar_image_id
+    id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, locked, updated_at, created_at, avatar_url, avatar_image_id
 FROM
     users
 WHERE
@@ -324,9 +324,9 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.VerifiedEmail,
 		&i.VerifiedPhone,
 		&i.PasswordChangedAt,
+		&i.Locked,
 		&i.UpdatedAt,
 		&i.CreatedAt,
-		&i.Locked,
 		&i.AvatarUrl,
 		&i.AvatarImageID,
 	)
@@ -334,7 +334,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at, locked, avatar_url, avatar_image_id FROM users WHERE id = $1 LIMIT 1
+SELECT id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, locked, updated_at, created_at, avatar_url, avatar_image_id FROM users WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
@@ -351,9 +351,9 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.VerifiedEmail,
 		&i.VerifiedPhone,
 		&i.PasswordChangedAt,
+		&i.Locked,
 		&i.UpdatedAt,
 		&i.CreatedAt,
-		&i.Locked,
 		&i.AvatarUrl,
 		&i.AvatarImageID,
 	)
@@ -362,7 +362,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 
 const getUserByUsername = `-- name: GetUserByUsername :one
 SELECT
-    id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at, locked, avatar_url, avatar_image_id
+    id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, locked, updated_at, created_at, avatar_url, avatar_image_id
 FROM
     users
 WHERE
@@ -384,9 +384,9 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.VerifiedEmail,
 		&i.VerifiedPhone,
 		&i.PasswordChangedAt,
+		&i.Locked,
 		&i.UpdatedAt,
 		&i.CreatedAt,
-		&i.Locked,
 		&i.AvatarUrl,
 		&i.AvatarImageID,
 	)
@@ -394,7 +394,7 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 }
 
 const getUsers = `-- name: GetUsers :many
-SELECT id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, updated_at, created_at, locked, avatar_url, avatar_image_id FROM users ORDER BY id LIMIT $1 OFFSET $2
+SELECT id, role, username, email, phone, fullname, hashed_password, verified_email, verified_phone, password_changed_at, locked, updated_at, created_at, avatar_url, avatar_image_id FROM users ORDER BY id LIMIT $1 OFFSET $2
 `
 
 type GetUsersParams struct {
@@ -422,9 +422,9 @@ func (q *Queries) GetUsers(ctx context.Context, arg GetUsersParams) ([]User, err
 			&i.VerifiedEmail,
 			&i.VerifiedPhone,
 			&i.PasswordChangedAt,
+			&i.Locked,
 			&i.UpdatedAt,
 			&i.CreatedAt,
-			&i.Locked,
 			&i.AvatarUrl,
 			&i.AvatarImageID,
 		); err != nil {

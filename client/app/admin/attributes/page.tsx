@@ -138,7 +138,7 @@ export default function Page() {
                   {e.values?.map((e) => e.name || e.code)?.join(', ')}
                 </td>
                 <td className='px-6 py-4'>
-                  {dayjs(e.created_at).format('YYYY/MM/DD')}
+                  {dayjs(e.createdAt).format('YYYY/MM/DD')}
                 </td>
                 <td className='px-6 py-4'>
                   <div className='flex space-x-2'>

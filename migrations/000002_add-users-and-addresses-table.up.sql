@@ -13,6 +13,7 @@ CREATE TABLE
         "verified_email" bool NOT NULL DEFAULT FALSE,
         "verified_phone" bool NOT NULL DEFAULT FALSE,
         "password_changed_at" TIMESTAMPTZ NOT NULL DEFAULT '0001-01-01 00:00:00Z',
+        locked BOOLEAN NOT NULL DEFAULT FALSE,
         "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW (),
         "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW ()
     );
