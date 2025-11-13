@@ -250,9 +250,10 @@ func seedUsers(ctx context.Context, pg repository.Repository) {
 		params[i] = repository.SeedUsersParams{
 			Email:          user.Email,
 			Username:       user.Username,
-			Phone:          user.Phone,
+			PhoneNumber:    user.Phone,
 			HashedPassword: hashed,
-			Fullname:       user.FullName,
+			FirstName:      user.FullName,
+			LastName:       "",
 			Role:           repository.UserRoleUser,
 		}
 		if params[i].Username == "admin" {
@@ -323,12 +324,12 @@ func seedUserAddresses(ctx context.Context, repo repository.Repository, userIDs 
 	for i, address := range addresses {
 		idx := rand.Intn(len(userIDs))
 		params[i] = repository.SeedAddressesParams{
-			UserID:   userIDs[idx],
-			Phone:    address.Phone,
-			Street:   address.Street,
-			Ward:     &address.Ward,
-			District: address.District,
-			City:     address.City,
+			UserID:      userIDs[idx],
+			PhoneNumber: address.Phone,
+			Street:      address.Street,
+			Ward:        &address.Ward,
+			District:    address.District,
+			City:        address.City,
 		}
 	}
 	_, err = repo.SeedAddresses(ctx, params)

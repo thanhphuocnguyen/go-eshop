@@ -33,7 +33,6 @@ CREATE INDEX idx_carts_updated_at ON carts (updated_at);
 -- Indexes for `cart_items` table
 -- The UNIQUE constraint on (cart_id, variant_id) creates the most important index.
 -- Add separate indexes if lookups by only one column are common and not covered well by the unique index:
-CREATE INDEX idx_cart_items_cart_id ON cart_items (cart_id);
 
 -- Often needed to fetch all items for a cart
 CREATE INDEX idx_cart_items_variant_id ON cart_items (variant_id);

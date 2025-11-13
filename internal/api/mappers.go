@@ -11,9 +11,9 @@ func mapToUserResponse(user repository.User) UserResponse {
 		ID:                user.ID,
 		Addresses:         []AddressResponse{},
 		Email:             user.Email,
-		FullName:          user.Fullname,
+		FullName:          user.FirstName,
 		Role:              user.Role,
-		Phone:             user.Phone,
+		Phone:             user.PhoneNumber,
 		Username:          user.Username,
 		VerifiedEmail:     user.VerifiedEmail,
 		VerifiedPhone:     user.VerifiedPhone,
@@ -25,7 +25,7 @@ func mapToUserResponse(user repository.User) UserResponse {
 
 func mapAddressToAddressResponse(address repository.UserAddress) AddressResponse {
 	return AddressResponse{
-		Phone:    address.Phone,
+		Phone:    address.PhoneNumber,
 		Street:   address.Street,
 		Ward:     address.Ward,
 		District: address.District,
@@ -250,7 +250,7 @@ func mapAddressResponse(address repository.UserAddress) AddressResponse {
 		ID:        address.ID.String(),
 		Default:   address.Default,
 		CreatedAt: address.CreatedAt,
-		Phone:     address.Phone,
+		Phone:     address.PhoneNumber,
 		Street:    address.Street,
 		Ward:      address.Ward,
 		District:  address.District,

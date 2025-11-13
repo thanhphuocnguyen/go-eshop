@@ -27,6 +27,27 @@ sql:
         - column: "orders.shipping_address"
           go_type:
             type: "ShippingAddressSnapshot"
+        - db_type: "payment_status"
+          go_type:
+            type: "PaymentStatus"
+        - db_type: "payment_method"
+          go_type:
+            type: "PaymentMethod"
+        - db_type: "order_status"
+          go_type:
+            type: "OrderStatus"
+        - db_type: "user_role"
+          go_type:
+            type: "UserRole"
+        - db_type: "cart_status"
+          go_type:
+            type: "CartStatus"
+        - db_type: "card_type"
+          go_type:
+            type: "CardType"
+        - db_type: "entity_type"
+          go_type:
+            type: "EntityType"
         emit_interface: true
         json_tags_case_style: "camel"
         emit_json_tags: true

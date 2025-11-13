@@ -130,7 +130,7 @@ INSERT INTO discount_users (discount_id, user_id)
 VALUES ($1, $2);
 
 -- name: GetDiscountUsers :many
-SELECT du.id, du.discount_id, du.user_id, u.fullname, u.username
+SELECT du.id, du.discount_id, du.user_id, CONCAT(u.first_name, ' ', u.last_name) as fullname, u.username
 FROM discount_users du
 JOIN users u ON du.user_id = u.id
 WHERE du.discount_id = $1

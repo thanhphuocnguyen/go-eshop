@@ -44,7 +44,10 @@ func (sv *Server) getCollectionBySlugHandler(c *gin.Context) {
 	}
 
 	filters, err := sv.repo.GetFilterListForCollectionID(c, collection.ID)
-
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
+		return
+	}
 	collectionResp := CollectionDetailResponse{
 		Collection: CategoryResponse{
 			ID:          collection.ID.String(),

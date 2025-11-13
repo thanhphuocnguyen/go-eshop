@@ -59,14 +59,17 @@ CREATE TABLE IF NOT EXISTS
 
 -- Add shipping-related fields to orders table
 ALTER TABLE orders
-ADD COLUMN shipping_method_id UUID REFERENCES shipping_methods(id),
-ADD COLUMN shipping_rate_id UUID REFERENCES shipping_rates(id),
-ADD COLUMN shipping_cost DECIMAL(10, 2) DEFAULT 0,
-ADD COLUMN estimated_delivery_date TIMESTAMPTZ,
-ADD COLUMN tracking_number VARCHAR(100),
-ADD COLUMN tracking_url TEXT,
-ADD COLUMN shipping_provider VARCHAR(100),
-ADD COLUMN shipping_notes TEXT;
+    ADD COLUMN IF NOT EXISTS shipping_method_id UUID REFERENCES shipping_methods(id);
+ALTER TABLE orders
+    ADD COLUMN IF NOT EXISTS shipping_rate_id UUID REFERENCES shipping_rates(id);
+ALTER TABLE orders
+    ADD COLUMN IF NOT EXISTS estimated_delivery_date TIMESTAMPTZ;
+ALTER TABLE orders
+    ADD COLUMN IF NOT EXISTS tracking_url TEXT;
+ALTER TABLE orders
+    ADD COLUMN IF NOT EXISTS shipping_provider VARCHAR(100);
+ALTER TABLE orders
+    ADD COLUMN IF NOT EXISTS shipping_notes TEXT;
 
 -- Create a table to track shipment status
 CREATE TABLE IF NOT EXISTS
@@ -87,16 +90,15 @@ CREATE TABLE IF NOT EXISTS
 -- Create table for shipment items
 CREATE TABLE IF NOT EXISTS
     shipment_items (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         shipment_id UUID NOT NULL REFERENCES shipments(id) ON DELETE CASCADE,
         order_item_id UUID NOT NULL REFERENCES order_items(id) ON DELETE CASCADE,
-        quantity INT NOT NULL,
+        quantity INT NOT NULL CHECK (quantity > 0),
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        UNIQUE(shipment_id, order_item_id)
+        PRIMARY KEY(shipment_id, order_item_id)
     );
 
--- Create indexes for better performance
+
 CREATE INDEX idx_shipping_methods_is_active ON shipping_methods(is_active);
 CREATE INDEX idx_shipping_zones_is_active ON shipping_zones(is_active);
 CREATE INDEX idx_shipping_rates_method_zone ON shipping_rates(shipping_method_id, shipping_zone_id);

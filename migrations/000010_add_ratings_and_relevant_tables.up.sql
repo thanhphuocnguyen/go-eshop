@@ -11,11 +11,11 @@ CREATE TABLE
         verified_purchase BOOLEAN NOT NULL DEFAULT FALSE,
         is_visible BOOLEAN NOT NULL DEFAULT TRUE,
         is_approved BOOLEAN NOT NULL DEFAULT FALSE,
-        helpful_votes INT NOT NULL DEFAULT 0,
-        unhelpful_votes INT NOT NULL DEFAULT 0,
+
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        UNIQUE (product_id, user_id, order_item_id)
+
+        UNIQUE (product_id, user_id)
     );
 
 -- Create rating_votes table to track user votes on reviews
@@ -74,12 +74,12 @@ BEGIN
     WITH rating_stats AS (
         SELECT 
             COUNT(*) AS total_count,
-            COUNT(*) FILTER (WHERE rating >= 1.0 AND rating < 2.0) AS one_star,
-            COUNT(*) FILTER (WHERE rating >= 2.0 AND rating < 3.0) AS two_star,
-            COUNT(*) FILTER (WHERE rating >= 3.0 AND rating < 4.0) AS three_star,
-            COUNT(*) FILTER (WHERE rating >= 4.0 AND rating < 5.0) AS four_star,
-            COUNT(*) FILTER (WHERE rating = 5.0) AS five_star,
-            COALESCE(AVG(rating), 0) AS avg
+
+            COUNT(*) FILTER (WHERE ROUND(rating) = 1) AS one_star,
+            COUNT(*) FILTER (WHERE ROUND(rating) = 2) AS two_star,
+            COUNT(*) FILTER (WHERE ROUND(rating) = 3) AS three_star,
+            COUNT(*) FILTER (WHERE ROUND(rating) = 4) AS four_star,
+            COUNT(*) FILTER (WHERE ROUND(rating) = 5) AS five_star
         FROM product_ratings
         WHERE product_id = NEW.product_id AND is_visible = TRUE AND is_approved = TRUE
     )

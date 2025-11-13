@@ -105,6 +105,10 @@ func (sv *Server) getProductDetailHandler(c *gin.Context) {
 	entityIds = append(entityIds, prodID)
 
 	images, err := sv.repo.GetProductImagesAssigned(c, entityIds)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
+		return
+	}
 	imageResp := mapToProductImages(prodID, images)
 	variants := mapToVariantResp(variantRows)
 	productDetail.Variants = variants
@@ -270,7 +274,7 @@ func (sv *Server) deleteProductHandler(c *gin.Context) {
 		errGroup.Go(func() (err error) {
 			img, err := sv.repo.GetImageFromID(c, repository.GetImageFromIDParams{
 				ID:         image.ID,
-				EntityType: string(repository.EntityTypeProductVariant),
+				EntityType: string(repository.EntityTypeProduct),
 			})
 
 			if err != nil {
@@ -302,7 +306,10 @@ func (sv *Server) deleteProductHandler(c *gin.Context) {
 	}
 
 	err = errGroup.Wait()
-
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
+		return
+	}
 	err = sv.repo.DeleteProduct(c, uuid.MustParse(params.ID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))

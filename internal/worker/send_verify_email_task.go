@@ -62,7 +62,7 @@ func (processor *RedisTaskProcessor) ProcessSendVerifyEmail(ctx context.Context,
 	emailData := VerifyEmailData{
 		UserID:     user.ID,
 		Email:      user.Email,
-		FullName:   user.Fullname,
+		FullName:   user.FirstName + " " + user.LastName,
 		VerifyLink: verifyLink,
 	}
 

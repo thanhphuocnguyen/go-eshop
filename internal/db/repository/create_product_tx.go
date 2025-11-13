@@ -19,7 +19,7 @@ type CreateProductTxArgs struct {
 	BrandID          string                         `json:"brand_id,omitempty" binding:"omitempty,uuid"`
 	CollectionID     *string                        `json:"collection_id,omitempty" binding:"omitempty,uuid"`
 	Attributes       []string                       `json:"attributes" binding:"min=1"`
-	Variants         []CreateProductVariantTxParams `json:"variants,min=1"`
+	Variants         []CreateProductVariantTxParams `json:"variants" binding:"min=1"`
 }
 
 func (s *pgRepo) CreateProductTx(ctx context.Context, arg CreateProductTxArgs) (productID uuid.UUID, err error) {
@@ -100,7 +100,7 @@ func (s *pgRepo) CreateProductTx(ctx context.Context, arg CreateProductTxArgs) (
 				Sku:       sku,
 			}
 
-			createVariantParams.Stock = *&variant.Stock
+			createVariantParams.Stock = variant.Stock
 			if variant.Weight != nil {
 				createVariantParams.Weight = utils.GetPgNumericFromFloat(*variant.Weight)
 			}

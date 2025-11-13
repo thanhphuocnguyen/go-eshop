@@ -2,6 +2,7 @@ package cachesrv
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/go-redis/cache/v8"
@@ -20,7 +21,15 @@ func (r *RedisCache) Delete(c context.Context, key string) error {
 
 // Get implements Cache.
 func (r *RedisCache) Get(c context.Context, key string, value interface{}) error {
-	return r.Storage.Get(c, key, value)
+	err := r.Storage.Get(c, key, value)
+	if err != nil {
+		// Check if it's a cache miss (key not found)
+		if errors.Is(err, cache.ErrCacheMiss) || err.Error() == "cache: key is missing" {
+			return ErrCacheMiss
+		}
+		return err
+	}
+	return nil
 }
 
 // Set implements Cache.

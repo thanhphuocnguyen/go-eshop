@@ -47,12 +47,12 @@ func (sv *Server) createAddressHandler(c *gin.Context) {
 	}
 
 	payload := repository.CreateAddressParams{
-		Phone:    req.Phone,
-		UserID:   authPayload.UserID,
-		Street:   req.Street,
-		Default:  req.IsDefault,
-		City:     req.City,
-		District: req.District,
+		PhoneNumber: req.Phone,
+		UserID:      authPayload.UserID,
+		Street:      req.Street,
+		Default:     req.IsDefault,
+		City:        req.City,
+		District:    req.District,
 	}
 
 	if req.Ward != nil {
@@ -162,7 +162,7 @@ func (sv *Server) updateAddressHandlers(c *gin.Context) {
 	}
 
 	if input.Phone != nil {
-		payload.Phone = input.Phone
+		payload.PhoneNumber = input.Phone
 	}
 
 	if input.City != nil {
@@ -241,15 +241,11 @@ func (sv *Server) removeAddressHandlers(c *gin.Context) {
 		return
 	}
 
-	if address.Deleted {
-		c.JSON(http.StatusNotFound, createErrorResponse[bool](NotFoundCode, "", fmt.Errorf("address has been removed")))
-		return
-	}
-
 	err = sv.repo.DeleteAddress(c, repository.DeleteAddressParams{
-		ID:     uuid.MustParse(param.ID),
-		UserID: authPayload.UserID,
+		ID:     address.ID,
+		UserID: address.UserID,
 	})
+
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, createErrorResponse[bool](NotFoundCode, "", err))
@@ -285,7 +281,7 @@ func (sv *Server) setDefaultAddressHandler(c *gin.Context) {
 		return
 	}
 
-	address, err := sv.repo.GetAddress(c, repository.GetAddressParams{
+	_, err := sv.repo.GetAddress(c, repository.GetAddressParams{
 		ID:     uuid.MustParse(param.ID),
 		UserID: authPayload.UserID,
 	})
@@ -296,11 +292,6 @@ func (sv *Server) setDefaultAddressHandler(c *gin.Context) {
 			return
 		}
 		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
-		return
-	}
-
-	if address.Deleted {
-		c.JSON(http.StatusNotFound, createErrorResponse[bool](NotFoundCode, "", fmt.Errorf("address has been removed")))
 		return
 	}
 

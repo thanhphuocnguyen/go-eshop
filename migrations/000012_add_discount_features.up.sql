@@ -4,17 +4,18 @@ CREATE TABLE IF NOT EXISTS discounts (
     code VARCHAR(50) UNIQUE NOT NULL,
     description TEXT,
     discount_type VARCHAR(20) NOT NULL CHECK (discount_type IN ('percentage', 'fixed_amount')),
-    discount_value NUMERIC(10, 2) NOT NULL,
-    min_purchase_amount NUMERIC(10, 2),
-    max_discount_amount NUMERIC(10, 2),
-    usage_limit INTEGER,
-    used_count INTEGER NOT NULL DEFAULT 0,
+    discount_value NUMERIC(10, 2) NOT NULL CHECK (discount_value > 0),
+    min_purchase_amount NUMERIC(10, 2) CHECK (min_purchase_amount IS NULL OR min_purchase_amount > 0),
+    max_discount_amount NUMERIC(10, 2) CHECK (max_discount_amount IS NULL OR max_discount_amount > 0),
+    usage_limit INTEGER CHECK (usage_limit IS NULL OR usage_limit > 0),
+    used_count INTEGER NOT NULL DEFAULT 0 CHECK (used_count >= 0),
     is_active BOOLEAN NOT NULL DEFAULT true,
     starts_at TIMESTAMPTZ NOT NULL,
     expires_at TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    deleted_at TIMESTAMPTZ
+    deleted_at TIMESTAMPTZ,
+    CHECK (expires_at > starts_at)
 );
 
 -- Create discount_products table for product-specific discounts
@@ -49,7 +50,7 @@ CREATE TABLE IF NOT EXISTS order_discounts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
     discount_id UUID NOT NULL REFERENCES discounts(id) ON DELETE CASCADE,
-    discount_amount NUMERIC(10, 2) NOT NULL,
+    discount_amount NUMERIC(10, 2) NOT NULL CHECK (discount_amount > 0),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE (order_id, discount_id)
 );
@@ -70,8 +71,8 @@ EXECUTE FUNCTION update_discount_updated_at();
 
 -- Create indexes for better query performance
 CREATE INDEX IF NOT EXISTS idx_discounts_code ON discounts(code);
-CREATE INDEX IF NOT EXISTS idx_discounts_is_active ON discounts(is_active);
 CREATE INDEX IF NOT EXISTS idx_discounts_dates ON discounts(starts_at, expires_at);
+CREATE INDEX IF NOT EXISTS idx_discounts_active_dates ON discounts(starts_at, expires_at) WHERE is_active = true AND deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_discount_products_discount_id ON discount_products(discount_id);
 CREATE INDEX IF NOT EXISTS idx_discount_products_product_id ON discount_products(product_id);
 CREATE INDEX IF NOT EXISTS idx_discount_categories_discount_id ON discount_categories(discount_id);

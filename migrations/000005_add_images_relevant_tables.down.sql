@@ -1,6 +1,4 @@
 -- Drop indexes for `image_assignments` table
-DROP INDEX IF EXISTS idx_image_assignments_entity_order;
-
 DROP INDEX IF EXISTS idx_image_assignments_image_id;
 
 DROP INDEX IF EXISTS idx_image_assignments_entity;

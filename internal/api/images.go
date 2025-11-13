@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"mime"
 	"net/http"
 	"strings"
@@ -120,7 +119,10 @@ func (sv *Server) uploadProductImagesHandler(c *gin.Context) {
 				MimeType:   &mimeType,
 				FileSize:   &file.Size,
 			})
-
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, createErrorResponse[[]ImageResponse](InternalServerErrorCode, "save image info to db failed", err))
+				return
+			}
 			createImageAssignmentReq := make([]repository.InsertBulkImageAssignmentsParams, 0)
 			createImageAssignmentReq = append(createImageAssignmentReq, repository.InsertBulkImageAssignmentsParams{
 				ImageID:      img.ID,
@@ -145,7 +147,7 @@ func (sv *Server) uploadProductImagesHandler(c *gin.Context) {
 				createImageAssignmentReq = append(createImageAssignmentReq, repository.InsertBulkImageAssignmentsParams{
 					ImageID:      img.ID,
 					EntityID:     variantID,
-					EntityType:   string(repository.EntityTypeProductVariant),
+					EntityType:   string(repository.EntityTypeProduct),
 					DisplayOrder: int16(i) + 1,
 					Role:         repository.GalleryRole,
 				})
@@ -195,7 +197,7 @@ func (sv *Server) getProductImagesHandler(c *gin.Context) {
 	images, err := sv.repo.GetImagesByEntityID(c, uuid.MustParse(param.ID))
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[ImageResponse](InternalServerErrorCode, fmt.Sprintf("server error"), err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[ImageResponse](InternalServerErrorCode, "server error", err))
 		return
 	}
 
@@ -250,7 +252,7 @@ func (sv *Server) removeImageHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 		return
 	}
-	if image.EntityType != string(repository.EntityTypeProductVariant) {
+	if image.EntityType != string(repository.EntityTypeProduct) {
 		c.JSON(http.StatusNotFound, createErrorResponse[bool](NotFoundCode, "", errors.New("image not found")))
 		return
 	}

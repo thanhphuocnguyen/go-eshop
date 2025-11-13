@@ -15,8 +15,7 @@ DROP INDEX IF EXISTS idx_discounts_is_active;
 DROP INDEX IF EXISTS idx_discounts_code;
 
 -- Drop trigger and function
-DROP TRIGGER IF EXISTS update_discount_timestamp ON discounts;
-DROP FUNCTION IF EXISTS update_discount_updated_at();
+
 
 -- Drop tables
 DROP TABLE IF EXISTS order_discounts;
@@ -24,3 +23,7 @@ DROP TABLE IF EXISTS discount_users;
 DROP TABLE IF EXISTS discount_categories;
 DROP TABLE IF EXISTS discount_products;
 DROP TABLE IF EXISTS discounts;
+
+-- Drop trigger and function (after dropping discounts table)
+DROP TRIGGER IF EXISTS update_discount_timestamp ON discounts;
+DROP FUNCTION IF EXISTS update_discount_updated_at();

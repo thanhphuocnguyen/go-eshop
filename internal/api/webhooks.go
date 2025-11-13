@@ -107,6 +107,10 @@ func (server *Server) stripeEventHandler(c *gin.Context) {
 			return
 		}
 		err = server.repo.UpdatePayment(c, updateTransactionStatus)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, createErrorResponse[bool](InternalServerErrorCode, "", err))
+			return
+		}
 	}
 
 	if strings.HasPrefix(string(evt.Type), "charge.") {

@@ -9,12 +9,11 @@ DROP INDEX IF EXISTS idx_shipping_rates_method_zone;
 DROP INDEX IF EXISTS idx_shipping_zones_is_active;
 DROP INDEX IF EXISTS idx_shipping_methods_is_active;
 
--- Drop shipment_items table
+-- Drop shipment_items table (must be dropped before shipments due to FK constraint)
 DROP TABLE IF EXISTS shipment_items;
 
 -- Drop shipments table
 DROP TABLE IF EXISTS shipments;
-
 -- Remove shipping-related fields from orders table
 ALTER TABLE orders
 DROP COLUMN IF EXISTS shipping_notes,

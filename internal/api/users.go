@@ -56,13 +56,16 @@ func (sv *Server) updateUserHandler(c *gin.Context) {
 		}
 	}
 
-	if req.FullName != nil {
-		arg.Fullname = req.FullName
+	if req.FirstName != nil {
+		arg.FirstName = req.FirstName
+	}
+	if req.LastName != nil {
+		arg.LastName = req.LastName
 	}
 
 	if req.Phone != nil {
-		arg.Phone = req.Phone
-		if user.Phone != *req.Phone {
+		arg.PhoneNumber = req.Phone
+		if user.PhoneNumber != *req.Phone {
 			arg.VerifiedPhone = &boolVal
 		}
 	}

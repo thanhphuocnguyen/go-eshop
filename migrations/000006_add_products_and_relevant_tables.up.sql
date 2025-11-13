@@ -2,13 +2,13 @@
 CREATE TABLE
     products (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        name VARCHAR NOT NULL,
+        name VARCHAR(255) NOT NULL,
         description TEXT NOT NULL,
         short_description VARCHAR(1000),
         attributes UUID[],
         base_price DECIMAL(10, 2),
         base_sku VARCHAR(100) UNIQUE NOT NULL,
-        slug VARCHAR UNIQUE NOT NULL,
+        slug VARCHAR(255) UNIQUE NOT NULL,
         is_active BOOLEAN DEFAULT TRUE,
         category_id UUID REFERENCES categories (id) ON DELETE SET NULL,
         collection_id UUID REFERENCES collections (id) ON DELETE SET NULL,
@@ -40,14 +40,14 @@ CREATE TABLE
         PRIMARY KEY (variant_id, attribute_value_id)
     );
 
--- Create product_attributes table
+-- Create featured_sections table
 CREATE TABLE
     featured_sections (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         name VARCHAR(255) UNIQUE NOT NULL,
         slug VARCHAR(255) UNIQUE NOT NULL,
         image_url TEXT,
-        image_id VARCHAR,
+        image_id VARCHAR(255),
         description TEXT,
         remarkable BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),

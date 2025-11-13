@@ -376,9 +376,13 @@ func (sv *Server) getDiscountUsersByIDHandler(c *gin.Context) {
 	}
 
 	for i, discountUser := range discountUserRows {
+		name := ""
+		if discountUser.Fullname != nil {
+			name = *discountUser.Fullname
+		}
 		resp[i] = DiscountLinkObject{
 			ID:   discountUser.ID.String(),
-			Name: discountUser.Fullname,
+			Name: name,
 		}
 	}
 

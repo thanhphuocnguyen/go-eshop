@@ -1,7 +1,7 @@
 -- This migration script creates the images and image_assignments tables
 -- for storing image metadata and their associations with various entities.
 -- It also creates indexes to optimize queries on these tables.
--- The images table stores information about each image, including its URL,
+-- The images table stores information about each image, including its URL, alt text, caption, MIME type, file size, dimensions, and timestamps.
 CREATE TABLE
     images (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -40,5 +40,3 @@ CREATE INDEX idx_images_url ON images (url);
 CREATE INDEX idx_image_assignments_entity ON image_assignments (entity_id, entity_type);
 
 CREATE INDEX idx_image_assignments_image_id ON image_assignments (image_id);
-
-CREATE INDEX idx_image_assignments_entity_order ON image_assignments (entity_id, entity_type, display_order);

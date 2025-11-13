@@ -68,13 +68,21 @@ func (sv *Server) getOrdersHandler(c *gin.Context) {
 
 	var orderResponses []OrderListResponse
 	for _, aggregated := range fetchedOrderRows {
+		// Convert PaymentStatus interface{} to PaymentStatus type
+		paymentStatus := repository.PaymentStatusPending
+		if aggregated.PaymentStatus != nil {
+			if ps, ok := aggregated.PaymentStatus.(repository.PaymentStatus); ok {
+				paymentStatus = ps
+			}
+		}
+
 		total, _ := aggregated.TotalPrice.Float64Value()
 		orderResponses = append(orderResponses, OrderListResponse{
 			ID:            aggregated.ID,
 			Total:         total.Float64,
 			TotalItems:    int32(aggregated.TotalItems),
 			Status:        aggregated.Status,
-			PaymentStatus: aggregated.PaymentStatus.PaymentStatus,
+			PaymentStatus: paymentStatus,
 			CreatedAt:     aggregated.CreatedAt.UTC(),
 			UpdatedAt:     aggregated.UpdatedAt.UTC(),
 		})
@@ -155,7 +163,10 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 	}
 
 	paymentInfo, err := sv.repo.GetPaymentByOrderID(c, order.ID)
-
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderDetailResponse](InternalServerErrorCode, "", err))
+		return
+	}
 	var apiErr *ApiError = nil
 
 	if paymentInfo.Status == repository.PaymentStatusPending &&
@@ -252,7 +263,7 @@ func (sv *Server) confirmOrderPayment(c *gin.Context) {
 		return
 	}
 	if order.CustomerID != tokenPayload.UserID {
-		c.JSON(http.StatusForbidden, createErrorResponse[gin.H](PermissionDeniedCode, "", errors.New("You do not have permission to access this order")))
+		c.JSON(http.StatusForbidden, createErrorResponse[gin.H](PermissionDeniedCode, "", errors.New("you do not have permission to access this order")))
 		return
 	}
 	if order.Status != repository.OrderStatusDelivered {
@@ -263,7 +274,7 @@ func (sv *Server) confirmOrderPayment(c *gin.Context) {
 	orderUpdateParams := repository.UpdateOrderParams{
 		ID: order.ID,
 		Status: repository.NullOrderStatus{
-			OrderStatus: repository.OrderStatusCompleted,
+			OrderStatus: repository.OrderStatusDelivered,
 			Valid:       true,
 		},
 		ConfirmedAt: pgtype.Timestamptz{
@@ -331,7 +342,7 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 	}
 
 	if order.CustomerID != tokenPayload.UserID && user.Role != repository.UserRoleAdmin {
-		c.JSON(http.StatusForbidden, createErrorResponse[OrderListResponse](PermissionDeniedCode, "", errors.New("You do not have permission to access this order")))
+		c.JSON(http.StatusForbidden, createErrorResponse[OrderListResponse](PermissionDeniedCode, "", errors.New("you do not have permission to access this order")))
 		return
 	}
 
@@ -408,7 +419,7 @@ func (sv *Server) changeOrderStatus(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](InternalServerErrorCode, "", err))
 		return
 	}
-	if order.Status == repository.OrderStatusCompleted || order.Status == repository.OrderStatusCancelled || order.Status == repository.OrderStatusRefunded {
+	if order.Status == repository.OrderStatusDelivered || order.Status == repository.OrderStatusCancelled || order.Status == repository.OrderStatusRefunded {
 		c.JSON(http.StatusBadRequest, createErrorResponse[OrderListResponse](InvalidPaymentCode, "", errors.New("order cannot be changed")))
 		return
 	}
@@ -428,7 +439,7 @@ func (sv *Server) changeOrderStatus(c *gin.Context) {
 			Valid: true,
 		}
 	}
-	if status == repository.OrderStatusDelivering {
+	if status == repository.OrderStatusProcessing {
 		updateParams.DeliveredAt = pgtype.Timestamptz{
 			Time:  time.Now(),
 			Valid: true,
@@ -602,6 +613,14 @@ func (sv *Server) getAdminOrdersHandler(c *gin.Context) {
 
 	var orderResponses []OrderListResponse
 	for _, aggregated := range fetchedOrderRows {
+		// Convert PaymentStatus interface{} to PaymentStatus type
+		paymentStatus := repository.PaymentStatusPending
+		if aggregated.PaymentStatus != nil {
+			if ps, ok := aggregated.PaymentStatus.(repository.PaymentStatus); ok {
+				paymentStatus = ps
+			}
+		}
+
 		total, _ := aggregated.TotalPrice.Float64Value()
 		orderResponses = append(orderResponses, OrderListResponse{
 			ID:            aggregated.ID,
@@ -610,7 +629,7 @@ func (sv *Server) getAdminOrdersHandler(c *gin.Context) {
 			Status:        aggregated.Status,
 			CustomerName:  aggregated.CustomerName,
 			CustomerEmail: aggregated.CustomerEmail,
-			PaymentStatus: aggregated.PaymentStatus.PaymentStatus,
+			PaymentStatus: paymentStatus,
 			CreatedAt:     aggregated.CreatedAt.UTC(),
 			UpdatedAt:     aggregated.UpdatedAt.UTC(),
 		})

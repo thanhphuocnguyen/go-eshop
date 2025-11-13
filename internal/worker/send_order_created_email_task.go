@@ -76,7 +76,7 @@ func (p *RedisTaskProcessor) ProcessSendOrderCreatedEmail(ctx context.Context, t
 	emailData := OrderCreatedEmailData{
 		OrderID:  order.ID,
 		Total:    price.Float64,
-		FullName: user.Fullname,
+		FullName: user.FirstName + " " + user.LastName,
 		Items:    items,
 	}
 

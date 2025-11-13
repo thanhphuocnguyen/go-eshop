@@ -1,5 +1,5 @@
 -- name: InsertSession :one
-INSERT INTO sessions (
+INSERT INTO user_sessions (
     id,
     user_id,
     refresh_token,
@@ -13,15 +13,15 @@ INSERT INTO sessions (
 
 
 -- name: GetSession :one
-SELECT * FROM sessions
+SELECT * FROM user_sessions
 WHERE id = $1 LIMIT 1;
 
 -- name: GetSessionByRefreshToken :one
-SELECT * FROM sessions
+SELECT * FROM user_sessions
 WHERE refresh_token = $1 LIMIT 1;
 
 -- name: UpdateSession :one
-UPDATE sessions
+UPDATE user_sessions
 SET
     user_agent = COALESCE(sqlc.narg('user_agent'), user_agent),
     client_ip = COALESCE(sqlc.narg('client_ip'), client_ip),

@@ -21,12 +21,21 @@ DROP TABLE IF EXISTS rating_replies;
 DROP TABLE IF EXISTS rating_votes;
 DROP TABLE IF EXISTS product_ratings;
 
--- Remove columns from products table
-ALTER TABLE products
-DROP COLUMN IF EXISTS avg_rating,
-DROP COLUMN IF EXISTS rating_count,
-DROP COLUMN IF EXISTS one_star_count,
-DROP COLUMN IF EXISTS two_star_count,
-DROP COLUMN IF EXISTS three_star_count,
-DROP COLUMN IF EXISTS four_star_count,
-DROP COLUMN IF EXISTS five_star_count;
+-- Remove columns from products table if it exists
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'products'
+    ) THEN
+        ALTER TABLE products
+            DROP COLUMN IF EXISTS avg_rating,
+            DROP COLUMN IF EXISTS rating_count,
+            DROP COLUMN IF EXISTS one_star_count,
+            DROP COLUMN IF EXISTS two_star_count,
+            DROP COLUMN IF EXISTS three_star_count,
+            DROP COLUMN IF EXISTS four_star_count,
+            DROP COLUMN IF EXISTS five_star_count;
+    END IF;
+END
+$$;

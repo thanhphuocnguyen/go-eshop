@@ -87,7 +87,8 @@ type CheckoutRequest struct {
 	PaymentGateway *string          `json:"paymentGateway" binding:"omitempty,oneof=stripe"`
 	AddressID      *string          `json:"addressId" binding:"omitempty,uuid"`
 	Email          *string          `json:"email" binding:"omitempty,email"`
-	FullName       *string          `json:"fullName" binding:"omitempty"`
+	FirstName      *string          `json:"firstName,omitempty" binding:"omitempty,min=3,max=32"`
+	LastName       *string          `json:"lastName,omitempty" binding:"omitempty,min=3,max=32"`
 	Address        *CheckoutAddress `json:"address" binding:"omitempty"`
 	DiscountCode   *string          `json:"discountCode" binding:"omitempty,min=5,max=32,alphanum"`
 }
@@ -97,10 +98,11 @@ type AssignmentRequest struct {
 }
 
 type UpdateUserRequest struct {
-	UserID   uuid.UUID `json:"userId" binding:"required,uuid"`
-	FullName *string   `json:"fullname,omitempty" binding:"omitempty,min=3,max=32"`
-	Email    *string   `json:"email" binding:"email,max=255,min=6"`
-	Phone    *string   `json:"phone" binding:"omitempty,min=8,max=15"`
+	UserID    uuid.UUID `json:"userId" binding:"required,uuid"`
+	FirstName *string   `json:"firstName,omitempty" binding:"omitempty,min=3,max=32"`
+	LastName  *string   `json:"lastName,omitempty" binding:"omitempty,min=3,max=32"`
+	Email     *string   `json:"email" binding:"email,max=255,min=6"`
+	Phone     *string   `json:"phone" binding:"omitempty,min=8,max=15"`
 }
 
 type CollectionProductRequest struct {
@@ -168,12 +170,13 @@ type DiscountListQuery struct {
 }
 
 type RegisterRequestBody struct {
-	Username string                `json:"username" binding:"required,min=3,max=32,lowercase"`
-	Password string                `json:"password" binding:"required,min=6,max=32"`
-	FullName string                `json:"fullname" binding:"required,min=3,max=32"`
-	Phone    string                `json:"phone" binding:"required,min=10,max=15"`
-	Email    string                `json:"email" binding:"required,email,max=255,min=6"`
-	Address  *CreateAddressRequest `json:"address" binding:"omitempty,required"`
+	Username  string                `json:"username" binding:"required,min=3,max=32,lowercase"`
+	Password  string                `json:"password" binding:"required,min=6,max=32"`
+	FirstName *string               `json:"firstName,omitempty" binding:"omitempty,min=3,max=32"`
+	LastName  *string               `json:"lastName,omitempty" binding:"omitempty,min=3,max=32"`
+	Phone     string                `json:"phone" binding:"required,min=10,max=15"`
+	Email     string                `json:"email" binding:"required,email,max=255,min=6"`
+	Address   *CreateAddressRequest `json:"address" binding:"omitempty,required"`
 }
 
 type LoginRequest struct {
@@ -184,7 +187,6 @@ type LoginRequest struct {
 
 type BrandsQueries struct {
 	PaginationQueryParams
-	ids []int32 `form:"ids,omitempty"`
 }
 
 type BrandProductRequest struct {

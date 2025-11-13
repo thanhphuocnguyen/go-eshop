@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/netip"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -51,12 +52,25 @@ func (sv *Server) registerHandler(c *gin.Context) {
 		return
 	}
 
+	// Construct full name from first and last name
+	fullName := ""
+	if req.FirstName != nil {
+		fullName = *req.FirstName
+	}
+	if req.LastName != nil {
+		if fullName != "" {
+			fullName += " " + *req.LastName
+		} else {
+			fullName = *req.LastName
+		}
+	}
+
 	arg := repository.CreateUserParams{
 		Username:       req.Username,
 		HashedPassword: hashedPassword,
-		Fullname:       req.FullName,
+		FirstName:      fullName,
 		Email:          req.Email,
-		Phone:          req.Phone,
+		PhoneNumber:    req.Phone,
 		Role:           repository.UserRoleUser,
 	}
 
@@ -71,12 +85,12 @@ func (sv *Server) registerHandler(c *gin.Context) {
 	}
 
 	createAddressArgs := repository.CreateAddressParams{
-		UserID:   user.ID,
-		Phone:    req.Address.Phone,
-		Street:   req.Address.Street,
-		City:     req.Address.City,
-		District: req.Address.District,
-		Default:  true,
+		UserID:      user.ID,
+		PhoneNumber: req.Address.Phone,
+		Street:      req.Address.Street,
+		City:        req.Address.City,
+		District:    req.Address.District,
+		Default:     true,
 	}
 
 	if req.Address.Ward != nil {
@@ -117,10 +131,10 @@ func (sv *Server) registerHandler(c *gin.Context) {
 		VerifiedEmail: user.VerifiedEmail,
 		VerifiedPhone: user.VerifiedPhone,
 		UpdatedAt:     user.UpdatedAt.String(),
-		FullName:      user.Fullname,
+		FullName:      user.FirstName,
 		Addresses: []AddressResponse{{
 			ID:        createdAddress.ID.String(),
-			Phone:     createdAddress.Phone,
+			Phone:     createdAddress.PhoneNumber,
 			Street:    createdAddress.Street,
 			Ward:      &ward,
 			District:  createdAddress.District,
@@ -189,12 +203,18 @@ func (sv *Server) loginHandler(c *gin.Context) {
 		return
 	}
 
+	clientIP, err := netip.ParseAddr(c.ClientIP())
+	if err != nil {
+		// Fallback to localhost if parsing fails
+		clientIP = netip.MustParseAddr("127.0.0.1")
+	}
+
 	session, err := sv.repo.InsertSession(c, repository.InsertSessionParams{
 		ID:           rfPayload.ID,
 		UserID:       user.ID,
 		RefreshToken: refreshToken,
 		UserAgent:    c.GetHeader("User-Agent"),
-		ClientIp:     c.ClientIP(),
+		ClientIp:     clientIP,
 		Blocked:      false,
 		ExpiredAt:    utils.GetPgTypeTimestamp(time.Now().Add(sv.config.RefreshTokenDuration)),
 	})

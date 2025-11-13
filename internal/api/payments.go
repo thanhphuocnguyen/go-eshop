@@ -115,7 +115,6 @@ func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
 
 	resp.PaymentID = payment.ID.String()
 	c.JSON(http.StatusOK, createSuccessResponse(c, resp, "", nil, nil))
-	return
 }
 
 // @Summary Get payment  by order ID

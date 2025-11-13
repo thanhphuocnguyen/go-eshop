@@ -2,8 +2,12 @@ package cachesrv
 
 import (
 	"context"
+	"errors"
 	"time"
 )
+
+// ErrCacheMiss is returned when a requested cache key is not found
+var ErrCacheMiss = errors.New("cache miss")
 
 type Cache interface {
 	Set(c context.Context, key string, value interface{}, expireIn *time.Duration) error

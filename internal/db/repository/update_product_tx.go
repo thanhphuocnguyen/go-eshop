@@ -13,7 +13,7 @@ import (
 type UpdateProductImages struct {
 	ID          string   `json:"id"`
 	Role        *string  `json:"role"`
-	IsRemoved   *bool    `json:"omitempty,is_removed"`
+	IsRemoved   *bool    `json:"is_removed,omitempty"`
 	Assignments []string `json:"assignments,omitempty"`
 }
 
@@ -39,6 +39,10 @@ func (s *pgRepo) UpdateProductTx(ctx context.Context, productID uuid.UUID, arg U
 		product, err := q.GetProductByID(ctx, GetProductByIDParams{
 			ID: productID,
 		})
+		if err != nil {
+			log.Error().Err(err).Msg("GetProductByID")
+			return err
+		}
 		updateProductParam := UpdateProductParams{
 			ID: productID,
 		}
@@ -316,7 +320,7 @@ func updateProductImages(ctx context.Context, q *Queries, arg []UpdateProdImages
 		// Remove all old image assignments
 		err := q.DeleteImageAssignments(ctx, DeleteImageAssignmentsParams{
 			ImageID:    uuid.MustParse(image.ImageID),
-			EntityType: string(EntityTypeProductVariant),
+			EntityType: string(EntityTypeProduct),
 		})
 
 		if err != nil {
@@ -333,7 +337,7 @@ func updateProductImages(ctx context.Context, q *Queries, arg []UpdateProdImages
 					ImageID:      uuid.MustParse(image.ImageID),
 					EntityID:     variantID,
 					Role:         "gallery",
-					EntityType:   string(EntityTypeProductVariant),
+					EntityType:   string(EntityTypeProduct),
 					DisplayOrder: 1,
 				}
 				if image.Role != nil {

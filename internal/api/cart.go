@@ -376,13 +376,13 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 			return
 		}
 		address, err := sv.repo.CreateAddress(c, repository.CreateAddressParams{
-			UserID:   user.ID,
-			Phone:    req.Address.Phone,
-			Street:   req.Address.Street,
-			Ward:     req.Address.Ward,
-			District: req.Address.District,
-			City:     req.Address.City,
-			Default:  false,
+			UserID:      user.ID,
+			PhoneNumber: req.Address.Phone,
+			Street:      req.Address.Street,
+			Ward:        req.Address.Ward,
+			District:    req.Address.District,
+			City:        req.Address.City,
+			Default:     false,
 		})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
@@ -393,7 +393,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 			Ward:     *address.Ward,
 			District: address.District,
 			City:     address.City,
-			Phone:    address.Phone,
+			Phone:    address.PhoneNumber,
 		}
 	} else {
 		address, err := sv.repo.GetAddress(c, repository.GetAddressParams{
@@ -413,7 +413,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 			Ward:     *address.Ward,
 			District: address.District,
 			City:     address.City,
-			Phone:    address.Phone,
+			Phone:    address.PhoneNumber,
 		}
 	}
 	if cart.UserID.Valid {
@@ -481,15 +481,26 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 		ShippingAddress: shippingAddr,
 		UserID:          authPayload.UserID,
 		CustomerInfo: repository.CustomerInfoTxArgs{
-			FullName: user.Fullname,
+			FullName: user.FirstName + " " + user.LastName,
 			Email:    user.Email,
-			Phone:    user.Phone,
+			Phone:    user.PhoneNumber,
 		},
 		CreateOrderItemParams: createOrderItemParams,
 	}
 
-	if req.FullName != nil {
-		params.CustomerInfo.FullName = *req.FullName
+	if req.FirstName != nil || req.LastName != nil {
+		fullName := ""
+		if req.FirstName != nil {
+			fullName = *req.FirstName
+		}
+		if req.LastName != nil {
+			if fullName != "" {
+				fullName += " " + *req.LastName
+			} else {
+				fullName = *req.LastName
+			}
+		}
+		params.CustomerInfo.FullName = fullName
 	}
 
 	if req.Email != nil {
@@ -501,6 +512,15 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 	// check if there is a discount code
 	if req.DiscountCode != nil && *req.DiscountCode != "" {
 		discount, err := sv.repo.GetDiscountByCode(c, *req.DiscountCode)
+		if err != nil {
+			if errors.Is(err, repository.ErrRecordNotFound) {
+				c.JSON(http.StatusBadRequest, createErrorResponse[gin.H](InvalidBodyCode, "", fmt.Errorf("discount code not found")))
+				return
+			}
+			log.Error().Err(err).Msg("GetDiscountByCode")
+			c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
+			return
+		}
 		discountID = &discount.ID
 		discountProductsAndCategories, err := sv.repo.GetDiscountProductsAndCategories(c, discount.ID)
 		if err != nil {

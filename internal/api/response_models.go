@@ -326,7 +326,8 @@ type RefreshTokenResponse struct {
 
 type ProductRatingModel struct {
 	ID               uuid.UUID          `json:"id"`
-	Name             string             `json:"name"`
+	FirstName        string             `json:"firstName"`
+	LastName         string             `json:"lastName"`
 	ProductName      string             `json:"productName,omitempty"`
 	UserID           uuid.UUID          `json:"userId"`
 	Rating           float64            `json:"rating"`
@@ -335,8 +336,7 @@ type ProductRatingModel struct {
 	IsApproved       bool               `json:"isApproved"`
 	ReviewContent    string             `json:"reviewContent"`
 	VerifiedPurchase bool               `json:"verifiedPurchase"`
-	HelpfulVotes     int32              `json:"helpfulVotes"`
-	UnhelpfulVotes   int32              `json:"unhelpfulVotes"`
+	Count            int64              `json:"count"`
 	Images           []RatingImageModel `json:"images"`
 }
 

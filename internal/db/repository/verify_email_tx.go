@@ -10,7 +10,7 @@ import (
 
 // VerifyEmailTxArgs contains the parameters needed for the verify email transaction
 type VerifyEmailTxArgs struct {
-	VerifyEmail VerifyEmail
+	VerifyEmail EmailVerification
 	VerifyCode  string
 }
 

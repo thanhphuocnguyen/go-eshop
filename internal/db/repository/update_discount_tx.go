@@ -59,6 +59,10 @@ func (s *pgRepo) UpdateDiscountTx(ctx context.Context, id uuid.UUID, arg UpdateD
 		}
 		discountID, err := q.UpdateDiscount(ctx, sqlParams)
 
+		if err != nil {
+			return err
+		}
+
 		if len(arg.Products) > 0 {
 			if err := q.DeleteProductDiscountsByDiscountID(ctx, discountID); err != nil {
 				return err
@@ -77,6 +81,9 @@ func (s *pgRepo) UpdateDiscountTx(ctx context.Context, id uuid.UUID, arg UpdateD
 		}
 		if len(arg.Categories) > 0 {
 			err := q.DeleteCategoryDiscountsByDiscountID(ctx, discountID)
+			if err != nil {
+				return err
+			}
 			sqlParams := make([]InsertBulkCategoryDiscountsParams, len(arg.Categories))
 			for i, id := range arg.Categories {
 				sqlParams[i] = InsertBulkCategoryDiscountsParams{

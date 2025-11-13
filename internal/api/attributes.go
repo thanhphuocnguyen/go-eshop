@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/cachesrv"
 )
 
 // @Summary Create an attribute
@@ -133,6 +134,9 @@ func (sv *Server) getAttributesHandler(c *gin.Context) {
 	}
 	var cached *[]AttributeResponse
 	err := sv.cachesrv.Get(c, fmt.Sprintf("attributes-%s", queries.IDs), &cached)
+	if err != nil && !errors.Is(err, cachesrv.ErrCacheMiss) {
+		log.Error().Err(err).Msg("failed to get attributes from cache")
+	}
 	if cached != nil {
 		c.JSON(http.StatusOK, createSuccessResponse(c, &cached, "", nil, nil))
 		return

@@ -9,8 +9,6 @@ UPDATE product_ratings SET
     is_visible = COALESCE(sqlc.narg(is_visible), is_visible), 
     is_approved = COALESCE(sqlc.narg(is_approved), is_approved),
     verified_purchase = COALESCE(sqlc.narg(verified_purchase), verified_purchase),
-    helpful_votes = COALESCE(sqlc.narg(helpful_votes), helpful_votes),
-    unhelpful_votes = COALESCE(sqlc.narg(unhelpful_votes), unhelpful_votes),
     updated_at = NOW()
 WHERE id = $1 RETURNING *;
 
@@ -21,8 +19,8 @@ DELETE FROM product_ratings WHERE id = $1;
 SELECT * FROM product_ratings WHERE id = $1;
 
 -- name: GetProductRatings :many
-SELECT pr.*, ia.id AS image_id, img.url as image_url, ia.role as image_role FROM
-    (SELECT  r.*, u.fullname, u.email, p.name AS product_name
+SELECT pr.*, ia.id AS image_id, img.url as image_url FROM
+    (SELECT  r.*, u.first_name, u.last_name, u.email, p.name AS product_name
     FROM product_ratings AS r
     JOIN users AS u ON u.id = r.user_id
     JOIN products AS p ON p.id = r.product_id
@@ -38,7 +36,7 @@ SELECT COUNT(*) FROM product_ratings WHERE product_id = $1 AND is_visible = TRUE
 -- name: GetProductRatingsByUserID :many
 SELECT 
     sqlc.embed(pr), 
-    u.id AS user_id, u.fullname, u.email
+    u.id AS user_id, u.first_name, u.last_name, u.email
 FROM product_ratings AS pr
 JOIN users AS u ON u.id = pr.user_id
 WHERE pr.user_id = $1 AND pr.is_visible = TRUE
@@ -48,7 +46,7 @@ LIMIT $2 OFFSET $3;
 -- name: GetProductRatingsByOrderItemIDs :many
 SELECT 
     sqlc.embed(pr), 
-    u.id AS user_id, u.fullname, u.email
+    u.id AS user_id, u.first_name, u.last_name, u.email
 FROM product_ratings AS pr
 JOIN users AS u ON u.id = pr.user_id
 WHERE pr.order_item_id = ANY(sqlc.arg(ids)::uuid[]) AND pr.is_visible = TRUE
@@ -103,7 +101,7 @@ SELECT * FROM rating_replies WHERE id = $1;
 -- name: GetRatingRepliesByRatingID :many
 SELECT 
     sqlc.embed(rr), 
-    u.id AS reply_by, u.fullname, u.email
+    u.id AS reply_by, u.first_name, u.last_name, u.email
 FROM rating_replies AS rr
 JOIN users AS u ON u.id = rr.reply_by
 WHERE rr.rating_id = $1;
@@ -111,7 +109,7 @@ WHERE rr.rating_id = $1;
 -- name: GetRatingRepliesByUserID :many
 SELECT 
     sqlc.embed(rr), 
-    u.id AS reply_by, u.fullname, u.email
+    u.id AS reply_by, u.first_name, u.last_name, u.email
 FROM rating_replies AS rr
 JOIN users AS u ON u.id = rr.reply_by
 WHERE rr.reply_by = $1;

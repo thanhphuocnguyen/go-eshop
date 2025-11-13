@@ -91,7 +91,6 @@ func (s *Server) postRatingHandler(c *gin.Context) {
 				assignments[i] = repository.InsertImageAssignmentParams{
 					EntityID:   rating.ID,
 					EntityType: "product_rating",
-					Role:       string(repository.ImageRoleGallery),
 				}
 			}(i, file)
 		}
@@ -133,8 +132,6 @@ func (s *Server) postRatingHandler(c *gin.Context) {
 		ReviewTitle:      *rating.ReviewTitle,
 		ReviewContent:    *rating.ReviewContent,
 		VerifiedPurchase: rating.VerifiedPurchase,
-		HelpfulVotes:     rating.HelpfulVotes,
-		UnhelpfulVotes:   rating.UnhelpfulVotes,
 		Images:           images,
 	}
 
@@ -178,11 +175,9 @@ func (s *Server) postRatingHelpfulHandler(c *gin.Context) {
 	}
 
 	id, err := s.repo.VoteHelpfulRatingTx(c, repository.VoteHelpfulRatingTxArgs{
-		UserID:         auth.UserID,
-		RatingID:       rating.ID,
-		Helpful:        req.Helpful,
-		HelpfulVotes:   rating.HelpfulVotes,
-		UnhelpfulVotes: rating.UnhelpfulVotes,
+		UserID:   auth.UserID,
+		RatingID: rating.ID,
+		Helpful:  req.Helpful,
 	})
 
 	if err != nil {
@@ -283,6 +278,10 @@ func (s *Server) getRatingsHandler(c *gin.Context) {
 		Bytes: uuid.Nil,
 		Valid: false,
 	})
+	if err != nil {
+		c.JSON(400, createErrorResponse[bool](InvalidBodyCode, "invalid request", err))
+		return
+	}
 
 	productRatings := make([]ProductRatingModel, 0)
 	for _, rating := range ratings {
@@ -305,7 +304,8 @@ func (s *Server) getRatingsHandler(c *gin.Context) {
 		model := ProductRatingModel{
 			ID:               rating.ID,
 			UserID:           rating.UserID,
-			Name:             rating.Fullname,
+			FirstName:        rating.FirstName,
+			LastName:         rating.LastName,
 			ProductName:      rating.ProductName,
 			Rating:           ratingPoint.Float64,
 			IsVisible:        rating.IsVisible,
@@ -313,8 +313,7 @@ func (s *Server) getRatingsHandler(c *gin.Context) {
 			ReviewTitle:      *rating.ReviewTitle,
 			ReviewContent:    *rating.ReviewContent,
 			VerifiedPurchase: rating.VerifiedPurchase,
-			HelpfulVotes:     rating.HelpfulVotes,
-			UnhelpfulVotes:   rating.UnhelpfulVotes,
+			Count:            ratingsCount,
 		}
 		if rating.ImageID.Valid {
 			id, _ := uuid.FromBytes(rating.ImageID.Bytes[:])
@@ -376,7 +375,10 @@ func (s *Server) getRatingsByProductHandler(c *gin.Context) {
 	}
 
 	ratingsCount, err := s.repo.CountProductRatings(c, utils.GetPgTypeUUID(uuid.MustParse(param.ID)))
-
+	if err != nil {
+		c.JSON(400, createErrorResponse[bool](InvalidBodyCode, "invalid request", err))
+		return
+	}
 	productRatings := make([]ProductRatingModel, 0)
 	for _, rating := range ratings {
 		ratingPoint, _ := rating.Rating.Float64Value()
@@ -398,15 +400,14 @@ func (s *Server) getRatingsByProductHandler(c *gin.Context) {
 		model := ProductRatingModel{
 			ID:               rating.ID,
 			UserID:           rating.UserID,
-			Name:             rating.Fullname,
+			FirstName:        rating.FirstName,
+			LastName:         rating.LastName,
 			Rating:           ratingPoint.Float64,
 			ProductName:      rating.ProductName,
 			IsVisible:        rating.IsVisible,
 			ReviewTitle:      *rating.ReviewTitle,
 			ReviewContent:    *rating.ReviewContent,
 			VerifiedPurchase: rating.VerifiedPurchase,
-			HelpfulVotes:     rating.HelpfulVotes,
-			UnhelpfulVotes:   rating.UnhelpfulVotes,
 		}
 		if rating.ImageID.Valid {
 			id, _ := uuid.FromBytes(rating.ImageID.Bytes[:])
