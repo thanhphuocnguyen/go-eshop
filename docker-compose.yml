@@ -47,15 +47,12 @@ services:
     networks:
       - eshop-network
   mailhog:
-    build:
-        context: .
-        dockerfile: Dockerfile-mailhog
-    container_name: eshop-mailhog
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025" # SMTP port
+      - "8025:8025" # MailHog web UI port
     volumes:
       - ./volumes/mailhog/volume:/maildir
-    ports:
-      - 1025:1025
-      - 8025:8025
     networks:
       - eshop-network
 networks:
