@@ -1,71 +1,54 @@
--- name: InsertImage :one
-INSERT INTO images (external_id, url, alt_text, caption, mime_type, file_size, width, height) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *;
--- name: InsertBulkImages :copyfrom
-INSERT INTO images (external_id, url, alt_text, caption, mime_type, file_size, width, height) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
+-- name: InsertProductImage :one
+INSERT INTO product_images (product_id, image_url, image_id, alt_text, caption, mime_type, file_size, width, height, display_order, is_primary) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *;
 
--- name: InsertImageAssignment :one
-INSERT INTO image_assignments (image_id, entity_id, entity_type, display_order, role) VALUES ($1, $2, $3, $4, $5) RETURNING *;
--- name: InsertBulkImageAssignments :copyfrom
-INSERT INTO image_assignments (image_id, entity_id, entity_type, display_order, role) VALUES ($1, $2, $3, $4, $5);
+-- name: InsertBulkProductImages :copyfrom
+INSERT INTO product_images (product_id, image_url, image_id, alt_text, caption, mime_type, file_size, width, height, display_order, is_primary) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);
 
--- name: GetImagesByEntityID :many
-SELECT * FROM image_assignments
-JOIN images ON images.id = image_assignments.image_id
-WHERE entity_id = $1 ORDER BY display_order;
+-- name: GetImagesByProductID :many
+SELECT * FROM product_images WHERE product_id = $1 ORDER BY display_order;
 
--- name: GetImageFromID :one
-SELECT * FROM images
-JOIN image_assignments ON images.id = image_assignments.image_id
-WHERE images.id = $1 AND entity_type = $2 LIMIT 1;
+-- name: GetImageByID :one
+SELECT * FROM product_images WHERE id = $1 LIMIT 1;
 
--- name: GetImageFromExternalID :one
-SELECT * FROM images
-JOIN image_assignments ON images.id = image_assignments.image_id
-WHERE external_id = $1 LIMIT 1;
+-- name: GetImageByImageID :one
+SELECT * FROM product_images WHERE image_id = $1 LIMIT 1;
 
--- name: GetProductImageByEntityID :one
-SELECT * FROM image_assignments
-JOIN images ON images.id = image_assignments.image_id
-WHERE entity_id = $1 LIMIT 1;
+-- name: GetPrimaryImageByProductID :one
+SELECT * FROM product_images WHERE product_id = $1 AND is_primary = true LIMIT 1;
 
--- name: GetProductImagesAssigned :many
+-- name: GetProductImages :many
 SELECT 
-    images.id,
-    images.external_id,
-    images.url,
-    images.alt_text,
-    images.caption,
-    images.mime_type,
-    images.file_size,
-    images.width,
-    images.height,
-    image_assignments.entity_id,
-    image_assignments.entity_type,
-    image_assignments.display_order,
-    image_assignments.role
-FROM images
-JOIN image_assignments ON images.id = image_assignments.image_id
-WHERE entity_id = ANY(sqlc.arg(entity_ids)::UUID[]) ORDER BY entity_id, display_order;
+    pi.id,
+    pi.image_id,
+    pi.image_url,
+    pi.alt_text,
+    pi.caption,
+    pi.mime_type,
+    pi.file_size,
+    pi.width,
+    pi.height,
+    pi.product_id,
+    pi.display_order,
+    pi.is_primary
+FROM product_images pi WHERE product_id = ANY(sqlc.arg(product_ids)::UUID[])  ORDER BY product_id, display_order;
 
 -- name: UpdateProductImage :exec
-UPDATE images 
+UPDATE product_images 
 SET 
-    url = COALESCE(sqlc.narg(url), url),
-    external_id = COALESCE(sqlc.narg(external_id), external_id) 
+    image_url = COALESCE(sqlc.narg(image_url), image_url),
+    image_id = COALESCE(sqlc.narg(image_id), image_id),
+    alt_text = COALESCE(sqlc.narg(alt_text), alt_text),
+    caption = COALESCE(sqlc.narg(caption), caption),
+    display_order = COALESCE(sqlc.narg(display_order), display_order),
+    is_primary = COALESCE(sqlc.narg(is_primary), is_primary),
+    updated_at = NOW()
 WHERE id = $1;
 
--- name: UpdateProductImageAssignment :exec
-UPDATE image_assignments
-SET 
-    display_order = COALESCE(sqlc.narg(display_order), display_order),
-    role = COALESCE(sqlc.narg(role), role)
-WHERE image_id = $1 AND entity_id = $2 AND entity_type = $3;
-
 -- name: DeleteProductImage :exec
-DELETE FROM images WHERE id = $1;
+DELETE FROM product_images WHERE id = $1;
 
--- name: DeleteProductImageAssignment :exec
-DELETE FROM image_assignments WHERE image_id = $1 AND entity_id = $2 AND entity_type = $3;
+-- name: DeleteProductImagesByProductID :exec
+DELETE FROM product_images WHERE product_id = $1;
 
--- name: DeleteImageAssignments :exec
-DELETE FROM image_assignments WHERE image_id = $1 AND entity_type = $2;
+-- name: SetPrimaryImage :exec
+UPDATE product_images SET is_primary = CASE WHEN id = $2 THEN true ELSE false END, updated_at = NOW() WHERE product_id = $1;

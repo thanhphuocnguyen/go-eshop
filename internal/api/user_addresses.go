@@ -23,7 +23,7 @@ import (
 // @Failure 401 {object} ApiResponse[gin.H]
 // @Router /address [post]
 func (sv *Server) createAddressHandler(c *gin.Context) {
-	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[AddressResponse](UnauthorizedCode, "", fmt.Errorf("authorization payload is not provided")))
 		return
@@ -93,7 +93,7 @@ func (sv *Server) createAddressHandler(c *gin.Context) {
 // @Success 200 {object} ApiResponse[[]AddressResponse]
 // @Router /address [get]
 func (sv *Server) getAddressesHandlers(c *gin.Context) {
-	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[[]AddressResponse](UnauthorizedCode, "", fmt.Errorf("authorization payload is not provided")))
 		return
@@ -127,7 +127,7 @@ func (sv *Server) getAddressesHandlers(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[gin.H]
 // @Router /address/{id} [put]
 func (sv *Server) updateAddressHandlers(c *gin.Context) {
-	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, createErrorResponse[AddressResponse](UnauthorizedCode, "", fmt.Errorf("authorization payload is not provided")))
 		return
@@ -216,7 +216,7 @@ func (sv *Server) updateAddressHandlers(c *gin.Context) {
 // @Failure 404 {object} ApiResponse[gin.H]
 // @Router /address/{id} [delete]
 func (sv *Server) removeAddressHandlers(c *gin.Context) {
-	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](UnauthorizedCode, "", fmt.Errorf("authorization payload is not provided")))
 		return
@@ -270,7 +270,7 @@ func (sv *Server) removeAddressHandlers(c *gin.Context) {
 // @Failure 404 {object} ApiResponse[gin.H]
 // @Router /address/{id}/default [put]
 func (sv *Server) setDefaultAddressHandler(c *gin.Context) {
-	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](UnauthorizedCode, "", fmt.Errorf("authorization payload is not provided")))
 		return

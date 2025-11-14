@@ -42,6 +42,17 @@ type Brand struct {
 	UpdatedAt    time.Time `json:"updatedAt"`
 }
 
+type CardType struct {
+	ID           uuid.UUID `json:"id"`
+	Code         string    `json:"code"`
+	Name         string    `json:"name"`
+	Description  *string   `json:"description"`
+	IsActive     bool      `json:"isActive"`
+	DisplayOrder int16     `json:"displayOrder"`
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
+}
+
 type Cart struct {
 	ID        uuid.UUID   `json:"id"`
 	UserID    pgtype.UUID `json:"userId"`
@@ -155,30 +166,6 @@ type FeaturedSection struct {
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
-type Image struct {
-	ID         uuid.UUID `json:"id"`
-	ExternalID string    `json:"externalId"`
-	Url        string    `json:"url"`
-	AltText    *string   `json:"altText"`
-	Caption    *string   `json:"caption"`
-	MimeType   *string   `json:"mimeType"`
-	FileSize   *int64    `json:"fileSize"`
-	Width      *int32    `json:"width"`
-	Height     *int32    `json:"height"`
-	UploadedAt time.Time `json:"uploadedAt"`
-	UpdatedAt  time.Time `json:"updatedAt"`
-}
-
-type ImageAssignment struct {
-	ID           uuid.UUID `json:"id"`
-	ImageID      uuid.UUID `json:"imageId"`
-	EntityID     uuid.UUID `json:"entityId"`
-	EntityType   string    `json:"entityType"`
-	DisplayOrder int16     `json:"displayOrder"`
-	Role         string    `json:"role"`
-	CreatedAt    time.Time `json:"createdAt"`
-}
-
 type Order struct {
 	ID                    uuid.UUID               `json:"id"`
 	CustomerID            uuid.UUID               `json:"customerId"`
@@ -228,19 +215,44 @@ type OrderItem struct {
 }
 
 type Payment struct {
-	ID              uuid.UUID          `json:"id"`
-	OrderID         uuid.UUID          `json:"orderId"`
-	Amount          pgtype.Numeric     `json:"amount"`
-	Status          PaymentStatus      `json:"status"`
-	Method          PaymentMethod      `json:"method"`
-	Gateway         *string            `json:"gateway"`
-	RefundID        *string            `json:"refundId"`
-	PaymentIntentID *string            `json:"paymentIntentId"`
-	ChargeID        *string            `json:"chargeId"`
-	ErrorCode       *string            `json:"errorCode"`
-	ErrorMessage    *string            `json:"errorMessage"`
-	CreatedAt       pgtype.Timestamptz `json:"createdAt"`
-	UpdatedAt       pgtype.Timestamptz `json:"updatedAt"`
+	ID               uuid.UUID          `json:"id"`
+	OrderID          uuid.UUID          `json:"orderId"`
+	PaymentMethodID  uuid.UUID          `json:"paymentMethodId"`
+	Amount           pgtype.Numeric     `json:"amount"`
+	ProcessingFee    pgtype.Numeric     `json:"processingFee"`
+	NetAmount        pgtype.Numeric     `json:"netAmount"`
+	Status           PaymentStatus      `json:"status"`
+	Gateway          *string            `json:"gateway"`
+	GatewayReference *string            `json:"gatewayReference"`
+	RefundID         *string            `json:"refundId"`
+	PaymentIntentID  *string            `json:"paymentIntentId"`
+	ChargeID         *string            `json:"chargeId"`
+	ErrorCode        *string            `json:"errorCode"`
+	ErrorMessage     *string            `json:"errorMessage"`
+	Metadata         []byte             `json:"metadata"`
+	CreatedAt        pgtype.Timestamptz `json:"createdAt"`
+	UpdatedAt        pgtype.Timestamptz `json:"updatedAt"`
+}
+
+type PaymentMethod struct {
+	ID                      uuid.UUID      `json:"id"`
+	Code                    string         `json:"code"`
+	Name                    string         `json:"name"`
+	Description             *string        `json:"description"`
+	IsActive                bool           `json:"isActive"`
+	GatewaySupported        *string        `json:"gatewaySupported"`
+	IconUrl                 *string        `json:"iconUrl"`
+	DisplayOrder            int16          `json:"displayOrder"`
+	RequiresAccount         bool           `json:"requiresAccount"`
+	MinAmount               pgtype.Numeric `json:"minAmount"`
+	MaxAmount               pgtype.Numeric `json:"maxAmount"`
+	ProcessingFeePercentage pgtype.Numeric `json:"processingFeePercentage"`
+	ProcessingFeeFixed      pgtype.Numeric `json:"processingFeeFixed"`
+	CurrencySupported       []string       `json:"currencySupported"`
+	CountriesSupported      []string       `json:"countriesSupported"`
+	Metadata                []byte         `json:"metadata"`
+	CreatedAt               time.Time      `json:"createdAt"`
+	UpdatedAt               time.Time      `json:"updatedAt"`
 }
 
 type PaymentTransaction struct {
@@ -253,6 +265,17 @@ type PaymentTransaction struct {
 	GatewayResponseMessage *string            `json:"gatewayResponseMessage"`
 	TransactionDate        pgtype.Timestamptz `json:"transactionDate"`
 	CreatedAt              pgtype.Timestamptz `json:"createdAt"`
+}
+
+type Permission struct {
+	ID        uuid.UUID `json:"id"`
+	RoleID    uuid.UUID `json:"roleId"`
+	Module    string    `json:"module"`
+	R         bool      `json:"r"`
+	W         bool      `json:"w"`
+	X         bool      `json:"x"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 type Product struct {
@@ -268,8 +291,8 @@ type Product struct {
 	CategoryID       pgtype.UUID    `json:"categoryId"`
 	CollectionID     pgtype.UUID    `json:"collectionId"`
 	BrandID          pgtype.UUID    `json:"brandId"`
-	CreatedAt        time.Time      `json:"createdAt"`
-	UpdatedAt        time.Time      `json:"updatedAt"`
+	ImageUrl         *string        `json:"imageUrl"`
+	ImageID          *string        `json:"imageId"`
 	AvgRating        pgtype.Numeric `json:"avgRating"`
 	RatingCount      int32          `json:"ratingCount"`
 	OneStarCount     int32          `json:"oneStarCount"`
@@ -277,6 +300,25 @@ type Product struct {
 	ThreeStarCount   int32          `json:"threeStarCount"`
 	FourStarCount    int32          `json:"fourStarCount"`
 	FiveStarCount    int32          `json:"fiveStarCount"`
+	CreatedAt        time.Time      `json:"createdAt"`
+	UpdatedAt        time.Time      `json:"updatedAt"`
+}
+
+type ProductImage struct {
+	ID           uuid.UUID `json:"id"`
+	ProductID    uuid.UUID `json:"productId"`
+	ImageUrl     string    `json:"imageUrl"`
+	ImageID      string    `json:"imageId"`
+	AltText      *string   `json:"altText"`
+	Caption      *string   `json:"caption"`
+	MimeType     *string   `json:"mimeType"`
+	FileSize     *int64    `json:"fileSize"`
+	Width        *int32    `json:"width"`
+	Height       *int32    `json:"height"`
+	DisplayOrder int16     `json:"displayOrder"`
+	IsPrimary    bool      `json:"isPrimary"`
+	UploadedAt   time.Time `json:"uploadedAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
 }
 
 type ProductRating struct {
@@ -305,6 +347,8 @@ type ProductVariant struct {
 	IsActive    *bool          `json:"isActive"`
 	CreatedAt   time.Time      `json:"createdAt"`
 	UpdatedAt   time.Time      `json:"updatedAt"`
+	ImageUrl    *string        `json:"imageUrl"`
+	ImageID     *string        `json:"imageId"`
 }
 
 type RatingReply struct {
@@ -400,7 +444,7 @@ type ShippingZone struct {
 
 type User struct {
 	ID                uuid.UUID `json:"id"`
-	Role              UserRole  `json:"role"`
+	RoleID            uuid.UUID `json:"roleId"`
 	Username          string    `json:"username"`
 	Email             string    `json:"email"`
 	PhoneNumber       string    `json:"phoneNumber"`
@@ -441,6 +485,16 @@ type UserPaymentInfo struct {
 	Default            *bool              `json:"default"`
 	CreatedAt          pgtype.Timestamptz `json:"createdAt"`
 	UpdatedAt          pgtype.Timestamptz `json:"updatedAt"`
+}
+
+type UserRole struct {
+	ID          uuid.UUID `json:"id"`
+	Code        string    `json:"code"`
+	Name        string    `json:"name"`
+	Description *string   `json:"description"`
+	IsActive    bool      `json:"isActive"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
 type UserSession struct {

@@ -62,12 +62,8 @@ func (server *Server) stripeEventHandler(c *gin.Context) {
 			return
 		}
 		updateTransactionStatus := repository.UpdatePaymentParams{
-			ID:       payment.ID,
-			ChargeID: id,
-			Method: repository.NullPaymentMethod{
-				PaymentMethod: repository.PaymentMethodStripe,
-				Valid:         true,
-			},
+			ID:              payment.ID,
+			ChargeID:        id,
 			Amount:          utils.GetPgNumericFromFloat((float64(piAmount) / 100)),
 			PaymentIntentID: id,
 			ErrorCode:       failureCode,

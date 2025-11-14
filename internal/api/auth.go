@@ -65,17 +65,27 @@ func (sv *Server) registerHandler(c *gin.Context) {
 		}
 	}
 
+	userRole, err := sv.repo.GetRoleByCode(c, string(repository.UserRoleCodeUser))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", err))
+		return
+	}
 	arg := repository.CreateUserParams{
 		Username:       req.Username,
 		HashedPassword: hashedPassword,
 		FirstName:      fullName,
 		Email:          req.Email,
 		PhoneNumber:    req.Phone,
-		Role:           repository.UserRoleUser,
+		RoleID:         userRole.ID,
 	}
 
 	if req.Username == "admin" {
-		arg.Role = repository.UserRoleAdmin
+		adminRole, err := sv.repo.GetRoleByCode(c, string(repository.UserRoleCodeAdmin))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", err))
+			return
+		}
+		arg.RoleID = adminRole.ID
 	}
 	user, err := sv.repo.CreateUser(c, arg)
 
@@ -125,7 +135,8 @@ func (sv *Server) registerHandler(c *gin.Context) {
 	userResp := &UserResponse{
 		ID:            user.ID,
 		Username:      user.Username,
-		Role:          user.Role,
+		RoleID:        user.RoleID.String(),
+		RoleCode:      userRole.Code,
 		Email:         user.Email,
 		CreatedAt:     user.CreatedAt.String(),
 		VerifiedEmail: user.VerifiedEmail,
@@ -191,13 +202,18 @@ func (sv *Server) loginHandler(c *gin.Context) {
 		return
 	}
 
-	accessToken, payload, err := sv.tokenGenerator.GenerateToken(user.ID, user.Username, user.Role, sv.config.AccessTokenDuration)
+	role, err := sv.repo.GetRoleByID(c, user.RoleID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[LoginResponse](InternalServerErrorCode, "", err))
+		return
+	}
+	accessToken, payload, err := sv.tokenGenerator.GenerateToken(user.ID, user.Username, role, sv.config.AccessTokenDuration)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[LoginResponse](InvalidTokenCode, "", err))
 		return
 	}
 
-	refreshToken, rfPayload, err := sv.tokenGenerator.GenerateToken(user.ID, user.Username, user.Role, sv.config.RefreshTokenDuration)
+	refreshToken, rfPayload, err := sv.tokenGenerator.GenerateToken(user.ID, user.Username, role, sv.config.RefreshTokenDuration)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[LoginResponse](InvalidTokenCode, "", err))
 		return
@@ -293,7 +309,13 @@ func (sv *Server) refreshTokenHandler(c *gin.Context) {
 		return
 	}
 
-	accessToken, _, err := sv.tokenGenerator.GenerateToken(session.UserID, refreshTokenPayload.Username, refreshTokenPayload.Role, sv.config.AccessTokenDuration)
+	role, err := sv.repo.GetRoleByID(c, refreshTokenPayload.RoleID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[RefreshTokenResponse](InternalServerErrorCode, "", err))
+		return
+	}
+
+	accessToken, _, err := sv.tokenGenerator.GenerateToken(session.UserID, refreshTokenPayload.Username, role, sv.config.AccessTokenDuration)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[RefreshTokenResponse](InternalServerErrorCode, "", err))
 		return

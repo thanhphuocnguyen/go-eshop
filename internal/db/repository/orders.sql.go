@@ -185,7 +185,8 @@ SELECT
     pm.id as payment_id,
     pm.status as payment_status,
     pm.amount as payment_amount,
-    pm.method,
+    pmt.code as payment_method,
+    pmt.id as payment_method_id,
     pm.gateway,
     pm.payment_intent_id,
     pm.created_at as payment_created_at,
@@ -194,6 +195,7 @@ SELECT
 FROM
     orders
 JOIN payments pm ON orders.id = pm.order_id
+JOIN payment_methods pmt ON pm.payment_method_id = pmt.id
 LEFT JOIN order_discounts od ON orders.id = od.order_id
 LEFT JOIN discounts d ON od.discount_id = d.id
 WHERE
@@ -227,7 +229,8 @@ type GetOrderRow struct {
 	PaymentID             uuid.UUID               `json:"paymentId"`
 	PaymentStatus         PaymentStatus           `json:"paymentStatus"`
 	PaymentAmount         pgtype.Numeric          `json:"paymentAmount"`
-	Method                PaymentMethod           `json:"method"`
+	PaymentMethod         string                  `json:"paymentMethod"`
+	PaymentMethodID       uuid.UUID               `json:"paymentMethodId"`
 	Gateway               *string                 `json:"gateway"`
 	PaymentIntentID       *string                 `json:"paymentIntentId"`
 	PaymentCreatedAt      pgtype.Timestamptz      `json:"paymentCreatedAt"`
@@ -264,7 +267,8 @@ func (q *Queries) GetOrder(ctx context.Context, id uuid.UUID) (GetOrderRow, erro
 		&i.PaymentID,
 		&i.PaymentStatus,
 		&i.PaymentAmount,
-		&i.Method,
+		&i.PaymentMethod,
+		&i.PaymentMethodID,
 		&i.Gateway,
 		&i.PaymentIntentID,
 		&i.PaymentCreatedAt,
@@ -318,7 +322,7 @@ func (q *Queries) GetOrderItemByID(ctx context.Context, id uuid.UUID) (GetOrderI
 const getOrderItems = `-- name: GetOrderItems :many
 SELECT
     oi.id, oi.order_id, oi.variant_id, oi.quantity, oi.price_per_unit_snapshot, oi.line_total_snapshot, oi.product_name_snapshot, oi.variant_sku_snapshot, oi.attributes_snapshot, oi.created_at, oi.updated_at, oi.discounted_price,
-    p.name as product_name, i.url as image_url,
+    p.name as product_name, pi.image_url as image_url,
     rv.id as rating_id, rv.rating, rv.review_title, rv.review_content, rv.created_at as rating_created_at
 FROM
     order_items oi
@@ -326,8 +330,7 @@ JOIN
     product_variants pv ON oi.variant_id = pv.id
 JOIN
     products p ON pv.product_id = p.id
-LEFT JOIN image_assignments AS ia ON ia.entity_id = pv.id AND ia.entity_type = 'variant'
-LEFT JOIN images AS i ON i.id = ia.image_id
+LEFT JOIN product_images AS pi ON pi.product_id = p.id AND pi.is_primary = true
 LEFT JOIN product_ratings rv ON rv.order_item_id = oi.id
 WHERE
     oi.order_id = $1

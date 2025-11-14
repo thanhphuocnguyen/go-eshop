@@ -12,21 +12,15 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
 
-const (
-	authorization        = "Authorization"
-	authorizationType    = "Bearer"
-	authorizationPayload = "authorization_payload"
-)
-
 func authenticateMiddleware(tokenGenerator auth.TokenGenerator) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		authorization := ctx.GetHeader(authorization)
+		authorization := ctx.GetHeader(Authorization)
 		if len(authorization) == 0 {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, createErrorResponse[bool](UnauthorizedCode, "authorize failed", fmt.Errorf("authorization header is not provided")))
 			return
 		}
 		authGroup := strings.Fields(authorization)
-		if len(authGroup) != 2 || authGroup[0] != authorizationType {
+		if len(authGroup) != 2 || authGroup[0] != AuthorizationType {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, createErrorResponse[bool](UnauthorizedCode, "authorize failed", fmt.Errorf("authorization header is not valid format")))
 			return
 		}
@@ -38,28 +32,23 @@ func authenticateMiddleware(tokenGenerator auth.TokenGenerator) gin.HandlerFunc 
 			return
 		}
 
-		ctx.Set(authorizationPayload, payload)
+		ctx.Set(AuthPayLoad, payload)
+		ctx.Set(UserRole, payload.RoleCode)
 		ctx.Next()
 	}
 }
 
-func authorizeMiddleware(repo repository.Repository, roles ...repository.UserRole) gin.HandlerFunc {
+func authorizeMiddleware(repo repository.Repository, roles ...repository.Role) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+		authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 		if !ok {
 			c.AbortWithStatusJSON(http.StatusForbidden, createErrorResponse[bool](PermissionDeniedCode, "authorize failed", fmt.Errorf("authorization payload is not provided")))
-			return
-		}
-		user, err := repo.GetUserByID(c, authPayload.UserID)
-		if err != nil {
-			log.Error().Err(err).Msg("get user by ID")
-			c.AbortWithStatusJSON(http.StatusForbidden, createErrorResponse[bool](PermissionDeniedCode, "authorize failed", fmt.Errorf("user not found")))
 			return
 		}
 
 		hasRole := false
 		for _, role := range roles {
-			if user.Role == role {
+			if repository.Role(authPayload.RoleCode) == role {
 				hasRole = true
 				break
 			}

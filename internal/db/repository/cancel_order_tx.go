@@ -12,7 +12,7 @@ import (
 
 type CancelOrderTxArgs struct {
 	OrderID                 uuid.UUID
-	CancelPaymentFromMethod func(ID string, method PaymentMethod) error
+	CancelPaymentFromMethod func(ID string, method string) error
 }
 
 func (pg *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (orderID uuid.UUID, err error) {
@@ -22,6 +22,11 @@ func (pg *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (or
 		if !errors.Is(err, ErrRecordNotFound) {
 			log.Error().Err(err).Msg("GetPaymentTransactionByOrderID")
 		}
+		paymentMethod, err := q.GetPaymentMethodByID(ctx, payment.PaymentMethodID)
+		if err != nil {
+			log.Error().Err(err).Msg("GetPaymentMethodByID")
+			return err
+		}
 		// if payment is not found, we don't need to cancel it
 		if err == nil && payment.Gateway != nil {
 			if payment.Status == PaymentStatusSuccess {
@@ -30,7 +35,7 @@ func (pg *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (or
 
 			// cancel payment from gateway if it's not cancelled yet
 			if args.CancelPaymentFromMethod != nil && payment.PaymentIntentID != nil {
-				err = args.CancelPaymentFromMethod(*payment.PaymentIntentID, payment.Method)
+				err = args.CancelPaymentFromMethod(*payment.PaymentIntentID, paymentMethod.Code)
 				if err != nil {
 					log.Error().Err(err).Msg("CancelPaymentFromGateway")
 					return err

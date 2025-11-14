@@ -33,7 +33,7 @@ func (sv *Server) getStripeConfig(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[gin.H]
 // @Router /payment [post]
 func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
-	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, createErrorResponse[PaymentResponse](UnauthorizedCode, "", errors.New("authorization payload is not provided")))
 		return
@@ -80,15 +80,25 @@ func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
 	}
 
 	total, _ := ord.TotalPrice.Float64Value()
+	paymentMethodId := uuid.MustParse(req.PaymentMethodID)
 	// create new payment
 	createPaymentParams := repository.CreatePaymentParams{
-		OrderID: ord.ID,
-		Amount:  utils.GetPgNumericFromFloat(total.Float64),
-		Method:  repository.PaymentMethod(req.PaymentMethod),
+		OrderID:         ord.ID,
+		Amount:          utils.GetPgNumericFromFloat(total.Float64),
+		PaymentMethodID: paymentMethodId,
 	}
 	var resp CreatePaymentIntentResponse
-	switch req.PaymentMethod {
-	case string(repository.PaymentMethodStripe):
+	paymentMethod, err := sv.repo.GetPaymentMethodByID(c, paymentMethodId)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, createErrorResponse[PaymentResponse](NotFoundCode, "", err))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
+		return
+	}
+	switch paymentMethod.Code {
+	case string(repository.PaymentMethodCodeStripe):
 		stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
@@ -145,7 +155,12 @@ func (sv *Server) getPaymentHandler(c *gin.Context) {
 	}
 
 	var details interface{}
-	if payment.Method == repository.PaymentMethodStripe {
+	paymentMethod, err := sv.repo.GetPaymentMethodByID(c, payment.PaymentMethodID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
+		return
+	}
+	if paymentMethod.Code == repository.PaymentMethodCodeStripe {
 		stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))

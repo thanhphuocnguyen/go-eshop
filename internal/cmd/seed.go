@@ -243,6 +243,12 @@ func seedUsers(ctx context.Context, pg repository.Repository) {
 	log.Info().Int("with user count: ", len(users)).Msg("creating users")
 	params := make([]repository.SeedUsersParams, len(users))
 	userIDs := make([]uuid.UUID, len(users))
+	role, err := pg.GetRoleByCode(ctx, string(repository.UserRoleCodeUser))
+	adminRole, err := pg.GetRoleByCode(ctx, string(repository.UserRoleCodeAdmin))
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get user role")
+		return
+	}
 	for i, user := range users {
 		hashed, _ := auth.HashPassword(user.Password)
 		usrID := uuid.New()
@@ -254,10 +260,10 @@ func seedUsers(ctx context.Context, pg repository.Repository) {
 			HashedPassword: hashed,
 			FirstName:      user.FullName,
 			LastName:       "",
-			Role:           repository.UserRoleUser,
+			RoleID:         role.ID,
 		}
 		if params[i].Username == "admin" {
-			params[i].Role = repository.UserRoleAdmin
+			params[i].RoleID = adminRole.ID
 		}
 	}
 

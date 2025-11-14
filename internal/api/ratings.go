@@ -2,10 +2,7 @@ package api
 
 import (
 	"errors"
-	"fmt"
-	"mime/multipart"
 	"net/http"
-	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -32,7 +29,7 @@ import (
 // @Failure 500 {object} ApiResponse[bool]
 // @Router /ratings [post]
 func (s *Server) postRatingHandler(c *gin.Context) {
-	auth, _ := c.MustGet(authorizationPayload).(*auth.Payload)
+	auth, _ := c.MustGet(AuthPayLoad).(*auth.Payload)
 
 	var req PostRatingFormData
 	if err := c.ShouldBind(&req); err != nil {
@@ -65,66 +62,6 @@ func (s *Server) postRatingHandler(c *gin.Context) {
 		return
 	}
 
-	images := make([]RatingImageModel, 0)
-	if len(req.Files) > 0 {
-		var wg sync.WaitGroup
-		wg.Add(len(req.Files))
-		uploadResults := make([]repository.InsertImageParams, len(req.Files))
-		assignments := make([]repository.InsertImageAssignmentParams, len(req.Files))
-		errs := make([]error, len(req.Files))
-		for i, file := range req.Files {
-			go func(i int, file *multipart.FileHeader) {
-				defer wg.Done()
-				ID, url, err := s.uploadService.UploadFile(c, file)
-				if err != nil {
-					errs[i] = err
-					return
-				}
-				uploadResults[i] = repository.InsertImageParams{
-					ExternalID: ID,
-					Url:        url,
-					AltText:    utils.StringPtr(file.Filename),
-					Caption:    utils.StringPtr(fmt.Sprintf("Image %d", i+1)),
-					MimeType:   utils.StringPtr(file.Header.Get("Content-Type")),
-					FileSize:   utils.Int64Ptr(file.Size),
-				}
-				assignments[i] = repository.InsertImageAssignmentParams{
-					EntityID:   rating.ID,
-					EntityType: "product_rating",
-				}
-			}(i, file)
-		}
-		wg.Wait()
-		for _, err := range errs {
-			if err != nil {
-				c.JSON(500, createErrorResponse[gin.H](InternalServerErrorCode, "internal server error", err))
-				return
-			}
-		}
-
-		// Insert product images
-		for i, uploadResult := range uploadResults {
-			img, err := s.repo.InsertImage(c, uploadResult)
-			if err != nil {
-				c.JSON(500, createErrorResponse[gin.H](InternalServerErrorCode, "internal server error", err))
-				return
-			}
-			assignments[i].ImageID = img.ID
-			_, err = s.repo.InsertImageAssignment(c, assignments[i])
-			if err != nil {
-				c.JSON(500, createErrorResponse[gin.H](InternalServerErrorCode, "internal server error", err))
-				return
-			}
-			images = append(images, struct {
-				ID  string `json:"id"`
-				URL string `json:"url"`
-			}{
-				ID:  img.ID.String(),
-				URL: img.Url,
-			})
-		}
-	}
-
 	resp := ProductRatingModel{
 		ID:               rating.ID,
 		UserID:           rating.UserID,
@@ -132,7 +69,7 @@ func (s *Server) postRatingHandler(c *gin.Context) {
 		ReviewTitle:      *rating.ReviewTitle,
 		ReviewContent:    *rating.ReviewContent,
 		VerifiedPurchase: rating.VerifiedPurchase,
-		Images:           images,
+		// Images:           images,
 	}
 
 	c.JSON(200, createSuccessResponse(c, resp, "success", nil, nil))
@@ -157,7 +94,7 @@ func (s *Server) postRatingHelpfulHandler(c *gin.Context) {
 		c.JSON(400, createErrorResponse[gin.H](InvalidBodyCode, "invalid request", err))
 		return
 	}
-	auth, _ := c.MustGet(authorizationPayload).(*auth.Payload)
+	auth, _ := c.MustGet(AuthPayLoad).(*auth.Payload)
 	var req PostHelpfulRatingRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(400, createErrorResponse[bool](InvalidBodyCode, "invalid request", err))
@@ -206,7 +143,7 @@ func (s *Server) postReplyRatingHandler(c *gin.Context) {
 		c.JSON(400, createErrorResponse[gin.H](InvalidBodyCode, "invalid request", err))
 		return
 	}
-	auth, _ := c.MustGet(authorizationPayload).(*auth.Payload)
+	auth, _ := c.MustGet(AuthPayLoad).(*auth.Payload)
 
 	var req PostReplyRatingRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -448,7 +385,7 @@ func (s *Server) getRatingsByProductHandler(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[bool]
 // @Router /ratings/orders/{orderId} [get]
 func (s *Server) getOrderRatingsHandler(c *gin.Context) {
-	auth, _ := c.MustGet(authorizationPayload).(*auth.Payload)
+	auth, _ := c.MustGet(AuthPayLoad).(*auth.Payload)
 
 	var param struct {
 		OrderID string `uri:"orderId" binding:"required,uuid"`

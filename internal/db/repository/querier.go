@@ -67,14 +67,13 @@ type Querier interface {
 	DeleteCollection(ctx context.Context, id uuid.UUID) error
 	DeleteDiscount(ctx context.Context, id uuid.UUID) error
 	DeleteDiscountCategory(ctx context.Context, arg DeleteDiscountCategoryParams) error
-	DeleteImageAssignments(ctx context.Context, arg DeleteImageAssignmentsParams) error
 	DeleteOrder(ctx context.Context, id uuid.UUID) error
 	DeletePayment(ctx context.Context, id uuid.UUID) error
 	DeletePaymentTransaction(ctx context.Context, id uuid.UUID) error
 	DeleteProduct(ctx context.Context, id uuid.UUID) error
 	DeleteProductDiscountsByDiscountID(ctx context.Context, discountID uuid.UUID) error
 	DeleteProductImage(ctx context.Context, id uuid.UUID) error
-	DeleteProductImageAssignment(ctx context.Context, arg DeleteProductImageAssignmentParams) error
+	DeleteProductImagesByProductID(ctx context.Context, productID uuid.UUID) error
 	DeleteProductRating(ctx context.Context, id uuid.UUID) error
 	DeleteProductVariant(ctx context.Context, id uuid.UUID) error
 	DeleteProductVariantAttributes(ctx context.Context, variantID uuid.UUID) error
@@ -120,9 +119,9 @@ type Querier interface {
 	GetDiscountUsers(ctx context.Context, arg GetDiscountUsersParams) ([]GetDiscountUsersRow, error)
 	GetDiscounts(ctx context.Context, arg GetDiscountsParams) ([]GetDiscountsRow, error)
 	GetFilterListForCollectionID(ctx context.Context, id uuid.UUID) ([]GetFilterListForCollectionIDRow, error)
-	GetImageFromExternalID(ctx context.Context, externalID string) (GetImageFromExternalIDRow, error)
-	GetImageFromID(ctx context.Context, arg GetImageFromIDParams) (GetImageFromIDRow, error)
-	GetImagesByEntityID(ctx context.Context, entityID uuid.UUID) ([]GetImagesByEntityIDRow, error)
+	GetImageByID(ctx context.Context, id uuid.UUID) (ProductImage, error)
+	GetImageByImageID(ctx context.Context, imageID string) (ProductImage, error)
+	GetImagesByProductID(ctx context.Context, productID uuid.UUID) ([]ProductImage, error)
 	GetOrder(ctx context.Context, id uuid.UUID) (GetOrderRow, error)
 	GetOrderItemByID(ctx context.Context, id uuid.UUID) (GetOrderItemByIDRow, error)
 	GetOrderItems(ctx context.Context, orderID uuid.UUID) ([]GetOrderItemsRow, error)
@@ -131,13 +130,15 @@ type Querier interface {
 	GetPaymentByID(ctx context.Context, id uuid.UUID) (Payment, error)
 	GetPaymentByOrderID(ctx context.Context, orderID uuid.UUID) (Payment, error)
 	GetPaymentByPaymentIntentID(ctx context.Context, paymentIntentID *string) (Payment, error)
+	// Payment Methods --
+	GetPaymentMethodByID(ctx context.Context, id uuid.UUID) (PaymentMethod, error)
 	GetPaymentTransactionByID(ctx context.Context, id uuid.UUID) (PaymentTransaction, error)
 	GetPaymentTransactionByPaymentID(ctx context.Context, paymentID uuid.UUID) (PaymentTransaction, error)
+	GetPrimaryImageByProductID(ctx context.Context, productID uuid.UUID) (ProductImage, error)
 	GetProductByID(ctx context.Context, arg GetProductByIDParams) (Product, error)
 	GetProductBySlug(ctx context.Context, arg GetProductBySlugParams) (Product, error)
 	GetProductDetail(ctx context.Context, arg GetProductDetailParams) (GetProductDetailRow, error)
-	GetProductImageByEntityID(ctx context.Context, entityID uuid.UUID) (GetProductImageByEntityIDRow, error)
-	GetProductImagesAssigned(ctx context.Context, entityIds []uuid.UUID) ([]GetProductImagesAssignedRow, error)
+	GetProductImages(ctx context.Context, productIds []uuid.UUID) ([]GetProductImagesRow, error)
 	GetProductRating(ctx context.Context, id uuid.UUID) (ProductRating, error)
 	GetProductRatings(ctx context.Context, arg GetProductRatingsParams) ([]GetProductRatingsRow, error)
 	GetProductRatingsByOrderItemIDs(ctx context.Context, ids []uuid.UUID) ([]GetProductRatingsByOrderItemIDsRow, error)
@@ -157,6 +158,9 @@ type Querier interface {
 	GetRatingVotesByUserID(ctx context.Context, userID uuid.UUID) ([]RatingVote, error)
 	GetRatingVotesCount(ctx context.Context, ratingID uuid.UUID) (int64, error)
 	GetRatingVotesCountByUserID(ctx context.Context, userID uuid.UUID) (int64, error)
+	// Roles Queries
+	GetRoleByCode(ctx context.Context, code string) (UserRole, error)
+	GetRoleByID(ctx context.Context, id uuid.UUID) (UserRole, error)
 	GetSession(ctx context.Context, id uuid.UUID) (UserSession, error)
 	GetSessionByRefreshToken(ctx context.Context, refreshToken string) (UserSession, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
@@ -166,17 +170,15 @@ type Querier interface {
 	GetVerifyEmailByID(ctx context.Context, id uuid.UUID) (EmailVerification, error)
 	GetVerifyEmailByVerifyCode(ctx context.Context, verifyCode string) (EmailVerification, error)
 	InsertBulkCategoryDiscounts(ctx context.Context, arg []InsertBulkCategoryDiscountsParams) (int64, error)
-	InsertBulkImageAssignments(ctx context.Context, arg []InsertBulkImageAssignmentsParams) (int64, error)
-	InsertBulkImages(ctx context.Context, arg []InsertBulkImagesParams) (int64, error)
 	InsertBulkProductDiscounts(ctx context.Context, arg []InsertBulkProductDiscountsParams) (int64, error)
+	InsertBulkProductImages(ctx context.Context, arg []InsertBulkProductImagesParams) (int64, error)
 	InsertBulkUserDiscounts(ctx context.Context, arg []InsertBulkUserDiscountsParams) (int64, error)
 	InsertDiscount(ctx context.Context, arg InsertDiscountParams) (uuid.UUID, error)
 	InsertDiscountCategory(ctx context.Context, arg InsertDiscountCategoryParams) (uuid.UUID, error)
 	InsertDiscountProduct(ctx context.Context, arg InsertDiscountProductParams) (uuid.UUID, error)
 	InsertDiscountUser(ctx context.Context, arg InsertDiscountUserParams) (uuid.UUID, error)
-	InsertImage(ctx context.Context, arg InsertImageParams) (Image, error)
-	InsertImageAssignment(ctx context.Context, arg InsertImageAssignmentParams) (ImageAssignment, error)
 	InsertOrderDiscount(ctx context.Context, arg InsertOrderDiscountParams) (uuid.UUID, error)
+	InsertProductImage(ctx context.Context, arg InsertProductImageParams) (ProductImage, error)
 	InsertProductRating(ctx context.Context, arg InsertProductRatingParams) (ProductRating, error)
 	InsertRatingReply(ctx context.Context, arg InsertRatingReplyParams) (RatingReply, error)
 	InsertRatingVotes(ctx context.Context, arg InsertRatingVotesParams) (RatingVote, error)
@@ -189,6 +191,7 @@ type Querier interface {
 	SeedCollections(ctx context.Context, arg []SeedCollectionsParams) (int64, error)
 	SeedUsers(ctx context.Context, arg []SeedUsersParams) (int64, error)
 	SetPrimaryAddress(ctx context.Context, arg SetPrimaryAddressParams) error
+	SetPrimaryImage(ctx context.Context, arg SetPrimaryImageParams) error
 	UpdateAddress(ctx context.Context, arg UpdateAddressParams) (UserAddress, error)
 	UpdateAttribute(ctx context.Context, arg UpdateAttributeParams) (Attribute, error)
 	UpdateAttributeValue(ctx context.Context, arg UpdateAttributeValueParams) (AttributeValue, error)
@@ -203,7 +206,6 @@ type Querier interface {
 	UpdatePaymentTransaction(ctx context.Context, arg UpdatePaymentTransactionParams) error
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
 	UpdateProductImage(ctx context.Context, arg UpdateProductImageParams) error
-	UpdateProductImageAssignment(ctx context.Context, arg UpdateProductImageAssignmentParams) error
 	UpdateProductRating(ctx context.Context, arg UpdateProductRatingParams) (ProductRating, error)
 	UpdateProductStock(ctx context.Context, arg UpdateProductStockParams) (ProductVariant, error)
 	UpdateProductVariant(ctx context.Context, arg UpdateProductVariantParams) (ProductVariant, error)

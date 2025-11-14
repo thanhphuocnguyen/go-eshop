@@ -19,7 +19,7 @@ DELETE FROM product_ratings WHERE id = $1;
 SELECT * FROM product_ratings WHERE id = $1;
 
 -- name: GetProductRatings :many
-SELECT pr.*, ia.id AS image_id, img.url as image_url FROM
+SELECT pr.*, pi.id AS image_id, pi.image_url as image_url FROM
     (SELECT  r.*, u.first_name, u.last_name, u.email, p.name AS product_name
     FROM product_ratings AS r
     JOIN users AS u ON u.id = r.user_id
@@ -27,8 +27,7 @@ SELECT pr.*, ia.id AS image_id, img.url as image_url FROM
     WHERE r.product_id = COALESCE(sqlc.narg('product_id'), r.product_id) AND r.is_visible = COALESCE(sqlc.narg('is_visible'), TRUE) AND r.is_approved = COALESCE(sqlc.narg('is_approved'), r.is_approved)
     ORDER BY r.created_at DESC
     LIMIT $1 OFFSET $2) as pr
-LEFT JOIN image_assignments AS ia ON ia.entity_id = pr.id AND ia.entity_type = 'product_rating'
-LEFT JOIN images AS img ON img.id = ia.image_id;
+LEFT JOIN product_images AS pi ON pi.product_id = pr.product_id AND pi.is_primary = true;
 
 -- name: GetProductRatingsCount :one
 SELECT COUNT(*) FROM product_ratings WHERE product_id = $1 AND is_visible = TRUE;

@@ -23,3 +23,9 @@ const (
 	InvalidProductCode      = "invalid_product"
 	InvalidOrderCode        = "invalid_order"
 )
+const (
+	Authorization     = "Authorization"
+	AuthorizationType = "Bearer"
+	AuthPayLoad       = "AuthPayload"
+	UserRole          = "UserRole"
+)

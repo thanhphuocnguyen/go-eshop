@@ -28,6 +28,7 @@ import (
 // @Failure 500 {object} ApiResponse[gin.H]
 // @Router /users/{id} [patch]
 func (sv *Server) updateUserHandler(c *gin.Context) {
+	authPayload, _ := c.MustGet(AuthPayLoad).(*auth.Payload)
 	var req UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[repository.UpdateUserRow](InvalidEmailCode, "", err))
@@ -40,7 +41,7 @@ func (sv *Server) updateUserHandler(c *gin.Context) {
 		return
 	}
 
-	if user.Role != repository.UserRoleAdmin && user.ID != req.UserID {
+	if authPayload.RoleCode != repository.UserRoleCodeAdmin && user.ID != req.UserID {
 		c.JSON(http.StatusUnauthorized, createErrorResponse[repository.UpdateUserRow](UnauthorizedCode, "", err))
 		return
 	}
@@ -90,7 +91,7 @@ func (sv *Server) updateUserHandler(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[gin.H]
 // @Router /users/me [get]
 func (sv *Server) getCurrentUserHandler(c *gin.Context) {
-	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", errors.New("authorization payload is not provided")))
 		return
@@ -225,7 +226,7 @@ func (sv *Server) getUserHandler(c *gin.Context) {
 // @Router /users/verify-email [post]
 // @Security BearerAuth
 func (sv *Server) sendVerifyEmailHandler(c *gin.Context) {
-	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", errors.New("authorization payload is not provided")))
 		return

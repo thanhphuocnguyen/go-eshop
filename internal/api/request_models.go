@@ -31,8 +31,8 @@ type PostReplyRatingRequest struct {
 }
 
 type PaymentRequest struct {
-	OrderID       string `json:"orderId" binding:"required,uuid"`
-	PaymentMethod string `json:"paymentMethod" binding:"required,oneof=cod stripe"`
+	OrderID         string `json:"orderId" binding:"required,uuid"`
+	PaymentMethodID string `json:"paymentMethodId" binding:"required,uuid"`
 }
 
 type UpdatePaymentStatusRequest struct {
@@ -83,14 +83,14 @@ type CheckoutAddress struct {
 }
 
 type CheckoutRequest struct {
-	PaymentMethod  string           `json:"paymentMethod" binding:"required,oneof=cod stripe"`
-	PaymentGateway *string          `json:"paymentGateway" binding:"omitempty,oneof=stripe"`
-	AddressID      *string          `json:"addressId" binding:"omitempty,uuid"`
-	Email          *string          `json:"email" binding:"omitempty,email"`
-	FirstName      *string          `json:"firstName,omitempty" binding:"omitempty,min=3,max=32"`
-	LastName       *string          `json:"lastName,omitempty" binding:"omitempty,min=3,max=32"`
-	Address        *CheckoutAddress `json:"address" binding:"omitempty"`
-	DiscountCode   *string          `json:"discountCode" binding:"omitempty,min=5,max=32,alphanum"`
+	PaymentMethodId string           `json:"paymentMethod" binding:"required,oneof=cod stripe"`
+	PaymentGateway  *string          `json:"paymentGateway" binding:"omitempty,oneof=stripe"`
+	AddressID       *string          `json:"addressId" binding:"omitempty,uuid"`
+	Email           *string          `json:"email" binding:"omitempty,email"`
+	FirstName       *string          `json:"firstName,omitempty" binding:"omitempty,min=3,max=32"`
+	LastName        *string          `json:"lastName,omitempty" binding:"omitempty,min=3,max=32"`
+	Address         *CheckoutAddress `json:"address" binding:"omitempty"`
+	DiscountCode    *string          `json:"discountCode" binding:"omitempty,min=5,max=32,alphanum"`
 }
 
 type AssignmentRequest struct {

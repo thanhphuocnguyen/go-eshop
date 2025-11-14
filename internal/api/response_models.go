@@ -225,18 +225,19 @@ type AddressResponse struct {
 }
 
 type UserResponse struct {
-	ID                uuid.UUID           `json:"id"`
-	Role              repository.UserRole `json:"role"`
-	Username          string              `json:"username"`
-	FullName          string              `json:"fullname"`
-	Email             string              `json:"email,omitempty"`
-	Phone             string              `json:"phone,omitempty"`
-	VerifiedEmail     bool                `json:"verifiedEmail,omitempty"`
-	VerifiedPhone     bool                `json:"verifiedPhone,omitempty"`
-	PasswordChangedAt string              `json:"passwordChangedAt,omitempty"`
-	Addresses         []AddressResponse   `json:"addresses"`
-	CreatedAt         string              `json:"createdAt,omitempty"`
-	UpdatedAt         string              `json:"updatedAt,omitempty"`
+	ID                uuid.UUID         `json:"id"`
+	RoleID            string            `json:"roleId"`
+	RoleCode          string            `json:"roleCode"`
+	Username          string            `json:"username"`
+	FullName          string            `json:"fullname"`
+	Email             string            `json:"email,omitempty"`
+	Phone             string            `json:"phone,omitempty"`
+	VerifiedEmail     bool              `json:"verifiedEmail,omitempty"`
+	VerifiedPhone     bool              `json:"verifiedPhone,omitempty"`
+	PasswordChangedAt string            `json:"passwordChangedAt,omitempty"`
+	Addresses         []AddressResponse `json:"addresses"`
+	CreatedAt         string            `json:"createdAt,omitempty"`
+	UpdatedAt         string            `json:"updatedAt,omitempty"`
 }
 
 type CartItemResponse struct {

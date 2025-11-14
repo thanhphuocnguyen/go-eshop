@@ -245,15 +245,14 @@ SELECT
     p.id AS product_id, p.name AS product_name, p.category_id,
     ci.id as cart_item_id, ci.quantity,
     av.id as attr_val_id, av.code AS attr_val_code, av.name as attr_val_name, a.name AS attr_name, a.id AS attr_id,
-    i.id AS image_id, i.url AS image_url
+    pi.id AS image_id, pi.image_url AS image_url
 FROM cart_items AS ci
 JOIN product_variants AS pv ON pv.id = ci.variant_id
 JOIN products AS p ON p.id = pv.product_id
 JOIN variant_attribute_values AS vav ON vav.variant_id = pv.id
 JOIN attribute_values AS av ON vav.attribute_value_id = av.id
 JOIN attributes AS a ON av.attribute_id = a.id
-LEFT JOIN image_assignments AS ia ON ia.entity_id = pv.id AND ia.entity_type = 'variant'
-LEFT JOIN images AS i ON i.id = ia.image_id
+LEFT JOIN product_images AS pi ON pi.product_id = p.id AND pi.is_primary = true
 WHERE ci.cart_id = $1
 ORDER BY ci.added_at, ci.id, pv.id DESC
 `

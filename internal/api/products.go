@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -11,7 +10,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
-	"golang.org/x/sync/errgroup"
 )
 
 // @Summary Create a new product
@@ -90,29 +88,18 @@ func (sv *Server) getProductDetailHandler(c *gin.Context) {
 		return
 	}
 
-	entityIds := make([]uuid.UUID, 0)
 	idMap := make(map[uuid.UUID]bool)
 
 	for _, row := range variantRows {
 		if _, ok := idMap[row.ID]; !ok {
 			idMap[row.ID] = true
-			entityIds = append(entityIds, row.ID)
 		}
 	}
-	// Add the product ID to the entityIds slice
-	// This ensures that the product ID is included in the list of entity IDs
-	// when fetching product images
-	entityIds = append(entityIds, prodID)
 
-	images, err := sv.repo.GetProductImagesAssigned(c, entityIds)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", err))
-		return
-	}
-	imageResp := mapToProductImages(prodID, images)
+	// imageResp := mapToProductImages(prodID, images)
 	variants := mapToVariantResp(variantRows)
 	productDetail.Variants = variants
-	productDetail.ProductImages = imageResp
+	// productDetail.ProductImages = imageResp
 	c.JSON(http.StatusOK, createSuccessResponse(c, productDetail, "product retrieved", nil, nil))
 }
 
@@ -259,58 +246,7 @@ func (sv *Server) deleteProductHandler(c *gin.Context) {
 		return
 	}
 
-	// Remove the product image
-	images, err := sv.repo.GetProductImagesAssigned(c, []uuid.UUID{product.ID})
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[bool](NotFoundCode, "", err))
-			return
-		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
-		return
-	}
-	errGroup, _ := errgroup.WithContext(c)
-	for _, image := range images {
-		errGroup.Go(func() (err error) {
-			img, err := sv.repo.GetImageFromID(c, repository.GetImageFromIDParams{
-				ID:         image.ID,
-				EntityType: string(repository.EntityTypeProduct),
-			})
-
-			if err != nil {
-				if errors.Is(err, repository.ErrRecordNotFound) {
-					c.JSON(http.StatusNotFound, createErrorResponse[bool](NotFoundCode, "", err))
-					return
-				}
-				c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
-				return
-			}
-			// Remove image from storage
-			msg, err := sv.removeImageUtil(c, img.ExternalID)
-			if err != nil {
-				return fmt.Errorf("failed to remove image: %w, reason: %s", err, msg)
-			}
-
-			// Remove image from product
-			err = sv.repo.DeleteProductImage(c, image.ID)
-			if err != nil {
-				if errors.Is(err, repository.ErrRecordNotFound) {
-					c.JSON(http.StatusNotFound, createErrorResponse[bool](NotFoundCode, "", err))
-					return
-				}
-				c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
-				return
-			}
-			return
-		})
-	}
-
-	err = errGroup.Wait()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
-		return
-	}
-	err = sv.repo.DeleteProduct(c, uuid.MustParse(params.ID))
+	err = sv.repo.DeleteProduct(c, product.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 		return

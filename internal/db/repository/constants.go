@@ -35,16 +35,15 @@ const (
 	PaymentStatusProcessing PaymentStatus = "processing"
 )
 
-type PaymentMethod string
-
+// Payment method constants for backward compatibility
 const (
-	PaymentMethodCreditCard   PaymentMethod = "credit_card"
-	PaymentMethodDebitCard    PaymentMethod = "debit_card"
-	PaymentMethodPaypal       PaymentMethod = "paypal"
-	PaymentMethodStripe       PaymentMethod = "stripe"
-	PaymentMethodApplePay     PaymentMethod = "apple_pay"
-	PaymentMethodBankTransfer PaymentMethod = "bank_transfer"
-	PaymentMethodCOD          PaymentMethod = "cod"
+	PaymentMethodCodeCreditCard   = "credit_card"
+	PaymentMethodCodeDebitCard    = "debit_card"
+	PaymentMethodCodePaypal       = "paypal"
+	PaymentMethodCodeStripe       = "stripe"
+	PaymentMethodCodeApplePay     = "apple_pay"
+	PaymentMethodCodeBankTransfer = "bank_transfer"
+	PaymentMethodCodeCOD          = "cod"
 )
 
 type OrderStatus string
@@ -59,12 +58,13 @@ const (
 	OrderStatusRefunded   OrderStatus = "refunded"
 )
 
-type UserRole string
+// User role constants for backward compatibility
+type Role string
 
 const (
-	UserRoleAdmin     UserRole = "admin"
-	UserRoleUser      UserRole = "user"
-	UserRoleModerator UserRole = "moderator"
+	UserRoleCodeAdmin     Role = "admin"
+	UserRoleCodeUser      Role = "user"
+	UserRoleCodeModerator Role = "moderator"
 )
 
 type CartStatus string
@@ -74,24 +74,29 @@ const (
 	CartStatusCheckedOut CartStatus = "checked_out"
 )
 
-type CardType string
+// EntityType reference table struct
+type EntityType struct {
+	ID          uuid.UUID `json:"id"`
+	Code        string    `json:"code"`
+	Name        string    `json:"name"`
+	Description *string   `json:"description"`
+	IsActive    bool      `json:"isActive"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+}
 
+// Entity type constants for backward compatibility
 const (
-	CardTypeDebit  CardType = "debit"
-	CardTypeCredit CardType = "credit"
+	EntityTypeCodeProduct       = "product"
+	EntityTypeCodeVariant       = "variant"
+	EntityTypeCodeProductRating = "product_rating"
+	EntityTypeCodeCategory      = "category"
+	EntityTypeCodeCollection    = "collection"
+	EntityTypeCodeBrand         = "brand"
+	EntityTypeCodeUser          = "user"
 )
 
-type EntityType string
-
-const (
-	EntityTypeProduct    EntityType = "product"
-	EntityTypeCategory   EntityType = "category"
-	EntityTypeCollection EntityType = "collection"
-	EntityTypeBrand      EntityType = "brand"
-	EntityTypeUser       EntityType = "user"
-)
-
-// Nullable types
+// Nullable types - updated for new reference table structs
 type NullPaymentStatus struct {
 	PaymentStatus PaymentStatus
 	Valid         bool
@@ -110,6 +115,11 @@ type NullUserRole struct {
 type NullPaymentMethod struct {
 	PaymentMethod PaymentMethod
 	Valid         bool
+}
+
+type NullEntityType struct {
+	EntityType EntityType
+	Valid      bool
 }
 
 // VerifyEmail type for email verification

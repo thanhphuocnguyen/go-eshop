@@ -189,13 +189,12 @@ SELECT
     p.name as product_name, p.id, p.description,
     p.base_price as product_price, 
     p.base_sku as product_sku, p.slug as product_slug,
-    img.id as image_id, img.url
+    pi.id as image_id, pi.image_url
 FROM collections AS c
 LEFT JOIN products AS p ON c.id = p.collection_id
-LEFT JOIN image_assignments AS ia ON p.id = ia.entity_id AND ia.entity_type = 'product'
-LEFT JOIN images AS img ON img.id = ia.image_id
+LEFT JOIN product_images AS pi ON p.id = pi.product_id AND pi.is_primary = true
 WHERE c.id = ANY($3::UUID[])
-GROUP BY c.id, p.id, img.id, img.url
+GROUP BY c.id, p.id, pi.id, pi.image_url
 LIMIT $1 OFFSET $2
 `
 
@@ -224,7 +223,7 @@ type GetCollectionsByIDsRow struct {
 	ProductSku    *string        `json:"productSku"`
 	ProductSlug   *string        `json:"productSlug"`
 	ImageID_2     pgtype.UUID    `json:"imageId2"`
-	Url           *string        `json:"url"`
+	ImageUrl_2    *string        `json:"imageUrl2"`
 }
 
 func (q *Queries) GetCollectionsByIDs(ctx context.Context, arg GetCollectionsByIDsParams) ([]GetCollectionsByIDsRow, error) {
@@ -255,7 +254,7 @@ func (q *Queries) GetCollectionsByIDs(ctx context.Context, arg GetCollectionsByI
 			&i.ProductSku,
 			&i.ProductSlug,
 			&i.ImageID_2,
-			&i.Url,
+			&i.ImageUrl_2,
 		); err != nil {
 			return nil, err
 		}

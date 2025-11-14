@@ -13,33 +13,13 @@ import (
 )
 
 const createPayment = `-- name: CreatePayment :one
-INSERT INTO
-    payments (
-        order_id,
-        amount,
-        method,
-        gateway,
-        status,
-        payment_intent_id,
-        charge_id
-    )
-VALUES
-    (
-        $1,
-        $2,
-        $3,
-        $4,
-        $5,
-        $6,
-        $7
-    )
-RETURNING id, order_id, amount, status, method, gateway, refund_id, payment_intent_id, charge_id, error_code, error_message, created_at, updated_at
+INSERT INTO payments (order_id,amount,payment_method_id,gateway,status,payment_intent_id,charge_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, order_id, payment_method_id, amount, processing_fee, net_amount, status, gateway, gateway_reference, refund_id, payment_intent_id, charge_id, error_code, error_message, metadata, created_at, updated_at
 `
 
 type CreatePaymentParams struct {
 	OrderID         uuid.UUID      `json:"orderId"`
 	Amount          pgtype.Numeric `json:"amount"`
-	Method          PaymentMethod  `json:"method"`
+	PaymentMethodID uuid.UUID      `json:"paymentMethodId"`
 	Gateway         *string        `json:"gateway"`
 	Status          PaymentStatus  `json:"status"`
 	PaymentIntentID *string        `json:"paymentIntentId"`
@@ -50,7 +30,7 @@ func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) (P
 	row := q.db.QueryRow(ctx, createPayment,
 		arg.OrderID,
 		arg.Amount,
-		arg.Method,
+		arg.PaymentMethodID,
 		arg.Gateway,
 		arg.Status,
 		arg.PaymentIntentID,
@@ -60,15 +40,19 @@ func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) (P
 	err := row.Scan(
 		&i.ID,
 		&i.OrderID,
+		&i.PaymentMethodID,
 		&i.Amount,
+		&i.ProcessingFee,
+		&i.NetAmount,
 		&i.Status,
-		&i.Method,
 		&i.Gateway,
+		&i.GatewayReference,
 		&i.RefundID,
 		&i.PaymentIntentID,
 		&i.ChargeID,
 		&i.ErrorCode,
 		&i.ErrorMessage,
+		&i.Metadata,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -76,25 +60,7 @@ func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) (P
 }
 
 const createPaymentTransaction = `-- name: CreatePaymentTransaction :one
-INSERT INTO
-    payment_transactions (
-        payment_id,
-        amount,
-        status,
-        gateway_transaction_id,
-        gateway_response_code,
-        gateway_response_message
-    )
-VALUES
-    (
-        $1,
-        $2,
-        $3,
-        $4,
-        $5,
-        $6
-    )
-RETURNING id, payment_id, amount, status, gateway_transaction_id, gateway_response_code, gateway_response_message, transaction_date, created_at
+INSERT INTO payment_transactions (payment_id,amount,status,gateway_transaction_id,gateway_response_code,gateway_response_message) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, payment_id, amount, status, gateway_transaction_id, gateway_response_code, gateway_response_message, transaction_date, created_at
 `
 
 type CreatePaymentTransactionParams struct {
@@ -132,10 +98,7 @@ func (q *Queries) CreatePaymentTransaction(ctx context.Context, arg CreatePaymen
 }
 
 const deletePayment = `-- name: DeletePayment :exec
-DELETE FROM
-    payments
-WHERE
-    id = $1
+DELETE FROM payments WHERE id = $1
 `
 
 func (q *Queries) DeletePayment(ctx context.Context, id uuid.UUID) error {
@@ -144,10 +107,7 @@ func (q *Queries) DeletePayment(ctx context.Context, id uuid.UUID) error {
 }
 
 const deletePaymentTransaction = `-- name: DeletePaymentTransaction :exec
-DELETE FROM
-    payment_transactions
-WHERE
-    id = $1
+DELETE FROM payment_transactions WHERE id = $1
 `
 
 func (q *Queries) DeletePaymentTransaction(ctx context.Context, id uuid.UUID) error {
@@ -156,13 +116,7 @@ func (q *Queries) DeletePaymentTransaction(ctx context.Context, id uuid.UUID) er
 }
 
 const getPaymentByID = `-- name: GetPaymentByID :one
-SELECT
-    id, order_id, amount, status, method, gateway, refund_id, payment_intent_id, charge_id, error_code, error_message, created_at, updated_at
-FROM
-    payments
-WHERE
-    id = $1
-LIMIT 1
+SELECT id, order_id, payment_method_id, amount, processing_fee, net_amount, status, gateway, gateway_reference, refund_id, payment_intent_id, charge_id, error_code, error_message, metadata, created_at, updated_at FROM payments WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetPaymentByID(ctx context.Context, id uuid.UUID) (Payment, error) {
@@ -171,15 +125,19 @@ func (q *Queries) GetPaymentByID(ctx context.Context, id uuid.UUID) (Payment, er
 	err := row.Scan(
 		&i.ID,
 		&i.OrderID,
+		&i.PaymentMethodID,
 		&i.Amount,
+		&i.ProcessingFee,
+		&i.NetAmount,
 		&i.Status,
-		&i.Method,
 		&i.Gateway,
+		&i.GatewayReference,
 		&i.RefundID,
 		&i.PaymentIntentID,
 		&i.ChargeID,
 		&i.ErrorCode,
 		&i.ErrorMessage,
+		&i.Metadata,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -187,13 +145,7 @@ func (q *Queries) GetPaymentByID(ctx context.Context, id uuid.UUID) (Payment, er
 }
 
 const getPaymentByOrderID = `-- name: GetPaymentByOrderID :one
-SELECT
-    id, order_id, amount, status, method, gateway, refund_id, payment_intent_id, charge_id, error_code, error_message, created_at, updated_at
-FROM
-    payments
-WHERE
-    order_id = $1
-LIMIT 1
+SELECT id, order_id, payment_method_id, amount, processing_fee, net_amount, status, gateway, gateway_reference, refund_id, payment_intent_id, charge_id, error_code, error_message, metadata, created_at, updated_at FROM payments WHERE order_id = $1 LIMIT 1
 `
 
 func (q *Queries) GetPaymentByOrderID(ctx context.Context, orderID uuid.UUID) (Payment, error) {
@@ -202,15 +154,19 @@ func (q *Queries) GetPaymentByOrderID(ctx context.Context, orderID uuid.UUID) (P
 	err := row.Scan(
 		&i.ID,
 		&i.OrderID,
+		&i.PaymentMethodID,
 		&i.Amount,
+		&i.ProcessingFee,
+		&i.NetAmount,
 		&i.Status,
-		&i.Method,
 		&i.Gateway,
+		&i.GatewayReference,
 		&i.RefundID,
 		&i.PaymentIntentID,
 		&i.ChargeID,
 		&i.ErrorCode,
 		&i.ErrorMessage,
+		&i.Metadata,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -218,13 +174,7 @@ func (q *Queries) GetPaymentByOrderID(ctx context.Context, orderID uuid.UUID) (P
 }
 
 const getPaymentByPaymentIntentID = `-- name: GetPaymentByPaymentIntentID :one
-SELECT
-    id, order_id, amount, status, method, gateway, refund_id, payment_intent_id, charge_id, error_code, error_message, created_at, updated_at
-FROM
-    payments
-WHERE
-    payment_intent_id = $1
-LIMIT 1
+SELECT id, order_id, payment_method_id, amount, processing_fee, net_amount, status, gateway, gateway_reference, refund_id, payment_intent_id, charge_id, error_code, error_message, metadata, created_at, updated_at FROM payments WHERE payment_intent_id = $1 LIMIT 1
 `
 
 func (q *Queries) GetPaymentByPaymentIntentID(ctx context.Context, paymentIntentID *string) (Payment, error) {
@@ -233,15 +183,50 @@ func (q *Queries) GetPaymentByPaymentIntentID(ctx context.Context, paymentIntent
 	err := row.Scan(
 		&i.ID,
 		&i.OrderID,
+		&i.PaymentMethodID,
 		&i.Amount,
+		&i.ProcessingFee,
+		&i.NetAmount,
 		&i.Status,
-		&i.Method,
 		&i.Gateway,
+		&i.GatewayReference,
 		&i.RefundID,
 		&i.PaymentIntentID,
 		&i.ChargeID,
 		&i.ErrorCode,
 		&i.ErrorMessage,
+		&i.Metadata,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getPaymentMethodByID = `-- name: GetPaymentMethodByID :one
+SELECT id, code, name, description, is_active, gateway_supported, icon_url, display_order, requires_account, min_amount, max_amount, processing_fee_percentage, processing_fee_fixed, currency_supported, countries_supported, metadata, created_at, updated_at FROM payment_methods WHERE id = $1 LIMIT 1
+`
+
+// Payment Methods --
+func (q *Queries) GetPaymentMethodByID(ctx context.Context, id uuid.UUID) (PaymentMethod, error) {
+	row := q.db.QueryRow(ctx, getPaymentMethodByID, id)
+	var i PaymentMethod
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.Name,
+		&i.Description,
+		&i.IsActive,
+		&i.GatewaySupported,
+		&i.IconUrl,
+		&i.DisplayOrder,
+		&i.RequiresAccount,
+		&i.MinAmount,
+		&i.MaxAmount,
+		&i.ProcessingFeePercentage,
+		&i.ProcessingFeeFixed,
+		&i.CurrencySupported,
+		&i.CountriesSupported,
+		&i.Metadata,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -249,13 +234,7 @@ func (q *Queries) GetPaymentByPaymentIntentID(ctx context.Context, paymentIntent
 }
 
 const getPaymentTransactionByID = `-- name: GetPaymentTransactionByID :one
-SELECT
-    id, payment_id, amount, status, gateway_transaction_id, gateway_response_code, gateway_response_message, transaction_date, created_at
-FROM
-    payment_transactions
-WHERE
-    id = $1
-LIMIT 1
+SELECT id, payment_id, amount, status, gateway_transaction_id, gateway_response_code, gateway_response_message, transaction_date, created_at FROM payment_transactions WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetPaymentTransactionByID(ctx context.Context, id uuid.UUID) (PaymentTransaction, error) {
@@ -276,13 +255,7 @@ func (q *Queries) GetPaymentTransactionByID(ctx context.Context, id uuid.UUID) (
 }
 
 const getPaymentTransactionByPaymentID = `-- name: GetPaymentTransactionByPaymentID :one
-SELECT
-    id, payment_id, amount, status, gateway_transaction_id, gateway_response_code, gateway_response_message, transaction_date, created_at
-FROM
-    payment_transactions
-WHERE
-    payment_id = $1
-LIMIT 1
+SELECT id, payment_id, amount, status, gateway_transaction_id, gateway_response_code, gateway_response_message, transaction_date, created_at FROM payment_transactions WHERE payment_id = $1 LIMIT 1
 `
 
 func (q *Queries) GetPaymentTransactionByPaymentID(ctx context.Context, paymentID uuid.UUID) (PaymentTransaction, error) {
@@ -307,23 +280,20 @@ UPDATE
     payments
 SET
     amount = COALESCE($2, amount),
-    method = COALESCE($3, method),
-    refund_id = COALESCE($4, refund_id),
-    status = COALESCE($5, status),
-    gateway = COALESCE($6, gateway),
-    payment_intent_id = COALESCE($7, payment_intent_id),
-    charge_id = COALESCE($8, charge_id),
-    error_code = COALESCE($9, error_code),
-    error_message = COALESCE($10, error_message),
+    refund_id = COALESCE($3, refund_id),
+    status = COALESCE($4, status),
+    gateway = COALESCE($5, gateway),
+    payment_intent_id = COALESCE($6, payment_intent_id),
+    charge_id = COALESCE($7, charge_id),
+    error_code = COALESCE($8, error_code),
+    error_message = COALESCE($9, error_message),
     updated_at = NOW()
-WHERE
-    id = $1
+WHERE id = $1
 `
 
 type UpdatePaymentParams struct {
 	ID              uuid.UUID      `json:"id"`
 	Amount          pgtype.Numeric `json:"amount"`
-	Method          interface{}    `json:"method"`
 	RefundID        *string        `json:"refundId"`
 	Status          interface{}    `json:"status"`
 	Gateway         *string        `json:"gateway"`
@@ -337,7 +307,6 @@ func (q *Queries) UpdatePayment(ctx context.Context, arg UpdatePaymentParams) er
 	_, err := q.db.Exec(ctx, updatePayment,
 		arg.ID,
 		arg.Amount,
-		arg.Method,
 		arg.RefundID,
 		arg.Status,
 		arg.Gateway,
@@ -350,16 +319,14 @@ func (q *Queries) UpdatePayment(ctx context.Context, arg UpdatePaymentParams) er
 }
 
 const updatePaymentTransaction = `-- name: UpdatePaymentTransaction :exec
-UPDATE
-    payment_transactions
+UPDATE payment_transactions
 SET
     amount = COALESCE($2, amount),
     status = COALESCE($3, status),
     gateway_transaction_id = COALESCE($4, gateway_transaction_id),
     gateway_response_code = COALESCE($5, gateway_response_code),
     gateway_response_message = COALESCE($6, gateway_response_message)
-WHERE
-    id = $1
+WHERE id = $1
 `
 
 type UpdatePaymentTransactionParams struct {

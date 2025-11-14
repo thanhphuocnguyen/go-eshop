@@ -218,81 +218,6 @@ func (q *Queries) InsertBulkCategoryDiscounts(ctx context.Context, arg []InsertB
 	return q.db.CopyFrom(ctx, []string{"discount_categories"}, []string{"discount_id", "category_id"}, &iteratorForInsertBulkCategoryDiscounts{rows: arg})
 }
 
-// iteratorForInsertBulkImageAssignments implements pgx.CopyFromSource.
-type iteratorForInsertBulkImageAssignments struct {
-	rows                 []InsertBulkImageAssignmentsParams
-	skippedFirstNextCall bool
-}
-
-func (r *iteratorForInsertBulkImageAssignments) Next() bool {
-	if len(r.rows) == 0 {
-		return false
-	}
-	if !r.skippedFirstNextCall {
-		r.skippedFirstNextCall = true
-		return true
-	}
-	r.rows = r.rows[1:]
-	return len(r.rows) > 0
-}
-
-func (r iteratorForInsertBulkImageAssignments) Values() ([]interface{}, error) {
-	return []interface{}{
-		r.rows[0].ImageID,
-		r.rows[0].EntityID,
-		r.rows[0].EntityType,
-		r.rows[0].DisplayOrder,
-		r.rows[0].Role,
-	}, nil
-}
-
-func (r iteratorForInsertBulkImageAssignments) Err() error {
-	return nil
-}
-
-func (q *Queries) InsertBulkImageAssignments(ctx context.Context, arg []InsertBulkImageAssignmentsParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"image_assignments"}, []string{"image_id", "entity_id", "entity_type", "display_order", "role"}, &iteratorForInsertBulkImageAssignments{rows: arg})
-}
-
-// iteratorForInsertBulkImages implements pgx.CopyFromSource.
-type iteratorForInsertBulkImages struct {
-	rows                 []InsertBulkImagesParams
-	skippedFirstNextCall bool
-}
-
-func (r *iteratorForInsertBulkImages) Next() bool {
-	if len(r.rows) == 0 {
-		return false
-	}
-	if !r.skippedFirstNextCall {
-		r.skippedFirstNextCall = true
-		return true
-	}
-	r.rows = r.rows[1:]
-	return len(r.rows) > 0
-}
-
-func (r iteratorForInsertBulkImages) Values() ([]interface{}, error) {
-	return []interface{}{
-		r.rows[0].ExternalID,
-		r.rows[0].Url,
-		r.rows[0].AltText,
-		r.rows[0].Caption,
-		r.rows[0].MimeType,
-		r.rows[0].FileSize,
-		r.rows[0].Width,
-		r.rows[0].Height,
-	}, nil
-}
-
-func (r iteratorForInsertBulkImages) Err() error {
-	return nil
-}
-
-func (q *Queries) InsertBulkImages(ctx context.Context, arg []InsertBulkImagesParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"images"}, []string{"external_id", "url", "alt_text", "caption", "mime_type", "file_size", "width", "height"}, &iteratorForInsertBulkImages{rows: arg})
-}
-
 // iteratorForInsertBulkProductDiscounts implements pgx.CopyFromSource.
 type iteratorForInsertBulkProductDiscounts struct {
 	rows                 []InsertBulkProductDiscountsParams
@@ -324,6 +249,48 @@ func (r iteratorForInsertBulkProductDiscounts) Err() error {
 
 func (q *Queries) InsertBulkProductDiscounts(ctx context.Context, arg []InsertBulkProductDiscountsParams) (int64, error) {
 	return q.db.CopyFrom(ctx, []string{"discount_products"}, []string{"discount_id", "product_id"}, &iteratorForInsertBulkProductDiscounts{rows: arg})
+}
+
+// iteratorForInsertBulkProductImages implements pgx.CopyFromSource.
+type iteratorForInsertBulkProductImages struct {
+	rows                 []InsertBulkProductImagesParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForInsertBulkProductImages) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForInsertBulkProductImages) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].ProductID,
+		r.rows[0].ImageUrl,
+		r.rows[0].ImageID,
+		r.rows[0].AltText,
+		r.rows[0].Caption,
+		r.rows[0].MimeType,
+		r.rows[0].FileSize,
+		r.rows[0].Width,
+		r.rows[0].Height,
+		r.rows[0].DisplayOrder,
+		r.rows[0].IsPrimary,
+	}, nil
+}
+
+func (r iteratorForInsertBulkProductImages) Err() error {
+	return nil
+}
+
+func (q *Queries) InsertBulkProductImages(ctx context.Context, arg []InsertBulkProductImagesParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"product_images"}, []string{"product_id", "image_url", "image_id", "alt_text", "caption", "mime_type", "file_size", "width", "height", "display_order", "is_primary"}, &iteratorForInsertBulkProductImages{rows: arg})
 }
 
 // iteratorForInsertBulkUserDiscounts implements pgx.CopyFromSource.
@@ -493,7 +460,7 @@ func (r iteratorForSeedUsers) Values() ([]interface{}, error) {
 		r.rows[0].FirstName,
 		r.rows[0].LastName,
 		r.rows[0].HashedPassword,
-		r.rows[0].Role,
+		r.rows[0].RoleID,
 	}, nil
 }
 
@@ -502,5 +469,5 @@ func (r iteratorForSeedUsers) Err() error {
 }
 
 func (q *Queries) SeedUsers(ctx context.Context, arg []SeedUsersParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"users"}, []string{"email", "username", "phone_number", "first_name", "last_name", "hashed_password", "role"}, &iteratorForSeedUsers{rows: arg})
+	return q.db.CopyFrom(ctx, []string{"users"}, []string{"email", "username", "phone_number", "first_name", "last_name", "hashed_password", "role_id"}, &iteratorForSeedUsers{rows: arg})
 }

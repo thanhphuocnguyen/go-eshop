@@ -38,9 +38,9 @@ type CheckoutCartTxArgs struct {
 	DiscountPrice         float64
 	DiscountID            *uuid.UUID
 	ShippingAddress       ShippingAddressSnapshot
-	PaymentMethod         PaymentMethod
+	PaymentMethodID       uuid.UUID
 	PaymentGateway        *string
-	CreatePaymentFn       func(orderID uuid.UUID, paymentMethod PaymentMethod) (paymentIntentID string, clientSecret *string, err error)
+	CreatePaymentFn       func(orderID uuid.UUID, method string) (paymentIntentID string, clientSecret *string, err error)
 }
 
 func (s *pgRepo) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxArgs) (CreatePaymentResult, error) {
@@ -67,11 +67,11 @@ func (s *pgRepo) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxArgs) (Cr
 		result.TotalPrice = paymentAmount
 
 		createPaymentArgs := CreatePaymentParams{
-			OrderID: order.ID,
-			Amount:  utils.GetPgNumericFromFloat(paymentAmount),
+			OrderID:         order.ID,
+			PaymentMethodID: arg.PaymentMethodID,
+			Amount:          utils.GetPgNumericFromFloat(paymentAmount),
 		}
 
-		createPaymentArgs.Method = arg.PaymentMethod
 		createPaymentArgs.Gateway = arg.PaymentGateway
 
 		if arg.DiscountPrice != 0 {
@@ -111,7 +111,12 @@ func (s *pgRepo) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxArgs) (Cr
 			return err
 		}
 		if paymentAmount > 0 {
-			paymentIntentID, clientSecret, err := arg.CreatePaymentFn(order.ID, createPaymentArgs.Method)
+			method, err := s.GetPaymentMethodByID(ctx, arg.PaymentMethodID)
+			if err != nil {
+				log.Error().Err(err).Msg("GetPaymentMethodByID")
+				return err
+			}
+			paymentIntentID, clientSecret, err := arg.CreatePaymentFn(order.ID, method.Code)
 			createPaymentArgs.PaymentIntentID = &paymentIntentID
 			if err != nil {
 				log.Error().Err(err).Msg("CreatePaymentFn")

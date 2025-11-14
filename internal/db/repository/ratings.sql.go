@@ -76,7 +76,7 @@ func (q *Queries) GetProductRating(ctx context.Context, id uuid.UUID) (ProductRa
 }
 
 const getProductRatings = `-- name: GetProductRatings :many
-SELECT pr.id, pr.product_id, pr.user_id, pr.order_item_id, pr.rating, pr.review_title, pr.review_content, pr.verified_purchase, pr.is_visible, pr.is_approved, pr.created_at, pr.updated_at, pr.first_name, pr.last_name, pr.email, pr.product_name, ia.id AS image_id, img.url as image_url FROM
+SELECT pr.id, pr.product_id, pr.user_id, pr.order_item_id, pr.rating, pr.review_title, pr.review_content, pr.verified_purchase, pr.is_visible, pr.is_approved, pr.created_at, pr.updated_at, pr.first_name, pr.last_name, pr.email, pr.product_name, pi.id AS image_id, pi.image_url as image_url FROM
     (SELECT  r.id, r.product_id, r.user_id, r.order_item_id, r.rating, r.review_title, r.review_content, r.verified_purchase, r.is_visible, r.is_approved, r.created_at, r.updated_at, u.first_name, u.last_name, u.email, p.name AS product_name
     FROM product_ratings AS r
     JOIN users AS u ON u.id = r.user_id
@@ -84,8 +84,7 @@ SELECT pr.id, pr.product_id, pr.user_id, pr.order_item_id, pr.rating, pr.review_
     WHERE r.product_id = COALESCE($3, r.product_id) AND r.is_visible = COALESCE($4, TRUE) AND r.is_approved = COALESCE($5, r.is_approved)
     ORDER BY r.created_at DESC
     LIMIT $1 OFFSET $2) as pr
-LEFT JOIN image_assignments AS ia ON ia.entity_id = pr.id AND ia.entity_type = 'product_rating'
-LEFT JOIN images AS img ON img.id = ia.image_id
+LEFT JOIN product_images AS pi ON pi.product_id = pr.product_id AND pi.is_primary = true
 `
 
 type GetProductRatingsParams struct {

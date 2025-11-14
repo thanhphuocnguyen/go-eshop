@@ -15,12 +15,13 @@ var (
 )
 
 type Payload struct {
-	ID       uuid.UUID           `json:"id"`
-	UserID   uuid.UUID           `json:"user_id"`
-	Username string              `json:"username"`
-	Role     repository.UserRole `json:"role"`
-	IssuedAt time.Time           `json:"issued_at"`
-	Expires  time.Time           `json:"expires"`
+	ID       uuid.UUID       `json:"id"`
+	UserID   uuid.UUID       `json:"userId"`
+	Username string          `json:"username"`
+	RoleID   uuid.UUID       `json:"roleId"`
+	RoleCode repository.Role `json:"roleCode"`
+	IssuedAt time.Time       `json:"issuedAt"`
+	Expires  time.Time       `json:"expires"`
 }
 
 func (payload *Payload) GetExpirationTime() (*jwt.NumericDate, error) {
@@ -50,7 +51,8 @@ func NewPayload(userID uuid.UUID, username string, rol repository.UserRole, dura
 	payload := &Payload{
 		ID:       id,
 		UserID:   userID,
-		Role:     rol,
+		RoleCode: repository.Role(rol.Code),
+		RoleID:   rol.ID,
 		Username: username,
 		IssuedAt: time.Now(),
 		Expires:  time.Now().Add(duration),

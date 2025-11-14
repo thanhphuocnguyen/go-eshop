@@ -106,16 +106,15 @@ ORDER BY c.id;
 -- name: GetProducts :many
 SELECT
     p.*,
-    first_img.id AS img_id, first_img.url AS img_url,
+    first_img.id AS img_id, first_img.image_url AS img_url,
     COUNT(v.id) AS variant_count, MIN(v.price)::DECIMAL AS min_price, MAX(v.price)::DECIMAL AS max_price
 FROM products as p
 LEFT JOIN product_variants as v ON p.id = v.product_id
 LEFT JOIN LATERAL (
-    SELECT img.id, img.url
-    FROM image_assignments as ia
-    LEFT JOIN images as img ON img.id = ia.image_id
-    WHERE ia.entity_id = p.id AND ia.entity_type = 'product'
-    ORDER BY ia.display_order ASC, ia.id ASC
+    SELECT pi.id, pi.image_url
+    FROM product_images as pi
+    WHERE pi.product_id = p.id
+    ORDER BY pi.display_order ASC, pi.id ASC
     LIMIT 1
 ) AS first_img ON true
 WHERE
@@ -129,7 +128,7 @@ WHERE
     AND p.brand_id = COALESCE(sqlc.narg('brand_id'), p.brand_id)
     AND p.slug ILIKE COALESCE(sqlc.narg('slug'), p.slug)
 GROUP BY
-    p.id, first_img.id, first_img.url
+    p.id, first_img.id, first_img.image_url
 ORDER BY
     @orderBy::text
 LIMIT $1 OFFSET $2;

@@ -17,7 +17,8 @@ SELECT
     pm.id as payment_id,
     pm.status as payment_status,
     pm.amount as payment_amount,
-    pm.method,
+    pmt.code as payment_method,
+    pmt.id as payment_method_id,
     pm.gateway,
     pm.payment_intent_id,
     pm.created_at as payment_created_at,
@@ -26,6 +27,7 @@ SELECT
 FROM
     orders
 JOIN payments pm ON orders.id = pm.order_id
+JOIN payment_methods pmt ON pm.payment_method_id = pmt.id
 LEFT JOIN order_discounts od ON orders.id = od.order_id
 LEFT JOIN discounts d ON od.discount_id = d.id
 WHERE
@@ -36,7 +38,7 @@ LIMIT 1;
 -- name: GetOrderItems :many
 SELECT
     oi.*,
-    p.name as product_name, i.url as image_url,
+    p.name as product_name, pi.image_url as image_url,
     rv.id as rating_id, rv.rating, rv.review_title, rv.review_content, rv.created_at as rating_created_at
 FROM
     order_items oi
@@ -44,8 +46,7 @@ JOIN
     product_variants pv ON oi.variant_id = pv.id
 JOIN
     products p ON pv.product_id = p.id
-LEFT JOIN image_assignments AS ia ON ia.entity_id = pv.id AND ia.entity_type = 'variant'
-LEFT JOIN images AS i ON i.id = ia.image_id
+LEFT JOIN product_images AS pi ON pi.product_id = p.id AND pi.is_primary = true
 LEFT JOIN product_ratings rv ON rv.order_item_id = oi.id
 WHERE
     oi.order_id = $1;

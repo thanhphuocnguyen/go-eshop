@@ -190,9 +190,7 @@ FROM
 LEFT JOIN
     products p ON c.id = p.id
 LEFT JOIN
-    image_assignments ia ON ia.entity_id = p.id AND ia.entity_type = 'product'
-LEFT JOIN
-    images i ON i.id = ia.image_id
+    product_images pi ON pi.product_id = p.id AND pi.is_primary = true
 WHERE
     c.id = $1
 `

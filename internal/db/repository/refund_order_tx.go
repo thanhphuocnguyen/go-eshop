@@ -10,7 +10,7 @@ import (
 
 type RefundOrderTxArgs struct {
 	OrderID                 uuid.UUID
-	RefundPaymentFromMethod func(paymentID string, method PaymentMethod) (string, error)
+	RefundPaymentFromMethod func(paymentID string, method string) (string, error)
 }
 
 func (pg *pgRepo) RefundOrderTx(ctx context.Context, args RefundOrderTxArgs) (err error) {
@@ -26,9 +26,15 @@ func (pg *pgRepo) RefundOrderTx(ctx context.Context, args RefundOrderTxArgs) (er
 			return errors.New("payment is not successful, can't refund")
 		}
 
+		paymentMethod, err := q.GetPaymentMethodByID(ctx, payment.PaymentMethodID)
+		if err != nil {
+			log.Error().Err(err).Msg("GetPaymentMethodByID")
+			return err
+		}
+
 		// refund payment from gateway if it's not refunded yet
 		if args.RefundPaymentFromMethod != nil {
-			refundID, err := args.RefundPaymentFromMethod(*payment.PaymentIntentID, payment.Method)
+			refundID, err := args.RefundPaymentFromMethod(*payment.PaymentIntentID, paymentMethod.Code)
 			if err != nil {
 				log.Error().Err(err).Msg("RefundPaymentFromGateway")
 				return err

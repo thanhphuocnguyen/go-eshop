@@ -87,19 +87,19 @@ func (q *Queries) CreateAddress(ctx context.Context, arg CreateAddressParams) (U
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO
-    users (email, username, phone_number, first_name, hashed_password,role)
+    users (email, username, phone_number, first_name, hashed_password, role_id)
 VALUES
     ($1, $2, $3, $4, $5, $6)
-RETURNING id, email, username, first_name, role, verified_email, verified_phone, created_at, updated_at
+RETURNING id, email, username, first_name, role_id, verified_email, verified_phone, created_at, updated_at
 `
 
 type CreateUserParams struct {
-	Email          string   `json:"email"`
-	Username       string   `json:"username"`
-	PhoneNumber    string   `json:"phoneNumber"`
-	FirstName      string   `json:"firstName"`
-	HashedPassword string   `json:"hashedPassword"`
-	Role           UserRole `json:"role"`
+	Email          string    `json:"email"`
+	Username       string    `json:"username"`
+	PhoneNumber    string    `json:"phoneNumber"`
+	FirstName      string    `json:"firstName"`
+	HashedPassword string    `json:"hashedPassword"`
+	RoleID         uuid.UUID `json:"roleId"`
 }
 
 type CreateUserRow struct {
@@ -107,7 +107,7 @@ type CreateUserRow struct {
 	Email         string    `json:"email"`
 	Username      string    `json:"username"`
 	FirstName     string    `json:"firstName"`
-	Role          UserRole  `json:"role"`
+	RoleID        uuid.UUID `json:"roleId"`
 	VerifiedEmail bool      `json:"verifiedEmail"`
 	VerifiedPhone bool      `json:"verifiedPhone"`
 	CreatedAt     time.Time `json:"createdAt"`
@@ -121,7 +121,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 		arg.PhoneNumber,
 		arg.FirstName,
 		arg.HashedPassword,
-		arg.Role,
+		arg.RoleID,
 	)
 	var i CreateUserRow
 	err := row.Scan(
@@ -129,7 +129,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 		&i.Email,
 		&i.Username,
 		&i.FirstName,
-		&i.Role,
+		&i.RoleID,
 		&i.VerifiedEmail,
 		&i.VerifiedPhone,
 		&i.CreatedAt,
@@ -290,14 +290,47 @@ func (q *Queries) GetDefaultAddress(ctx context.Context, userID uuid.UUID) (User
 	return i, err
 }
 
+const getRoleByCode = `-- name: GetRoleByCode :one
+SELECT id, code, name, description, is_active, created_at, updated_at FROM user_roles WHERE code = $1 LIMIT 1
+`
+
+// Roles Queries
+func (q *Queries) GetRoleByCode(ctx context.Context, code string) (UserRole, error) {
+	row := q.db.QueryRow(ctx, getRoleByCode, code)
+	var i UserRole
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.Name,
+		&i.Description,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getRoleByID = `-- name: GetRoleByID :one
+SELECT id, code, name, description, is_active, created_at, updated_at FROM user_roles WHERE id = $1 LIMIT 1
+`
+
+func (q *Queries) GetRoleByID(ctx context.Context, id uuid.UUID) (UserRole, error) {
+	row := q.db.QueryRow(ctx, getRoleByID, id)
+	var i UserRole
+	err := row.Scan(
+		&i.ID,
+		&i.Code,
+		&i.Name,
+		&i.Description,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT
-    id, role, username, email, phone_number, first_name, last_name, avatar_url, avatar_image_id, hashed_password, verified_email, verified_phone, locked, password_changed_at, updated_at, created_at
-FROM
-    users
-WHERE
-    email = $1
-LIMIT 1
+SELECT id, role_id, username, email, phone_number, first_name, last_name, avatar_url, avatar_image_id, hashed_password, verified_email, verified_phone, locked, password_changed_at, updated_at, created_at FROM users WHERE email = $1 LIMIT 1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -305,7 +338,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Role,
+		&i.RoleID,
 		&i.Username,
 		&i.Email,
 		&i.PhoneNumber,
@@ -325,7 +358,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, role, username, email, phone_number, first_name, last_name, avatar_url, avatar_image_id, hashed_password, verified_email, verified_phone, locked, password_changed_at, updated_at, created_at FROM users WHERE id = $1 LIMIT 1
+SELECT id, role_id, username, email, phone_number, first_name, last_name, avatar_url, avatar_image_id, hashed_password, verified_email, verified_phone, locked, password_changed_at, updated_at, created_at FROM users WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
@@ -333,7 +366,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Role,
+		&i.RoleID,
 		&i.Username,
 		&i.Email,
 		&i.PhoneNumber,
@@ -353,13 +386,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT
-    id, role, username, email, phone_number, first_name, last_name, avatar_url, avatar_image_id, hashed_password, verified_email, verified_phone, locked, password_changed_at, updated_at, created_at
-FROM
-    users
-WHERE
-    username = $1
-LIMIT 1
+SELECT id, role_id, username, email, phone_number, first_name, last_name, avatar_url, avatar_image_id, hashed_password, verified_email, verified_phone, locked, password_changed_at, updated_at, created_at FROM users WHERE username = $1 LIMIT 1
 `
 
 func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
@@ -367,7 +394,7 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Role,
+		&i.RoleID,
 		&i.Username,
 		&i.Email,
 		&i.PhoneNumber,
@@ -387,7 +414,7 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 }
 
 const getUsers = `-- name: GetUsers :many
-SELECT id, role, username, email, phone_number, first_name, last_name, avatar_url, avatar_image_id, hashed_password, verified_email, verified_phone, locked, password_changed_at, updated_at, created_at FROM users ORDER BY id LIMIT $1 OFFSET $2
+SELECT id, role_id, username, email, phone_number, first_name, last_name, avatar_url, avatar_image_id, hashed_password, verified_email, verified_phone, locked, password_changed_at, updated_at, created_at FROM users ORDER BY id LIMIT $1 OFFSET $2
 `
 
 type GetUsersParams struct {
@@ -406,7 +433,7 @@ func (q *Queries) GetUsers(ctx context.Context, arg GetUsersParams) ([]User, err
 		var i User
 		if err := rows.Scan(
 			&i.ID,
-			&i.Role,
+			&i.RoleID,
 			&i.Username,
 			&i.Email,
 			&i.PhoneNumber,
@@ -495,13 +522,13 @@ type SeedAddressesParams struct {
 }
 
 type SeedUsersParams struct {
-	Email          string   `json:"email"`
-	Username       string   `json:"username"`
-	PhoneNumber    string   `json:"phoneNumber"`
-	FirstName      string   `json:"firstName"`
-	LastName       string   `json:"lastName"`
-	HashedPassword string   `json:"hashedPassword"`
-	Role           UserRole `json:"role"`
+	Email          string    `json:"email"`
+	Username       string    `json:"username"`
+	PhoneNumber    string    `json:"phoneNumber"`
+	FirstName      string    `json:"firstName"`
+	LastName       string    `json:"lastName"`
+	HashedPassword string    `json:"hashedPassword"`
+	RoleID         uuid.UUID `json:"roleId"`
 }
 
 const setPrimaryAddress = `-- name: SetPrimaryAddress :exec
@@ -584,7 +611,7 @@ SET
     email = coalesce($1, email),
     first_name = coalesce($2, first_name),
     last_name = coalesce($3, last_name),
-    role = coalesce($4, role),
+    role_id = coalesce($4, role_id),
     phone_number = coalesce($5, phone_number),
     verified_email = coalesce($6, verified_email),
     verified_phone = coalesce($7, verified_phone),
@@ -593,14 +620,14 @@ SET
     updated_at = $10
 WHERE
     id = $11
-RETURNING id, email, username, first_name, last_name, role, verified_email, verified_phone, created_at, updated_at
+RETURNING id, email, username, first_name, last_name, role_id, verified_email, verified_phone, created_at, updated_at
 `
 
 type UpdateUserParams struct {
 	Email             *string            `json:"email"`
 	FirstName         *string            `json:"firstName"`
 	LastName          *string            `json:"lastName"`
-	Role              interface{}        `json:"role"`
+	RoleID            pgtype.UUID        `json:"roleId"`
 	PhoneNumber       *string            `json:"phoneNumber"`
 	VerifiedEmail     *bool              `json:"verifiedEmail"`
 	VerifiedPhone     *bool              `json:"verifiedPhone"`
@@ -616,7 +643,7 @@ type UpdateUserRow struct {
 	Username      string    `json:"username"`
 	FirstName     string    `json:"firstName"`
 	LastName      string    `json:"lastName"`
-	Role          UserRole  `json:"role"`
+	RoleID        uuid.UUID `json:"roleId"`
 	VerifiedEmail bool      `json:"verifiedEmail"`
 	VerifiedPhone bool      `json:"verifiedPhone"`
 	CreatedAt     time.Time `json:"createdAt"`
@@ -628,7 +655,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateU
 		arg.Email,
 		arg.FirstName,
 		arg.LastName,
-		arg.Role,
+		arg.RoleID,
 		arg.PhoneNumber,
 		arg.VerifiedEmail,
 		arg.VerifiedPhone,
@@ -644,7 +671,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateU
 		&i.Username,
 		&i.FirstName,
 		&i.LastName,
-		&i.Role,
+		&i.RoleID,
 		&i.VerifiedEmail,
 		&i.VerifiedPhone,
 		&i.CreatedAt,

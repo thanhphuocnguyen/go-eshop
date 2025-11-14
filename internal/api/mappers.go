@@ -12,7 +12,7 @@ func mapToUserResponse(user repository.User) UserResponse {
 		Addresses:         []AddressResponse{},
 		Email:             user.Email,
 		FullName:          user.FirstName,
-		Role:              user.Role,
+		RoleID:            user.RoleID.String(),
 		Phone:             user.PhoneNumber,
 		Username:          user.Username,
 		VerifiedEmail:     user.VerifiedEmail,
@@ -162,54 +162,6 @@ func mapToVariantResp(variantRows []repository.GetProductVariantsRow) []ProductV
 	return variants
 }
 
-func mapToProductImages(productID uuid.UUID, imageRows []repository.GetProductImagesAssignedRow) []ProductImageModel {
-	// log.Debug().Msgf("mapToProductImages: %v", imageRows)
-	images := make([]ProductImageModel, 0)
-	for _, row := range imageRows {
-		existingImageIdx := -1
-		for i, image := range images {
-			if image.ID == row.ID.String() {
-				existingImageIdx = i
-				break
-			}
-		}
-		if existingImageIdx != -1 {
-			image := ImageAssignmentModel{
-				ID:           row.ID.String(),
-				EntityID:     row.EntityID.String(),
-				EntityType:   row.EntityType,
-				Role:         row.Role,
-				DisplayOrder: row.DisplayOrder,
-			}
-			if row.EntityID != productID {
-				// If the image already exists, append the assignment to the existing image
-				images[existingImageIdx].VariantAssignments = append(images[existingImageIdx].VariantAssignments, image)
-			}
-		} else {
-			// If the image does not exist, add it to the list of images
-			image := ProductImageModel{
-				ID:                 row.ID.String(),
-				Url:                row.Url,
-				ExternalID:         row.ExternalID,
-				Role:               row.Role,
-				VariantAssignments: make([]ImageAssignmentModel, 0),
-			}
-
-			if row.EntityID != productID {
-				image.VariantAssignments = append(image.VariantAssignments, ImageAssignmentModel{
-					ID:           row.ID.String(),
-					EntityID:     row.EntityID.String(),
-					EntityType:   row.EntityType,
-					Role:         row.Role,
-					DisplayOrder: row.DisplayOrder,
-				})
-			}
-			images = append(images, image)
-		}
-	}
-	return images
-}
-
 func mapToListProductResponse(productRow repository.GetProductsRow) ProductListModel {
 	minPrice, _ := productRow.MinPrice.Float64Value()
 	maxPrice, _ := productRow.MaxPrice.Float64Value()
@@ -230,17 +182,14 @@ func mapToListProductResponse(productRow repository.GetProductsRow) ProductListM
 		MaxPrice:     maxPrice.Float64,
 		Sku:          productRow.BaseSku,
 		Slug:         productRow.Slug,
-		ImgUrl:       productRow.ImgUrl,
+		ImgUrl:       &productRow.ImgUrl,
 		AvgRating:    &avgRating,
 		ReviewCount:  &productRow.RatingCount,
 		VariantCount: productRow.VariantCount,
 		CreatedAt:    productRow.CreatedAt.String(),
 		UpdatedAt:    productRow.UpdatedAt.String(),
 	}
-	if productRow.ImgID.Valid {
-		id, _ := uuid.FromBytes(productRow.ImgID.Bytes[:])
-		product.ImgID = utils.StringPtr(id.String())
-	}
+	product.ImgID = utils.StringPtr(productRow.ImgID.String())
 
 	return product
 }

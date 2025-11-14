@@ -7,27 +7,12 @@ package repository
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 )
 
-const deleteImageAssignments = `-- name: DeleteImageAssignments :exec
-DELETE FROM image_assignments WHERE image_id = $1 AND entity_type = $2
-`
-
-type DeleteImageAssignmentsParams struct {
-	ImageID    uuid.UUID `json:"imageId"`
-	EntityType string    `json:"entityType"`
-}
-
-func (q *Queries) DeleteImageAssignments(ctx context.Context, arg DeleteImageAssignmentsParams) error {
-	_, err := q.db.Exec(ctx, deleteImageAssignments, arg.ImageID, arg.EntityType)
-	return err
-}
-
 const deleteProductImage = `-- name: DeleteProductImage :exec
-DELETE FROM images WHERE id = $1
+DELETE FROM product_images WHERE id = $1
 `
 
 func (q *Queries) DeleteProductImage(ctx context.Context, id uuid.UUID) error {
@@ -35,185 +20,93 @@ func (q *Queries) DeleteProductImage(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-const deleteProductImageAssignment = `-- name: DeleteProductImageAssignment :exec
-DELETE FROM image_assignments WHERE image_id = $1 AND entity_id = $2 AND entity_type = $3
+const deleteProductImagesByProductID = `-- name: DeleteProductImagesByProductID :exec
+DELETE FROM product_images WHERE product_id = $1
 `
 
-type DeleteProductImageAssignmentParams struct {
-	ImageID    uuid.UUID `json:"imageId"`
-	EntityID   uuid.UUID `json:"entityId"`
-	EntityType string    `json:"entityType"`
-}
-
-func (q *Queries) DeleteProductImageAssignment(ctx context.Context, arg DeleteProductImageAssignmentParams) error {
-	_, err := q.db.Exec(ctx, deleteProductImageAssignment, arg.ImageID, arg.EntityID, arg.EntityType)
+func (q *Queries) DeleteProductImagesByProductID(ctx context.Context, productID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteProductImagesByProductID, productID)
 	return err
 }
 
-const getImageFromExternalID = `-- name: GetImageFromExternalID :one
-SELECT images.id, external_id, url, alt_text, caption, mime_type, file_size, width, height, uploaded_at, updated_at, image_assignments.id, image_id, entity_id, entity_type, display_order, role, created_at FROM images
-JOIN image_assignments ON images.id = image_assignments.image_id
-WHERE external_id = $1 LIMIT 1
+const getImageByID = `-- name: GetImageByID :one
+SELECT id, product_id, image_url, image_id, alt_text, caption, mime_type, file_size, width, height, display_order, is_primary, uploaded_at, updated_at FROM product_images WHERE id = $1 LIMIT 1
 `
 
-type GetImageFromExternalIDRow struct {
-	ID           uuid.UUID `json:"id"`
-	ExternalID   string    `json:"externalId"`
-	Url          string    `json:"url"`
-	AltText      *string   `json:"altText"`
-	Caption      *string   `json:"caption"`
-	MimeType     *string   `json:"mimeType"`
-	FileSize     *int64    `json:"fileSize"`
-	Width        *int32    `json:"width"`
-	Height       *int32    `json:"height"`
-	UploadedAt   time.Time `json:"uploadedAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
-	ID_2         uuid.UUID `json:"id2"`
-	ImageID      uuid.UUID `json:"imageId"`
-	EntityID     uuid.UUID `json:"entityId"`
-	EntityType   string    `json:"entityType"`
-	DisplayOrder int16     `json:"displayOrder"`
-	Role         string    `json:"role"`
-	CreatedAt    time.Time `json:"createdAt"`
-}
-
-func (q *Queries) GetImageFromExternalID(ctx context.Context, externalID string) (GetImageFromExternalIDRow, error) {
-	row := q.db.QueryRow(ctx, getImageFromExternalID, externalID)
-	var i GetImageFromExternalIDRow
+func (q *Queries) GetImageByID(ctx context.Context, id uuid.UUID) (ProductImage, error) {
+	row := q.db.QueryRow(ctx, getImageByID, id)
+	var i ProductImage
 	err := row.Scan(
 		&i.ID,
-		&i.ExternalID,
-		&i.Url,
+		&i.ProductID,
+		&i.ImageUrl,
+		&i.ImageID,
 		&i.AltText,
 		&i.Caption,
 		&i.MimeType,
 		&i.FileSize,
 		&i.Width,
 		&i.Height,
+		&i.DisplayOrder,
+		&i.IsPrimary,
 		&i.UploadedAt,
 		&i.UpdatedAt,
-		&i.ID_2,
-		&i.ImageID,
-		&i.EntityID,
-		&i.EntityType,
-		&i.DisplayOrder,
-		&i.Role,
-		&i.CreatedAt,
 	)
 	return i, err
 }
 
-const getImageFromID = `-- name: GetImageFromID :one
-SELECT images.id, external_id, url, alt_text, caption, mime_type, file_size, width, height, uploaded_at, updated_at, image_assignments.id, image_id, entity_id, entity_type, display_order, role, created_at FROM images
-JOIN image_assignments ON images.id = image_assignments.image_id
-WHERE images.id = $1 AND entity_type = $2 LIMIT 1
+const getImageByImageID = `-- name: GetImageByImageID :one
+SELECT id, product_id, image_url, image_id, alt_text, caption, mime_type, file_size, width, height, display_order, is_primary, uploaded_at, updated_at FROM product_images WHERE image_id = $1 LIMIT 1
 `
 
-type GetImageFromIDParams struct {
-	ID         uuid.UUID `json:"id"`
-	EntityType string    `json:"entityType"`
-}
-
-type GetImageFromIDRow struct {
-	ID           uuid.UUID `json:"id"`
-	ExternalID   string    `json:"externalId"`
-	Url          string    `json:"url"`
-	AltText      *string   `json:"altText"`
-	Caption      *string   `json:"caption"`
-	MimeType     *string   `json:"mimeType"`
-	FileSize     *int64    `json:"fileSize"`
-	Width        *int32    `json:"width"`
-	Height       *int32    `json:"height"`
-	UploadedAt   time.Time `json:"uploadedAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
-	ID_2         uuid.UUID `json:"id2"`
-	ImageID      uuid.UUID `json:"imageId"`
-	EntityID     uuid.UUID `json:"entityId"`
-	EntityType   string    `json:"entityType"`
-	DisplayOrder int16     `json:"displayOrder"`
-	Role         string    `json:"role"`
-	CreatedAt    time.Time `json:"createdAt"`
-}
-
-func (q *Queries) GetImageFromID(ctx context.Context, arg GetImageFromIDParams) (GetImageFromIDRow, error) {
-	row := q.db.QueryRow(ctx, getImageFromID, arg.ID, arg.EntityType)
-	var i GetImageFromIDRow
+func (q *Queries) GetImageByImageID(ctx context.Context, imageID string) (ProductImage, error) {
+	row := q.db.QueryRow(ctx, getImageByImageID, imageID)
+	var i ProductImage
 	err := row.Scan(
 		&i.ID,
-		&i.ExternalID,
-		&i.Url,
+		&i.ProductID,
+		&i.ImageUrl,
+		&i.ImageID,
 		&i.AltText,
 		&i.Caption,
 		&i.MimeType,
 		&i.FileSize,
 		&i.Width,
 		&i.Height,
+		&i.DisplayOrder,
+		&i.IsPrimary,
 		&i.UploadedAt,
 		&i.UpdatedAt,
-		&i.ID_2,
-		&i.ImageID,
-		&i.EntityID,
-		&i.EntityType,
-		&i.DisplayOrder,
-		&i.Role,
-		&i.CreatedAt,
 	)
 	return i, err
 }
 
-const getImagesByEntityID = `-- name: GetImagesByEntityID :many
-SELECT image_assignments.id, image_id, entity_id, entity_type, display_order, role, created_at, images.id, external_id, url, alt_text, caption, mime_type, file_size, width, height, uploaded_at, updated_at FROM image_assignments
-JOIN images ON images.id = image_assignments.image_id
-WHERE entity_id = $1 ORDER BY display_order
+const getImagesByProductID = `-- name: GetImagesByProductID :many
+SELECT id, product_id, image_url, image_id, alt_text, caption, mime_type, file_size, width, height, display_order, is_primary, uploaded_at, updated_at FROM product_images WHERE product_id = $1 ORDER BY display_order
 `
 
-type GetImagesByEntityIDRow struct {
-	ID           uuid.UUID `json:"id"`
-	ImageID      uuid.UUID `json:"imageId"`
-	EntityID     uuid.UUID `json:"entityId"`
-	EntityType   string    `json:"entityType"`
-	DisplayOrder int16     `json:"displayOrder"`
-	Role         string    `json:"role"`
-	CreatedAt    time.Time `json:"createdAt"`
-	ID_2         uuid.UUID `json:"id2"`
-	ExternalID   string    `json:"externalId"`
-	Url          string    `json:"url"`
-	AltText      *string   `json:"altText"`
-	Caption      *string   `json:"caption"`
-	MimeType     *string   `json:"mimeType"`
-	FileSize     *int64    `json:"fileSize"`
-	Width        *int32    `json:"width"`
-	Height       *int32    `json:"height"`
-	UploadedAt   time.Time `json:"uploadedAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
-}
-
-func (q *Queries) GetImagesByEntityID(ctx context.Context, entityID uuid.UUID) ([]GetImagesByEntityIDRow, error) {
-	rows, err := q.db.Query(ctx, getImagesByEntityID, entityID)
+func (q *Queries) GetImagesByProductID(ctx context.Context, productID uuid.UUID) ([]ProductImage, error) {
+	rows, err := q.db.Query(ctx, getImagesByProductID, productID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetImagesByEntityIDRow{}
+	items := []ProductImage{}
 	for rows.Next() {
-		var i GetImagesByEntityIDRow
+		var i ProductImage
 		if err := rows.Scan(
 			&i.ID,
+			&i.ProductID,
+			&i.ImageUrl,
 			&i.ImageID,
-			&i.EntityID,
-			&i.EntityType,
-			&i.DisplayOrder,
-			&i.Role,
-			&i.CreatedAt,
-			&i.ID_2,
-			&i.ExternalID,
-			&i.Url,
 			&i.AltText,
 			&i.Caption,
 			&i.MimeType,
 			&i.FileSize,
 			&i.Width,
 			&i.Height,
+			&i.DisplayOrder,
+			&i.IsPrimary,
 			&i.UploadedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -227,118 +120,86 @@ func (q *Queries) GetImagesByEntityID(ctx context.Context, entityID uuid.UUID) (
 	return items, nil
 }
 
-const getProductImageByEntityID = `-- name: GetProductImageByEntityID :one
-SELECT image_assignments.id, image_id, entity_id, entity_type, display_order, role, created_at, images.id, external_id, url, alt_text, caption, mime_type, file_size, width, height, uploaded_at, updated_at FROM image_assignments
-JOIN images ON images.id = image_assignments.image_id
-WHERE entity_id = $1 LIMIT 1
+const getPrimaryImageByProductID = `-- name: GetPrimaryImageByProductID :one
+SELECT id, product_id, image_url, image_id, alt_text, caption, mime_type, file_size, width, height, display_order, is_primary, uploaded_at, updated_at FROM product_images WHERE product_id = $1 AND is_primary = true LIMIT 1
 `
 
-type GetProductImageByEntityIDRow struct {
-	ID           uuid.UUID `json:"id"`
-	ImageID      uuid.UUID `json:"imageId"`
-	EntityID     uuid.UUID `json:"entityId"`
-	EntityType   string    `json:"entityType"`
-	DisplayOrder int16     `json:"displayOrder"`
-	Role         string    `json:"role"`
-	CreatedAt    time.Time `json:"createdAt"`
-	ID_2         uuid.UUID `json:"id2"`
-	ExternalID   string    `json:"externalId"`
-	Url          string    `json:"url"`
-	AltText      *string   `json:"altText"`
-	Caption      *string   `json:"caption"`
-	MimeType     *string   `json:"mimeType"`
-	FileSize     *int64    `json:"fileSize"`
-	Width        *int32    `json:"width"`
-	Height       *int32    `json:"height"`
-	UploadedAt   time.Time `json:"uploadedAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
-}
-
-func (q *Queries) GetProductImageByEntityID(ctx context.Context, entityID uuid.UUID) (GetProductImageByEntityIDRow, error) {
-	row := q.db.QueryRow(ctx, getProductImageByEntityID, entityID)
-	var i GetProductImageByEntityIDRow
+func (q *Queries) GetPrimaryImageByProductID(ctx context.Context, productID uuid.UUID) (ProductImage, error) {
+	row := q.db.QueryRow(ctx, getPrimaryImageByProductID, productID)
+	var i ProductImage
 	err := row.Scan(
 		&i.ID,
+		&i.ProductID,
+		&i.ImageUrl,
 		&i.ImageID,
-		&i.EntityID,
-		&i.EntityType,
-		&i.DisplayOrder,
-		&i.Role,
-		&i.CreatedAt,
-		&i.ID_2,
-		&i.ExternalID,
-		&i.Url,
 		&i.AltText,
 		&i.Caption,
 		&i.MimeType,
 		&i.FileSize,
 		&i.Width,
 		&i.Height,
+		&i.DisplayOrder,
+		&i.IsPrimary,
 		&i.UploadedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
 }
 
-const getProductImagesAssigned = `-- name: GetProductImagesAssigned :many
+const getProductImages = `-- name: GetProductImages :many
 SELECT 
-    images.id,
-    images.external_id,
-    images.url,
-    images.alt_text,
-    images.caption,
-    images.mime_type,
-    images.file_size,
-    images.width,
-    images.height,
-    image_assignments.entity_id,
-    image_assignments.entity_type,
-    image_assignments.display_order,
-    image_assignments.role
-FROM images
-JOIN image_assignments ON images.id = image_assignments.image_id
-WHERE entity_id = ANY($1::UUID[]) ORDER BY entity_id, display_order
+    pi.id,
+    pi.image_id,
+    pi.image_url,
+    pi.alt_text,
+    pi.caption,
+    pi.mime_type,
+    pi.file_size,
+    pi.width,
+    pi.height,
+    pi.product_id,
+    pi.display_order,
+    pi.is_primary
+FROM product_images pi WHERE product_id = ANY($1::UUID[])  ORDER BY product_id, display_order
 `
 
-type GetProductImagesAssignedRow struct {
+type GetProductImagesRow struct {
 	ID           uuid.UUID `json:"id"`
-	ExternalID   string    `json:"externalId"`
-	Url          string    `json:"url"`
+	ImageID      string    `json:"imageId"`
+	ImageUrl     string    `json:"imageUrl"`
 	AltText      *string   `json:"altText"`
 	Caption      *string   `json:"caption"`
 	MimeType     *string   `json:"mimeType"`
 	FileSize     *int64    `json:"fileSize"`
 	Width        *int32    `json:"width"`
 	Height       *int32    `json:"height"`
-	EntityID     uuid.UUID `json:"entityId"`
-	EntityType   string    `json:"entityType"`
+	ProductID    uuid.UUID `json:"productId"`
 	DisplayOrder int16     `json:"displayOrder"`
-	Role         string    `json:"role"`
+	IsPrimary    bool      `json:"isPrimary"`
 }
 
-func (q *Queries) GetProductImagesAssigned(ctx context.Context, entityIds []uuid.UUID) ([]GetProductImagesAssignedRow, error) {
-	rows, err := q.db.Query(ctx, getProductImagesAssigned, entityIds)
+func (q *Queries) GetProductImages(ctx context.Context, productIds []uuid.UUID) ([]GetProductImagesRow, error) {
+	rows, err := q.db.Query(ctx, getProductImages, productIds)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetProductImagesAssignedRow{}
+	items := []GetProductImagesRow{}
 	for rows.Next() {
-		var i GetProductImagesAssignedRow
+		var i GetProductImagesRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.ExternalID,
-			&i.Url,
+			&i.ImageID,
+			&i.ImageUrl,
 			&i.AltText,
 			&i.Caption,
 			&i.MimeType,
 			&i.FileSize,
 			&i.Width,
 			&i.Height,
-			&i.EntityID,
-			&i.EntityType,
+			&i.ProductID,
 			&i.DisplayOrder,
-			&i.Role,
+			&i.IsPrimary,
 		); err != nil {
 			return nil, err
 		}
@@ -350,143 +211,118 @@ func (q *Queries) GetProductImagesAssigned(ctx context.Context, entityIds []uuid
 	return items, nil
 }
 
-type InsertBulkImageAssignmentsParams struct {
-	ImageID      uuid.UUID `json:"imageId"`
-	EntityID     uuid.UUID `json:"entityId"`
-	EntityType   string    `json:"entityType"`
+type InsertBulkProductImagesParams struct {
+	ProductID    uuid.UUID `json:"productId"`
+	ImageUrl     string    `json:"imageUrl"`
+	ImageID      string    `json:"imageId"`
+	AltText      *string   `json:"altText"`
+	Caption      *string   `json:"caption"`
+	MimeType     *string   `json:"mimeType"`
+	FileSize     *int64    `json:"fileSize"`
+	Width        *int32    `json:"width"`
+	Height       *int32    `json:"height"`
 	DisplayOrder int16     `json:"displayOrder"`
-	Role         string    `json:"role"`
+	IsPrimary    bool      `json:"isPrimary"`
 }
 
-type InsertBulkImagesParams struct {
-	ExternalID string  `json:"externalId"`
-	Url        string  `json:"url"`
-	AltText    *string `json:"altText"`
-	Caption    *string `json:"caption"`
-	MimeType   *string `json:"mimeType"`
-	FileSize   *int64  `json:"fileSize"`
-	Width      *int32  `json:"width"`
-	Height     *int32  `json:"height"`
-}
-
-const insertImage = `-- name: InsertImage :one
-INSERT INTO images (external_id, url, alt_text, caption, mime_type, file_size, width, height) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, external_id, url, alt_text, caption, mime_type, file_size, width, height, uploaded_at, updated_at
+const insertProductImage = `-- name: InsertProductImage :one
+INSERT INTO product_images (product_id, image_url, image_id, alt_text, caption, mime_type, file_size, width, height, display_order, is_primary) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id, product_id, image_url, image_id, alt_text, caption, mime_type, file_size, width, height, display_order, is_primary, uploaded_at, updated_at
 `
 
-type InsertImageParams struct {
-	ExternalID string  `json:"externalId"`
-	Url        string  `json:"url"`
-	AltText    *string `json:"altText"`
-	Caption    *string `json:"caption"`
-	MimeType   *string `json:"mimeType"`
-	FileSize   *int64  `json:"fileSize"`
-	Width      *int32  `json:"width"`
-	Height     *int32  `json:"height"`
+type InsertProductImageParams struct {
+	ProductID    uuid.UUID `json:"productId"`
+	ImageUrl     string    `json:"imageUrl"`
+	ImageID      string    `json:"imageId"`
+	AltText      *string   `json:"altText"`
+	Caption      *string   `json:"caption"`
+	MimeType     *string   `json:"mimeType"`
+	FileSize     *int64    `json:"fileSize"`
+	Width        *int32    `json:"width"`
+	Height       *int32    `json:"height"`
+	DisplayOrder int16     `json:"displayOrder"`
+	IsPrimary    bool      `json:"isPrimary"`
 }
 
-func (q *Queries) InsertImage(ctx context.Context, arg InsertImageParams) (Image, error) {
-	row := q.db.QueryRow(ctx, insertImage,
-		arg.ExternalID,
-		arg.Url,
+func (q *Queries) InsertProductImage(ctx context.Context, arg InsertProductImageParams) (ProductImage, error) {
+	row := q.db.QueryRow(ctx, insertProductImage,
+		arg.ProductID,
+		arg.ImageUrl,
+		arg.ImageID,
 		arg.AltText,
 		arg.Caption,
 		arg.MimeType,
 		arg.FileSize,
 		arg.Width,
 		arg.Height,
+		arg.DisplayOrder,
+		arg.IsPrimary,
 	)
-	var i Image
+	var i ProductImage
 	err := row.Scan(
 		&i.ID,
-		&i.ExternalID,
-		&i.Url,
+		&i.ProductID,
+		&i.ImageUrl,
+		&i.ImageID,
 		&i.AltText,
 		&i.Caption,
 		&i.MimeType,
 		&i.FileSize,
 		&i.Width,
 		&i.Height,
+		&i.DisplayOrder,
+		&i.IsPrimary,
 		&i.UploadedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
 }
 
-const insertImageAssignment = `-- name: InsertImageAssignment :one
-INSERT INTO image_assignments (image_id, entity_id, entity_type, display_order, role) VALUES ($1, $2, $3, $4, $5) RETURNING id, image_id, entity_id, entity_type, display_order, role, created_at
+const setPrimaryImage = `-- name: SetPrimaryImage :exec
+UPDATE product_images SET is_primary = CASE WHEN id = $2 THEN true ELSE false END, updated_at = NOW() WHERE product_id = $1
 `
 
-type InsertImageAssignmentParams struct {
-	ImageID      uuid.UUID `json:"imageId"`
-	EntityID     uuid.UUID `json:"entityId"`
-	EntityType   string    `json:"entityType"`
-	DisplayOrder int16     `json:"displayOrder"`
-	Role         string    `json:"role"`
+type SetPrimaryImageParams struct {
+	ProductID uuid.UUID `json:"productId"`
+	ID        uuid.UUID `json:"id"`
 }
 
-func (q *Queries) InsertImageAssignment(ctx context.Context, arg InsertImageAssignmentParams) (ImageAssignment, error) {
-	row := q.db.QueryRow(ctx, insertImageAssignment,
-		arg.ImageID,
-		arg.EntityID,
-		arg.EntityType,
-		arg.DisplayOrder,
-		arg.Role,
-	)
-	var i ImageAssignment
-	err := row.Scan(
-		&i.ID,
-		&i.ImageID,
-		&i.EntityID,
-		&i.EntityType,
-		&i.DisplayOrder,
-		&i.Role,
-		&i.CreatedAt,
-	)
-	return i, err
+func (q *Queries) SetPrimaryImage(ctx context.Context, arg SetPrimaryImageParams) error {
+	_, err := q.db.Exec(ctx, setPrimaryImage, arg.ProductID, arg.ID)
+	return err
 }
 
 const updateProductImage = `-- name: UpdateProductImage :exec
-UPDATE images 
+UPDATE product_images 
 SET 
-    url = COALESCE($2, url),
-    external_id = COALESCE($3, external_id) 
+    image_url = COALESCE($2, image_url),
+    image_id = COALESCE($3, image_id),
+    alt_text = COALESCE($4, alt_text),
+    caption = COALESCE($5, caption),
+    display_order = COALESCE($6, display_order),
+    is_primary = COALESCE($7, is_primary),
+    updated_at = NOW()
 WHERE id = $1
 `
 
 type UpdateProductImageParams struct {
-	ID         uuid.UUID `json:"id"`
-	Url        *string   `json:"url"`
-	ExternalID *string   `json:"externalId"`
+	ID           uuid.UUID `json:"id"`
+	ImageUrl     *string   `json:"imageUrl"`
+	ImageID      *string   `json:"imageId"`
+	AltText      *string   `json:"altText"`
+	Caption      *string   `json:"caption"`
+	DisplayOrder *int16    `json:"displayOrder"`
+	IsPrimary    *bool     `json:"isPrimary"`
 }
 
 func (q *Queries) UpdateProductImage(ctx context.Context, arg UpdateProductImageParams) error {
-	_, err := q.db.Exec(ctx, updateProductImage, arg.ID, arg.Url, arg.ExternalID)
-	return err
-}
-
-const updateProductImageAssignment = `-- name: UpdateProductImageAssignment :exec
-UPDATE image_assignments
-SET 
-    display_order = COALESCE($4, display_order),
-    role = COALESCE($5, role)
-WHERE image_id = $1 AND entity_id = $2 AND entity_type = $3
-`
-
-type UpdateProductImageAssignmentParams struct {
-	ImageID      uuid.UUID `json:"imageId"`
-	EntityID     uuid.UUID `json:"entityId"`
-	EntityType   string    `json:"entityType"`
-	DisplayOrder *int16    `json:"displayOrder"`
-	Role         *string   `json:"role"`
-}
-
-func (q *Queries) UpdateProductImageAssignment(ctx context.Context, arg UpdateProductImageAssignmentParams) error {
-	_, err := q.db.Exec(ctx, updateProductImageAssignment,
+	_, err := q.db.Exec(ctx, updateProductImage,
+		arg.ID,
+		arg.ImageUrl,
 		arg.ImageID,
-		arg.EntityID,
-		arg.EntityType,
+		arg.AltText,
+		arg.Caption,
 		arg.DisplayOrder,
-		arg.Role,
+		arg.IsPrimary,
 	)
 	return err
 }

@@ -32,7 +32,7 @@ import (
 // @Failure 500 {object} ApiResponse[[]OrderListResponse]
 // @Router /order/list [get]
 func (sv *Server) getOrdersHandler(c *gin.Context) {
-	tokenPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	tokenPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, createErrorResponse[[]OrderListResponse](UnauthorizedCode, "", errors.New("authorization payload is not provided")))
 		return
@@ -49,7 +49,7 @@ func (sv *Server) getOrdersHandler(c *gin.Context) {
 		Offset: (orderListQuery.Page - 1) * orderListQuery.PageSize,
 	}
 
-	if tokenPayload.Role != repository.UserRoleAdmin {
+	if tokenPayload.RoleCode != repository.UserRoleCodeAdmin {
 		dbParams.CustomerID = utils.GetPgTypeUUID(tokenPayload.UserID)
 	}
 
@@ -149,7 +149,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 			Amount:   paymentAmount.Float64,
 			IntendID: order.PaymentIntentID,
 			GateWay:  order.Gateway,
-			Method:   string(order.Method),
+			Method:   string(order.PaymentMethod),
 			Status:   string(order.PaymentStatus),
 		},
 		CreatedAt: order.CreatedAt.UTC(),
@@ -171,7 +171,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 
 	if paymentInfo.Status == repository.PaymentStatusPending &&
 		paymentInfo.PaymentIntentID != nil &&
-		paymentInfo.Method == repository.PaymentMethodStripe {
+		order.PaymentMethod == repository.PaymentMethodCodeStripe {
 		resp.PaymentInfo.IntendID = paymentInfo.PaymentIntentID
 		stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
 		if err != nil {
@@ -247,7 +247,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[gin.H]
 // @Router /order/{orderId}/confirm-received [put]
 func (sv *Server) confirmOrderPayment(c *gin.Context) {
-	tokenPayload, _ := c.MustGet(authorizationPayload).(*auth.Payload)
+	tokenPayload, _ := c.MustGet(AuthPayLoad).(*auth.Payload)
 	var params UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[gin.H](InvalidBodyCode, "", err))
@@ -313,7 +313,7 @@ func (sv *Server) confirmOrderPayment(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[OrderListResponse]
 // @Router /order/{orderId}/cancel [put]
 func (sv *Server) cancelOrder(c *gin.Context) {
-	tokenPayload, _ := c.MustGet(authorizationPayload).(*auth.Payload)
+	tokenPayload, _ := c.MustGet(AuthPayLoad).(*auth.Payload)
 
 	var params UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
@@ -326,22 +326,13 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 		return
 	}
 
-	user, err := sv.repo.GetUserByID(c, tokenPayload.UserID)
-	if err != nil {
-		if err == repository.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, createErrorResponse[OrderListResponse](NotFoundCode, "", err))
-		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](InternalServerErrorCode, "", err))
-		return
-	}
-
 	order, err := sv.repo.GetOrder(c, uuid.MustParse(params.ID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](InternalServerErrorCode, "", err))
 		return
 	}
-
-	if order.CustomerID != tokenPayload.UserID && user.Role != repository.UserRoleAdmin {
+	userRole := repository.Role(c.GetString(UserRole))
+	if order.CustomerID != tokenPayload.UserID && userRole != repository.UserRoleCodeAdmin {
 		c.JSON(http.StatusForbidden, createErrorResponse[OrderListResponse](PermissionDeniedCode, "", errors.New("you do not have permission to access this order")))
 		return
 	}
@@ -349,10 +340,11 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 	paymentRow, err := sv.repo.GetPaymentByOrderID(c, order.ID)
 	if err != nil && !errors.Is(err, repository.ErrRecordNotFound) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](InternalServerErrorCode, "", err))
+		return
 	}
 
 	// if order status is not pending or user is not admin
-	if order.Status != repository.OrderStatusPending || (paymentRow != repository.Payment{} && paymentRow.Status != repository.PaymentStatusPending) {
+	if order.Status != repository.OrderStatusPending || (paymentRow.Status != repository.PaymentStatusPending) {
 		c.JSON(http.StatusBadRequest, createErrorResponse[OrderListResponse](PermissionDeniedCode, "", errors.New("order cannot be cancelled")))
 		return
 	}
@@ -360,9 +352,9 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 	// if order
 	cancelOrderTxParams := repository.CancelOrderTxArgs{
 		OrderID: uuid.MustParse(params.ID),
-		CancelPaymentFromMethod: func(paymentID string, method repository.PaymentMethod) error {
+		CancelPaymentFromMethod: func(paymentID string, method string) error {
 			switch method {
-			case repository.PaymentMethodStripe:
+			case repository.PaymentMethodCodeStripe:
 				stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
 				if err != nil {
 					c.JSON(http.StatusInternalServerError, createErrorResponse[OrderListResponse](InternalServerErrorCode, "", err))
@@ -517,9 +509,9 @@ func (sv *Server) refundOrder(c *gin.Context) {
 	}
 	err = sv.repo.RefundOrderTx(c, repository.RefundOrderTxArgs{
 		OrderID: uuid.MustParse(params.ID),
-		RefundPaymentFromMethod: func(paymentID string, method repository.PaymentMethod) (string, error) {
+		RefundPaymentFromMethod: func(paymentID string, method string) (string, error) {
 			switch method {
-			case repository.PaymentMethodStripe:
+			case repository.PaymentMethodCodeStripe:
 				stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
 				if err != nil {
 					return "", err

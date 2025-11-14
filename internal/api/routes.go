@@ -15,7 +15,7 @@ import (
 )
 
 func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
-	admin := rg.Group("/admin", authenticateMiddleware(sv.tokenGenerator), authorizeMiddleware(sv.repo, repository.UserRoleAdmin))
+	admin := rg.Group("/admin", authenticateMiddleware(sv.tokenGenerator), authorizeMiddleware(sv.repo, repository.UserRoleCodeAdmin))
 	{
 		users := admin.Group("users")
 		{
@@ -149,7 +149,7 @@ func (sv *Server) setupImageRoutes(rg *gin.RouterGroup) {
 	{
 		images.DELETE(
 			"remove-external/:public_id",
-			authorizeMiddleware(sv.repo, repository.UserRoleAdmin),
+			authorizeMiddleware(sv.repo, repository.UserRoleCodeAdmin),
 			sv.removeImageByPublicIDHandler)
 		images.GET("", sv.getProductImagesHandler)
 	}

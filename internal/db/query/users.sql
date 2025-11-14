@@ -1,27 +1,15 @@
 -- name: CreateUser :one
 INSERT INTO
-    users (email, username, phone_number, first_name, hashed_password,role)
+    users (email, username, phone_number, first_name, hashed_password, role_id)
 VALUES
     ($1, $2, $3, $4, $5, $6)
-RETURNING id, email, username, first_name, role, verified_email, verified_phone, created_at, updated_at;
+RETURNING id, email, username, first_name, role_id, verified_email, verified_phone, created_at, updated_at;
 
 -- name: GetUserByUsername :one
-SELECT
-    *
-FROM
-    users
-WHERE
-    username = $1
-LIMIT 1;
+SELECT * FROM users WHERE username = $1 LIMIT 1;
 
 -- name: GetUserByEmail :one
-SELECT
-    *
-FROM
-    users
-WHERE
-    email = $1
-LIMIT 1;
+SELECT * FROM users WHERE email = $1 LIMIT 1;
 
 -- name: GetUserByID :one
 SELECT * FROM users WHERE id = $1 LIMIT 1;
@@ -36,7 +24,7 @@ SET
     email = coalesce(sqlc.narg('email'), email),
     first_name = coalesce(sqlc.narg('first_name'), first_name),
     last_name = coalesce(sqlc.narg('last_name'), last_name),
-    role = coalesce(sqlc.narg('role'), role),
+    role_id = coalesce(sqlc.narg('role_id'), role_id),
     phone_number = coalesce(sqlc.narg('phone_number'), phone_number),
     verified_email = coalesce(sqlc.narg('verified_email'), verified_email),
     verified_phone = coalesce(sqlc.narg('verified_phone'), verified_phone),
@@ -45,7 +33,7 @@ SET
     updated_at = sqlc.arg('updated_at')
 WHERE
     id = sqlc.arg('id')
-RETURNING id, email, username, first_name, last_name, role, verified_email, verified_phone, created_at, updated_at;
+RETURNING id, email, username, first_name, last_name, role_id, verified_email, verified_phone, created_at, updated_at;
 
 
 -- name: DeleteUser :exec
@@ -59,7 +47,7 @@ FROM
 
 -- name: SeedUsers :copyfrom
 INSERT INTO
-    users (email, username, phone_number, first_name, last_name, hashed_password, role)
+    users (email, username, phone_number, first_name, last_name, hashed_password, role_id)
 VALUES
     ($1, $2, $3, $4, $5, $6, $7);
 
@@ -168,3 +156,10 @@ UPDATE email_verifications
 SET is_used = TRUE
 WHERE id = $1 AND verify_code = $2 AND expired_at > now()
 RETURNING *;
+
+-- Roles Queries
+-- name: GetRoleByCode :one
+SELECT * FROM user_roles WHERE code = $1 LIMIT 1;
+
+-- name: GetRoleByID :one
+SELECT * FROM user_roles WHERE id = $1 LIMIT 1;

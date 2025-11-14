@@ -30,7 +30,7 @@ import (
 // @Failure 401 {object} gin.H
 // @Router /cart [post]
 func (sv *Server) createCart(c *gin.Context) {
-	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CartDetailResponse](InvalidBodyCode, "", errors.New("user not found")))
 		return
@@ -84,7 +84,7 @@ func (sv *Server) createCart(c *gin.Context) {
 // @Failure 401 {object} gin.H
 // @Router /cart [get]
 func (sv *Server) getCartHandler(c *gin.Context) {
-	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusBadRequest, createErrorResponse[CartDetailResponse](InvalidBodyCode, "", errors.New("user not found")))
 		return
@@ -144,7 +144,7 @@ func (sv *Server) getCartHandler(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[gin.H]
 // @Router /cart/discounts [get]
 func (sv *Server) getCartDiscountsHandler(c *gin.Context) {
-	authPayload, _ := c.MustGet(authorizationPayload).(*auth.Payload)
+	authPayload, _ := c.MustGet(AuthPayLoad).(*auth.Payload)
 	cart, err := sv.repo.GetCart(c, repository.GetCartParams{
 		UserID: utils.GetPgTypeUUID(authPayload.UserID),
 	})
@@ -186,7 +186,7 @@ func (sv *Server) updateCartItemQtyHandler(c *gin.Context) {
 		return
 	}
 
-	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusBadRequest, createErrorResponse[uuid.UUID](InvalidBodyCode, "", errors.New("user not found")))
 		return
@@ -274,7 +274,7 @@ func (sv *Server) updateCartItemQtyHandler(c *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /cart/item/{id} [delete]
 func (sv *Server) removeCartItem(c *gin.Context) {
-	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusBadRequest, createErrorResponse[string](InvalidBodyCode, "", errors.New("user not found")))
 		return
@@ -334,7 +334,7 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /cart/checkoutHandler [post]
 func (sv *Server) checkoutHandler(c *gin.Context) {
-	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusBadRequest, createErrorResponse[gin.H](InvalidBodyCode, "", errors.New("user not found")))
 		return
@@ -578,18 +578,18 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 
 	params.DiscountPrice = discountPrice
 	params.DiscountID = discountID
-	params.PaymentMethod = repository.PaymentMethod(req.PaymentMethod)
+	params.PaymentMethodID = uuid.MustParse(req.PaymentMethodId)
 
-	params.CreatePaymentFn = func(orderID uuid.UUID, paymentMethod repository.PaymentMethod) (paymentIntentID string, clientSecretID *string, err error) {
-		switch paymentMethod {
-		case repository.PaymentMethodStripe:
+	params.CreatePaymentFn = func(orderID uuid.UUID, method string) (paymentIntentID string, clientSecretID *string, err error) {
+		switch method {
+		case repository.PaymentMethodCodeStripe:
 			stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
 			if err != nil {
 				return "", utils.StringPtr(""), err
 			}
 			sv.paymentCtx.SetStrategy(stripeInstance)
 		default:
-			return "", utils.StringPtr(""), fmt.Errorf("unsupported payment method: %s", paymentMethod)
+			return "", utils.StringPtr(""), fmt.Errorf("unsupported payment method: %s", method)
 		}
 		receiptEmail := user.Email
 		// create payment intent
@@ -628,7 +628,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /cart/clear [put]
 func (sv *Server) clearCart(c *gin.Context) {
-	authPayload, ok := c.MustGet(authorizationPayload).(*auth.Payload)
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidBodyCode, "", errors.New("user not found")))
 		return

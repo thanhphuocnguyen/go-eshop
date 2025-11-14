@@ -2,12 +2,10 @@ package repository
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
-	"golang.org/x/sync/errgroup"
 )
 
 type UpdateProductImages struct {
@@ -18,20 +16,20 @@ type UpdateProductImages struct {
 }
 
 type UpdateProductTxParams struct {
-	Name             *string                        `json:"name" binding:"omitempty,min=3,max=100"`
-	Description      *string                        `json:"description" binding:"omitempty,min=6,max=5000"`
-	ShortDescription *string                        `json:"short_description" binding:"omitempty,max=2000"`
-	Price            *float64                       `json:"price" binding:"omitempty,gt=0"`
-	Sku              *string                        `json:"sku" binding:"omitempty"`
-	Slug             *string                        `json:"slug" binding:"omitempty"`
-	Stock            *int32                         `json:"stock" binding:"omitempty,gt=0"`
-	CategoryID       *string                        `json:"categoryId,omitempty" binding:"omitempty,uuid"`
-	BrandID          *string                        `json:"brandId,omitempty" binding:"omitempty,uuid"`
-	CollectionID     *string                        `json:"collectionId,omitempty" binding:"omitempty,uuid"`
-	Attributes       []string                       `json:"attributes" binding:"omitempty"`
-	Images           []UpdateProductImages          `json:"images" binding:"omitempty,dive"`
-	Variants         []UpdateProductVariantTxParams `json:"variants" binding:"omitempty,dive"`
-	RemoveImageFn    func(ctx context.Context, externalID string) (string, error)
+	Name             *string  `json:"name" binding:"omitempty,min=3,max=100"`
+	Description      *string  `json:"description" binding:"omitempty,min=6,max=5000"`
+	ShortDescription *string  `json:"short_description" binding:"omitempty,max=2000"`
+	Price            *float64 `json:"price" binding:"omitempty,gt=0"`
+	Sku              *string  `json:"sku" binding:"omitempty"`
+	Slug             *string  `json:"slug" binding:"omitempty"`
+	Stock            *int32   `json:"stock" binding:"omitempty,gt=0"`
+	CategoryID       *string  `json:"categoryId,omitempty" binding:"omitempty,uuid"`
+	BrandID          *string  `json:"brandId,omitempty" binding:"omitempty,uuid"`
+	CollectionID     *string  `json:"collectionId,omitempty" binding:"omitempty,uuid"`
+	Attributes       []string `json:"attributes" binding:"omitempty"`
+	// Images           []UpdateProductImages          `json:"images" binding:"omitempty,dive"`
+	Variants      []UpdateProductVariantTxParams `json:"variants" binding:"omitempty,dive"`
+	RemoveImageFn func(ctx context.Context, externalID string) (string, error)
 }
 
 func (s *pgRepo) UpdateProductTx(ctx context.Context, productID uuid.UUID, arg UpdateProductTxParams) (err error) {
@@ -86,76 +84,6 @@ func (s *pgRepo) UpdateProductTx(ctx context.Context, productID uuid.UUID, arg U
 
 		if err != nil {
 			log.Error().Err(err).Msg("UpdateProduct")
-			return err
-		}
-
-		if len(arg.Images) > 0 {
-			errGroup, _ := errgroup.WithContext(ctx)
-			imgAssignmentArgs := make([]UpdateProdImagesTxArgs, 0)
-			for _, image := range arg.Images {
-				if image.IsRemoved != nil && *image.IsRemoved {
-					errGroup.Go(func() (err error) {
-						img, err := q.GetImageFromID(ctx, GetImageFromIDParams{
-							ID:         uuid.MustParse(image.ID),
-							EntityType: string(EntityTypeProduct),
-						})
-
-						if err != nil {
-
-							return err
-						}
-
-						msg, err := arg.RemoveImageFn(ctx, img.ExternalID)
-						if err != nil {
-							return fmt.Errorf("failed to remove image: %w, reason: %s", err, msg)
-						}
-
-						// Remove image from product
-						err = q.DeleteProductImage(ctx, uuid.MustParse(image.ID))
-						if err != nil {
-							return err
-						}
-						return err
-					})
-				} else {
-					// parse the assignments to UUIDs
-					assignmentIds := make([]uuid.UUID, 0)
-					for _, assignment := range image.Assignments {
-						if assignment == productID.String() {
-							continue
-						}
-						assignmentIds = append(assignmentIds, uuid.MustParse(assignment))
-					}
-					// append the image assignment to the list
-					args := UpdateProdImagesTxArgs{
-						ImageID:    image.ID,
-						Role:       image.Role,
-						EntityID:   productID,
-						EntityType: string(EntityTypeProduct),
-						VariantIDs: assignmentIds,
-					}
-
-					imgAssignmentArgs = append(imgAssignmentArgs, args)
-				}
-
-			}
-
-			err = errGroup.Wait()
-			if err != nil {
-				return err
-			}
-
-			if len(imgAssignmentArgs) != 0 {
-				// update the image assignments
-				err := updateProductImages(ctx, q, imgAssignmentArgs)
-				if err != nil {
-					return err
-				}
-			}
-
-		}
-		if err != nil {
-			log.Error().Err(err).Msg("GetProductByID")
 			return err
 		}
 
@@ -299,58 +227,4 @@ type UpdateProdImagesTxArgs struct {
 	EntityType string      `json:"entityType"`
 	Role       *string     `json:"role"`
 	VariantIDs []uuid.UUID `json:"variantIds"`
-}
-
-func updateProductImages(ctx context.Context, q *Queries, arg []UpdateProdImagesTxArgs) error {
-	for _, image := range arg {
-		if image.Role != nil {
-			var defaultDisplayOrder int16 = 1
-			err := q.UpdateProductImageAssignment(ctx, UpdateProductImageAssignmentParams{
-				ImageID:      uuid.MustParse(image.ImageID),
-				EntityID:     image.EntityID,
-				EntityType:   image.EntityType,
-				DisplayOrder: &defaultDisplayOrder,
-				Role:         image.Role,
-			})
-			if err != nil {
-				log.Error().Err(err).Msg("Failed to update product image assignment")
-				return err
-			}
-		}
-		// Remove all old image assignments
-		err := q.DeleteImageAssignments(ctx, DeleteImageAssignmentsParams{
-			ImageID:    uuid.MustParse(image.ImageID),
-			EntityType: string(EntityTypeProduct),
-		})
-
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to delete image assignments")
-			return err
-		}
-
-		// If there are no variant IDs, we can return early
-		if len(image.VariantIDs) > 0 {
-			// Create new image assignments
-			createBulkImgAssignmentParams := make([]InsertBulkImageAssignmentsParams, 0)
-			for _, variantID := range image.VariantIDs {
-				createImgAssignmentParams := InsertBulkImageAssignmentsParams{
-					ImageID:      uuid.MustParse(image.ImageID),
-					EntityID:     variantID,
-					Role:         "gallery",
-					EntityType:   string(EntityTypeProduct),
-					DisplayOrder: 1,
-				}
-				if image.Role != nil {
-					createImgAssignmentParams.Role = *image.Role
-				}
-				createBulkImgAssignmentParams = append(createBulkImgAssignmentParams, createImgAssignmentParams)
-			}
-			_, err = q.InsertBulkImageAssignments(ctx, createBulkImgAssignmentParams)
-			if err != nil {
-				log.Error().Err(err).Msg("Failed to create bulk image assignments")
-				return err
-			}
-		}
-	}
-	return nil
 }

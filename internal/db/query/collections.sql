@@ -24,13 +24,12 @@ SELECT
     p.name as product_name, p.id, p.description,
     p.base_price as product_price, 
     p.base_sku as product_sku, p.slug as product_slug,
-    img.id as image_id, img.url
+    pi.id as image_id, pi.image_url
 FROM collections AS c
 LEFT JOIN products AS p ON c.id = p.collection_id
-LEFT JOIN image_assignments AS ia ON p.id = ia.entity_id AND ia.entity_type = 'product'
-LEFT JOIN images AS img ON img.id = ia.image_id
+LEFT JOIN product_images AS pi ON p.id = pi.product_id AND pi.is_primary = true
 WHERE c.id = ANY(sqlc.narg('ids')::UUID[])
-GROUP BY c.id, p.id, img.id, img.url
+GROUP BY c.id, p.id, pi.id, pi.image_url
 LIMIT $1 OFFSET $2;
 
 -- name: GetCollections :many
