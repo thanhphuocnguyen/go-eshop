@@ -14,10 +14,8 @@ import (
 )
 
 const countOrders = `-- name: CountOrders :one
-SELECT
-    COUNT(*)
-FROM
-    orders ord
+SELECT COUNT(*)
+FROM orders ord
 LEFT JOIN payments p ON ord.id = p.order_id
 WHERE
     ord.status = COALESCE($1, ord.status) AND
@@ -60,17 +58,7 @@ type CreateBulkOrderItemsParams struct {
 }
 
 const createOrder = `-- name: CreateOrder :one
-INSERT INTO orders (
-    customer_id,
-    customer_email,
-    customer_name,
-    customer_phone,
-    total_price,
-    shipping_address
-)
-VALUES 
-    ($1, $2, $3, $4,  $5, $6)
-RETURNING id, customer_id, customer_email, customer_name, customer_phone, shipping_address, total_price, status, confirmed_at, delivered_at, cancelled_at, shipping_method, refunded_at, order_date, updated_at, created_at, shipping_method_id, shipping_rate_id, estimated_delivery_date, tracking_url, shipping_provider, shipping_notes
+INSERT INTO orders (customer_id,customer_email,customer_name,customer_phone,total_price,shipping_address) VALUES ($1, $2, $3, $4,  $5, $6) RETURNING id, customer_id, customer_email, customer_name, customer_phone, shipping_address, total_price, status, confirmed_at, delivered_at, cancelled_at, shipping_method, refunded_at, order_date, updated_at, created_at, shipping_method_id, shipping_rate_id, estimated_delivery_date, tracking_url, shipping_provider, shipping_notes
 `
 
 type CreateOrderParams struct {
@@ -120,11 +108,7 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 }
 
 const createOrderItem = `-- name: CreateOrderItem :one
-INSERT INTO
-    order_items (order_id, variant_id, quantity, price_per_unit_snapshot, variant_sku_snapshot, product_name_snapshot, line_total_snapshot, attributes_snapshot)
-VALUES
-    ($1, $2, $3, $4, $5, $6, $7, $8)
-RETURNING id, order_id, variant_id, quantity, price_per_unit_snapshot, line_total_snapshot, product_name_snapshot, variant_sku_snapshot, attributes_snapshot, created_at, updated_at, discounted_price
+INSERT INTO order_items (order_id, variant_id, quantity, price_per_unit_snapshot, variant_sku_snapshot, product_name_snapshot, line_total_snapshot, attributes_snapshot) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, order_id, variant_id, quantity, price_per_unit_snapshot, line_total_snapshot, product_name_snapshot, variant_sku_snapshot, attributes_snapshot, created_at, updated_at, discounted_price
 `
 
 type CreateOrderItemParams struct {
@@ -168,10 +152,7 @@ func (q *Queries) CreateOrderItem(ctx context.Context, arg CreateOrderItemParams
 }
 
 const deleteOrder = `-- name: DeleteOrder :exec
-DELETE FROM
-    orders
-WHERE
-    id = $1
+DELETE FROM orders WHERE id = $1
 `
 
 func (q *Queries) DeleteOrder(ctx context.Context, id uuid.UUID) error {
@@ -192,14 +173,12 @@ SELECT
     pm.created_at as payment_created_at,
     d.code,
     od.discount_amount
-FROM
-    orders
+FROM orders
 JOIN payments pm ON orders.id = pm.order_id
 JOIN payment_methods pmt ON pm.payment_method_id = pmt.id
 LEFT JOIN order_discounts od ON orders.id = od.order_id
 LEFT JOIN discounts d ON od.discount_id = d.id
-WHERE
-    orders.id = $1
+WHERE orders.id = $1
 LIMIT 1
 `
 
@@ -279,22 +258,12 @@ func (q *Queries) GetOrder(ctx context.Context, id uuid.UUID) (GetOrderRow, erro
 }
 
 const getOrderItemByID = `-- name: GetOrderItemByID :one
-SELECT
-    oi.id as order_item_id,
-    o.id as order_id,
-    p.id as product_id,
-    pv.id as variant_id,
-    o.customer_id
-FROM
-    order_items oi
-JOIN
-    product_variants pv ON oi.variant_id = pv.id
-JOIN
-    products p ON pv.product_id = p.id
-JOIN
-    orders o ON oi.order_id = o.id
-WHERE
-    oi.id = $1
+SELECT oi.id as order_item_id, o.id as order_id, p.id as product_id, pv.id as variant_id, o.customer_id
+FROM order_items oi
+JOIN product_variants pv ON oi.variant_id = pv.id
+JOIN products p ON pv.product_id = p.id
+JOIN orders o ON oi.order_id = o.id
+WHERE oi.id = $1
 LIMIT 1
 `
 
@@ -324,16 +293,12 @@ SELECT
     oi.id, oi.order_id, oi.variant_id, oi.quantity, oi.price_per_unit_snapshot, oi.line_total_snapshot, oi.product_name_snapshot, oi.variant_sku_snapshot, oi.attributes_snapshot, oi.created_at, oi.updated_at, oi.discounted_price,
     p.name as product_name, pi.image_url as image_url,
     rv.id as rating_id, rv.rating, rv.review_title, rv.review_content, rv.created_at as rating_created_at
-FROM
-    order_items oi
-JOIN
-    product_variants pv ON oi.variant_id = pv.id
-JOIN
-    products p ON pv.product_id = p.id
+FROM order_items oi
+JOIN product_variants pv ON oi.variant_id = pv.id
+JOIN products p ON pv.product_id = p.id
 LEFT JOIN product_images AS pi ON pi.product_id = p.id AND pi.is_primary = true
 LEFT JOIN product_ratings rv ON rv.order_item_id = oi.id
-WHERE
-    oi.order_id = $1
+WHERE oi.order_id = $1
 `
 
 type GetOrderItemsRow struct {
@@ -399,24 +364,13 @@ func (q *Queries) GetOrderItems(ctx context.Context, orderID uuid.UUID) ([]GetOr
 }
 
 const getOrderItemsByOrderID = `-- name: GetOrderItemsByOrderID :many
-SELECT
-    oi.id as order_item_id,
-    o.id as order_id,
-    p.id as product_id,
-    pv.id as variant_id,
-    o.customer_id
-FROM
-    order_items oi
-JOIN
-    product_variants pv ON oi.variant_id = pv.id
-JOIN
-    products p ON pv.product_id = p.id
-JOIN
-    orders o ON oi.order_id = o.id
-WHERE
-    oi.order_id = $1
-ORDER BY
-    oi.id
+SELECT oi.id as order_item_id, o.id as order_id, p.id as product_id, pv.id as variant_id, o.customer_id
+FROM order_items oi
+JOIN product_variants pv ON oi.variant_id = pv.id
+JOIN products p ON pv.product_id = p.id
+JOIN orders o ON oi.order_id = o.id
+WHERE oi.order_id = $1
+ORDER BY oi.id
 `
 
 type GetOrderItemsByOrderIDRow struct {
@@ -454,10 +408,8 @@ func (q *Queries) GetOrderItemsByOrderID(ctx context.Context, orderID uuid.UUID)
 }
 
 const getOrders = `-- name: GetOrders :many
-SELECT
-    ord.id, ord.customer_id, ord.customer_email, ord.customer_name, ord.customer_phone, ord.shipping_address, ord.total_price, ord.status, ord.confirmed_at, ord.delivered_at, ord.cancelled_at, ord.shipping_method, ord.refunded_at, ord.order_date, ord.updated_at, ord.created_at, ord.shipping_method_id, ord.shipping_rate_id, ord.estimated_delivery_date, ord.tracking_url, ord.shipping_provider, ord.shipping_notes, pm.status as payment_status, COUNT(oi.id) as total_items
-FROM
-    orders ord
+SELECT ord.id, ord.customer_id, ord.customer_email, ord.customer_name, ord.customer_phone, ord.shipping_address, ord.total_price, ord.status, ord.confirmed_at, ord.delivered_at, ord.cancelled_at, ord.shipping_method, ord.refunded_at, ord.order_date, ord.updated_at, ord.created_at, ord.shipping_method_id, ord.shipping_rate_id, ord.estimated_delivery_date, ord.tracking_url, ord.shipping_provider, ord.shipping_notes, pm.status as payment_status, COUNT(oi.id) as total_items
+FROM orders ord
 LEFT JOIN order_items oi ON ord.id = oi.id
 LEFT JOIN payments pm ON ord.id = pm.order_id
 WHERE
@@ -467,8 +419,7 @@ WHERE
     ord.created_at <= COALESCE($6, ord.created_at) AND
     pm.status = COALESCE($7, pm.status)
 GROUP BY ord.id, pm.status
-ORDER BY
-    ord.created_at DESC
+ORDER BY ord.created_at DESC
 LIMIT $1
 OFFSET $2
 `
@@ -564,16 +515,7 @@ func (q *Queries) GetOrders(ctx context.Context, arg GetOrdersParams) ([]GetOrde
 }
 
 const listOrderItems = `-- name: ListOrderItems :many
-SELECT
-    id, order_id, variant_id, quantity, price_per_unit_snapshot, line_total_snapshot, product_name_snapshot, variant_sku_snapshot, attributes_snapshot, created_at, updated_at, discounted_price
-FROM
-    order_items
-WHERE
-    order_id = $1
-ORDER BY
-    id
-LIMIT $2
-OFFSET $3
+SELECT id, order_id, variant_id, quantity, price_per_unit_snapshot, line_total_snapshot, product_name_snapshot, variant_sku_snapshot, attributes_snapshot, created_at, updated_at, discounted_price FROM order_items WHERE order_id = $1 ORDER BY id LIMIT $2 OFFSET $3
 `
 
 type ListOrderItemsParams struct {
@@ -616,17 +558,14 @@ func (q *Queries) ListOrderItems(ctx context.Context, arg ListOrderItemsParams) 
 }
 
 const updateOrder = `-- name: UpdateOrder :one
-UPDATE
-    orders
+UPDATE orders
 SET
     status = coalesce($1, status),
     confirmed_at = coalesce($2, confirmed_at),
     cancelled_at = coalesce($3, cancelled_at),
     delivered_at = coalesce($4, delivered_at),
     updated_at = now()
-WHERE
-    id = $5
-RETURNING orders.id
+WHERE id = $5 RETURNING orders.id
 `
 
 type UpdateOrderParams struct {

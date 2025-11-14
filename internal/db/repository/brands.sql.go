@@ -14,8 +14,7 @@ import (
 )
 
 const countBrands = `-- name: CountBrands :one
-SELECT count(*)
-FROM brands
+SELECT count(*) FROM brands
 `
 
 func (q *Queries) CountBrands(ctx context.Context) (int64, error) {
@@ -26,11 +25,7 @@ func (q *Queries) CountBrands(ctx context.Context) (int64, error) {
 }
 
 const createBrand = `-- name: CreateBrand :one
-INSERT INTO brands 
-    (name, slug, description, image_url, image_id, remarkable)
-VALUES 
-    ($1, $2, $3, $4, $5, $6)
-RETURNING id, name, image_url, image_id, description, slug, remarkable, display_order, published, created_at, updated_at
+INSERT INTO brands (name, slug, description, image_url, image_id, remarkable) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, image_url, image_id, description, slug, remarkable, display_order, published, created_at, updated_at
 `
 
 type CreateBrandParams struct {
@@ -78,9 +73,7 @@ func (q *Queries) DeleteBrand(ctx context.Context, id uuid.UUID) error {
 }
 
 const getBrandByID = `-- name: GetBrandByID :one
-SELECT c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at 
-FROM brands c 
-WHERE c.id = $1 LIMIT 1
+SELECT c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at FROM brands c WHERE c.id = $1 LIMIT 1
 `
 
 func (q *Queries) GetBrandByID(ctx context.Context, id uuid.UUID) (Brand, error) {
@@ -103,10 +96,7 @@ func (q *Queries) GetBrandByID(ctx context.Context, id uuid.UUID) (Brand, error)
 }
 
 const getBrandBySlug = `-- name: GetBrandBySlug :one
-SELECT c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at
-FROM brands c
-WHERE c.slug = $1
-LIMIT 1
+SELECT c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at FROM brands c WHERE c.slug = $1 LIMIT 1
 `
 
 func (q *Queries) GetBrandBySlug(ctx context.Context, slug string) (Brand, error) {
@@ -129,13 +119,7 @@ func (q *Queries) GetBrandBySlug(ctx context.Context, slug string) (Brand, error
 }
 
 const getBrands = `-- name: GetBrands :many
-SELECT
-    c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at
-FROM
-    brands AS c
-WHERE c.published = COALESCE($3, c.published)
-LIMIT $1
-OFFSET $2
+SELECT c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at FROM brands AS c WHERE c.published = COALESCE($3, c.published) LIMIT $1 OFFSET $2
 `
 
 type GetBrandsParams struct {
@@ -177,9 +161,7 @@ func (q *Queries) GetBrands(ctx context.Context, arg GetBrandsParams) ([]Brand, 
 }
 
 const getBrandsByIDs = `-- name: GetBrandsByIDs :many
-SELECT 
-    c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at, 
-    p.name as product_name, p.id as product_id, p.description, p.base_price as product_price, p.base_sku as product_sku, p.slug as product_slug
+SELECT c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at, p.name as product_name, p.id as product_id, p.description, p.base_price as product_price, p.base_sku as product_sku, p.slug as product_slug
 FROM brands AS c
 LEFT JOIN products AS p ON p.brand_id = c.id
 WHERE c.id = ANY($3::UUID[])

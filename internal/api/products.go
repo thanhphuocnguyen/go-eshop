@@ -23,7 +23,7 @@ import (
 // @Failure 400 {object} ApiResponse[gin.H]
 // @Failure 500 {object} ApiResponse[gin.H]
 // @Router /products [post]
-func (sv *Server) addProductHandler(c *gin.Context) {
+func (sv *Server) AddProductHandler(c *gin.Context) {
 	var req repository.CreateProductTxArgs
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[ProductListModel](InvalidBodyCode, "", err))
@@ -52,7 +52,7 @@ func (sv *Server) addProductHandler(c *gin.Context) {
 // @Failure 404 {object} ApiResponse[gin.H]
 // @Failure 500 {object} ApiResponse[gin.H]
 // @Router /products/{productId} [get]
-func (sv *Server) getProductDetailHandler(c *gin.Context) {
+func (sv *Server) GetProductDetailHandler(c *gin.Context) {
 	var params URISlugParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[gin.H](InvalidBodyCode, "", err))

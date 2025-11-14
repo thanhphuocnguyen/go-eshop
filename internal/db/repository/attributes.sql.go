@@ -435,15 +435,9 @@ func (q *Queries) UpdateAttribute(ctx context.Context, arg UpdateAttributeParams
 }
 
 const updateAttributeValue = `-- name: UpdateAttributeValue :one
-UPDATE 
-    attribute_values 
-SET 
-    code = COALESCE($2, code),
-    is_active = COALESCE($3, is_active),
-    "name" = COALESCE($4, "name"),
-    display_order = COALESCE($5, display_order)
-WHERE id = $1
-RETURNING id, attribute_id, name, code, is_active, display_order, created_at
+UPDATE attribute_values 
+SET code = COALESCE($2, code), is_active = COALESCE($3, is_active), "name" = COALESCE($4, "name"), display_order = COALESCE($5, display_order)
+WHERE id = $1 RETURNING id, attribute_id, name, code, is_active, display_order, created_at
 `
 
 type UpdateAttributeValueParams struct {

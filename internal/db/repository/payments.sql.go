@@ -276,8 +276,7 @@ func (q *Queries) GetPaymentTransactionByPaymentID(ctx context.Context, paymentI
 }
 
 const updatePayment = `-- name: UpdatePayment :exec
-UPDATE
-    payments
+UPDATE payments
 SET
     amount = COALESCE($2, amount),
     refund_id = COALESCE($3, refund_id),

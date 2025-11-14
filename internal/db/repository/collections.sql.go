@@ -14,8 +14,7 @@ import (
 )
 
 const countCollections = `-- name: CountCollections :one
-SELECT count(*)
-FROM collections
+SELECT count(*) FROM collections
 `
 
 func (q *Queries) CountCollections(ctx context.Context) (int64, error) {
@@ -26,11 +25,7 @@ func (q *Queries) CountCollections(ctx context.Context) (int64, error) {
 }
 
 const createCollection = `-- name: CreateCollection :one
-INSERT INTO collections 
-    (name, slug, description, remarkable, image_url, image_id)
-VALUES 
-    ($1, $2, $3, $4, $5, $6)
-RETURNING id, name, image_url, image_id, description, slug, remarkable, display_order, published, created_at, updated_at
+INSERT INTO collections (name, slug, description, remarkable, image_url, image_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, image_url, image_id, description, slug, remarkable, display_order, published, created_at, updated_at
 `
 
 type CreateCollectionParams struct {
@@ -78,10 +73,7 @@ func (q *Queries) DeleteCollection(ctx context.Context, id uuid.UUID) error {
 }
 
 const getCollectionByID = `-- name: GetCollectionByID :one
-SELECT c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at
-FROM collections c 
-WHERE c.id = $1
-LIMIT 1
+SELECT c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at FROM collections c  WHERE c.id = $1 LIMIT 1
 `
 
 func (q *Queries) GetCollectionByID(ctx context.Context, id uuid.UUID) (Collection, error) {
@@ -104,10 +96,7 @@ func (q *Queries) GetCollectionByID(ctx context.Context, id uuid.UUID) (Collecti
 }
 
 const getCollectionBySlug = `-- name: GetCollectionBySlug :one
-SELECT c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at
-FROM collections c
-WHERE c.slug = $1
-LIMIT 1
+SELECT c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at FROM collections c WHERE c.slug = $1 LIMIT 1
 `
 
 func (q *Queries) GetCollectionBySlug(ctx context.Context, slug string) (Collection, error) {
@@ -130,13 +119,7 @@ func (q *Queries) GetCollectionBySlug(ctx context.Context, slug string) (Collect
 }
 
 const getCollections = `-- name: GetCollections :many
-SELECT 
-    c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at
-FROM collections AS c
-WHERE 
-    c.published = COALESCE($3, c.published)
-    AND c.remarkable = COALESCE($4, c.remarkable)
-LIMIT $1 OFFSET $2
+SELECT  c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at FROM collections AS c WHERE  c.published = COALESCE($3, c.published) AND c.remarkable = COALESCE($4, c.remarkable) LIMIT $1 OFFSET $2
 `
 
 type GetCollectionsParams struct {
@@ -283,8 +266,7 @@ SET
     slug = COALESCE($7, slug),
     published = COALESCE($8, published),
     updated_at = now()
-WHERE id = $1
-RETURNING id, name, image_url, image_id, description, slug, remarkable, display_order, published, created_at, updated_at
+WHERE id = $1 RETURNING id, name, image_url, image_id, description, slug, remarkable, display_order, published, created_at, updated_at
 `
 
 type UpdateCollectionWithParams struct {

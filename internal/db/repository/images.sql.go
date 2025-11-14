@@ -147,20 +147,7 @@ func (q *Queries) GetPrimaryImageByProductID(ctx context.Context, productID uuid
 }
 
 const getProductImages = `-- name: GetProductImages :many
-SELECT 
-    pi.id,
-    pi.image_id,
-    pi.image_url,
-    pi.alt_text,
-    pi.caption,
-    pi.mime_type,
-    pi.file_size,
-    pi.width,
-    pi.height,
-    pi.product_id,
-    pi.display_order,
-    pi.is_primary
-FROM product_images pi WHERE product_id = ANY($1::UUID[])  ORDER BY product_id, display_order
+SELECT  p_img.id, p_img.image_id, p_img.image_url, p_img.alt_text, p_img.caption, p_img.mime_type, p_img.file_size, p_img.width, p_img.height, p_img.product_id, p_img.display_order, p_img.is_primary FROM product_images p_img WHERE product_id = ANY($1::UUID[])  ORDER BY product_id, display_order
 `
 
 type GetProductImagesRow struct {

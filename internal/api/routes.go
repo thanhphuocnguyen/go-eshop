@@ -19,13 +19,13 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 	{
 		users := admin.Group("users")
 		{
-			users.GET("", sv.getUsersHandler)
-			users.GET(":id", sv.getUserHandler)
+			users.GET("", sv.GetUsersHandler)
+			users.GET(":id", sv.GetUserHandler)
 		}
 
 		productGroup := admin.Group("products")
 		{
-			productGroup.POST("", sv.addProductHandler)
+			productGroup.POST("", sv.AddProductHandler)
 			productGroup.PUT(":id", sv.updateProductHandler)
 			productGroup.DELETE(":id", sv.deleteProductHandler)
 		}
@@ -60,20 +60,20 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 		brands := admin.Group("brands")
 		{
 
-			brands.GET("", sv.getBrandsHandler)
-			brands.GET(":id", sv.getBrandByIDHandler)
-			brands.POST("", sv.createBrandHandler)
-			brands.PUT(":id", sv.updateBrandHandler)
-			brands.DELETE(":id", sv.deleteBrand)
+			brands.GET("", sv.GetBrandsHandler)
+			brands.GET(":id", sv.GetBrandByIDHandler)
+			brands.POST("", sv.CreateBrandHandler)
+			brands.PUT(":id", sv.UpdateBrandHandler)
+			brands.DELETE(":id", sv.DeleteBrandHandler)
 		}
 
 		collections := admin.Group("collections")
 		{
-			collections.GET("", sv.getCollectionsHandler)
-			collections.POST("", sv.createCollectionHandler)
-			collections.GET(":id", sv.getCollectionByIDHandler)
-			collections.PUT(":id", sv.updateCollectionHandler)
-			collections.DELETE(":id", sv.deleteCollectionHandler)
+			collections.GET("", sv.GetCollectionsHandler)
+			collections.POST("", sv.CreateCollectionHandler)
+			collections.GET(":id", sv.GetCollectionByIDHandler)
+			collections.PUT(":id", sv.UpdateCollectionHandler)
+			collections.DELETE(":id", sv.DeleteCollectionHandler)
 		}
 
 		images := admin.Group("images")
@@ -109,8 +109,8 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 func (sv *Server) setupAuthRoutes(rg *gin.RouterGroup) {
 	auth := rg.Group("/auth")
 	{
-		auth.POST("register", sv.registerHandler)
-		auth.POST("login", sv.loginHandler)
+		auth.POST("register", sv.RegisterHandler)
+		auth.POST("login", sv.LoginHandler)
 		auth.POST("refresh-token", sv.refreshTokenHandler)
 	}
 }
@@ -119,9 +119,9 @@ func (sv *Server) setupAuthRoutes(rg *gin.RouterGroup) {
 func (sv *Server) setupUserRoutes(rg *gin.RouterGroup) {
 	users := rg.Group("user", authenticateMiddleware(sv.tokenGenerator))
 	{
-		users.GET("me", sv.getCurrentUserHandler)
+		users.GET("me", sv.GetCurrentUserHandler)
 		users.PATCH("me", sv.updateUserHandler)
-		users.POST("send-verify-email", sv.sendVerifyEmailHandler)
+		users.POST("send-verify-email", sv.SendVerifyEmailHandler)
 		userAddresses := users.Group("addresses")
 		{
 			userAddresses.POST("", sv.createAddressHandler)
@@ -138,7 +138,7 @@ func (sv *Server) setupProductRoutes(rg *gin.RouterGroup) {
 	products := rg.Group("products")
 	{
 		products.GET("", sv.getProductsHandler)
-		products.GET(":id", sv.getProductDetailHandler)
+		products.GET(":id", sv.GetProductDetailHandler)
 		products.GET(":id/ratings", sv.getRatingsByProductHandler)
 	}
 }
@@ -206,8 +206,8 @@ func (sv *Server) setupCategoryRoutes(rg *gin.RouterGroup) {
 func (sv *Server) setupCollectionRoutes(rg *gin.RouterGroup) {
 	collections := rg.Group("collections")
 	{
-		collections.GET("", sv.getCollectionsHandler)
-		collections.GET(":slug", sv.getCollectionBySlugHandler)
+		collections.GET("", sv.GetCollectionsHandler)
+		collections.GET(":slug", sv.GetCollectionBySlugHandler)
 	}
 }
 
@@ -215,8 +215,8 @@ func (sv *Server) setupCollectionRoutes(rg *gin.RouterGroup) {
 func (sv *Server) setupBrandRoutes(rg *gin.RouterGroup) {
 	brands := rg.Group("brands")
 	{
-		brands.GET("", sv.getShopBrandsHandler)
-		brands.GET(":slug", sv.getShopBrandBySlugHandler)
+		brands.GET("", sv.GetShopBrandsHandler)
+		brands.GET(":slug", sv.GetShopBrandBySlugHandler)
 	}
 }
 
@@ -263,7 +263,7 @@ func (sv *Server) initializeRouter() {
 
 	router.Static("/assets", "./assets")
 
-	router.GET("verify-email", sv.verifyEmailHandler)
+	router.GET("verify-email", sv.VerifyEmailHandler)
 	// Setup API routes
 	v1 := router.Group("/api/v1")
 	{

@@ -55,7 +55,7 @@ type Querier interface {
 	CreateProductVariant(ctx context.Context, arg CreateProductVariantParams) (ProductVariant, error)
 	// Product Variant attributes
 	CreateProductVariantAttribute(ctx context.Context, arg CreateProductVariantAttributeParams) (VariantAttributeValue, error)
-	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	// Verification Token Queries
 	CreateVerifyEmail(ctx context.Context, arg CreateVerifyEmailParams) (EmailVerification, error)
 	DeleteAddress(ctx context.Context, arg DeleteAddressParams) error

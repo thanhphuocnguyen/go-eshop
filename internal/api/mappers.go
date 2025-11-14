@@ -6,13 +6,15 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
-func mapToUserResponse(user repository.User) UserResponse {
-	return UserResponse{
+func mapToUserResponse(user repository.User, roleCode repository.Role) UserDetail {
+	return UserDetail{
 		ID:                user.ID,
 		Addresses:         []AddressResponse{},
 		Email:             user.Email,
-		FullName:          user.FirstName,
+		FirstName:         user.FirstName,
+		LastName:          user.LastName,
 		RoleID:            user.RoleID.String(),
+		RoleCode:          roleCode,
 		Phone:             user.PhoneNumber,
 		Username:          user.Username,
 		VerifiedEmail:     user.VerifiedEmail,

@@ -165,12 +165,8 @@ func (q *Queries) GetAvailableDiscountsForCart(ctx context.Context, cartID uuid.
 }
 
 const getCart = `-- name: GetCart :one
-SELECT id, user_id, session_id, order_id, updated_at, created_at
-FROM carts
-WHERE (
-    (carts.user_id IS NOT NULL AND carts.user_id = $1) OR 
-    (carts.session_id IS NOT NULL AND carts.session_id = $2)
-) AND carts.order_id IS NULL
+SELECT id, user_id, session_id, order_id, updated_at, created_at FROM carts
+WHERE ((carts.user_id IS NOT NULL AND carts.user_id = $1) OR (carts.session_id IS NOT NULL AND carts.session_id = $2)) AND carts.order_id IS NULL 
 ORDER BY carts.updated_at DESC
 LIMIT 1
 `

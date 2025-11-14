@@ -14,8 +14,7 @@ import (
 )
 
 const countDiscountCategories = `-- name: CountDiscountCategories :one
-SELECT COUNT(*) FROM discount_categories
-WHERE discount_id = $1
+SELECT COUNT(*) FROM discount_categories WHERE discount_id = $1
 `
 
 func (q *Queries) CountDiscountCategories(ctx context.Context, discountID uuid.UUID) (int64, error) {
@@ -26,8 +25,7 @@ func (q *Queries) CountDiscountCategories(ctx context.Context, discountID uuid.U
 }
 
 const countDiscountProducts = `-- name: CountDiscountProducts :one
-SELECT COUNT(*) FROM discount_products
-WHERE discount_id = $1
+SELECT COUNT(*) FROM discount_products WHERE discount_id = $1
 `
 
 func (q *Queries) CountDiscountProducts(ctx context.Context, discountID uuid.UUID) (int64, error) {
@@ -38,8 +36,7 @@ func (q *Queries) CountDiscountProducts(ctx context.Context, discountID uuid.UUI
 }
 
 const countDiscountUsers = `-- name: CountDiscountUsers :one
-SELECT COUNT(*) FROM discount_users
-WHERE discount_id = $1
+SELECT COUNT(*) FROM discount_users WHERE discount_id = $1
 `
 
 func (q *Queries) CountDiscountUsers(ctx context.Context, discountID uuid.UUID) (int64, error) {
@@ -61,8 +58,7 @@ func (q *Queries) CountDiscounts(ctx context.Context) (int64, error) {
 }
 
 const deleteCategoryDiscountsByDiscountID = `-- name: DeleteCategoryDiscountsByDiscountID :exec
-DELETE FROM discount_categories
-WHERE discount_id = $1
+DELETE FROM discount_categories WHERE discount_id = $1
 `
 
 func (q *Queries) DeleteCategoryDiscountsByDiscountID(ctx context.Context, discountID uuid.UUID) error {
@@ -71,9 +67,7 @@ func (q *Queries) DeleteCategoryDiscountsByDiscountID(ctx context.Context, disco
 }
 
 const deleteDiscount = `-- name: DeleteDiscount :exec
-UPDATE discounts
-SET deleted_at = NOW()
-WHERE id = $1
+UPDATE discounts SET deleted_at = NOW() WHERE id = $1
 `
 
 func (q *Queries) DeleteDiscount(ctx context.Context, id uuid.UUID) error {
@@ -82,9 +76,7 @@ func (q *Queries) DeleteDiscount(ctx context.Context, id uuid.UUID) error {
 }
 
 const deleteDiscountCategory = `-- name: DeleteDiscountCategory :exec
-DELETE FROM discount_categories
-WHERE discount_id = $1
-  AND category_id = $2
+DELETE FROM discount_categories WHERE discount_id = $1 AND category_id = $2
 `
 
 type DeleteDiscountCategoryParams struct {
@@ -98,8 +90,7 @@ func (q *Queries) DeleteDiscountCategory(ctx context.Context, arg DeleteDiscount
 }
 
 const deleteProductDiscountsByDiscountID = `-- name: DeleteProductDiscountsByDiscountID :exec
-DELETE FROM discount_products
-WHERE discount_id = $1
+DELETE FROM discount_products WHERE discount_id = $1
 `
 
 func (q *Queries) DeleteProductDiscountsByDiscountID(ctx context.Context, discountID uuid.UUID) error {
@@ -108,8 +99,7 @@ func (q *Queries) DeleteProductDiscountsByDiscountID(ctx context.Context, discou
 }
 
 const deleteUserDiscountsByDiscountID = `-- name: DeleteUserDiscountsByDiscountID :exec
-DELETE FROM discount_users
-WHERE discount_id = $1
+DELETE FROM discount_users WHERE discount_id = $1
 `
 
 func (q *Queries) DeleteUserDiscountsByDiscountID(ctx context.Context, discountID uuid.UUID) error {
@@ -118,10 +108,7 @@ func (q *Queries) DeleteUserDiscountsByDiscountID(ctx context.Context, discountI
 }
 
 const getDiscountByCode = `-- name: GetDiscountByCode :one
-SELECT id, code, description, discount_type, discount_value, min_purchase_amount, max_discount_amount, usage_limit, used_count, is_active, starts_at, expires_at, created_at, updated_at, deleted_at
-FROM discounts
-WHERE code = $1
-LIMIT 1
+SELECT id, code, description, discount_type, discount_value, min_purchase_amount, max_discount_amount, usage_limit, used_count, is_active, starts_at, expires_at, created_at, updated_at, deleted_at FROM discounts WHERE code = $1 LIMIT 1
 `
 
 func (q *Queries) GetDiscountByCode(ctx context.Context, code string) (Discount, error) {
@@ -148,9 +135,7 @@ func (q *Queries) GetDiscountByCode(ctx context.Context, code string) (Discount,
 }
 
 const getDiscountByID = `-- name: GetDiscountByID :one
-SELECT id, code, description, discount_type, discount_value, min_purchase_amount, max_discount_amount, usage_limit, used_count, is_active, starts_at, expires_at, created_at, updated_at, deleted_at
-FROM discounts
-WHERE id = $1
+SELECT id, code, description, discount_type, discount_value, min_purchase_amount, max_discount_amount, usage_limit, used_count, is_active, starts_at, expires_at, created_at, updated_at, deleted_at FROM discounts WHERE id = $1
 `
 
 func (q *Queries) GetDiscountByID(ctx context.Context, id uuid.UUID) (Discount, error) {
@@ -177,13 +162,7 @@ func (q *Queries) GetDiscountByID(ctx context.Context, id uuid.UUID) (Discount, 
 }
 
 const getDiscountCategories = `-- name: GetDiscountCategories :many
-SELECT dc.id, dc.discount_id, dc.category_id, c.name
-FROM discount_categories dc
-JOIN categories c ON dc.category_id = c.id
-WHERE dc.discount_id = $1
-ORDER BY dc.id
-LIMIT $2
-OFFSET $3
+SELECT dc.id, dc.discount_id, dc.category_id, c.name FROM discount_categories dc JOIN categories c ON dc.category_id = c.id WHERE dc.discount_id = $1 LIMIT $2 OFFSET $3
 `
 
 type GetDiscountCategoriesParams struct {
@@ -225,12 +204,10 @@ func (q *Queries) GetDiscountCategories(ctx context.Context, arg GetDiscountCate
 }
 
 const getDiscountProducts = `-- name: GetDiscountProducts :many
-SELECT dp.id, dp.discount_id, dp.product_id, p.name, p.base_price, d.discount_type, d.discount_value
-FROM discount_products dp
+SELECT dp.id, dp.discount_id, dp.product_id, p.name, p.base_price, d.discount_type, d.discount_value FROM discount_products dp
 JOIN products p ON dp.product_id = p.id
 JOIN discounts d ON dp.discount_id = d.id
 WHERE dp.discount_id = $1
-ORDER BY dp.id
 LIMIT $2
 OFFSET $3
 `
@@ -280,13 +257,7 @@ func (q *Queries) GetDiscountProducts(ctx context.Context, arg GetDiscountProduc
 }
 
 const getDiscountProductsAndCategories = `-- name: GetDiscountProductsAndCategories :many
-SELECT dp.product_id, dc.category_id
-FROM discounts d
-LEFT JOIN discount_products dp ON d.id = dp.discount_id
-LEFT JOIN discount_categories dc ON d.id = dc.discount_id
-WHERE d.id = $1
-  AND (dp.product_id IS NOT NULL OR dc.category_id IS NOT NULL)
-ORDER BY dp.product_id, dc.category_id
+SELECT dp.product_id, dc.category_id FROM discounts d LEFT JOIN discount_products dp ON d.id = dp.discount_id LEFT JOIN discount_categories dc ON d.id = dc.discount_id WHERE d.id = $1 AND (dp.product_id IS NOT NULL OR dc.category_id IS NOT NULL) ORDER BY dp.product_id, dc.category_id
 `
 
 type GetDiscountProductsAndCategoriesRow struct {
@@ -319,8 +290,7 @@ SELECT usage_limit, used_count, discount_amount, customer_name, order_id, total_
 FROM discounts
 JOIN order_discounts ON discounts.id = order_discounts.discount_id
 JOIN orders ON order_discounts.order_id = orders.id
-WHERE discounts.id = $1
-  AND orders.status IN ('completed', 'confirmed')
+WHERE discounts.id = $1 AND orders.status IN ('completed', 'confirmed')
 `
 
 type GetDiscountUsagesRow struct {
@@ -362,13 +332,7 @@ func (q *Queries) GetDiscountUsages(ctx context.Context, id uuid.UUID) ([]GetDis
 }
 
 const getDiscountUsers = `-- name: GetDiscountUsers :many
-SELECT du.id, du.discount_id, du.user_id, CONCAT(u.first_name, ' ', u.last_name) as fullname, u.username
-FROM discount_users du
-JOIN users u ON du.user_id = u.id
-WHERE du.discount_id = $1
-ORDER BY du.id
-LIMIT $2
-OFFSET $3
+SELECT du.id, du.discount_id, du.user_id, CONCAT(u.first_name, ' ', u.last_name) as fullname, u.username FROM discount_users du JOIN users u ON du.user_id = u.id WHERE du.discount_id = $1 ORDER BY du.id LIMIT $2 OFFSET $3
 `
 
 type GetDiscountUsersParams struct {
@@ -412,9 +376,7 @@ func (q *Queries) GetDiscountUsers(ctx context.Context, arg GetDiscountUsersPara
 }
 
 const getDiscounts = `-- name: GetDiscounts :many
-SELECT id, code, "description", discount_type, discount_value,
-    min_purchase_amount, max_discount_amount, 
-    usage_limit, used_count, is_active, starts_at, expires_at
+SELECT id, code, "description", discount_type, discount_value, min_purchase_amount, max_discount_amount, usage_limit, used_count, is_active, starts_at, expires_at
 FROM discounts
 WHERE 
     discount_type = COALESCE($3, discounts.discount_type)
@@ -422,7 +384,6 @@ WHERE
     AND starts_at >= COALESCE($5, discounts.starts_at)
     AND starts_at <= COALESCE($6, discounts.starts_at)
     AND code ILIKE '%' || COALESCE($7, discounts.code) || '%'
-ORDER BY id
 LIMIT $1
 OFFSET $2
 `
@@ -509,11 +470,7 @@ type InsertBulkUserDiscountsParams struct {
 }
 
 const insertDiscount = `-- name: InsertDiscount :one
-INSERT INTO discounts 
-    (code, description, discount_type, discount_value, min_purchase_amount, max_discount_amount, is_active, usage_limit, starts_at, expires_at)
-VALUES 
-    ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-RETURNING id
+INSERT INTO discounts (code, description, discount_type, discount_value, min_purchase_amount, max_discount_amount, is_active, usage_limit, starts_at, expires_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
 `
 
 type InsertDiscountParams struct {
@@ -548,9 +505,7 @@ func (q *Queries) InsertDiscount(ctx context.Context, arg InsertDiscountParams) 
 }
 
 const insertDiscountCategory = `-- name: InsertDiscountCategory :one
-INSERT INTO discount_categories (discount_id, category_id)
-VALUES ($1, $2)
-RETURNING id
+INSERT INTO discount_categories (discount_id, category_id) VALUES ($1, $2) RETURNING id
 `
 
 type InsertDiscountCategoryParams struct {
@@ -566,9 +521,7 @@ func (q *Queries) InsertDiscountCategory(ctx context.Context, arg InsertDiscount
 }
 
 const insertDiscountProduct = `-- name: InsertDiscountProduct :one
-INSERT INTO discount_products (discount_id, product_id)
-VALUES ($1, $2)
-RETURNING id
+INSERT INTO discount_products (discount_id, product_id) VALUES ($1, $2) RETURNING id
 `
 
 type InsertDiscountProductParams struct {
@@ -584,9 +537,7 @@ func (q *Queries) InsertDiscountProduct(ctx context.Context, arg InsertDiscountP
 }
 
 const insertDiscountUser = `-- name: InsertDiscountUser :one
-INSERT INTO discount_users (discount_id, user_id)
-VALUES ($1, $2)
-RETURNING id
+INSERT INTO discount_users (discount_id, user_id) VALUES ($1, $2) RETURNING id
 `
 
 type InsertDiscountUserParams struct {
@@ -602,9 +553,7 @@ func (q *Queries) InsertDiscountUser(ctx context.Context, arg InsertDiscountUser
 }
 
 const insertOrderDiscount = `-- name: InsertOrderDiscount :one
-INSERT INTO order_discounts (order_id, discount_id, discount_amount)
-VALUES ($1, $2, $3)
-RETURNING id
+INSERT INTO order_discounts (order_id, discount_id, discount_amount) VALUES ($1, $2, $3) RETURNING id
 `
 
 type InsertOrderDiscountParams struct {
@@ -632,8 +581,7 @@ SET "description" = COALESCE($2, discounts.description),
     is_active = COALESCE($9, discounts.is_active),
     starts_at = COALESCE($10, discounts.starts_at),
     expires_at = COALESCE($11, discounts.expires_at)
-WHERE id = $1
-RETURNING id
+WHERE id = $1 RETURNING id
 `
 
 type UpdateDiscountParams struct {

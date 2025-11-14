@@ -17,63 +17,51 @@ import (
 
 // ------------------------------ Handlers ------------------------------
 
-// registerHandler godoc
+// RegisterHandler godoc
 // @Summary Create a new user
 // @Description Create a new user
 // @Tags users
 // @Accept  json
 // @Produce  json
 // @Param input body RegisterRequestBody true "User info"
-// @Success 200 {object} ApiResponse[UserResponse]
-// @Failure 400 {object} ApiResponse[UserResponse]
-// @Failure 500 {object} ApiResponse[UserResponse]
+// @Success 200 {object} ApiResponse[UserDetail]
+// @Failure 400 {object} ApiResponse[UserDetail]
+// @Failure 500 {object} ApiResponse[UserDetail]
 // @Router /users [post]
-func (sv *Server) registerHandler(c *gin.Context) {
+func (sv *Server) RegisterHandler(c *gin.Context) {
 	var req RegisterRequestBody
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[UserResponse](InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[UserDetail](InvalidBodyCode, "", err))
 		return
 	}
 
 	_, err := sv.repo.GetUserByUsername(c, req.Username)
 	if err != nil && !errors.Is(err, repository.ErrRecordNotFound) {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserDetail](InternalServerErrorCode, "", err))
 		return
 	}
 
 	if err == nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[UserResponse](UsernameExistedCode, "", fmt.Errorf("username %s is already taken", req.Username)))
+		c.JSON(http.StatusBadRequest, createErrorResponse[UserDetail](UsernameExistedCode, "", fmt.Errorf("username %s is already taken", req.Username)))
 		return
 	}
 
 	hashedPassword, err := auth.HashPassword(req.Password)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](HashPasswordCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserDetail](HashPasswordCode, "", err))
 		return
-	}
-
-	// Construct full name from first and last name
-	fullName := ""
-	if req.FirstName != nil {
-		fullName = *req.FirstName
-	}
-	if req.LastName != nil {
-		if fullName != "" {
-			fullName += " " + *req.LastName
-		} else {
-			fullName = *req.LastName
-		}
 	}
 
 	userRole, err := sv.repo.GetRoleByCode(c, string(repository.UserRoleCodeUser))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserDetail](InternalServerErrorCode, "", err))
 		return
 	}
 	arg := repository.CreateUserParams{
 		Username:       req.Username,
 		HashedPassword: hashedPassword,
-		FirstName:      fullName,
+		FirstName:      req.FirstName,
+		LastName:       req.LastName,
 		Email:          req.Email,
 		PhoneNumber:    req.Phone,
 		RoleID:         userRole.ID,
@@ -82,7 +70,7 @@ func (sv *Server) registerHandler(c *gin.Context) {
 	if req.Username == "admin" {
 		adminRole, err := sv.repo.GetRoleByCode(c, string(repository.UserRoleCodeAdmin))
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", err))
+			c.JSON(http.StatusInternalServerError, createErrorResponse[UserDetail](InternalServerErrorCode, "", err))
 			return
 		}
 		arg.RoleID = adminRole.ID
@@ -90,7 +78,7 @@ func (sv *Server) registerHandler(c *gin.Context) {
 	user, err := sv.repo.CreateUser(c, arg)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserDetail](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -109,7 +97,7 @@ func (sv *Server) registerHandler(c *gin.Context) {
 	createdAddress, err := sv.repo.CreateAddress(c, createAddressArgs)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](AddressCodeCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserDetail](AddressCodeCode, "", err))
 		return
 	}
 
@@ -123,7 +111,7 @@ func (sv *Server) registerHandler(c *gin.Context) {
 	)
 
 	if err != nil {
-		createErrorResponse[UserResponse](ActivateUserCode, "Please verify your email address to activate your account", err)
+		createErrorResponse[UserDetail](ActivateUserCode, "Please verify your email address to activate your account", err)
 		return
 	}
 
@@ -132,17 +120,22 @@ func (sv *Server) registerHandler(c *gin.Context) {
 		ward = *createdAddress.Ward
 	}
 
-	userResp := &UserResponse{
+	userResp := &UserDetail{
 		ID:            user.ID,
 		Username:      user.Username,
 		RoleID:        user.RoleID.String(),
-		RoleCode:      userRole.Code,
+		RoleCode:      repository.Role(userRole.Code),
 		Email:         user.Email,
 		CreatedAt:     user.CreatedAt.String(),
 		VerifiedEmail: user.VerifiedEmail,
 		VerifiedPhone: user.VerifiedPhone,
 		UpdatedAt:     user.UpdatedAt.String(),
-		FullName:      user.FirstName,
+		FirstName:     user.FirstName,
+		Locked:        user.Locked,
+		Phone:         user.PhoneNumber,
+		AvatarURL:     user.AvatarUrl,
+		AvatarID:      user.AvatarImageID,
+		LastName:      user.LastName,
 		Addresses: []AddressResponse{{
 			ID:        createdAddress.ID.String(),
 			Phone:     createdAddress.PhoneNumber,
@@ -158,7 +151,7 @@ func (sv *Server) registerHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, createSuccessResponse(c, userResp, "Created user and address successfully", nil, nil))
 }
 
-// loginHandler godoc
+// LoginHandler godoc
 // @Summary Login to the system
 // @Description Login to the system
 // @Tags users
@@ -168,8 +161,8 @@ func (sv *Server) registerHandler(c *gin.Context) {
 // @Success 200 {object} ApiResponse[LoginResponse]
 // @Failure 401 {object} ApiResponse[LoginResponse]
 // @Failure 500 {object} ApiResponse[LoginResponse]
-// @Router /users/loginHandler [post]
-func (sv *Server) loginHandler(c *gin.Context) {
+// @Router /users/LoginHandler [post]
+func (sv *Server) LoginHandler(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[LoginResponse](InvalidBodyCode, "", err))

@@ -14,10 +14,7 @@ import (
 )
 
 const countAddresses = `-- name: CountAddresses :one
-SELECT
-    COUNT(*)
-FROM
-    user_addresses
+SELECT COUNT(*) FROM user_addresses
 `
 
 func (q *Queries) CountAddresses(ctx context.Context) (int64, error) {
@@ -28,10 +25,7 @@ func (q *Queries) CountAddresses(ctx context.Context) (int64, error) {
 }
 
 const countUsers = `-- name: CountUsers :one
-SELECT
-    count(*)
-FROM
-    users
+SELECT count(*) FROM users
 `
 
 func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
@@ -42,10 +36,7 @@ func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
 }
 
 const createAddress = `-- name: CreateAddress :one
-INSERT INTO 
-    user_addresses (user_id, phone_number, street, ward, district, city, "default")
-VALUES
-    ($1, $2, $3, $4, $5, $6, $7) RETURNING id, user_id, phone_number, street, ward, district, city, "default", created_at, updated_at
+INSERT INTO user_addresses (user_id, phone_number, street, ward, district, city, "default") VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, user_id, phone_number, street, ward, district, city, "default", created_at, updated_at
 `
 
 type CreateAddressParams struct {
@@ -86,11 +77,7 @@ func (q *Queries) CreateAddress(ctx context.Context, arg CreateAddressParams) (U
 }
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO
-    users (email, username, phone_number, first_name, hashed_password, role_id)
-VALUES
-    ($1, $2, $3, $4, $5, $6)
-RETURNING id, email, username, first_name, role_id, verified_email, verified_phone, created_at, updated_at
+INSERT INTO users (email, username, phone_number, first_name, last_name, hashed_password, role_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, role_id, username, email, phone_number, first_name, last_name, avatar_url, avatar_image_id, hashed_password, verified_email, verified_phone, locked, password_changed_at, updated_at, created_at
 `
 
 type CreateUserParams struct {
@@ -98,42 +85,39 @@ type CreateUserParams struct {
 	Username       string    `json:"username"`
 	PhoneNumber    string    `json:"phoneNumber"`
 	FirstName      string    `json:"firstName"`
+	LastName       string    `json:"lastName"`
 	HashedPassword string    `json:"hashedPassword"`
 	RoleID         uuid.UUID `json:"roleId"`
 }
 
-type CreateUserRow struct {
-	ID            uuid.UUID `json:"id"`
-	Email         string    `json:"email"`
-	Username      string    `json:"username"`
-	FirstName     string    `json:"firstName"`
-	RoleID        uuid.UUID `json:"roleId"`
-	VerifiedEmail bool      `json:"verifiedEmail"`
-	VerifiedPhone bool      `json:"verifiedPhone"`
-	CreatedAt     time.Time `json:"createdAt"`
-	UpdatedAt     time.Time `json:"updatedAt"`
-}
-
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRow(ctx, createUser,
 		arg.Email,
 		arg.Username,
 		arg.PhoneNumber,
 		arg.FirstName,
+		arg.LastName,
 		arg.HashedPassword,
 		arg.RoleID,
 	)
-	var i CreateUserRow
+	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Email,
-		&i.Username,
-		&i.FirstName,
 		&i.RoleID,
+		&i.Username,
+		&i.Email,
+		&i.PhoneNumber,
+		&i.FirstName,
+		&i.LastName,
+		&i.AvatarUrl,
+		&i.AvatarImageID,
+		&i.HashedPassword,
 		&i.VerifiedEmail,
 		&i.VerifiedPhone,
-		&i.CreatedAt,
+		&i.Locked,
+		&i.PasswordChangedAt,
 		&i.UpdatedAt,
+		&i.CreatedAt,
 	)
 	return i, err
 }
@@ -188,13 +172,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
 }
 
 const getAddress = `-- name: GetAddress :one
-SELECT
-    id, user_id, phone_number, street, ward, district, city, "default", created_at, updated_at
-FROM
-    user_addresses
-WHERE
-    id = $1 AND user_id = $2
-LIMIT 1
+SELECT id, user_id, phone_number, street, ward, district, city, "default", created_at, updated_at FROM user_addresses WHERE id = $1 AND user_id = $2 LIMIT 1
 `
 
 type GetAddressParams struct {
@@ -221,14 +199,7 @@ func (q *Queries) GetAddress(ctx context.Context, arg GetAddressParams) (UserAdd
 }
 
 const getAddresses = `-- name: GetAddresses :many
-SELECT
-    id, user_id, phone_number, street, ward, district, city, "default", created_at, updated_at
-FROM
-    user_addresses
-WHERE
-    user_id = $1
-ORDER BY
-    "default" DESC, id ASC
+SELECT id, user_id, phone_number, street, ward, district, city, "default", created_at, updated_at FROM user_addresses WHERE user_id = $1 ORDER BY "default" DESC, id ASC
 `
 
 func (q *Queries) GetAddresses(ctx context.Context, userID uuid.UUID) ([]UserAddress, error) {
@@ -263,13 +234,7 @@ func (q *Queries) GetAddresses(ctx context.Context, userID uuid.UUID) ([]UserAdd
 }
 
 const getDefaultAddress = `-- name: GetDefaultAddress :one
-SELECT
-    id, user_id, phone_number, street, ward, district, city, "default", created_at, updated_at
-FROM
-    user_addresses
-WHERE
-    user_id = $1 AND "default" = TRUE
-LIMIT 1
+SELECT id, user_id, phone_number, street, ward, district, city, "default", created_at, updated_at FROM user_addresses WHERE user_id = $1 AND "default" = TRUE LIMIT 1
 `
 
 func (q *Queries) GetDefaultAddress(ctx context.Context, userID uuid.UUID) (UserAddress, error) {
@@ -498,12 +463,7 @@ func (q *Queries) GetVerifyEmailByVerifyCode(ctx context.Context, verifyCode str
 }
 
 const resetPrimaryAddress = `-- name: ResetPrimaryAddress :exec
-UPDATE
-    user_addresses
-SET
-    "default" = FALSE
-WHERE
-    user_id = $1 AND "default" = TRUE
+UPDATE user_addresses SET "default" = FALSE WHERE user_id = $1 AND "default" = TRUE
 `
 
 func (q *Queries) ResetPrimaryAddress(ctx context.Context, userID uuid.UUID) error {
@@ -532,12 +492,7 @@ type SeedUsersParams struct {
 }
 
 const setPrimaryAddress = `-- name: SetPrimaryAddress :exec
-UPDATE
-    user_addresses
-SET
-    "default" = $1
-WHERE
-    id = $2 AND user_id = $3
+UPDATE user_addresses SET "default" = $1 WHERE id = $2 AND user_id = $3
 `
 
 type SetPrimaryAddressParams struct {
@@ -681,10 +636,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateU
 }
 
 const updateVerifyEmail = `-- name: UpdateVerifyEmail :one
-UPDATE email_verifications
-SET is_used = TRUE
-WHERE id = $1 AND verify_code = $2 AND expired_at > now()
-RETURNING id, user_id, email, verify_code, is_used, created_at, expired_at
+UPDATE email_verifications SET is_used = TRUE WHERE id = $1 AND verify_code = $2 AND expired_at > now() RETURNING id, user_id, email, verify_code, is_used, created_at, expired_at
 `
 
 type UpdateVerifyEmailParams struct {

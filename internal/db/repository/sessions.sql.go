@@ -14,8 +14,7 @@ import (
 )
 
 const getSession = `-- name: GetSession :one
-SELECT id, user_id, refresh_token, user_agent, client_ip, blocked, expired_at, created_at FROM user_sessions
-WHERE id = $1 LIMIT 1
+SELECT id, user_id, refresh_token, user_agent, client_ip, blocked, expired_at, created_at FROM user_sessions WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetSession(ctx context.Context, id uuid.UUID) (UserSession, error) {
@@ -35,8 +34,7 @@ func (q *Queries) GetSession(ctx context.Context, id uuid.UUID) (UserSession, er
 }
 
 const getSessionByRefreshToken = `-- name: GetSessionByRefreshToken :one
-SELECT id, user_id, refresh_token, user_agent, client_ip, blocked, expired_at, created_at FROM user_sessions
-WHERE refresh_token = $1 LIMIT 1
+SELECT id, user_id, refresh_token, user_agent, client_ip, blocked, expired_at, created_at FROM user_sessions WHERE refresh_token = $1 LIMIT 1
 `
 
 func (q *Queries) GetSessionByRefreshToken(ctx context.Context, refreshToken string) (UserSession, error) {
@@ -56,17 +54,7 @@ func (q *Queries) GetSessionByRefreshToken(ctx context.Context, refreshToken str
 }
 
 const insertSession = `-- name: InsertSession :one
-INSERT INTO user_sessions (
-    id,
-    user_id,
-    refresh_token,
-    user_agent,
-    client_ip,
-    blocked,
-    expired_at
-) VALUES (
-    $1, $2, $3, $4, $5, $6, $7
-) RETURNING id, user_id, refresh_token, user_agent, client_ip, blocked, expired_at, created_at
+INSERT INTO user_sessions (id,user_id,refresh_token,user_agent,client_ip,blocked,expired_at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, user_id, refresh_token, user_agent, client_ip, blocked, expired_at, created_at
 `
 
 type InsertSessionParams struct {
@@ -110,8 +98,7 @@ SET
     client_ip = COALESCE($3, client_ip),
     blocked = COALESCE($4, blocked),
     expired_at = COALESCE($5, expired_at)
-WHERE id = $1
-RETURNING id, user_id, refresh_token, user_agent, client_ip, blocked, expired_at, created_at
+WHERE id = $1 RETURNING id, user_id, refresh_token, user_agent, client_ip, blocked, expired_at, created_at
 `
 
 type UpdateSessionParams struct {

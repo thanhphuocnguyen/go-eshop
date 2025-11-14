@@ -309,12 +309,7 @@ func (q *Queries) GetRatingReplies(ctx context.Context, id uuid.UUID) (RatingRep
 }
 
 const getRatingRepliesByRatingID = `-- name: GetRatingRepliesByRatingID :many
-SELECT 
-    rr.id, rr.rating_id, rr.reply_by, rr.content, rr.is_visible, rr.created_at, rr.updated_at, 
-    u.id AS reply_by, u.first_name, u.last_name, u.email
-FROM rating_replies AS rr
-JOIN users AS u ON u.id = rr.reply_by
-WHERE rr.rating_id = $1
+SELECT rr.id, rr.rating_id, rr.reply_by, rr.content, rr.is_visible, rr.created_at, rr.updated_at, u.id AS reply_by, u.first_name, u.last_name, u.email FROM rating_replies AS rr JOIN users AS u ON u.id = rr.reply_by WHERE rr.rating_id = $1
 `
 
 type GetRatingRepliesByRatingIDRow struct {
@@ -358,12 +353,7 @@ func (q *Queries) GetRatingRepliesByRatingID(ctx context.Context, ratingID uuid.
 }
 
 const getRatingRepliesByUserID = `-- name: GetRatingRepliesByUserID :many
-SELECT 
-    rr.id, rr.rating_id, rr.reply_by, rr.content, rr.is_visible, rr.created_at, rr.updated_at, 
-    u.id AS reply_by, u.first_name, u.last_name, u.email
-FROM rating_replies AS rr
-JOIN users AS u ON u.id = rr.reply_by
-WHERE rr.reply_by = $1
+SELECT rr.id, rr.rating_id, rr.reply_by, rr.content, rr.is_visible, rr.created_at, rr.updated_at, u.id AS reply_by, u.first_name, u.last_name, u.email FROM rating_replies AS rr JOIN users AS u ON u.id = rr.reply_by WHERE rr.reply_by = $1
 `
 
 type GetRatingRepliesByUserIDRow struct {
@@ -673,9 +663,7 @@ func (q *Queries) UpdateProductRating(ctx context.Context, arg UpdateProductRati
 }
 
 const updateRatingReplies = `-- name: UpdateRatingReplies :one
-UPDATE rating_replies SET 
-    content = COALESCE($2, content)
-WHERE id = $1 RETURNING id, rating_id, reply_by, content, is_visible, created_at, updated_at
+UPDATE rating_replies SET content = COALESCE($2, content) WHERE id = $1 RETURNING id, rating_id, reply_by, content, is_visible, created_at, updated_at
 `
 
 type UpdateRatingRepliesParams struct {
@@ -699,9 +687,7 @@ func (q *Queries) UpdateRatingReplies(ctx context.Context, arg UpdateRatingRepli
 }
 
 const updateRatingVote = `-- name: UpdateRatingVote :one
-UPDATE rating_votes SET 
-    is_helpful = COALESCE($2, is_helpful)
-WHERE id = $1 RETURNING id, rating_id, user_id, is_helpful, created_at, updated_at
+UPDATE rating_votes SET is_helpful = COALESCE($2, is_helpful) WHERE id = $1 RETURNING id, rating_id, user_id, is_helpful, created_at, updated_at
 `
 
 type UpdateRatingVoteParams struct {

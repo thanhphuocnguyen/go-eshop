@@ -15,7 +15,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/pkg/cachesrv"
 )
 
-// updateUserHandler godoc
+// UpdateUserHandler godoc
 // @Summary Update user info
 // @Description Update user info
 // @Tags users
@@ -80,24 +80,24 @@ func (sv *Server) updateUserHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, createSuccessResponse(c, updatedUser, "", nil, nil))
 }
 
-// getCurrentUserHandler godoc
+// GetCurrentUserHandler godoc
 // @Summary Get user info
 // @Description Get user info
 // @Tags users
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} ApiResponse[UserResponse]
+// @Success 200 {object} ApiResponse[UserDetail]
 // @Failure 404 {object} ApiResponse[gin.H]
 // @Failure 500 {object} ApiResponse[gin.H]
 // @Router /users/me [get]
-func (sv *Server) getCurrentUserHandler(c *gin.Context) {
+func (sv *Server) GetCurrentUserHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", errors.New("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserDetail](InternalServerErrorCode, "", errors.New("authorization payload is not provided")))
 		return
 	}
 
-	var userResp UserResponse
+	var userResp UserDetail
 	err := sv.cachesrv.Get(c, cachesrv.USER_KEY_PREFIX+authPayload.UserID.String(), &userResp)
 	if err == nil {
 		c.JSON(http.StatusOK, createSuccessResponse(c, userResp, "", nil, nil))
@@ -107,16 +107,16 @@ func (sv *Server) getCurrentUserHandler(c *gin.Context) {
 	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[UserResponse](NotFoundCode, "", err))
+			c.JSON(http.StatusNotFound, createErrorResponse[UserDetail](NotFoundCode, "", err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserDetail](InternalServerErrorCode, "", err))
 		return
 	}
 
 	userAddress, err := sv.repo.GetAddresses(c, user.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserDetail](InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -124,18 +124,18 @@ func (sv *Server) getCurrentUserHandler(c *gin.Context) {
 	for _, address := range userAddress {
 		addressResp = append(addressResp, mapAddressToAddressResponse(address))
 	}
-	userResp = mapToUserResponse(user)
+	userResp = mapToUserResponse(user, authPayload.RoleCode)
 	userResp.Addresses = addressResp
 
 	if err = sv.cachesrv.Set(c, cachesrv.USER_KEY_PREFIX+authPayload.UserID.String(), userResp, &cachesrv.DEFAULT_EXPIRATION); err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserDetail](InternalServerErrorCode, "", err))
 		return
 	}
 
 	c.JSON(http.StatusOK, createSuccessResponse(c, userResp, "", nil, nil))
 }
 
-// getUsersHandler godoc
+// GetUsersHandler godoc
 // @Summary List users
 // @Description List users
 // @Tags users
@@ -148,10 +148,15 @@ func (sv *Server) getCurrentUserHandler(c *gin.Context) {
 // @Failure 400 {object} ApiResponse[gin.H]
 // @Failure 401 {object} ApiResponse[gin.H]
 // @Router /admin/users [get]
-func (sv *Server) getUsersHandler(c *gin.Context) {
+func (sv *Server) GetUsersHandler(c *gin.Context) {
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[[]UserDetail](InternalServerErrorCode, "", errors.New("authorization payload is not provided")))
+		return
+	}
 	var queries PaginationQueryParams
 	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[[]UserResponse](InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[[]UserDetail](InvalidBodyCode, "", err))
 		return
 	}
 
@@ -161,59 +166,64 @@ func (sv *Server) getUsersHandler(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[[]UserResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[[]UserDetail](InternalServerErrorCode, "", err))
 		return
 	}
 
 	total, err := sv.repo.CountUsers(c)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[[]UserResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[[]UserDetail](InternalServerErrorCode, "", err))
 		return
 	}
 
-	userResp := make([]UserResponse, 0)
+	userResp := make([]UserDetail, 0)
 	for _, user := range users {
-		userResp = append(userResp, mapToUserResponse(user))
+		userResp = append(userResp, mapToUserResponse(user, authPayload.RoleCode))
 	}
 
 	pagination := createPagination(queries.Page, queries.PageSize, total)
 	c.JSON(http.StatusOK, createSuccessResponse(c, userResp, "", pagination, nil))
 }
 
-// getUserHandler godoc
+// GetUserHandler godoc
 // @Summary Get user info
 // @Description Get user info
 // @Tags Admin
 // @Accept  json
 // @Produce  json
 // @Param id path string true "User ID"
-// @Success 200 {object} ApiResponse[UserResponse]
-// @Failure 400 {object} ApiResponse[UserResponse]
-// @Failure 404 {object} ApiResponse[UserResponse]
-// @Failure 500 {object} ApiResponse[UserResponse]
+// @Success 200 {object} ApiResponse[UserDetail]
+// @Failure 400 {object} ApiResponse[UserDetail]
+// @Failure 404 {object} ApiResponse[UserDetail]
+// @Failure 500 {object} ApiResponse[UserDetail]
 // @Router /admin/users/{id} [get]
-func (sv *Server) getUserHandler(c *gin.Context) {
+func (sv *Server) GetUserHandler(c *gin.Context) {
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserDetail](InternalServerErrorCode, "", errors.New("authorization payload is not provided")))
+		return
+	}
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[UserResponse](InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErrorResponse[UserDetail](InvalidBodyCode, "", err))
 		return
 	}
 
 	user, err := sv.repo.GetUserByID(c, uuid.MustParse(param.ID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[UserResponse](NotFoundCode, "", err))
+			c.JSON(http.StatusNotFound, createErrorResponse[UserDetail](NotFoundCode, "", err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[UserResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErrorResponse[UserDetail](InternalServerErrorCode, "", err))
 		return
 	}
 
-	userResp := mapToUserResponse(user)
+	userResp := mapToUserResponse(user, authPayload.RoleCode)
 	c.JSON(http.StatusOK, createSuccessResponse(c, userResp, "", nil, nil))
 }
 
-// sendVerifyEmailHandler godoc
+// SendVerifyEmailHandler godoc
 // @Summary Send verify email
 // @Description Send verify email
 // @Tags users
@@ -225,7 +235,7 @@ func (sv *Server) getUserHandler(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[gin.H]
 // @Router /users/verify-email [post]
 // @Security BearerAuth
-func (sv *Server) sendVerifyEmailHandler(c *gin.Context) {
+func (sv *Server) SendVerifyEmailHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[gin.H](InternalServerErrorCode, "", errors.New("authorization payload is not provided")))
@@ -258,7 +268,7 @@ func (sv *Server) sendVerifyEmailHandler(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// verifyEmailHandler godoc
+// VerifyEmailHandler godoc
 // @Summary Verify email
 // @Description Verify email
 // @Tags users
@@ -273,7 +283,12 @@ func (sv *Server) sendVerifyEmailHandler(c *gin.Context) {
 // @Failure 500 {object} ApiResponse[gin.H]
 // @Router /users/verify-email [get]
 // @Security BearerAuth
-func (sv *Server) verifyEmailHandler(c *gin.Context) {
+func (sv *Server) VerifyEmailHandler(c *gin.Context) {
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", errors.New("authorization payload is not provided")))
+		return
+	}
 	var query VerifyEmailQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
 		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidEmailCode, "", err))
@@ -301,7 +316,7 @@ func (sv *Server) verifyEmailHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 		return
 	}
-	if err := sv.cachesrv.Set(c, cachesrv.USER_KEY_PREFIX+user.ID.String(), mapToUserResponse(user), &cachesrv.DEFAULT_EXPIRATION); err != nil {
+	if err := sv.cachesrv.Set(c, cachesrv.USER_KEY_PREFIX+user.ID.String(), mapToUserResponse(user, authPayload.RoleCode), &cachesrv.DEFAULT_EXPIRATION); err != nil {
 		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
 		return
 	}

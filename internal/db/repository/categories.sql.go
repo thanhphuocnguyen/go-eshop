@@ -24,11 +24,7 @@ func (q *Queries) CountCategories(ctx context.Context) (int64, error) {
 }
 
 const createCategory = `-- name: CreateCategory :one
-INSERT INTO categories
-    (name, slug, description, remarkable, image_url, image_id)
-VALUES
-    ($1, $2, $3, $4, $5, $6)
-RETURNING id, name, description, image_url, image_id, published, remarkable, slug, display_order, created_at, updated_at
+INSERT INTO categories (name, slug, description, remarkable, image_url, image_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, description, image_url, image_id, published, remarkable, slug, display_order, created_at, updated_at
 `
 
 type CreateCategoryParams struct {
@@ -76,13 +72,7 @@ func (q *Queries) DeleteCategory(ctx context.Context, id uuid.UUID) error {
 }
 
 const getCategories = `-- name: GetCategories :many
-SELECT id, name, description, image_url, image_id, published, remarkable, slug, display_order, created_at, updated_at FROM categories
-WHERE
-    published = COALESCE($3, true)
-    AND remarkable = COALESCE($4, remarkable)
-ORDER BY id
-LIMIT $1
-OFFSET $2
+SELECT id, name, description, image_url, image_id, published, remarkable, slug, display_order, created_at, updated_at FROM categories WHERE published = COALESCE($3, true) AND remarkable = COALESCE($4, remarkable) ORDER BY id LIMIT $1 OFFSET $2
 `
 
 type GetCategoriesParams struct {
@@ -130,10 +120,7 @@ func (q *Queries) GetCategories(ctx context.Context, arg GetCategoriesParams) ([
 }
 
 const getCategoryByID = `-- name: GetCategoryByID :one
-SELECT c.id, c.name, c.description, c.image_url, c.image_id, c.published, c.remarkable, c.slug, c.display_order, c.created_at, c.updated_at
-FROM categories c
-WHERE c.id = $1
-LIMIT 1
+SELECT c.id, c.name, c.description, c.image_url, c.image_id, c.published, c.remarkable, c.slug, c.display_order, c.created_at, c.updated_at FROM categories c WHERE c.id = $1 LIMIT 1
 `
 
 func (q *Queries) GetCategoryByID(ctx context.Context, id uuid.UUID) (Category, error) {
@@ -156,10 +143,7 @@ func (q *Queries) GetCategoryByID(ctx context.Context, id uuid.UUID) (Category, 
 }
 
 const getCategoryBySlug = `-- name: GetCategoryBySlug :one
-SELECT c.id, c.name, c.description, c.image_url, c.image_id, c.published, c.remarkable, c.slug, c.display_order, c.created_at, c.updated_at
-FROM categories c
-WHERE c.slug = $1
-LIMIT 1
+SELECT c.id, c.name, c.description, c.image_url, c.image_id, c.published, c.remarkable, c.slug, c.display_order, c.created_at, c.updated_at FROM categories c WHERE c.slug = $1 LIMIT 1
 `
 
 func (q *Queries) GetCategoryBySlug(ctx context.Context, slug string) (Category, error) {
@@ -182,17 +166,7 @@ func (q *Queries) GetCategoryBySlug(ctx context.Context, slug string) (Category,
 }
 
 const getCategoryProductsByID = `-- name: GetCategoryProductsByID :many
-SELECT
-    c.id, c.name, c.description, c.image_url, c.image_id, c.published, c.remarkable, c.slug, c.display_order, c.created_at, c.updated_at,
-    p.id, p.name as product_name, p.description as product_description
-FROM
-    categories c
-LEFT JOIN
-    products p ON c.id = p.id
-LEFT JOIN
-    product_images pi ON pi.product_id = p.id AND pi.is_primary = true
-WHERE
-    c.id = $1
+SELECT c.id, c.name, c.description, c.image_url, c.image_id, c.published, c.remarkable, c.slug, c.display_order, c.created_at, c.updated_at, p.id, p.name as product_name, p.description as product_description FROM categories c LEFT JOIN products p ON c.id = p.id LEFT JOIN product_images pi ON pi.product_id = p.id AND pi.is_primary = true WHERE c.id = $1
 `
 
 type GetCategoryProductsByIDRow struct {
@@ -246,8 +220,7 @@ type SeedCategoriesParams struct {
 }
 
 const updateCategory = `-- name: UpdateCategory :one
-UPDATE
-    categories
+UPDATE categories
 SET
     name = COALESCE($2, name), 
     slug = COALESCE($3, slug),
@@ -257,9 +230,7 @@ SET
     remarkable = COALESCE($7, remarkable),
     published = COALESCE($8, published),
     updated_at = now()
-WHERE
-    id = $1
-RETURNING id, name, description, image_url, image_id, published, remarkable, slug, display_order, created_at, updated_at
+WHERE id = $1 RETURNING id, name, description, image_url, image_id, published, remarkable, slug, display_order, created_at, updated_at
 `
 
 type UpdateCategoryParams struct {

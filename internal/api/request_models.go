@@ -172,8 +172,8 @@ type DiscountListQuery struct {
 type RegisterRequestBody struct {
 	Username  string                `json:"username" binding:"required,min=3,max=32,lowercase"`
 	Password  string                `json:"password" binding:"required,min=6,max=32"`
-	FirstName *string               `json:"firstName,omitempty" binding:"omitempty,min=3,max=32"`
-	LastName  *string               `json:"lastName,omitempty" binding:"omitempty,min=3,max=32"`
+	FirstName string                `json:"firstName,omitempty" binding:"omitempty,min=3,max=32"`
+	LastName  string                `json:"lastName,omitempty" binding:"omitempty,min=3,max=32"`
 	Phone     string                `json:"phone" binding:"required,min=10,max=15"`
 	Email     string                `json:"email" binding:"required,email,max=255,min=6"`
 	Address   *CreateAddressRequest `json:"address" binding:"omitempty,required"`
