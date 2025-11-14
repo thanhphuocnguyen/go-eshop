@@ -1,48 +1,20 @@
 -- name: CreateCategory :one
-INSERT INTO categories
-    (name, slug, description, remarkable, image_url, image_id)
-VALUES
-    ($1, $2, $3, $4, $5, $6)
-RETURNING *;
+INSERT INTO categories (name, slug, description, remarkable, image_url, image_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;
 
 -- name: GetCategoryByID :one
-SELECT c.*
-FROM categories c
-WHERE c.id = $1
-LIMIT 1;
+SELECT c.* FROM categories c WHERE c.id = $1 LIMIT 1;
 
 -- name: GetCategoryBySlug :one
-SELECT c.*
-FROM categories c
-WHERE c.slug = $1
-LIMIT 1;
+SELECT c.* FROM categories c WHERE c.slug = $1 LIMIT 1;
 
 -- name: GetCategoryProductsByID :many
-SELECT
-    sqlc.embed(c),
-    p.id, p.name as product_name, p.description as product_description
-FROM
-    categories c
-LEFT JOIN
-    products p ON c.id = p.id
-LEFT JOIN
-    product_images pi ON pi.product_id = p.id AND pi.is_primary = true
-WHERE
-    c.id = $1;
+SELECT sqlc.embed(c), p.id, p.name as product_name, p.description as product_description FROM categories c LEFT JOIN products p ON c.id = p.id LEFT JOIN product_images pi ON pi.product_id = p.id AND pi.is_primary = true WHERE c.id = $1;
 
 -- name: GetCategories :many
-SELECT * FROM categories
-WHERE
-    published = COALESCE(sqlc.narg('published'), true)
-    AND remarkable = COALESCE(sqlc.narg('remarkable'), remarkable)
-ORDER BY id
-LIMIT $1
-OFFSET $2;
-
+SELECT * FROM categories WHERE published = COALESCE(sqlc.narg('published'), true) AND remarkable = COALESCE(sqlc.narg('remarkable'), remarkable) ORDER BY id LIMIT $1 OFFSET $2;
 
 -- name: UpdateCategory :one
-UPDATE
-    categories
+UPDATE categories
 SET
     name = COALESCE(sqlc.narg('name'), name), 
     slug = COALESCE(sqlc.narg('slug'), slug),
@@ -52,10 +24,7 @@ SET
     remarkable = COALESCE(sqlc.narg('remarkable'), remarkable),
     published = COALESCE(sqlc.narg('published'), published),
     updated_at = now()
-WHERE
-    id = $1
-RETURNING *;
-
+WHERE id = $1 RETURNING *;
 
 -- name: DeleteCategory :exec
 DELETE FROM categories WHERE id = $1;
@@ -64,7 +33,4 @@ DELETE FROM categories WHERE id = $1;
 SELECT count(*) FROM categories;
 
 -- name: SeedCategories :copyfrom
-INSERT INTO categories
-    (name, slug, description, image_url, image_id)
-VALUES
-    ($1, $2, $3, $4, $5);
+INSERT INTO categories (name, slug, description, image_url, image_id) VALUES ($1, $2, $3, $4, $5);

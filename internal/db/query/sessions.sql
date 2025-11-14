@@ -1,25 +1,12 @@
 -- name: InsertSession :one
-INSERT INTO user_sessions (
-    id,
-    user_id,
-    refresh_token,
-    user_agent,
-    client_ip,
-    blocked,
-    expired_at
-) VALUES (
-    $1, $2, $3, $4, $5, $6, $7
-) RETURNING *;
+INSERT INTO user_sessions (id,user_id,refresh_token,user_agent,client_ip,blocked,expired_at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
 
 
 -- name: GetSession :one
-SELECT * FROM user_sessions
-WHERE id = $1 LIMIT 1;
+SELECT * FROM user_sessions WHERE id = $1 LIMIT 1;
 
 -- name: GetSessionByRefreshToken :one
-SELECT * FROM user_sessions
-WHERE refresh_token = $1 LIMIT 1;
-
+SELECT * FROM user_sessions WHERE refresh_token = $1 LIMIT 1;
 -- name: UpdateSession :one
 UPDATE user_sessions
 SET
@@ -27,5 +14,4 @@ SET
     client_ip = COALESCE(sqlc.narg('client_ip'), client_ip),
     blocked = COALESCE(sqlc.narg('blocked'), blocked),
     expired_at = COALESCE(sqlc.narg('expired_at'), expired_at)
-WHERE id = $1
-RETURNING *;
+WHERE id = $1 RETURNING *;

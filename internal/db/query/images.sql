@@ -17,20 +17,7 @@ SELECT * FROM product_images WHERE image_id = $1 LIMIT 1;
 SELECT * FROM product_images WHERE product_id = $1 AND is_primary = true LIMIT 1;
 
 -- name: GetProductImages :many
-SELECT 
-    pi.id,
-    pi.image_id,
-    pi.image_url,
-    pi.alt_text,
-    pi.caption,
-    pi.mime_type,
-    pi.file_size,
-    pi.width,
-    pi.height,
-    pi.product_id,
-    pi.display_order,
-    pi.is_primary
-FROM product_images pi WHERE product_id = ANY(sqlc.arg(product_ids)::UUID[])  ORDER BY product_id, display_order;
+SELECT  p_img.id, p_img.image_id, p_img.image_url, p_img.alt_text, p_img.caption, p_img.mime_type, p_img.file_size, p_img.width, p_img.height, p_img.product_id, p_img.display_order, p_img.is_primary FROM product_images p_img WHERE product_id = ANY(sqlc.arg(product_ids)::UUID[])  ORDER BY product_id, display_order;
 
 -- name: UpdateProductImage :exec
 UPDATE product_images 

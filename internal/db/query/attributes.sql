@@ -63,15 +63,9 @@ WHERE attribute_id = ANY(sqlc.arg(ids)::uuid[])
 ORDER BY atv.id;
 
 -- name: UpdateAttributeValue :one
-UPDATE 
-    attribute_values 
-SET 
-    code = COALESCE(sqlc.narg('code'), code),
-    is_active = COALESCE(sqlc.narg('is_active'), is_active),
-    "name" = COALESCE(sqlc.narg('name'), "name"),
-    display_order = COALESCE(sqlc.narg('display_order'), display_order)
-WHERE id = $1
-RETURNING *;
+UPDATE attribute_values 
+SET code = COALESCE(sqlc.narg('code'), code), is_active = COALESCE(sqlc.narg('is_active'), is_active), "name" = COALESCE(sqlc.narg('name'), "name"), display_order = COALESCE(sqlc.narg('display_order'), display_order)
+WHERE id = $1 RETURNING *;
 
 -- name: DeleteAttributeValue :exec
 DELETE FROM attribute_values WHERE id = $1;

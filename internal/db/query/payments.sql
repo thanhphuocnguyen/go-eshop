@@ -11,8 +11,7 @@ SELECT * FROM payments WHERE order_id = $1 LIMIT 1;
 SELECT * FROM payments WHERE payment_intent_id = $1 LIMIT 1;
 
 -- name: UpdatePayment :exec
-UPDATE
-    payments
+UPDATE payments
 SET
     amount = COALESCE(sqlc.narg(amount), amount),
     refund_id = COALESCE(sqlc.narg(refund_id), refund_id),

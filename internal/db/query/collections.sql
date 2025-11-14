@@ -1,22 +1,11 @@
 -- name: CreateCollection :one
-INSERT INTO collections 
-    (name, slug, description, remarkable, image_url, image_id)
-VALUES 
-    ($1, $2, $3, $4, $5, $6)
-RETURNING *;
+INSERT INTO collections (name, slug, description, remarkable, image_url, image_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;
 
 -- name: GetCollectionByID :one
-SELECT c.*
-FROM collections c 
-WHERE c.id = $1
-LIMIT 1;
+SELECT c.* FROM collections c  WHERE c.id = $1 LIMIT 1;
 
 -- name: GetCollectionBySlug :one
-SELECT c.*
-FROM collections c
-WHERE c.slug = $1
-LIMIT 1;
-
+SELECT c.* FROM collections c WHERE c.slug = $1 LIMIT 1;
 
 -- name: GetCollectionsByIDs :many
 SELECT 
@@ -33,13 +22,7 @@ GROUP BY c.id, p.id, pi.id, pi.image_url
 LIMIT $1 OFFSET $2;
 
 -- name: GetCollections :many
-SELECT 
-    c.*
-FROM collections AS c
-WHERE 
-    c.published = COALESCE(sqlc.narg('published'), c.published)
-    AND c.remarkable = COALESCE(sqlc.narg('remarkable'), c.remarkable)
-LIMIT $1 OFFSET $2;
+SELECT  c.* FROM collections AS c WHERE  c.published = COALESCE(sqlc.narg('published'), c.published) AND c.remarkable = COALESCE(sqlc.narg('remarkable'), c.remarkable) LIMIT $1 OFFSET $2;
 
 -- name: UpdateCollectionWith :one
 UPDATE collections
@@ -52,15 +35,13 @@ SET
     slug = COALESCE(sqlc.narg('slug'), slug),
     published = COALESCE(sqlc.narg('published'), published),
     updated_at = now()
-WHERE id = $1
-RETURNING *;
+WHERE id = $1 RETURNING *;
 
 -- name: DeleteCollection :exec
 DELETE FROM collections WHERE id = $1;
 
 -- name: CountCollections :one
-SELECT count(*)
-FROM collections;
+SELECT count(*) FROM collections;
 
 -- name: SeedCollections :copyfrom
 INSERT INTO collections (name, description, image_url) VALUES ($1, $2, $3);

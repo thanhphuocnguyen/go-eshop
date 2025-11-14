@@ -1,9 +1,5 @@
 -- name: CreateUser :one
-INSERT INTO
-    users (email, username, phone_number, first_name, hashed_password, role_id)
-VALUES
-    ($1, $2, $3, $4, $5, $6)
-RETURNING id, email, username, first_name, role_id, verified_email, verified_phone, created_at, updated_at;
+INSERT INTO users (email, username, phone_number, first_name, hashed_password, role_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, email, username, first_name, role_id, verified_email, verified_phone, created_at, updated_at;
 
 -- name: GetUserByUsername :one
 SELECT * FROM users WHERE username = $1 LIMIT 1;
@@ -35,60 +31,30 @@ WHERE
     id = sqlc.arg('id')
 RETURNING id, email, username, first_name, last_name, role_id, verified_email, verified_phone, created_at, updated_at;
 
-
 -- name: DeleteUser :exec
 DELETE FROM users WHERE id = $1;
 
 -- name: CountUsers :one
-SELECT
-    count(*)
-FROM
-    users;
+SELECT count(*) FROM users;
 
 -- name: SeedUsers :copyfrom
-INSERT INTO
-    users (email, username, phone_number, first_name, last_name, hashed_password, role_id)
-VALUES
-    ($1, $2, $3, $4, $5, $6, $7);
+INSERT INTO users (email, username, phone_number, first_name, last_name, hashed_password, role_id) VALUES ($1, $2, $3, $4, $5, $6, $7);
 
 -- User Address Queries
 -- name: CreateAddress :one
-INSERT INTO 
-    user_addresses (user_id, phone_number, street, ward, district, city, "default")
-VALUES
-    ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
+INSERT INTO user_addresses (user_id, phone_number, street, ward, district, city, "default") VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
 
 -- name: GetAddress :one
-SELECT
-    *
-FROM
-    user_addresses
-WHERE
-    id = $1 AND user_id = $2
-LIMIT 1;
+SELECT * FROM user_addresses WHERE id = $1 AND user_id = $2 LIMIT 1;
 
 -- name: DeleteAddress :exec
 DELETE FROM user_addresses WHERE id = $1 AND user_id = $2;
 
 -- name: GetDefaultAddress :one
-SELECT
-    *
-FROM
-    user_addresses
-WHERE
-    user_id = $1 AND "default" = TRUE
-LIMIT 1;
-
+SELECT * FROM user_addresses WHERE user_id = $1 AND "default" = TRUE LIMIT 1;
 
 -- name: GetAddresses :many
-SELECT
-    *
-FROM
-    user_addresses
-WHERE
-    user_id = $1
-ORDER BY
-    "default" DESC, id ASC;
+SELECT * FROM user_addresses WHERE user_id = $1 ORDER BY "default" DESC, id ASC;
 
 -- name: UpdateAddress :one
 UPDATE
@@ -106,40 +72,16 @@ RETURNING *;
 
 
 -- name: SetPrimaryAddress :exec
-UPDATE
-    user_addresses
-SET
-    "default" = $1
-WHERE
-    id = $2 AND user_id = $3;
+UPDATE user_addresses SET "default" = $1 WHERE id = $2 AND user_id = $3;
 
 -- name: ResetPrimaryAddress :exec
-UPDATE
-    user_addresses
-SET
-    "default" = FALSE
-WHERE
-    user_id = $1 AND "default" = TRUE;
+UPDATE user_addresses SET "default" = FALSE WHERE user_id = $1 AND "default" = TRUE;
 
 -- name: CountAddresses :one
-SELECT
-    COUNT(*)
-FROM
-    user_addresses;
+SELECT COUNT(*) FROM user_addresses;
 
 -- name: SeedAddresses :copyfrom
-INSERT INTO
-    user_addresses (
-        user_id,
-        phone_number,
-        street,
-        ward,
-        district,
-        city,
-        "default"
-    )
-VALUES
-    ($1,$2,$3,$4,$5,$6,$7);
+INSERT INTO user_addresses (user_id, phone_number, street, ward, district, city, "default") VALUES ($1,$2,$3,$4,$5,$6,$7);
 
 -- Verification Token Queries
 -- name: CreateVerifyEmail :one
@@ -152,10 +94,7 @@ SELECT * FROM email_verifications WHERE verify_code = $1 AND expired_at > now() 
 SELECT * FROM email_verifications WHERE id = $1;
 
 -- name: UpdateVerifyEmail :one
-UPDATE email_verifications
-SET is_used = TRUE
-WHERE id = $1 AND verify_code = $2 AND expired_at > now()
-RETURNING *;
+UPDATE email_verifications SET is_used = TRUE WHERE id = $1 AND verify_code = $2 AND expired_at > now() RETURNING *;
 
 -- Roles Queries
 -- name: GetRoleByCode :one

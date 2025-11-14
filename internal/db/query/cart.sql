@@ -2,12 +2,8 @@
 INSERT INTO carts (user_id, session_id) VALUES ($1, $2) RETURNING *;
 
 -- name: GetCart :one
-SELECT *
-FROM carts
-WHERE (
-    (carts.user_id IS NOT NULL AND carts.user_id = $1) OR 
-    (carts.session_id IS NOT NULL AND carts.session_id = $2)
-) AND carts.order_id IS NULL
+SELECT * FROM carts
+WHERE ((carts.user_id IS NOT NULL AND carts.user_id = $1) OR (carts.session_id IS NOT NULL AND carts.session_id = $2)) AND carts.order_id IS NULLORDER BY carts.updated_at DESC
 ORDER BY carts.updated_at DESC
 LIMIT 1;
 

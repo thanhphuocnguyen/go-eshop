@@ -51,18 +51,15 @@ JOIN users AS u ON u.id = pr.user_id
 WHERE pr.order_item_id = ANY(sqlc.arg(ids)::uuid[]) AND pr.is_visible = TRUE
 ORDER BY pr.created_at DESC;
 
-
 -- name: CountProductRatings :one
 SELECT COUNT(*) FROM product_ratings WHERE product_id = COALESCE(sqlc.narg('product_id'), product_id) AND is_visible = TRUE;
-
 
 -- name: InsertRatingVotes :one
 INSERT INTO rating_votes (rating_id, user_id, is_helpful) VALUES ($1, $2, $3) RETURNING *;
 
 -- name: UpdateRatingVote :one
-UPDATE rating_votes SET 
-    is_helpful = COALESCE(sqlc.narg(is_helpful), is_helpful)
-WHERE id = $1 RETURNING *;
+UPDATE rating_votes SET is_helpful = COALESCE(sqlc.narg(is_helpful), is_helpful) WHERE id = $1 RETURNING *;
+
 -- name: DeleteRatingVotes :exec
 DELETE FROM rating_votes WHERE id = $1;
 
@@ -87,9 +84,7 @@ SELECT COUNT(*) FROM rating_votes WHERE user_id = $1 AND is_helpful = TRUE;
 INSERT INTO rating_replies (rating_id, reply_by, content) VALUES ($1, $2, $3) RETURNING *;
 
 -- name: UpdateRatingReplies :one
-UPDATE rating_replies SET 
-    content = COALESCE(sqlc.narg(reply_content), content)
-WHERE id = $1 RETURNING *;
+UPDATE rating_replies SET content = COALESCE(sqlc.narg(reply_content), content) WHERE id = $1 RETURNING *;
 
 -- name: DeleteRatingReplies :exec
 DELETE FROM rating_replies WHERE id = $1;
@@ -98,17 +93,7 @@ DELETE FROM rating_replies WHERE id = $1;
 SELECT * FROM rating_replies WHERE id = $1;
 
 -- name: GetRatingRepliesByRatingID :many
-SELECT 
-    sqlc.embed(rr), 
-    u.id AS reply_by, u.first_name, u.last_name, u.email
-FROM rating_replies AS rr
-JOIN users AS u ON u.id = rr.reply_by
-WHERE rr.rating_id = $1;
+SELECT sqlc.embed(rr), u.id AS reply_by, u.first_name, u.last_name, u.email FROM rating_replies AS rr JOIN users AS u ON u.id = rr.reply_by WHERE rr.rating_id = $1;
 
 -- name: GetRatingRepliesByUserID :many
-SELECT 
-    sqlc.embed(rr), 
-    u.id AS reply_by, u.first_name, u.last_name, u.email
-FROM rating_replies AS rr
-JOIN users AS u ON u.id = rr.reply_by
-WHERE rr.reply_by = $1;
+SELECT sqlc.embed(rr), u.id AS reply_by, u.first_name, u.last_name, u.email FROM rating_replies AS rr JOIN users AS u ON u.id = rr.reply_by WHERE rr.reply_by = $1;
