@@ -24,26 +24,26 @@ import (
 // @Param files formData file false "Images"
 // @Security BearerAuth
 // @Success 200 {object} ApiResponse[ProductRatingModel]
-// @Failure 400 {object} ApiResponse[bool]
-// @Failure 403 {object} ApiResponse[bool]
-// @Failure 500 {object} ApiResponse[bool]
+// @Failure 400 {object} ErrorResp
+// @Failure 403 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
 // @Router /ratings [post]
 func (s *Server) postRatingHandler(c *gin.Context) {
 	auth, _ := c.MustGet(AuthPayLoad).(*auth.Payload)
 
 	var req PostRatingFormData
 	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(400, createErrorResponse[gin.H](InvalidBodyCode, "invalid request", err))
+		c.JSON(400, createErr(InvalidBodyCode, "invalid request", err))
 		return
 	}
 
 	orderItem, err := s.repo.GetOrderItemByID(c, uuid.MustParse(req.OrderItemID))
 	if err != nil {
-		c.JSON(400, createErrorResponse[gin.H](InvalidBodyCode, "invalid request", err))
+		c.JSON(400, createErr(InvalidBodyCode, "invalid request", err))
 		return
 	}
 	if orderItem.CustomerID != auth.UserID {
-		c.JSON(403, createErrorResponse[gin.H](InvalidBodyCode, "forbidden", nil))
+		c.JSON(403, createErr(InvalidBodyCode, "forbidden", nil))
 		return
 	}
 
@@ -58,7 +58,7 @@ func (s *Server) postRatingHandler(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(500, createErrorResponse[bool](InternalServerErrorCode, "internal server error", err))
+		c.JSON(500, createErr(InternalServerErrorCode, "internal server error", err))
 		return
 	}
 
@@ -72,7 +72,7 @@ func (s *Server) postRatingHandler(c *gin.Context) {
 		// Images:           images,
 	}
 
-	c.JSON(200, createSuccessResponse(c, resp, "success", nil, nil))
+	c.JSON(200, createDataResp(c, resp, "success", nil, nil))
 }
 
 // @Summary Post a helpful rating
@@ -83,31 +83,31 @@ func (s *Server) postRatingHandler(c *gin.Context) {
 // @Param ratingId body string true "Rating ID"
 // @Param helpful body bool true "Helpful"
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[bool]
-// @Failure 400 {object} ApiResponse[bool]
-// @Failure 403 {object} ApiResponse[bool]
-// @Failure 500 {object} ApiResponse[bool]
+// @Success 200 {object} ApiResponse[string]
+// @Failure 400 {object} ErrorResp
+// @Failure 403 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
 // @Router /ratings/{ratingId}/helpful [post]
 func (s *Server) postRatingHelpfulHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(400, createErrorResponse[gin.H](InvalidBodyCode, "invalid request", err))
+		c.JSON(400, createErr(InvalidBodyCode, "invalid request", err))
 		return
 	}
 	auth, _ := c.MustGet(AuthPayLoad).(*auth.Payload)
 	var req PostHelpfulRatingRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, createErrorResponse[bool](InvalidBodyCode, "invalid request", err))
+		c.JSON(400, createErr(InvalidBodyCode, "invalid request", err))
 		return
 	}
 
 	rating, err := s.repo.GetProductRating(c, uuid.MustParse(param.ID))
 	if err != nil {
-		c.JSON(400, createErrorResponse[bool](InvalidBodyCode, "invalid request", err))
+		c.JSON(400, createErr(InvalidBodyCode, "invalid request", err))
 		return
 	}
 	if rating.UserID == auth.UserID {
-		c.JSON(403, createErrorResponse[bool](InvalidBodyCode, "forbidden", nil))
+		c.JSON(403, createErr(InvalidBodyCode, "forbidden", nil))
 		return
 	}
 
@@ -118,10 +118,10 @@ func (s *Server) postRatingHelpfulHandler(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(500, createErrorResponse[bool](InternalServerErrorCode, "internal server error", err))
+		c.JSON(500, createErr(InternalServerErrorCode, "internal server error", err))
 	}
 
-	c.JSON(200, createSuccessResponse(c, id, "success", nil, nil))
+	c.JSON(200, createDataResp(c, id, "success", nil, nil))
 }
 
 // @Summary Post a reply to a rating
@@ -132,27 +132,27 @@ func (s *Server) postRatingHelpfulHandler(c *gin.Context) {
 // @Param ratingId path string true "Rating ID"
 // @Param content body string true "Reply Content"
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[bool]
-// @Failure 400 {object} ApiResponse[bool]
-// @Failure 403 {object} ApiResponse[bool]
-// @Failure 500 {object} ApiResponse[bool]
+// @Success 200 {object} ApiResponse[string]
+// @Failure 400 {object} ErrorResp
+// @Failure 403 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
 // @Router /ratings/{ratingId}/reply [post]
 func (s *Server) postReplyRatingHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(400, createErrorResponse[gin.H](InvalidBodyCode, "invalid request", err))
+		c.JSON(400, createErr(InvalidBodyCode, "invalid request", err))
 		return
 	}
 	auth, _ := c.MustGet(AuthPayLoad).(*auth.Payload)
 
 	var req PostReplyRatingRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, createErrorResponse[bool](InvalidBodyCode, "invalid request", err))
+		c.JSON(400, createErr(InvalidBodyCode, "invalid request", err))
 		return
 	}
 	rating, err := s.repo.GetProductRating(c, uuid.MustParse(param.ID))
 	if err != nil {
-		c.JSON(400, createErrorResponse[bool](InvalidBodyCode, "invalid request", err))
+		c.JSON(400, createErr(InvalidBodyCode, "invalid request", err))
 		return
 	}
 
@@ -162,11 +162,11 @@ func (s *Server) postReplyRatingHandler(c *gin.Context) {
 		Content:  req.Content,
 	})
 	if err != nil {
-		c.JSON(500, createErrorResponse[bool](InternalServerErrorCode, "internal server error", err))
+		c.JSON(500, createErr(InternalServerErrorCode, "internal server error", err))
 		return
 	}
 
-	c.JSON(200, createSuccessResponse(c, reply.ID, "success", nil, nil))
+	c.JSON(200, createDataResp(c, reply.ID, "success", nil, nil))
 }
 
 // @Summary Get product ratings
@@ -178,14 +178,14 @@ func (s *Server) postReplyRatingHandler(c *gin.Context) {
 // @Param page query int false "Page number" default(1)
 // @Param pageSize query int false "Page size" default(10)
 // @Success 200 {object} ApiResponse[[]ProductRatingModel]
-// @Failure 400 {object} ApiResponse[bool]
-// @Failure 404 {object} ApiResponse[bool]
-// @Failure 500 {object} ApiResponse[bool]
+// @Failure 400 {object} ErrorResp
+// @Failure 404 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
 // @Router /admin/ratings [get]
 func (s *Server) getRatingsHandler(c *gin.Context) {
 	var queries RatingsQueryParams
 	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(400, createErrorResponse[bool](InvalidBodyCode, "invalid request", err))
+		c.JSON(400, createErr(InvalidBodyCode, "invalid request", err))
 		return
 	}
 	sqlParams := repository.GetProductRatingsParams{
@@ -207,7 +207,7 @@ func (s *Server) getRatingsHandler(c *gin.Context) {
 	}
 	ratings, err := s.repo.GetProductRatings(c, sqlParams)
 	if err != nil {
-		c.JSON(400, createErrorResponse[bool](InvalidBodyCode, "invalid request", err))
+		c.JSON(400, createErr(InvalidBodyCode, "invalid request", err))
 		return
 	}
 
@@ -216,7 +216,7 @@ func (s *Server) getRatingsHandler(c *gin.Context) {
 		Valid: false,
 	})
 	if err != nil {
-		c.JSON(400, createErrorResponse[bool](InvalidBodyCode, "invalid request", err))
+		c.JSON(400, createErr(InvalidBodyCode, "invalid request", err))
 		return
 	}
 
@@ -230,10 +230,9 @@ func (s *Server) getRatingsHandler(c *gin.Context) {
 				break
 			}
 		}
-		if prIdx != -1 && rating.ImageID.Valid {
-			id, _ := uuid.FromBytes(rating.ImageID.Bytes[:])
+		if prIdx != -1 && rating.ImageID != nil {
 			productRatings[prIdx].Images = append(productRatings[prIdx].Images, RatingImageModel{
-				ID:  id.String(),
+				ID:  *rating.ImageID,
 				URL: *rating.ImageUrl,
 			})
 			continue
@@ -252,16 +251,15 @@ func (s *Server) getRatingsHandler(c *gin.Context) {
 			VerifiedPurchase: rating.VerifiedPurchase,
 			Count:            ratingsCount,
 		}
-		if rating.ImageID.Valid {
-			id, _ := uuid.FromBytes(rating.ImageID.Bytes[:])
+		if rating.ImageID != nil {
 			model.Images = append(model.Images, RatingImageModel{
-				ID:  id.String(),
+				ID:  *rating.ImageID,
 				URL: *rating.ImageUrl,
 			})
 		}
 		productRatings = append(productRatings, model)
 	}
-	c.JSON(200, createSuccessResponse(
+	c.JSON(200, createDataResp(
 		c,
 		productRatings,
 		"success",
@@ -285,19 +283,19 @@ func (s *Server) getRatingsHandler(c *gin.Context) {
 // @Param page query int false "Page number" default(1)
 // @Param pageSize query int false "Page size" default(10)
 // @Success 200 {object} ApiResponse[[]ProductRatingModel]
-// @Failure 400 {object} ApiResponse[bool]
-// @Failure 404 {object} ApiResponse[bool]
-// @Failure 500 {object} ApiResponse[bool]
+// @Failure 400 {object} ErrorResp
+// @Failure 404 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
 // @Router /ratings/products/{productId} [get]
 func (s *Server) getRatingsByProductHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(400, createErrorResponse[bool](InvalidBodyCode, "invalid request", err))
+		c.JSON(400, createErr(InvalidBodyCode, "invalid request", err))
 		return
 	}
 	var queries PaginationQueryParams
 	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(400, createErrorResponse[bool](InvalidBodyCode, "invalid request", err))
+		c.JSON(400, createErr(InvalidBodyCode, "invalid request", err))
 		return
 	}
 
@@ -307,13 +305,13 @@ func (s *Server) getRatingsByProductHandler(c *gin.Context) {
 		Offset:    (queries.Page - 1) * queries.PageSize,
 	})
 	if err != nil {
-		c.JSON(400, createErrorResponse[bool](InvalidBodyCode, "invalid request", err))
+		c.JSON(400, createErr(InvalidBodyCode, "invalid request", err))
 		return
 	}
 
 	ratingsCount, err := s.repo.CountProductRatings(c, utils.GetPgTypeUUID(uuid.MustParse(param.ID)))
 	if err != nil {
-		c.JSON(400, createErrorResponse[bool](InvalidBodyCode, "invalid request", err))
+		c.JSON(400, createErr(InvalidBodyCode, "invalid request", err))
 		return
 	}
 	productRatings := make([]ProductRatingModel, 0)
@@ -326,10 +324,9 @@ func (s *Server) getRatingsByProductHandler(c *gin.Context) {
 				break
 			}
 		}
-		if prIdx != -1 && rating.ImageID.Valid {
-			id, _ := uuid.FromBytes(rating.ImageID.Bytes[:])
+		if prIdx != -1 && rating.ImageID != nil {
 			productRatings[prIdx].Images = append(productRatings[prIdx].Images, RatingImageModel{
-				ID:  id.String(),
+				ID:  *rating.ImageID,
 				URL: *rating.ImageUrl,
 			})
 			continue
@@ -346,17 +343,16 @@ func (s *Server) getRatingsByProductHandler(c *gin.Context) {
 			ReviewContent:    *rating.ReviewContent,
 			VerifiedPurchase: rating.VerifiedPurchase,
 		}
-		if rating.ImageID.Valid {
-			id, _ := uuid.FromBytes(rating.ImageID.Bytes[:])
+		if rating.ImageID != nil {
 			model.Images = append(model.Images, RatingImageModel{
-				ID:  id.String(),
+				ID:  *rating.ImageID,
 				URL: *rating.ImageUrl,
 			})
 		}
 		productRatings = append(productRatings, model)
 	}
 
-	c.JSON(200, createSuccessResponse(
+	c.JSON(200, createDataResp(
 		c,
 		productRatings,
 		"success",
@@ -379,10 +375,10 @@ func (s *Server) getRatingsByProductHandler(c *gin.Context) {
 // @Param orderId path string true "Order ID"
 // @Security BearerAuth
 // @Success 200 {object} ApiResponse[[]ProductRatingModel]
-// @Failure 400 {object} ApiResponse[bool]
-// @Failure 403 {object} ApiResponse[bool]
-// @Failure 404 {object} ApiResponse[bool]
-// @Failure 500 {object} ApiResponse[bool]
+// @Failure 400 {object} ErrorResp
+// @Failure 403 {object} ErrorResp
+// @Failure 404 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
 // @Router /ratings/orders/{orderId} [get]
 func (s *Server) getOrderRatingsHandler(c *gin.Context) {
 	auth, _ := c.MustGet(AuthPayLoad).(*auth.Payload)
@@ -391,21 +387,21 @@ func (s *Server) getOrderRatingsHandler(c *gin.Context) {
 		OrderID string `uri:"orderId" binding:"required,uuid"`
 	}
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(400, createErrorResponse[bool](InvalidBodyCode, "invalid request", err))
+		c.JSON(400, createErr(InvalidBodyCode, "invalid request", err))
 		return
 	}
 
 	orderItems, err := s.repo.GetOrderItemsByOrderID(c, uuid.MustParse(param.OrderID))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "internal server error", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "internal server error", err))
 		return
 	}
 	if len(orderItems) == 0 {
-		c.JSON(http.StatusNotFound, createErrorResponse[bool](NotFoundCode, "order items not found", nil))
+		c.JSON(http.StatusNotFound, createErr(NotFoundCode, "order items not found", nil))
 		return
 	}
 	if orderItems[0].CustomerID != auth.UserID {
-		c.JSON(http.StatusForbidden, createErrorResponse[bool](PermissionDeniedCode, "forbidden", nil))
+		c.JSON(http.StatusForbidden, createErr(PermissionDeniedCode, "forbidden", nil))
 		return
 	}
 	orderItemIds := make([]uuid.UUID, len(orderItems))
@@ -414,11 +410,11 @@ func (s *Server) getOrderRatingsHandler(c *gin.Context) {
 	}
 	ratings, err := s.repo.GetProductRatingsByOrderItemIDs(c, orderItemIds)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "internal server error", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "internal server error", err))
 		return
 	}
 
-	c.JSON(200, createSuccessResponse(c, ratings, "success", nil, nil))
+	c.JSON(200, createDataResp(c, ratings, "success", nil, nil))
 }
 
 // @Summary Delete a rating
@@ -428,10 +424,10 @@ func (s *Server) getOrderRatingsHandler(c *gin.Context) {
 // @Produce json
 // @Param id path string true "Rating ID"
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[bool]
-// @Failure 400 {object} ApiResponse[bool]
-// @Failure 404 {object} ApiResponse[bool]
-// @Failure 500 {object} ApiResponse[bool]
+// @Success 204 {object}
+// @Failure 400 {object} ErrorResp
+// @Failure 404 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
 // @Router /admin/ratings/{id} [delete]
 func (sv *Server) deleteRatingHandler(c *gin.Context) {
 	// Parse the rating ID from the URL
@@ -440,14 +436,14 @@ func (sv *Server) deleteRatingHandler(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidBodyCode, "Invalid rating ID", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "Invalid rating ID", err))
 		return
 	}
 
 	// Convert the ID to UUID
 	ratingID, err := uuid.Parse(param.ID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidBodyCode, "Invalid rating ID format", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "Invalid rating ID format", err))
 		return
 	}
 
@@ -455,21 +451,21 @@ func (sv *Server) deleteRatingHandler(c *gin.Context) {
 	_, err = sv.repo.GetProductRating(c, ratingID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[bool](NotFoundCode, "Rating not found", err))
+			c.JSON(http.StatusNotFound, createErr(NotFoundCode, "Rating not found", err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 
 	// Delete the rating
 	err = sv.repo.DeleteProductRating(c, ratingID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "Failed to delete rating", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "Failed to delete rating", err))
 		return
 	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(c, true, "Rating deleted successfully", nil, nil))
+	c.Status(http.StatusNoContent)
 }
 
 // @Summary Approve a rating
@@ -479,10 +475,10 @@ func (sv *Server) deleteRatingHandler(c *gin.Context) {
 // @Produce json
 // @Param id path string true "Rating ID"
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[bool]
-// @Failure 400 {object} ApiResponse[bool]
-// @Failure 404 {object} ApiResponse[bool]
-// @Failure 500 {object} ApiResponse[bool]
+// @Success 204 {object}
+// @Failure 400 {object} ErrorResp
+// @Failure 404 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
 // @Router /admin/ratings/{id}/approve [post]
 func (sv *Server) approveRatingHandler(c *gin.Context) {
 	// Parse the rating ID from the URL
@@ -491,14 +487,14 @@ func (sv *Server) approveRatingHandler(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidBodyCode, "Invalid rating ID", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "Invalid rating ID", err))
 		return
 	}
 
 	// Convert the ID to UUID
 	ratingID, err := uuid.Parse(param.ID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidBodyCode, "Invalid rating ID format", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "Invalid rating ID format", err))
 		return
 	}
 
@@ -506,10 +502,10 @@ func (sv *Server) approveRatingHandler(c *gin.Context) {
 	rating, err := sv.repo.GetProductRating(c, ratingID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[bool](NotFoundCode, "Rating not found", err))
+			c.JSON(http.StatusNotFound, createErr(NotFoundCode, "Rating not found", err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -523,11 +519,11 @@ func (sv *Server) approveRatingHandler(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "Failed to approve rating", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "Failed to approve rating", err))
 		return
 	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(c, true, "Rating approved successfully", nil, nil))
+	c.Status(http.StatusNoContent)
 }
 
 // @Summary Ban a user from rating
@@ -537,10 +533,10 @@ func (sv *Server) approveRatingHandler(c *gin.Context) {
 // @Produce json
 // @Param id path string true "Rating ID"
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[bool]
-// @Failure 400 {object} ApiResponse[bool]
-// @Failure 404 {object} ApiResponse[bool]
-// @Failure 500 {object} ApiResponse[bool]
+// @Success 204 {object}
+// @Failure 400 {object} ErrorResp
+// @Failure 404 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
 // @Router /admin/ratings/{id}/ban [post]
 func (sv *Server) banUserRatingHandler(c *gin.Context) {
 	// Parse the rating ID from the URL
@@ -549,14 +545,14 @@ func (sv *Server) banUserRatingHandler(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidBodyCode, "Invalid rating ID", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "Invalid rating ID", err))
 		return
 	}
 
 	// Convert the ID to UUID
 	ratingID, err := uuid.Parse(param.ID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidBodyCode, "Invalid rating ID format", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "Invalid rating ID format", err))
 		return
 	}
 
@@ -564,10 +560,10 @@ func (sv *Server) banUserRatingHandler(c *gin.Context) {
 	rating, err := sv.repo.GetProductRating(c, ratingID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[bool](NotFoundCode, "Rating not found", err))
+			c.JSON(http.StatusNotFound, createErr(NotFoundCode, "Rating not found", err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -581,9 +577,9 @@ func (sv *Server) banUserRatingHandler(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "Failed to ban user rating", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "Failed to ban user rating", err))
 		return
 	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(c, true, "User rating banned successfully", nil, nil))
+	c.Status(http.StatusNoContent)
 }

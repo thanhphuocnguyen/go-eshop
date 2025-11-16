@@ -84,7 +84,7 @@ SELECT pr.id, pr.product_id, pr.user_id, pr.order_item_id, pr.rating, pr.review_
     WHERE r.product_id = COALESCE($3, r.product_id) AND r.is_visible = COALESCE($4, TRUE) AND r.is_approved = COALESCE($5, r.is_approved)
     ORDER BY r.created_at DESC
     LIMIT $1 OFFSET $2) as pr
-LEFT JOIN product_images AS pi ON pi.product_id = pr.product_id AND pi.is_primary = true
+LEFT JOIN product_images AS pi ON pi.product_id = pr.product_id
 `
 
 type GetProductRatingsParams struct {
@@ -112,7 +112,7 @@ type GetProductRatingsRow struct {
 	LastName         string         `json:"lastName"`
 	Email            string         `json:"email"`
 	ProductName      string         `json:"productName"`
-	ImageID          pgtype.UUID    `json:"imageId"`
+	ImageID          *int64         `json:"imageId"`
 	ImageUrl         *string        `json:"imageUrl"`
 }
 

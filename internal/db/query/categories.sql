@@ -8,7 +8,7 @@ SELECT c.* FROM categories c WHERE c.id = $1 LIMIT 1;
 SELECT c.* FROM categories c WHERE c.slug = $1 LIMIT 1;
 
 -- name: GetCategoryProductsByID :many
-SELECT sqlc.embed(c), p.id, p.name as product_name, p.description as product_description FROM categories c LEFT JOIN products p ON c.id = p.id LEFT JOIN product_images pi ON pi.product_id = p.id AND pi.is_primary = true WHERE c.id = $1;
+SELECT sqlc.embed(c), p.id, p.name as product_name, p.description as product_description FROM categories c LEFT JOIN products p ON c.id = p.id LEFT JOIN product_images pi ON pi.product_id = p.id WHERE c.id = $1;
 
 -- name: GetCategories :many
 SELECT * FROM categories WHERE published = COALESCE(sqlc.narg('published'), true) AND remarkable = COALESCE(sqlc.narg('remarkable'), remarkable) ORDER BY id LIMIT $1 OFFSET $2;

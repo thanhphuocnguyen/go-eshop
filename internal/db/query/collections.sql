@@ -16,7 +16,7 @@ SELECT
     pi.id as image_id, pi.image_url
 FROM collections AS c
 LEFT JOIN products AS p ON c.id = p.collection_id
-LEFT JOIN product_images AS pi ON p.id = pi.product_id AND pi.is_primary = true
+LEFT JOIN product_images AS pi ON p.id = pi.product_id
 WHERE c.id = ANY(sqlc.narg('ids')::UUID[])
 GROUP BY c.id, p.id, pi.id, pi.image_url
 LIMIT $1 OFFSET $2;

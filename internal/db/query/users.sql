@@ -42,7 +42,7 @@ INSERT INTO users (email, username, phone_number, first_name, last_name, hashed_
 
 -- User Address Queries
 -- name: CreateAddress :one
-INSERT INTO user_addresses (user_id, phone_number, street, ward, district, city, "default") VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
+INSERT INTO user_addresses (user_id, phone_number, street, ward, district, city, "is_default") VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
 
 -- name: GetAddress :one
 SELECT * FROM user_addresses WHERE id = $1 AND user_id = $2 LIMIT 1;
@@ -51,10 +51,10 @@ SELECT * FROM user_addresses WHERE id = $1 AND user_id = $2 LIMIT 1;
 DELETE FROM user_addresses WHERE id = $1 AND user_id = $2;
 
 -- name: GetDefaultAddress :one
-SELECT * FROM user_addresses WHERE user_id = $1 AND "default" = TRUE LIMIT 1;
+SELECT * FROM user_addresses WHERE user_id = $1 AND "is_default" = TRUE LIMIT 1;
 
 -- name: GetAddresses :many
-SELECT * FROM user_addresses WHERE user_id = $1 ORDER BY "default" DESC, id ASC;
+SELECT * FROM user_addresses WHERE user_id = $1 ORDER BY "is_default" DESC, id ASC;
 
 -- name: UpdateAddress :one
 UPDATE
@@ -65,23 +65,23 @@ SET
     ward = coalesce(sqlc.narg('ward'), ward),
     district = coalesce(sqlc.narg('district'), district),
     city = coalesce(sqlc.narg('city'), city),
-    "default" = coalesce(sqlc.narg('default'), "default")
+    "is_default" = coalesce(sqlc.narg('is_default'), "is_default")
 WHERE
     id = sqlc.arg('id') AND user_id = sqlc.arg('user_id')
 RETURNING *;
 
 
 -- name: SetPrimaryAddress :exec
-UPDATE user_addresses SET "default" = $1 WHERE id = $2 AND user_id = $3;
+UPDATE user_addresses SET "is_default" = $1 WHERE id = $2 AND user_id = $3;
 
 -- name: ResetPrimaryAddress :exec
-UPDATE user_addresses SET "default" = FALSE WHERE user_id = $1 AND "default" = TRUE;
+UPDATE user_addresses SET "is_default" = FALSE WHERE user_id = $1 AND "is_default" = TRUE;
 
 -- name: CountAddresses :one
 SELECT COUNT(*) FROM user_addresses;
 
 -- name: SeedAddresses :copyfrom
-INSERT INTO user_addresses (user_id, phone_number, street, ward, district, city, "default") VALUES ($1,$2,$3,$4,$5,$6,$7);
+INSERT INTO user_addresses (user_id, phone_number, street, ward, district, city, "is_default") VALUES ($1,$2,$3,$4,$5,$6,$7);
 
 -- Verification Token Queries
 -- name: CreateVerifyEmail :one

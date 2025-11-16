@@ -121,7 +121,6 @@ CREATE TABLE IF NOT EXISTS payment_methods (
     is_active BOOLEAN NOT NULL DEFAULT true,
     gateway_supported VARCHAR(100), -- e.g., 'stripe', 'paypal', null for COD
     icon_url TEXT,
-    display_order SMALLINT NOT NULL DEFAULT 0,
     requires_account BOOLEAN NOT NULL DEFAULT false, -- Whether this method requires user account setup
     min_amount DECIMAL(10, 2), -- Minimum transaction amount for this method
     max_amount DECIMAL(10, 2), -- Maximum transaction amount for this method
@@ -136,17 +135,17 @@ CREATE TABLE IF NOT EXISTS payment_methods (
 
 -- Insert seed data for payment_methods
 INSERT INTO payment_methods (
-    code, name, description, gateway_supported, display_order, requires_account, 
+    code, name, description, gateway_supported, requires_account, 
     min_amount, max_amount, processing_fee_percentage, processing_fee_fixed,
     currency_supported, countries_supported
 ) VALUES
-    ('credit_card', 'Credit Card', 'Credit card payment method', 'stripe', 1, false, 1.00, 10000.00, 0.0290, 0.30, ARRAY['USD', 'EUR', 'GBP'], ARRAY['US', 'CA', 'GB', 'EU']),
-    ('debit_card', 'Debit Card', 'Debit card payment method', 'stripe', 2, false, 1.00, 5000.00, 0.0290, 0.30, ARRAY['USD', 'EUR', 'GBP'], ARRAY['US', 'CA', 'GB', 'EU']),
-    ('paypal', 'PayPal', 'PayPal payment method', 'paypal', 3, true, 1.00, 10000.00, 0.0349, 0.49, ARRAY['USD', 'EUR', 'GBP', 'CAD'], ARRAY['US', 'CA', 'GB', 'EU', 'AU']),
-    ('stripe', 'Stripe', 'Stripe payment method', 'stripe', 4, false, 0.50, 999999.99, 0.0290, 0.30, ARRAY['USD', 'EUR', 'GBP'], ARRAY['US', 'CA', 'GB', 'EU']),
-    ('apple_pay', 'Apple Pay', 'Apple Pay payment method', 'stripe', 5, false, 1.00, 10000.00, 0.0290, 0.30, ARRAY['USD', 'EUR', 'GBP'], ARRAY['US', 'CA', 'GB', 'EU']),
-    ('bank_transfer', 'Bank Transfer', 'Bank transfer payment method', null, 6, false, 10.00, 50000.00, 0.0000, 0.00, ARRAY['USD', 'EUR'], ARRAY['US', 'EU']),
-    ('cod', 'Cash on Delivery', 'Cash on delivery payment method', null, 7, false, 5.00, 500.00, 0.0000, 2.00, ARRAY['USD'], ARRAY['US'])
+    ('credit_card', 'Credit Card', 'Credit card payment method', 'stripe', false, 1.00, 10000.00, 0.0290, 0.30, ARRAY['USD', 'EUR', 'GBP'], ARRAY['US', 'CA', 'GB', 'EU']),
+    ('debit_card', 'Debit Card', 'Debit card payment method', 'stripe', false, 1.00, 5000.00, 0.0290, 0.30, ARRAY['USD', 'EUR', 'GBP'], ARRAY['US', 'CA', 'GB', 'EU']),
+    ('paypal', 'PayPal', 'PayPal payment method', 'paypal', false, 1.00, 10000.00, 0.0349, 0.49, ARRAY['USD', 'EUR', 'GBP', 'CAD'], ARRAY['US', 'CA', 'GB', 'EU', 'AU']),
+    ('stripe', 'Stripe', 'Stripe payment method', 'stripe', false, 0.50, 999999.99, 0.0290, 0.30, ARRAY['USD', 'EUR', 'GBP'], ARRAY['US', 'CA', 'GB', 'EU']),
+    ('apple_pay', 'Apple Pay', 'Apple Pay payment method', 'stripe', false, 1.00, 10000.00, 0.0290, 0.30, ARRAY['USD', 'EUR', 'GBP'], ARRAY['US', 'CA', 'GB', 'EU']),
+    ('bank_transfer', 'Bank Transfer', 'Bank transfer payment method', null, false, 10.00, 50000.00, 0.0000, 0.00, ARRAY['USD', 'EUR'], ARRAY['US', 'EU']),
+    ('cod', 'Cash on Delivery', 'Cash on delivery payment method', null, false, 5.00, 500.00, 0.0000, 2.00, ARRAY['USD'], ARRAY['US'])
 ON CONFLICT (code) DO NOTHING;
 
 -- Create card_types reference table
@@ -156,68 +155,67 @@ CREATE TABLE IF NOT EXISTS card_types (
     name VARCHAR(100) NOT NULL,
     description TEXT,
     is_active BOOLEAN NOT NULL DEFAULT true,
-    display_order SMALLINT NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Insert seed data for card_types
-INSERT INTO card_types (code, name, description, display_order) VALUES
-    ('debit', 'Debit Card', 'Standard debit card', 1),
-    ('credit', 'Credit Card', 'Standard credit card', 2),
-    ('prepaid', 'Prepaid Card', 'Prepaid card with preloaded funds', 3),
-    ('gift_card', 'Gift Card', 'Gift card for purchases', 4),
-    ('corporate', 'Corporate Card', 'Corporate/company card', 5),
-    ('virtual', 'Virtual Card', 'Virtual card for online transactions', 6),
-    ('business', 'Business Card', 'Business credit/debit card', 7),
-    ('rewards', 'Rewards Card', 'Rewards/loyalty card', 8)
+INSERT INTO card_types (code, name, description) VALUES
+    ('debit', 'Debit Card', 'Standard debit card'),
+    ('credit', 'Credit Card', 'Standard credit card'),
+    ('prepaid', 'Prepaid Card', 'Prepaid card with preloaded funds'),
+    ('gift_card', 'Gift Card', 'Gift card for purchases'),
+    ('corporate', 'Corporate Card', 'Corporate/company card'),
+    ('virtual', 'Virtual Card', 'Virtual card for online transactions'),
+    ('business', 'Business Card', 'Business credit/debit card'),
+    ('rewards', 'Rewards Card', 'Rewards/loyalty card')
 ON CONFLICT (code) DO NOTHING;
 
 -- Create users and addresses tables
 CREATE TABLE
-    "users" (
-        "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
-        "role_id" UUID NOT NULL REFERENCES user_roles (id) ON DELETE RESTRICT,
-        "username" VARCHAR UNIQUE NOT NULL,
-        "email" VARCHAR UNIQUE NOT NULL,
-        "phone_number" VARCHAR(20) NOT NULL CHECK (
-            char_length(phone_number) >= 10
-            AND char_length(phone_number) <= 20
-        ),
-        "first_name" VARCHAR NOT NULL,
-        "last_name" VARCHAR NOT NULL,
-        "avatar_url" VARCHAR,
-        "avatar_image_id" VARCHAR,
-        "hashed_password" VARCHAR NOT NULL,
-        "verified_email" bool NOT NULL DEFAULT FALSE,
-        "verified_phone" bool NOT NULL DEFAULT FALSE,
-        "locked" BOOLEAN NOT NULL DEFAULT FALSE,
-        "password_changed_at" TIMESTAMPTZ NOT NULL DEFAULT '0001-01-01 00:00:00Z',
-        "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW (),
-        "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW ()
-    );
-
-CREATE TABLE
-    "user_addresses" (
-        "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
-        "user_id" UUID NOT NULL REFERENCES "users" ("id") ON DELETE CASCADE,
-        "phone_number" VARCHAR(20) NOT NULL CHECK (
-            char_length(phone_number) >= 10
-            AND char_length(phone_number) <= 20
-        ),
-        "street" VARCHAR NOT NULL,
-        "ward" VARCHAR(100),
-        "district" VARCHAR(100) NOT NULL,
-        "city" VARCHAR(100) NOT NULL,
-        "default" BOOLEAN NOT NULL DEFAULT FALSE,
-        "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW (),
-        "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW ()
-    );
-
-CREATE TABLE
-    "email_verifications" (
+    users (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
-        user_id UUID NOT NULL REFERENCES "users" ("id") ON DELETE CASCADE,
+        role_id UUID NOT NULL REFERENCES user_roles (id) ON DELETE RESTRICT,
+        username VARCHAR UNIQUE NOT NULL,
+        email VARCHAR UNIQUE NOT NULL,
+        phone_number VARCHAR(20) NOT NULL CHECK (
+            char_length(phone_number) >= 10
+            AND char_length(phone_number) <= 20
+        ),
+        first_name VARCHAR NOT NULL,
+        last_name VARCHAR NOT NULL,
+        avatar_url VARCHAR,
+        avatar_image_id VARCHAR,
+        hashed_password VARCHAR NOT NULL,
+        verified_email bool NOT NULL DEFAULT FALSE,
+        verified_phone bool NOT NULL DEFAULT FALSE,
+        locked BOOLEAN NOT NULL DEFAULT FALSE,
+        password_changed_at TIMESTAMPTZ NOT NULL DEFAULT '0001-01-01 00:00:00Z',
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW ()
+    );
+
+CREATE TABLE
+    user_addresses (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
+        user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+        phone_number VARCHAR(20) NOT NULL CHECK (
+            char_length(phone_number) >= 10
+            AND char_length(phone_number) <= 20
+        ),
+        street VARCHAR NOT NULL,
+        ward VARCHAR(100),
+        district VARCHAR(100) NOT NULL,
+        city VARCHAR(100) NOT NULL,
+        is_default BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW ()
+    );
+
+CREATE TABLE
+    email_verifications (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
+        user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
         email VARCHAR(255) NOT NULL,
         verify_code VARCHAR(255) NOT NULL,
         is_used BOOLEAN NOT NULL DEFAULT FALSE,
@@ -226,103 +224,92 @@ CREATE TABLE
     );
 
 CREATE TABLE
-    "user_sessions" (
-        "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
-        "user_id" UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-        "refresh_token" VARCHAR NOT NULL,
-        "user_agent" VARCHAR(512) NOT NULL,
-        "client_ip" INET NOT NULL,
-        "blocked" boolean NOT NULL DEFAULT FALSE,
-        "expired_at" TIMESTAMPTZ NOT NULL,
-        "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW ()
+    user_sessions (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
+        user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+        refresh_token VARCHAR NOT NULL,
+        user_agent VARCHAR(512) NOT NULL,
+        client_ip INET NOT NULL,
+        blocked boolean NOT NULL DEFAULT FALSE,
+        expired_at TIMESTAMPTZ NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW ()
     );
 
 CREATE TABLE
     user_payment_infos (
-        "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
-        "user_id" UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-        "card_number" VARCHAR(19) NOT NULL,
-        "card_last4" VARCHAR(4) NOT NULL,
-        "payment_method_token" VARCHAR(255) NOT NULL,
-        "expiration_date" DATE NOT NULL,
-        "billing_address" TEXT NOT NULL,
-        "default" BOOLEAN DEFAULT FALSE,
-        "created_at" TIMESTAMPTZ DEFAULT NOW (),
-        "updated_at" TIMESTAMPTZ DEFAULT NOW (),
-        UNIQUE ("user_id", "payment_method_token")
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
+        user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+        card_number VARCHAR(19) NOT NULL,
+        card_last4 VARCHAR(4) NOT NULL,
+        payment_method_token VARCHAR(255) NOT NULL,
+        expiration_date DATE NOT NULL,
+        billing_address TEXT NOT NULL,
+        is_default BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMPTZ DEFAULT NOW (),
+        updated_at TIMESTAMPTZ DEFAULT NOW (),
+        UNIQUE (user_id, payment_method_token)
     );
 
 -- Create categories, collections, and brands tables
 CREATE TABLE
-    "categories" (
-        "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        "name" VARCHAR(255) UNIQUE NOT NULL,
-        "description" TEXT,
-        "image_url" TEXT,
-        "image_id" VARCHAR,
-        "published" BOOLEAN NOT NULL DEFAULT TRUE,
-        "remarkable" BOOLEAN DEFAULT FALSE,
-        "slug" VARCHAR UNIQUE NOT NULL,
-        "display_order" INT DEFAULT 0,
-        "created_at" TIMESTAMPTZ NOT NULL DEFAULT now (),
-        "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now ()
+    categories (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        name VARCHAR(255) UNIQUE NOT NULL,
+        description TEXT,
+        image_url TEXT,
+        image_id VARCHAR,
+        published BOOLEAN NOT NULL DEFAULT TRUE,
+        remarkable BOOLEAN DEFAULT FALSE,
+        slug VARCHAR UNIQUE NOT NULL,
+        display_order INT DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now (),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now ()
     );
 
 CREATE TABLE
     collections (
-        "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        "name" VARCHAR(255) UNIQUE NOT NULL,
-        "image_url" TEXT,
-        "image_id" VARCHAR,
-        "description" TEXT,
-        "slug" VARCHAR UNIQUE NOT NULL,
-        "remarkable" BOOLEAN DEFAULT FALSE,
-        "display_order" INT DEFAULT 0,
-        "published" BOOLEAN NOT NULL DEFAULT TRUE,
-        "created_at" TIMESTAMPTZ NOT NULL DEFAULT now (),
-        "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now ()
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        name VARCHAR(255) UNIQUE NOT NULL,
+        image_url TEXT,
+        image_id VARCHAR,
+        description TEXT,
+        slug VARCHAR UNIQUE NOT NULL,
+        remarkable BOOLEAN DEFAULT FALSE,
+        display_order INT DEFAULT 0,
+        published BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now (),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now ()
     );
 
 CREATE TABLE
     brands (
-        "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        "name" VARCHAR(255) UNIQUE NOT NULL,
-        "image_url" TEXT,
-        "image_id" VARCHAR,
-        "description" TEXT,
-        "slug" VARCHAR UNIQUE NOT NULL,
-        "remarkable" BOOLEAN DEFAULT FALSE,
-        "display_order" INT DEFAULT 0,
-        "published" BOOLEAN NOT NULL DEFAULT TRUE,
-        "created_at" TIMESTAMPTZ NOT NULL DEFAULT now (),
-        "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now ()
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        name VARCHAR(255) UNIQUE NOT NULL,
+        image_url TEXT,
+        image_id VARCHAR,
+        description TEXT,
+        slug VARCHAR UNIQUE NOT NULL,
+        remarkable BOOLEAN DEFAULT FALSE,
+        display_order INT DEFAULT 0,
+        published BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now (),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now ()
     );
 
 -- Create attributes tables
 CREATE TABLE
     attributes (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        "name" VARCHAR(100) UNIQUE NOT NULL,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW ()
+        id INT PRIMARY KEY,
+        name VARCHAR(100) UNIQUE NOT NULL
     );
 
 CREATE TABLE
     attribute_values (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        attribute_id UUID NOT NULL REFERENCES attributes (id) ON DELETE CASCADE,
-        "name" VARCHAR NOT NULL,
-        code VARCHAR NOT NULL,
-        is_active BOOLEAN DEFAULT TRUE,
-        display_order SMALLINT NOT NULL DEFAULT 0 CHECK (
-            display_order >= 0
-            AND display_order <= 32767
-        ),
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),
-        UNIQUE (attribute_id, code),
-        UNIQUE(attribute_id, "name")
+        id BIGINT PRIMARY KEY,
+        attribute_id INT NOT NULL REFERENCES attributes (id) ON DELETE CASCADE,
+        value VARCHAR(255) NOT NULL,
+        UNIQUE(attribute_id, value)
     );
-
-
 
 -- Create products tables
 CREATE TABLE
@@ -331,7 +318,7 @@ CREATE TABLE
         name VARCHAR(255) NOT NULL,
         description TEXT NOT NULL,
         short_description VARCHAR(1000),
-        attributes UUID[],
+        attributes int[],
         base_price DECIMAL(10, 2),
         base_sku VARCHAR(100) UNIQUE NOT NULL,
         slug VARCHAR(255) UNIQUE NOT NULL,
@@ -355,18 +342,13 @@ CREATE TABLE
 -- Create product_images table for storing product image metadata
 CREATE TABLE
     product_images (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        id BIGINT PRIMARY KEY,
         product_id UUID NOT NULL REFERENCES products (id) ON DELETE CASCADE,
         image_url VARCHAR(1024) NOT NULL,
         image_id VARCHAR(255) NOT NULL,
         alt_text VARCHAR(255),
         caption TEXT,
-        mime_type VARCHAR(50),
-        file_size BIGINT,
-        width INT,
-        height INT,
-        display_order SMALLINT NOT NULL DEFAULT 0,
-        is_primary BOOLEAN NOT NULL DEFAULT FALSE,
+        display_order BIGINT NOT NULL DEFAULT 0,
         uploaded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
@@ -390,7 +372,7 @@ CREATE TABLE
 CREATE TABLE
     variant_attribute_values (
         variant_id UUID NOT NULL REFERENCES product_variants (id) ON DELETE CASCADE,
-        attribute_value_id UUID NOT NULL REFERENCES attribute_values (id) ON DELETE CASCADE,
+        attribute_value_id BIGINT NOT NULL REFERENCES attribute_values (id) ON DELETE CASCADE,
         PRIMARY KEY (variant_id, attribute_value_id)
     );
 
@@ -473,7 +455,7 @@ CREATE TABLE
         customer_phone VARCHAR(50) NOT NULL,
         shipping_address JSONB NOT NULL,
         total_price DECIMAL(10, 2) NOT NULL CHECK (total_price >= 0),
-        "status" order_status NOT NULL DEFAULT 'pending',
+        status order_status NOT NULL DEFAULT 'pending',
         confirmed_at TIMESTAMPTZ,
         delivered_at TIMESTAMPTZ,
         cancelled_at TIMESTAMPTZ,
@@ -491,19 +473,19 @@ CREATE TABLE
     );
 
 CREATE TABLE
-    "order_items" (
-        "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        "order_id" UUID NOT NULL REFERENCES "orders" ("id") ON DELETE CASCADE,
-        "variant_id" UUID NOT NULL REFERENCES "product_variants" ("id") ON DELETE RESTRICT,
-        "quantity" SMALLINT NOT NULL DEFAULT 1 CHECK (quantity > 0),
-        "price_per_unit_snapshot" DECIMAL(10, 2) NOT NULL CHECK (price_per_unit_snapshot >= 0),
-        "line_total_snapshot" DECIMAL(10, 2) NOT NULL CHECK (line_total_snapshot >= 0),
-        "product_name_snapshot" VARCHAR(255) NOT NULL,
-        "variant_sku_snapshot" VARCHAR(100) NOT NULL,
-        "attributes_snapshot" JSONB NOT NULL,
-        "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        "discounted_price" DECIMAL(10, 2)
+    order_items (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        order_id UUID NOT NULL REFERENCES orders (id) ON DELETE CASCADE,
+        variant_id UUID NOT NULL REFERENCES product_variants (id) ON DELETE RESTRICT,
+        quantity SMALLINT NOT NULL DEFAULT 1 CHECK (quantity > 0),
+        price_per_unit_snapshot DECIMAL(10, 2) NOT NULL CHECK (price_per_unit_snapshot >= 0),
+        line_total_snapshot DECIMAL(10, 2) NOT NULL CHECK (line_total_snapshot >= 0),
+        product_name_snapshot VARCHAR(255) NOT NULL,
+        variant_sku_snapshot VARCHAR(100) NOT NULL,
+        attributes_snapshot JSONB NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        discounted_price DECIMAL(10, 2)
     );
 
 CREATE TABLE IF NOT EXISTS order_discounts (
@@ -517,21 +499,21 @@ CREATE TABLE IF NOT EXISTS order_discounts (
 
 -- Create carts tables
 CREATE TABLE
-    "carts" (
-        "id" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        "user_id" UUID REFERENCES "users" ("id") ON DELETE CASCADE,
-        "session_id" VARCHAR(255),
-        "order_id" UUID REFERENCES "orders" ("id") ON DELETE SET NULL,
-        "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW (),
-        "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW ()
+    carts (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id UUID REFERENCES users (id) ON DELETE CASCADE,
+        session_id VARCHAR(255),
+        order_id UUID REFERENCES orders (id) ON DELETE SET NULL,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW ()
     );
 
 CREATE TABLE
     cart_items (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        cart_id UUID NOT NULL REFERENCES "carts" ("id") ON DELETE CASCADE,
-        variant_id UUID NOT NULL REFERENCES "product_variants" ("id") ON DELETE CASCADE,
-        quantity smallint NOT NULL DEFAULT 1 CHECK ("quantity" > 0),
+        cart_id UUID NOT NULL REFERENCES carts (id) ON DELETE CASCADE,
+        variant_id UUID NOT NULL REFERENCES product_variants (id) ON DELETE CASCADE,
+        quantity smallint NOT NULL DEFAULT 1 CHECK (quantity > 0),
         added_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),
         UNIQUE (cart_id, variant_id)
     );
@@ -783,7 +765,6 @@ EXECUTE FUNCTION update_product_avg_rating();
 CREATE INDEX IF NOT EXISTS idx_payment_methods_code ON payment_methods(code);
 CREATE INDEX IF NOT EXISTS idx_payment_methods_is_active ON payment_methods(is_active);
 CREATE INDEX IF NOT EXISTS idx_payment_methods_gateway ON payment_methods(gateway_supported);
-CREATE INDEX IF NOT EXISTS idx_payment_methods_display_order ON payment_methods(display_order);
 CREATE INDEX IF NOT EXISTS idx_user_roles_code ON user_roles(code);
 CREATE INDEX IF NOT EXISTS idx_user_roles_is_active ON user_roles(is_active);
 CREATE INDEX IF NOT EXISTS idx_permissions_role_id ON permissions(role_id);
@@ -794,18 +775,14 @@ CREATE INDEX IF NOT EXISTS idx_card_types_is_active ON card_types(is_active);
 
 -- Users and related tables indexes
 CREATE INDEX idx_email_verifications_expired_at ON email_verifications (expired_at);
-CREATE INDEX ON "user_payment_infos" ("user_id");
-CREATE INDEX ON "user_sessions" ("user_id");
-CREATE INDEX ON "user_addresses" ("user_id", "default");
+CREATE INDEX ON user_payment_infos (user_id);
+CREATE INDEX ON user_sessions (user_id);
+CREATE INDEX ON user_addresses (user_id, is_default);
 CREATE INDEX idx_users_role_id ON users (role_id);
-
--- Attributes indexes
-CREATE INDEX idx_attribute_values_attribute_id_display_order ON attribute_values (attribute_id, display_order);
 
 -- Product images indexes
 CREATE INDEX idx_product_images_product_id ON product_images (product_id);
 CREATE INDEX idx_product_images_image_id ON product_images (image_id);
-CREATE INDEX idx_product_images_is_primary ON product_images (is_primary);
 CREATE INDEX idx_product_images_display_order ON product_images (display_order);
 
 -- Products indexes
@@ -846,15 +823,15 @@ CREATE INDEX idx_carts_updated_at ON carts (updated_at);
 CREATE INDEX idx_cart_items_variant_id ON cart_items (variant_id);
 
 -- Payments indexes
-CREATE INDEX ON "payments" ("order_id");
-CREATE INDEX ON "payments" ("status");
-CREATE INDEX ON "payments" ("payment_method_id");
-CREATE INDEX ON "payments" ("payment_intent_id");
-CREATE INDEX ON "payments" ("charge_id");
-CREATE INDEX ON "payments" ("gateway_reference");
-CREATE INDEX ON "payment_transactions" ("payment_id");
-CREATE INDEX ON "payment_transactions" ("status");
-CREATE INDEX ON "payment_transactions" ("gateway_transaction_id");
+CREATE INDEX ON payments (order_id);
+CREATE INDEX ON payments (status);
+CREATE INDEX ON payments (payment_method_id);
+CREATE INDEX ON payments (payment_intent_id);
+CREATE INDEX ON payments (charge_id);
+CREATE INDEX ON payments (gateway_reference);
+CREATE INDEX ON payment_transactions (payment_id);
+CREATE INDEX ON payment_transactions (status);
+CREATE INDEX ON payment_transactions (gateway_transaction_id);
 
 -- Ratings indexes
 CREATE INDEX idx_product_ratings_product_id ON product_ratings(product_id);

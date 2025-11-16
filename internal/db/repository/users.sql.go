@@ -36,7 +36,7 @@ func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
 }
 
 const createAddress = `-- name: CreateAddress :one
-INSERT INTO user_addresses (user_id, phone_number, street, ward, district, city, "default") VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, user_id, phone_number, street, ward, district, city, "default", created_at, updated_at
+INSERT INTO user_addresses (user_id, phone_number, street, ward, district, city, "is_default") VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, user_id, phone_number, street, ward, district, city, is_default, created_at, updated_at
 `
 
 type CreateAddressParams struct {
@@ -46,7 +46,7 @@ type CreateAddressParams struct {
 	Ward        *string   `json:"ward"`
 	District    string    `json:"district"`
 	City        string    `json:"city"`
-	Default     bool      `json:"default"`
+	IsDefault   bool      `json:"isDefault"`
 }
 
 // User Address Queries
@@ -58,7 +58,7 @@ func (q *Queries) CreateAddress(ctx context.Context, arg CreateAddressParams) (U
 		arg.Ward,
 		arg.District,
 		arg.City,
-		arg.Default,
+		arg.IsDefault,
 	)
 	var i UserAddress
 	err := row.Scan(
@@ -69,7 +69,7 @@ func (q *Queries) CreateAddress(ctx context.Context, arg CreateAddressParams) (U
 		&i.Ward,
 		&i.District,
 		&i.City,
-		&i.Default,
+		&i.IsDefault,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -172,7 +172,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
 }
 
 const getAddress = `-- name: GetAddress :one
-SELECT id, user_id, phone_number, street, ward, district, city, "default", created_at, updated_at FROM user_addresses WHERE id = $1 AND user_id = $2 LIMIT 1
+SELECT id, user_id, phone_number, street, ward, district, city, is_default, created_at, updated_at FROM user_addresses WHERE id = $1 AND user_id = $2 LIMIT 1
 `
 
 type GetAddressParams struct {
@@ -191,7 +191,7 @@ func (q *Queries) GetAddress(ctx context.Context, arg GetAddressParams) (UserAdd
 		&i.Ward,
 		&i.District,
 		&i.City,
-		&i.Default,
+		&i.IsDefault,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -199,7 +199,7 @@ func (q *Queries) GetAddress(ctx context.Context, arg GetAddressParams) (UserAdd
 }
 
 const getAddresses = `-- name: GetAddresses :many
-SELECT id, user_id, phone_number, street, ward, district, city, "default", created_at, updated_at FROM user_addresses WHERE user_id = $1 ORDER BY "default" DESC, id ASC
+SELECT id, user_id, phone_number, street, ward, district, city, is_default, created_at, updated_at FROM user_addresses WHERE user_id = $1 ORDER BY "is_default" DESC, id ASC
 `
 
 func (q *Queries) GetAddresses(ctx context.Context, userID uuid.UUID) ([]UserAddress, error) {
@@ -219,7 +219,7 @@ func (q *Queries) GetAddresses(ctx context.Context, userID uuid.UUID) ([]UserAdd
 			&i.Ward,
 			&i.District,
 			&i.City,
-			&i.Default,
+			&i.IsDefault,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -234,7 +234,7 @@ func (q *Queries) GetAddresses(ctx context.Context, userID uuid.UUID) ([]UserAdd
 }
 
 const getDefaultAddress = `-- name: GetDefaultAddress :one
-SELECT id, user_id, phone_number, street, ward, district, city, "default", created_at, updated_at FROM user_addresses WHERE user_id = $1 AND "default" = TRUE LIMIT 1
+SELECT id, user_id, phone_number, street, ward, district, city, is_default, created_at, updated_at FROM user_addresses WHERE user_id = $1 AND "is_default" = TRUE LIMIT 1
 `
 
 func (q *Queries) GetDefaultAddress(ctx context.Context, userID uuid.UUID) (UserAddress, error) {
@@ -248,7 +248,7 @@ func (q *Queries) GetDefaultAddress(ctx context.Context, userID uuid.UUID) (User
 		&i.Ward,
 		&i.District,
 		&i.City,
-		&i.Default,
+		&i.IsDefault,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -463,7 +463,7 @@ func (q *Queries) GetVerifyEmailByVerifyCode(ctx context.Context, verifyCode str
 }
 
 const resetPrimaryAddress = `-- name: ResetPrimaryAddress :exec
-UPDATE user_addresses SET "default" = FALSE WHERE user_id = $1 AND "default" = TRUE
+UPDATE user_addresses SET "is_default" = FALSE WHERE user_id = $1 AND "is_default" = TRUE
 `
 
 func (q *Queries) ResetPrimaryAddress(ctx context.Context, userID uuid.UUID) error {
@@ -478,7 +478,7 @@ type SeedAddressesParams struct {
 	Ward        *string   `json:"ward"`
 	District    string    `json:"district"`
 	City        string    `json:"city"`
-	Default     bool      `json:"default"`
+	IsDefault   bool      `json:"isDefault"`
 }
 
 type SeedUsersParams struct {
@@ -492,17 +492,17 @@ type SeedUsersParams struct {
 }
 
 const setPrimaryAddress = `-- name: SetPrimaryAddress :exec
-UPDATE user_addresses SET "default" = $1 WHERE id = $2 AND user_id = $3
+UPDATE user_addresses SET "is_default" = $1 WHERE id = $2 AND user_id = $3
 `
 
 type SetPrimaryAddressParams struct {
-	Default bool      `json:"default"`
-	ID      uuid.UUID `json:"id"`
-	UserID  uuid.UUID `json:"userId"`
+	IsDefault bool      `json:"isDefault"`
+	ID        uuid.UUID `json:"id"`
+	UserID    uuid.UUID `json:"userId"`
 }
 
 func (q *Queries) SetPrimaryAddress(ctx context.Context, arg SetPrimaryAddressParams) error {
-	_, err := q.db.Exec(ctx, setPrimaryAddress, arg.Default, arg.ID, arg.UserID)
+	_, err := q.db.Exec(ctx, setPrimaryAddress, arg.IsDefault, arg.ID, arg.UserID)
 	return err
 }
 
@@ -515,10 +515,10 @@ SET
     ward = coalesce($3, ward),
     district = coalesce($4, district),
     city = coalesce($5, city),
-    "default" = coalesce($6, "default")
+    "is_default" = coalesce($6, "is_default")
 WHERE
     id = $7 AND user_id = $8
-RETURNING id, user_id, phone_number, street, ward, district, city, "default", created_at, updated_at
+RETURNING id, user_id, phone_number, street, ward, district, city, is_default, created_at, updated_at
 `
 
 type UpdateAddressParams struct {
@@ -527,7 +527,7 @@ type UpdateAddressParams struct {
 	Ward        *string   `json:"ward"`
 	District    *string   `json:"district"`
 	City        *string   `json:"city"`
-	Default     *bool     `json:"default"`
+	IsDefault   *bool     `json:"isDefault"`
 	ID          uuid.UUID `json:"id"`
 	UserID      uuid.UUID `json:"userId"`
 }
@@ -539,7 +539,7 @@ func (q *Queries) UpdateAddress(ctx context.Context, arg UpdateAddressParams) (U
 		arg.Ward,
 		arg.District,
 		arg.City,
-		arg.Default,
+		arg.IsDefault,
 		arg.ID,
 		arg.UserID,
 	)
@@ -552,7 +552,7 @@ func (q *Queries) UpdateAddress(ctx context.Context, arg UpdateAddressParams) (U
 		&i.Ward,
 		&i.District,
 		&i.City,
-		&i.Default,
+		&i.IsDefault,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

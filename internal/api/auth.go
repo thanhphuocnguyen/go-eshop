@@ -25,36 +25,36 @@ import (
 // @Produce  json
 // @Param input body RegisterRequestBody true "User info"
 // @Success 200 {object} ApiResponse[UserDetail]
-// @Failure 400 {object} ApiResponse[UserDetail]
-// @Failure 500 {object} ApiResponse[UserDetail]
+// @Failure 400 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
 // @Router /users [post]
 func (sv *Server) RegisterHandler(c *gin.Context) {
 	var req RegisterRequestBody
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[UserDetail](InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
 		return
 	}
 
 	_, err := sv.repo.GetUserByUsername(c, req.Username)
 	if err != nil && !errors.Is(err, repository.ErrRecordNotFound) {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[UserDetail](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 
 	if err == nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[UserDetail](UsernameExistedCode, "", fmt.Errorf("username %s is already taken", req.Username)))
+		c.JSON(http.StatusBadRequest, createErr(UsernameExistedCode, "", fmt.Errorf("username %s is already taken", req.Username)))
 		return
 	}
 
 	hashedPassword, err := auth.HashPassword(req.Password)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[UserDetail](HashPasswordCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(HashPasswordCode, "", err))
 		return
 	}
 
 	userRole, err := sv.repo.GetRoleByCode(c, string(repository.UserRoleCodeUser))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[UserDetail](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 	arg := repository.CreateUserParams{
@@ -70,7 +70,7 @@ func (sv *Server) RegisterHandler(c *gin.Context) {
 	if req.Username == "admin" {
 		adminRole, err := sv.repo.GetRoleByCode(c, string(repository.UserRoleCodeAdmin))
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[UserDetail](InternalServerErrorCode, "", err))
+			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 			return
 		}
 		arg.RoleID = adminRole.ID
@@ -78,7 +78,7 @@ func (sv *Server) RegisterHandler(c *gin.Context) {
 	user, err := sv.repo.CreateUser(c, arg)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[UserDetail](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -88,7 +88,7 @@ func (sv *Server) RegisterHandler(c *gin.Context) {
 		Street:      req.Address.Street,
 		City:        req.Address.City,
 		District:    req.Address.District,
-		Default:     true,
+		IsDefault:   true,
 	}
 
 	if req.Address.Ward != nil {
@@ -97,7 +97,7 @@ func (sv *Server) RegisterHandler(c *gin.Context) {
 	createdAddress, err := sv.repo.CreateAddress(c, createAddressArgs)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[UserDetail](AddressCodeCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(AddressCodeCode, "", err))
 		return
 	}
 
@@ -111,7 +111,7 @@ func (sv *Server) RegisterHandler(c *gin.Context) {
 	)
 
 	if err != nil {
-		createErrorResponse[UserDetail](ActivateUserCode, "Please verify your email address to activate your account", err)
+		createErr(ActivateUserCode, "Please verify your email address to activate your account", err)
 		return
 	}
 
@@ -143,12 +143,12 @@ func (sv *Server) RegisterHandler(c *gin.Context) {
 			Ward:      &ward,
 			District:  createdAddress.District,
 			City:      createdAddress.City,
-			Default:   createdAddress.Default,
+			Default:   createdAddress.IsDefault,
 			CreatedAt: createdAddress.CreatedAt,
 		}},
 	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(c, userResp, "Created user and address successfully", nil, nil))
+	c.JSON(http.StatusOK, createDataResp(c, userResp, "Created user and address successfully", nil, nil))
 }
 
 // LoginHandler godoc
@@ -159,17 +159,17 @@ func (sv *Server) RegisterHandler(c *gin.Context) {
 // @Produce  json
 // @Param input body LoginRequest true "User info"
 // @Success 200 {object} ApiResponse[LoginResponse]
-// @Failure 401 {object} ApiResponse[LoginResponse]
-// @Failure 500 {object} ApiResponse[LoginResponse]
+// @Failure 401 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
 // @Router /users/LoginHandler [post]
 func (sv *Server) LoginHandler(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[LoginResponse](InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
 		return
 	}
 	if req.Username == nil && req.Email == nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[LoginResponse](InvalidEmailCode, "", fmt.Errorf("username or email is required")))
+		c.JSON(http.StatusBadRequest, createErr(InvalidEmailCode, "", fmt.Errorf("username or email is required")))
 		return
 	}
 
@@ -183,32 +183,32 @@ func (sv *Server) LoginHandler(c *gin.Context) {
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusUnauthorized, createErrorResponse[LoginResponse](NotFoundCode, "User not existed", err))
+			c.JSON(http.StatusUnauthorized, createErr(NotFoundCode, "User not existed", err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[LoginResponse](InternalServerErrorCode, "Internal Server Error", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "Internal Server Error", err))
 		return
 	}
 
 	if err := auth.CheckPassword(req.Password, user.HashedPassword); err != nil {
-		c.JSON(http.StatusUnauthorized, createErrorResponse[LoginResponse](UnauthorizedCode, "Invalid credentials", err))
+		c.JSON(http.StatusUnauthorized, createErr(UnauthorizedCode, "Invalid credentials", err))
 		return
 	}
 
 	role, err := sv.repo.GetRoleByID(c, user.RoleID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[LoginResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 	accessToken, payload, err := sv.tokenGenerator.GenerateToken(user.ID, user.Username, role, sv.config.AccessTokenDuration)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[LoginResponse](InvalidTokenCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InvalidTokenCode, "", err))
 		return
 	}
 
 	refreshToken, rfPayload, err := sv.tokenGenerator.GenerateToken(user.ID, user.Username, role, sv.config.RefreshTokenDuration)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[LoginResponse](InvalidTokenCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InvalidTokenCode, "", err))
 		return
 	}
 
@@ -229,7 +229,7 @@ func (sv *Server) LoginHandler(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[LoginResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -240,7 +240,7 @@ func (sv *Server) LoginHandler(c *gin.Context) {
 		RefreshToken:          refreshToken,
 		RefreshTokenExpiresAt: rfPayload.Expires,
 	}
-	c.JSON(http.StatusOK, createSuccessResponse(c, loginResp, "success", nil, nil))
+	c.JSON(http.StatusOK, createDataResp(c, loginResp, "success", nil, nil))
 }
 
 // refreshTokenHandler godoc
@@ -250,20 +250,20 @@ func (sv *Server) LoginHandler(c *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @Success 200 {object} ApiResponse[RefreshTokenResponse]
-// @Failure 401 {object} ApiResponse[RefreshTokenResponse]
-// @Failure 500 {object} ApiResponse[RefreshTokenResponse]
+// @Failure 401 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
 // @Router /users/refresh-token [post]
 func (sv *Server) refreshTokenHandler(c *gin.Context) {
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {
-		c.JSON(http.StatusUnauthorized, createErrorResponse[RefreshTokenResponse](UnauthorizedCode, "", fmt.Errorf("refresh token is required")))
+		c.JSON(http.StatusUnauthorized, createErr(UnauthorizedCode, "", fmt.Errorf("refresh token is required")))
 		return
 	}
 
 	refreshToken := authHeader[len("Bearer "):]
 	refreshTokenPayload, err := sv.tokenGenerator.VerifyToken(refreshToken)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, createErrorResponse[RefreshTokenResponse](UnauthorizedCode, "", err))
+		c.JSON(http.StatusUnauthorized, createErr(UnauthorizedCode, "", err))
 		return
 	}
 
@@ -271,49 +271,49 @@ func (sv *Server) refreshTokenHandler(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound,
-				createErrorResponse[RefreshTokenResponse](NotFoundCode, "Not found", fmt.Errorf("session not found")))
+				createErr(NotFoundCode, "Not found", fmt.Errorf("session not found")))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[RefreshTokenResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 
 	if session.ID != refreshTokenPayload.ID {
 		err := errors.New("refresh token is not valid")
-		c.JSON(http.StatusUnauthorized, createErrorResponse[RefreshTokenResponse](InvalidTokenCode, "", err))
+		c.JSON(http.StatusUnauthorized, createErr(InvalidTokenCode, "", err))
 		return
 	}
 
 	if session.RefreshToken != refreshToken {
 		err := errors.New("refresh token is not valid")
-		c.JSON(http.StatusUnauthorized, createErrorResponse[RefreshTokenResponse](InvalidTokenCode, "", err))
+		c.JSON(http.StatusUnauthorized, createErr(InvalidTokenCode, "", err))
 		return
 	}
 
 	if session.Blocked {
 		err := errors.New("session is blocked")
-		c.JSON(http.StatusUnauthorized, createErrorResponse[RefreshTokenResponse](InvalidSessionCode, "", err))
+		c.JSON(http.StatusUnauthorized, createErr(InvalidSessionCode, "", err))
 		return
 	}
 
 	if time.Now().After(session.ExpiredAt) {
 		err := errors.New("refresh token was expired")
-		c.JSON(http.StatusUnauthorized, createErrorResponse[RefreshTokenResponse](InvalidSessionCode, "", err))
+		c.JSON(http.StatusUnauthorized, createErr(InvalidSessionCode, "", err))
 		return
 	}
 
 	role, err := sv.repo.GetRoleByID(c, refreshTokenPayload.RoleID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[RefreshTokenResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 
 	accessToken, _, err := sv.tokenGenerator.GenerateToken(session.UserID, refreshTokenPayload.Username, role, sv.config.AccessTokenDuration)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[RefreshTokenResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 
 	c.JSON(http.StatusOK,
-		createSuccessResponse(c, RefreshTokenResponse{AccessToken: accessToken, AccessTokenExpiresAt: time.Now().Add(sv.config.AccessTokenDuration)}, "success", nil, nil))
+		createDataResp(c, RefreshTokenResponse{AccessToken: accessToken, AccessTokenExpiresAt: time.Now().Add(sv.config.AccessTokenDuration)}, "success", nil, nil))
 }

@@ -13,19 +13,14 @@ import (
 )
 
 type Attribute struct {
-	ID        uuid.UUID `json:"id"`
-	Name      string    `json:"name"`
-	CreatedAt time.Time `json:"createdAt"`
+	ID   int32  `json:"id"`
+	Name string `json:"name"`
 }
 
 type AttributeValue struct {
-	ID           uuid.UUID `json:"id"`
-	AttributeID  uuid.UUID `json:"attributeId"`
-	Name         string    `json:"name"`
-	Code         string    `json:"code"`
-	IsActive     *bool     `json:"isActive"`
-	DisplayOrder int16     `json:"displayOrder"`
-	CreatedAt    time.Time `json:"createdAt"`
+	ID          int64  `json:"id"`
+	AttributeID int32  `json:"attributeId"`
+	Value       string `json:"value"`
 }
 
 type Brand struct {
@@ -43,14 +38,13 @@ type Brand struct {
 }
 
 type CardType struct {
-	ID           uuid.UUID `json:"id"`
-	Code         string    `json:"code"`
-	Name         string    `json:"name"`
-	Description  *string   `json:"description"`
-	IsActive     bool      `json:"isActive"`
-	DisplayOrder int16     `json:"displayOrder"`
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
+	ID          uuid.UUID `json:"id"`
+	Code        string    `json:"code"`
+	Name        string    `json:"name"`
+	Description *string   `json:"description"`
+	IsActive    bool      `json:"isActive"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
 type Cart struct {
@@ -242,7 +236,6 @@ type PaymentMethod struct {
 	IsActive                bool           `json:"isActive"`
 	GatewaySupported        *string        `json:"gatewaySupported"`
 	IconUrl                 *string        `json:"iconUrl"`
-	DisplayOrder            int16          `json:"displayOrder"`
 	RequiresAccount         bool           `json:"requiresAccount"`
 	MinAmount               pgtype.Numeric `json:"minAmount"`
 	MaxAmount               pgtype.Numeric `json:"maxAmount"`
@@ -283,7 +276,7 @@ type Product struct {
 	Name             string         `json:"name"`
 	Description      string         `json:"description"`
 	ShortDescription *string        `json:"shortDescription"`
-	Attributes       []uuid.UUID    `json:"attributes"`
+	Attributes       []int32        `json:"attributes"`
 	BasePrice        pgtype.Numeric `json:"basePrice"`
 	BaseSku          string         `json:"baseSku"`
 	Slug             string         `json:"slug"`
@@ -305,18 +298,13 @@ type Product struct {
 }
 
 type ProductImage struct {
-	ID           uuid.UUID `json:"id"`
+	ID           int64     `json:"id"`
 	ProductID    uuid.UUID `json:"productId"`
 	ImageUrl     string    `json:"imageUrl"`
 	ImageID      string    `json:"imageId"`
 	AltText      *string   `json:"altText"`
 	Caption      *string   `json:"caption"`
-	MimeType     *string   `json:"mimeType"`
-	FileSize     *int64    `json:"fileSize"`
-	Width        *int32    `json:"width"`
-	Height       *int32    `json:"height"`
-	DisplayOrder int16     `json:"displayOrder"`
-	IsPrimary    bool      `json:"isPrimary"`
+	DisplayOrder int64     `json:"displayOrder"`
 	UploadedAt   time.Time `json:"uploadedAt"`
 	UpdatedAt    time.Time `json:"updatedAt"`
 }
@@ -469,7 +457,7 @@ type UserAddress struct {
 	Ward        *string   `json:"ward"`
 	District    string    `json:"district"`
 	City        string    `json:"city"`
-	Default     bool      `json:"default"`
+	IsDefault   bool      `json:"isDefault"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
@@ -482,7 +470,7 @@ type UserPaymentInfo struct {
 	PaymentMethodToken string             `json:"paymentMethodToken"`
 	ExpirationDate     pgtype.Date        `json:"expirationDate"`
 	BillingAddress     string             `json:"billingAddress"`
-	Default            *bool              `json:"default"`
+	IsDefault          *bool              `json:"isDefault"`
 	CreatedAt          pgtype.Timestamptz `json:"createdAt"`
 	UpdatedAt          pgtype.Timestamptz `json:"updatedAt"`
 }
@@ -510,5 +498,5 @@ type UserSession struct {
 
 type VariantAttributeValue struct {
 	VariantID        uuid.UUID `json:"variantId"`
-	AttributeValueID uuid.UUID `json:"attributeValueId"`
+	AttributeValueID int64     `json:"attributeValueId"`
 }

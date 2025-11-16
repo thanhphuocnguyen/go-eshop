@@ -18,19 +18,16 @@ type CreateProductTxArgs struct {
 	CategoryID       string                         `json:"category_id,omitempty" binding:"omitempty,uuid"`
 	BrandID          string                         `json:"brand_id,omitempty" binding:"omitempty,uuid"`
 	CollectionID     *string                        `json:"collection_id,omitempty" binding:"omitempty,uuid"`
-	Attributes       []string                       `json:"attributes" binding:"min=1"`
+	Attributes       []int32                        `json:"attributes" binding:"min=1"`
 	Variants         []CreateProductVariantTxParams `json:"variants" binding:"min=1"`
 }
 
 func (s *pgRepo) CreateProductTx(ctx context.Context, arg CreateProductTxArgs) (productID uuid.UUID, err error) {
 	err = s.execTx(ctx, func(q *Queries) (err error) {
-		attributes := make([]uuid.UUID, len(arg.Attributes))
-		for i, attr := range arg.Attributes {
-			attributes[i] = uuid.MustParse(attr)
-		}
+
 		createParams := CreateProductParams{
 			Name:        arg.Name,
-			Attributes:  attributes,
+			Attributes:  arg.Attributes,
 			Description: arg.Description,
 		}
 
@@ -54,24 +51,20 @@ func (s *pgRepo) CreateProductTx(ctx context.Context, arg CreateProductTxArgs) (
 		}
 
 		// get all attribute values
-		attrValMp := make(map[string]bool)
-		attrValueIds := make([]uuid.UUID, 0)
+		attrValMp := make(map[int64]bool)
+		attrValueIds := make([]int64, 0)
 		for _, variant := range arg.Variants {
 			for _, attr := range variant.Attributes {
 				if attrValMp[attr.ValueID] {
 					continue
 				}
-				id, parseErr := uuid.Parse(attr.ValueID)
-				if parseErr != nil {
-					log.Error().Err(parseErr).Msgf("Parse UUID from %s", attr.ValueID)
-					return parseErr
-				}
-				attrValueIds = append(attrValueIds, id)
+
+				attrValueIds = append(attrValueIds, attr.ValueID)
 				attrValMp[attr.ValueID] = true
 			}
 		}
 
-		attributeValueMp := make(map[string]AttributeValue)
+		attributeValueMp := make(map[int64]AttributeValue)
 		attributeValueRows, err := q.GetAttributeValuesByIDs(ctx, attrValueIds)
 
 		if err != nil {
@@ -79,8 +72,8 @@ func (s *pgRepo) CreateProductTx(ctx context.Context, arg CreateProductTxArgs) (
 			return err
 		}
 		for _, attributeValue := range attributeValueRows {
-			if _, ok := attributeValueMp[attributeValue.ID.String()]; !ok {
-				attributeValueMp[attributeValue.ID.String()] = attributeValue
+			if _, ok := attributeValueMp[attributeValue.ID]; !ok {
+				attributeValueMp[attributeValue.ID] = attributeValue
 			}
 		}
 
@@ -117,7 +110,7 @@ func (s *pgRepo) CreateProductTx(ctx context.Context, arg CreateProductTxArgs) (
 				for i, attr := range variant.Attributes {
 					createBulkProductVariantAttributesParam[i] = CreateBulkProductVariantAttributeParams{
 						VariantID:        created.ID,
-						AttributeValueID: uuid.MustParse(attr.ValueID),
+						AttributeValueID: attr.ValueID,
 					}
 				}
 

@@ -15,7 +15,7 @@ const deleteProductImage = `-- name: DeleteProductImage :exec
 DELETE FROM product_images WHERE id = $1
 `
 
-func (q *Queries) DeleteProductImage(ctx context.Context, id uuid.UUID) error {
+func (q *Queries) DeleteProductImage(ctx context.Context, id int64) error {
 	_, err := q.db.Exec(ctx, deleteProductImage, id)
 	return err
 }
@@ -30,10 +30,10 @@ func (q *Queries) DeleteProductImagesByProductID(ctx context.Context, productID 
 }
 
 const getImageByID = `-- name: GetImageByID :one
-SELECT id, product_id, image_url, image_id, alt_text, caption, mime_type, file_size, width, height, display_order, is_primary, uploaded_at, updated_at FROM product_images WHERE id = $1 LIMIT 1
+SELECT id, product_id, image_url, image_id, alt_text, caption, display_order, uploaded_at, updated_at FROM product_images WHERE id = $1 LIMIT 1
 `
 
-func (q *Queries) GetImageByID(ctx context.Context, id uuid.UUID) (ProductImage, error) {
+func (q *Queries) GetImageByID(ctx context.Context, id int64) (ProductImage, error) {
 	row := q.db.QueryRow(ctx, getImageByID, id)
 	var i ProductImage
 	err := row.Scan(
@@ -43,12 +43,7 @@ func (q *Queries) GetImageByID(ctx context.Context, id uuid.UUID) (ProductImage,
 		&i.ImageID,
 		&i.AltText,
 		&i.Caption,
-		&i.MimeType,
-		&i.FileSize,
-		&i.Width,
-		&i.Height,
 		&i.DisplayOrder,
-		&i.IsPrimary,
 		&i.UploadedAt,
 		&i.UpdatedAt,
 	)
@@ -56,7 +51,7 @@ func (q *Queries) GetImageByID(ctx context.Context, id uuid.UUID) (ProductImage,
 }
 
 const getImageByImageID = `-- name: GetImageByImageID :one
-SELECT id, product_id, image_url, image_id, alt_text, caption, mime_type, file_size, width, height, display_order, is_primary, uploaded_at, updated_at FROM product_images WHERE image_id = $1 LIMIT 1
+SELECT id, product_id, image_url, image_id, alt_text, caption, display_order, uploaded_at, updated_at FROM product_images WHERE image_id = $1 LIMIT 1
 `
 
 func (q *Queries) GetImageByImageID(ctx context.Context, imageID string) (ProductImage, error) {
@@ -69,12 +64,7 @@ func (q *Queries) GetImageByImageID(ctx context.Context, imageID string) (Produc
 		&i.ImageID,
 		&i.AltText,
 		&i.Caption,
-		&i.MimeType,
-		&i.FileSize,
-		&i.Width,
-		&i.Height,
 		&i.DisplayOrder,
-		&i.IsPrimary,
 		&i.UploadedAt,
 		&i.UpdatedAt,
 	)
@@ -82,7 +72,7 @@ func (q *Queries) GetImageByImageID(ctx context.Context, imageID string) (Produc
 }
 
 const getImagesByProductID = `-- name: GetImagesByProductID :many
-SELECT id, product_id, image_url, image_id, alt_text, caption, mime_type, file_size, width, height, display_order, is_primary, uploaded_at, updated_at FROM product_images WHERE product_id = $1 ORDER BY display_order
+SELECT id, product_id, image_url, image_id, alt_text, caption, display_order, uploaded_at, updated_at FROM product_images WHERE product_id = $1 ORDER BY display_order
 `
 
 func (q *Queries) GetImagesByProductID(ctx context.Context, productID uuid.UUID) ([]ProductImage, error) {
@@ -101,12 +91,7 @@ func (q *Queries) GetImagesByProductID(ctx context.Context, productID uuid.UUID)
 			&i.ImageID,
 			&i.AltText,
 			&i.Caption,
-			&i.MimeType,
-			&i.FileSize,
-			&i.Width,
-			&i.Height,
 			&i.DisplayOrder,
-			&i.IsPrimary,
 			&i.UploadedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -121,7 +106,7 @@ func (q *Queries) GetImagesByProductID(ctx context.Context, productID uuid.UUID)
 }
 
 const getPrimaryImageByProductID = `-- name: GetPrimaryImageByProductID :one
-SELECT id, product_id, image_url, image_id, alt_text, caption, mime_type, file_size, width, height, display_order, is_primary, uploaded_at, updated_at FROM product_images WHERE product_id = $1 AND is_primary = true LIMIT 1
+SELECT id, product_id, image_url, image_id, alt_text, caption, display_order, uploaded_at, updated_at FROM product_images WHERE product_id = $1 LIMIT 1
 `
 
 func (q *Queries) GetPrimaryImageByProductID(ctx context.Context, productID uuid.UUID) (ProductImage, error) {
@@ -134,12 +119,7 @@ func (q *Queries) GetPrimaryImageByProductID(ctx context.Context, productID uuid
 		&i.ImageID,
 		&i.AltText,
 		&i.Caption,
-		&i.MimeType,
-		&i.FileSize,
-		&i.Width,
-		&i.Height,
 		&i.DisplayOrder,
-		&i.IsPrimary,
 		&i.UploadedAt,
 		&i.UpdatedAt,
 	)
@@ -147,22 +127,17 @@ func (q *Queries) GetPrimaryImageByProductID(ctx context.Context, productID uuid
 }
 
 const getProductImages = `-- name: GetProductImages :many
-SELECT  p_img.id, p_img.image_id, p_img.image_url, p_img.alt_text, p_img.caption, p_img.mime_type, p_img.file_size, p_img.width, p_img.height, p_img.product_id, p_img.display_order, p_img.is_primary FROM product_images p_img WHERE product_id = ANY($1::UUID[])  ORDER BY product_id, display_order
+SELECT  p_img.id, p_img.image_id, p_img.image_url, p_img.alt_text, p_img.caption, p_img.product_id, p_img.display_order FROM product_images p_img WHERE product_id = ANY($1::UUID[])  ORDER BY product_id, display_order
 `
 
 type GetProductImagesRow struct {
-	ID           uuid.UUID `json:"id"`
+	ID           int64     `json:"id"`
 	ImageID      string    `json:"imageId"`
 	ImageUrl     string    `json:"imageUrl"`
 	AltText      *string   `json:"altText"`
 	Caption      *string   `json:"caption"`
-	MimeType     *string   `json:"mimeType"`
-	FileSize     *int64    `json:"fileSize"`
-	Width        *int32    `json:"width"`
-	Height       *int32    `json:"height"`
 	ProductID    uuid.UUID `json:"productId"`
-	DisplayOrder int16     `json:"displayOrder"`
-	IsPrimary    bool      `json:"isPrimary"`
+	DisplayOrder int64     `json:"displayOrder"`
 }
 
 func (q *Queries) GetProductImages(ctx context.Context, productIds []uuid.UUID) ([]GetProductImagesRow, error) {
@@ -180,13 +155,8 @@ func (q *Queries) GetProductImages(ctx context.Context, productIds []uuid.UUID) 
 			&i.ImageUrl,
 			&i.AltText,
 			&i.Caption,
-			&i.MimeType,
-			&i.FileSize,
-			&i.Width,
-			&i.Height,
 			&i.ProductID,
 			&i.DisplayOrder,
-			&i.IsPrimary,
 		); err != nil {
 			return nil, err
 		}
@@ -204,16 +174,11 @@ type InsertBulkProductImagesParams struct {
 	ImageID      string    `json:"imageId"`
 	AltText      *string   `json:"altText"`
 	Caption      *string   `json:"caption"`
-	MimeType     *string   `json:"mimeType"`
-	FileSize     *int64    `json:"fileSize"`
-	Width        *int32    `json:"width"`
-	Height       *int32    `json:"height"`
-	DisplayOrder int16     `json:"displayOrder"`
-	IsPrimary    bool      `json:"isPrimary"`
+	DisplayOrder int64     `json:"displayOrder"`
 }
 
 const insertProductImage = `-- name: InsertProductImage :one
-INSERT INTO product_images (product_id, image_url, image_id, alt_text, caption, mime_type, file_size, width, height, display_order, is_primary) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id, product_id, image_url, image_id, alt_text, caption, mime_type, file_size, width, height, display_order, is_primary, uploaded_at, updated_at
+INSERT INTO product_images (product_id, image_url, image_id, alt_text, caption, display_order) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, product_id, image_url, image_id, alt_text, caption, display_order, uploaded_at, updated_at
 `
 
 type InsertProductImageParams struct {
@@ -222,12 +187,7 @@ type InsertProductImageParams struct {
 	ImageID      string    `json:"imageId"`
 	AltText      *string   `json:"altText"`
 	Caption      *string   `json:"caption"`
-	MimeType     *string   `json:"mimeType"`
-	FileSize     *int64    `json:"fileSize"`
-	Width        *int32    `json:"width"`
-	Height       *int32    `json:"height"`
-	DisplayOrder int16     `json:"displayOrder"`
-	IsPrimary    bool      `json:"isPrimary"`
+	DisplayOrder int64     `json:"displayOrder"`
 }
 
 func (q *Queries) InsertProductImage(ctx context.Context, arg InsertProductImageParams) (ProductImage, error) {
@@ -237,12 +197,7 @@ func (q *Queries) InsertProductImage(ctx context.Context, arg InsertProductImage
 		arg.ImageID,
 		arg.AltText,
 		arg.Caption,
-		arg.MimeType,
-		arg.FileSize,
-		arg.Width,
-		arg.Height,
 		arg.DisplayOrder,
-		arg.IsPrimary,
 	)
 	var i ProductImage
 	err := row.Scan(
@@ -252,30 +207,11 @@ func (q *Queries) InsertProductImage(ctx context.Context, arg InsertProductImage
 		&i.ImageID,
 		&i.AltText,
 		&i.Caption,
-		&i.MimeType,
-		&i.FileSize,
-		&i.Width,
-		&i.Height,
 		&i.DisplayOrder,
-		&i.IsPrimary,
 		&i.UploadedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
-}
-
-const setPrimaryImage = `-- name: SetPrimaryImage :exec
-UPDATE product_images SET is_primary = CASE WHEN id = $2 THEN true ELSE false END, updated_at = NOW() WHERE product_id = $1
-`
-
-type SetPrimaryImageParams struct {
-	ProductID uuid.UUID `json:"productId"`
-	ID        uuid.UUID `json:"id"`
-}
-
-func (q *Queries) SetPrimaryImage(ctx context.Context, arg SetPrimaryImageParams) error {
-	_, err := q.db.Exec(ctx, setPrimaryImage, arg.ProductID, arg.ID)
-	return err
 }
 
 const updateProductImage = `-- name: UpdateProductImage :exec
@@ -286,19 +222,17 @@ SET
     alt_text = COALESCE($4, alt_text),
     caption = COALESCE($5, caption),
     display_order = COALESCE($6, display_order),
-    is_primary = COALESCE($7, is_primary),
     updated_at = NOW()
 WHERE id = $1
 `
 
 type UpdateProductImageParams struct {
-	ID           uuid.UUID `json:"id"`
-	ImageUrl     *string   `json:"imageUrl"`
-	ImageID      *string   `json:"imageId"`
-	AltText      *string   `json:"altText"`
-	Caption      *string   `json:"caption"`
-	DisplayOrder *int16    `json:"displayOrder"`
-	IsPrimary    *bool     `json:"isPrimary"`
+	ID           int64   `json:"id"`
+	ImageUrl     *string `json:"imageUrl"`
+	ImageID      *string `json:"imageId"`
+	AltText      *string `json:"altText"`
+	Caption      *string `json:"caption"`
+	DisplayOrder *int64  `json:"displayOrder"`
 }
 
 func (q *Queries) UpdateProductImage(ctx context.Context, arg UpdateProductImageParams) error {
@@ -309,7 +243,6 @@ func (q *Queries) UpdateProductImage(ctx context.Context, arg UpdateProductImage
 		arg.AltText,
 		arg.Caption,
 		arg.DisplayOrder,
-		arg.IsPrimary,
 	)
 	return err
 }

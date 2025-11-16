@@ -20,14 +20,14 @@ import (
 // @Produce json
 // @Param page query int false "Page number"
 // @Param pageSize query int false "Page size"
-// @Success 200 {object} ApiResponse[CategoryResponse]
-// @Failure 400 {object} gin.H
-// @Failure 500 {object} gin.H
+// @Success 200 {object} ApiResponse[[]CategoryListResponse]
+// @Failure 400 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
 // @Router /categories [get]
 func (sv *Server) getCategoriesHandler(c *gin.Context) {
 	var query PaginationQueryParams
 	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
 		return
 	}
 	params := repository.GetCategoriesParams{
@@ -40,13 +40,13 @@ func (sv *Server) getCategoriesHandler(c *gin.Context) {
 
 	categories, err := sv.repo.GetCategories(c, params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 
 	count, err := sv.repo.CountCategories(c)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -68,7 +68,7 @@ func (sv *Server) getCategoriesHandler(c *gin.Context) {
 		catIds[i] = category.ID
 	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(
+	c.JSON(http.StatusOK, createDataResp(
 		c,
 		categoriesResp,
 		fmt.Sprintf("Total %d categories", count),
@@ -87,13 +87,13 @@ func (sv *Server) getCategoriesHandler(c *gin.Context) {
 // @Param slug path string true "Category Slug"
 // @Param pageSize query int false "Page size"
 // @Success 200 {object} ApiResponse[CategoryResponse]
-// @Failure 400 {object} gin.H
-// @Failure 500 {object} gin.H
+// @Failure 400 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
 // @Router /categories/slug/{slug} [get]
 func (sv *Server) getCategoryBySlugHandler(c *gin.Context) {
 	var param SlugParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
 		return
 	}
 
@@ -101,10 +101,10 @@ func (sv *Server) getCategoryBySlugHandler(c *gin.Context) {
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[CategoryResponse](InvalidBodyCode, "", fmt.Errorf("category with Slug %s not found", param.Slug)))
+			c.JSON(http.StatusNotFound, createErr(InvalidBodyCode, "", fmt.Errorf("category with Slug %s not found", param.Slug)))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -120,7 +120,7 @@ func (sv *Server) getCategoryBySlugHandler(c *gin.Context) {
 		ImageUrl:    category.ImageUrl,
 	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(c, resp, "", nil, nil))
+	c.JSON(http.StatusOK, createDataResp(c, resp, "", nil, nil))
 }
 
 // --- Admin API ---
@@ -133,13 +133,13 @@ func (sv *Server) getCategoryBySlugHandler(c *gin.Context) {
 // @Produce json
 // @Param request body CreateCategoryRequest true "Category request"
 // @Success 201 {object} ApiResponse[CategoryResponse]
-// @Failure 400 {object} gin.H
-// @Failure 500 {object} gin.H
+// @Failure 400 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
 // @Router /admin/categories [post]
 func (sv *Server) createCategoryHandler(c *gin.Context) {
 	var req CreateCategoryRequest
 	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
 		return
 	}
 	params := repository.CreateCategoryParams{
@@ -158,7 +158,7 @@ func (sv *Server) createCategoryHandler(c *gin.Context) {
 	if req.Image != nil {
 		imageID, imageURL, err := sv.uploadService.UploadFile(c, req.Image)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](UploadFileCode, "", err))
+			c.JSON(http.StatusInternalServerError, createErr(UploadFileCode, "", err))
 			return
 		}
 		params.ImageID = &imageID
@@ -167,7 +167,7 @@ func (sv *Server) createCategoryHandler(c *gin.Context) {
 
 	col, err := sv.repo.CreateCategory(c, params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 	resp := CategoryResponse{
@@ -182,7 +182,7 @@ func (sv *Server) createCategoryHandler(c *gin.Context) {
 		ImageUrl:    col.ImageUrl,
 	}
 
-	c.JSON(http.StatusCreated, createSuccessResponse(c, resp, "", nil, nil))
+	c.JSON(http.StatusCreated, createDataResp(c, resp, "", nil, nil))
 }
 
 // getAdminCategoriesHandler retrieves a list of Categories.
@@ -194,14 +194,14 @@ func (sv *Server) createCategoryHandler(c *gin.Context) {
 // @Produce json
 // @Param page query int false "Page number"
 // @Param pageSize query int false "Page size"
-// @Success 200 {object} ApiResponse[CategoryResponse]
-// @Failure 400 {object} gin.H
-// @Failure 500 {object} gin.H
-// @Router/admin/categories [get]
+// @Success 200 {object} ApiResponse[[]CategoryResponse]
+// @Failure 400 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
+// @Router /admin/categories [get]
 func (sv *Server) getAdminCategoriesHandler(c *gin.Context) {
 	var query PaginationQueryParams
 	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
 		return
 	}
 	params := repository.GetCategoriesParams{
@@ -213,13 +213,13 @@ func (sv *Server) getAdminCategoriesHandler(c *gin.Context) {
 
 	categories, err := sv.repo.GetCategories(c, params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 
 	count, err := sv.repo.CountCategories(c)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 	categoriesResp := make([]CategoryResponse, len(categories))
@@ -237,7 +237,7 @@ func (sv *Server) getAdminCategoriesHandler(c *gin.Context) {
 			ImageUrl:    category.ImageUrl,
 		}
 	}
-	c.JSON(http.StatusOK, createSuccessResponse(c, categoriesResp, "", createPagination(query.Page, query.PageSize, count), nil))
+	c.JSON(http.StatusOK, createDataResp(c, categoriesResp, "", createPagination(query.Page, query.PageSize, count), nil))
 }
 
 // getCategoryByID retrieves a Category by its ID.
@@ -249,24 +249,24 @@ func (sv *Server) getAdminCategoriesHandler(c *gin.Context) {
 // @Produce json
 // @Param id path int true "Category ID"
 // @Success 200 {object} ApiResponse[CategoryResponse]
-// @Failure 400 {object} gin.H
-// @Failure 404 {object} gin.H
-// @Failure 500 {object} gin.H
+// @Failure 400 {object} ErrorResp
+// @Failure 404 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
 // @Router /admin/categories/{id} [get]
 func (sv *Server) getCategoryByID(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
 		return
 	}
 
 	category, err := sv.repo.GetCategoryByID(c, uuid.MustParse(param.ID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[CategoryResponse](InvalidBodyCode, "", fmt.Errorf("category with ID %s not found", param.ID)))
+			c.JSON(http.StatusNotFound, createErr(InvalidBodyCode, "", fmt.Errorf("category with ID %s not found", param.ID)))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -282,7 +282,7 @@ func (sv *Server) getCategoryByID(c *gin.Context) {
 		ImageUrl:    category.ImageUrl,
 	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(c, resp, "", nil, nil))
+	c.JSON(http.StatusOK, createDataResp(c, resp, "", nil, nil))
 }
 
 // updateCategoryHandler updates a Category.
@@ -294,19 +294,19 @@ func (sv *Server) getCategoryByID(c *gin.Context) {
 // @Produce json
 // @Param id path int true "Category ID"
 // @Param request body UpdateCategoryRequest true "Category request"
-// @Success 200 {object} ApiResponse[CategoryResponse]
-// @Failure 400 {object} gin.H
-// @Failure 500 {object} gin.H
+// @Success 200 {object} ApiResponse[repository.Category]
+// @Failure 400 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
 // @Router /admin/categories/{id} [put]
 func (sv *Server) updateCategoryHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
 		return
 	}
 	var req UpdateCategoryRequest
 	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[CategoryResponse](InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
 		return
 	}
 
@@ -314,10 +314,10 @@ func (sv *Server) updateCategoryHandler(c *gin.Context) {
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[CategoryResponse](NotFoundCode, "", fmt.Errorf("category with ID %s not found", param.ID)))
+			c.JSON(http.StatusNotFound, createErr(NotFoundCode, "", fmt.Errorf("category with ID %s not found", param.ID)))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 
@@ -363,7 +363,7 @@ func (sv *Server) updateCategoryHandler(c *gin.Context) {
 		}
 		imageID, imageURL, err = sv.uploadService.UploadFile(c, req.Image)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](UploadFileCode, "", err))
+			c.JSON(http.StatusInternalServerError, createErr(UploadFileCode, "", err))
 			return
 		}
 		updateParam.ImageID = &imageID
@@ -372,11 +372,11 @@ func (sv *Server) updateCategoryHandler(c *gin.Context) {
 	col, err := sv.repo.UpdateCategory(c, updateParam)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[CategoryResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(c, col, msg, nil, apiErr))
+	c.JSON(http.StatusOK, createDataResp(c, col, msg, nil, apiErr))
 }
 
 // deleteCategoryHandler delete a Category.
@@ -387,31 +387,31 @@ func (sv *Server) updateCategoryHandler(c *gin.Context) {
 // @Tags Admin
 // @Produce json
 // @Param id path int true "Category ID"
-// @Success 204 {object} ApiResponse[bool]
-// @Failure 400 {object} gin.H
-// @Failure 500 {object} gin.H
+// @Success 204 {object}
+// @Failure 400 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
 // @Router /admin/categories/{id} [delete]
 func (sv *Server) deleteCategoryHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[bool](InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
 		return
 	}
 
 	_, err := sv.repo.GetCategoryByID(c, uuid.MustParse(param.ID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[bool](NotFoundCode, "", fmt.Errorf("category with ID %s not found", param.ID)))
+			c.JSON(http.StatusNotFound, createErr(NotFoundCode, "", fmt.Errorf("category with ID %s not found", param.ID)))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 
 	err = sv.repo.DeleteCategory(c, uuid.MustParse(param.ID))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[bool](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
-	c.JSON(http.StatusOK, createSuccessResponse(c, true, fmt.Sprintf("Category with ID %s deleted", param.ID), nil, nil))
+	c.Status(http.StatusNoContent)
 }

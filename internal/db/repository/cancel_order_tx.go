@@ -28,7 +28,7 @@ func (pg *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (or
 			return err
 		}
 		// if payment is not found, we don't need to cancel it
-		if err == nil && payment.Gateway != nil {
+		if payment.Gateway != nil {
 			if payment.Status == PaymentStatusSuccess {
 				return errors.New("payment is already successful, need to refund")
 			}
@@ -81,7 +81,7 @@ func (pg *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (or
 			log.Error().Err(err).Msg("ListOrderItems")
 			return err
 		}
-		// TODO: implement UpdateProductStock
+		// TODO: #1 implement UpdateProductStock
 		for _, item := range orderItems {
 			_, err := q.UpdateProductStock(ctx, UpdateProductStockParams{
 				ID:    item.VariantID,

@@ -6,11 +6,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func createErrorResponse[T any](code string, msg string, err error) ApiResponse[T] {
-	return ApiResponse[T]{
-		Success: false,
-		Data:    nil,
-		Error: &ApiError{
+type ErrorResp struct {
+	Error ApiError `json:"error"`
+}
+
+func createErr(code string, msg string, err error) ErrorResp {
+	return ErrorResp{
+		Error: ApiError{
 			Code:    code,
 			Details: msg,
 			Stack:   err.Error(),
@@ -18,13 +20,12 @@ func createErrorResponse[T any](code string, msg string, err error) ApiResponse[
 	}
 }
 
-func createSuccessResponse[T any](c *gin.Context, data T, message string, pagination *Pagination, err *ApiError) ApiResponse[T] {
+func createDataResp[T any](c *gin.Context, data T, message string, pagination *Pagination, err *ApiError) ApiResponse[T] {
 	resp := ApiResponse[T]{
 		Success:    true,
 		Message:    message,
 		Data:       &data,
 		Pagination: pagination,
-
 		Meta: &MetaInfo{
 			Timestamp: time.Now().Format(time.RFC3339),
 			RequestID: c.GetString("RequestID"),

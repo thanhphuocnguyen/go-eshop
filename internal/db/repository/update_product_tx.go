@@ -26,7 +26,7 @@ type UpdateProductTxParams struct {
 	CategoryID       *string  `json:"categoryId,omitempty" binding:"omitempty,uuid"`
 	BrandID          *string  `json:"brandId,omitempty" binding:"omitempty,uuid"`
 	CollectionID     *string  `json:"collectionId,omitempty" binding:"omitempty,uuid"`
-	Attributes       []string `json:"attributes" binding:"omitempty"`
+	Attributes       []int32  `json:"attributes" binding:"omitempty"`
 	// Images           []UpdateProductImages          `json:"images" binding:"omitempty,dive"`
 	Variants      []UpdateProductVariantTxParams `json:"variants" binding:"omitempty,dive"`
 	RemoveImageFn func(ctx context.Context, externalID string) (string, error)
@@ -73,11 +73,7 @@ func (s *pgRepo) UpdateProductTx(ctx context.Context, productID uuid.UUID, arg U
 			updateProductParam.BasePrice = utils.GetPgNumericFromFloat(*arg.Price)
 		}
 		if len(arg.Attributes) > 0 {
-			attributes := make([]uuid.UUID, len(arg.Attributes))
-			for i, attr := range arg.Attributes {
-				attributes[i] = uuid.MustParse(attr)
-			}
-			updateProductParam.Attributes = attributes
+			updateProductParam.Attributes = arg.Attributes
 		}
 
 		product, err = q.UpdateProduct(ctx, updateProductParam)
@@ -89,24 +85,20 @@ func (s *pgRepo) UpdateProductTx(ctx context.Context, productID uuid.UUID, arg U
 
 		if len(arg.Variants) > 0 {
 			// get all attribute values
-			attrValMp := make(map[string]bool)
-			attrValueIds := make([]uuid.UUID, 0)
+			attrValMp := make(map[int64]bool)
+			attrValueIds := make([]int64, 0)
 			for _, variant := range arg.Variants {
 				for _, attr := range variant.Attributes {
 					if attrValMp[attr.ValueID] {
 						continue
 					}
-					id, parseErr := uuid.Parse(attr.ValueID)
-					if parseErr != nil {
-						log.Error().Err(parseErr).Msgf("Parse UUID from %s", attr.ValueID)
-						return parseErr
-					}
-					attrValueIds = append(attrValueIds, id)
+
+					attrValueIds = append(attrValueIds, attr.ValueID)
 					attrValMp[attr.ValueID] = true
 				}
 			}
 
-			attributeValueMp := make(map[string]AttributeValue)
+			attributeValueMp := make(map[int64]AttributeValue)
 			attributeValueRows, err := q.GetAttributeValuesByIDs(ctx, attrValueIds)
 
 			if err != nil {
@@ -114,8 +106,8 @@ func (s *pgRepo) UpdateProductTx(ctx context.Context, productID uuid.UUID, arg U
 				return err
 			}
 			for _, attributeValue := range attributeValueRows {
-				if _, ok := attributeValueMp[attributeValue.ID.String()]; !ok {
-					attributeValueMp[attributeValue.ID.String()] = attributeValue
+				if _, ok := attributeValueMp[attributeValue.ID]; !ok {
+					attributeValueMp[attributeValue.ID] = attributeValue
 				}
 			}
 			for i, variant := range arg.Variants {
@@ -166,7 +158,7 @@ func (s *pgRepo) UpdateProductTx(ctx context.Context, productID uuid.UUID, arg U
 						for _, attr := range variant.Attributes {
 							createBulkProductVariantAttributesParam = append(createBulkProductVariantAttributesParam, CreateBulkProductVariantAttributeParams{
 								VariantID:        updated.ID,
-								AttributeValueID: uuid.MustParse(attr.ValueID),
+								AttributeValueID: attr.ValueID,
 							})
 						}
 						_, err = q.CreateBulkProductVariantAttribute(ctx, createBulkProductVariantAttributesParam)
@@ -202,7 +194,7 @@ func (s *pgRepo) UpdateProductTx(ctx context.Context, productID uuid.UUID, arg U
 						for i, attr := range variant.Attributes {
 							createBulkProductVariantAttributesParam[i] = CreateBulkProductVariantAttributeParams{
 								VariantID:        created.ID,
-								AttributeValueID: uuid.MustParse(attr.ValueID),
+								AttributeValueID: attr.ValueID,
 							}
 						}
 

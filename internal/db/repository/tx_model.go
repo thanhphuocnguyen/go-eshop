@@ -4,7 +4,7 @@ import "github.com/google/uuid"
 
 type ProductAttributesTxParam struct {
 	ID      string `json:"id" binding:"required,uuid"`
-	ValueID string `json:"value_id" binding:"required,uuid"`
+	ValueID int64  `json:"value_id" binding:"required"`
 }
 
 type CreateProductVariantTxParams struct {

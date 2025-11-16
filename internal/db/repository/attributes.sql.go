@@ -7,10 +7,8 @@ package repository
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const countAttributes = `-- name: CountAttributes :one
@@ -25,51 +23,41 @@ func (q *Queries) CountAttributes(ctx context.Context) (int64, error) {
 }
 
 const createAttribute = `-- name: CreateAttribute :one
-INSERT INTO attributes (name) VALUES ($1) RETURNING id, name, created_at
+INSERT INTO attributes (name) VALUES ($1) RETURNING id, name
 `
 
 func (q *Queries) CreateAttribute(ctx context.Context, name string) (Attribute, error) {
 	row := q.db.QueryRow(ctx, createAttribute, name)
 	var i Attribute
-	err := row.Scan(&i.ID, &i.Name, &i.CreatedAt)
+	err := row.Scan(&i.ID, &i.Name)
 	return i, err
 }
 
 const createAttributeValue = `-- name: CreateAttributeValue :one
-INSERT INTO attribute_values (attribute_id, "name", code, display_order) VALUES ($1, $2, $3, $4) RETURNING id, attribute_id, name, code, is_active, display_order, created_at
+INSERT INTO attribute_values (attribute_id, value) VALUES ($1, $2) RETURNING id, attribute_id, value
 `
 
 type CreateAttributeValueParams struct {
-	AttributeID  uuid.UUID `json:"attributeId"`
-	Name         string    `json:"name"`
-	Code         string    `json:"code"`
-	DisplayOrder int16     `json:"displayOrder"`
+	AttributeID int32  `json:"attributeId"`
+	Value       string `json:"value"`
 }
 
 // Attribute values
 func (q *Queries) CreateAttributeValue(ctx context.Context, arg CreateAttributeValueParams) (AttributeValue, error) {
-	row := q.db.QueryRow(ctx, createAttributeValue,
-		arg.AttributeID,
-		arg.Name,
-		arg.Code,
-		arg.DisplayOrder,
-	)
+	row := q.db.QueryRow(ctx, createAttributeValue, arg.AttributeID, arg.Value)
 	var i AttributeValue
-	err := row.Scan(
-		&i.ID,
-		&i.AttributeID,
-		&i.Name,
-		&i.Code,
-		&i.IsActive,
-		&i.DisplayOrder,
-		&i.CreatedAt,
-	)
+	err := row.Scan(&i.ID, &i.AttributeID, &i.Value)
 	return i, err
+}
+
+type CreateAttributeValuesParams struct {
+	AttributeID int32  `json:"attributeId"`
+	Value       string `json:"value"`
 }
 
 type CreateBulkProductVariantAttributeParams struct {
 	VariantID        uuid.UUID `json:"variantId"`
-	AttributeValueID uuid.UUID `json:"attributeValueId"`
+	AttributeValueID int64     `json:"attributeValueId"`
 }
 
 const createProductVariantAttribute = `-- name: CreateProductVariantAttribute :one
@@ -78,7 +66,7 @@ INSERT INTO variant_attribute_values (variant_id, attribute_value_id) VALUES ($1
 
 type CreateProductVariantAttributeParams struct {
 	VariantID        uuid.UUID `json:"variantId"`
-	AttributeValueID uuid.UUID `json:"attributeValueId"`
+	AttributeValueID int64     `json:"attributeValueId"`
 }
 
 // Product Variant attributes
@@ -93,7 +81,7 @@ const deleteAttribute = `-- name: DeleteAttribute :exec
 DELETE FROM attributes WHERE id = $1
 `
 
-func (q *Queries) DeleteAttribute(ctx context.Context, id uuid.UUID) error {
+func (q *Queries) DeleteAttribute(ctx context.Context, id int32) error {
 	_, err := q.db.Exec(ctx, deleteAttribute, id)
 	return err
 }
@@ -102,8 +90,22 @@ const deleteAttributeValue = `-- name: DeleteAttributeValue :exec
 DELETE FROM attribute_values WHERE id = $1
 `
 
-func (q *Queries) DeleteAttributeValue(ctx context.Context, id uuid.UUID) error {
+func (q *Queries) DeleteAttributeValue(ctx context.Context, id int64) error {
 	_, err := q.db.Exec(ctx, deleteAttributeValue, id)
+	return err
+}
+
+const deleteAttributeValueByValueID = `-- name: DeleteAttributeValueByValueID :exec
+DELETE FROM attribute_values WHERE id = $2 AND attribute_id = $1
+`
+
+type DeleteAttributeValueByValueIDParams struct {
+	AttributeID int32 `json:"attributeId"`
+	ID          int64 `json:"id"`
+}
+
+func (q *Queries) DeleteAttributeValueByValueID(ctx context.Context, arg DeleteAttributeValueByValueIDParams) error {
+	_, err := q.db.Exec(ctx, deleteAttributeValueByValueID, arg.AttributeID, arg.ID)
 	return err
 }
 
@@ -116,93 +118,44 @@ func (q *Queries) DeleteProductVariantAttributes(ctx context.Context, variantID 
 	return err
 }
 
-const getAttributeByID = `-- name: GetAttributeByID :many
-SELECT a.id, a.name, a.created_at, 
-    av.name as attr_val_name, av.id as attribute_value_id, av.is_active as attribute_value_is_active, 
-    av.code as attr_val_code, av.created_at as attribute_value_created_at, av.display_order as display_order
-FROM attributes a
-LEFT JOIN attribute_values as av ON a.id = av.attribute_id
-WHERE a.id = $1
-ORDER BY a.id, av.display_order
+const getAttributeByID = `-- name: GetAttributeByID :one
+SELECT id, name FROM attributes WHERE id = $1 ORDER BY id
 `
 
-type GetAttributeByIDRow struct {
-	ID                      uuid.UUID          `json:"id"`
-	Name                    string             `json:"name"`
-	CreatedAt               time.Time          `json:"createdAt"`
-	AttrValName             *string            `json:"attrValName"`
-	AttributeValueID        pgtype.UUID        `json:"attributeValueId"`
-	AttributeValueIsActive  *bool              `json:"attributeValueIsActive"`
-	AttrValCode             *string            `json:"attrValCode"`
-	AttributeValueCreatedAt pgtype.Timestamptz `json:"attributeValueCreatedAt"`
-	DisplayOrder            *int16             `json:"displayOrder"`
-}
-
-func (q *Queries) GetAttributeByID(ctx context.Context, id uuid.UUID) ([]GetAttributeByIDRow, error) {
-	rows, err := q.db.Query(ctx, getAttributeByID, id)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []GetAttributeByIDRow{}
-	for rows.Next() {
-		var i GetAttributeByIDRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.CreatedAt,
-			&i.AttrValName,
-			&i.AttributeValueID,
-			&i.AttributeValueIsActive,
-			&i.AttrValCode,
-			&i.AttributeValueCreatedAt,
-			&i.DisplayOrder,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) GetAttributeByID(ctx context.Context, id int32) (Attribute, error) {
+	row := q.db.QueryRow(ctx, getAttributeByID, id)
+	var i Attribute
+	err := row.Scan(&i.ID, &i.Name)
+	return i, err
 }
 
 const getAttributeByName = `-- name: GetAttributeByName :one
-SELECT id, name, created_at FROM attributes WHERE name = $1 LIMIT 1
+SELECT id, name FROM attributes WHERE name = $1 LIMIT 1
 `
 
 func (q *Queries) GetAttributeByName(ctx context.Context, name string) (Attribute, error) {
 	row := q.db.QueryRow(ctx, getAttributeByName, name)
 	var i Attribute
-	err := row.Scan(&i.ID, &i.Name, &i.CreatedAt)
+	err := row.Scan(&i.ID, &i.Name)
 	return i, err
 }
 
 const getAttributeValueByID = `-- name: GetAttributeValueByID :one
-SELECT id, attribute_id, name, code, is_active, display_order, created_at FROM attribute_values WHERE id = $1
+SELECT id, attribute_id, value FROM attribute_values WHERE id = $1
 `
 
-func (q *Queries) GetAttributeValueByID(ctx context.Context, id uuid.UUID) (AttributeValue, error) {
+func (q *Queries) GetAttributeValueByID(ctx context.Context, id int64) (AttributeValue, error) {
 	row := q.db.QueryRow(ctx, getAttributeValueByID, id)
 	var i AttributeValue
-	err := row.Scan(
-		&i.ID,
-		&i.AttributeID,
-		&i.Name,
-		&i.Code,
-		&i.IsActive,
-		&i.DisplayOrder,
-		&i.CreatedAt,
-	)
+	err := row.Scan(&i.ID, &i.AttributeID, &i.Value)
 	return i, err
 }
 
 const getAttributeValues = `-- name: GetAttributeValues :many
-SELECT id, attribute_id, name, code, is_active, display_order, created_at FROM attribute_values WHERE attribute_id = $1 ORDER BY attribute_values.id
+SELECT id, attribute_id, value FROM attribute_values WHERE attribute_id = $1 ORDER BY attribute_values.id
 `
 
-func (q *Queries) GetAttributeValues(ctx context.Context, attributeID uuid.UUID) ([]AttributeValue, error) {
+func (q *Queries) GetAttributeValues(ctx context.Context, attributeID int32) ([]AttributeValue, error) {
 	rows, err := q.db.Query(ctx, getAttributeValues, attributeID)
 	if err != nil {
 		return nil, err
@@ -211,15 +164,7 @@ func (q *Queries) GetAttributeValues(ctx context.Context, attributeID uuid.UUID)
 	items := []AttributeValue{}
 	for rows.Next() {
 		var i AttributeValue
-		if err := rows.Scan(
-			&i.ID,
-			&i.AttributeID,
-			&i.Name,
-			&i.Code,
-			&i.IsActive,
-			&i.DisplayOrder,
-			&i.CreatedAt,
-		); err != nil {
+		if err := rows.Scan(&i.ID, &i.AttributeID, &i.Value); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -231,10 +176,10 @@ func (q *Queries) GetAttributeValues(ctx context.Context, attributeID uuid.UUID)
 }
 
 const getAttributeValuesByIDs = `-- name: GetAttributeValuesByIDs :many
-SELECT id, attribute_id, name, code, is_active, display_order, created_at FROM attribute_values WHERE id = ANY($1::uuid[]) ORDER BY attribute_values.id
+SELECT id, attribute_id, value FROM attribute_values WHERE id = ANY($1::bigint[]) ORDER BY attribute_values.id
 `
 
-func (q *Queries) GetAttributeValuesByIDs(ctx context.Context, ids []uuid.UUID) ([]AttributeValue, error) {
+func (q *Queries) GetAttributeValuesByIDs(ctx context.Context, ids []int64) ([]AttributeValue, error) {
 	rows, err := q.db.Query(ctx, getAttributeValuesByIDs, ids)
 	if err != nil {
 		return nil, err
@@ -243,15 +188,7 @@ func (q *Queries) GetAttributeValuesByIDs(ctx context.Context, ids []uuid.UUID) 
 	items := []AttributeValue{}
 	for rows.Next() {
 		var i AttributeValue
-		if err := rows.Scan(
-			&i.ID,
-			&i.AttributeID,
-			&i.Name,
-			&i.Code,
-			&i.IsActive,
-			&i.DisplayOrder,
-			&i.CreatedAt,
-		); err != nil {
+		if err := rows.Scan(&i.ID, &i.AttributeID, &i.Value); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -263,21 +200,21 @@ func (q *Queries) GetAttributeValuesByIDs(ctx context.Context, ids []uuid.UUID) 
 }
 
 const getAttributeWithValuesByIDs = `-- name: GetAttributeWithValuesByIDs :many
-SELECT att.name as attribute_name, att.id as attribute_id, atv.name as attribute_value_name, atv.id as attribute_value_id 
+SELECT att.name as attribute_name, att.id as attribute_id, atv.value as attribute_value, atv.id as attribute_value_id 
 FROM attributes as att
 LEFT JOIN attribute_values as atv ON att.id = atv.attribute_id
-WHERE attribute_id = ANY($1::uuid[]) 
+WHERE attribute_id = ANY($1::int[]) 
 ORDER BY atv.id
 `
 
 type GetAttributeWithValuesByIDsRow struct {
-	AttributeName      string      `json:"attributeName"`
-	AttributeID        uuid.UUID   `json:"attributeId"`
-	AttributeValueName *string     `json:"attributeValueName"`
-	AttributeValueID   pgtype.UUID `json:"attributeValueId"`
+	AttributeName    string  `json:"attributeName"`
+	AttributeID      int32   `json:"attributeId"`
+	AttributeValue   *string `json:"attributeValue"`
+	AttributeValueID *int64  `json:"attributeValueId"`
 }
 
-func (q *Queries) GetAttributeWithValuesByIDs(ctx context.Context, ids []uuid.UUID) ([]GetAttributeWithValuesByIDsRow, error) {
+func (q *Queries) GetAttributeWithValuesByIDs(ctx context.Context, ids []int32) ([]GetAttributeWithValuesByIDsRow, error) {
 	rows, err := q.db.Query(ctx, getAttributeWithValuesByIDs, ids)
 	if err != nil {
 		return nil, err
@@ -289,7 +226,7 @@ func (q *Queries) GetAttributeWithValuesByIDs(ctx context.Context, ids []uuid.UU
 		if err := rows.Scan(
 			&i.AttributeName,
 			&i.AttributeID,
-			&i.AttributeValueName,
+			&i.AttributeValue,
 			&i.AttributeValueID,
 		); err != nil {
 			return nil, err
@@ -304,32 +241,25 @@ func (q *Queries) GetAttributeWithValuesByIDs(ctx context.Context, ids []uuid.UU
 
 const getAttributes = `-- name: GetAttributes :many
 SELECT 
-    a.id, a.name, a.created_at, 
-    av.name as attr_val_name, av.id as attribute_value_id, av.is_active as attribute_value_is_active,
-    av.code as attr_val_code, av.created_at as attribute_value_created_at, av.display_order as display_order
+    a.id, a.name, av.value as attr_value, av.id as attr_value_id
 FROM attributes as a
 LEFT JOIN attribute_values as av ON a.id = av.attribute_id
 WHERE 
     CASE 
-        WHEN array_length($1::uuid[], 1) > 0 THEN a.id = ANY($1::uuid[])
+        WHEN array_length($1::int[], 1) > 0 THEN a.id = ANY($1::int[])
         ELSE true
     END
-ORDER BY a.id, av.display_order
+ORDER BY a.id
 `
 
 type GetAttributesRow struct {
-	ID                      uuid.UUID          `json:"id"`
-	Name                    string             `json:"name"`
-	CreatedAt               time.Time          `json:"createdAt"`
-	AttrValName             *string            `json:"attrValName"`
-	AttributeValueID        pgtype.UUID        `json:"attributeValueId"`
-	AttributeValueIsActive  *bool              `json:"attributeValueIsActive"`
-	AttrValCode             *string            `json:"attrValCode"`
-	AttributeValueCreatedAt pgtype.Timestamptz `json:"attributeValueCreatedAt"`
-	DisplayOrder            *int16             `json:"displayOrder"`
+	ID          int32   `json:"id"`
+	Name        string  `json:"name"`
+	AttrValue   *string `json:"attrValue"`
+	AttrValueID *int64  `json:"attrValueId"`
 }
 
-func (q *Queries) GetAttributes(ctx context.Context, ids []uuid.UUID) ([]GetAttributesRow, error) {
+func (q *Queries) GetAttributes(ctx context.Context, ids []int32) ([]GetAttributesRow, error) {
 	rows, err := q.db.Query(ctx, getAttributes, ids)
 	if err != nil {
 		return nil, err
@@ -341,13 +271,8 @@ func (q *Queries) GetAttributes(ctx context.Context, ids []uuid.UUID) ([]GetAttr
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
-			&i.CreatedAt,
-			&i.AttrValName,
-			&i.AttributeValueID,
-			&i.AttributeValueIsActive,
-			&i.AttrValCode,
-			&i.AttributeValueCreatedAt,
-			&i.DisplayOrder,
+			&i.AttrValue,
+			&i.AttrValueID,
 		); err != nil {
 			return nil, err
 		}
@@ -360,10 +285,10 @@ func (q *Queries) GetAttributes(ctx context.Context, ids []uuid.UUID) ([]GetAttr
 }
 
 const getAttributesByIDs = `-- name: GetAttributesByIDs :many
-SELECT id, name, created_at FROM attributes WHERE id = ANY($1::uuid[]) ORDER BY attributes.id
+SELECT id, name FROM attributes WHERE id = ANY($1::int[]) ORDER BY attributes.id
 `
 
-func (q *Queries) GetAttributesByIDs(ctx context.Context, ids []uuid.UUID) ([]Attribute, error) {
+func (q *Queries) GetAttributesByIDs(ctx context.Context, ids []int32) ([]Attribute, error) {
 	rows, err := q.db.Query(ctx, getAttributesByIDs, ids)
 	if err != nil {
 		return nil, err
@@ -372,7 +297,7 @@ func (q *Queries) GetAttributesByIDs(ctx context.Context, ids []uuid.UUID) ([]At
 	items := []Attribute{}
 	for rows.Next() {
 		var i Attribute
-		if err := rows.Scan(&i.ID, &i.Name, &i.CreatedAt); err != nil {
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -419,52 +344,35 @@ func (q *Queries) GetProductVariantAttributes(ctx context.Context, variantID uui
 }
 
 const updateAttribute = `-- name: UpdateAttribute :one
-UPDATE attributes SET name = $1 WHERE id = $2 RETURNING id, name, created_at
+UPDATE attributes SET name = $1 WHERE id = $2 RETURNING id, name
 `
 
 type UpdateAttributeParams struct {
-	Name string    `json:"name"`
-	ID   uuid.UUID `json:"id"`
+	Name string `json:"name"`
+	ID   int32  `json:"id"`
 }
 
 func (q *Queries) UpdateAttribute(ctx context.Context, arg UpdateAttributeParams) (Attribute, error) {
 	row := q.db.QueryRow(ctx, updateAttribute, arg.Name, arg.ID)
 	var i Attribute
-	err := row.Scan(&i.ID, &i.Name, &i.CreatedAt)
+	err := row.Scan(&i.ID, &i.Name)
 	return i, err
 }
 
 const updateAttributeValue = `-- name: UpdateAttributeValue :one
 UPDATE attribute_values 
-SET code = COALESCE($2, code), is_active = COALESCE($3, is_active), "name" = COALESCE($4, "name"), display_order = COALESCE($5, display_order)
-WHERE id = $1 RETURNING id, attribute_id, name, code, is_active, display_order, created_at
+SET "value" = COALESCE($2, "value")
+WHERE id = $1 RETURNING id, attribute_id, value
 `
 
 type UpdateAttributeValueParams struct {
-	ID           uuid.UUID `json:"id"`
-	Code         *string   `json:"code"`
-	IsActive     *bool     `json:"isActive"`
-	Name         *string   `json:"name"`
-	DisplayOrder *int16    `json:"displayOrder"`
+	ID    int64   `json:"id"`
+	Value *string `json:"value"`
 }
 
 func (q *Queries) UpdateAttributeValue(ctx context.Context, arg UpdateAttributeValueParams) (AttributeValue, error) {
-	row := q.db.QueryRow(ctx, updateAttributeValue,
-		arg.ID,
-		arg.Code,
-		arg.IsActive,
-		arg.Name,
-		arg.DisplayOrder,
-	)
+	row := q.db.QueryRow(ctx, updateAttributeValue, arg.ID, arg.Value)
 	var i AttributeValue
-	err := row.Scan(
-		&i.ID,
-		&i.AttributeID,
-		&i.Name,
-		&i.Code,
-		&i.IsActive,
-		&i.DisplayOrder,
-		&i.CreatedAt,
-	)
+	err := row.Scan(&i.ID, &i.AttributeID, &i.Value)
 	return i, err
 }

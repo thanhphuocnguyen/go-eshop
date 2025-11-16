@@ -175,7 +175,7 @@ SELECT
     pi.id as image_id, pi.image_url
 FROM collections AS c
 LEFT JOIN products AS p ON c.id = p.collection_id
-LEFT JOIN product_images AS pi ON p.id = pi.product_id AND pi.is_primary = true
+LEFT JOIN product_images AS pi ON p.id = pi.product_id
 WHERE c.id = ANY($3::UUID[])
 GROUP BY c.id, p.id, pi.id, pi.image_url
 LIMIT $1 OFFSET $2
@@ -205,7 +205,7 @@ type GetCollectionsByIDsRow struct {
 	ProductPrice  pgtype.Numeric `json:"productPrice"`
 	ProductSku    *string        `json:"productSku"`
 	ProductSlug   *string        `json:"productSlug"`
-	ImageID_2     pgtype.UUID    `json:"imageId2"`
+	ImageID_2     *int64         `json:"imageId2"`
 	ImageUrl_2    *string        `json:"imageUrl2"`
 }
 

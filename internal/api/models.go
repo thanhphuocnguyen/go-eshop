@@ -1,11 +1,215 @@
 package api
 
 import (
+	"mime/multipart"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 )
+
+type CreateCategoryRequest struct {
+	Name         string                `form:"name" binding:"required,min=3,max=255"`
+	Slug         string                `form:"slug" binding:"required,min=3,max=255"`
+	Description  *string               `form:"description" binding:"omitempty,max=1000"`
+	DisplayOrder *int16                `form:"displayOrder" binding:"omitempty"`
+	Remarkable   *bool                 `form:"remarkable" binding:"omitempty"`
+	Image        *multipart.FileHeader `form:"image" binding:"omitempty"`
+}
+
+type CategoryProductRequest struct {
+	SortOrder int16 `json:"sortOrder,omitempty"`
+}
+
+type PostHelpfulRatingRequest struct {
+	Helpful bool `json:"helpful"`
+}
+
+type PostReplyRatingRequest struct {
+	RatingID string `json:"ratingId" binding:"required"`
+	Content  string `json:"content" binding:"required"`
+}
+
+type PaymentRequest struct {
+	OrderID         string `json:"orderId" binding:"required,uuid"`
+	PaymentMethodID string `json:"paymentMethodId" binding:"required,uuid"`
+}
+
+type UpdatePaymentStatusRequest struct {
+	Status repository.PaymentStatus `json:"status" binding:"required"`
+}
+
+type OrderStatusRequest struct {
+	Status string `json:"status" binding:"required,oneof=pending confirmed delivering delivered completed"`
+	Reason string `json:"reason,omitempty"`
+}
+
+type RefundOrderRequest struct {
+	Reason string `json:"reason" binding:"required,oneof=defective damaged fraudulent requested_by_customer"`
+}
+
+type CancelOrderRequest struct {
+	Reason string `json:"reason" binding:"required"`
+}
+
+type CreateAddressRequest struct {
+	Phone     string  `json:"phone" binding:"required,min=10,max=15"`
+	Street    string  `json:"street" binding:"required"`
+	District  string  `json:"district" binding:"required"`
+	City      string  `json:"city" binding:"required"`
+	Ward      *string `json:"ward,omitempty" binding:"omitempty,max=100"`
+	IsDefault bool    `json:"isDefault,omitempty" binding:"omitempty"`
+}
+
+type UpdateAddressRequest struct {
+	Phone     *string `json:"phone" binding:"omitempty"`
+	Address   *string `json:"address1" binding:"omitempty"`
+	Ward      *string `json:"ward" binding:"omitempty"`
+	District  *string `json:"district" binding:"omitempty"`
+	City      *string `json:"city" binding:"omitempty"`
+	IsDefault *bool   `json:"isDefault" binding:"omitempty"`
+}
+
+type UpdateCartItemQtyRequest struct {
+	Quantity int16 `json:"quantity" binding:"required,gt=0"`
+}
+
+type CheckoutAddress struct {
+	Phone    string  `json:"phone"`
+	Street   string  `json:"street"`
+	Ward     *string `json:"ward,omitempty"`
+	District string  `json:"district"`
+	City     string  `json:"city"`
+}
+
+type CheckoutRequest struct {
+	PaymentMethodId string           `json:"paymentMethod" binding:"required,oneof=cod stripe"`
+	PaymentGateway  *string          `json:"paymentGateway" binding:"omitempty,oneof=stripe"`
+	AddressID       *string          `json:"addressId" binding:"omitempty,uuid"`
+	Email           *string          `json:"email" binding:"omitempty,email"`
+	FirstName       *string          `json:"firstName,omitempty" binding:"omitempty,min=3,max=32"`
+	LastName        *string          `json:"lastName,omitempty" binding:"omitempty,min=3,max=32"`
+	Address         *CheckoutAddress `json:"address" binding:"omitempty"`
+	DiscountCode    *string          `json:"discountCode" binding:"omitempty,min=5,max=32,alphanum"`
+}
+
+type AssignmentRequest struct {
+	VariantIDs []string `json:"variantIds" binding:"required"`
+}
+
+type UpdateUserRequest struct {
+	UserID    uuid.UUID `json:"userId" binding:"required,uuid"`
+	FirstName *string   `json:"firstName,omitempty" binding:"omitempty,min=3,max=32"`
+	LastName  *string   `json:"lastName,omitempty" binding:"omitempty,min=3,max=32"`
+	Email     *string   `json:"email" binding:"email,max=255,min=6"`
+	Phone     *string   `json:"phone" binding:"omitempty,min=8,max=15"`
+}
+
+type CollectionProductRequest struct {
+	SortOrder int16 `json:"sortOrder,omitempty"`
+}
+
+type UpdateCategoryRequest struct {
+	Name         *string               `form:"name" binding:"omitempty,min=3,max=255"`
+	Description  *string               `form:"description" binding:"omitempty,max=1000"`
+	Slug         *string               `form:"slug" binding:"omitempty,min=3,max=255"`
+	Published    *bool                 `form:"published" binding:"omitempty"`
+	Remarkable   *bool                 `form:"remarkable" binding:"omitempty"`
+	DisplayOrder *int16                `form:"displayOrder" binding:"omitempty"`
+	Image        *multipart.FileHeader `form:"image" binding:"omitempty"`
+}
+
+type ProductQueries struct {
+	Page         int64    `form:"page,default=1" binding:"omitempty,min=1"`
+	PageSize     int64    `form:"pageSize,default=20" binding:"omitempty,min=1,max=100"`
+	Search       *string  `form:"search" binding:"omitempty,max=1000"`
+	CategoryIDs  []string `form:"categoryIds" binding:"omitempty,uuidslice"`
+	BrandID      *string  `form:"brandId" binding:"omitempty,uuid4"`
+	CollectionID *string  `form:"collectionId" binding:"omitempty,uuid4"`
+}
+
+type OrderListQuery struct {
+	PaginationQueryParams
+	Status        *string `form:"status,omitempty" binding:"omitempty,oneof=pending confirmed delivering delivered completed cancelled refunded"`
+	PaymentStatus *string `form:"paymentStatus,omitempty" binding:"omitempty,oneof=pending succeeded failed cancelled refunded"`
+}
+
+type PostRatingFormData struct {
+	OrderItemID string                  `form:"orderItemId" binding:"required"`
+	Rating      float64                 `form:"rating" binding:"required,min=1,max=5"`
+	Title       string                  `form:"title" binding:"required"`
+	Content     string                  `form:"content" binding:"required"`
+	Files       []*multipart.FileHeader `form:"files" binding:"omitempty"`
+}
+
+type CreateDiscountRequest struct {
+	Code              string    `json:"code" binding:"required,min=5,max=32,alphanum"`
+	DiscountType      string    `json:"discountType" binding:"required,oneof=percentage fixed_amount"`
+	DiscountValue     float64   `json:"discountValue" binding:"required,gt=0"`
+	IsActive          bool      `json:"isActive" binding:"required"`
+	StartsAt          time.Time `json:"startsAt" binding:"required" time_format:"RFC3339"`
+	ExpiresAt         time.Time `json:"expiresAt" binding:"omitempty" time_format:"RFC3339"`
+	Description       *string   `json:"description" binding:"omitempty,max=1000"`
+	MinPurchaseAmount *float64  `json:"minPurchaseAmount" binding:"omitempty,gt=0"`
+	MaxDiscountAmount *float64  `json:"maxDiscountAmount" binding:"omitempty,gt=0"`
+	UsageLimit        *int32    `json:"usageLimit" binding:"omitempty,gte=0"`
+
+	// Related entities
+	Products   []string `json:"products,omitempty" binding:"omitempty,uuidslice"`
+	Categories []string `json:"categories,omitempty" binding:"omitempty,uuidslice"`
+	Users      []string `json:"users,omitempty" binding:"omitempty,uuidslice"`
+}
+
+type DiscountListQuery struct {
+	PaginationQueryParams
+	DiscountType  *string    `form:"discountType" binding:"omitempty,oneof=percentage fixed_amount"`
+	IsActive      *bool      `from:"isActive" binding:"omitempty"`
+	DiscountValue *float64   `form:"discountValue" binding:"omitempty,gt=0"`
+	FromDate      *time.Time `form:"fromDate, default=" binding:"omitempty"`
+	ToDate        *time.Time `form:"toDate" binding:"omitempty"`
+}
+
+type RegisterRequestBody struct {
+	Username  string                `json:"username" binding:"required,min=3,max=32,lowercase"`
+	Password  string                `json:"password" binding:"required,min=6,max=32"`
+	FirstName string                `json:"firstName,omitempty" binding:"omitempty,min=3,max=32"`
+	LastName  string                `json:"lastName,omitempty" binding:"omitempty,min=3,max=32"`
+	Phone     string                `json:"phone" binding:"required,min=10,max=15"`
+	Email     string                `json:"email" binding:"required,email,max=255,min=6"`
+	Address   *CreateAddressRequest `json:"address" binding:"omitempty,required"`
+}
+
+type LoginRequest struct {
+	Username *string `form:"username" binding:"omitempty,max=32"`
+	Email    *string `form:"email" binding:"omitempty,email,max=255"`
+	Password string  `form:"password" binding:"required,min=6,max=32"`
+}
+
+type BrandsQueries struct {
+	PaginationQueryParams
+}
+
+type BrandProductRequest struct {
+	SortOrder int16 `json:"sortOrder,omitempty"`
+}
+
+type CreateAttributeRequest struct {
+	Name   string   `json:"name" binding:"required"`
+	Values []string `json:"values,omitempty"`
+}
+
+type UpdateAttributeRequest struct {
+	Name string `json:"name" binding:"required"`
+}
+
+type AttributeParam struct {
+	ID      int32  `uri:"id" binding:"required"`
+	ValueID *int64 `uri:"valueId" binding:"omitempty"`
+}
+
+type GetAttributesQuery struct {
+	IDs []int32 `form:"ids" binding:"omitempty"`
+}
 
 type URISlugParam struct {
 	ID string `uri:"id" binding:"required"`
@@ -20,11 +224,11 @@ type SlugParam struct {
 }
 
 type VerifyEmailQuery struct {
-	VerifyCode string `form:"verify_code" binding:"required,min=1"`
+	VerifyCode string `form:"verifyCode" binding:"required,min=1"`
 }
 
 type ProductVariantParam struct {
-	ID string `uri:"variant_id" binding:"required,uuid"`
+	ID string `uri:"variantId" binding:"required,uuid"`
 }
 
 // Meta info about the request
@@ -69,15 +273,15 @@ type PaginationQueryParams struct {
 }
 
 type ProductDetailItemResponse struct {
-	ID               string   `json:"id"`
-	Name             string   `json:"name"`
-	Description      string   `json:"description"`
-	ShortDescription *string  `json:"shortDescription"`
-	Attributes       []string `json:"attributes"`
-	BasePrice        float64  `json:"price,omitzero"`
-	BaseSku          string   `json:"sku"`
-	IsActive         bool     `json:"isActive"`
-	Slug             string   `json:"slug"`
+	ID               string  `json:"id"`
+	Name             string  `json:"name"`
+	Description      string  `json:"description"`
+	ShortDescription *string `json:"shortDescription"`
+	Attributes       []int32 `json:"attributes"`
+	BasePrice        float64 `json:"price,omitzero"`
+	BaseSku          string  `json:"sku"`
+	IsActive         bool    `json:"isActive"`
+	Slug             string  `json:"slug"`
 
 	RatingCount    int32 `json:"ratingCount"`
 	OneStarCount   int32 `json:"oneStarCount"`
@@ -131,12 +335,12 @@ type CategoryResponse struct {
 }
 
 type PublicIDParam struct {
-	PublicID string `uri:"public_id" binding:"required"`
+	PublicID string `uri:"publicId" binding:"required"`
 }
 
 type RemoveImageParams struct {
 	ID        string  `uri:"id" binding:"required,uuid"`
-	VariantID *string `uri:"id" binding:"omitempty,uuid"`
+	VariantID *string `uri:"variantId" binding:"omitempty,uuid"`
 	ImageID   string  `uri:"imageId" binding:"required,uuid"`
 }
 
@@ -155,10 +359,10 @@ type CollectionsQueryParams struct {
 }
 
 type CollectionDetailResponse struct {
-	Collection CategoryResponse          `json:"collection"`
-	Categories []FiltersModel            `json:"categories"`
-	Brands     []FiltersModel            `json:"brands"`
-	Attributes map[string][]FiltersModel `json:"attributes"`
+	Collection CategoryResponse              `json:"collection"`
+	Categories []FiltersModel                `json:"categories"`
+	Brands     []FiltersModel                `json:"brands"`
+	Attributes map[string][]FilterIntIDModel `json:"attributes"`
 }
 
 type RatingsQueryParams struct {
@@ -175,7 +379,9 @@ type PaymentResponse struct {
 	ID      string                   `json:"id"`
 	Gateway *string                  `json:"gateway,omitempty"`
 	Status  repository.PaymentStatus `json:"status,omitempty"`
-	Details interface{}              `json:"details"`
+	// Details contains gateway-specific payment information.
+	// The type may vary depending on the payment provider, and is typically a struct or map[string]interface{}.
+	Details any `json:"details"`
 }
 
 type OrderItemResponse struct {
@@ -195,7 +401,7 @@ type OrderDetailResponse struct {
 	Status        repository.OrderStatus             `json:"status"`
 	CustomerName  string                             `json:"customerName"`
 	CustomerEmail string                             `json:"customerEmail"`
-	PaymentInfo   PaymentInfoModel                   `json:"paymentInfo,omitempty"`
+	PaymentInfo   PaymentInfoModel                   `json:"paymentInfo"`
 	ShippingInfo  repository.ShippingAddressSnapshot `json:"shippingInfo"`
 	Products      []OrderItemResponse                `json:"products"`
 	CreatedAt     time.Time                          `json:"createdAt"`
@@ -263,7 +469,7 @@ type CartDetailResponse struct {
 	ID         uuid.UUID          `json:"id"`
 	TotalPrice float64            `json:"totalPrice"`
 	CartItems  []CartItemResponse `json:"cartItems"`
-	UpdatedAt  time.Time          `json:"updatedAt,omitempty"`
+	UpdatedAt  time.Time          `json:"updatedAt"`
 	CreatedAt  time.Time          `json:"createdAt"`
 }
 
@@ -359,13 +565,18 @@ type ProductListModel struct {
 	ImgUrl       *string  `json:"imageUrl,omitempty"`
 	AvgRating    *float64 `json:"avgRating,omitempty"`
 	ReviewCount  *int32   `json:"reviewCount,omitempty"`
-	ImgID        *string  `json:"imageId,omitempty"`
+	ImgID        *int64   `json:"imageId,omitempty"`
 	CreatedAt    string   `json:"createdAt,omitempty"`
 	UpdatedAt    string   `json:"updatedAt,omitempty"`
 }
 
 type FiltersModel struct {
 	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type FilterIntIDModel struct {
+	ID   int64  `json:"id"`
 	Name string `json:"name"`
 }
 
@@ -433,26 +644,23 @@ type RatingModel struct {
 }
 
 type RatingImageModel struct {
-	ID  string `json:"id"`
+	ID  int64  `json:"id"`
 	URL string `json:"url"`
 }
 
 type ProductAttributeModel struct {
-	ID          string         `json:"id"`
+	ID          int32          `json:"id"`
 	Name        string         `json:"name"`
 	ValueObject AttributeValue `json:"valueObject"`
 }
 
 type AttributeValue struct {
-	ID           uuid.UUID `json:"id"`
-	Code         string    `json:"code"`
-	Name         *string   `json:"name"`
-	IsActive     *bool     `json:"isActive"`
-	DisplayOrder *int16    `json:"displayOrder"`
+	ID    int64  `json:"id"`
+	Value string `json:"code"`
 }
 
 type AttributeResponse struct {
-	ID        uuid.UUID        `json:"id"`
+	ID        int32            `json:"id"`
 	Name      string           `json:"name"`
 	Values    []AttributeValue `json:"values,omitempty"`
 	CreatedAt string           `json:"createdAt"`

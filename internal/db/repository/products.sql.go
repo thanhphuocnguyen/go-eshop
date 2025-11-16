@@ -102,7 +102,7 @@ type CreateProductParams struct {
 	BasePrice        pgtype.Numeric `json:"basePrice"`
 	BaseSku          string         `json:"baseSku"`
 	Slug             string         `json:"slug"`
-	Attributes       []uuid.UUID    `json:"attributes"`
+	Attributes       []int32        `json:"attributes"`
 	BrandID          pgtype.UUID    `json:"brandId"`
 	CollectionID     pgtype.UUID    `json:"collectionId"`
 	CategoryID       pgtype.UUID    `json:"categoryId"`
@@ -224,7 +224,7 @@ type GetFilterListForCollectionIDRow struct {
 	CategoryID   pgtype.UUID `json:"categoryId"`
 	BrandID      pgtype.UUID `json:"brandId"`
 	BrandName    *string     `json:"brandName"`
-	Attributes   []uuid.UUID `json:"attributes"`
+	Attributes   []int32     `json:"attributes"`
 }
 
 func (q *Queries) GetFilterListForCollectionID(ctx context.Context, id uuid.UUID) ([]GetFilterListForCollectionIDRow, error) {
@@ -373,7 +373,7 @@ type GetProductDetailRow struct {
 	CreatedAt        time.Time      `json:"createdAt"`
 	IsActive         *bool          `json:"isActive"`
 	ShortDescription *string        `json:"shortDescription"`
-	Attributes       []uuid.UUID    `json:"attributes"`
+	Attributes       []int32        `json:"attributes"`
 	RatingCount      int32          `json:"ratingCount"`
 	OneStarCount     int32          `json:"oneStarCount"`
 	TwoStarCount     int32          `json:"twoStarCount"`
@@ -453,14 +453,14 @@ const getProductVariants = `-- name: GetProductVariants :many
 SELECT
     v.id, v.product_id, v.description, v.sku, v.price, v.stock, v.weight, v.is_active, v.created_at, v.updated_at,
     a.id as attr_id, a.name as attr_name,
-    av.id as attr_val_id, av.code as attr_val_code, av.display_order as attr_display_order, 
-    av.is_active as attr_val_is_active, av.name as attr_val_name
+    av.id as attr_val_id,
+    av.value as attr_value
 FROM product_variants AS v
 JOIN variant_attribute_values as vav ON v.id = vav.variant_id
 JOIN attribute_values as av ON vav.attribute_value_id = av.id
 JOIN attributes as a ON av.attribute_id = a.id
 WHERE v.product_id = $1 AND v.is_active = COALESCE($2, TRUE)
-ORDER BY a.id, av.display_order, v.created_at DESC
+ORDER BY a.id, v.created_at DESC
 `
 
 type GetProductVariantsParams struct {
@@ -469,23 +469,20 @@ type GetProductVariantsParams struct {
 }
 
 type GetProductVariantsRow struct {
-	ID               uuid.UUID      `json:"id"`
-	ProductID        uuid.UUID      `json:"productId"`
-	Description      *string        `json:"description"`
-	Sku              string         `json:"sku"`
-	Price            pgtype.Numeric `json:"price"`
-	Stock            int32          `json:"stock"`
-	Weight           pgtype.Numeric `json:"weight"`
-	IsActive         *bool          `json:"isActive"`
-	CreatedAt        time.Time      `json:"createdAt"`
-	UpdatedAt        time.Time      `json:"updatedAt"`
-	AttrID           uuid.UUID      `json:"attrId"`
-	AttrName         string         `json:"attrName"`
-	AttrValID        uuid.UUID      `json:"attrValId"`
-	AttrValCode      string         `json:"attrValCode"`
-	AttrDisplayOrder int16          `json:"attrDisplayOrder"`
-	AttrValIsActive  *bool          `json:"attrValIsActive"`
-	AttrValName      string         `json:"attrValName"`
+	ID          uuid.UUID      `json:"id"`
+	ProductID   uuid.UUID      `json:"productId"`
+	Description *string        `json:"description"`
+	Sku         string         `json:"sku"`
+	Price       pgtype.Numeric `json:"price"`
+	Stock       int32          `json:"stock"`
+	Weight      pgtype.Numeric `json:"weight"`
+	IsActive    *bool          `json:"isActive"`
+	CreatedAt   time.Time      `json:"createdAt"`
+	UpdatedAt   time.Time      `json:"updatedAt"`
+	AttrID      int32          `json:"attrId"`
+	AttrName    string         `json:"attrName"`
+	AttrValID   int64          `json:"attrValId"`
+	AttrValue   string         `json:"attrValue"`
 }
 
 func (q *Queries) GetProductVariants(ctx context.Context, arg GetProductVariantsParams) ([]GetProductVariantsRow, error) {
@@ -511,10 +508,7 @@ func (q *Queries) GetProductVariants(ctx context.Context, arg GetProductVariants
 			&i.AttrID,
 			&i.AttrName,
 			&i.AttrValID,
-			&i.AttrValCode,
-			&i.AttrDisplayOrder,
-			&i.AttrValIsActive,
-			&i.AttrValName,
+			&i.AttrValue,
 		); err != nil {
 			return nil, err
 		}
@@ -537,7 +531,7 @@ LEFT JOIN LATERAL (
     SELECT pi.id, pi.image_url
     FROM product_images as pi
     WHERE pi.product_id = p.id
-    ORDER BY pi.display_order ASC, pi.id ASC
+    ORDER BY pi.id ASC
     LIMIT 1
 ) AS first_img ON true
 WHERE
@@ -574,7 +568,7 @@ type GetProductsRow struct {
 	Name             string         `json:"name"`
 	Description      string         `json:"description"`
 	ShortDescription *string        `json:"shortDescription"`
-	Attributes       []uuid.UUID    `json:"attributes"`
+	Attributes       []int32        `json:"attributes"`
 	BasePrice        pgtype.Numeric `json:"basePrice"`
 	BaseSku          string         `json:"baseSku"`
 	Slug             string         `json:"slug"`
@@ -593,7 +587,7 @@ type GetProductsRow struct {
 	FiveStarCount    int32          `json:"fiveStarCount"`
 	CreatedAt        time.Time      `json:"createdAt"`
 	UpdatedAt        time.Time      `json:"updatedAt"`
-	ImgID            uuid.UUID      `json:"imgId"`
+	ImgID            int64          `json:"imgId"`
 	ImgUrl           string         `json:"imgUrl"`
 	VariantCount     int64          `json:"variantCount"`
 	MinPrice         pgtype.Numeric `json:"minPrice"`
@@ -685,7 +679,7 @@ type UpdateProductParams struct {
 	Description      *string        `json:"description"`
 	ShortDescription *string        `json:"shortDescription"`
 	BrandID          pgtype.UUID    `json:"brandId"`
-	Attributes       []uuid.UUID    `json:"attributes"`
+	Attributes       []int32        `json:"attributes"`
 	CollectionID     pgtype.UUID    `json:"collectionId"`
 	CategoryID       pgtype.UUID    `json:"categoryId"`
 	Slug             *string        `json:"slug"`

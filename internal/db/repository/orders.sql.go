@@ -296,7 +296,7 @@ SELECT
 FROM order_items oi
 JOIN product_variants pv ON oi.variant_id = pv.id
 JOIN products p ON pv.product_id = p.id
-LEFT JOIN product_images AS pi ON pi.product_id = p.id AND pi.is_primary = true
+LEFT JOIN product_images AS pi ON pi.product_id = p.id
 LEFT JOIN product_ratings rv ON rv.order_item_id = oi.id
 WHERE oi.order_id = $1
 `

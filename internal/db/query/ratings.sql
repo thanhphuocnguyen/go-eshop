@@ -27,7 +27,7 @@ SELECT pr.*, pi.id AS image_id, pi.image_url as image_url FROM
     WHERE r.product_id = COALESCE(sqlc.narg('product_id'), r.product_id) AND r.is_visible = COALESCE(sqlc.narg('is_visible'), TRUE) AND r.is_approved = COALESCE(sqlc.narg('is_approved'), r.is_approved)
     ORDER BY r.created_at DESC
     LIMIT $1 OFFSET $2) as pr
-LEFT JOIN product_images AS pi ON pi.product_id = pr.product_id AND pi.is_primary = true;
+LEFT JOIN product_images AS pi ON pi.product_id = pr.product_id;
 
 -- name: GetProductRatingsCount :one
 SELECT COUNT(*) FROM product_ratings WHERE product_id = $1 AND is_visible = TRUE;

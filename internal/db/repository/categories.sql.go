@@ -166,7 +166,7 @@ func (q *Queries) GetCategoryBySlug(ctx context.Context, slug string) (Category,
 }
 
 const getCategoryProductsByID = `-- name: GetCategoryProductsByID :many
-SELECT c.id, c.name, c.description, c.image_url, c.image_id, c.published, c.remarkable, c.slug, c.display_order, c.created_at, c.updated_at, p.id, p.name as product_name, p.description as product_description FROM categories c LEFT JOIN products p ON c.id = p.id LEFT JOIN product_images pi ON pi.product_id = p.id AND pi.is_primary = true WHERE c.id = $1
+SELECT c.id, c.name, c.description, c.image_url, c.image_id, c.published, c.remarkable, c.slug, c.display_order, c.created_at, c.updated_at, p.id, p.name as product_name, p.description as product_description FROM categories c LEFT JOIN products p ON c.id = p.id LEFT JOIN product_images pi ON pi.product_id = p.id WHERE c.id = $1
 `
 
 type GetCategoryProductsByIDRow struct {

@@ -32,7 +32,7 @@ func mapAddressToAddressResponse(address repository.UserAddress) AddressResponse
 		Ward:     address.Ward,
 		District: address.District,
 		City:     address.City,
-		Default:  address.Default,
+		Default:  address.IsDefault,
 		ID:       address.ID.String(),
 	}
 }
@@ -40,10 +40,7 @@ func mapAddressToAddressResponse(address repository.UserAddress) AddressResponse
 func mapToProductResponse(productRows repository.GetProductDetailRow) ProductDetailItemResponse {
 
 	basePrice, _ := productRows.BasePrice.Float64Value()
-	attributes := make([]string, len(productRows.Attributes))
-	for i, attr := range productRows.Attributes {
-		attributes[i] = attr.String()
-	}
+
 	discountValue, _ := productRows.MaxDiscountValue.Float64Value()
 
 	resp := ProductDetailItemResponse{
@@ -51,7 +48,7 @@ func mapToProductResponse(productRows repository.GetProductDetailRow) ProductDet
 		Name:             productRows.Name,
 		BasePrice:        basePrice.Float64,
 		ShortDescription: productRows.ShortDescription,
-		Attributes:       attributes,
+		Attributes:       productRows.Attributes,
 		Description:      productRows.Description,
 		BaseSku:          productRows.BaseSku,
 		Slug:             productRows.Slug,
@@ -112,7 +109,7 @@ func mapToVariantResp(variantRows []repository.GetProductVariantsRow) []ProductV
 			// If the variant already exists, append the attribute to the existing variant
 			attrIdx := -1
 			for j, a := range variants[variantIdx].Attributes {
-				if a.ID == row.AttrID.String() {
+				if a.ID == row.AttrID {
 					attrIdx = j
 					break
 				}
@@ -124,14 +121,11 @@ func mapToVariantResp(variantRows []repository.GetProductVariantsRow) []ProductV
 			}
 
 			variants[variantIdx].Attributes = append(variants[variantIdx].Attributes, ProductAttributeModel{
-				ID:   row.AttrID.String(),
+				ID:   row.AttrID,
 				Name: row.AttrName,
 				ValueObject: AttributeValue{
-					ID:           row.AttrValID,
-					Code:         row.AttrValCode,
-					Name:         &row.AttrValName,
-					IsActive:     row.IsActive,
-					DisplayOrder: &row.AttrDisplayOrder,
+					ID:    row.AttrValID,
+					Value: row.AttrValue,
 				},
 			})
 		} else {
@@ -145,14 +139,11 @@ func mapToVariantResp(variantRows []repository.GetProductVariantsRow) []ProductV
 				Sku:      &row.Sku,
 				Attributes: []ProductAttributeModel{
 					{
-						ID:   row.AttrID.String(),
+						ID:   row.AttrID,
 						Name: row.AttrName,
 						ValueObject: AttributeValue{
-							ID:           row.AttrValID,
-							Code:         row.AttrValCode,
-							Name:         &row.AttrValName,
-							IsActive:     row.IsActive,
-							DisplayOrder: &row.AttrDisplayOrder,
+							ID:    row.AttrValID,
+							Value: row.AttrValue,
 						},
 					},
 				},
@@ -191,7 +182,7 @@ func mapToListProductResponse(productRow repository.GetProductsRow) ProductListM
 		CreatedAt:    productRow.CreatedAt.String(),
 		UpdatedAt:    productRow.UpdatedAt.String(),
 	}
-	product.ImgID = utils.StringPtr(productRow.ImgID.String())
+	product.ImgID = &productRow.ImgID
 
 	return product
 }
@@ -199,7 +190,7 @@ func mapToListProductResponse(productRow repository.GetProductsRow) ProductListM
 func mapAddressResponse(address repository.UserAddress) AddressResponse {
 	return AddressResponse{
 		ID:        address.ID.String(),
-		Default:   address.Default,
+		Default:   address.IsDefault,
 		CreatedAt: address.CreatedAt,
 		Phone:     address.PhoneNumber,
 		Street:    address.Street,

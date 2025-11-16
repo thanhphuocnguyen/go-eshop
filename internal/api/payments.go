@@ -26,56 +26,56 @@ func (sv *Server) getStripeConfig(c *gin.Context) {
 // @Param request body PaymentRequest true "Payment request"
 // @Security BearerAuth
 // @Success 200 {object} ApiResponse[PaymentResponse]
-// @Failure 400 {object} ApiResponse[gin.H]
-// @Failure 401 {object} ApiResponse[gin.H]
-// @Failure 403 {object} ApiResponse[gin.H]
-// @Failure 404 {object} ApiResponse[gin.H]
-// @Failure 500 {object} ApiResponse[gin.H]
+// @Failure 400 {object} ErrorResp
+// @Failure 401 {object} ErrorResp
+// @Failure 403 {object} ErrorResp
+// @Failure 404 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
 // @Router /payment [post]
 func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, createErrorResponse[PaymentResponse](UnauthorizedCode, "", errors.New("authorization payload is not provided")))
+		c.JSON(http.StatusUnauthorized, createErr(UnauthorizedCode, "", errors.New("authorization payload is not provided")))
 		return
 	}
 	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[PaymentResponse](NotFoundCode, "", err))
+			c.JSON(http.StatusNotFound, createErr(NotFoundCode, "", err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 	var req PaymentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
 		return
 	}
 
 	ord, err := sv.repo.GetOrder(c, uuid.MustParse(req.OrderID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[PaymentResponse](NotFoundCode, "", err))
+			c.JSON(http.StatusNotFound, createErr(NotFoundCode, "", err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", errors.New("order not found")))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", errors.New("order not found")))
 		return
 	}
 
 	if ord.CustomerID != user.ID {
-		c.JSON(http.StatusForbidden, createErrorResponse[PaymentResponse](PermissionDeniedCode, "", errors.New("permission denied")))
+		c.JSON(http.StatusForbidden, createErr(PermissionDeniedCode, "", errors.New("permission denied")))
 		return
 	}
 
 	payment, err := sv.repo.GetPaymentByOrderID(c, ord.ID)
 	if err != nil && !errors.Is(err, repository.ErrRecordNotFound) {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", errors.New("order not found")))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", errors.New("order not found")))
 		return
 	}
 
 	if payment.ID != uuid.Nil && payment.Status != repository.PaymentStatusCancelled {
-		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](InvalidPaymentCode, "", errors.New("payment already exists")))
+		c.JSON(http.StatusBadRequest, createErr(InvalidPaymentCode, "", errors.New("payment already exists")))
 		return
 	}
 
@@ -91,23 +91,23 @@ func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
 	paymentMethod, err := sv.repo.GetPaymentMethodByID(c, paymentMethodId)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[PaymentResponse](NotFoundCode, "", err))
+			c.JSON(http.StatusNotFound, createErr(NotFoundCode, "", err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 	switch paymentMethod.Code {
 	case string(repository.PaymentMethodCodeStripe):
 		stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
+			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 			return
 		}
 		sv.paymentCtx.SetStrategy(stripeInstance)
 		createPaymentIntentResult, err := sv.paymentCtx.CreatePaymentIntent(total.Float64, user.Email)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
+			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 			return
 		}
 		paymentIntent := createPaymentIntentResult.(*stripe.PaymentIntent)
@@ -119,12 +119,12 @@ func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
 	payment, err = sv.repo.CreatePayment(c, createPaymentParams)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 
 	resp.PaymentID = payment.ID.String()
-	c.JSON(http.StatusOK, createSuccessResponse(c, resp, "", nil, nil))
+	c.JSON(http.StatusOK, createDataResp(c, resp, "", nil, nil))
 }
 
 // @Summary Get payment  by order ID
@@ -135,42 +135,42 @@ func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
 // @Param id path int true "Order ID"
 // @Security BearerAuth
 // @Success 200 {object} ApiResponse[PaymentResponse]
-// @Failure 400 {object} ApiResponse[gin.H]
-// @Failure 401 {object} ApiResponse[gin.H]
-// @Failure 403 {object} ApiResponse[gin.H]
-// @Failure 404 {object} ApiResponse[gin.H]
-// @Failure 500 {object} ApiResponse[gin.H]
+// @Failure 400 {object} ErrorResp
+// @Failure 401 {object} ErrorResp
+// @Failure 403 {object} ErrorResp
+// @Failure 404 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
 // @Router /payment/{id} [get]
 func (sv *Server) getPaymentHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
 		return
 	}
 
 	payment, err := sv.repo.GetPaymentByID(c, uuid.MustParse(param.ID))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 
 	var details interface{}
 	paymentMethod, err := sv.repo.GetPaymentMethodByID(c, payment.PaymentMethodID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 	if paymentMethod.Code == repository.PaymentMethodCodeStripe {
 		stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
+			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 			return
 		}
 		sv.paymentCtx.SetStrategy(stripeInstance)
 
 		details, err = sv.paymentCtx.GetPaymentObject(*payment.PaymentIntentID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
+			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 			return
 		}
 	}
@@ -182,7 +182,7 @@ func (sv *Server) getPaymentHandler(c *gin.Context) {
 		Details: details,
 	}
 
-	c.JSON(http.StatusOK, createSuccessResponse(c, resp, "", nil, nil))
+	c.JSON(http.StatusOK, createDataResp(c, resp, "", nil, nil))
 }
 
 // @Summary Change payment status
@@ -193,56 +193,56 @@ func (sv *Server) getPaymentHandler(c *gin.Context) {
 // @Param paymentId path string true "Payment ID"
 // @Security BearerAuth
 // @Success 200 {object} ApiResponse[PaymentResponse]
-// @Failure 400 {object} ApiResponse[gin.H]
-// @Failure 401 {object} ApiResponse[gin.H]
-// @Failure 403 {object} ApiResponse[gin.H]
-// @Failure 404 {object} ApiResponse[gin.H]
-// @Failure 500 {object} ApiResponse[gin.H]
+// @Failure 400 {object} ErrorResp
+// @Failure 401 {object} ErrorResp
+// @Failure 403 {object} ErrorResp
+// @Failure 404 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
 // @Router /payment/{paymentId} [get]
 func (sv *Server) changePaymentStatusHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](InvalidBodyCode, "", errors.New("order not found")))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", errors.New("order not found")))
 		return
 	}
 	var req UpdatePaymentStatusRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](InvalidBodyCode, "", errors.New("order not found")))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", errors.New("order not found")))
 		return
 	}
 	payment, err := sv.repo.GetPaymentByID(c, uuid.MustParse(param.ID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[PaymentResponse](NotFoundCode, "", errors.New("order not found")))
+			c.JSON(http.StatusNotFound, createErr(NotFoundCode, "", errors.New("order not found")))
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", errors.New("order not found")))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", errors.New("order not found")))
 		return
 	}
 	order, err := sv.repo.GetOrder(c, payment.OrderID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErrorResponse[PaymentResponse](NotFoundCode, "", err))
+			c.JSON(http.StatusNotFound, createErr(NotFoundCode, "", err))
 		}
-		c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 	if order.Status != repository.OrderStatusPending {
-		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](InvalidPaymentCode, "", errors.New("order is not pending")))
+		c.JSON(http.StatusBadRequest, createErr(InvalidPaymentCode, "", errors.New("order is not pending")))
 		return
 	}
 
 	if payment.Gateway != nil {
-		c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](InvalidPaymentCode, "", errors.New("cannot change payment status for stripe payment")))
+		c.JSON(http.StatusBadRequest, createErr(InvalidPaymentCode, "", errors.New("cannot change payment status for stripe payment")))
 		return
 	}
 
 	if req.Status == repository.PaymentStatusCancelled {
 		if payment.Status == repository.PaymentStatusSuccess {
-			c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](InvalidPaymentCode, "", errors.New("cannot cancel payment that is already success")))
+			c.JSON(http.StatusBadRequest, createErr(InvalidPaymentCode, "", errors.New("cannot cancel payment that is already success")))
 			return
 		}
 		if payment.Status == repository.PaymentStatusCancelled {
-			c.JSON(http.StatusBadRequest, createErrorResponse[PaymentResponse](InvalidPaymentCode, "", errors.New("payment is already cancelled")))
+			c.JSON(http.StatusBadRequest, createErr(InvalidPaymentCode, "", errors.New("payment is already cancelled")))
 			return
 		}
 	}
@@ -257,7 +257,7 @@ func (sv *Server) changePaymentStatusHandler(c *gin.Context) {
 			DeliveredAt: utils.GetPgTypeTimestamp(time.Now()),
 		})
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
+			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 			return
 		}
 
@@ -271,12 +271,12 @@ func (sv *Server) changePaymentStatusHandler(c *gin.Context) {
 		},
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErrorResponse[PaymentResponse](InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
 		return
 	}
 	resp := PaymentResponse{
 		ID:     payment.ID.String(),
 		Status: req.Status,
 	}
-	c.JSON(http.StatusOK, createSuccessResponse(c, resp, "", nil, nil))
+	c.JSON(http.StatusOK, createDataResp(c, resp, "", nil, nil))
 }

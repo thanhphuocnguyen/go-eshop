@@ -203,7 +203,7 @@ func (q *Queries) GetPaymentByPaymentIntentID(ctx context.Context, paymentIntent
 }
 
 const getPaymentMethodByID = `-- name: GetPaymentMethodByID :one
-SELECT id, code, name, description, is_active, gateway_supported, icon_url, display_order, requires_account, min_amount, max_amount, processing_fee_percentage, processing_fee_fixed, currency_supported, countries_supported, metadata, created_at, updated_at FROM payment_methods WHERE id = $1 LIMIT 1
+SELECT id, code, name, description, is_active, gateway_supported, icon_url, requires_account, min_amount, max_amount, processing_fee_percentage, processing_fee_fixed, currency_supported, countries_supported, metadata, created_at, updated_at FROM payment_methods WHERE id = $1 LIMIT 1
 `
 
 // Payment Methods --
@@ -218,7 +218,6 @@ func (q *Queries) GetPaymentMethodByID(ctx context.Context, id uuid.UUID) (Payme
 		&i.IsActive,
 		&i.GatewaySupported,
 		&i.IconUrl,
-		&i.DisplayOrder,
 		&i.RequiresAccount,
 		&i.MinAmount,
 		&i.MaxAmount,

@@ -42,14 +42,14 @@ LIMIT 1;
 SELECT
     v.id, v.product_id, v.description, v.sku, v.price, v.stock, v.weight, v.is_active, v.created_at, v.updated_at,
     a.id as attr_id, a.name as attr_name,
-    av.id as attr_val_id, av.code as attr_val_code, av.display_order as attr_display_order, 
-    av.is_active as attr_val_is_active, av.name as attr_val_name
+    av.id as attr_val_id,
+    av.value as attr_value
 FROM product_variants AS v
 JOIN variant_attribute_values as vav ON v.id = vav.variant_id
 JOIN attribute_values as av ON vav.attribute_value_id = av.id
 JOIN attributes as a ON av.attribute_id = a.id
 WHERE v.product_id = $1 AND v.is_active = COALESCE(sqlc.narg('is_active'), TRUE)
-ORDER BY a.id, av.display_order, v.created_at DESC;
+ORDER BY a.id, v.created_at DESC;
 
 -- name: GetFilterListForCollectionID :many
 SELECT c.name as category_name, c.id as category_id, br.id as brand_id, br.name AS brand_name, p.attributes
@@ -72,7 +72,7 @@ LEFT JOIN LATERAL (
     SELECT pi.id, pi.image_url
     FROM product_images as pi
     WHERE pi.product_id = p.id
-    ORDER BY pi.display_order ASC, pi.id ASC
+    ORDER BY pi.id ASC
     LIMIT 1
 ) AS first_img ON true
 WHERE
