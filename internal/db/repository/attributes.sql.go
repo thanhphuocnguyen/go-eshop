@@ -361,17 +361,18 @@ func (q *Queries) UpdateAttribute(ctx context.Context, arg UpdateAttributeParams
 
 const updateAttributeValue = `-- name: UpdateAttributeValue :one
 UPDATE attribute_values 
-SET "value" = COALESCE($2, "value")
-WHERE id = $1 RETURNING id, attribute_id, value
+SET value = $3
+WHERE id = $1 AND attribute_id = $2 RETURNING id, attribute_id, value
 `
 
 type UpdateAttributeValueParams struct {
-	ID    int64   `json:"id"`
-	Value *string `json:"value"`
+	ID          int64  `json:"id"`
+	AttributeID int32  `json:"attributeId"`
+	Value       string `json:"value"`
 }
 
 func (q *Queries) UpdateAttributeValue(ctx context.Context, arg UpdateAttributeValueParams) (AttributeValue, error) {
-	row := q.db.QueryRow(ctx, updateAttributeValue, arg.ID, arg.Value)
+	row := q.db.QueryRow(ctx, updateAttributeValue, arg.ID, arg.AttributeID, arg.Value)
 	var i AttributeValue
 	err := row.Scan(&i.ID, &i.AttributeID, &i.Value)
 	return i, err

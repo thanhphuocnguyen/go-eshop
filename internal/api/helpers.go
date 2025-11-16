@@ -10,20 +10,18 @@ type ErrorResp struct {
 	Error ApiError `json:"error"`
 }
 
-func createErr(code string, msg string, err error) ErrorResp {
+func createErr(code string, err error) ErrorResp {
 	return ErrorResp{
 		Error: ApiError{
 			Code:    code,
-			Details: msg,
-			Stack:   err.Error(),
+			Details: err.Error(),
+			Stack:   err,
 		},
 	}
 }
 
-func createDataResp[T any](c *gin.Context, data T, message string, pagination *Pagination, err *ApiError) ApiResponse[T] {
+func createDataResp[T any](c *gin.Context, data T, pagination *Pagination, err *ApiError) ApiResponse[T] {
 	resp := ApiResponse[T]{
-		Success:    true,
-		Message:    message,
 		Data:       &data,
 		Pagination: pagination,
 		Meta: &MetaInfo{
@@ -33,6 +31,7 @@ func createDataResp[T any](c *gin.Context, data T, message string, pagination *P
 			Method:    c.Request.Method,
 		},
 	}
+
 	if err != nil {
 		resp.Error = err
 	}

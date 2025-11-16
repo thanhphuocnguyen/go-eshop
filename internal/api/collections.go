@@ -28,7 +28,8 @@ import (
 func (sv *Server) GetCollectionBySlugHandler(c *gin.Context) {
 	var param SlugParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode,
+			err))
 		return
 	}
 
@@ -36,16 +37,19 @@ func (sv *Server) GetCollectionBySlugHandler(c *gin.Context) {
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErr(NotFoundCode, "", fmt.Errorf("category with slug %s not found", param.Slug)))
+			c.JSON(http.StatusNotFound, createErr(NotFoundCode,
+				fmt.Errorf("category with slug %s not found", param.Slug)))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode,
+			err))
 		return
 	}
 
 	filters, err := sv.repo.GetFilterListForCollectionID(c, collection.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode,
+			err))
 		return
 	}
 	collectionResp := CollectionDetailResponse{
@@ -116,7 +120,8 @@ func (sv *Server) GetCollectionBySlugHandler(c *gin.Context) {
 
 	attributes, err := sv.repo.GetAttributeWithValuesByIDs(c, listAttrs)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode,
+			err))
 		return
 	}
 
@@ -150,7 +155,8 @@ func (sv *Server) GetCollectionBySlugHandler(c *gin.Context) {
 	if collection.Remarkable != nil {
 		collectionResp.Collection.Remarkable = *collection.Remarkable
 	}
-	c.JSON(http.StatusOK, createDataResp(c, collectionResp, "", nil, nil))
+	c.JSON(http.StatusOK, createDataResp(c, collectionResp,
+		nil, nil))
 }
 
 // --- Admin API ---
@@ -169,7 +175,8 @@ func (sv *Server) GetCollectionBySlugHandler(c *gin.Context) {
 func (sv *Server) CreateCollectionHandler(c *gin.Context) {
 	var req CreateCategoryRequest
 	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode,
+			err))
 		return
 	}
 	createParams := repository.CreateCollectionParams{
@@ -188,7 +195,8 @@ func (sv *Server) CreateCollectionHandler(c *gin.Context) {
 	if req.Image != nil {
 		ID, url, err := sv.uploadService.UploadFile(c, req.Image)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErr(UploadFileCode, "", err))
+			c.JSON(http.StatusInternalServerError, createErr(UploadFileCode,
+				err))
 			return
 		}
 
@@ -198,12 +206,13 @@ func (sv *Server) CreateCollectionHandler(c *gin.Context) {
 
 	col, err := sv.repo.CreateCollection(c, createParams)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode,
+			err))
 		return
 	}
 	sv.cachesrv.Delete(c, "collections-*")
 
-	c.JSON(http.StatusCreated, createDataResp(c, col, "collection", nil, nil))
+	c.JSON(http.StatusCreated, createDataResp(c, col, nil, nil))
 }
 
 // @Summary Get a list of Collections
@@ -221,7 +230,8 @@ func (sv *Server) CreateCollectionHandler(c *gin.Context) {
 func (sv *Server) GetCollectionsHandler(c *gin.Context) {
 	var queries CollectionsQueryParams
 	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode,
+			err))
 		return
 	}
 
@@ -234,29 +244,19 @@ func (sv *Server) GetCollectionsHandler(c *gin.Context) {
 	dbQueries.Limit = int64(queries.PageSize)
 	collectionRows, err := sv.repo.GetCollections(c, dbQueries)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode,
+			err))
 		return
 	}
 
 	cnt, err := sv.repo.CountCollections(c)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode,
+			err))
 		return
 	}
 
-	c.JSON(http.StatusOK, createDataResp(
-		c,
-		collectionRows,
-		"collections",
-		&Pagination{
-			Page:            queries.Page,
-			PageSize:        queries.PageSize,
-			Total:           cnt,
-			TotalPages:      cnt / int64(queries.PageSize),
-			HasNextPage:     cnt > int64(queries.Page*queries.PageSize),
-			HasPreviousPage: queries.Page > 1,
-		}, nil,
-	))
+	c.JSON(http.StatusOK, createDataResp(c, collectionRows, createPagination(cnt, queries.Page, queries.PageSize), nil))
 }
 
 // @Summary Get a Collection by ID
@@ -274,17 +274,20 @@ func (sv *Server) GetCollectionsHandler(c *gin.Context) {
 func (sv *Server) GetCollectionByIDHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode,
+			err))
 		return
 	}
 
 	collection, err := sv.repo.GetCollectionByID(c, uuid.MustParse(param.ID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErr(NotFoundCode, "", fmt.Errorf("collection with ID %s not found", param.ID)))
+			c.JSON(http.StatusNotFound, createErr(NotFoundCode,
+				fmt.Errorf("collection with ID %s not found", param.ID)))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode,
+			err))
 		return
 	}
 
@@ -303,7 +306,7 @@ func (sv *Server) GetCollectionByIDHandler(c *gin.Context) {
 		colResp.Remarkable = *collection.Remarkable
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, colResp, "collection", nil, nil))
+	c.JSON(http.StatusOK, createDataResp(c, colResp, nil, nil))
 }
 
 // @Summary Update a Collection
@@ -321,12 +324,14 @@ func (sv *Server) GetCollectionByIDHandler(c *gin.Context) {
 func (sv *Server) UpdateCollectionHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode,
+			err))
 		return
 	}
 	var req UpdateCategoryRequest
 	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode,
+			err))
 		return
 	}
 
@@ -334,10 +339,12 @@ func (sv *Server) UpdateCollectionHandler(c *gin.Context) {
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErr(NotFoundCode, "", fmt.Errorf("collection with ID %s not found", param.ID)))
+			c.JSON(http.StatusNotFound, createErr(NotFoundCode,
+				fmt.Errorf("collection with ID %s not found", param.ID)))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode,
+			err))
 		return
 	}
 
@@ -356,7 +363,8 @@ func (sv *Server) UpdateCollectionHandler(c *gin.Context) {
 		oldImageUrl := collection.ImageUrl
 		ID, url, err := sv.uploadService.UploadFile(c, req.Image)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode,
+				err))
 			return
 		}
 
@@ -365,8 +373,8 @@ func (sv *Server) UpdateCollectionHandler(c *gin.Context) {
 
 		// Delete old image
 		if oldImageID != nil && oldImageUrl != nil {
-			if msg, err := sv.uploadService.RemoveFile(c, *oldImageID); err != nil {
-				c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, msg, err))
+			if _, err := sv.uploadService.RemoveFile(c, *oldImageID); err != nil {
+				c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 				return
 			}
 		}
@@ -383,11 +391,13 @@ func (sv *Server) UpdateCollectionHandler(c *gin.Context) {
 	col, err := sv.repo.UpdateCollectionWith(c, updateParam)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode,
+			err))
 		return
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, col, "", nil, nil))
+	c.JSON(http.StatusOK, createDataResp(c, col,
+		nil, nil))
 }
 
 // @Summary Delete a Collection
@@ -404,23 +414,27 @@ func (sv *Server) UpdateCollectionHandler(c *gin.Context) {
 func (sv *Server) DeleteCollectionHandler(c *gin.Context) {
 	var colID UriIDParam
 	if err := c.ShouldBindUri(&colID); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode,
+			err))
 		return
 	}
 
 	_, err := sv.repo.GetCollectionByID(c, uuid.MustParse(colID.ID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErr(NotFoundCode, "", fmt.Errorf("collection with ID %s not found", colID.ID)))
+			c.JSON(http.StatusNotFound, createErr(NotFoundCode,
+				fmt.Errorf("collection with ID %s not found", colID.ID)))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode,
+			err))
 		return
 	}
 
 	err = sv.repo.DeleteCollection(c, uuid.MustParse(colID.ID))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode,
+			err))
 		return
 	}
 	c.Status(http.StatusNoContent)

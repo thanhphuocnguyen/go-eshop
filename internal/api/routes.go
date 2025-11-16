@@ -36,7 +36,7 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 			attributeGroup.GET("", sv.getAttributesHandler)
 			attributeGroup.GET(":id", sv.GetAttributeByIDHandler)
 			attributeGroup.PUT(":id", sv.updateAttributeHandler)
-			attributeGroup.DELETE(":id", sv.deleteAttributeHandler)
+			attributeGroup.DELETE(":id", sv.RemoveAttributeHandler)
 		}
 
 		adminOrder := admin.Group("orders")

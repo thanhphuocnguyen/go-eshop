@@ -26,7 +26,7 @@ import (
 func (sv *Server) AddProductHandler(c *gin.Context) {
 	var req repository.CreateProductTxArgs
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 
@@ -34,11 +34,11 @@ func (sv *Server) AddProductHandler(c *gin.Context) {
 
 	if err != nil {
 		log.Error().Err(err).Msg("CreateProduct")
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
-	c.JSON(http.StatusCreated, createDataResp(c, productID.String(), "", nil, nil))
+	c.JSON(http.StatusCreated, createDataResp(c, productID.String(), nil, nil))
 }
 
 // @Summary Get a product detail by ID
@@ -55,7 +55,7 @@ func (sv *Server) AddProductHandler(c *gin.Context) {
 func (sv *Server) GetProductDetailHandler(c *gin.Context) {
 	var params URISlugParam
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 	sqlParams := repository.GetProductDetailParams{}
@@ -69,10 +69,10 @@ func (sv *Server) GetProductDetailHandler(c *gin.Context) {
 	productRow, err := sv.repo.GetProductDetail(c, sqlParams)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErr(NotFoundCode, "", err))
+			c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -84,7 +84,7 @@ func (sv *Server) GetProductDetailHandler(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -100,7 +100,7 @@ func (sv *Server) GetProductDetailHandler(c *gin.Context) {
 	variants := mapToVariantResp(variantRows)
 	productDetail.Variants = variants
 	// productDetail.ProductImages = imageResp
-	c.JSON(http.StatusOK, createDataResp(c, productDetail, "product retrieved", nil, nil))
+	c.JSON(http.StatusOK, createDataResp(c, productDetail, nil, nil))
 }
 
 // @Summary Get list of products
@@ -118,7 +118,7 @@ func (sv *Server) GetProductDetailHandler(c *gin.Context) {
 func (sv *Server) getProductsHandler(c *gin.Context) {
 	var queries ProductQueries
 	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 
@@ -153,13 +153,13 @@ func (sv *Server) getProductsHandler(c *gin.Context) {
 
 	products, err := sv.repo.GetProducts(c, dbParams)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "Server error", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
 	productCnt, err := sv.repo.CountProducts(c, repository.CountProductsParams{})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "Server error", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -168,14 +168,7 @@ func (sv *Server) getProductsHandler(c *gin.Context) {
 		productResponses = append(productResponses, mapToListProductResponse(product))
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, productResponses, "products retrieved", &Pagination{
-		Total:           productCnt,
-		Page:            queries.Page,
-		PageSize:        queries.PageSize,
-		TotalPages:      (productCnt + queries.PageSize - 1) / queries.PageSize,
-		HasNextPage:     int(queries.Page*queries.PageSize) < int(productCnt),
-		HasPreviousPage: queries.Page > 1,
-	}, nil))
+	c.JSON(http.StatusOK, createDataResp(c, productResponses, createPagination(productCnt, queries.Page, queries.PageSize), nil))
 }
 
 // @Summary Update a product by ID
@@ -193,29 +186,29 @@ func (sv *Server) getProductsHandler(c *gin.Context) {
 func (sv *Server) updateProductHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 	uuid, err := uuid.Parse(param.ID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 
 	var req repository.UpdateProductTxParams
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 	err = sv.repo.UpdateProductTx(c, uuid, req)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErr(NotFoundCode, "", err))
+			c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
 			return
 		}
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, struct{}{}, "product updated", nil, nil))
+	c.Status(http.StatusOK)
 }
 
 // @Summary Remove a product by ID
@@ -232,23 +225,23 @@ func (sv *Server) updateProductHandler(c *gin.Context) {
 func (sv *Server) deleteProductHandler(c *gin.Context) {
 	var params UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 
 	product, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(params.ID)})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErr(NotFoundCode, "", err))
+			c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
 	err = sv.repo.DeleteProduct(c, product.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 

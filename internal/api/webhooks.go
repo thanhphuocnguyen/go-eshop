@@ -27,7 +27,7 @@ import (
 func (server *Server) stripeEventHandler(c *gin.Context) {
 	var evt stripe.Event
 	if err := c.ShouldBindJSON(&evt); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidEventCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidEventCode, err))
 		return
 	}
 
@@ -55,10 +55,10 @@ func (server *Server) stripeEventHandler(c *gin.Context) {
 			if errors.Is(err, repository.ErrRecordNotFound) {
 				// If the payment is not found, we can ignore the event
 				log.Info().Msgf("Payment not found for payment intent ID: %s", *id)
-				c.JSON(http.StatusOK, createDataResp(c, true, "", nil, nil))
+				c.JSON(http.StatusOK, createDataResp(c, true, nil, nil))
 				return
 			}
-			c.JSON(http.StatusBadRequest, createErr(InternalServerErrorCode, "", err))
+			c.JSON(http.StatusBadRequest, createErr(InternalServerErrorCode, err))
 			return
 		}
 		updateTransactionStatus := repository.UpdatePaymentParams{
@@ -99,12 +99,12 @@ func (server *Server) stripeEventHandler(c *gin.Context) {
 
 		default:
 			log.Info().Msgf("Unhandled event type: %s", evt.Type)
-			c.JSON(http.StatusOK, createDataResp(c, true, "", nil, nil))
+			c.JSON(http.StatusOK, createDataResp(c, true, nil, nil))
 			return
 		}
 		err = server.repo.UpdatePayment(c, updateTransactionStatus)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, createErr(InternalServerErrorCode, "", err))
+			c.JSON(http.StatusBadRequest, createErr(InternalServerErrorCode, err))
 			return
 		}
 	}
@@ -120,10 +120,10 @@ func (server *Server) stripeEventHandler(c *gin.Context) {
 			if errors.Is(err, repository.ErrRecordNotFound) {
 				// If the payment is not found, we can ignore the event
 				log.Info().Msgf("Payment not found for payment intent ID: %s", *paymentIntentID)
-				c.JSON(http.StatusOK, createDataResp(c, true, "", nil, nil))
+				c.JSON(http.StatusOK, createDataResp(c, true, nil, nil))
 				return
 			}
-			c.JSON(http.StatusBadRequest, createErr(InternalServerErrorCode, "", err))
+			c.JSON(http.StatusBadRequest, createErr(InternalServerErrorCode, err))
 			return
 		}
 		var createPaymentTransactionArg = repository.CreatePaymentTransactionParams{
@@ -144,7 +144,7 @@ func (server *Server) stripeEventHandler(c *gin.Context) {
 			}
 			err = server.repo.UpdatePayment(c, updateTransactionStatus)
 			if err != nil {
-				c.JSON(http.StatusBadRequest, createErr(InternalServerErrorCode, "", err))
+				c.JSON(http.StatusBadRequest, createErr(InternalServerErrorCode, err))
 				return
 			}
 		case stripe.EventTypeChargeFailed:
@@ -176,7 +176,7 @@ func (server *Server) stripeEventHandler(c *gin.Context) {
 		}
 		_, err = server.repo.CreatePaymentTransaction(c, createPaymentTransactionArg)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, createErr(InternalServerErrorCode, "", err))
+			c.JSON(http.StatusBadRequest, createErr(InternalServerErrorCode, err))
 			return
 		}
 	}

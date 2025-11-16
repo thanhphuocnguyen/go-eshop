@@ -87,5 +87,5 @@ func (s *Server) getHomePageHandler(ctx *gin.Context) {
 		Collections: collections,
 	}
 
-	ctx.JSON(http.StatusOK, createDataResp(ctx, response, "Get homepage data successfully", nil, nil))
+	ctx.JSON(http.StatusOK, createDataResp(ctx, response, nil, nil))
 }

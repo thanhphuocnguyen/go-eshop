@@ -59,8 +59,8 @@ ORDER BY atv.id;
 
 -- name: UpdateAttributeValue :one
 UPDATE attribute_values 
-SET "value" = COALESCE(sqlc.narg('value'), "value")
-WHERE id = $1 RETURNING *;
+SET value = $3
+WHERE id = $1 AND attribute_id = $2 RETURNING *;
 
 -- name: DeleteAttributeValue :exec
 DELETE FROM attribute_values WHERE id = $1;

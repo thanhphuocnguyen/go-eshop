@@ -24,7 +24,7 @@ func (sv *Server) createDiscountHandler(c *gin.Context) {
 	// Create a new discount
 	var req CreateDiscountRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 	sqlParams := repository.InsertDiscountParams{
@@ -47,11 +47,11 @@ func (sv *Server) createDiscountHandler(c *gin.Context) {
 
 	discount, err := sv.repo.InsertDiscount(c, sqlParams)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "Failed to create discount", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
-	c.JSON(http.StatusCreated, createDataResp(c, discount.String(), "Discount created successfully", nil, nil))
+	c.JSON(http.StatusCreated, createDataResp(c, discount.String(), nil, nil))
 }
 
 // getDiscountsHandler godoc
@@ -72,7 +72,7 @@ func (sv *Server) createDiscountHandler(c *gin.Context) {
 func (sv *Server) getDiscountsHandler(c *gin.Context) {
 	var queries DiscountListQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 
@@ -94,12 +94,12 @@ func (sv *Server) getDiscountsHandler(c *gin.Context) {
 
 	discounts, err := sv.repo.GetDiscounts(c, sqlParams)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "Failed to get discounts", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 	total, err := sv.repo.CountDiscounts(c)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "Failed to count discounts", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 	listData := make([]DiscountListItemResponseModel, len(discounts))
@@ -129,7 +129,7 @@ func (sv *Server) getDiscountsHandler(c *gin.Context) {
 	}
 	pagination := createPagination(queries.Page, queries.PageSize, total)
 
-	c.JSON(http.StatusOK, createDataResp(c, listData, "Discounts retrieved successfully", pagination, nil))
+	c.JSON(http.StatusOK, createDataResp(c, listData, pagination, nil))
 }
 
 // getDiscountByIDHandler godoc
@@ -148,19 +148,19 @@ func (sv *Server) getDiscountByIDHandler(c *gin.Context) {
 	// Get discount by ID
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "Discount ID is required", nil))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, nil))
 		return
 	}
 
 	discount, err := sv.repo.GetDiscountByID(c, uuid.MustParse(id))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "Failed to get discount", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
 	discountUsageRows, err := sv.repo.GetDiscountUsages(c, discount.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "Failed to get discount usages", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -206,7 +206,7 @@ func (sv *Server) getDiscountByIDHandler(c *gin.Context) {
 		resp.MaxDiscount = maxDiscountAmount.Float64
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, resp, "Discount retrieved successfully", nil, nil))
+	c.JSON(http.StatusOK, createDataResp(c, resp, nil, nil))
 }
 
 // getDiscountProductsByIDHandler godoc
@@ -226,12 +226,12 @@ func (sv *Server) getDiscountByIDHandler(c *gin.Context) {
 func (sv *Server) getDiscountProductsByIDHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 	var queries PaginationQueryParams
 	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 
@@ -243,7 +243,7 @@ func (sv *Server) getDiscountProductsByIDHandler(c *gin.Context) {
 			Offset:     (queries.Page - 1) * queries.PageSize,
 		})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "Failed to get discount products", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -251,7 +251,7 @@ func (sv *Server) getDiscountProductsByIDHandler(c *gin.Context) {
 
 	total, err := sv.repo.CountDiscountProducts(c, uuid.MustParse(param.ID))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "Failed to count discount products", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 	for i, discountProduct := range discountProductRows {
@@ -266,7 +266,7 @@ func (sv *Server) getDiscountProductsByIDHandler(c *gin.Context) {
 
 	pagination := createPagination(queries.Page, queries.PageSize, total)
 
-	c.JSON(http.StatusOK, createDataResp(c, resp, "", pagination, nil))
+	c.JSON(http.StatusOK, createDataResp(c, resp, pagination, nil))
 }
 
 // getDiscountCategoriesByIDHandler godoc
@@ -286,12 +286,12 @@ func (sv *Server) getDiscountProductsByIDHandler(c *gin.Context) {
 func (sv *Server) getDiscountCategoriesByIDHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 	var queries PaginationQueryParams
 	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 
@@ -303,7 +303,7 @@ func (sv *Server) getDiscountCategoriesByIDHandler(c *gin.Context) {
 			Offset:     (queries.Page - 1) * queries.PageSize,
 		})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "Failed to get discount CaterGetDiscountCategories", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -312,7 +312,7 @@ func (sv *Server) getDiscountCategoriesByIDHandler(c *gin.Context) {
 	total, err := sv.repo.CountDiscountCategories(c, uuid.MustParse(param.ID))
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "Failed to count discount Categorys", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -325,7 +325,7 @@ func (sv *Server) getDiscountCategoriesByIDHandler(c *gin.Context) {
 
 	pagination := createPagination(queries.Page, queries.PageSize, total)
 
-	c.JSON(http.StatusOK, createDataResp(c, resp, "", pagination, nil))
+	c.JSON(http.StatusOK, createDataResp(c, resp, pagination, nil))
 }
 
 // getDiscountUsersByIDHandler godoc
@@ -345,12 +345,12 @@ func (sv *Server) getDiscountCategoriesByIDHandler(c *gin.Context) {
 func (sv *Server) getDiscountUsersByIDHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 	var queries PaginationQueryParams
 	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 
@@ -362,7 +362,7 @@ func (sv *Server) getDiscountUsersByIDHandler(c *gin.Context) {
 			Offset:     (queries.Page - 1) * queries.PageSize,
 		})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "Failed to get discount CaterGetDiscountUsers", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -371,7 +371,7 @@ func (sv *Server) getDiscountUsersByIDHandler(c *gin.Context) {
 	total, err := sv.repo.CountDiscountUsers(c, uuid.MustParse(param.ID))
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "Failed to count discount Users", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -388,41 +388,41 @@ func (sv *Server) getDiscountUsersByIDHandler(c *gin.Context) {
 
 	pagination := createPagination(queries.Page, queries.PageSize, total)
 
-	c.JSON(http.StatusOK, createDataResp(c, resp, "", pagination, nil))
+	c.JSON(http.StatusOK, createDataResp(c, resp, pagination, nil))
 }
 
 func (sv *Server) updateDiscountHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 
 	var req repository.UpdateDiscountTxArgs
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 	// Update discount
 	err := sv.repo.UpdateDiscountTx(c, uuid.MustParse(param.ID), req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "Failed to update discount", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-	c.JSON(http.StatusOK, createDataResp(c, struct{}{}, "Discount updated successfully", nil, nil))
+	c.JSON(http.StatusOK, createDataResp(c, struct{}{}, nil, nil))
 }
 
 func (sv *Server) deleteDiscountHandler(c *gin.Context) {
 	// Delete discount
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "Discount ID is required", nil))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, nil))
 		return
 	}
 
 	err := sv.repo.DeleteDiscount(c, uuid.MustParse(id))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "Failed to delete discount", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 

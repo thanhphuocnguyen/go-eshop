@@ -8,6 +8,12 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 )
 
+type PaginationQueryParams struct {
+	Page     int64   `form:"page,default=1" binding:"omitempty,min=1"`
+	PageSize int64   `form:"pageSize,default=20" binding:"omitempty,min=1,max=100"`
+	Search   *string `form:"search" binding:"omitempty,omitzero,max=1000"`
+}
+
 type CreateCategoryRequest struct {
 	Name         string                `form:"name" binding:"required,min=3,max=255"`
 	Slug         string                `form:"slug" binding:"required,min=3,max=255"`
@@ -193,13 +199,16 @@ type BrandProductRequest struct {
 	SortOrder int16 `json:"sortOrder,omitempty"`
 }
 
-type CreateAttributeRequest struct {
-	Name   string   `json:"name" binding:"required"`
-	Values []string `json:"values,omitempty"`
+type AttributeRequest struct {
+	Name string `json:"name" binding:"required"`
 }
 
-type UpdateAttributeRequest struct {
-	Name string `json:"name" binding:"required"`
+type CreateAttributeValuesRequest struct {
+	Values []string `json:"values" binding:"required"`
+}
+
+type UpdateAttributeValueRequest struct {
+	Value string `json:"value" binding:"required"`
 }
 
 type AttributeParam struct {
@@ -253,7 +262,7 @@ type ApiResponse[T any] struct {
 type ApiError struct {
 	Code    string `json:"code"`
 	Details string `json:"details"`
-	Stack   string `json:"stack,omitempty"` // Hide in production
+	Stack   error  `json:"stack,omitempty"` // Hide in production
 }
 
 // Pagination info (for paginated endpoints)
@@ -264,12 +273,6 @@ type Pagination struct {
 	TotalPages      int64 `json:"totalPages"`
 	HasNextPage     bool  `json:"hasNextPage"`
 	HasPreviousPage bool  `json:"hasPreviousPage"`
-}
-
-type PaginationQueryParams struct {
-	Page     int64   `form:"page,default=1" binding:"omitempty,min=1"`
-	PageSize int64   `form:"pageSize,default=20" binding:"omitempty,min=1,max=100"`
-	Search   *string `form:"search" binding:"omitempty,omitzero,max=1000"`
 }
 
 type ProductDetailItemResponse struct {

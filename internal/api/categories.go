@@ -27,7 +27,7 @@ import (
 func (sv *Server) getCategoriesHandler(c *gin.Context) {
 	var query PaginationQueryParams
 	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 	params := repository.GetCategoriesParams{
@@ -40,13 +40,13 @@ func (sv *Server) getCategoriesHandler(c *gin.Context) {
 
 	categories, err := sv.repo.GetCategories(c, params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
-	count, err := sv.repo.CountCategories(c)
+	cnt, err := sv.repo.CountCategories(c)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -68,13 +68,7 @@ func (sv *Server) getCategoriesHandler(c *gin.Context) {
 		catIds[i] = category.ID
 	}
 
-	c.JSON(http.StatusOK, createDataResp(
-		c,
-		categoriesResp,
-		fmt.Sprintf("Total %d categories", count),
-		nil,
-		nil,
-	))
+	c.JSON(http.StatusOK, createDataResp(c, categoriesResp, createPagination(cnt, query.Page, query.PageSize), nil))
 }
 
 // getCategoryBySlugHandler retrieves a list of Products by Category Slug.
@@ -93,7 +87,7 @@ func (sv *Server) getCategoriesHandler(c *gin.Context) {
 func (sv *Server) getCategoryBySlugHandler(c *gin.Context) {
 	var param SlugParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 
@@ -101,10 +95,10 @@ func (sv *Server) getCategoryBySlugHandler(c *gin.Context) {
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErr(InvalidBodyCode, "", fmt.Errorf("category with Slug %s not found", param.Slug)))
+			c.JSON(http.StatusNotFound, createErr(InvalidBodyCode, fmt.Errorf("category with Slug %s not found", param.Slug)))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -120,7 +114,7 @@ func (sv *Server) getCategoryBySlugHandler(c *gin.Context) {
 		ImageUrl:    category.ImageUrl,
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, resp, "", nil, nil))
+	c.JSON(http.StatusOK, createDataResp(c, resp, nil, nil))
 }
 
 // --- Admin API ---
@@ -139,7 +133,7 @@ func (sv *Server) getCategoryBySlugHandler(c *gin.Context) {
 func (sv *Server) createCategoryHandler(c *gin.Context) {
 	var req CreateCategoryRequest
 	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 	params := repository.CreateCategoryParams{
@@ -158,7 +152,7 @@ func (sv *Server) createCategoryHandler(c *gin.Context) {
 	if req.Image != nil {
 		imageID, imageURL, err := sv.uploadService.UploadFile(c, req.Image)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErr(UploadFileCode, "", err))
+			c.JSON(http.StatusInternalServerError, createErr(UploadFileCode, err))
 			return
 		}
 		params.ImageID = &imageID
@@ -167,7 +161,7 @@ func (sv *Server) createCategoryHandler(c *gin.Context) {
 
 	col, err := sv.repo.CreateCategory(c, params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 	resp := CategoryResponse{
@@ -182,7 +176,7 @@ func (sv *Server) createCategoryHandler(c *gin.Context) {
 		ImageUrl:    col.ImageUrl,
 	}
 
-	c.JSON(http.StatusCreated, createDataResp(c, resp, "", nil, nil))
+	c.JSON(http.StatusCreated, createDataResp(c, resp, nil, nil))
 }
 
 // getAdminCategoriesHandler retrieves a list of Categories.
@@ -201,7 +195,7 @@ func (sv *Server) createCategoryHandler(c *gin.Context) {
 func (sv *Server) getAdminCategoriesHandler(c *gin.Context) {
 	var query PaginationQueryParams
 	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 	params := repository.GetCategoriesParams{
@@ -213,13 +207,13 @@ func (sv *Server) getAdminCategoriesHandler(c *gin.Context) {
 
 	categories, err := sv.repo.GetCategories(c, params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
 	count, err := sv.repo.CountCategories(c)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 	categoriesResp := make([]CategoryResponse, len(categories))
@@ -237,7 +231,7 @@ func (sv *Server) getAdminCategoriesHandler(c *gin.Context) {
 			ImageUrl:    category.ImageUrl,
 		}
 	}
-	c.JSON(http.StatusOK, createDataResp(c, categoriesResp, "", createPagination(query.Page, query.PageSize, count), nil))
+	c.JSON(http.StatusOK, createDataResp(c, categoriesResp, createPagination(query.Page, query.PageSize, count), nil))
 }
 
 // getCategoryByID retrieves a Category by its ID.
@@ -256,17 +250,17 @@ func (sv *Server) getAdminCategoriesHandler(c *gin.Context) {
 func (sv *Server) getCategoryByID(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 
 	category, err := sv.repo.GetCategoryByID(c, uuid.MustParse(param.ID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErr(InvalidBodyCode, "", fmt.Errorf("category with ID %s not found", param.ID)))
+			c.JSON(http.StatusNotFound, createErr(InvalidBodyCode, fmt.Errorf("category with ID %s not found", param.ID)))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -282,7 +276,7 @@ func (sv *Server) getCategoryByID(c *gin.Context) {
 		ImageUrl:    category.ImageUrl,
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, resp, "", nil, nil))
+	c.JSON(http.StatusOK, createDataResp(c, resp, nil, nil))
 }
 
 // updateCategoryHandler updates a Category.
@@ -301,12 +295,12 @@ func (sv *Server) getCategoryByID(c *gin.Context) {
 func (sv *Server) updateCategoryHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 	var req UpdateCategoryRequest
 	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 
@@ -314,10 +308,10 @@ func (sv *Server) updateCategoryHandler(c *gin.Context) {
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErr(NotFoundCode, "", fmt.Errorf("category with ID %s not found", param.ID)))
+			c.JSON(http.StatusNotFound, createErr(NotFoundCode, fmt.Errorf("category with ID %s not found", param.ID)))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -344,7 +338,6 @@ func (sv *Server) updateCategoryHandler(c *gin.Context) {
 	if req.Published != nil {
 		updateParam.Published = req.Published
 	}
-	msg := ""
 	var apiErr *ApiError
 
 	imageID, imageURL := "", ""
@@ -353,17 +346,17 @@ func (sv *Server) updateCategoryHandler(c *gin.Context) {
 		oldImageURL := category.ImageUrl
 		// remove old image
 		if oldImageID != nil && oldImageURL != nil {
-			msg, err = sv.uploadService.RemoveFile(c, *oldImageID)
+			_, err = sv.uploadService.RemoveFile(c, *oldImageID)
 			if err != nil {
 				apiErr = &ApiError{
 					Code:    UploadFileCode,
-					Details: "Failed to remove old image",
-					Stack:   err.Error()}
+					Details: err.Error(),
+					Stack:   err}
 			}
 		}
 		imageID, imageURL, err = sv.uploadService.UploadFile(c, req.Image)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErr(UploadFileCode, "", err))
+			c.JSON(http.StatusInternalServerError, createErr(UploadFileCode, err))
 			return
 		}
 		updateParam.ImageID = &imageID
@@ -372,11 +365,11 @@ func (sv *Server) updateCategoryHandler(c *gin.Context) {
 	col, err := sv.repo.UpdateCategory(c, updateParam)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, col, msg, nil, apiErr))
+	c.JSON(http.StatusOK, createDataResp(c, col, nil, apiErr))
 }
 
 // deleteCategoryHandler delete a Category.
@@ -394,23 +387,23 @@ func (sv *Server) updateCategoryHandler(c *gin.Context) {
 func (sv *Server) deleteCategoryHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 
 	_, err := sv.repo.GetCategoryByID(c, uuid.MustParse(param.ID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErr(NotFoundCode, "", fmt.Errorf("category with ID %s not found", param.ID)))
+			c.JSON(http.StatusNotFound, createErr(NotFoundCode, fmt.Errorf("category with ID %s not found", param.ID)))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
 	err = sv.repo.DeleteCategory(c, uuid.MustParse(param.ID))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, "", err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 	c.Status(http.StatusNoContent)

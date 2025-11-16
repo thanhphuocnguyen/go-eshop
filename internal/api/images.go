@@ -24,34 +24,34 @@ import (
 func (sv *Server) uploadProductImagesHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 	form, _ := c.MultipartForm()
 	files := form.File["files"]
 	if len(files) == 0 {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", errors.New("missing files in request")))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("missing files in request")))
 		return
 	}
 
 	if len(files) > 5 {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", errors.New("maximum 5 files allowed")))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("maximum 5 files allowed")))
 		return
 	}
 
 	assignmentsReq := c.PostFormArray("assignments[]")
 	if len(assignmentsReq) == 0 {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", errors.New("missing assignments in request")))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("missing assignments in request")))
 		return
 	}
 
 	roles := c.PostFormArray("roles")
 	if len(roles) == 0 {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", errors.New("missing roles in request")))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("missing roles in request")))
 		return
 	}
 	if len(roles) != len(assignmentsReq) {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", errors.New("roles and assignments must be the same length")))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("roles and assignments must be the same length")))
 		return
 	}
 	// Check if the roles are valid
@@ -65,7 +65,7 @@ func (sv *Server) uploadProductImagesHandler(c *gin.Context) {
 		images = append(images, img)
 	}
 
-	c.JSON(http.StatusCreated, createDataResp(c, images, "", nil, nil))
+	c.JSON(http.StatusCreated, createDataResp(c, images, nil, nil))
 }
 
 // @Summary Get list of product image by ID
@@ -82,11 +82,11 @@ func (sv *Server) uploadProductImagesHandler(c *gin.Context) {
 func (sv *Server) getProductImagesHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, []ImageResponse{}, "", nil, nil))
+	c.JSON(http.StatusOK, createDataResp(c, []ImageResponse{}, nil, nil))
 }
 
 // @Summary Remove a product image by ID
@@ -103,13 +103,13 @@ func (sv *Server) getProductImagesHandler(c *gin.Context) {
 func (sv *Server) removeImageHandler(c *gin.Context) {
 	_, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, createErr(UnauthorizedCode, "", errors.New("missing user payload in context")))
+		c.JSON(http.StatusUnauthorized, createErr(UnauthorizedCode, errors.New("missing user payload in context")))
 		return
 	}
 
 	var params RemoveImageParams
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 
@@ -130,17 +130,17 @@ func (sv *Server) removeImageHandler(c *gin.Context) {
 func (sv *Server) removeImageByPublicIDHandler(c *gin.Context) {
 	_, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, createErr(UnauthorizedCode, "", errors.New("missing user payload in context")))
+		c.JSON(http.StatusInternalServerError, createErr(UnauthorizedCode, errors.New("missing user payload in context")))
 		return
 	}
 	var params PublicIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, "", err))
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
-	msg, err := sv.removeImageUtil(c, params.PublicID)
+	_, err := sv.removeImageUtil(c, params.PublicID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, msg, err))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
