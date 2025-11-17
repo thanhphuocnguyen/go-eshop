@@ -61,7 +61,6 @@ func (sv *Server) getCategoriesHandler(c *gin.Context) {
 			CreatedAt:   category.CreatedAt.String(),
 			UpdatedAt:   category.UpdatedAt.String(),
 			Description: category.Description,
-			Remarkable:  *category.Remarkable,
 			ImageUrl:    category.ImageUrl,
 		}
 
@@ -110,7 +109,6 @@ func (sv *Server) getCategoryBySlugHandler(c *gin.Context) {
 		CreatedAt:   category.CreatedAt.String(),
 		UpdatedAt:   category.UpdatedAt.String(),
 		Description: category.Description,
-		Remarkable:  *category.Remarkable,
 		ImageUrl:    category.ImageUrl,
 	}
 
@@ -145,10 +143,6 @@ func (sv *Server) createCategoryHandler(c *gin.Context) {
 		params.Description = req.Description
 	}
 
-	if req.Remarkable != nil {
-		params.Remarkable = req.Remarkable
-	}
-
 	if req.Image != nil {
 		imageID, imageURL, err := sv.uploadService.UploadFile(c, req.Image)
 		if err != nil {
@@ -172,7 +166,6 @@ func (sv *Server) createCategoryHandler(c *gin.Context) {
 		CreatedAt:   col.CreatedAt.String(),
 		UpdatedAt:   col.UpdatedAt.String(),
 		Description: col.Description,
-		Remarkable:  *col.Remarkable,
 		ImageUrl:    col.ImageUrl,
 	}
 
@@ -227,7 +220,6 @@ func (sv *Server) getAdminCategoriesHandler(c *gin.Context) {
 			CreatedAt:   category.CreatedAt.String(),
 			UpdatedAt:   category.UpdatedAt.String(),
 			Description: category.Description,
-			Remarkable:  *category.Remarkable,
 			ImageUrl:    category.ImageUrl,
 		}
 	}
@@ -272,7 +264,6 @@ func (sv *Server) getCategoryByID(c *gin.Context) {
 		CreatedAt:   category.CreatedAt.String(),
 		UpdatedAt:   category.UpdatedAt.String(),
 		Description: category.Description,
-		Remarkable:  *category.Remarkable,
 		ImageUrl:    category.ImageUrl,
 	}
 
@@ -329,10 +320,6 @@ func (sv *Server) updateCategoryHandler(c *gin.Context) {
 
 	if req.Description != nil {
 		updateParam.Description = req.Description
-	}
-
-	if req.Remarkable != nil {
-		updateParam.Remarkable = req.Remarkable
 	}
 
 	if req.Published != nil {

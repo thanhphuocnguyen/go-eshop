@@ -21,10 +21,9 @@ func (s *Server) getHomePageHandler(ctx *gin.Context) {
 	go func() {
 		defer wg.Done()
 		categoryRows, err := s.repo.GetCategories(ctx, repository.GetCategoriesParams{
-			Limit:      5,
-			Offset:     0,
-			Published:  utils.BoolPtr(true),
-			Remarkable: utils.BoolPtr(true),
+			Limit:     5,
+			Offset:    0,
+			Published: utils.BoolPtr(true),
 		})
 
 		if err != nil {
@@ -49,10 +48,9 @@ func (s *Server) getHomePageHandler(ctx *gin.Context) {
 	go func() {
 		defer wg.Done()
 		collectionRows, err := s.repo.GetCollections(ctx, repository.GetCollectionsParams{
-			Limit:      5,
-			Offset:     0,
-			Published:  utils.BoolPtr(true),
-			Remarkable: utils.BoolPtr(true),
+			Limit:     5,
+			Offset:    0,
+			Published: utils.BoolPtr(true),
 		})
 
 		if err != nil {

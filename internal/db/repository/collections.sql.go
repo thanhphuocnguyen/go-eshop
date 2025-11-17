@@ -25,14 +25,13 @@ func (q *Queries) CountCollections(ctx context.Context) (int64, error) {
 }
 
 const createCollection = `-- name: CreateCollection :one
-INSERT INTO collections (name, slug, description, remarkable, image_url, image_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, image_url, image_id, description, slug, remarkable, display_order, published, created_at, updated_at
+INSERT INTO collections (name, slug, description,  image_url, image_id) VALUES ($1, $2, $3, $4, $5) RETURNING id, name, image_url, image_id, description, slug, display_order, published, created_at, updated_at
 `
 
 type CreateCollectionParams struct {
 	Name        string  `json:"name"`
 	Slug        string  `json:"slug"`
 	Description *string `json:"description"`
-	Remarkable  *bool   `json:"remarkable"`
 	ImageUrl    *string `json:"imageUrl"`
 	ImageID     *string `json:"imageId"`
 }
@@ -42,7 +41,6 @@ func (q *Queries) CreateCollection(ctx context.Context, arg CreateCollectionPara
 		arg.Name,
 		arg.Slug,
 		arg.Description,
-		arg.Remarkable,
 		arg.ImageUrl,
 		arg.ImageID,
 	)
@@ -54,7 +52,6 @@ func (q *Queries) CreateCollection(ctx context.Context, arg CreateCollectionPara
 		&i.ImageID,
 		&i.Description,
 		&i.Slug,
-		&i.Remarkable,
 		&i.DisplayOrder,
 		&i.Published,
 		&i.CreatedAt,
@@ -73,7 +70,7 @@ func (q *Queries) DeleteCollection(ctx context.Context, id uuid.UUID) error {
 }
 
 const getCollectionByID = `-- name: GetCollectionByID :one
-SELECT c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at FROM collections c  WHERE c.id = $1 LIMIT 1
+SELECT id, name, image_url, image_id, description, slug, display_order, published, created_at, updated_at FROM collections  WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetCollectionByID(ctx context.Context, id uuid.UUID) (Collection, error) {
@@ -86,7 +83,6 @@ func (q *Queries) GetCollectionByID(ctx context.Context, id uuid.UUID) (Collecti
 		&i.ImageID,
 		&i.Description,
 		&i.Slug,
-		&i.Remarkable,
 		&i.DisplayOrder,
 		&i.Published,
 		&i.CreatedAt,
@@ -96,7 +92,7 @@ func (q *Queries) GetCollectionByID(ctx context.Context, id uuid.UUID) (Collecti
 }
 
 const getCollectionBySlug = `-- name: GetCollectionBySlug :one
-SELECT c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at FROM collections c WHERE c.slug = $1 LIMIT 1
+SELECT id, name, image_url, image_id, description, slug, display_order, published, created_at, updated_at FROM collections WHERE slug = $1 LIMIT 1
 `
 
 func (q *Queries) GetCollectionBySlug(ctx context.Context, slug string) (Collection, error) {
@@ -109,7 +105,6 @@ func (q *Queries) GetCollectionBySlug(ctx context.Context, slug string) (Collect
 		&i.ImageID,
 		&i.Description,
 		&i.Slug,
-		&i.Remarkable,
 		&i.DisplayOrder,
 		&i.Published,
 		&i.CreatedAt,
@@ -119,23 +114,17 @@ func (q *Queries) GetCollectionBySlug(ctx context.Context, slug string) (Collect
 }
 
 const getCollections = `-- name: GetCollections :many
-SELECT  c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at FROM collections AS c WHERE  c.published = COALESCE($3, c.published) AND c.remarkable = COALESCE($4, c.remarkable) LIMIT $1 OFFSET $2
+SELECT id, name, image_url, image_id, description, slug, display_order, published, created_at, updated_at FROM collections WHERE  published = COALESCE($3, published) ORDER BY display_order LIMIT $1 OFFSET $2
 `
 
 type GetCollectionsParams struct {
-	Limit      int64 `json:"limit"`
-	Offset     int64 `json:"offset"`
-	Published  *bool `json:"published"`
-	Remarkable *bool `json:"remarkable"`
+	Limit     int64 `json:"limit"`
+	Offset    int64 `json:"offset"`
+	Published *bool `json:"published"`
 }
 
 func (q *Queries) GetCollections(ctx context.Context, arg GetCollectionsParams) ([]Collection, error) {
-	rows, err := q.db.Query(ctx, getCollections,
-		arg.Limit,
-		arg.Offset,
-		arg.Published,
-		arg.Remarkable,
-	)
+	rows, err := q.db.Query(ctx, getCollections, arg.Limit, arg.Offset, arg.Published)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +139,6 @@ func (q *Queries) GetCollections(ctx context.Context, arg GetCollectionsParams) 
 			&i.ImageID,
 			&i.Description,
 			&i.Slug,
-			&i.Remarkable,
 			&i.DisplayOrder,
 			&i.Published,
 			&i.CreatedAt,
@@ -168,7 +156,7 @@ func (q *Queries) GetCollections(ctx context.Context, arg GetCollectionsParams) 
 
 const getCollectionsByIDs = `-- name: GetCollectionsByIDs :many
 SELECT 
-    c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at, 
+    c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.display_order, c.published, c.created_at, c.updated_at, 
     p.name as product_name, p.id, p.description,
     p.base_price as product_price, 
     p.base_sku as product_sku, p.slug as product_slug,
@@ -194,7 +182,6 @@ type GetCollectionsByIDsRow struct {
 	ImageID       *string        `json:"imageId"`
 	Description   *string        `json:"description"`
 	Slug          string         `json:"slug"`
-	Remarkable    *bool          `json:"remarkable"`
 	DisplayOrder  *int32         `json:"displayOrder"`
 	Published     bool           `json:"published"`
 	CreatedAt     time.Time      `json:"createdAt"`
@@ -225,7 +212,6 @@ func (q *Queries) GetCollectionsByIDs(ctx context.Context, arg GetCollectionsByI
 			&i.ImageID,
 			&i.Description,
 			&i.Slug,
-			&i.Remarkable,
 			&i.DisplayOrder,
 			&i.Published,
 			&i.CreatedAt,
@@ -262,11 +248,10 @@ SET
     image_url = COALESCE($3, image_url), 
     image_id = COALESCE($4, image_id),
     description = COALESCE($5, description),
-    remarkable = COALESCE($6, remarkable),
-    slug = COALESCE($7, slug),
-    published = COALESCE($8, published),
+    slug = COALESCE($6, slug),
+    published = COALESCE($7, published),
     updated_at = now()
-WHERE id = $1 RETURNING id, name, image_url, image_id, description, slug, remarkable, display_order, published, created_at, updated_at
+WHERE id = $1 RETURNING id, name, image_url, image_id, description, slug, display_order, published, created_at, updated_at
 `
 
 type UpdateCollectionWithParams struct {
@@ -275,7 +260,6 @@ type UpdateCollectionWithParams struct {
 	ImageUrl    *string   `json:"imageUrl"`
 	ImageID     *string   `json:"imageId"`
 	Description *string   `json:"description"`
-	Remarkable  *bool     `json:"remarkable"`
 	Slug        *string   `json:"slug"`
 	Published   *bool     `json:"published"`
 }
@@ -287,7 +271,6 @@ func (q *Queries) UpdateCollectionWith(ctx context.Context, arg UpdateCollection
 		arg.ImageUrl,
 		arg.ImageID,
 		arg.Description,
-		arg.Remarkable,
 		arg.Slug,
 		arg.Published,
 	)
@@ -299,7 +282,6 @@ func (q *Queries) UpdateCollectionWith(ctx context.Context, arg UpdateCollection
 		&i.ImageID,
 		&i.Description,
 		&i.Slug,
-		&i.Remarkable,
 		&i.DisplayOrder,
 		&i.Published,
 		&i.CreatedAt,

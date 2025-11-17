@@ -152,9 +152,6 @@ func (sv *Server) GetCollectionBySlugHandler(c *gin.Context) {
 		}
 	}
 
-	if collection.Remarkable != nil {
-		collectionResp.Collection.Remarkable = *collection.Remarkable
-	}
 	c.JSON(http.StatusOK, createDataResp(c, collectionResp,
 		nil, nil))
 }
@@ -186,10 +183,6 @@ func (sv *Server) CreateCollectionHandler(c *gin.Context) {
 
 	if req.Description != nil {
 		createParams.Description = req.Description
-	}
-
-	if req.Remarkable != nil {
-		createParams.Remarkable = req.Remarkable
 	}
 
 	if req.Image != nil {
@@ -302,9 +295,6 @@ func (sv *Server) GetCollectionByIDHandler(c *gin.Context) {
 		UpdatedAt:   collection.UpdatedAt.Format("2006-01-02 15:04:05"),
 		Products:    []CategoryLinkedProduct{},
 	}
-	if collection.Remarkable != nil {
-		colResp.Remarkable = *collection.Remarkable
-	}
 
 	c.JSON(http.StatusOK, createDataResp(c, colResp, nil, nil))
 }
@@ -382,10 +372,6 @@ func (sv *Server) UpdateCollectionHandler(c *gin.Context) {
 
 	if req.Published != nil {
 		updateParam.Published = req.Published
-	}
-
-	if req.Remarkable != nil {
-		updateParam.Remarkable = req.Remarkable
 	}
 
 	col, err := sv.repo.UpdateCollectionWith(c, updateParam)

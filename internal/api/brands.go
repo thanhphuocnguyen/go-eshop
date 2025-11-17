@@ -79,10 +79,6 @@ func (sv *Server) GetShopBrandsHandler(c *gin.Context) {
 			ImageUrl:    row.ImageUrl,
 		}
 
-		if row.Remarkable != nil {
-			model.Remarkable = *row.Remarkable
-		}
-
 		data[i] = model
 	}
 	cached = &struct {
@@ -356,9 +352,6 @@ func (sv *Server) GetBrandByIDHandler(c *gin.Context) {
 		UpdatedAt:   result.UpdatedAt.Format("2006-01-02 15:04:05"),
 		ImageUrl:    result.ImageUrl,
 	}
-	if result.Remarkable != nil {
-		colResp.Remarkable = *result.Remarkable
-	}
 
 	c.JSON(http.StatusOK, createDataResp(c, colResp, nil, nil))
 }
@@ -429,10 +422,6 @@ func (sv *Server) UpdateBrandHandler(c *gin.Context) {
 	}
 	if req.Description != nil {
 		updateParam.Description = req.Description
-	}
-
-	if req.Remarkable != nil {
-		updateParam.Remarkable = req.Remarkable
 	}
 
 	if req.Published != nil {

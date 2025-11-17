@@ -25,7 +25,7 @@ func (q *Queries) CountBrands(ctx context.Context) (int64, error) {
 }
 
 const createBrand = `-- name: CreateBrand :one
-INSERT INTO brands (name, slug, description, image_url, image_id, remarkable) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, image_url, image_id, description, slug, remarkable, display_order, published, created_at, updated_at
+INSERT INTO brands (name, slug, description, image_url, image_id) VALUES ($1, $2, $3, $4, $5) RETURNING id, name, image_url, image_id, description, slug, display_order, published, created_at, updated_at
 `
 
 type CreateBrandParams struct {
@@ -34,7 +34,6 @@ type CreateBrandParams struct {
 	Description *string `json:"description"`
 	ImageUrl    *string `json:"imageUrl"`
 	ImageID     *string `json:"imageId"`
-	Remarkable  *bool   `json:"remarkable"`
 }
 
 func (q *Queries) CreateBrand(ctx context.Context, arg CreateBrandParams) (Brand, error) {
@@ -44,7 +43,6 @@ func (q *Queries) CreateBrand(ctx context.Context, arg CreateBrandParams) (Brand
 		arg.Description,
 		arg.ImageUrl,
 		arg.ImageID,
-		arg.Remarkable,
 	)
 	var i Brand
 	err := row.Scan(
@@ -54,7 +52,6 @@ func (q *Queries) CreateBrand(ctx context.Context, arg CreateBrandParams) (Brand
 		&i.ImageID,
 		&i.Description,
 		&i.Slug,
-		&i.Remarkable,
 		&i.DisplayOrder,
 		&i.Published,
 		&i.CreatedAt,
@@ -73,7 +70,7 @@ func (q *Queries) DeleteBrand(ctx context.Context, id uuid.UUID) error {
 }
 
 const getBrandByID = `-- name: GetBrandByID :one
-SELECT c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at FROM brands c WHERE c.id = $1 LIMIT 1
+SELECT id, name, image_url, image_id, description, slug, display_order, published, created_at, updated_at FROM brands WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetBrandByID(ctx context.Context, id uuid.UUID) (Brand, error) {
@@ -86,7 +83,6 @@ func (q *Queries) GetBrandByID(ctx context.Context, id uuid.UUID) (Brand, error)
 		&i.ImageID,
 		&i.Description,
 		&i.Slug,
-		&i.Remarkable,
 		&i.DisplayOrder,
 		&i.Published,
 		&i.CreatedAt,
@@ -96,7 +92,7 @@ func (q *Queries) GetBrandByID(ctx context.Context, id uuid.UUID) (Brand, error)
 }
 
 const getBrandBySlug = `-- name: GetBrandBySlug :one
-SELECT c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at FROM brands c WHERE c.slug = $1 LIMIT 1
+SELECT id, name, image_url, image_id, description, slug, display_order, published, created_at, updated_at FROM brands WHERE slug = $1 LIMIT 1
 `
 
 func (q *Queries) GetBrandBySlug(ctx context.Context, slug string) (Brand, error) {
@@ -109,7 +105,6 @@ func (q *Queries) GetBrandBySlug(ctx context.Context, slug string) (Brand, error
 		&i.ImageID,
 		&i.Description,
 		&i.Slug,
-		&i.Remarkable,
 		&i.DisplayOrder,
 		&i.Published,
 		&i.CreatedAt,
@@ -119,7 +114,7 @@ func (q *Queries) GetBrandBySlug(ctx context.Context, slug string) (Brand, error
 }
 
 const getBrands = `-- name: GetBrands :many
-SELECT c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at FROM brands AS c WHERE c.published = COALESCE($3, c.published) LIMIT $1 OFFSET $2
+SELECT id, name, image_url, image_id, description, slug, display_order, published, created_at, updated_at FROM brands WHERE published = COALESCE($3, published) ORDER BY display_order LIMIT $1 OFFSET $2
 `
 
 type GetBrandsParams struct {
@@ -144,7 +139,6 @@ func (q *Queries) GetBrands(ctx context.Context, arg GetBrandsParams) ([]Brand, 
 			&i.ImageID,
 			&i.Description,
 			&i.Slug,
-			&i.Remarkable,
 			&i.DisplayOrder,
 			&i.Published,
 			&i.CreatedAt,
@@ -161,7 +155,7 @@ func (q *Queries) GetBrands(ctx context.Context, arg GetBrandsParams) ([]Brand, 
 }
 
 const getBrandsByIDs = `-- name: GetBrandsByIDs :many
-SELECT c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.remarkable, c.display_order, c.published, c.created_at, c.updated_at, p.name as product_name, p.id as product_id, p.description, p.base_price as product_price, p.base_sku as product_sku, p.slug as product_slug
+SELECT c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.display_order, c.published, c.created_at, c.updated_at, p.name as product_name, p.id as product_id, p.description, p.base_price as product_price, p.base_sku as product_sku, p.slug as product_slug
 FROM brands AS c
 LEFT JOIN products AS p ON p.brand_id = c.id
 WHERE c.id = ANY($3::UUID[])
@@ -182,7 +176,6 @@ type GetBrandsByIDsRow struct {
 	ImageID       *string        `json:"imageId"`
 	Description   *string        `json:"description"`
 	Slug          string         `json:"slug"`
-	Remarkable    *bool          `json:"remarkable"`
 	DisplayOrder  *int32         `json:"displayOrder"`
 	Published     bool           `json:"published"`
 	CreatedAt     time.Time      `json:"createdAt"`
@@ -211,7 +204,6 @@ func (q *Queries) GetBrandsByIDs(ctx context.Context, arg GetBrandsByIDsParams) 
 			&i.ImageID,
 			&i.Description,
 			&i.Slug,
-			&i.Remarkable,
 			&i.DisplayOrder,
 			&i.Published,
 			&i.CreatedAt,
@@ -240,12 +232,11 @@ SET
     image_url = COALESCE($3, image_url),
     image_id = COALESCE($4, image_id),
     description = COALESCE($5, description),
-    remarkable = COALESCE($6, remarkable),
-    slug = COALESCE($7, slug),
-    published = COALESCE($8, published),
+    slug = COALESCE($6, slug),
+    published = COALESCE($7, published),
     updated_at = now()
 WHERE id = $1
-RETURNING id, name, image_url, image_id, description, slug, remarkable, display_order, published, created_at, updated_at
+RETURNING id, name, image_url, image_id, description, slug, display_order, published, created_at, updated_at
 `
 
 type UpdateBrandWithParams struct {
@@ -254,7 +245,6 @@ type UpdateBrandWithParams struct {
 	ImageUrl    *string   `json:"imageUrl"`
 	ImageID     *string   `json:"imageId"`
 	Description *string   `json:"description"`
-	Remarkable  *bool     `json:"remarkable"`
 	Slug        *string   `json:"slug"`
 	Published   *bool     `json:"published"`
 }
@@ -266,7 +256,6 @@ func (q *Queries) UpdateBrandWith(ctx context.Context, arg UpdateBrandWithParams
 		arg.ImageUrl,
 		arg.ImageID,
 		arg.Description,
-		arg.Remarkable,
 		arg.Slug,
 		arg.Published,
 	)
@@ -278,7 +267,6 @@ func (q *Queries) UpdateBrandWith(ctx context.Context, arg UpdateBrandWithParams
 		&i.ImageID,
 		&i.Description,
 		&i.Slug,
-		&i.Remarkable,
 		&i.DisplayOrder,
 		&i.Published,
 		&i.CreatedAt,

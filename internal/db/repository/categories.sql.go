@@ -24,14 +24,13 @@ func (q *Queries) CountCategories(ctx context.Context) (int64, error) {
 }
 
 const createCategory = `-- name: CreateCategory :one
-INSERT INTO categories (name, slug, description, remarkable, image_url, image_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, description, image_url, image_id, published, remarkable, slug, display_order, created_at, updated_at
+INSERT INTO categories (name, slug, description, image_url, image_id) VALUES ($1, $2, $3, $4, $5) RETURNING id, name, description, image_url, image_id, published, slug, display_order, created_at, updated_at
 `
 
 type CreateCategoryParams struct {
 	Name        string  `json:"name"`
 	Slug        string  `json:"slug"`
 	Description *string `json:"description"`
-	Remarkable  *bool   `json:"remarkable"`
 	ImageUrl    *string `json:"imageUrl"`
 	ImageID     *string `json:"imageId"`
 }
@@ -41,7 +40,6 @@ func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) 
 		arg.Name,
 		arg.Slug,
 		arg.Description,
-		arg.Remarkable,
 		arg.ImageUrl,
 		arg.ImageID,
 	)
@@ -53,7 +51,6 @@ func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) 
 		&i.ImageUrl,
 		&i.ImageID,
 		&i.Published,
-		&i.Remarkable,
 		&i.Slug,
 		&i.DisplayOrder,
 		&i.CreatedAt,
@@ -72,23 +69,17 @@ func (q *Queries) DeleteCategory(ctx context.Context, id uuid.UUID) error {
 }
 
 const getCategories = `-- name: GetCategories :many
-SELECT id, name, description, image_url, image_id, published, remarkable, slug, display_order, created_at, updated_at FROM categories WHERE published = COALESCE($3, true) AND remarkable = COALESCE($4, remarkable) ORDER BY id LIMIT $1 OFFSET $2
+SELECT id, name, description, image_url, image_id, published, slug, display_order, created_at, updated_at FROM categories WHERE published = COALESCE($3, true) ORDER BY display_order LIMIT $1 OFFSET $2
 `
 
 type GetCategoriesParams struct {
-	Limit      int64 `json:"limit"`
-	Offset     int64 `json:"offset"`
-	Published  *bool `json:"published"`
-	Remarkable *bool `json:"remarkable"`
+	Limit     int64 `json:"limit"`
+	Offset    int64 `json:"offset"`
+	Published *bool `json:"published"`
 }
 
 func (q *Queries) GetCategories(ctx context.Context, arg GetCategoriesParams) ([]Category, error) {
-	rows, err := q.db.Query(ctx, getCategories,
-		arg.Limit,
-		arg.Offset,
-		arg.Published,
-		arg.Remarkable,
-	)
+	rows, err := q.db.Query(ctx, getCategories, arg.Limit, arg.Offset, arg.Published)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +94,6 @@ func (q *Queries) GetCategories(ctx context.Context, arg GetCategoriesParams) ([
 			&i.ImageUrl,
 			&i.ImageID,
 			&i.Published,
-			&i.Remarkable,
 			&i.Slug,
 			&i.DisplayOrder,
 			&i.CreatedAt,
@@ -120,7 +110,7 @@ func (q *Queries) GetCategories(ctx context.Context, arg GetCategoriesParams) ([
 }
 
 const getCategoryByID = `-- name: GetCategoryByID :one
-SELECT c.id, c.name, c.description, c.image_url, c.image_id, c.published, c.remarkable, c.slug, c.display_order, c.created_at, c.updated_at FROM categories c WHERE c.id = $1 LIMIT 1
+SELECT id, name, description, image_url, image_id, published, slug, display_order, created_at, updated_at FROM categories WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetCategoryByID(ctx context.Context, id uuid.UUID) (Category, error) {
@@ -133,7 +123,6 @@ func (q *Queries) GetCategoryByID(ctx context.Context, id uuid.UUID) (Category, 
 		&i.ImageUrl,
 		&i.ImageID,
 		&i.Published,
-		&i.Remarkable,
 		&i.Slug,
 		&i.DisplayOrder,
 		&i.CreatedAt,
@@ -143,7 +132,7 @@ func (q *Queries) GetCategoryByID(ctx context.Context, id uuid.UUID) (Category, 
 }
 
 const getCategoryBySlug = `-- name: GetCategoryBySlug :one
-SELECT c.id, c.name, c.description, c.image_url, c.image_id, c.published, c.remarkable, c.slug, c.display_order, c.created_at, c.updated_at FROM categories c WHERE c.slug = $1 LIMIT 1
+SELECT id, name, description, image_url, image_id, published, slug, display_order, created_at, updated_at FROM categories WHERE slug = $1 LIMIT 1
 `
 
 func (q *Queries) GetCategoryBySlug(ctx context.Context, slug string) (Category, error) {
@@ -156,7 +145,6 @@ func (q *Queries) GetCategoryBySlug(ctx context.Context, slug string) (Category,
 		&i.ImageUrl,
 		&i.ImageID,
 		&i.Published,
-		&i.Remarkable,
 		&i.Slug,
 		&i.DisplayOrder,
 		&i.CreatedAt,
@@ -166,7 +154,7 @@ func (q *Queries) GetCategoryBySlug(ctx context.Context, slug string) (Category,
 }
 
 const getCategoryProductsByID = `-- name: GetCategoryProductsByID :many
-SELECT c.id, c.name, c.description, c.image_url, c.image_id, c.published, c.remarkable, c.slug, c.display_order, c.created_at, c.updated_at, p.id, p.name as product_name, p.description as product_description FROM categories c LEFT JOIN products p ON c.id = p.id LEFT JOIN product_images pi ON pi.product_id = p.id WHERE c.id = $1
+SELECT c.id, c.name, c.description, c.image_url, c.image_id, c.published, c.slug, c.display_order, c.created_at, c.updated_at, p.id, p.name as product_name, p.description as product_description FROM categories c LEFT JOIN products p ON c.id = p.id LEFT JOIN product_images pi ON pi.product_id = p.id WHERE c.id = $1
 `
 
 type GetCategoryProductsByIDRow struct {
@@ -192,7 +180,6 @@ func (q *Queries) GetCategoryProductsByID(ctx context.Context, id uuid.UUID) ([]
 			&i.Category.ImageUrl,
 			&i.Category.ImageID,
 			&i.Category.Published,
-			&i.Category.Remarkable,
 			&i.Category.Slug,
 			&i.Category.DisplayOrder,
 			&i.Category.CreatedAt,
@@ -227,10 +214,9 @@ SET
     description = COALESCE($4, description),
     image_id = COALESCE($5, image_id),
     image_url = COALESCE($6, image_url), 
-    remarkable = COALESCE($7, remarkable),
-    published = COALESCE($8, published),
+    published = COALESCE($7, published),
     updated_at = now()
-WHERE id = $1 RETURNING id, name, description, image_url, image_id, published, remarkable, slug, display_order, created_at, updated_at
+WHERE id = $1 RETURNING id, name, description, image_url, image_id, published, slug, display_order, created_at, updated_at
 `
 
 type UpdateCategoryParams struct {
@@ -240,7 +226,6 @@ type UpdateCategoryParams struct {
 	Description *string   `json:"description"`
 	ImageID     *string   `json:"imageId"`
 	ImageUrl    *string   `json:"imageUrl"`
-	Remarkable  *bool     `json:"remarkable"`
 	Published   *bool     `json:"published"`
 }
 
@@ -252,7 +237,6 @@ func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) 
 		arg.Description,
 		arg.ImageID,
 		arg.ImageUrl,
-		arg.Remarkable,
 		arg.Published,
 	)
 	var i Category
@@ -263,7 +247,6 @@ func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) 
 		&i.ImageUrl,
 		&i.ImageID,
 		&i.Published,
-		&i.Remarkable,
 		&i.Slug,
 		&i.DisplayOrder,
 		&i.CreatedAt,

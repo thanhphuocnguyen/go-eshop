@@ -259,7 +259,6 @@ CREATE TABLE
         image_url TEXT,
         image_id VARCHAR,
         published BOOLEAN NOT NULL DEFAULT TRUE,
-        remarkable BOOLEAN DEFAULT FALSE,
         slug VARCHAR UNIQUE NOT NULL,
         display_order INT DEFAULT 0,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now (),
@@ -274,7 +273,6 @@ CREATE TABLE
         image_id VARCHAR,
         description TEXT,
         slug VARCHAR UNIQUE NOT NULL,
-        remarkable BOOLEAN DEFAULT FALSE,
         display_order INT DEFAULT 0,
         published BOOLEAN NOT NULL DEFAULT TRUE,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now (),
@@ -289,7 +287,6 @@ CREATE TABLE
         image_id VARCHAR,
         description TEXT,
         slug VARCHAR UNIQUE NOT NULL,
-        remarkable BOOLEAN DEFAULT FALSE,
         display_order INT DEFAULT 0,
         published BOOLEAN NOT NULL DEFAULT TRUE,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now (),
@@ -384,7 +381,6 @@ CREATE TABLE
         image_url TEXT,
         image_id VARCHAR(255),
         description TEXT,
-        remarkable BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW ()
     );

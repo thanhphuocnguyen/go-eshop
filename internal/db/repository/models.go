@@ -30,7 +30,6 @@ type Brand struct {
 	ImageID      *string   `json:"imageId"`
 	Description  *string   `json:"description"`
 	Slug         string    `json:"slug"`
-	Remarkable   *bool     `json:"remarkable"`
 	DisplayOrder *int32    `json:"displayOrder"`
 	Published    bool      `json:"published"`
 	CreatedAt    time.Time `json:"createdAt"`
@@ -71,7 +70,6 @@ type Category struct {
 	ImageUrl     *string   `json:"imageUrl"`
 	ImageID      *string   `json:"imageId"`
 	Published    bool      `json:"published"`
-	Remarkable   *bool     `json:"remarkable"`
 	Slug         string    `json:"slug"`
 	DisplayOrder *int32    `json:"displayOrder"`
 	CreatedAt    time.Time `json:"createdAt"`
@@ -85,7 +83,6 @@ type Collection struct {
 	ImageID      *string   `json:"imageId"`
 	Description  *string   `json:"description"`
 	Slug         string    `json:"slug"`
-	Remarkable   *bool     `json:"remarkable"`
 	DisplayOrder *int32    `json:"displayOrder"`
 	Published    bool      `json:"published"`
 	CreatedAt    time.Time `json:"createdAt"`
@@ -155,7 +152,6 @@ type FeaturedSection struct {
 	ImageUrl    *string   `json:"imageUrl"`
 	ImageID     *string   `json:"imageId"`
 	Description *string   `json:"description"`
-	Remarkable  *bool     `json:"remarkable"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 }

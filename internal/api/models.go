@@ -326,7 +326,6 @@ type CategoryResponse struct {
 	Description *string                 `json:"description,omitempty"`
 	Slug        string                  `json:"slug"`
 	Published   bool                    `json:"published,omitempty"`
-	Remarkable  bool                    `json:"remarkable,omitempty"`
 	CreatedAt   string                  `json:"createdAt,omitempty"`
 	UpdatedAt   string                  `json:"updatedAt,omitempty"`
 	ImageUrl    *string                 `json:"imageUrl,omitempty"`
