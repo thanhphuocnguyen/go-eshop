@@ -203,11 +203,7 @@ type AttributeRequest struct {
 	Name string `json:"name" binding:"required"`
 }
 
-type CreateAttributeValuesRequest struct {
-	Values []string `json:"values" binding:"required"`
-}
-
-type UpdateAttributeValueRequest struct {
+type AttributeValuesReq struct {
 	Value string `json:"value" binding:"required"`
 }
 
@@ -659,13 +655,13 @@ type ProductAttributeModel struct {
 
 type AttributeValue struct {
 	ID    int64  `json:"id"`
-	Value string `json:"code"`
+	Value string `json:"value"`
 }
 
 type AttributeResponse struct {
 	ID        int32            `json:"id"`
 	Name      string           `json:"name"`
-	Values    []AttributeValue `json:"values,omitempty"`
+	Values    []AttributeValue `json:"values"`
 	CreatedAt string           `json:"createdAt"`
 	UpdatedAt string           `json:"updatedAt"`
 }

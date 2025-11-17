@@ -33,10 +33,14 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 		attributeGroup := admin.Group("attributes")
 		{
 			attributeGroup.POST("", sv.CreateAttributeHandler)
-			attributeGroup.GET("", sv.getAttributesHandler)
+			attributeGroup.GET("", sv.GetAttributesHandler)
 			attributeGroup.GET(":id", sv.GetAttributeByIDHandler)
-			attributeGroup.PUT(":id", sv.updateAttributeHandler)
+			attributeGroup.PUT(":id", sv.UpdateAttributeHandler)
 			attributeGroup.DELETE(":id", sv.RemoveAttributeHandler)
+
+			attributeGroup.POST(":id/create", sv.AddAttributeValueHandler)
+			attributeGroup.PUT(":id/update/:valueId", sv.UpdateAttrValueHandler)
+			attributeGroup.DELETE(":id/remove/:valueId", sv.RemoveAttrValueHandler)
 		}
 
 		adminOrder := admin.Group("orders")

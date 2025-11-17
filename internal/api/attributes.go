@@ -92,7 +92,7 @@ func (sv *Server) GetAttributeByIDHandler(c *gin.Context) {
 // @Success 200 {object} ApiResponse[[]AttributeResponse]
 // @Failure 500 {object} ErrorResp
 // @Router /attributes [get]
-func (sv *Server) getAttributesHandler(c *gin.Context) {
+func (sv *Server) GetAttributesHandler(c *gin.Context) {
 	var queries GetAttributesQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
@@ -156,7 +156,7 @@ func (sv *Server) getAttributesHandler(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /attributes/{id} [put]
-func (sv *Server) updateAttributeHandler(c *gin.Context) {
+func (sv *Server) UpdateAttributeHandler(c *gin.Context) {
 	var param AttributeParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
@@ -187,24 +187,24 @@ func (sv *Server) updateAttributeHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, createDataResp(c, attribute, nil, nil))
 }
 
-// @Summary Add new attribute values
-// @Description Add new attribute values
+// @Summary Add new attribute value
+// @Description Add new attribute value
 // @Tags attributes
 // @Accept json
 // @Produce json
 // @Param id path int true "Attribute ID"
-// @Param params body AddAttributeValuesRequest true "Attribute values"
+// @Param params body AddAttributeValueRequest true "Attribute value"
 // @Success 200 {object} ApiResponse[bool]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /attributes/{id}/create [put]
-func (sv *Server) AddAttrValuesHandler(c *gin.Context) {
+// @Router /attributes/{id}/create [post]
+func (sv *Server) AddAttributeValueHandler(c *gin.Context) {
 	var param AttributeParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
-	var req CreateAttributeValuesRequest
+	var req AttributeValuesReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -216,20 +216,16 @@ func (sv *Server) AddAttrValuesHandler(c *gin.Context) {
 		return
 	}
 
-	createParams := make([]repository.CreateAttributeValuesParams, len(req.Values))
-	for i, val := range req.Values {
-		createParams[i] = repository.CreateAttributeValuesParams{
-			AttributeID: attr.ID,
-			Value:       val,
-		}
-	}
-	_, err = sv.repo.CreateAttributeValues(c, createParams)
+	obj, err := sv.repo.CreateAttributeValue(c, repository.CreateAttributeValueParams{
+		AttributeID: attr.ID,
+		Value:       req.Value,
+	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
-	c.Status(http.StatusNoContent)
+	c.JSON(http.StatusCreated, createDataResp(c, obj, nil, nil))
 }
 
 // @Summary update attribute value
@@ -238,7 +234,7 @@ func (sv *Server) AddAttrValuesHandler(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Attribute ID"
-// @Param params body UpdateAttributeValueRequest true "Attribute values"
+// @Param params body UpdateAttributeValueRequest true "Attribute value"
 // @Success 200 {object} ApiResponse[bool]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
@@ -253,7 +249,7 @@ func (sv *Server) UpdateAttrValueHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, nil))
 		return
 	}
-	var req UpdateAttributeValueRequest
+	var req AttributeValuesReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -261,7 +257,7 @@ func (sv *Server) UpdateAttrValueHandler(c *gin.Context) {
 
 	attr, err := sv.repo.GetAttributeByID(c, param.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
 		return
 	}
 
@@ -317,7 +313,7 @@ func (sv *Server) RemoveAttrValueHandler(c *gin.Context) {
 		return
 	}
 
-	c.Status(http.StatusNoContent)
+	c.JSON(http.StatusNoContent, createDataResp(c, struct{}{}, nil, nil))
 }
 
 // @Summary Delete an attribute

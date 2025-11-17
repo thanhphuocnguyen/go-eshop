@@ -299,13 +299,13 @@ CREATE TABLE
 -- Create attributes tables
 CREATE TABLE
     attributes (
-        id INT PRIMARY KEY,
+        id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
         name VARCHAR(100) UNIQUE NOT NULL
     );
 
 CREATE TABLE
     attribute_values (
-        id BIGINT PRIMARY KEY,
+        id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
         attribute_id INT NOT NULL REFERENCES attributes (id) ON DELETE CASCADE,
         value VARCHAR(255) NOT NULL,
         UNIQUE(attribute_id, value)
