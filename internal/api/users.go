@@ -106,17 +106,13 @@ func (sv *Server) GetCurrentUserHandler(c *gin.Context) {
 
 	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
 	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
-			return
-		}
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusUnauthorized, createErr(NotFoundCode, err))
 		return
 	}
 
 	userAddress, err := sv.repo.GetAddresses(c, user.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusBadRequest, createErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -128,7 +124,7 @@ func (sv *Server) GetCurrentUserHandler(c *gin.Context) {
 	userResp.Addresses = addressResp
 
 	if err = sv.cachesrv.Set(c, cachesrv.USER_KEY_PREFIX+authPayload.UserID.String(), userResp, &cachesrv.DEFAULT_EXPIRATION); err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusBadRequest, createErr(InternalServerErrorCode, err))
 		return
 	}
 

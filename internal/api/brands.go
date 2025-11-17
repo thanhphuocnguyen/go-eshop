@@ -39,18 +39,6 @@ func (sv *Server) GetShopBrandsHandler(c *gin.Context) {
 
 	dbQueries.Limit = queries.PageSize
 	dbQueries.Offset = (queries.Page - 1) * queries.PageSize
-	var cached *struct {
-		Data       []CategoryResponse `json:"data"`
-		Pagination *Pagination        `json:"pagination"`
-	}
-
-	if err := sv.cachesrv.Get(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), &cached); err == nil {
-		if cached != nil {
-			resp := createDataResp(c, cached.Data, cached.Pagination, nil)
-			c.JSON(http.StatusOK, resp)
-			return
-		}
-	}
 
 	rows, err := sv.repo.GetBrands(c, dbQueries)
 	if err != nil {
@@ -81,25 +69,9 @@ func (sv *Server) GetShopBrandsHandler(c *gin.Context) {
 
 		data[i] = model
 	}
-	cached = &struct {
-		Data       []CategoryResponse `json:"data"`
-		Pagination *Pagination        `json:"pagination"`
-	}{
-		Data: data,
-		Pagination: &Pagination{
-			Page:            queries.Page,
-			Total:           cnt,
-			PageSize:        queries.PageSize,
-			TotalPages:      cnt / int64(queries.PageSize),
-			HasNextPage:     cnt > int64((queries.Page-1)*queries.PageSize+queries.PageSize),
-			HasPreviousPage: queries.Page > 1,
-		},
-	}
 
-	resp := createDataResp(c, cached.Data, cached.Pagination, nil)
-	if err = sv.cachesrv.Set(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), resp, nil); err != nil {
-		log.Error().Err(err).Msg("error when set brands to cache")
-	}
+	resp := createDataResp(c, data, createPagination(queries.Page, queries.PageSize, cnt), nil)
+
 	c.JSON(http.StatusOK, resp)
 }
 
@@ -137,18 +109,6 @@ func (sv *Server) GetShopBrandBySlugHandler(c *gin.Context) {
 	}
 	dbQueries.Limit = queries.PageSize
 	dbQueries.Offset = (queries.Page - 1) * queries.PageSize
-	var cached *struct {
-		Data       []CategoryResponse `json:"data"`
-		Pagination *Pagination        `json:"pagination"`
-	}
-
-	if err := sv.cachesrv.Get(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), &cached); err == nil {
-		if cached != nil {
-			resp := createDataResp(c, cached.Data, cached.Pagination, nil)
-			c.JSON(http.StatusOK, resp)
-			return
-		}
-	}
 
 	rows, err := sv.repo.GetBrands(c, dbQueries)
 	if err != nil {
@@ -174,18 +134,8 @@ func (sv *Server) GetShopBrandBySlugHandler(c *gin.Context) {
 			ImageUrl:    row.ImageUrl,
 		}
 	}
-	cached = &struct {
-		Data       []CategoryResponse `json:"data"`
-		Pagination *Pagination        `json:"pagination"`
-	}{
-		Data:       data,
-		Pagination: createPagination(cnt, queries.Page, queries.PageSize),
-	}
 
-	resp := createDataResp(c, cached.Data, cached.Pagination, nil)
-	if err = sv.cachesrv.Set(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), resp, nil); err != nil {
-		log.Error().Err(err).Msg("error when set brands to cache")
-	}
+	resp := createDataResp(c, data, createPagination(queries.Page, queries.PageSize, cnt), nil)
 	c.JSON(http.StatusOK, resp)
 }
 
@@ -226,7 +176,6 @@ func (sv *Server) CreateBrandHandler(c *gin.Context) {
 	}
 
 	col, err := sv.repo.CreateBrand(c, params)
-	sv.cachesrv.Delete(c, "brands-*")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
@@ -260,18 +209,6 @@ func (sv *Server) GetBrandsHandler(c *gin.Context) {
 	dbQueries.Limit = queries.PageSize
 	dbQueries.Offset = (queries.Page - 1) * queries.PageSize
 
-	var cached *struct {
-		Data       []CategoryResponse `json:"data"`
-		Pagination *Pagination        `json:"pagination"`
-	}
-	if err := sv.cachesrv.Get(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), &cached); err == nil {
-		if cached != nil {
-			resp := createDataResp(c, cached.Data, cached.Pagination, nil)
-			c.JSON(http.StatusOK, resp)
-			return
-		}
-	}
-
 	rows, err := sv.repo.GetBrands(c, dbQueries)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
@@ -298,17 +235,6 @@ func (sv *Server) GetBrandsHandler(c *gin.Context) {
 	}
 
 	pagination := createPagination(queries.Page, queries.PageSize, cnt)
-	cached = &struct {
-		Data       []CategoryResponse "json:\"data\""
-		Pagination *Pagination        "json:\"pagination\""
-	}{
-		Data:       data,
-		Pagination: pagination,
-	}
-
-	if err = sv.cachesrv.Set(c, fmt.Sprintf("brands-%d-%d", queries.Page, queries.PageSize), cached, nil); err != nil {
-		log.Error().Err(err).Msg("error when set brands to cache")
-	}
 
 	resp := createDataResp(c, data, pagination, nil)
 	c.JSON(http.StatusOK, resp)
