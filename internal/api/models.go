@@ -271,16 +271,17 @@ type Pagination struct {
 	HasPreviousPage bool  `json:"hasPreviousPage"`
 }
 
-type ProductDetailItemResponse struct {
+type ManageProductDetailResp struct {
 	ID               string  `json:"id"`
 	Name             string  `json:"name"`
 	Description      string  `json:"description"`
 	ShortDescription *string `json:"shortDescription"`
-	Attributes       []int32 `json:"attributes"`
 	BasePrice        float64 `json:"price,omitzero"`
 	BaseSku          string  `json:"sku"`
 	IsActive         bool    `json:"isActive"`
 	Slug             string  `json:"slug"`
+	ImageUrl         string  `json:"imageUrl"`
+	ImageId          string  `json:"imageId,omitempty"`
 
 	RatingCount    int32 `json:"ratingCount"`
 	OneStarCount   int32 `json:"oneStarCount"`
@@ -292,14 +293,10 @@ type ProductDetailItemResponse struct {
 	UpdatedAt string `json:"updatedAt"`
 	CreatedAt string `json:"createdAt"`
 
-	MaxDiscountValue float64 `json:"maxDiscountValue,omitzero"`
-	DiscountType     *string `json:"discountType,omitempty"`
-
-	Variants      []ProductVariantModel    `json:"variants"`
-	ProductImages []ProductImageModel      `json:"productImages"`
-	Collection    *GeneralCategoryResponse `json:"collection,omitempty"`
-	Brand         *GeneralCategoryResponse `json:"brand,omitempty"`
-	Category      *GeneralCategoryResponse `json:"category,omitempty"`
+	Attributes []int32                  `json:"attributes,omitempty"`
+	Collection *GeneralCategoryResponse `json:"collection,omitempty"`
+	Brand      *GeneralCategoryResponse `json:"brand,omitempty"`
+	Category   *GeneralCategoryResponse `json:"category,omitempty"`
 }
 
 type GeneralCategoryResponse struct {
@@ -308,16 +305,16 @@ type GeneralCategoryResponse struct {
 }
 
 type CategoryListResponse struct {
-	ID          string             `json:"id"`
-	Name        string             `json:"name"`
-	Description *string            `json:"description,omitempty"`
-	Slug        string             `json:"slug"`
-	Published   bool               `json:"published,omitempty"`
-	Remarkable  bool               `json:"remarkable,omitempty"`
-	CreatedAt   string             `json:"createdAt,omitempty"`
-	UpdatedAt   string             `json:"updatedAt,omitempty"`
-	ImageUrl    *string            `json:"imageUrl,omitempty"`
-	Products    []ProductListModel `json:"products,omitempty"`
+	ID          string                   `json:"id"`
+	Name        string                   `json:"name"`
+	Description *string                  `json:"description,omitempty"`
+	Slug        string                   `json:"slug"`
+	Published   bool                     `json:"published,omitempty"`
+	Remarkable  bool                     `json:"remarkable,omitempty"`
+	CreatedAt   string                   `json:"createdAt,omitempty"`
+	UpdatedAt   string                   `json:"updatedAt,omitempty"`
+	ImageUrl    *string                  `json:"imageUrl,omitempty"`
+	Products    []ManageProductListModel `json:"products,omitempty"`
 }
 
 type CategoryResponse struct {
@@ -550,20 +547,18 @@ type ProductRatingModel struct {
 	Images           []RatingImageModel `json:"images"`
 }
 
-type ProductListModel struct {
+type ManageProductListModel struct {
 	ID           string   `json:"id"`
 	Name         string   `json:"name"`
 	Description  string   `json:"description"`
 	VariantCount int64    `json:"variantCount,omitzero"`
 	BasePrice    float64  `json:"basePrice,omitzero"`
-	MinPrice     float64  `json:"minPrice,omitzero"`
-	MaxPrice     float64  `json:"maxPrice,omitzero"`
 	Slug         string   `json:"slug,omitempty"`
 	Sku          string   `json:"sku"`
 	ImgUrl       *string  `json:"imageUrl,omitempty"`
 	AvgRating    *float64 `json:"avgRating,omitempty"`
 	ReviewCount  *int32   `json:"reviewCount,omitempty"`
-	ImgID        *int64   `json:"imageId,omitempty"`
+	ImgID        *string  `json:"imageId,omitempty"`
 	CreatedAt    string   `json:"createdAt,omitempty"`
 	UpdatedAt    string   `json:"updatedAt,omitempty"`
 }
@@ -592,13 +587,12 @@ type CategoryLinkedProduct struct {
 	ImageUrl     *string `json:"imageUrl,omitempty"`
 }
 
-type ProductVariantModel struct {
-	ID         string                  `json:"id"`
-	Price      float64                 `json:"price"`
-	StockQty   int32                   `json:"stockQty"`
-	IsActive   bool                    `json:"isActive"`
-	Sku        *string                 `json:"sku,omitempty"`
-	Attributes []ProductAttributeModel `json:"attributes"`
+type ManageProductVariantModel struct {
+	ID       string  `json:"id"`
+	Price    float64 `json:"price"`
+	StockQty int32   `json:"stockQty"`
+	IsActive bool    `json:"isActive"`
+	Sku      *string `json:"sku,omitempty"`
 }
 
 type ImageAssignmentModel struct {
@@ -658,9 +652,59 @@ type AttributeValue struct {
 }
 
 type AttributeResponse struct {
-	ID        int32            `json:"id"`
-	Name      string           `json:"name"`
-	Values    []AttributeValue `json:"values"`
-	CreatedAt string           `json:"createdAt"`
-	UpdatedAt string           `json:"updatedAt"`
+	ID     int32            `json:"id"`
+	Name   string           `json:"name"`
+	Values []AttributeValue `json:"values"`
+}
+
+type CreateProductReq struct {
+	Name             string  `json:"name" binding:"required,min=3,max=255"`
+	Description      string  `json:"description" binding:"required"`
+	ShortDescription *string `json:"shortDescription" binding:"omitempty,max=1000"`
+	Attributes       []int32 `json:"attributes" binding:"required,required"`
+	BasePrice        float64 `json:"price" binding:"required,gt=0"`
+	BaseSku          string  `json:"sku" binding:"required,min=3,max=100"`
+	IsActive         bool    `json:"isActive" binding:"required"`
+	Slug             string  `json:"slug" binding:"required,min=3,max=255"`
+
+	CollectionID *string `json:"collectionId" binding:"omitempty,uuid4"`
+	BrandID      string  `json:"brandId" binding:"omitempty,uuid4"`
+	CategoryID   string  `json:"categoryId" binding:"required,uuid4"`
+}
+type UpdateProductReq struct {
+	Name             *string  `json:"name" binding:"min=3,max=255"`
+	Description      *string  `json:"description"`
+	ShortDescription *string  `json:"shortDescription" binding:"omitempty,max=1000"`
+	Attributes       *[]int32 `json:"attributes" binding:""`
+	BasePrice        *float64 `json:"price" binding:"gt=0"`
+	BaseSku          *string  `json:"sku" binding:"min=3,max=100"`
+	IsActive         *bool    `json:"isActive" binding:""`
+	Slug             *string  `json:"slug" binding:"min=3,max=255"`
+
+	CollectionID *string `json:"collectionId" binding:"omitempty,uuid4"`
+	BrandID      *string `json:"brandId" binding:"omitempty,uuid4"`
+	CategoryID   *string `json:"categoryId" binding:"uuid4"`
+}
+
+type CreateProdVariantReq struct {
+	Price           float64  `json:"price" binding:"required,gt=0"`
+	StockQty        int32    `json:"stockQty" binding:"required,gte=0"`
+	IsActive        bool     `json:"isActive" binding:"required"`
+	AttributeValues []int64  `json:"attributeValues" binding:"required"`
+	Description     *string  `json:"description" binding:"omitempty"`
+	Weight          *float64 `json:"weight" binding:"omitempty,gt=0"`
+}
+
+type UpdateProdVariantReq struct {
+	Price           *float64 `json:"price" binding:"omitempty,gt=0"`
+	StockQty        *int32   `json:"stockQty" binding:"omitempty,gte=0"`
+	IsActive        *bool    `json:"isActive" binding:"omitempty"`
+	Description     *string  `json:"description" binding:"omitempty"`
+	AttributeValues *[]int64 `json:"attributeValues" binding:"required,omitempty"`
+	Weight          *float64 `json:"weight" binding:"omitempty,gt=0"`
+}
+
+type URIVariantParam struct {
+	ProductID string `uri:"productId" binding:"required,uuid"`
+	VariantID string `uri:"variantId" binding:"required,uuid"`
 }

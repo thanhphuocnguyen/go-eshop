@@ -55,9 +55,31 @@ type CreateAttributeValuesParams struct {
 	Value       string `json:"value"`
 }
 
+type CreateBulkProductAttributesParams struct {
+	ProductID   uuid.UUID `json:"productId"`
+	AttributeID int32     `json:"attributeId"`
+}
+
 type CreateBulkProductVariantAttributeParams struct {
 	VariantID        uuid.UUID `json:"variantId"`
 	AttributeValueID int64     `json:"attributeValueId"`
+}
+
+const createProductAttribute = `-- name: CreateProductAttribute :one
+INSERT INTO product_attributes (product_id, attribute_id) VALUES ($1, $2) RETURNING id, product_id, attribute_id
+`
+
+type CreateProductAttributeParams struct {
+	ProductID   uuid.UUID `json:"productId"`
+	AttributeID int32     `json:"attributeId"`
+}
+
+// PRODUCT ATTRIBUTES QUERIES
+func (q *Queries) CreateProductAttribute(ctx context.Context, arg CreateProductAttributeParams) (ProductAttribute, error) {
+	row := q.db.QueryRow(ctx, createProductAttribute, arg.ProductID, arg.AttributeID)
+	var i ProductAttribute
+	err := row.Scan(&i.ID, &i.ProductID, &i.AttributeID)
+	return i, err
 }
 
 const createProductVariantAttribute = `-- name: CreateProductVariantAttribute :one
@@ -109,6 +131,15 @@ func (q *Queries) DeleteAttributeValueByValueID(ctx context.Context, arg DeleteA
 	return err
 }
 
+const deleteProductAttributesByProductID = `-- name: DeleteProductAttributesByProductID :exec
+DELETE FROM product_attributes WHERE product_id = $1
+`
+
+func (q *Queries) DeleteProductAttributesByProductID(ctx context.Context, productID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteProductAttributesByProductID, productID)
+	return err
+}
+
 const deleteProductVariantAttributes = `-- name: DeleteProductVariantAttributes :exec
 DELETE FROM variant_attribute_values WHERE variant_id = $1
 `
@@ -152,7 +183,7 @@ func (q *Queries) GetAttributeValueByID(ctx context.Context, id int64) (Attribut
 }
 
 const getAttributeValues = `-- name: GetAttributeValues :many
-SELECT id, attribute_id, value FROM attribute_values WHERE attribute_id = $1 ORDER BY attribute_values.id
+SELECT id, attribute_id, value FROM attribute_values WHERE attribute_id = $1 ORDER BY id
 `
 
 func (q *Queries) GetAttributeValues(ctx context.Context, attributeID int32) ([]AttributeValue, error) {
@@ -176,7 +207,8 @@ func (q *Queries) GetAttributeValues(ctx context.Context, attributeID int32) ([]
 }
 
 const getAttributeValuesByIDs = `-- name: GetAttributeValuesByIDs :many
-SELECT id, attribute_id, value FROM attribute_values WHERE id = ANY($1::bigint[]) ORDER BY attribute_values.id
+SELECT id, attribute_id, value FROM attribute_values
+WHERE id = ANY($1::bigint[]) ORDER BY id
 `
 
 func (q *Queries) GetAttributeValuesByIDs(ctx context.Context, ids []int64) ([]AttributeValue, error) {
@@ -298,6 +330,45 @@ func (q *Queries) GetAttributesByIDs(ctx context.Context, ids []int32) ([]Attrib
 	for rows.Next() {
 		var i Attribute
 		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getProductAttributesByProductID = `-- name: GetProductAttributesByProductID :many
+SELECT pa.id, pa.product_id, pa.attribute_id, a.name as attribute_name
+FROM product_attributes as pa
+LEFT JOIN attributes as a ON pa.attribute_id = a.id
+WHERE pa.product_id = $1 ORDER BY pa.attribute_id
+`
+
+type GetProductAttributesByProductIDRow struct {
+	ID            int64     `json:"id"`
+	ProductID     uuid.UUID `json:"productId"`
+	AttributeID   int32     `json:"attributeId"`
+	AttributeName *string   `json:"attributeName"`
+}
+
+func (q *Queries) GetProductAttributesByProductID(ctx context.Context, productID uuid.UUID) ([]GetProductAttributesByProductIDRow, error) {
+	rows, err := q.db.Query(ctx, getProductAttributesByProductID, productID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetProductAttributesByProductIDRow{}
+	for rows.Next() {
+		var i GetProductAttributesByProductIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProductID,
+			&i.AttributeID,
+			&i.AttributeName,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

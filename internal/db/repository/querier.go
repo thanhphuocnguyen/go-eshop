@@ -40,6 +40,7 @@ type Querier interface {
 	CreateAttributeValues(ctx context.Context, arg []CreateAttributeValuesParams) (int64, error)
 	CreateBrand(ctx context.Context, arg CreateBrandParams) (Brand, error)
 	CreateBulkOrderItems(ctx context.Context, arg []CreateBulkOrderItemsParams) (int64, error)
+	CreateBulkProductAttributes(ctx context.Context, arg []CreateBulkProductAttributesParams) (int64, error)
 	CreateBulkProductVariantAttribute(ctx context.Context, arg []CreateBulkProductVariantAttributeParams) (int64, error)
 	CreateBulkProductVariants(ctx context.Context, arg []CreateBulkProductVariantsParams) (int64, error)
 	CreateCart(ctx context.Context, arg CreateCartParams) (Cart, error)
@@ -53,6 +54,9 @@ type Querier interface {
 	// Payment Transactions --
 	CreatePaymentTransaction(ctx context.Context, arg CreatePaymentTransactionParams) (PaymentTransaction, error)
 	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
+	// PRODUCT ATTRIBUTES QUERIES
+	CreateProductAttribute(ctx context.Context, arg CreateProductAttributeParams) (ProductAttribute, error)
+	// Product Variants --
 	CreateProductVariant(ctx context.Context, arg CreateProductVariantParams) (ProductVariant, error)
 	// Product Variant attributes
 	CreateProductVariantAttribute(ctx context.Context, arg CreateProductVariantAttributeParams) (VariantAttributeValue, error)
@@ -73,11 +77,12 @@ type Querier interface {
 	DeletePayment(ctx context.Context, id uuid.UUID) error
 	DeletePaymentTransaction(ctx context.Context, id uuid.UUID) error
 	DeleteProduct(ctx context.Context, id uuid.UUID) error
+	DeleteProductAttributesByProductID(ctx context.Context, productID uuid.UUID) error
 	DeleteProductDiscountsByDiscountID(ctx context.Context, discountID uuid.UUID) error
 	DeleteProductImage(ctx context.Context, id int64) error
 	DeleteProductImagesByProductID(ctx context.Context, productID uuid.UUID) error
 	DeleteProductRating(ctx context.Context, id uuid.UUID) error
-	DeleteProductVariant(ctx context.Context, id uuid.UUID) error
+	DeleteProductVariant(ctx context.Context, arg DeleteProductVariantParams) error
 	DeleteProductVariantAttributes(ctx context.Context, variantID uuid.UUID) error
 	DeleteRatingReplies(ctx context.Context, id uuid.UUID) error
 	DeleteRatingVotes(ctx context.Context, id uuid.UUID) error
@@ -85,6 +90,7 @@ type Querier interface {
 	DeleteUserDiscountsByDiscountID(ctx context.Context, discountID uuid.UUID) error
 	GetAddress(ctx context.Context, arg GetAddressParams) (UserAddress, error)
 	GetAddresses(ctx context.Context, userID uuid.UUID) ([]UserAddress, error)
+	GetAdminProducts(ctx context.Context, arg GetAdminProductsParams) ([]Product, error)
 	GetAttributeByID(ctx context.Context, id int32) (Attribute, error)
 	GetAttributeByName(ctx context.Context, name string) (Attribute, error)
 	GetAttributeValueByID(ctx context.Context, id int64) (AttributeValue, error)
@@ -137,6 +143,7 @@ type Querier interface {
 	GetPaymentTransactionByID(ctx context.Context, id uuid.UUID) (PaymentTransaction, error)
 	GetPaymentTransactionByPaymentID(ctx context.Context, paymentID uuid.UUID) (PaymentTransaction, error)
 	GetPrimaryImageByProductID(ctx context.Context, productID uuid.UUID) (ProductImage, error)
+	GetProductAttributesByProductID(ctx context.Context, productID uuid.UUID) ([]GetProductAttributesByProductIDRow, error)
 	GetProductByID(ctx context.Context, arg GetProductByIDParams) (Product, error)
 	GetProductBySlug(ctx context.Context, arg GetProductBySlugParams) (Product, error)
 	GetProductDetail(ctx context.Context, arg GetProductDetailParams) (GetProductDetailRow, error)
@@ -148,9 +155,8 @@ type Querier interface {
 	GetProductRatingsCount(ctx context.Context, productID uuid.UUID) (int64, error)
 	GetProductVariantAttributeByID(ctx context.Context, variantID uuid.UUID) (VariantAttributeValue, error)
 	GetProductVariantAttributes(ctx context.Context, variantID uuid.UUID) ([]VariantAttributeValue, error)
-	GetProductVariantByID(ctx context.Context, id uuid.UUID) (ProductVariant, error)
-	GetProductVariants(ctx context.Context, arg GetProductVariantsParams) ([]GetProductVariantsRow, error)
-	GetProducts(ctx context.Context, arg GetProductsParams) ([]GetProductsRow, error)
+	GetProductVariantByID(ctx context.Context, arg GetProductVariantByIDParams) (GetProductVariantByIDRow, error)
+	GetProductVariantList(ctx context.Context, arg GetProductVariantListParams) ([]ProductVariant, error)
 	GetRatingReplies(ctx context.Context, id uuid.UUID) (RatingReply, error)
 	GetRatingRepliesByRatingID(ctx context.Context, ratingID uuid.UUID) ([]GetRatingRepliesByRatingIDRow, error)
 	GetRatingRepliesByUserID(ctx context.Context, replyBy uuid.UUID) ([]GetRatingRepliesByUserIDRow, error)

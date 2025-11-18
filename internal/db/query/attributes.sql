@@ -45,10 +45,11 @@ INSERT INTO attribute_values (attribute_id, value) VALUES ($1, $2);
 SELECT * FROM attribute_values WHERE id = $1;
 
 -- name: GetAttributeValues :many
-SELECT * FROM attribute_values WHERE attribute_id = $1 ORDER BY attribute_values.id;
+SELECT * FROM attribute_values WHERE attribute_id = $1 ORDER BY id;
 
 -- name: GetAttributeValuesByIDs :many
-SELECT * FROM attribute_values WHERE id = ANY(sqlc.arg(ids)::bigint[]) ORDER BY attribute_values.id;
+SELECT * FROM attribute_values
+WHERE id = ANY(sqlc.arg(ids)::bigint[]) ORDER BY id;
 
 -- name: GetAttributeWithValuesByIDs :many
 SELECT att.name as attribute_name, att.id as attribute_id, atv.value as attribute_value, atv.id as attribute_value_id 
@@ -83,3 +84,19 @@ SELECT * FROM variant_attribute_values WHERE variant_id = $1 ORDER BY variant_at
 
 -- name: DeleteProductVariantAttributes :exec
 DELETE FROM variant_attribute_values WHERE variant_id = $1;
+
+-- PRODUCT ATTRIBUTES QUERIES
+-- name: CreateProductAttribute :one
+INSERT INTO product_attributes (product_id, attribute_id) VALUES ($1, $2) RETURNING *;
+
+-- name: CreateBulkProductAttributes :copyfrom
+INSERT INTO product_attributes (product_id, attribute_id) VALUES ($1, $2);
+
+-- name: GetProductAttributesByProductID :many
+SELECT pa.*, a.name as attribute_name
+FROM product_attributes as pa
+LEFT JOIN attributes as a ON pa.attribute_id = a.id
+WHERE pa.product_id = $1 ORDER BY pa.attribute_id;
+
+-- name: DeleteProductAttributesByProductID :exec
+DELETE FROM product_attributes WHERE product_id = $1;

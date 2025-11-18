@@ -102,20 +102,6 @@ func (sv *Server) GetCollectionBySlugHandler(c *gin.Context) {
 			}
 		}
 
-		if len(row.Attributes) > 0 {
-			for _, attr := range row.Attributes {
-				idx := -1
-				for i, a := range listAttrs {
-					if a == attr {
-						idx = i
-						break
-					}
-				}
-				if idx == -1 {
-					listAttrs = append(listAttrs, attr)
-				}
-			}
-		}
 	}
 
 	attributes, err := sv.repo.GetAttributeWithValuesByIDs(c, listAttrs)

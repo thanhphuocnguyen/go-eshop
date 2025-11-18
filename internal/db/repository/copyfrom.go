@@ -149,6 +149,39 @@ func (q *Queries) CreateBulkOrderItems(ctx context.Context, arg []CreateBulkOrde
 	return q.db.CopyFrom(ctx, []string{"order_items"}, []string{"order_id", "variant_id", "quantity", "price_per_unit_snapshot", "variant_sku_snapshot", "product_name_snapshot", "line_total_snapshot", "attributes_snapshot"}, &iteratorForCreateBulkOrderItems{rows: arg})
 }
 
+// iteratorForCreateBulkProductAttributes implements pgx.CopyFromSource.
+type iteratorForCreateBulkProductAttributes struct {
+	rows                 []CreateBulkProductAttributesParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForCreateBulkProductAttributes) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForCreateBulkProductAttributes) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].ProductID,
+		r.rows[0].AttributeID,
+	}, nil
+}
+
+func (r iteratorForCreateBulkProductAttributes) Err() error {
+	return nil
+}
+
+func (q *Queries) CreateBulkProductAttributes(ctx context.Context, arg []CreateBulkProductAttributesParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"product_attributes"}, []string{"product_id", "attribute_id"}, &iteratorForCreateBulkProductAttributes{rows: arg})
+}
+
 // iteratorForCreateBulkProductVariantAttribute implements pgx.CopyFromSource.
 type iteratorForCreateBulkProductVariantAttribute struct {
 	rows                 []CreateBulkProductVariantAttributeParams

@@ -37,18 +37,14 @@ func mapAddressToAddressResponse(address repository.UserAddress) AddressResponse
 	}
 }
 
-func mapToProductResponse(productRows repository.GetProductDetailRow) ProductDetailItemResponse {
-
+func mapToProductResponse(productRows repository.GetProductDetailRow) ManageProductDetailResp {
 	basePrice, _ := productRows.BasePrice.Float64Value()
 
-	discountValue, _ := productRows.MaxDiscountValue.Float64Value()
-
-	resp := ProductDetailItemResponse{
-		ID:               productRows.ProductID.String(),
+	resp := ManageProductDetailResp{
+		ID:               productRows.ID.String(),
 		Name:             productRows.Name,
 		BasePrice:        basePrice.Float64,
 		ShortDescription: productRows.ShortDescription,
-		Attributes:       productRows.Attributes,
 		Description:      productRows.Description,
 		BaseSku:          productRows.BaseSku,
 		Slug:             productRows.Slug,
@@ -59,15 +55,12 @@ func mapToProductResponse(productRows repository.GetProductDetailRow) ProductDet
 		FourStarCount:    productRows.FourStarCount,
 		FiveStarCount:    productRows.FiveStarCount,
 
-		MaxDiscountValue: discountValue.Float64,
-		DiscountType:     productRows.DiscountType,
-
 		UpdatedAt: productRows.UpdatedAt.String(),
 		CreatedAt: productRows.CreatedAt.String(),
 
-		IsActive:      *productRows.IsActive,
-		Variants:      make([]ProductVariantModel, 0),
-		ProductImages: make([]ProductImageModel, 0),
+		IsActive: *productRows.IsActive,
+		ImageUrl: *productRows.ImageUrl,
+		ImageId:  *productRows.ImageID,
 	}
 
 	if productRows.BrandID.Valid {
@@ -95,94 +88,24 @@ func mapToProductResponse(productRows repository.GetProductDetailRow) ProductDet
 	return resp
 }
 
-func mapToVariantResp(variantRows []repository.GetProductVariantsRow) []ProductVariantModel {
-	variants := make([]ProductVariantModel, 0)
-	for _, row := range variantRows {
-		variantIdx := -1
-		for i, v := range variants {
-			if v.ID == row.ID.String() {
-				variantIdx = i
-				break
-			}
-		}
-		if variantIdx != -1 {
-			// If the variant already exists, append the attribute to the existing variant
-			attrIdx := -1
-			for j, a := range variants[variantIdx].Attributes {
-				if a.ID == row.AttrID {
-					attrIdx = j
-					break
-				}
-			}
-
-			if attrIdx != -1 {
-				// If the attribute already exists, do nothing
-				continue
-			}
-
-			variants[variantIdx].Attributes = append(variants[variantIdx].Attributes, ProductAttributeModel{
-				ID:   row.AttrID,
-				Name: row.AttrName,
-				ValueObject: AttributeValue{
-					ID:    row.AttrValID,
-					Value: row.AttrValue,
-				},
-			})
-		} else {
-			// If the variant does not exist, add it to the list of variants
-			price, _ := row.Price.Float64Value()
-			variant := ProductVariantModel{
-				ID:       row.ID.String(),
-				Price:    price.Float64,
-				StockQty: row.Stock,
-				IsActive: *row.IsActive,
-				Sku:      &row.Sku,
-				Attributes: []ProductAttributeModel{
-					{
-						ID:   row.AttrID,
-						Name: row.AttrName,
-						ValueObject: AttributeValue{
-							ID:    row.AttrValID,
-							Value: row.AttrValue,
-						},
-					},
-				},
-			}
-			variants = append(variants, variant)
-		}
-
-	}
-	return variants
-}
-
-func mapToListProductResponse(productRow repository.GetProductsRow) ProductListModel {
-	minPrice, _ := productRow.MinPrice.Float64Value()
-	maxPrice, _ := productRow.MaxPrice.Float64Value()
+func mapToListProductResponse(productRow repository.Product) ManageProductListModel {
 	basePrice, _ := productRow.BasePrice.Float64Value()
-	if minPrice.Float64 == 0 {
-		minPrice = basePrice
-	}
-	if maxPrice.Float64 == 0 {
-		maxPrice = basePrice
-	}
+
 	avgRating := utils.GetAvgRating(productRow.RatingCount, productRow.OneStarCount, productRow.TwoStarCount, productRow.ThreeStarCount, productRow.FourStarCount, productRow.FiveStarCount)
-	product := ProductListModel{
-		ID:           productRow.ID.String(),
-		Name:         productRow.Name,
-		Description:  productRow.Description,
-		BasePrice:    basePrice.Float64,
-		MinPrice:     minPrice.Float64,
-		MaxPrice:     maxPrice.Float64,
-		Sku:          productRow.BaseSku,
-		Slug:         productRow.Slug,
-		ImgUrl:       &productRow.ImgUrl,
-		AvgRating:    &avgRating,
-		ReviewCount:  &productRow.RatingCount,
-		VariantCount: productRow.VariantCount,
-		CreatedAt:    productRow.CreatedAt.String(),
-		UpdatedAt:    productRow.UpdatedAt.String(),
+	product := ManageProductListModel{
+		ID:          productRow.ID.String(),
+		Name:        productRow.Name,
+		Description: productRow.Description,
+		BasePrice:   basePrice.Float64,
+		Sku:         productRow.BaseSku,
+		Slug:        productRow.Slug,
+		AvgRating:   &avgRating,
+		ImgUrl:      productRow.ImageUrl,
+		ImgID:       productRow.ImageID,
+		ReviewCount: &productRow.RatingCount,
+		CreatedAt:   productRow.CreatedAt.String(),
+		UpdatedAt:   productRow.UpdatedAt.String(),
 	}
-	product.ImgID = &productRow.ImgID
 
 	return product
 }

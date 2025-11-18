@@ -315,7 +315,6 @@ CREATE TABLE
         name VARCHAR(255) NOT NULL,
         description TEXT NOT NULL,
         short_description VARCHAR(1000),
-        attributes int[],
         base_price DECIMAL(10, 2),
         base_sku VARCHAR(100) UNIQUE NOT NULL,
         slug VARCHAR(255) UNIQUE NOT NULL,
@@ -334,6 +333,15 @@ CREATE TABLE
         five_star_count INT NOT NULL DEFAULT 0,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+-- Create product_attributes table
+CREATE TABLE
+    product_attributes (
+        id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+        product_id UUID NOT NULL REFERENCES products (id) ON DELETE CASCADE,
+        attribute_id INT NOT NULL REFERENCES attributes (id) ON DELETE CASCADE,
+        UNIQUE(product_id, attribute_id)
     );
 
 -- Create product_images table for storing product image metadata

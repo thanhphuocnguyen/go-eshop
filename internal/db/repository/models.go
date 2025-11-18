@@ -272,7 +272,6 @@ type Product struct {
 	Name             string         `json:"name"`
 	Description      string         `json:"description"`
 	ShortDescription *string        `json:"shortDescription"`
-	Attributes       []int32        `json:"attributes"`
 	BasePrice        pgtype.Numeric `json:"basePrice"`
 	BaseSku          string         `json:"baseSku"`
 	Slug             string         `json:"slug"`
@@ -291,6 +290,12 @@ type Product struct {
 	FiveStarCount    int32          `json:"fiveStarCount"`
 	CreatedAt        time.Time      `json:"createdAt"`
 	UpdatedAt        time.Time      `json:"updatedAt"`
+}
+
+type ProductAttribute struct {
+	ID          int64     `json:"id"`
+	ProductID   uuid.UUID `json:"productId"`
+	AttributeID int32     `json:"attributeId"`
 }
 
 type ProductImage struct {

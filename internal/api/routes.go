@@ -23,11 +23,20 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 			users.GET(":id", sv.GetUserHandler)
 		}
 
-		productGroup := admin.Group("products")
+		productsGroup := admin.Group("products")
 		{
-			productGroup.POST("", sv.AddProductHandler)
-			productGroup.PUT(":id", sv.updateProductHandler)
-			productGroup.DELETE(":id", sv.deleteProductHandler)
+			productsGroup.POST("", sv.AddProductHandler)
+			productsGroup.PUT(":id", sv.UpdateProductHandler)
+			productsGroup.DELETE(":id", sv.DeleteProductHandler)
+
+			productGroup := productsGroup.Group(":id")
+			{
+				productGroup.POST("images", sv.UploadProductImageHandler)
+				productGroup.POST("variants", sv.AddProductVariantHandler)
+				productGroup.GET("variants", sv.GetVariantsHandler)
+				productGroup.PUT("variants/:variantId", sv.UpdateProductVariantHandler)
+				productGroup.DELETE("variants/:variantId", sv.DeleteProductVariantHandler)
+			}
 		}
 
 		attributeGroup := admin.Group("attributes")
@@ -38,11 +47,13 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 			attributeGroup.PUT(":id", sv.UpdateAttributeHandler)
 			attributeGroup.DELETE(":id", sv.RemoveAttributeHandler)
 
-			attributeGroup.POST(":id/create", sv.AddAttributeValueHandler)
-			attributeGroup.PUT(":id/update/:valueId", sv.UpdateAttrValueHandler)
-			attributeGroup.DELETE(":id/remove/:valueId", sv.RemoveAttrValueHandler)
+			attributeValue := attributeGroup.Group(":id")
+			{
+				attributeValue.POST("create", sv.AddAttributeValueHandler)
+				attributeValue.PUT("update/:valueId", sv.UpdateAttrValueHandler)
+				attributeValue.DELETE("remove/:valueId", sv.RemoveAttrValueHandler)
+			}
 		}
-
 		adminOrder := admin.Group("orders")
 		{
 			adminOrder.GET("", sv.getAdminOrdersHandler)
@@ -78,13 +89,6 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 			collections.GET(":id", sv.GetCollectionByIDHandler)
 			collections.PUT(":id", sv.UpdateCollectionHandler)
 			collections.DELETE(":id", sv.DeleteCollectionHandler)
-		}
-
-		images := admin.Group("images")
-		{
-			productImages := images.Group("products")
-			productImages.POST(":id", sv.uploadProductImagesHandler)
-			productImages.DELETE(":id", sv.removeImageHandler)
 		}
 
 		ratings := admin.Group("ratings")
@@ -141,7 +145,7 @@ func (sv *Server) setupUserRoutes(rg *gin.RouterGroup) {
 func (sv *Server) setupProductRoutes(rg *gin.RouterGroup) {
 	products := rg.Group("products")
 	{
-		products.GET("", sv.getProductsHandler)
+		products.GET("", sv.GetAdminProductsHandler)
 		products.GET(":id", sv.GetProductDetailHandler)
 		products.GET(":id/ratings", sv.getRatingsByProductHandler)
 	}

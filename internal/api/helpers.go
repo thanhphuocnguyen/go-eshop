@@ -2,6 +2,7 @@ package api
 
 import (
 	"time"
+	"unsafe"
 
 	"github.com/gin-gonic/gin"
 )
@@ -47,4 +48,8 @@ func createPagination(page, pageSize, total int64) *Pagination {
 		HasNextPage:     total > int64(page*pageSize),
 		HasPreviousPage: page > 1,
 	}
+}
+
+func isStructEmpty(s interface{}) bool {
+	return unsafe.Sizeof(s) == 0
 }
