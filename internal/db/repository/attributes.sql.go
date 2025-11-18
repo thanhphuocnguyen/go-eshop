@@ -340,6 +340,51 @@ func (q *Queries) GetAttributesByIDs(ctx context.Context, ids []int32) ([]Attrib
 	return items, nil
 }
 
+const getProductAttributeValuesByProductID = `-- name: GetProductAttributeValuesByProductID :many
+SELECT
+    a.id as attribute_id,
+    a.name as attribute_name,
+    av.id as attribute_value_id,
+    av.value as attribute_value
+FROM product_attributes as pa
+LEFT JOIN attributes as a ON pa.attribute_id = a.id
+LEFT JOIN attribute_values as av ON a.id = av.attribute_id
+WHERE pa.product_id = $1
+ORDER BY a.id, av.id
+`
+
+type GetProductAttributeValuesByProductIDRow struct {
+	AttributeID      *int32  `json:"attributeId"`
+	AttributeName    *string `json:"attributeName"`
+	AttributeValueID *int64  `json:"attributeValueId"`
+	AttributeValue   *string `json:"attributeValue"`
+}
+
+func (q *Queries) GetProductAttributeValuesByProductID(ctx context.Context, productID uuid.UUID) ([]GetProductAttributeValuesByProductIDRow, error) {
+	rows, err := q.db.Query(ctx, getProductAttributeValuesByProductID, productID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetProductAttributeValuesByProductIDRow{}
+	for rows.Next() {
+		var i GetProductAttributeValuesByProductIDRow
+		if err := rows.Scan(
+			&i.AttributeID,
+			&i.AttributeName,
+			&i.AttributeValueID,
+			&i.AttributeValue,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getProductAttributesByProductID = `-- name: GetProductAttributesByProductID :many
 SELECT pa.id, pa.product_id, pa.attribute_id, a.name as attribute_name
 FROM product_attributes as pa

@@ -34,6 +34,7 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 				productGroup.POST("images", sv.UploadProductImageHandler)
 				productGroup.POST("variants", sv.AddProductVariantHandler)
 				productGroup.GET("variants", sv.GetVariantsHandler)
+				productGroup.GET("variants/:variantId", sv.GetVariantHandler)
 				productGroup.PUT("variants/:variantId", sv.UpdateProductVariantHandler)
 				productGroup.DELETE("variants/:variantId", sv.DeleteProductVariantHandler)
 			}
@@ -46,6 +47,8 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 			attributeGroup.GET(":id", sv.GetAttributeByIDHandler)
 			attributeGroup.PUT(":id", sv.UpdateAttributeHandler)
 			attributeGroup.DELETE(":id", sv.RemoveAttributeHandler)
+
+			attributeGroup.GET("product/:id", sv.GetAttributeValuesForProductHandler)
 
 			attributeValue := attributeGroup.Group(":id")
 			{
@@ -145,8 +148,8 @@ func (sv *Server) setupUserRoutes(rg *gin.RouterGroup) {
 func (sv *Server) setupProductRoutes(rg *gin.RouterGroup) {
 	products := rg.Group("products")
 	{
-		products.GET("", sv.GetAdminProductsHandler)
-		products.GET(":id", sv.GetProductDetailHandler)
+		products.GET("", sv.GetManageProductsHandler)
+		products.GET(":id", sv.GetProductByIdHandler)
 		products.GET(":id/ratings", sv.getRatingsByProductHandler)
 	}
 }

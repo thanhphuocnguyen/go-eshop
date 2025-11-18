@@ -587,28 +587,16 @@ type CategoryLinkedProduct struct {
 	ImageUrl     *string `json:"imageUrl,omitempty"`
 }
 
-type ManageProductVariantModel struct {
-	ID       string  `json:"id"`
-	Price    float64 `json:"price"`
-	StockQty int32   `json:"stockQty"`
-	IsActive bool    `json:"isActive"`
-	Sku      *string `json:"sku,omitempty"`
-}
-
-type ImageAssignmentModel struct {
-	ID           string `json:"id"`
-	EntityID     string `json:"entityId"`
-	EntityType   string `json:"entityType"`
-	DisplayOrder int16  `json:"displayOrder"`
-	Role         string `json:"role"`
-}
-
-type ProductImageModel struct {
-	ID                 string                 `json:"id"`
-	Url                string                 `json:"url"`
-	ExternalID         string                 `json:"externalId"`
-	Role               string                 `json:"role"`
-	VariantAssignments []ImageAssignmentModel `json:"assignments"`
+type VariantModel struct {
+	ID         string           `json:"id"`
+	Price      float64          `json:"price"`
+	StockQty   int32            `json:"stockQty"`
+	IsActive   bool             `json:"isActive"`
+	Weight     *float64         `json:"weight,omitempty"`
+	Sku        *string          `json:"sku,omitempty"`
+	Attributes []AttributeValue `json:"attributeValues,omitempty"`
+	CreatedAt  string           `json:"createdAt"`
+	UpdatedAt  string           `json:"updatedAt"`
 }
 
 type OrderItemAttribute struct {
@@ -640,18 +628,13 @@ type RatingImageModel struct {
 	URL string `json:"url"`
 }
 
-type ProductAttributeModel struct {
-	ID          int32          `json:"id"`
-	Name        string         `json:"name"`
-	ValueObject AttributeValue `json:"valueObject"`
-}
-
 type AttributeValue struct {
-	ID    int64  `json:"id"`
-	Value string `json:"value"`
+	ID    int64   `json:"id"`
+	Value string  `json:"value"`
+	Name  *string `json:"name,omitempty"`
 }
 
-type AttributeResponse struct {
+type AttributeRespModel struct {
 	ID     int32            `json:"id"`
 	Name   string           `json:"name"`
 	Values []AttributeValue `json:"values"`

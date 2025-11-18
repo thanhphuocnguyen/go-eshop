@@ -98,5 +98,17 @@ FROM product_attributes as pa
 LEFT JOIN attributes as a ON pa.attribute_id = a.id
 WHERE pa.product_id = $1 ORDER BY pa.attribute_id;
 
+-- name: GetProductAttributeValuesByProductID :many
+SELECT
+    a.id as attribute_id,
+    a.name as attribute_name,
+    av.id as attribute_value_id,
+    av.value as attribute_value
+FROM product_attributes as pa
+LEFT JOIN attributes as a ON pa.attribute_id = a.id
+LEFT JOIN attribute_values as av ON a.id = av.attribute_id
+WHERE pa.product_id = $1
+ORDER BY a.id, av.id;
+
 -- name: DeleteProductAttributesByProductID :exec
 DELETE FROM product_attributes WHERE product_id = $1;

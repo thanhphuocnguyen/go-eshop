@@ -11,13 +11,14 @@ SELECT products.* FROM products WHERE products.id = $1 AND is_active = COALESCE(
 SELECT products.* FROM products WHERE products.slug = $1 AND is_active = COALESCE(sqlc.narg('is_active'), TRUE);
 
 -- name: GetProductVariantByID :one
-SELECT product_variants.*, attributes.name, attribute_values.* FROM product_variants
-LEFT JOIN products ON product_variants.product_id = products.id
-LEFT JOIN product_attributes ON products.id = product_attributes.product_id
-LEFT JOIN attributes ON product_attributes.attribute_id = attributes.id
-LEFT JOIN attribute_values ON attributes.id = attribute_values.attribute_id
+SELECT * FROM product_variants WHERE id = $1 AND product_id = $2 AND is_active = COALESCE(sqlc.narg('is_active'), TRUE) LIMIT 1;
+
+-- name: GetVariantDetailByID :many
+SELECT product_variants.*, attribute_values.id as attribute_value_id, attribute_values.value as attribute_value FROM product_variants
+LEFT JOIN variant_attribute_values ON product_variants.id = variant_attribute_values.variant_id
+LEFT JOIN attribute_values ON variant_attribute_values.attribute_value_id = attribute_values.id
 WHERE product_variants.id = $1 AND product_variants.product_id = $2 AND product_variants.is_active = COALESCE(sqlc.narg('is_active'), product_variants.is_active)
-GROUP BY product_variants.id, attributes.id, attribute_values.id;
+GROUP BY product_variants.id, attribute_values.id;
 
 -- name: GetProductDetail :one
 SELECT
@@ -115,6 +116,8 @@ SET
     description = coalesce(sqlc.narg('description'), description),
     weight = coalesce(sqlc.narg('weight'), weight),
     is_active = coalesce(sqlc.narg('is_active'), is_active),
+    image_url = coalesce(sqlc.narg('image_url'), image_url),
+    image_id = coalesce(sqlc.narg('image_id'), image_id),
     updated_at = NOW()
 WHERE id = sqlc.arg('id') AND product_id = sqlc.arg('product_id') RETURNING *;
 

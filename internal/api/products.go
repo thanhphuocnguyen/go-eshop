@@ -83,7 +83,7 @@ func (sv *Server) AddProductHandler(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /products/{productId} [get]
-func (sv *Server) GetProductDetailHandler(c *gin.Context) {
+func (sv *Server) GetProductByIdHandler(c *gin.Context) {
 	var params URISlugParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
@@ -133,7 +133,7 @@ func (sv *Server) GetProductDetailHandler(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /products [get]
-func (sv *Server) GetAdminProductsHandler(c *gin.Context) {
+func (sv *Server) GetManageProductsHandler(c *gin.Context) {
 	var queries ProductQueries
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
@@ -381,7 +381,7 @@ func (sv *Server) DeleteProductHandler(c *gin.Context) {
 // @Success 200 {object} ApiResponse[string]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /products/{id}/variant [post]
+// @Router /products/{id}/variants [post]
 func (sv *Server) AddProductVariantHandler(c *gin.Context) {
 	var prodId URISlugParam
 	if err := c.ShouldBindUri(&prodId); err != nil {
@@ -432,7 +432,7 @@ func (sv *Server) AddProductVariantHandler(c *gin.Context) {
 	variantSku := repository.GetVariantSKUWithAttributeNames(prod.BaseSku, attributeValues)
 
 	createParams := repository.CreateProductVariantParams{
-		ProductID:   uuid.MustParse(prodId.ID),
+		ProductID:   prod.ID,
 		Description: req.Description,
 		Sku:         variantSku,
 		Price:       utils.GetPgNumericFromFloat(req.Price),
@@ -467,6 +467,72 @@ func (sv *Server) AddProductVariantHandler(c *gin.Context) {
 	c.JSON(http.StatusCreated, createDataResp(c, variant.ID.String(), nil, nil))
 }
 
+// @Summary Upload product image
+// @Schemes http
+// @Description upload product image
+// @Tags products
+// @Accept json
+// @Param input "
+// @Produce json
+// @Success 200 {object} ApiResponse[string]
+// @Failure 400 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
+// @Router /products/{id}/variants/{variantId}/image [post]
+func (sv *Server) UploadProductVariantImageHandler(c *gin.Context) {
+	var param UriIDParam
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		return
+	}
+	var variantParam ProductVariantParam
+	if err := c.ShouldBindUri(&variantParam); err != nil {
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		return
+	}
+	file, _ := c.FormFile("file")
+	if file == nil {
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("image file is required")))
+		return
+	}
+
+	product, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(param.ID)})
+	if err != nil {
+		c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
+		return
+	}
+	variant, err := sv.repo.GetProductVariantByID(c, repository.GetProductVariantByIDParams{
+		ID:        uuid.MustParse(variantParam.ID),
+		ProductID: product.ID,
+	})
+	if err != nil {
+		c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
+		return
+	}
+
+	id, url, err := sv.uploadService.UploadFile(c, file)
+	if err != nil {
+		log.Error().Err(err).Timestamp().Msg("UploadFile")
+
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		return
+	}
+
+	updated, err := sv.repo.UpdateProductVariant(c, repository.UpdateProductVariantParams{
+		ImageUrl:  &url,
+		ImageID:   &id,
+		ID:        variant.ID,
+		ProductID: product.ID,
+	})
+
+	if err != nil {
+		log.Error().Err(err).Timestamp().Msg("UpdateProductVariant")
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		return
+	}
+
+	c.JSON(http.StatusCreated, createDataResp(c, updated, nil, nil))
+}
+
 // @Summary Get product variants
 // @Schemes http
 // @Description get product variants
@@ -494,6 +560,7 @@ func (sv *Server) GetVariantsHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
+
 	c.JSON(http.StatusOK, createDataResp(c, variantRows, nil, nil))
 }
 
@@ -506,8 +573,8 @@ func (sv *Server) GetVariantsHandler(c *gin.Context) {
 // @Success 200 {object} ApiResponse[ProductVariantModel]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /products/{id}/variant/{variantID} [get]
-func (sv *Server) GetVariantDetailHandler(c *gin.Context) {
+// @Router /products/{id}/variants/{variantID} [get]
+func (sv *Server) GetVariantHandler(c *gin.Context) {
 	var prodId URISlugParam
 	if err := c.ShouldBindUri(&prodId); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
@@ -525,16 +592,40 @@ func (sv *Server) GetVariantDetailHandler(c *gin.Context) {
 		return
 	}
 
-	variant, err := sv.repo.GetProductVariantByID(c, repository.GetProductVariantByIDParams{
+	rows, err := sv.repo.GetVariantDetailByID(c, repository.GetVariantDetailByIDParams{
 		ID:        uuid.MustParse(variantId.ID),
 		ProductID: prod.ID,
 	})
+
 	if err != nil {
 		c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
 		return
 	}
+	first := rows[0]
+	price, _ := first.Price.Float64Value()
+	resp := VariantModel{
+		ID:         first.ID.String(),
+		Price:      price.Float64,
+		StockQty:   first.Stock,
+		Sku:        &first.Sku,
+		Attributes: make([]AttributeValue, len(rows)),
+		CreatedAt:  first.CreatedAt.String(),
+		UpdatedAt:  first.UpdatedAt.String(),
+		IsActive:   *first.IsActive,
+	}
+	if first.Weight.Valid {
+		weightFloat, _ := first.Weight.Float64Value()
+		resp.Weight = &weightFloat.Float64
+	}
+	for i, row := range rows {
+		attr := AttributeValue{
+			ID:    *row.AttributeValueID,
+			Value: *row.AttributeValue,
+		}
+		resp.Attributes[i] = attr
+	}
 
-	c.JSON(http.StatusOK, createDataResp(c, variant, nil, nil))
+	c.JSON(http.StatusOK, createDataResp(c, resp, nil, nil))
 }
 
 // @Summary Update a product variant
@@ -547,7 +638,7 @@ func (sv *Server) GetVariantDetailHandler(c *gin.Context) {
 // @Success 200 {object} ApiResponse[string]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /products/{id}/variant/{variantId} [put]
+// @Router /products/{id}/variants/{variantId} [put]
 func (sv *Server) UpdateProductVariantHandler(c *gin.Context) {
 	var uris URIVariantParam
 	if err := c.ShouldBindUri(&uris); err != nil {

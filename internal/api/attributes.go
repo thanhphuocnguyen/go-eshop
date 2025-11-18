@@ -3,8 +3,10 @@ package api
 import (
 	"errors"
 	"net/http"
+	"slices"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 )
 
@@ -14,7 +16,7 @@ import (
 // @Accept json
 // @Produce json
 // @Param params body CreateAttributeRequest true "Attribute name"
-// @Success 201 {object} ApiResponse[AttributeResponse]
+// @Success 201 {object} ApiResponse[AttributeRespModel]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /attributes [post]
@@ -31,7 +33,7 @@ func (sv *Server) CreateAttributeHandler(c *gin.Context) {
 		return
 	}
 
-	attributeResp := AttributeResponse{
+	attributeResp := AttributeRespModel{
 		ID:   attribute.ID,
 		Name: attribute.Name,
 	}
@@ -45,7 +47,7 @@ func (sv *Server) CreateAttributeHandler(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Attribute ID"
-// @Success 200 {object} ApiResponse[AttributeResponse]
+// @Success 200 {object} ApiResponse[AttributeRespModel]
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /attributes/{id} [get]
@@ -62,7 +64,7 @@ func (sv *Server) GetAttributeByIDHandler(c *gin.Context) {
 		return
 	}
 
-	attributeResp := AttributeResponse{
+	attributeResp := AttributeRespModel{
 		Name: attr.Name,
 		ID:   attr.ID,
 	}
@@ -114,11 +116,11 @@ func (sv *Server) GetAttributesHandler(c *gin.Context) {
 		return
 	}
 
-	var attributeResp = []AttributeResponse{}
+	var attributeResp = []AttributeRespModel{}
 	for i := range attributeRows {
 		attrVal := attributeRows[i]
 		if i == 0 || attributeRows[i].ID != attributeRows[i-1].ID {
-			attributeResp = append(attributeResp, AttributeResponse{
+			attributeResp = append(attributeResp, AttributeRespModel{
 				ID:     attrVal.ID,
 				Name:   attrVal.Name,
 				Values: []AttributeValue{},
@@ -143,6 +145,64 @@ func (sv *Server) GetAttributesHandler(c *gin.Context) {
 	// }
 
 	c.JSON(http.StatusOK, createDataResp(c, attributeResp, nil, nil))
+}
+
+// @Summary Get attributes and their values by for a product
+// @Description Get attributes and their values for a product
+// @Tags attributes
+// @Accept json
+// @Produce json
+// @Param id path string true "Product ID"
+// @Success 200 {object} ApiResponse[[]AttributeResponse]
+// @Failure 404 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
+// @Router /attributes/product/{id} [get]
+func (sv *Server) GetAttributeValuesForProductHandler(c *gin.Context) {
+	var uri UriIDParam
+	if err := c.ShouldBindUri(&uri); err != nil {
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		return
+	}
+
+	attrs, err := sv.repo.GetProductAttributeValuesByProductID(c, uuid.MustParse(uri.ID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		return
+	}
+
+	resp := make([]AttributeRespModel, 0)
+	for _, attr := range attrs {
+
+		if slices.ContainsFunc(resp, func(a AttributeRespModel) bool {
+			return *attr.AttributeID == a.ID
+		}) {
+			// push value to existing attribute
+			for i, r := range resp {
+				if r.ID == *attr.AttributeID {
+					resp[i].Values = append(resp[i].Values, AttributeValue{
+						ID:    *attr.AttributeValueID,
+						Value: *attr.AttributeValue,
+					})
+					break
+				}
+			}
+		} else {
+			// create new attribute
+			attrResp := AttributeRespModel{
+				ID:   *attr.AttributeID,
+				Name: *attr.AttributeName,
+				Values: []AttributeValue{
+					{
+						ID:    *attr.AttributeValueID,
+						Value: *attr.AttributeValue,
+					},
+				},
+			}
+			resp = append(resp, attrResp)
+		}
+	}
+
+	c.JSON(http.StatusOK, createDataResp(c, resp, nil, nil))
 }
 
 // @Summary Update an attribute
