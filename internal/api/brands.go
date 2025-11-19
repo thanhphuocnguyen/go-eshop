@@ -82,7 +82,7 @@ func (sv *Server) GetShopBrandsHandler(c *gin.Context) {
 // @Tags Brands
 // @Produce json
 // @Param slug path string true "Brand slug"
-// @Success 200 {object} ApiResponse
+// @Success 200 {object} ApiResponse[[]CategoryResponse]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /shop/brands/{slug} [get]
@@ -147,7 +147,7 @@ func (sv *Server) GetShopBrandBySlugHandler(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param request body CreateCategoryRequest true "Brand request"
-// @Success 201 {object} ApiResponse
+// @Success 201 {object} ApiResponse[CategoryResponse]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /brands [post]
@@ -192,7 +192,7 @@ func (sv *Server) CreateBrandHandler(c *gin.Context) {
 // @Produce json
 // @Param page query int false "Page number"
 // @Param pageSize query int false "Page size"
-// @Success 200 {object} ApiResponse[gin.H]
+// @Success 200 {object} ApiResponse[[]CategoryResponse]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /brands [get]
@@ -247,7 +247,7 @@ func (sv *Server) GetBrandsHandler(c *gin.Context) {
 // @Tags Admin
 // @Produce json
 // @Param id path int true "Brand ID"
-// @Success 200 {object} ApiResponse
+// @Success 200 {object} ApiResponse[CategoryResponse]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/brands/{id} [get]
@@ -290,9 +290,10 @@ func (sv *Server) GetBrandByIDHandler(c *gin.Context) {
 // @Tags Admin
 // @Param id path int true "Brand ID"
 // @Param request body UpdateCategoryRequest true "Brand request"
-// @Success 200 {object} ApiResponse
+// @Success 200 {object} ApiResponse[CategoryResponse]
 // @Failure 400 {object} ErrorResp
-// @Failure 500 {object} ErrorRespErrorResp/{id} [put]
+// @Failure 500 {object} ErrorResp
+// @Router /admin/brands/{id} [put]
 func (sv *Server) UpdateBrandHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
@@ -373,7 +374,8 @@ func (sv *Server) UpdateBrandHandler(c *gin.Context) {
 // @Param id path int true "Brand ID"
 // @Success 204 {object} ApiResponse[bool]
 // @Failure 400 {object} ErrorResp
-// @Failure 500 {object} ErrorRespErrorResp/{id} [delete]
+// @Failure 500 {object} ErrorResp
+// @Router /admin/brands/{id} [delete]
 func (sv *Server) DeleteBrandHandler(c *gin.Context) {
 	var colID UriIDParam
 	if err := c.ShouldBindUri(&colID); err != nil {

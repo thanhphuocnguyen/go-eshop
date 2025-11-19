@@ -18,9 +18,9 @@ import (
 // @Description create a new product with the input payload
 // @Tags products
 // @Accept json
-// @Param input body repository.CreateProductReq true "Product input"
+// @Param input body CreateProductReq true "Product input"
 // @Produce json
-// @Success 200 {object} ApiResponse[string]
+// @Success 200 {object} ApiResponse[repository.Product]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /products [post]
@@ -69,7 +69,7 @@ func (sv *Server) AddProductHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, createDataResp(c, product.ID.String(), nil, nil))
+	c.JSON(http.StatusCreated, createDataResp(c, product, nil, nil))
 }
 
 // @Summary Get a product detail by ID
@@ -129,11 +129,11 @@ func (sv *Server) GetProductByIdHandler(c *gin.Context) {
 // @Param page query int true "Page number"
 // @Param pageSize query int true "Page size"
 // @Produce json
-// @Success 200 {array} ApiResponse
+// @Success 200 {array} ApiResponse[[]ManageProductListModel]
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /products [get]
-func (sv *Server) GetManageProductsHandler(c *gin.Context) {
+func (sv *Server) GetProductsHandler(c *gin.Context) {
 	var queries ProductQueries
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
@@ -195,11 +195,11 @@ func (sv *Server) GetManageProductsHandler(c *gin.Context) {
 // @Tags products
 // @Accept json
 // @Param productId path int true "Product ID"
-// @Param input body repository.UpdateProductTxParams true "Product input"
+// @Param input body UpdateProductReq true "Product update input"
 // @Produce json
-// @Success 200 {object} ApiResponse
+// @Success 200 {object} ApiResponse[repository.Product]
 // @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrResp
+// @Failure 500 {object} ErrorResp
 // @Router /products/{productId} [put]
 func (sv *Server) UpdateProductHandler(c *gin.Context) {
 	var param UriIDParam
@@ -255,7 +255,6 @@ func (sv *Server) UpdateProductHandler(c *gin.Context) {
 	}
 
 	updated, err := sv.repo.UpdateProduct(c, updateParams)
-
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
@@ -292,8 +291,8 @@ func (sv *Server) UpdateProductHandler(c *gin.Context) {
 // @Schemes http
 // @Description upload product image
 // @Tags products
-// @Accept json
-// @Param input "
+// @Accept multipart/form-data
+// @Param id path string true "Product ID"
 // @Produce json
 // @Success 200 {object} ApiResponse[string]
 // @Failure 400 {object} ErrorResp
@@ -308,6 +307,21 @@ func (sv *Server) UploadProductImageHandler(c *gin.Context) {
 	file, _ := c.FormFile("file")
 	if file == nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("image file is required")))
+		return
+	}
+
+	prod, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(param.ID)})
+	if err != nil {
+		c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
+		return
+	}
+	if prod.ImageID != nil {
+		msg, err := sv.uploadService.RemoveFile(c, *prod.ImageID)
+		if err != nil {
+			log.Error().Err(err).Timestamp().Msg(msg)
+			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+			return
+		}
 		return
 	}
 
@@ -341,7 +355,7 @@ func (sv *Server) UploadProductImageHandler(c *gin.Context) {
 // @Accept json
 // @Param productId path int true "Product ID"
 // @Produce json
-// @Success 200 {object} ApiResponse
+// @Success 200 {object} ApiResponse[string]
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /products/{productId} [delete]
@@ -376,13 +390,13 @@ func (sv *Server) DeleteProductHandler(c *gin.Context) {
 // @Description create a new product with the input payload
 // @Tags products
 // @Accept json
-// @Param input body repository.CreateProductReq true "Product input"
+// @Param input body CreateProdVariantReq true "Product variant input"
 // @Produce json
 // @Success 200 {object} ApiResponse[string]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /products/{id}/variants [post]
-func (sv *Server) AddProductVariantHandler(c *gin.Context) {
+func (sv *Server) AddVariantHandler(c *gin.Context) {
 	var prodId URISlugParam
 	if err := c.ShouldBindUri(&prodId); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
@@ -467,79 +481,13 @@ func (sv *Server) AddProductVariantHandler(c *gin.Context) {
 	c.JSON(http.StatusCreated, createDataResp(c, variant.ID.String(), nil, nil))
 }
 
-// @Summary Upload product image
-// @Schemes http
-// @Description upload product image
-// @Tags products
-// @Accept json
-// @Param input "
-// @Produce json
-// @Success 200 {object} ApiResponse[string]
-// @Failure 400 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
-// @Router /products/{id}/variants/{variantId}/image [post]
-func (sv *Server) UploadProductVariantImageHandler(c *gin.Context) {
-	var param UriIDParam
-	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
-		return
-	}
-	var variantParam ProductVariantParam
-	if err := c.ShouldBindUri(&variantParam); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
-		return
-	}
-	file, _ := c.FormFile("file")
-	if file == nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("image file is required")))
-		return
-	}
-
-	product, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(param.ID)})
-	if err != nil {
-		c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
-		return
-	}
-	variant, err := sv.repo.GetProductVariantByID(c, repository.GetProductVariantByIDParams{
-		ID:        uuid.MustParse(variantParam.ID),
-		ProductID: product.ID,
-	})
-	if err != nil {
-		c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
-		return
-	}
-
-	id, url, err := sv.uploadService.UploadFile(c, file)
-	if err != nil {
-		log.Error().Err(err).Timestamp().Msg("UploadFile")
-
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
-		return
-	}
-
-	updated, err := sv.repo.UpdateProductVariant(c, repository.UpdateProductVariantParams{
-		ImageUrl:  &url,
-		ImageID:   &id,
-		ID:        variant.ID,
-		ProductID: product.ID,
-	})
-
-	if err != nil {
-		log.Error().Err(err).Timestamp().Msg("UpdateProductVariant")
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
-		return
-	}
-
-	c.JSON(http.StatusCreated, createDataResp(c, updated, nil, nil))
-}
-
 // @Summary Get product variants
 // @Schemes http
 // @Description get product variants
 // @Tags products
 // @Accept json
 // @Produce json
-// @Success 200 {object} ApiResponse[[]ProductVariantModel]
+// @Success 200 {object} ApiResponse[[]repository.ProductVariant]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /products/{id}/variants [get]
@@ -570,7 +518,9 @@ func (sv *Server) GetVariantsHandler(c *gin.Context) {
 // @Tags products
 // @Accept json
 // @Produce json
-// @Success 200 {object} ApiResponse[ProductVariantModel]
+// @Param id path string true "Product ID"
+// @Param variantID path string true "Product Variant ID"
+// @Success 200 {object} ApiResponse[VariantModel]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /products/{id}/variants/{variantID} [get]
@@ -606,7 +556,7 @@ func (sv *Server) GetVariantHandler(c *gin.Context) {
 	resp := VariantModel{
 		ID:         first.ID.String(),
 		Price:      price.Float64,
-		StockQty:   first.Stock,
+		Stock:      first.Stock,
 		Sku:        &first.Sku,
 		Attributes: make([]AttributeValue, len(rows)),
 		CreatedAt:  first.CreatedAt.String(),
@@ -616,6 +566,12 @@ func (sv *Server) GetVariantHandler(c *gin.Context) {
 	if first.Weight.Valid {
 		weightFloat, _ := first.Weight.Float64Value()
 		resp.Weight = &weightFloat.Float64
+	}
+	if first.ImageUrl != nil {
+		resp.ImageUrl = first.ImageUrl
+	}
+	if first.ImageID != nil {
+		resp.ImageID = first.ImageID
 	}
 	for i, row := range rows {
 		attr := AttributeValue{
@@ -633,13 +589,13 @@ func (sv *Server) GetVariantHandler(c *gin.Context) {
 // @Description update a product with the input payload
 // @Tags products
 // @Accept json
-// @Param input body repository.CreateProductReq true "Product input"
+// @Param input body UpdateProdVariantReq true "Product variant input"
 // @Produce json
-// @Success 200 {object} ApiResponse[string]
+// @Success 200 {object} ApiResponse[repository.ProductVariant]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /products/{id}/variants/{variantId} [put]
-func (sv *Server) UpdateProductVariantHandler(c *gin.Context) {
+func (sv *Server) UpdateVariantHandler(c *gin.Context) {
 	var uris URIVariantParam
 	if err := c.ShouldBindUri(&uris); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
@@ -683,7 +639,82 @@ func (sv *Server) UpdateProductVariantHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, updatedVariant.ID.String(), nil, nil))
+	c.JSON(http.StatusOK, createDataResp(c, updatedVariant, nil, nil))
+}
+
+// @Summary Upload a product variant image
+// @Schemes http
+// @Description upload a product variant image with the input payload
+// @Tags products
+// @Accept multipart/form-data
+// @Param id path string true "Product ID"
+// @Param variantId path string true "Product Variant ID"
+// @Produce json
+// @Success 200 {object} ApiResponse[repository.ProductVariant]
+// @Failure 400 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
+// @Router /products/{id}/variants/{variantId}/images [post]
+func (sv *Server) UploadVariantImageHandler(c *gin.Context) {
+	var uris URIVariantParam
+	if err := c.ShouldBindUri(&uris); err != nil {
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		return
+	}
+
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		return
+	}
+
+	prod, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(uris.ProductID)})
+	if err != nil {
+		c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
+		return
+	}
+
+	variant, err := sv.repo.GetProductVariantByID(c, repository.GetProductVariantByIDParams{
+		ID:        uuid.MustParse(uris.VariantID),
+		ProductID: prod.ID,
+	})
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
+		return
+	}
+
+	if variant.ImageID != nil {
+		msg, err := sv.uploadService.RemoveFile(c, *variant.ImageID)
+		if err != nil {
+			log.Error().Err(err).Timestamp().Msg(msg)
+			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+			return
+		}
+	}
+
+	id, url, err := sv.uploadService.UploadFile(c, file)
+	if err != nil {
+		log.Error().Err(err).Timestamp().Msg("UploadFile")
+
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		return
+	}
+	updateParam := repository.UpdateProductVariantParams{
+		ProductID: prod.ID,
+		ID:        variant.ID,
+		ImageID:   &id,
+		ImageUrl:  &url,
+	}
+
+	updatedVariant, err := sv.repo.UpdateProductVariant(c, updateParam)
+	if err != nil {
+		log.Error().Err(err).Timestamp().Msg("UpdateProductVariant")
+
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		return
+	}
+
+	c.JSON(http.StatusOK, createDataResp(c, updatedVariant, nil, nil))
 }
 
 // @Summary Delete a product variant
@@ -696,7 +727,7 @@ func (sv *Server) UpdateProductVariantHandler(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /products/{id}/variant/{variantID} [delete]
-func (sv *Server) DeleteProductVariantHandler(c *gin.Context) {
+func (sv *Server) DeleteVariantHandler(c *gin.Context) {
 	var uris URIVariantParam
 	if err := c.ShouldBindUri(&uris); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
@@ -713,9 +744,9 @@ func (sv *Server) DeleteProductVariantHandler(c *gin.Context) {
 		ProductID: prod.ID,
 		ID:        uuid.MustParse(uris.VariantID),
 	})
-	if err != nil {
-		log.Error().Err(err).Timestamp().Msg("DeleteProductVariant")
 
+	if err != nil {
+		log.Error().Err(err).Timestamp().Msg("DeleteVariant")
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}

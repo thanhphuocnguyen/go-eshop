@@ -319,11 +319,9 @@ CREATE TABLE
         base_sku VARCHAR(100) UNIQUE NOT NULL,
         slug VARCHAR(255) UNIQUE NOT NULL,
         is_active BOOLEAN DEFAULT TRUE,
-        category_id UUID REFERENCES categories (id) ON DELETE SET NULL,
-        collection_id UUID REFERENCES collections (id) ON DELETE SET NULL,
-        brand_id UUID REFERENCES brands (id) ON DELETE SET NULL,
         image_url TEXT,
         image_id VARCHAR(255),
+
         avg_rating DECIMAL(2, 1) DEFAULT NULL,
         rating_count INT NOT NULL DEFAULT 0,
         one_star_count INT NOT NULL DEFAULT 0,
@@ -331,8 +329,13 @@ CREATE TABLE
         three_star_count INT NOT NULL DEFAULT 0,
         four_star_count INT NOT NULL DEFAULT 0,
         five_star_count INT NOT NULL DEFAULT 0,
+
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+        category_id UUID REFERENCES categories (id) ON DELETE SET NULL,
+        collection_id UUID REFERENCES collections (id) ON DELETE SET NULL,
+        brand_id UUID REFERENCES brands (id) ON DELETE SET NULL
     );
 
 -- Create product_attributes table

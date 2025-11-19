@@ -205,19 +205,19 @@ func (sv *Server) updateAddressHandlers(c *gin.Context) {
 	c.JSON(http.StatusOK, createDataResp(c, addressDetail, nil, nil))
 }
 
-// removeAddressHandlers godoc
+// RemoveAddressHandlers godoc
 // @Summary Remove an address
 // @Description Remove an address
 // @Tags address
 // @Accept json
 // @Produce json
 // @Param id path int true "Address ID"
-// @Success 204 {object}
+// @Success 204 {object} nil
 // @Failure 400 {object} ErrorResp
 // @Failure 401 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
 // @Router /address/{id} [delete]
-func (sv *Server) removeAddressHandlers(c *gin.Context) {
+func (sv *Server) RemoveAddressHandlers(c *gin.Context) {
 	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, createErr(UnauthorizedCode, fmt.Errorf("authorization payload is not provided")))
@@ -266,7 +266,7 @@ func (sv *Server) removeAddressHandlers(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Address ID"
-// @Success 204 {object}
+// @Success 204 {object} nil
 // @Failure 400 {object} ErrorResp
 // @Failure 401 {object} ErrorResp
 // @Failure 404 {object} ErrorResp

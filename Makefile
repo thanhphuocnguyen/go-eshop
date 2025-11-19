@@ -42,10 +42,10 @@ serve-server:
 listen-stripe:
 	@echo "Listening to Stripe events..."
 	stripe listen --forward-to localhost:4000/webhook/v1/stripe
-gen-sqlc:
+sqlc:
 	@echo "Generating sqlc..."
 	sqlc generate
-gen-swagger:
+swagger:
 	@echo "Generating swagger..."
 	swag init -d internal/api -g server.go --parseInternal --parseDependency
 

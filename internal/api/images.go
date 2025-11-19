@@ -19,7 +19,7 @@ import (
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /images/product/{productId} [get]
-func (sv *Server) getProductImagesHandler(c *gin.Context) {
+func (sv *Server) GetProductImagesHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
@@ -27,33 +27,6 @@ func (sv *Server) getProductImagesHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, createDataResp(c, []ImageResponse{}, nil, nil))
-}
-
-// @Summary Remove a product image by ID
-// @Schemes http
-// @Description remove a product image by ID
-// @Tags images
-// @Accept json
-// @Param productId path int true "Product ID"
-// @Produce json
-// @Success 200 {object} ApiResponse[bool]
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
-// @Router /images/product/{productId} [delete]
-func (sv *Server) removeImageHandler(c *gin.Context) {
-	_, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, createErr(UnauthorizedCode, errors.New("missing user payload in context")))
-		return
-	}
-
-	var params RemoveImageParams
-	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
-		return
-	}
-
-	c.Status(http.StatusNoContent)
 }
 
 // @Summary Remove a product by external ID
@@ -67,7 +40,7 @@ func (sv *Server) removeImageHandler(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /images/{publicID} [delete]
-func (sv *Server) removeImageByPublicIDHandler(c *gin.Context) {
+func (sv *Server) RemoveImageByPublicIDHandler(c *gin.Context) {
 	_, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, createErr(UnauthorizedCode, errors.New("missing user payload in context")))

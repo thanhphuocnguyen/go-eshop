@@ -65,7 +65,7 @@ func (sv *Server) createDiscountHandler(c *gin.Context) {
 // @Param search query string false "Search by code"
 // @Param discountType query string false "Discount type" default(percentage)
 // @Param isActive query bool false "Is active" default(true)
-// @Success 200 {object} ApiResponse[DiscountListItemResponseModel]
+// @Success 200 {object} ApiResponse[[]DiscountListItemResponseModel]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /discounts [get]
@@ -279,9 +279,9 @@ func (sv *Server) getDiscountProductsByIDHandler(c *gin.Context) {
 // @Param page query int false "Page number" default(1)
 // @Param pageSize query int false "Page size" default(10)
 // @Success 200 {object} ApiResponse[DiscountLinkObject]
-// @Failure 400 {object} ApiResponse
-// @Failure 404 {object} ApiResponse
-// @Failure 500 {object} ApiResponse
+// @Failure 400 {object} ErrorResp
+// @Failure 404 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
 // @Router /discounts/{id}/categories [get]
 func (sv *Server) getDiscountCategoriesByIDHandler(c *gin.Context) {
 	var param UriIDParam

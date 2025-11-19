@@ -27,7 +27,6 @@ definitions:
         type: string
       stack:
         description: Hide in production
-        type: string
     type: object
   api.ApiResponse-api_AddressResponse:
     properties:
@@ -44,10 +43,10 @@ definitions:
       success:
         type: boolean
     type: object
-  api.ApiResponse-api_AttributeResponse:
+  api.ApiResponse-api_AttributeRespModel:
     properties:
       data:
-        $ref: '#/definitions/api.AttributeResponse'
+        $ref: '#/definitions/api.AttributeRespModel'
       error:
         $ref: '#/definitions/api.ApiError'
       message:
@@ -119,10 +118,10 @@ definitions:
       success:
         type: boolean
     type: object
-  api.ApiResponse-api_DiscountListItemResponseModel:
+  api.ApiResponse-api_LoginResponse:
     properties:
       data:
-        $ref: '#/definitions/api.DiscountListItemResponseModel'
+        $ref: '#/definitions/api.LoginResponse'
       error:
         $ref: '#/definitions/api.ApiError'
       message:
@@ -134,10 +133,10 @@ definitions:
       success:
         type: boolean
     type: object
-  api.ApiResponse-api_LoginResponse:
+  api.ApiResponse-api_ManageProductDetailResp:
     properties:
       data:
-        $ref: '#/definitions/api.LoginResponse'
+        $ref: '#/definitions/api.ManageProductDetailResp'
       error:
         $ref: '#/definitions/api.ApiError'
       message:
@@ -194,21 +193,6 @@ definitions:
       success:
         type: boolean
     type: object
-  api.ApiResponse-api_ProductListModel:
-    properties:
-      data:
-        $ref: '#/definitions/api.ProductListModel'
-      error:
-        $ref: '#/definitions/api.ApiError'
-      message:
-        type: string
-      meta:
-        $ref: '#/definitions/api.MetaInfo'
-      pagination:
-        $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
-    type: object
   api.ApiResponse-api_ProductRatingModel:
     properties:
       data:
@@ -239,10 +223,25 @@ definitions:
       success:
         type: boolean
     type: object
-  api.ApiResponse-api_UserResponse:
+  api.ApiResponse-api_UserDetail:
     properties:
       data:
-        $ref: '#/definitions/api.UserResponse'
+        $ref: '#/definitions/api.UserDetail'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-api_VariantModel:
+    properties:
+      data:
+        $ref: '#/definitions/api.VariantModel'
       error:
         $ref: '#/definitions/api.ApiError'
       message:
@@ -271,11 +270,62 @@ definitions:
       success:
         type: boolean
     type: object
-  api.ApiResponse-array_api_AttributeResponse:
+  api.ApiResponse-array_api_AttributeRespModel:
     properties:
       data:
         items:
-          $ref: '#/definitions/api.AttributeResponse'
+          $ref: '#/definitions/api.AttributeRespModel'
+        type: array
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-array_api_CategoryListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/api.CategoryListResponse'
+        type: array
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-array_api_CategoryResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/api.CategoryResponse'
+        type: array
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-array_api_DiscountListItemResponseModel:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/api.DiscountListItemResponseModel'
         type: array
       error:
         $ref: '#/definitions/api.ApiError'
@@ -293,6 +343,23 @@ definitions:
       data:
         items:
           $ref: '#/definitions/api.ImageResponse'
+        type: array
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-array_api_ManageProductListModel:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/api.ManageProductListModel'
         type: array
       error:
         $ref: '#/definitions/api.ApiError'
@@ -339,11 +406,45 @@ definitions:
       success:
         type: boolean
     type: object
-  api.ApiResponse-array_api_UserResponse:
+  api.ApiResponse-array_api_UserDetail:
     properties:
       data:
         items:
-          $ref: '#/definitions/api.UserResponse'
+          $ref: '#/definitions/api.UserDetail'
+        type: array
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-array_repository_GetAvailableDiscountsForCartRow:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/repository.GetAvailableDiscountsForCartRow'
+        type: array
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-array_repository_ProductVariant:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/repository.ProductVariant'
         type: array
       error:
         $ref: '#/definitions/api.ApiError'
@@ -371,10 +472,55 @@ definitions:
       success:
         type: boolean
     type: object
-  api.ApiResponse-gin_H:
+  api.ApiResponse-repository_Attribute:
     properties:
       data:
-        $ref: '#/definitions/gin.H'
+        $ref: '#/definitions/repository.Attribute'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-repository_Category:
+    properties:
+      data:
+        $ref: '#/definitions/repository.Category'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-repository_CreatePaymentResult:
+    properties:
+      data:
+        $ref: '#/definitions/repository.CreatePaymentResult'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
+      success:
+        type: boolean
+    type: object
+  api.ApiResponse-repository_ProductVariant:
+    properties:
+      data:
+        $ref: '#/definitions/repository.ProductVariant'
       error:
         $ref: '#/definitions/api.ApiError'
       message:
@@ -416,30 +562,18 @@ definitions:
       success:
         type: boolean
     type: object
-  api.ApiResponse-uuid_UUID:
+  api.AttributeRequest:
     properties:
-      data:
-        type: string
-      error:
-        $ref: '#/definitions/api.ApiError'
-      message:
-        type: string
-      meta:
-        $ref: '#/definitions/api.MetaInfo'
-      pagination:
-        $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
-    type: object
-  api.AttributeResponse:
-    properties:
-      createdAt:
-        type: string
-      id:
-        type: string
       name:
         type: string
-      updatedAt:
+    required:
+    - name
+    type: object
+  api.AttributeRespModel:
+    properties:
+      id:
+        type: integer
+      name:
         type: string
       values:
         items:
@@ -448,30 +582,19 @@ definitions:
     type: object
   api.AttributeValue:
     properties:
-      code:
-        type: string
-      displayOrder:
-        type: integer
       id:
-        type: string
-      isActive:
-        type: boolean
+        type: integer
       name:
+        type: string
+      value:
         type: string
     type: object
-  api.AttributeValueRequest:
+  api.AttributeValuesReq:
     properties:
-      code:
-        type: string
-      displayOrder:
-        minimum: 0
-        type: integer
-      isActive:
-        type: boolean
-      name:
+      value:
         type: string
     required:
-    - code
+    - value
     type: object
   api.CartDetailResponse:
     properties:
@@ -530,6 +653,31 @@ definitions:
       variantCount:
         type: integer
     type: object
+  api.CategoryListResponse:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      imageUrl:
+        type: string
+      name:
+        type: string
+      products:
+        items:
+          $ref: '#/definitions/api.ManageProductListModel'
+        type: array
+      published:
+        type: boolean
+      remarkable:
+        type: boolean
+      slug:
+        type: string
+      updatedAt:
+        type: string
+    type: object
   api.CategoryResponse:
     properties:
       createdAt:
@@ -547,8 +695,6 @@ definitions:
           $ref: '#/definitions/api.CategoryLinkedProduct'
         type: array
       published:
-        type: boolean
-      remarkable:
         type: boolean
       slug:
         type: string
@@ -580,7 +726,13 @@ definitions:
         type: string
       email:
         type: string
-      fullName:
+      firstName:
+        maxLength: 32
+        minLength: 3
+        type: string
+      lastName:
+        maxLength: 32
+        minLength: 3
         type: string
       paymentGateway:
         enum:
@@ -588,7 +740,7 @@ definitions:
         type: string
       paymentMethod:
         enum:
-        - code
+        - cod
         - stripe
         type: string
     required:
@@ -616,17 +768,6 @@ definitions:
     - district
     - phone
     - street
-    type: object
-  api.CreateAttributeRequest:
-    properties:
-      name:
-        type: string
-      values:
-        items:
-          $ref: '#/definitions/api.AttributeValueRequest'
-        type: array
-    required:
-    - name
     type: object
   api.CreateCategoryRequest:
     properties:
@@ -699,6 +840,72 @@ definitions:
     - discountValue
     - isActive
     - startsAt
+    type: object
+  api.CreateProdVariantReq:
+    properties:
+      attributeValues:
+        items:
+          type: integer
+        type: array
+      description:
+        type: string
+      isActive:
+        type: boolean
+      price:
+        type: number
+      stockQty:
+        minimum: 0
+        type: integer
+      weight:
+        type: number
+    required:
+    - attributeValues
+    - isActive
+    - price
+    - stockQty
+    type: object
+  api.CreateProductReq:
+    properties:
+      attributes:
+        items:
+          type: integer
+        type: array
+      brandId:
+        type: string
+      categoryId:
+        type: string
+      collectionId:
+        type: string
+      description:
+        type: string
+      isActive:
+        type: boolean
+      name:
+        maxLength: 255
+        minLength: 3
+        type: string
+      price:
+        type: number
+      shortDescription:
+        maxLength: 1000
+        type: string
+      sku:
+        maxLength: 100
+        minLength: 3
+        type: string
+      slug:
+        maxLength: 255
+        minLength: 3
+        type: string
+    required:
+    - attributes
+    - categoryId
+    - description
+    - isActive
+    - name
+    - price
+    - sku
+    - slug
     type: object
   api.DiscountDetailResponseModel:
     properties:
@@ -791,6 +998,13 @@ definitions:
       orderId:
         type: string
     type: object
+  api.GeneralCategoryResponse:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
   api.ImageResponse:
     properties:
       assignments:
@@ -835,6 +1049,84 @@ definitions:
         type: string
       sessionId:
         type: string
+    type: object
+  api.ManageProductDetailResp:
+    properties:
+      attributes:
+        items:
+          type: integer
+        type: array
+      brand:
+        $ref: '#/definitions/api.GeneralCategoryResponse'
+      category:
+        $ref: '#/definitions/api.GeneralCategoryResponse'
+      collection:
+        $ref: '#/definitions/api.GeneralCategoryResponse'
+      createdAt:
+        type: string
+      description:
+        type: string
+      fiveStarCount:
+        type: integer
+      fourStarCount:
+        type: integer
+      id:
+        type: string
+      imageId:
+        type: string
+      imageUrl:
+        type: string
+      isActive:
+        type: boolean
+      name:
+        type: string
+      oneStarCount:
+        type: integer
+      price:
+        type: number
+      ratingCount:
+        type: integer
+      shortDescription:
+        type: string
+      sku:
+        type: string
+      slug:
+        type: string
+      threeStarCount:
+        type: integer
+      twoStarCount:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  api.ManageProductListModel:
+    properties:
+      avgRating:
+        type: number
+      basePrice:
+        type: number
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      imageId:
+        type: string
+      imageUrl:
+        type: string
+      name:
+        type: string
+      reviewCount:
+        type: integer
+      sku:
+        type: string
+      slug:
+        type: string
+      updatedAt:
+        type: string
+      variantCount:
+        type: integer
     type: object
   api.MetaInfo:
     properties:
@@ -950,62 +1242,31 @@ definitions:
     properties:
       orderId:
         type: string
-      paymentMethod:
-        enum:
-        - cod
-        - stripe
+      paymentMethodId:
         type: string
     required:
     - orderId
-    - paymentMethod
+    - paymentMethodId
     type: object
   api.PaymentResponse:
     properties:
-      details: {}
+      details:
+        description: |-
+          Details contains gateway-specific payment information.
+          The type may vary depending on the payment provider, and is typically a struct or map[string]interface{}.
       gateway:
-        $ref: '#/definitions/repository.PaymentGateway'
+        type: string
       id:
         type: string
       status:
         $ref: '#/definitions/repository.PaymentStatus'
     type: object
-  api.ProductListModel:
-    properties:
-      avgRating:
-        type: number
-      basePrice:
-        type: number
-      createdAt:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      imageId:
-        type: string
-      imageUrl:
-        type: string
-      maxPrice:
-        type: number
-      minPrice:
-        type: number
-      name:
-        type: string
-      reviewCount:
-        type: integer
-      sku:
-        type: string
-      slug:
-        type: string
-      updatedAt:
-        type: string
-      variantCount:
-        type: integer
-    type: object
   api.ProductRatingModel:
     properties:
-      helpfulVotes:
+      count:
         type: integer
+      firstName:
+        type: string
       id:
         type: string
       images:
@@ -1016,7 +1277,7 @@ definitions:
         type: boolean
       isVisible:
         type: boolean
-      name:
+      lastName:
         type: string
       productName:
         type: string
@@ -1026,8 +1287,6 @@ definitions:
         type: string
       reviewTitle:
         type: string
-      unhelpfulVotes:
-        type: integer
       userId:
         type: string
       verifiedPurchase:
@@ -1036,7 +1295,7 @@ definitions:
   api.RatingImageModel:
     properties:
       id:
-        type: string
+        type: integer
       url:
         type: string
     type: object
@@ -1068,7 +1327,11 @@ definitions:
         maxLength: 255
         minLength: 6
         type: string
-      fullname:
+      firstName:
+        maxLength: 32
+        minLength: 3
+        type: string
+      lastName:
         maxLength: 32
         minLength: 3
         type: string
@@ -1087,7 +1350,6 @@ definitions:
     required:
     - address
     - email
-    - fullname
     - password
     - phone
     - username
@@ -1106,33 +1368,6 @@ definitions:
         type: string
       ward:
         type: string
-    type: object
-  api.UpdateAttributeRequest:
-    properties:
-      name:
-        type: string
-      values:
-        items:
-          $ref: '#/definitions/api.UpdateAttributeValueRequest'
-        type: array
-    required:
-    - name
-    type: object
-  api.UpdateAttributeValueRequest:
-    properties:
-      code:
-        type: string
-      displayOrder:
-        minimum: 0
-        type: integer
-      id:
-        type: string
-      isActive:
-        type: boolean
-      name:
-        type: string
-    required:
-    - code
     type: object
   api.UpdateCartItemQtyRequest:
     properties:
@@ -1163,13 +1398,71 @@ definitions:
         minLength: 3
         type: string
     type: object
+  api.UpdateProdVariantReq:
+    properties:
+      attributeValues:
+        items:
+          type: integer
+        type: array
+      description:
+        type: string
+      isActive:
+        type: boolean
+      price:
+        type: number
+      stockQty:
+        minimum: 0
+        type: integer
+      weight:
+        type: number
+    required:
+    - attributeValues
+    type: object
+  api.UpdateProductReq:
+    properties:
+      attributes:
+        items:
+          type: integer
+        type: array
+      brandId:
+        type: string
+      categoryId:
+        type: string
+      collectionId:
+        type: string
+      description:
+        type: string
+      isActive:
+        type: boolean
+      name:
+        maxLength: 255
+        minLength: 3
+        type: string
+      price:
+        type: number
+      shortDescription:
+        maxLength: 1000
+        type: string
+      sku:
+        maxLength: 100
+        minLength: 3
+        type: string
+      slug:
+        maxLength: 255
+        minLength: 3
+        type: string
+    type: object
   api.UpdateUserRequest:
     properties:
       email:
         maxLength: 255
         minLength: 6
         type: string
-      fullname:
+      firstName:
+        maxLength: 32
+        minLength: 3
+        type: string
+      lastName:
         maxLength: 32
         minLength: 3
         type: string
@@ -1182,26 +1475,38 @@ definitions:
     required:
     - userId
     type: object
-  api.UserResponse:
+  api.UserDetail:
     properties:
       addresses:
         items:
           $ref: '#/definitions/api.AddressResponse'
         type: array
+      avatarId:
+        type: string
+      avatarUrl:
+        type: string
       createdAt:
         type: string
       email:
         type: string
-      fullname:
+      firstName:
         type: string
       id:
         type: string
+      lastLoginAt:
+        type: string
+      lastName:
+        type: string
+      locked:
+        type: boolean
       passwordChangedAt:
         type: string
       phone:
         type: string
-      role:
-        $ref: '#/definitions/repository.UserRole'
+      roleCode:
+        $ref: '#/definitions/repository.Role'
+      roleId:
+        type: string
       updatedAt:
         type: string
       username:
@@ -1211,8 +1516,39 @@ definitions:
       verifiedPhone:
         type: boolean
     type: object
-  gin.H:
-    additionalProperties: {}
+  api.VariantModel:
+    properties:
+      attributeValues:
+        items:
+          $ref: '#/definitions/api.AttributeValue'
+        type: array
+      createdAt:
+        type: string
+      id:
+        type: string
+      imageId:
+        type: string
+      imageUrl:
+        type: string
+      isActive:
+        type: boolean
+      price:
+        type: number
+      sku:
+        type: string
+      stock:
+        type: integer
+      updatedAt:
+        type: string
+      weight:
+        type: number
+    type: object
+  big.Int:
+    type: object
+  github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp:
+    properties:
+      error:
+        $ref: '#/definitions/api.ApiError'
     type: object
   multipart.FileHeader:
     properties:
@@ -1223,6 +1559,45 @@ definitions:
       size:
         type: integer
     type: object
+  pgtype.InfinityModifier:
+    enum:
+    - 1
+    - 0
+    - -1
+    type: integer
+    x-enum-varnames:
+    - Infinity
+    - Finite
+    - NegativeInfinity
+  pgtype.Numeric:
+    properties:
+      exp:
+        type: integer
+      infinityModifier:
+        $ref: '#/definitions/pgtype.InfinityModifier'
+      int:
+        $ref: '#/definitions/big.Int'
+      naN:
+        type: boolean
+      valid:
+        type: boolean
+    type: object
+  pgtype.Timestamptz:
+    properties:
+      infinityModifier:
+        $ref: '#/definitions/pgtype.InfinityModifier'
+      time:
+        type: string
+      valid:
+        type: boolean
+    type: object
+  repository.Attribute:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
   repository.AttributeDataSnapshot:
     properties:
       name:
@@ -1230,106 +1605,87 @@ definitions:
       value:
         type: string
     type: object
-  repository.CreateProductTxArgs:
+  repository.Category:
     properties:
-      attributes:
-        items:
-          type: string
-        minItems: 1
-        type: array
-      brand_id:
-        type: string
-      category_id:
-        type: string
-      collection_id:
+      createdAt:
         type: string
       description:
-        maxLength: 5000
-        minLength: 6
+        type: string
+      displayOrder:
+        type: integer
+      id:
+        type: string
+      imageId:
+        type: string
+      imageUrl:
         type: string
       name:
-        maxLength: 100
-        minLength: 3
         type: string
-      price:
-        type: number
-      short_description:
-        maxLength: 2000
-        type: string
-      sku:
-        type: string
+      published:
+        type: boolean
       slug:
         type: string
-      variants:
-        items:
-          $ref: '#/definitions/repository.CreateProductVariantTxParams'
-        type: array
-    required:
-    - name
-    - price
-    - sku
+      updatedAt:
+        type: string
     type: object
-  repository.CreateProductVariantTxParams:
+  repository.CreatePaymentResult:
     properties:
-      attributes:
-        items:
-          $ref: '#/definitions/repository.ProductAttributesTxParam'
-        minItems: 1
-        type: array
-      is_active:
-        type: boolean
-      price:
+      clientSecret:
+        type: string
+      orderId:
+        type: string
+      paymentId:
+        type: string
+      paymentIntentId:
+        type: string
+      status:
+        $ref: '#/definitions/repository.PaymentStatus'
+      totalPrice:
         type: number
-      stock_qty:
-        minimum: 0
+    type: object
+  repository.GetAvailableDiscountsForCartRow:
+    properties:
+      categoryCount:
         type: integer
-      weight:
-        minimum: 0
-        type: number
-    required:
-    - price
-    - stock_qty
+      categoryId:
+        type: string
+      code:
+        type: string
+      description:
+        type: string
+      discountType:
+        type: string
+      discountValue:
+        $ref: '#/definitions/pgtype.Numeric'
+      expiresAt:
+        $ref: '#/definitions/pgtype.Timestamptz'
+      id:
+        type: string
+      productCount:
+        type: integer
+      productId:
+        type: string
+      startsAt:
+        $ref: '#/definitions/pgtype.Timestamptz'
     type: object
   repository.OrderStatus:
     enum:
     - pending
     - confirmed
-    - delivering
+    - processing
+    - shipped
     - delivered
     - cancelled
     - refunded
-    - completed
     type: string
     x-enum-varnames:
     - OrderStatusPending
     - OrderStatusConfirmed
-    - OrderStatusDelivering
+    - OrderStatusProcessing
+    - OrderStatusShipped
     - OrderStatusDelivered
     - OrderStatusCancelled
     - OrderStatusRefunded
-    - OrderStatusCompleted
-  repository.PaymentGateway:
-    enum:
-    - stripe
-    - paypal
-    - visa
-    - mastercard
-    - apple_pay
-    - postpaid
-    - momo
-    - zalo_pay
-    - vn_pay
-    type: string
-    x-enum-varnames:
-    - PaymentGatewayStripe
-    - PaymentGatewayPaypal
-    - PaymentGatewayVisa
-    - PaymentGatewayMastercard
-    - PaymentGatewayApplePay
-    - PaymentGatewayPostpaid
-    - PaymentGatewayMomo
-    - PaymentGatewayZaloPay
-    - PaymentGatewayVnPay
   repository.PaymentStatus:
     enum:
     - pending
@@ -1346,16 +1702,43 @@ definitions:
     - PaymentStatusCancelled
     - PaymentStatusRefunded
     - PaymentStatusProcessing
-  repository.ProductAttributesTxParam:
+  repository.ProductVariant:
     properties:
+      createdAt:
+        type: string
+      description:
+        type: string
       id:
         type: string
-      value_id:
+      imageId:
         type: string
-    required:
-    - id
-    - value_id
+      imageUrl:
+        type: string
+      isActive:
+        type: boolean
+      price:
+        $ref: '#/definitions/pgtype.Numeric'
+      productId:
+        type: string
+      sku:
+        type: string
+      stock:
+        type: integer
+      updatedAt:
+        type: string
+      weight:
+        $ref: '#/definitions/pgtype.Numeric'
     type: object
+  repository.Role:
+    enum:
+    - admin
+    - user
+    - moderator
+    type: string
+    x-enum-varnames:
+    - UserRoleCodeAdmin
+    - UserRoleCodeUser
+    - UserRoleCodeModerator
   repository.ShippingAddressSnapshot:
     properties:
       city:
@@ -1375,94 +1758,20 @@ definitions:
     - street
     - ward
     type: object
-  repository.UpdateProductImages:
-    properties:
-      assignments:
-        items:
-          type: string
-        type: array
-      id:
-        type: string
-      omitempty:
-        type: boolean
-      role:
-        type: string
-    type: object
-  repository.UpdateProductTxParams:
-    properties:
-      attributes:
-        items:
-          type: string
-        type: array
-      brandId:
-        type: string
-      categoryId:
-        type: string
-      collectionId:
-        type: string
-      description:
-        maxLength: 5000
-        minLength: 6
-        type: string
-      images:
-        items:
-          $ref: '#/definitions/repository.UpdateProductImages'
-        type: array
-      name:
-        maxLength: 100
-        minLength: 3
-        type: string
-      price:
-        type: number
-      short_description:
-        maxLength: 2000
-        type: string
-      sku:
-        type: string
-      slug:
-        type: string
-      stock:
-        type: integer
-      variants:
-        items:
-          $ref: '#/definitions/repository.UpdateProductVariantTxParams'
-        type: array
-    type: object
-  repository.UpdateProductVariantTxParams:
-    properties:
-      attributes:
-        items:
-          $ref: '#/definitions/repository.ProductAttributesTxParam'
-        minItems: 1
-        type: array
-      id:
-        type: string
-      is_active:
-        type: boolean
-      price:
-        type: number
-      stock_qty:
-        minimum: 0
-        type: integer
-      weight:
-        minimum: 0
-        type: number
-    required:
-    - price
-    - stock_qty
-    type: object
   repository.UpdateUserRow:
     properties:
       createdAt:
         type: string
       email:
         type: string
-      fullname:
+      firstName:
         type: string
       id:
         type: string
-      role:
-        $ref: '#/definitions/repository.UserRole'
+      lastName:
+        type: string
+      roleId:
+        type: string
       updatedAt:
         type: string
       username:
@@ -1472,16 +1781,6 @@ definitions:
       verifiedPhone:
         type: boolean
     type: object
-  repository.UserRole:
-    enum:
-    - admin
-    - user
-    - moderator
-    type: string
-    x-enum-varnames:
-    - UserRoleAdmin
-    - UserRoleUser
-    - UserRoleModerator
   textproto.MIMEHeader:
     additionalProperties:
       items:
@@ -1515,6 +1814,14 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/api.ApiResponse-array_api_AddressResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Get list of addresses
       tags:
       - address
@@ -1539,11 +1846,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Create a new address
       tags:
       - address
@@ -1561,20 +1868,20 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "204":
+          description: No Content
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Remove an address
       tags:
       - address
@@ -1604,19 +1911,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Update an address
       tags:
       - address
@@ -1634,24 +1941,53 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "204":
+          description: No Content
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Set default address
       tags:
       - address
   /admin/brands/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a Brand
+      operationId: delete-Brand
+      parameters:
+      - description: Brand ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+      summary: Delete a Brand
+      tags:
+      - Admin
     get:
       consumes:
       - application/json
@@ -1673,15 +2009,82 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Get a Brand by ID
       tags:
       - Admin
+    put:
+      consumes:
+      - application/json
+      description: Update a Brand
+      operationId: update-Brand
+      parameters:
+      - description: Brand ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Brand request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.UpdateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+      summary: Update a Brand
+      tags:
+      - Admin
   /admin/categories:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of Categories
+      operationId: get-admin-Categories
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-array_api_CategoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+      summary: Get a list of Categories
+      tags:
+      - Categories
     post:
       consumes:
       - application/json
@@ -1704,11 +2107,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Create a new Category
       tags:
       - Categories
@@ -1729,16 +2132,14 @@ paths:
       responses:
         "204":
           description: No Content
-          schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Delete a Category
       tags:
       - Admin
@@ -1763,15 +2164,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Get a Category by ID
       tags:
       - Categories
@@ -1798,15 +2199,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/api.ApiResponse-repository_Category'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Update a Category
       tags:
       - Admin
@@ -1835,11 +2236,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Get a list of Collections
       tags:
       - Admin
@@ -1865,11 +2266,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Create a new Collection
       tags:
       - Admin
@@ -1890,16 +2291,14 @@ paths:
       responses:
         "204":
           description: No Content
-          schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Delete a Collection
       tags:
       - Admin
@@ -1924,15 +2323,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Get a Collection by ID
       tags:
       - Admin
@@ -1963,11 +2362,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Update a Collection
       tags:
       - Admin
@@ -1999,15 +2398,15 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_OrderListResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_OrderListResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_OrderListResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       security:
       - BearerAuth: []
       summary: Get all orders (Admin endpoint)
@@ -2034,19 +2433,19 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_OrderDetailResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_OrderDetailResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_OrderDetailResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_OrderDetailResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       security:
       - BearerAuth: []
       summary: Get order details by ID (Admin endpoint)
@@ -2083,15 +2482,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Get product ratings
       tags:
       - ratings
@@ -2109,22 +2508,20 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+        "204":
+          description: No Content
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       security:
       - BearerAuth: []
       summary: Delete a rating
@@ -2145,22 +2542,20 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+        "204":
+          description: No Content
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       security:
       - BearerAuth: []
       summary: Approve a rating
@@ -2181,22 +2576,20 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+        "204":
+          description: No Content
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       security:
       - BearerAuth: []
       summary: Ban a user from rating
@@ -2223,19 +2616,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_UserResponse'
+            $ref: '#/definitions/api.ApiResponse-array_api_UserDetail'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: List users
       tags:
       - users
@@ -2256,19 +2649,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_UserResponse'
+            $ref: '#/definitions/api.ApiResponse-api_UserDetail'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_UserResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_UserResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_UserResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Get user info
       tags:
       - Admin
@@ -2283,11 +2676,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_AttributeResponse'
+            $ref: '#/definitions/api.ApiResponse-array_api_AttributeRespModel'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_AttributeResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Get all attributes
       tags:
       - attributes
@@ -2301,22 +2694,22 @@ paths:
         name: params
         required: true
         schema:
-          $ref: '#/definitions/api.CreateAttributeRequest'
+          $ref: '#/definitions/api.AttributeValuesReq'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_AttributeResponse'
+            $ref: '#/definitions/api.ApiResponse-api_AttributeRespModel'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_AttributeResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_AttributeResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Create an attribute
       tags:
       - attributes
@@ -2339,7 +2732,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Delete an attribute
       tags:
       - attributes
@@ -2359,15 +2752,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_AttributeResponse'
+            $ref: '#/definitions/api.ApiResponse-api_AttributeRespModel'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_AttributeResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_AttributeResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Get an attribute
       tags:
       - attributes
@@ -2386,23 +2779,149 @@ paths:
         name: params
         required: true
         schema:
-          $ref: '#/definitions/api.UpdateAttributeRequest'
+          $ref: '#/definitions/api.AttributeRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_AttributeResponse'
+            $ref: '#/definitions/api.ApiResponse-repository_Attribute'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_AttributeResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_AttributeResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Update an attribute
+      tags:
+      - attributes
+  /attributes/{id}/create:
+    post:
+      consumes:
+      - application/json
+      description: Add new attribute value
+      parameters:
+      - description: Attribute ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Attribute value
+        in: body
+        name: params
+        required: true
+        schema:
+          $ref: '#/definitions/api.AttributeValuesReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+      summary: Add new attribute value
+      tags:
+      - attributes
+  /attributes/{id}/remove/{valueId}:
+    delete:
+      consumes:
+      - application/json
+      description: remove an attribute value
+      parameters:
+      - description: Attribute ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+      summary: remove an attribute value
+      tags:
+      - attributes
+  /attributes/{id}/update/{valueId}:
+    put:
+      consumes:
+      - application/json
+      description: update attribute value
+      parameters:
+      - description: Attribute ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Attribute value
+        in: body
+        name: params
+        required: true
+        schema:
+          $ref: '#/definitions/api.AttributeValuesReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-bool'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+      summary: update attribute value
+      tags:
+      - attributes
+  /attributes/product/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get attributes and their values for a product
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-array_api_AttributeRespModel'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+      summary: Get attributes and their values by for a product
       tags:
       - attributes
   /brands:
@@ -2426,15 +2945,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/api.ApiResponse-array_api_CategoryResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Get a list of brands
       tags:
       - Admin
@@ -2460,77 +2979,12 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Create a new Brand
-      tags:
-      - Admin
-  /brands/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete a Brand
-      operationId: delete-Brand
-      parameters:
-      - description: Brand ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: No Content
-          schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
-      summary: Delete a Brand
-      tags:
-      - Admin
-    put:
-      consumes:
-      - application/json
-      description: Update a Brand
-      operationId: update-Brand
-      parameters:
-      - description: Brand ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Brand request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/api.UpdateCategoryRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
-      summary: Update a Brand
       tags:
       - Admin
   /cart:
@@ -2548,23 +3002,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Get cart details by user ID
       tags:
       - cart
@@ -2582,23 +3036,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Create a new cart
       tags:
       - carts
@@ -2620,27 +3074,27 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/api.ApiResponse-repository_CreatePaymentResult'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Update product items in the cart
       tags:
       - carts
@@ -2652,30 +3106,28 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+        "204":
+          description: No Content
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Clear the cart
       tags:
       - carts
@@ -2690,15 +3142,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/api.ApiResponse-array_repository_GetAvailableDiscountsForCartRow'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Get cart discounts
       tags:
       - carts
@@ -2723,23 +3175,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Remove a product from the cart
       tags:
       - carts
@@ -2761,15 +3213,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-uuid_UUID'
+            $ref: '#/definitions/api.ApiResponse-string'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Add a product to the cart
       tags:
       - carts
@@ -2794,15 +3246,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/api.ApiResponse-array_api_CategoryListResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Get a list of Categories
       tags:
       - Categories
@@ -2832,11 +3284,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Get a list of Products by Category Slug
       tags:
       - Categories
@@ -2862,11 +3314,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Get a list of Collections
       tags:
       - Collections
@@ -2906,15 +3362,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_DiscountListItemResponseModel'
+            $ref: '#/definitions/api.ApiResponse-array_api_DiscountListItemResponseModel'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Get all discounts
       tags:
       - discounts
@@ -2939,11 +3395,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Create a new discount
       tags:
       - discounts
@@ -2968,15 +3424,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Get discount by ID
       tags:
       - discounts
@@ -3011,15 +3467,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Get discount categories by ID
       tags:
       - discounts
@@ -3054,15 +3510,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Get discount products by ID
       tags:
       - discounts
@@ -3097,15 +3553,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Get discount users by ID
       tags:
       - discounts
@@ -3130,43 +3586,15 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Remove a product by external ID
       tags:
       - images
   /images/product/{productId}:
-    delete:
-      consumes:
-      - application/json
-      description: remove a product image by ID
-      parameters:
-      - description: Product ID
-        in: path
-        name: productId
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/gin.H'
-      summary: Remove a product image by ID
-      tags:
-      - images
     get:
       consumes:
       - application/json
@@ -3187,45 +3615,12 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Get list of product image by ID
-      tags:
-      - images
-    post:
-      consumes:
-      - application/json
-      description: upload product images by ID
-      parameters:
-      - description: Product ID
-        in: path
-        name: productId
-        required: true
-        type: integer
-      - description: Image file
-        in: formData
-        name: files
-        required: true
-        type: file
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_ImageResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/gin.H'
-      summary: Upload product images
       tags:
       - images
   /order/{orderId}:
@@ -3249,15 +3644,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.OrderDetailResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.OrderDetailResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.OrderDetailResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       security:
       - BearerAuth: []
       summary: Get order detail
@@ -3284,15 +3679,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       security:
       - BearerAuth: []
       summary: Cancel order
@@ -3319,15 +3714,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       security:
       - BearerAuth: []
       summary: confirm received order payment info
@@ -3354,15 +3749,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       security:
       - BearerAuth: []
       summary: Refund order
@@ -3395,15 +3790,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_OrderListResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       security:
       - BearerAuth: []
       summary: Change order status
@@ -3441,15 +3836,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_OrderListResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_OrderListResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_OrderListResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       security:
       - BearerAuth: []
       summary: List orders
@@ -3477,23 +3872,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       security:
       - BearerAuth: []
       summary: Initiate payment
@@ -3520,23 +3915,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       security:
       - BearerAuth: []
       summary: Get payment  by order ID
@@ -3563,23 +3958,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       security:
       - BearerAuth: []
       summary: Change payment status
@@ -3608,17 +4003,17 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
+              $ref: '#/definitions/api.ApiResponse-array_api_ManageProductListModel'
             type: array
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
-      summary: Get list of products
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+      summary: Get list of display products
       tags:
       - products
     post:
@@ -3631,23 +4026,259 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/repository.CreateProductTxArgs'
+          $ref: '#/definitions/api.CreateProductReq'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
+            $ref: '#/definitions/api.ApiResponse-string'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Create a new product
+      tags:
+      - products
+  /products/{id}/image:
+    post:
+      consumes:
+      - multipart/form-data
+      description: upload product image
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-string'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+      summary: Upload product image
+      tags:
+      - products
+  /products/{id}/variant/{variantID}:
+    delete:
+      consumes:
+      - application/json
+      description: delete a product variant with the input payload
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-string'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+      summary: Delete a product variant
+      tags:
+      - products
+  /products/{id}/variants:
+    get:
+      consumes:
+      - application/json
+      description: get product variants
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-array_repository_ProductVariant'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+      summary: Get product variants
+      tags:
+      - products
+    post:
+      consumes:
+      - application/json
+      description: create a new product with the input payload
+      parameters:
+      - description: Product variant input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/api.CreateProdVariantReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-string'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+      summary: Create a new product variant
+      tags:
+      - products
+  /products/{id}/variants/{variantID}:
+    get:
+      consumes:
+      - application/json
+      description: get product variant
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Product Variant ID
+        in: path
+        name: variantID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_VariantModel'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+      summary: Get product variant
+      tags:
+      - products
+  /products/{id}/variants/{variantId}:
+    put:
+      consumes:
+      - application/json
+      description: update a product with the input payload
+      parameters:
+      - description: Product variant input
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/api.UpdateProdVariantReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-repository_ProductVariant'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+      summary: Update a product variant
+      tags:
+      - products
+  /products/{id}/variants/{variantId}/image:
+    post:
+      consumes:
+      - multipart/form-data
+      description: upload product image
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Product Variant ID
+        in: path
+        name: variantId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-string'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+      summary: Upload product image
+      tags:
+      - products
+  /products/{id}/variants/{variantId}/images:
+    post:
+      consumes:
+      - multipart/form-data
+      description: upload a product variant image with the input payload
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Product Variant ID
+        in: path
+        name: variantId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ApiResponse-repository_ProductVariant'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+      summary: Upload a product variant image
       tags:
       - products
   /products/{productId}:
@@ -3667,22 +4298,22 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/api.ApiResponse-string'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Remove a product by ID
       tags:
       - products
     get:
       consumes:
       - application/json
-      description: get a product detail by ID
+      description: get a display product by ID
       parameters:
       - description: Product ID
         in: path
@@ -3695,16 +4326,16 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/api.ApiResponse-api_ManageProductDetailResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
-      summary: Get a product detail by ID
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+      summary: Get a display product by ID
       tags:
       - products
     put:
@@ -3717,27 +4348,27 @@ paths:
         name: productId
         required: true
         type: integer
-      - description: Product input
+      - description: Product update input
         in: body
         name: input
         required: true
         schema:
-          $ref: '#/definitions/repository.UpdateProductTxParams'
+          $ref: '#/definitions/api.UpdateProductReq'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
+            $ref: '#/definitions/api.ApiResponse-api_ManageProductDetailResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_ProductListModel'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Update a product by ID
       tags:
       - products
@@ -3781,15 +4412,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       security:
       - BearerAuth: []
       summary: Post a rating
@@ -3819,19 +4450,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/api.ApiResponse-string'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       security:
       - BearerAuth: []
       summary: Post a helpful rating
@@ -3860,19 +4491,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/api.ApiResponse-string'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       security:
       - BearerAuth: []
       summary: Post a reply to a rating
@@ -3899,19 +4530,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       security:
       - BearerAuth: []
       summary: Get order ratings
@@ -3948,15 +4579,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Get product ratings
       tags:
       - ratings
@@ -3981,15 +4612,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/api.ApiResponse-array_api_CategoryResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Get a list of brands for the shop
       tags:
       - Brands
@@ -4011,15 +4642,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/api.ApiResponse-array_api_CategoryResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Get a list of brands for the shop
       tags:
       - Brands
@@ -4041,15 +4672,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_UserResponse'
+            $ref: '#/definitions/api.ApiResponse-api_UserDetail'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_UserResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_UserResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Create a new user
       tags:
       - users
@@ -4075,19 +4706,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Update user info
       tags:
       - users
-  /users/loginHandler:
+  /users/LoginHandler:
     post:
       consumes:
       - application/json
@@ -4109,11 +4740,11 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_LoginResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_LoginResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Login to the system
       tags:
       - users
@@ -4128,15 +4759,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_UserResponse'
+            $ref: '#/definitions/api.ApiResponse-api_UserDetail'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Get user info
       tags:
       - users
@@ -4155,11 +4786,11 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_RefreshTokenResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_RefreshTokenResponse'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Refresh token
       tags:
       - users
@@ -4184,24 +4815,22 @@ paths:
       responses:
         "200":
           description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       security:
       - BearerAuth: []
       summary: Verify email
@@ -4216,20 +4845,18 @@ paths:
       responses:
         "204":
           description: No Content
-          schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-gin_H'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       security:
       - BearerAuth: []
       summary: Send verify email
@@ -4243,18 +4870,16 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+        "204":
+          description: No Content
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ApiResponse-bool'
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Stripe webhook
       tags:
       - webhook

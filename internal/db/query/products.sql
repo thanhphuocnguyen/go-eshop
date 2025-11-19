@@ -21,18 +21,13 @@ WHERE product_variants.id = $1 AND product_variants.product_id = $2 AND product_
 GROUP BY product_variants.id, attribute_values.id;
 
 -- name: GetProductDetail :one
-SELECT
-    p.*,
-    c.id AS category_id, c.name AS category_name,
-    cl.id AS collection_id, cl.name AS collection_name,
-    b.id AS brand_id, b.name AS brand_name
+SELECT p.*, c.id AS category_id, c.name AS category_name, cl.id AS collection_id, cl.name AS collection_name, b.id AS brand_id, b.name AS brand_name
 FROM products p
 LEFT JOIN categories as c ON p.category_id = c.id
 LEFT JOIN brands AS b ON p.brand_id = b.id
 LEFT JOIN collections as cl ON p.collection_id = cl.id
 WHERE (p.id = $1 OR p.slug = $2) AND p.is_active = COALESCE(sqlc.narg('is_active'), TRUE)
-GROUP BY p.id, c.id, cl.id, b.id
-LIMIT 1;
+GROUP BY p.id, c.id, cl.id, b.id LIMIT 1;
 
 -- name: GetProductVariantList :many
 SELECT * FROM product_variants WHERE product_id = $1 AND is_active = COALESCE(sqlc.narg('is_active'), is_active) ORDER BY id, created_at DESC;
@@ -43,14 +38,10 @@ FROM products p
 LEFT JOIN categories c ON c.id = p.category_id
 LEFT JOIN collections cl ON p.collection_id = cl.id
 LEFT JOIN brands br ON p.brand_id = br.id
-WHERE cl.id = $1
-GROUP BY c.id, br.id
-ORDER BY c.id;
+WHERE cl.id = $1 GROUP BY c.id, br.id ORDER BY c.id;
 
 -- name: GetAdminProducts :many
-SELECT
-    p.*
-FROM products as p
+SELECT p.* FROM products as p
 WHERE
     p.is_active = COALESCE(sqlc.narg('is_active'), p.is_active) 
     AND (p.name ILIKE COALESCE(sqlc.narg('search'), p.name) OR p.base_sku ILIKE COALESCE(sqlc.narg('search'), p.base_sku) OR p.description ILIKE COALESCE(sqlc.narg('search'), p.description))
@@ -58,23 +49,13 @@ WHERE
     AND (p.collection_id IS NULL OR p.collection_id = COALESCE(sqlc.narg('collection_id'), p.collection_id))
     AND p.brand_id = COALESCE(sqlc.narg('brand_id'), p.brand_id)
     AND p.slug ILIKE COALESCE(sqlc.narg('slug'), p.slug)
-GROUP BY
-    p.id
-ORDER BY
-    @orderBy::text
-LIMIT $1 OFFSET $2;
+GROUP BY p.id ORDER BY @orderBy::text LIMIT $1 OFFSET $2;
 
 -- name: CountProducts :one
-SELECT
-    COUNT(*)
-FROM
-    products
+SELECT COUNT(*) FROM products
 WHERE
-    is_active = COALESCE(sqlc.narg('is_active'), is_active)
-    AND name ILIKE COALESCE(sqlc.narg('name'), name)
-    AND category_id = COALESCE(sqlc.narg('category_id'), category_id)
-    AND collection_id = COALESCE(sqlc.narg('collection_id'), collection_id)
-    AND brand_id = COALESCE(sqlc.narg('brand_id'), brand_id);
+    is_active = COALESCE(sqlc.narg('is_active'), is_active) AND name ILIKE COALESCE(sqlc.narg('name'), name)
+    AND category_id = COALESCE(sqlc.narg('category_id'), category_id) AND collection_id = COALESCE(sqlc.narg('collection_id'), collection_id) AND brand_id = COALESCE(sqlc.narg('brand_id'), brand_id);
 
 -- name: UpdateProduct :one
 UPDATE
@@ -93,9 +74,7 @@ SET
     image_url = coalesce(sqlc.narg('image_url'), image_url),
     image_id = coalesce(sqlc.narg('image_id'), image_id),
     updated_at = NOW()
-WHERE
-    id = sqlc.arg('id')
-RETURNING *;
+WHERE id = sqlc.arg('id') RETURNING *;
 
 -- name: DeleteProduct :exec
 DELETE FROM products WHERE id = $1;

@@ -139,7 +139,7 @@ func (sv *Server) GetCurrentUserHandler(c *gin.Context) {
 // @Produce  json
 // @Param limit query int false "Limit"
 // @Param offset query int false "Offset"
-// @Success 200 {object} ApiResponse[[]UserResponse]
+// @Success 200 {object} ApiResponse[[]UserDetail]
 // @Failure 500 {object} ErrorResp
 // @Failure 400 {object} ErrorResp
 // @Failure 401 {object} ErrorResp
@@ -225,7 +225,7 @@ func (sv *Server) GetUserHandler(c *gin.Context) {
 // @Tags users
 // @Accept  json
 // @Produce  json
-// @Success 204 {object}
+// @Success 204 {object} nil
 // @Failure 400 {object} ErrorResp
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
@@ -272,7 +272,7 @@ func (sv *Server) SendVerifyEmailHandler(c *gin.Context) {
 // @Produce  json
 // @Param id query int true "ID"
 // @Param verify_code query string true "Verify code"
-// @Success 200 {object} html
+// @Success 200 {object} nil
 // @Failure 400 {object} ErrorResp
 // @Failure 401 {object} ErrorResp
 // @Failure 404 {object} ErrorResp

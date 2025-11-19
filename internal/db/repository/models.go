@@ -276,9 +276,6 @@ type Product struct {
 	BaseSku          string         `json:"baseSku"`
 	Slug             string         `json:"slug"`
 	IsActive         *bool          `json:"isActive"`
-	CategoryID       pgtype.UUID    `json:"categoryId"`
-	CollectionID     pgtype.UUID    `json:"collectionId"`
-	BrandID          pgtype.UUID    `json:"brandId"`
 	ImageUrl         *string        `json:"imageUrl"`
 	ImageID          *string        `json:"imageId"`
 	AvgRating        pgtype.Numeric `json:"avgRating"`
@@ -290,6 +287,9 @@ type Product struct {
 	FiveStarCount    int32          `json:"fiveStarCount"`
 	CreatedAt        time.Time      `json:"createdAt"`
 	UpdatedAt        time.Time      `json:"updatedAt"`
+	CategoryID       pgtype.UUID    `json:"categoryId"`
+	CollectionID     pgtype.UUID    `json:"collectionId"`
+	BrandID          pgtype.UUID    `json:"brandId"`
 }
 
 type ProductAttribute struct {

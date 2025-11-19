@@ -32,11 +32,14 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 			productGroup := productsGroup.Group(":id")
 			{
 				productGroup.POST("images", sv.UploadProductImageHandler)
-				productGroup.POST("variants", sv.AddProductVariantHandler)
-				productGroup.GET("variants", sv.GetVariantsHandler)
-				productGroup.GET("variants/:variantId", sv.GetVariantHandler)
-				productGroup.PUT("variants/:variantId", sv.UpdateProductVariantHandler)
-				productGroup.DELETE("variants/:variantId", sv.DeleteProductVariantHandler)
+
+				variantGroup := productGroup.Group("variants")
+				variantGroup.POST("", sv.AddVariantHandler)
+				variantGroup.GET("", sv.GetVariantsHandler)
+				variantGroup.GET(":variantId", sv.GetVariantHandler)
+				variantGroup.PUT(":variantId", sv.UpdateVariantHandler)
+				variantGroup.POST(":variantId/images", sv.UploadVariantImageHandler)
+				variantGroup.DELETE(":variantId", sv.DeleteVariantHandler)
 			}
 		}
 
@@ -68,7 +71,7 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 
 		categories := admin.Group("categories")
 		{
-			categories.GET("", sv.getAdminCategoriesHandler)
+			categories.GET("", sv.GetAdminCategoriesHandler)
 			categories.GET(":id", sv.getCategoryByID)
 			categories.POST("", sv.createCategoryHandler)
 			categories.PUT(":id", sv.updateCategoryHandler)
@@ -139,7 +142,7 @@ func (sv *Server) setupUserRoutes(rg *gin.RouterGroup) {
 			userAddresses.PATCH(":id/default", sv.setDefaultAddressHandler)
 			userAddresses.GET("", sv.getAddressesHandlers)
 			userAddresses.PATCH(":id", sv.updateAddressHandlers)
-			userAddresses.DELETE(":id", sv.removeAddressHandlers)
+			userAddresses.DELETE(":id", sv.RemoveAddressHandlers)
 		}
 	}
 }
@@ -148,7 +151,7 @@ func (sv *Server) setupUserRoutes(rg *gin.RouterGroup) {
 func (sv *Server) setupProductRoutes(rg *gin.RouterGroup) {
 	products := rg.Group("products")
 	{
-		products.GET("", sv.GetManageProductsHandler)
+		products.GET("", sv.GetProductsHandler)
 		products.GET(":id", sv.GetProductByIdHandler)
 		products.GET(":id/ratings", sv.getRatingsByProductHandler)
 	}
@@ -161,8 +164,8 @@ func (sv *Server) setupImageRoutes(rg *gin.RouterGroup) {
 		images.DELETE(
 			"remove-external/:public_id",
 			authorizeMiddleware(repository.UserRoleCodeAdmin),
-			sv.removeImageByPublicIDHandler)
-		images.GET("", sv.getProductImagesHandler)
+			sv.RemoveImageByPublicIDHandler)
+		images.GET("", sv.GetProductImagesHandler)
 	}
 }
 

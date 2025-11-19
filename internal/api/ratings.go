@@ -400,7 +400,7 @@ func (s *Server) getOrderRatingsHandler(c *gin.Context) {
 // @Produce json
 // @Param id path string true "Rating ID"
 // @Security BearerAuth
-// @Success 204 {object}
+// @Success 204 {object} nil
 // @Failure 400 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
@@ -451,7 +451,7 @@ func (sv *Server) deleteRatingHandler(c *gin.Context) {
 // @Produce json
 // @Param id path string true "Rating ID"
 // @Security BearerAuth
-// @Success 204 {object}
+// @Success 204 {object} nil
 // @Failure 400 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
@@ -509,7 +509,7 @@ func (sv *Server) approveRatingHandler(c *gin.Context) {
 // @Produce json
 // @Param id path string true "Rating ID"
 // @Security BearerAuth
-// @Success 204 {object}
+// @Success 204 {object} nil
 // @Failure 400 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp

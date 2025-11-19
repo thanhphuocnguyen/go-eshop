@@ -172,10 +172,10 @@ func (sv *Server) createCategoryHandler(c *gin.Context) {
 	c.JSON(http.StatusCreated, createDataResp(c, resp, nil, nil))
 }
 
-// getAdminCategoriesHandler retrieves a list of Categories.
+// GetAdminCategoriesHandler retrieves a list of Categories.
 // @Summary Get a list of Categories
 // @Description Get a list of Categories
-// @ID get-Categories
+// @ID get-admin-Categories
 // @Accept json
 // @Tags Categories
 // @Produce json
@@ -185,7 +185,7 @@ func (sv *Server) createCategoryHandler(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/categories [get]
-func (sv *Server) getAdminCategoriesHandler(c *gin.Context) {
+func (sv *Server) GetAdminCategoriesHandler(c *gin.Context) {
 	var query PaginationQueryParams
 	if err := c.ShouldBindQuery(&query); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
@@ -367,7 +367,7 @@ func (sv *Server) updateCategoryHandler(c *gin.Context) {
 // @Tags Admin
 // @Produce json
 // @Param id path int true "Category ID"
-// @Success 204 {object}
+// @Success 204 {object} nil
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/categories/{id} [delete]

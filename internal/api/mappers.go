@@ -59,8 +59,8 @@ func mapToProductResponse(productRows repository.GetProductDetailRow) ManageProd
 		CreatedAt: productRows.CreatedAt.String(),
 
 		IsActive: *productRows.IsActive,
-		ImageUrl: *productRows.ImageUrl,
-		ImageId:  *productRows.ImageID,
+		ImageUrl: productRows.ImageUrl,
+		ImageId:  productRows.ImageID,
 	}
 
 	if productRows.BrandID.Valid {

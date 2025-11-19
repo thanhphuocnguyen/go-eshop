@@ -15,7 +15,7 @@ import (
 // @Tags attributes
 // @Accept json
 // @Produce json
-// @Param params body CreateAttributeRequest true "Attribute name"
+// @Param params body AttributeValuesReq true "Attribute name"
 // @Success 201 {object} ApiResponse[AttributeRespModel]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
@@ -91,7 +91,7 @@ func (sv *Server) GetAttributeByIDHandler(c *gin.Context) {
 // @Tags attributes
 // @Accept json
 // @Produce json
-// @Success 200 {object} ApiResponse[[]AttributeResponse]
+// @Success 200 {object} ApiResponse[[]AttributeRespModel]
 // @Failure 500 {object} ErrorResp
 // @Router /attributes [get]
 func (sv *Server) GetAttributesHandler(c *gin.Context) {
@@ -100,15 +100,6 @@ func (sv *Server) GetAttributesHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
-	// var cached *[]AttributeResponse
-	// err := sv.cachesrv.Get(c, fmt.Sprintf("attributes-%s", queries.IDs), &cached)
-	// if err != nil && !errors.Is(err, cachesrv.ErrCacheMiss) {
-	// 	log.Error().Err(err).Msg("failed to get attributes from cache")
-	// }
-	// if cached != nil {
-	// 	c.JSON(http.StatusOK, createSuccessResponse(c, &cached,  nil, nil))
-	// 	return
-	// }
 
 	attributeRows, err := sv.repo.GetAttributes(c, queries.IDs)
 	if err != nil {
@@ -140,9 +131,6 @@ func (sv *Server) GetAttributesHandler(c *gin.Context) {
 			})
 		}
 	}
-	// if err := sv.cachesrv.Set(c, fmt.Sprintf("attributes-%s", queries.IDs), attributeResp, nil); err != nil {
-	// 	log.Error().Err(err).Msg("failed to cache attributes")
-	// }
 
 	c.JSON(http.StatusOK, createDataResp(c, attributeResp, nil, nil))
 }
@@ -153,7 +141,7 @@ func (sv *Server) GetAttributesHandler(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path string true "Product ID"
-// @Success 200 {object} ApiResponse[[]AttributeResponse]
+// @Success 200 {object} ApiResponse[[]AttributeRespModel]
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /attributes/product/{id} [get]
@@ -211,7 +199,7 @@ func (sv *Server) GetAttributeValuesForProductHandler(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Attribute ID"
-// @Param params body UpdateAttributeRequest true "Attribute name"
+// @Param params body AttributeRequest true "Attribute name"
 // @Success 200 {object} ApiResponse[repository.Attribute]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
@@ -253,7 +241,7 @@ func (sv *Server) UpdateAttributeHandler(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Attribute ID"
-// @Param params body AddAttributeValueRequest true "Attribute value"
+// @Param params body AttributeValuesReq true "Attribute value"
 // @Success 200 {object} ApiResponse[bool]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
@@ -294,7 +282,7 @@ func (sv *Server) AddAttributeValueHandler(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Attribute ID"
-// @Param params body UpdateAttributeValueRequest true "Attribute value"
+// @Param params body AttributeValuesReq true "Attribute value"
 // @Success 200 {object} ApiResponse[bool]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
@@ -340,7 +328,6 @@ func (sv *Server) UpdateAttrValueHandler(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Attribute ID"
-// @Param params body RemoveAttributeValueRequest true "Attribute values"
 // @Success 204 {object} nil
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp

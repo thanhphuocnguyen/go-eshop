@@ -620,7 +620,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 // @Tags carts
 // @Accept json
 // @Produce json
-// @Success 204 {object}
+// @Success 204 {object} nil
 // @Failure 400 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
 // @Failure 403 {object} ErrorResp

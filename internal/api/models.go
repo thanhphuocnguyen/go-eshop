@@ -280,8 +280,8 @@ type ManageProductDetailResp struct {
 	BaseSku          string  `json:"sku"`
 	IsActive         bool    `json:"isActive"`
 	Slug             string  `json:"slug"`
-	ImageUrl         string  `json:"imageUrl"`
-	ImageId          string  `json:"imageId,omitempty"`
+	ImageUrl         *string `json:"imageUrl,omitempty"`
+	ImageId          *string `json:"imageId,omitempty"`
 
 	RatingCount    int32 `json:"ratingCount"`
 	OneStarCount   int32 `json:"oneStarCount"`
@@ -590,10 +590,12 @@ type CategoryLinkedProduct struct {
 type VariantModel struct {
 	ID         string           `json:"id"`
 	Price      float64          `json:"price"`
-	StockQty   int32            `json:"stockQty"`
+	Stock      int32            `json:"stock"`
 	IsActive   bool             `json:"isActive"`
 	Weight     *float64         `json:"weight,omitempty"`
 	Sku        *string          `json:"sku,omitempty"`
+	ImageUrl   *string          `json:"imageUrl,omitempty"`
+	ImageID    *string          `json:"imageId,omitempty"`
 	Attributes []AttributeValue `json:"attributeValues,omitempty"`
 	CreatedAt  string           `json:"createdAt"`
 	UpdatedAt  string           `json:"updatedAt"`
@@ -688,6 +690,6 @@ type UpdateProdVariantReq struct {
 }
 
 type URIVariantParam struct {
-	ProductID string `uri:"productId" binding:"required,uuid"`
+	ProductID string `uri:"id" binding:"required,uuid"`
 	VariantID string `uri:"variantId" binding:"required,uuid"`
 }

@@ -379,7 +379,7 @@ func (sv *Server) UpdateCollectionHandler(c *gin.Context) {
 // @Tags Admin
 // @Produce json
 // @Param id path int true "Collection ID"
-// @Success 204 {object}
+// @Success 204 {object} nil
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/collections/{id} [delete]
