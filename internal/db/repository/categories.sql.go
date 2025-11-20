@@ -12,6 +12,20 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const addProductToCategory = `-- name: AddProductToCategory :exec
+INSERT INTO category_products (category_id, product_id) VALUES ($1, $2)
+`
+
+type AddProductToCategoryParams struct {
+	CategoryID uuid.UUID `json:"categoryId"`
+	ProductID  uuid.UUID `json:"productId"`
+}
+
+func (q *Queries) AddProductToCategory(ctx context.Context, arg AddProductToCategoryParams) error {
+	_, err := q.db.Exec(ctx, addProductToCategory, arg.CategoryID, arg.ProductID)
+	return err
+}
+
 const countCategories = `-- name: CountCategories :one
 SELECT count(*) FROM categories
 `

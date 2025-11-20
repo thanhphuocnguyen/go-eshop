@@ -13,6 +13,20 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const addProductToCollection = `-- name: AddProductToCollection :exec
+INSERT INTO collection_products (collection_id, product_id) VALUES ($1, $2)
+`
+
+type AddProductToCollectionParams struct {
+	CollectionID uuid.UUID `json:"collectionId"`
+	ProductID    uuid.UUID `json:"productId"`
+}
+
+func (q *Queries) AddProductToCollection(ctx context.Context, arg AddProductToCollectionParams) error {
+	_, err := q.db.Exec(ctx, addProductToCollection, arg.CollectionID, arg.ProductID)
+	return err
+}
+
 const countCollections = `-- name: CountCollections :one
 SELECT count(*) FROM collections
 `
@@ -159,13 +173,12 @@ SELECT
     c.id, c.name, c.image_url, c.image_id, c.description, c.slug, c.display_order, c.published, c.created_at, c.updated_at, 
     p.name as product_name, p.id, p.description,
     p.base_price as product_price, 
-    p.base_sku as product_sku, p.slug as product_slug,
-    pi.id as image_id, pi.image_url
+    p.base_sku as product_sku, p.slug as product_slug
 FROM collections AS c
-LEFT JOIN products AS p ON c.id = p.collection_id
-LEFT JOIN product_images AS pi ON p.id = pi.product_id
+LEFT JOIN collection_products AS cp ON c.id = cp.collection_id
+LEFT JOIN products AS p ON cp.product_id = p.id
 WHERE c.id = ANY($3::UUID[])
-GROUP BY c.id, p.id, pi.id, pi.image_url
+GROUP BY c.id, p.id
 LIMIT $1 OFFSET $2
 `
 
@@ -192,8 +205,6 @@ type GetCollectionsByIDsRow struct {
 	ProductPrice  pgtype.Numeric `json:"productPrice"`
 	ProductSku    *string        `json:"productSku"`
 	ProductSlug   *string        `json:"productSlug"`
-	ImageID_2     *int64         `json:"imageId2"`
-	ImageUrl_2    *string        `json:"imageUrl2"`
 }
 
 func (q *Queries) GetCollectionsByIDs(ctx context.Context, arg GetCollectionsByIDsParams) ([]GetCollectionsByIDsRow, error) {
@@ -222,8 +233,93 @@ func (q *Queries) GetCollectionsByIDs(ctx context.Context, arg GetCollectionsByI
 			&i.ProductPrice,
 			&i.ProductSku,
 			&i.ProductSlug,
-			&i.ImageID_2,
-			&i.ImageUrl_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getDisplayCollectionProducts = `-- name: GetDisplayCollectionProducts :many
+SELECT 
+    p.id, p.name, p.description, p.short_description, p.base_price, p.base_sku, p.slug, p.is_active, p.image_url, p.image_id, p.avg_rating, p.rating_count, p.one_star_count, p.two_star_count, p.three_star_count, p.four_star_count, p.five_star_count, p.created_at, p.updated_at, p.brand_id, COUNT(pv.id) AS variant_count, MIN(pv.price) AS price
+FROM collections AS c
+JOIN collection_products AS cp ON c.id = cp.collection_id
+JOIN products AS p ON cp.product_id = p.id
+LEFT JOIN product_variants AS pv ON pv.product_id = p.id
+WHERE c.id = $1 AND p.is_active = TRUE
+GROUP BY p.id
+ORDER BY p.created_at DESC
+LIMIT $2 OFFSET $3
+`
+
+type GetDisplayCollectionProductsParams struct {
+	ID     uuid.UUID `json:"id"`
+	Limit  int64     `json:"limit"`
+	Offset int64     `json:"offset"`
+}
+
+type GetDisplayCollectionProductsRow struct {
+	ID               uuid.UUID      `json:"id"`
+	Name             string         `json:"name"`
+	Description      string         `json:"description"`
+	ShortDescription *string        `json:"shortDescription"`
+	BasePrice        pgtype.Numeric `json:"basePrice"`
+	BaseSku          string         `json:"baseSku"`
+	Slug             string         `json:"slug"`
+	IsActive         *bool          `json:"isActive"`
+	ImageUrl         *string        `json:"imageUrl"`
+	ImageID          *string        `json:"imageId"`
+	AvgRating        pgtype.Numeric `json:"avgRating"`
+	RatingCount      int32          `json:"ratingCount"`
+	OneStarCount     int32          `json:"oneStarCount"`
+	TwoStarCount     int32          `json:"twoStarCount"`
+	ThreeStarCount   int32          `json:"threeStarCount"`
+	FourStarCount    int32          `json:"fourStarCount"`
+	FiveStarCount    int32          `json:"fiveStarCount"`
+	CreatedAt        time.Time      `json:"createdAt"`
+	UpdatedAt        time.Time      `json:"updatedAt"`
+	BrandID          pgtype.UUID    `json:"brandId"`
+	VariantCount     int64          `json:"variantCount"`
+	Price            pgtype.Numeric `json:"price"`
+}
+
+func (q *Queries) GetDisplayCollectionProducts(ctx context.Context, arg GetDisplayCollectionProductsParams) ([]GetDisplayCollectionProductsRow, error) {
+	rows, err := q.db.Query(ctx, getDisplayCollectionProducts, arg.ID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetDisplayCollectionProductsRow{}
+	for rows.Next() {
+		var i GetDisplayCollectionProductsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.ShortDescription,
+			&i.BasePrice,
+			&i.BaseSku,
+			&i.Slug,
+			&i.IsActive,
+			&i.ImageUrl,
+			&i.ImageID,
+			&i.AvgRating,
+			&i.RatingCount,
+			&i.OneStarCount,
+			&i.TwoStarCount,
+			&i.ThreeStarCount,
+			&i.FourStarCount,
+			&i.FiveStarCount,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.BrandID,
+			&i.VariantCount,
+			&i.Price,
 		); err != nil {
 			return nil, err
 		}

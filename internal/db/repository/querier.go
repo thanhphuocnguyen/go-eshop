@@ -14,6 +14,8 @@ import (
 type Querier interface {
 	AddBulkAttributes(ctx context.Context, name []string) (int64, error)
 	AddBulkProducts(ctx context.Context, arg []AddBulkProductsParams) (int64, error)
+	AddProductToCategory(ctx context.Context, arg AddProductToCategoryParams) error
+	AddProductToCollection(ctx context.Context, arg AddProductToCollectionParams) error
 	ArchiveProduct(ctx context.Context, arg ArchiveProductParams) error
 	ArchiveProductVariant(ctx context.Context, arg ArchiveProductVariantParams) error
 	CheckoutCart(ctx context.Context, arg CheckoutCartParams) error
@@ -90,7 +92,6 @@ type Querier interface {
 	DeleteUserDiscountsByDiscountID(ctx context.Context, discountID uuid.UUID) error
 	GetAddress(ctx context.Context, arg GetAddressParams) (UserAddress, error)
 	GetAddresses(ctx context.Context, userID uuid.UUID) ([]UserAddress, error)
-	GetAdminProducts(ctx context.Context, arg GetAdminProductsParams) ([]Product, error)
 	GetAttributeByID(ctx context.Context, id int32) (Attribute, error)
 	GetAttributeByName(ctx context.Context, name string) (Attribute, error)
 	GetAttributeValueByID(ctx context.Context, id int64) (AttributeValue, error)
@@ -126,7 +127,8 @@ type Querier interface {
 	GetDiscountUsages(ctx context.Context, id uuid.UUID) ([]GetDiscountUsagesRow, error)
 	GetDiscountUsers(ctx context.Context, arg GetDiscountUsersParams) ([]GetDiscountUsersRow, error)
 	GetDiscounts(ctx context.Context, arg GetDiscountsParams) ([]GetDiscountsRow, error)
-	GetFilterListForCollectionID(ctx context.Context, id uuid.UUID) ([]GetFilterListForCollectionIDRow, error)
+	GetDisplayCollectionProducts(ctx context.Context, arg GetDisplayCollectionProductsParams) ([]GetDisplayCollectionProductsRow, error)
+	GetDisplayProducts(ctx context.Context, arg GetDisplayProductsParams) ([]GetDisplayProductsRow, error)
 	GetImageByID(ctx context.Context, id int64) (ProductImage, error)
 	GetImageByImageID(ctx context.Context, imageID string) (ProductImage, error)
 	GetImagesByProductID(ctx context.Context, productID uuid.UUID) ([]ProductImage, error)
@@ -158,6 +160,7 @@ type Querier interface {
 	GetProductVariantAttributes(ctx context.Context, variantID uuid.UUID) ([]VariantAttributeValue, error)
 	GetProductVariantByID(ctx context.Context, arg GetProductVariantByIDParams) (ProductVariant, error)
 	GetProductVariantList(ctx context.Context, arg GetProductVariantListParams) ([]ProductVariant, error)
+	GetProducts(ctx context.Context, arg GetProductsParams) ([]Product, error)
 	GetRatingReplies(ctx context.Context, id uuid.UUID) (RatingReply, error)
 	GetRatingRepliesByRatingID(ctx context.Context, ratingID uuid.UUID) ([]GetRatingRepliesByRatingIDRow, error)
 	GetRatingRepliesByUserID(ctx context.Context, replyBy uuid.UUID) ([]GetRatingRepliesByUserIDRow, error)

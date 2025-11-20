@@ -118,6 +118,8 @@ DROP TABLE IF EXISTS featured_sections;
 DROP TABLE IF EXISTS variant_attribute_values;
 DROP TABLE IF EXISTS product_variants;
 DROP TABLE IF EXISTS product_images;
+DROP TABLE IF EXISTS category_products;
+DROP TABLE IF EXISTS collection_products;
 DROP TABLE IF EXISTS products;
 DROP TABLE IF EXISTS attribute_values;
 DROP TABLE IF EXISTS attributes;

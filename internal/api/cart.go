@@ -560,18 +560,19 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 						discountPrice += lineTotal - discountValue.Float64
 					}
 				}
-			} else if item.CategoryID.Valid {
-				catId, _ := uuid.FromBytes(item.CategoryID.Bytes[:])
-				if _, ok := discountCategoryIDs[catId]; ok {
-					if discount.DiscountType == string(repository.PercentageDiscount) {
-						discountPrice += lineTotal * (discountValue.Float64 / 100)
-					} else {
-						discountPrice += lineTotal - discountValue.Float64
-					}
-				} else {
-					log.Warn().Msgf("Category %s not found in discount categories", catId.String())
-				}
 			}
+			// else if item.CategoryID.Valid {
+			// 	catId, _ := uuid.FromBytes(item.CategoryID.Bytes[:])
+			// 	if _, ok := discountCategoryIDs[catId]; ok {
+			// 		if discount.DiscountType == string(repository.PercentageDiscount) {
+			// 			discountPrice += lineTotal * (discountValue.Float64 / 100)
+			// 		} else {
+			// 			discountPrice += lineTotal - discountValue.Float64
+			// 		}
+			// 	} else {
+			// 		log.Warn().Msgf("Category %s not found in discount categories", catId.String())
+			// 	}
+			// }
 		}
 
 	}
@@ -697,14 +698,14 @@ func mapToCartItemsResp(rows []repository.GetCartItemsRow) ([]CartItemResponse, 
 			}
 
 			// Populate CategoryID if available
-			if row.CategoryID.Valid {
-				categoryID := row.CategoryID.Bytes
-				categoryUUID, err := uuid.FromBytes(categoryID[:])
-				if err == nil {
-					categoryIDStr := categoryUUID.String()
-					cartItem.CategoryID = &categoryIDStr
-				}
-			}
+			// if row.CategoryID.Valid {
+			// 	categoryID := row.CategoryID.Bytes
+			// 	categoryUUID, err := uuid.FromBytes(categoryID[:])
+			// 	if err == nil {
+			// 		categoryIDStr := categoryUUID.String()
+			// 		cartItem.CategoryID = &categoryIDStr
+			// 	}
+			// }
 			cartItemsResp = append(cartItemsResp, cartItem)
 			totalPrice += cartItem.Price * float64(cartItem.Quantity)
 		} else {

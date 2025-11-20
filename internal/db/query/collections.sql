@@ -12,17 +12,28 @@ SELECT
     c.*, 
     p.name as product_name, p.id, p.description,
     p.base_price as product_price, 
-    p.base_sku as product_sku, p.slug as product_slug,
-    pi.id as image_id, pi.image_url
+    p.base_sku as product_sku, p.slug as product_slug
 FROM collections AS c
-LEFT JOIN products AS p ON c.id = p.collection_id
-LEFT JOIN product_images AS pi ON p.id = pi.product_id
+LEFT JOIN collection_products AS cp ON c.id = cp.collection_id
+LEFT JOIN products AS p ON cp.product_id = p.id
 WHERE c.id = ANY(sqlc.narg('ids')::UUID[])
-GROUP BY c.id, p.id, pi.id, pi.image_url
+GROUP BY c.id, p.id
 LIMIT $1 OFFSET $2;
 
 -- name: GetCollections :many
 SELECT * FROM collections WHERE  published = COALESCE(sqlc.narg('published'), published) ORDER BY display_order LIMIT $1 OFFSET $2;
+
+-- name: GetDisplayCollectionProducts :many
+SELECT 
+    p.*, COUNT(pv.id) AS variant_count, MIN(pv.price) AS price
+FROM collections AS c
+JOIN collection_products AS cp ON c.id = cp.collection_id
+JOIN products AS p ON cp.product_id = p.id
+LEFT JOIN product_variants AS pv ON pv.product_id = p.id
+WHERE c.id = $1 AND p.is_active = TRUE
+GROUP BY p.id
+ORDER BY p.created_at DESC
+LIMIT $2 OFFSET $3;
 
 -- name: UpdateCollectionWith :one
 UPDATE collections
@@ -44,3 +55,6 @@ SELECT count(*) FROM collections;
 
 -- name: SeedCollections :copyfrom
 INSERT INTO collections (name, description, image_url) VALUES ($1, $2, $3);
+
+-- name: AddProductToCollection :exec
+INSERT INTO collection_products (collection_id, product_id) VALUES ($1, $2);

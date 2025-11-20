@@ -36,7 +36,7 @@ SELECT * FROM cart_items WHERE variant_id = $1 AND cart_id = $2;
 SELECT
     sqlc.embed(ci), 
     pv.id AS variant_id, pv.price, pv.stock, pv.sku, pv.stock as stock_qty,
-    p.id AS product_id, p.name AS product_name, p.category_id,
+    p.id AS product_id, p.name AS product_name,
     ci.id as cart_item_id, ci.quantity,
     av.id as attr_val_id, av.value as attr_value, a.name AS attr_name,
     pi.id AS image_id, pi.image_url AS image_url
@@ -54,7 +54,7 @@ ORDER BY ci.added_at, ci.id, pv.id DESC;
 SELECT 
     sqlc.embed(ci), 
     pv.id AS variant_id, pv.price, pv.stock, pv.sku, pv.stock as stock_qty,
-    p.name AS product_name, p.id AS product_id, p.category_id,
+    p.name AS product_name, p.id AS product_id,
     av.value as attr_value, a.name AS attr_name
 FROM cart_items AS ci
 JOIN product_variants AS pv ON pv.id = ci.variant_id
@@ -75,8 +75,9 @@ SELECT d.id, d.code, d.description, d.discount_type, d.discount_value, d.starts_
 FROM cart_items ci
 JOIN product_variants pv ON ci.variant_id = pv.id
 JOIN products p ON pv.product_id = p.id
+JOIN category_products cp ON p.id = cp.product_id
 LEFT JOIN discount_products dp ON p.id = dp.product_id
-LEFT JOIN discount_categories dc ON p.category_id = dc.category_id
+LEFT JOIN discount_categories dc ON cp.category_id = dc.category_id
 LEFT JOIN discounts d ON dp.discount_id = d.id OR dc.discount_id = d.id
 WHERE ci.cart_id = $1
 AND d.deleted_at IS NULL

@@ -354,10 +354,10 @@ type CollectionsQueryParams struct {
 }
 
 type CollectionDetailResponse struct {
-	Collection CategoryResponse              `json:"collection"`
-	Categories []FiltersModel                `json:"categories"`
-	Brands     []FiltersModel                `json:"brands"`
-	Attributes map[string][]FilterIntIDModel `json:"attributes"`
+	CategoryResponse `json:",inline"`
+	Categories       []FiltersModel                `json:"categories"`
+	Brands           []FiltersModel                `json:"brands"`
+	Attributes       map[string][]FilterIntIDModel `json:"attributes"`
 }
 
 type RatingsQueryParams struct {
@@ -555,7 +555,7 @@ type ManageProductListModel struct {
 	BasePrice    float64  `json:"basePrice,omitzero"`
 	Slug         string   `json:"slug,omitempty"`
 	Sku          string   `json:"sku"`
-	ImgUrl       *string  `json:"imageUrl,omitempty"`
+	ImageUrl     *string  `json:"imageUrl,omitempty"`
 	AvgRating    *float64 `json:"avgRating,omitempty"`
 	ReviewCount  *int32   `json:"reviewCount,omitempty"`
 	ImgID        *string  `json:"imageId,omitempty"`
@@ -584,6 +584,8 @@ type CategoryLinkedProduct struct {
 	ID           string  `json:"id"`
 	Name         string  `json:"name"`
 	VariantCount int32   `json:"variantCount"`
+	Price        float64 `json:"price"`
+	Sku          string  `json:"sku"`
 	ImageUrl     *string `json:"imageUrl,omitempty"`
 }
 

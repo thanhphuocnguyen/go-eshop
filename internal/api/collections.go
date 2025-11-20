@@ -46,100 +46,41 @@ func (sv *Server) GetCollectionBySlugHandler(c *gin.Context) {
 		return
 	}
 
-	filters, err := sv.repo.GetFilterListForCollectionID(c, collection.ID)
+	rows, err := sv.repo.GetDisplayCollectionProducts(c, repository.GetDisplayCollectionProductsParams{
+		ID:     collection.ID,
+		Limit:  1000,
+		Offset: 0,
+	})
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode,
 			err))
 		return
 	}
-	collectionResp := CollectionDetailResponse{
-		Collection: CategoryResponse{
-			ID:          collection.ID.String(),
-			Name:        collection.Name,
-			Description: collection.Description,
-			Slug:        collection.Slug,
-			ImageUrl:    collection.ImageUrl,
-			CreatedAt:   collection.CreatedAt.String(),
-			Published:   collection.Published,
-			UpdatedAt:   collection.UpdatedAt.String(),
-		},
-		Categories: make([]FiltersModel, 0),
-		Brands:     make([]FiltersModel, 0),
-		Attributes: make(map[string][]FilterIntIDModel),
+	collectionResp := CategoryResponse{
+		ID:          collection.ID.String(),
+		Name:        collection.Name,
+		Description: collection.Description,
+		Slug:        collection.Slug,
+		ImageUrl:    collection.ImageUrl,
+		CreatedAt:   collection.CreatedAt.String(),
+		Published:   collection.Published,
+		UpdatedAt:   collection.UpdatedAt.String(),
+		Products:    make([]CategoryLinkedProduct, len(rows)),
 	}
-	listAttrs := make([]int32, 0)
-	for _, row := range filters {
-		if row.CategoryID.Valid {
-			idx := -1
-			id, _ := uuid.FromBytes(row.CategoryID.Bytes[:])
-			for i, c := range collectionResp.Categories {
-				if c.ID == id.String() {
-					idx = i
-					break
-				}
-			}
-			if idx == -1 {
-				collectionResp.Categories = append(collectionResp.Categories, FiltersModel{
-					ID:   id.String(),
-					Name: *row.CategoryName,
-				})
-			}
-		}
-		if row.BrandID.Valid {
-			id, _ := uuid.FromBytes(row.BrandID.Bytes[:])
-			idx := -1
-			for i, b := range collectionResp.Brands {
-				if b.ID == id.String() {
-					idx = i
-					break
-				}
-			}
-			if idx == -1 {
-				collectionResp.Brands = append(collectionResp.Brands, FiltersModel{
-					ID:   id.String(),
-					Name: *row.BrandName,
-				})
-			}
-		}
-
-	}
-
-	attributes, err := sv.repo.GetAttributeWithValuesByIDs(c, listAttrs)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode,
-			err))
-		return
-	}
-
-	for _, attr := range attributes {
-		if attr.AttributeValueID == nil {
-			continue
-		}
-
-		if _, ok := collectionResp.Attributes[attr.AttributeName]; !ok {
-			collectionResp.Attributes[attr.AttributeName] = []FilterIntIDModel{{
-				ID:   *attr.AttributeValueID,
-				Name: *attr.AttributeValue,
-			}}
-
-		}
-		idx := -1
-		for i, a := range collectionResp.Attributes[attr.AttributeName] {
-			if a.ID == *attr.AttributeValueID {
-				idx = i
-				break
-			}
-		}
-		if idx == -1 {
-			collectionResp.Attributes[attr.AttributeName] = append(collectionResp.Attributes[attr.AttributeName], FilterIntIDModel{
-				ID:   *attr.AttributeValueID,
-				Name: *attr.AttributeValue,
-			})
+	for i, row := range rows {
+		price, _ := row.Price.Float64Value()
+		collectionResp.Products[i] = CategoryLinkedProduct{
+			ID:           row.ID.String(),
+			Name:         row.Name,
+			VariantCount: int32(row.VariantCount),
+			Price:        price.Float64,
+			Sku:          row.BaseSku,
+			ImageUrl:     row.ImageUrl,
 		}
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, collectionResp,
-		nil, nil))
+	c.JSON(http.StatusOK, createDataResp(c, collectionResp, nil, nil))
 }
 
 // --- Admin API ---

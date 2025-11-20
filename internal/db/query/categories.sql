@@ -33,3 +33,6 @@ SELECT count(*) FROM categories;
 
 -- name: SeedCategories :copyfrom
 INSERT INTO categories (name, slug, description, image_url, image_id) VALUES ($1, $2, $3, $4, $5);
+
+-- name: AddProductToCategory :exec
+INSERT INTO category_products (category_id, product_id) VALUES ($1, $2);

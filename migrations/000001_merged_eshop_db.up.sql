@@ -333,11 +333,20 @@ CREATE TABLE
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-        category_id UUID REFERENCES categories (id) ON DELETE SET NULL,
-        collection_id UUID REFERENCES collections (id) ON DELETE SET NULL,
         brand_id UUID REFERENCES brands (id) ON DELETE SET NULL
     );
 
+CREATE TABLE category_products (
+    category_id UUID NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+    product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    PRIMARY KEY (category_id, product_id)
+);
+
+CREATE TABLE collection_products (
+    collection_id UUID NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
+    product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    PRIMARY KEY (collection_id, product_id)
+);
 -- Create product_attributes table
 CREATE TABLE
     product_attributes (

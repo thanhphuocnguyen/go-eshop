@@ -1,5 +1,5 @@
 -- name: CreateProduct :one
-INSERT INTO products (name, description, short_description, base_price, base_sku, slug, brand_id, collection_id, category_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *;
+INSERT INTO products (name, description, short_description, base_price, base_sku, slug, brand_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
 
 -- name: CreateBulkProductVariants :copyfrom
 INSERT INTO product_variants (product_id, sku, price, stock, weight) VALUES ($1, $2, $3, $4, $5);
@@ -23,39 +23,48 @@ GROUP BY product_variants.id, attribute_values.id;
 -- name: GetProductDetail :one
 SELECT p.*, c.id AS category_id, c.name AS category_name, cl.id AS collection_id, cl.name AS collection_name, b.id AS brand_id, b.name AS brand_name
 FROM products p
-LEFT JOIN categories as c ON p.category_id = c.id
+LEFT JOIN category_products AS cp ON p.id = cp.product_id
+LEFT JOIN categories as c ON cp.category_id = c.id
 LEFT JOIN brands AS b ON p.brand_id = b.id
-LEFT JOIN collections as cl ON p.collection_id = cl.id
+LEFT JOIN collection_products AS colp ON p.id = colp.product_id
+LEFT JOIN collections as cl ON colp.collection_id = cl.id
 WHERE (p.id = $1 OR p.slug = $2) AND p.is_active = COALESCE(sqlc.narg('is_active'), TRUE)
 GROUP BY p.id, c.id, cl.id, b.id LIMIT 1;
 
 -- name: GetProductVariantList :many
 SELECT * FROM product_variants WHERE product_id = $1 AND is_active = COALESCE(sqlc.narg('is_active'), is_active) ORDER BY id, created_at DESC;
 
--- name: GetFilterListForCollectionID :many
-SELECT c.name as category_name, c.id as category_id, br.id as brand_id, br.name AS brand_name
-FROM products p
-LEFT JOIN categories c ON c.id = p.category_id
-LEFT JOIN collections cl ON p.collection_id = cl.id
-LEFT JOIN brands br ON p.brand_id = br.id
-WHERE cl.id = $1 GROUP BY c.id, br.id ORDER BY c.id;
-
--- name: GetAdminProducts :many
+-- name: GetProducts :many
 SELECT p.* FROM products as p
 WHERE
     p.is_active = COALESCE(sqlc.narg('is_active'), p.is_active) 
-    AND (p.name ILIKE COALESCE(sqlc.narg('search'), p.name) OR p.base_sku ILIKE COALESCE(sqlc.narg('search'), p.base_sku) OR p.description ILIKE COALESCE(sqlc.narg('search'), p.description))
-    AND (ARRAY_LENGTH(sqlc.arg('category_ids')::uuid[], 1) IS NULL OR p.category_id = ANY(sqlc.arg('category_ids')::uuid[]))
-    AND (p.collection_id IS NULL OR p.collection_id = COALESCE(sqlc.narg('collection_id'), p.collection_id))
+    AND p.name ILIKE COALESCE(sqlc.narg('search'), p.name)
     AND p.brand_id = COALESCE(sqlc.narg('brand_id'), p.brand_id)
     AND p.slug ILIKE COALESCE(sqlc.narg('slug'), p.slug)
+GROUP BY p.id ORDER BY @orderBy::text LIMIT $1 OFFSET $2;
+
+-- name: GetDisplayProducts :many
+SELECT p.*, MIN(pv.price) as min_price, COUNT(pv.id) as variant_count FROM products as p
+LEFT JOIN collection_products cp ON p.id = cp.product_id
+LEFT JOIN collections c ON cp.collection_id = c.id
+LEFT JOIN category_products catp ON p.id = catp.product_id
+LEFT JOIN categories cat ON catp.category_id = cat.id
+LEFT JOIN brands b ON p.brand_id = b.id
+LEFT JOIN product_variants pv ON pv.product_id = p.id
+WHERE
+    p.is_active = COALESCE(sqlc.narg('is_active'), p.is_active) 
+    AND p.name ILIKE COALESCE(sqlc.narg('search'), p.name)
+    AND p.brand_id = ANY(COALESCE(sqlc.narg('brand_ids')::uuid[], '{}')::uuid[])
+    AND c.id = ANY(COALESCE(sqlc.narg('collection_ids')::uuid[], '{}')::uuid[])
+    AND cat.id = ANY(COALESCE(sqlc.narg('category_ids')::uuid[], '{}')::uuid[])
+    AND pv.stock > 0
 GROUP BY p.id ORDER BY @orderBy::text LIMIT $1 OFFSET $2;
 
 -- name: CountProducts :one
 SELECT COUNT(*) FROM products
 WHERE
     is_active = COALESCE(sqlc.narg('is_active'), is_active) AND name ILIKE COALESCE(sqlc.narg('name'), name)
-    AND category_id = COALESCE(sqlc.narg('category_id'), category_id) AND collection_id = COALESCE(sqlc.narg('collection_id'), collection_id) AND brand_id = COALESCE(sqlc.narg('brand_id'), brand_id);
+    AND brand_id = COALESCE(sqlc.narg('brand_id'), brand_id);
 
 -- name: UpdateProduct :one
 UPDATE
@@ -65,8 +74,6 @@ SET
     description = coalesce(sqlc.narg('description'), description),
     short_description = coalesce(sqlc.narg('short_description'), short_description),
     brand_id = coalesce(sqlc.narg('brand_id'), brand_id),
-    collection_id = coalesce(sqlc.narg('collection_id'), collection_id),
-    category_id = coalesce(sqlc.narg('category_id'), category_id),
     slug = coalesce(sqlc.narg('slug'), slug),
     base_price = coalesce(sqlc.narg('base_price'), base_price),
     base_sku = coalesce(sqlc.narg('base_sku'), base_sku),
@@ -107,7 +114,13 @@ DELETE FROM product_variants WHERE id = $1 AND product_id = $2;
 UPDATE product_variants SET is_active = $1, updated_at = NOW() WHERE id = $2;
 
 -- name: AddBulkProducts :copyfrom
-INSERT INTO products (category_id, collection_id, brand_id, name, description) VALUES ($1, $2, $3, $4, $5);
+INSERT INTO products (brand_id, name, description) VALUES ($1, $2, $3);
 
 -- name: UpdateProductStock :one
 UPDATE product_variants SET stock = stock - $1 WHERE id = $2 RETURNING *;
+
+
+
+
+--- SHOP PRODUCT DISPLAY ----
+-- name: GetShopProducts :many

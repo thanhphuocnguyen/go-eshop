@@ -100,7 +100,7 @@ func mapToListProductResponse(productRow repository.Product) ManageProductListMo
 		Sku:         productRow.BaseSku,
 		Slug:        productRow.Slug,
 		AvgRating:   &avgRating,
-		ImgUrl:      productRow.ImageUrl,
+		ImageUrl:    productRow.ImageUrl,
 		ImgID:       productRow.ImageID,
 		ReviewCount: &productRow.RatingCount,
 		CreatedAt:   productRow.CreatedAt.String(),

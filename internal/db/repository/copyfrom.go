@@ -61,8 +61,6 @@ func (r *iteratorForAddBulkProducts) Next() bool {
 
 func (r iteratorForAddBulkProducts) Values() ([]interface{}, error) {
 	return []interface{}{
-		r.rows[0].CategoryID,
-		r.rows[0].CollectionID,
 		r.rows[0].BrandID,
 		r.rows[0].Name,
 		r.rows[0].Description,
@@ -74,7 +72,7 @@ func (r iteratorForAddBulkProducts) Err() error {
 }
 
 func (q *Queries) AddBulkProducts(ctx context.Context, arg []AddBulkProductsParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"products"}, []string{"category_id", "collection_id", "brand_id", "name", "description"}, &iteratorForAddBulkProducts{rows: arg})
+	return q.db.CopyFrom(ctx, []string{"products"}, []string{"brand_id", "name", "description"}, &iteratorForAddBulkProducts{rows: arg})
 }
 
 // iteratorForCreateAttributeValues implements pgx.CopyFromSource.

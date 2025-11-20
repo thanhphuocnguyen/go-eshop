@@ -41,17 +41,39 @@ func (sv *Server) AddProductHandler(c *gin.Context) {
 	createParams.Slug = req.Slug
 	createParams.BaseSku = req.BaseSku
 
-	createParams.CategoryID = utils.GetPgTypeUUIDFromString(req.CategoryID)
-
 	createParams.BrandID = utils.GetPgTypeUUIDFromString(req.BrandID)
-	if req.CollectionID != nil {
-		createParams.CollectionID = utils.GetPgTypeUUIDFromString(*req.CollectionID)
-	}
 
 	product, err := sv.repo.CreateProduct(c, createParams)
+	if err != nil {
+		log.Error().Err(err).Timestamp().Msg("CreateProduct")
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		return
+	}
 
+	err = sv.repo.AddProductToCategory(c, repository.AddProductToCategoryParams{
+		CategoryID: uuid.MustParse(req.CategoryID),
+		ProductID:  product.ID,
+	})
+
+	if err != nil {
+		log.Error().Err(err).Msg("AddProductToCategory")
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		return
+	}
+
+	if req.CollectionID != nil {
+		err = sv.repo.AddProductToCollection(c, repository.AddProductToCollectionParams{
+			CollectionID: uuid.MustParse(*req.CollectionID),
+			ProductID:    product.ID,
+		})
+		if err != nil {
+			log.Error().Err(err).Msg("AddProductToCollection")
+			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+			return
+		}
+	}
 	for _, attrID := range req.Attributes {
-		_, err := sv.repo.CreateProductAttribute(c, repository.CreateProductAttributeParams{
+		_, err = sv.repo.CreateProductAttribute(c, repository.CreateProductAttributeParams{
 			ProductID:   product.ID,
 			AttributeID: attrID,
 		})
@@ -140,7 +162,7 @@ func (sv *Server) GetProductsHandler(c *gin.Context) {
 		return
 	}
 
-	dbParams := repository.GetAdminProductsParams{
+	dbParams := repository.GetProductsParams{
 		Limit:  queries.PageSize,
 		Offset: (queries.Page - 1) * queries.PageSize,
 	}
@@ -154,22 +176,11 @@ func (sv *Server) GetProductsHandler(c *gin.Context) {
 		dbParams.Search = &search
 	}
 
-	if len(queries.CategoryIDs) > 0 {
-		dbParams.CategoryIds = make([]uuid.UUID, len(queries.CategoryIDs))
-		for i, id := range queries.CategoryIDs {
-			dbParams.CategoryIds[i] = uuid.MustParse(id)
-		}
-	}
-
-	if queries.CollectionID != nil {
-		dbParams.CollectionID = utils.GetPgTypeUUID(uuid.MustParse(*queries.CollectionID))
-	}
-
 	if queries.BrandID != nil {
 		dbParams.BrandID = utils.GetPgTypeUUID(uuid.MustParse(*queries.BrandID))
 	}
 
-	products, err := sv.repo.GetAdminProducts(c, dbParams)
+	products, err := sv.repo.GetProducts(c, dbParams)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
@@ -244,14 +255,9 @@ func (sv *Server) UpdateProductHandler(c *gin.Context) {
 	if req.IsActive != nil {
 		updateParams.IsActive = req.IsActive
 	}
-	if req.CategoryID != nil {
-		updateParams.CategoryID = utils.GetPgTypeUUIDFromString(*req.CategoryID)
-	}
+
 	if req.BrandID != nil {
 		updateParams.BrandID = utils.GetPgTypeUUIDFromString(*req.BrandID)
-	}
-	if req.CollectionID != nil {
-		updateParams.CollectionID = utils.GetPgTypeUUIDFromString(*req.CollectionID)
 	}
 
 	updated, err := sv.repo.UpdateProduct(c, updateParams)

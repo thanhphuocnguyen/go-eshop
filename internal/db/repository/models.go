@@ -76,6 +76,11 @@ type Category struct {
 	UpdatedAt    time.Time `json:"updatedAt"`
 }
 
+type CategoryProduct struct {
+	CategoryID uuid.UUID `json:"categoryId"`
+	ProductID  uuid.UUID `json:"productId"`
+}
+
 type Collection struct {
 	ID           uuid.UUID `json:"id"`
 	Name         string    `json:"name"`
@@ -87,6 +92,11 @@ type Collection struct {
 	Published    bool      `json:"published"`
 	CreatedAt    time.Time `json:"createdAt"`
 	UpdatedAt    time.Time `json:"updatedAt"`
+}
+
+type CollectionProduct struct {
+	CollectionID uuid.UUID `json:"collectionId"`
+	ProductID    uuid.UUID `json:"productId"`
 }
 
 type Discount struct {
@@ -287,8 +297,6 @@ type Product struct {
 	FiveStarCount    int32          `json:"fiveStarCount"`
 	CreatedAt        time.Time      `json:"createdAt"`
 	UpdatedAt        time.Time      `json:"updatedAt"`
-	CategoryID       pgtype.UUID    `json:"categoryId"`
-	CollectionID     pgtype.UUID    `json:"collectionId"`
 	BrandID          pgtype.UUID    `json:"brandId"`
 }
 

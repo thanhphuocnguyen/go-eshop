@@ -8,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
 // @Summary Get a display product by ID
@@ -79,7 +78,7 @@ func (sv *Server) GetDisplayProductsHandler(c *gin.Context) {
 		return
 	}
 
-	dbParams := repository.GetAdminProductsParams{
+	dbParams := repository.GetDisplayProductsParams{
 		Limit:  queries.PageSize,
 		Offset: (queries.Page - 1) * queries.PageSize,
 	}
@@ -101,14 +100,14 @@ func (sv *Server) GetDisplayProductsHandler(c *gin.Context) {
 	}
 
 	if queries.CollectionID != nil {
-		dbParams.CollectionID = utils.GetPgTypeUUID(uuid.MustParse(*queries.CollectionID))
+		dbParams.CollectionIds = []uuid.UUID{uuid.MustParse(*queries.CollectionID)}
 	}
 
 	if queries.BrandID != nil {
-		dbParams.BrandID = utils.GetPgTypeUUID(uuid.MustParse(*queries.BrandID))
+		dbParams.BrandIds = []uuid.UUID{uuid.MustParse(*queries.BrandID)}
 	}
 
-	products, err := sv.repo.GetAdminProducts(c, dbParams)
+	products, err := sv.repo.GetDisplayProducts(c, dbParams)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
@@ -122,7 +121,21 @@ func (sv *Server) GetDisplayProductsHandler(c *gin.Context) {
 
 	productResponses := make([]ManageProductListModel, 0)
 	for _, product := range products {
-		productResponses = append(productResponses, mapToListProductResponse(product))
+		price, _ := product.MinPrice.Float64Value()
+		prod := ManageProductListModel{
+			ID:          product.ID.String(),
+			Name:        product.Name,
+			Description: product.Description,
+			BasePrice:   price.Float64,
+			Sku:         product.BaseSku,
+			Slug:        product.Slug,
+			ImageUrl:    product.ImageUrl,
+		}
+		if product.AvgRating.Valid {
+			avgRating, _ := product.AvgRating.Float64Value()
+			prod.AvgRating = &avgRating.Float64
+		}
+		productResponses = append(productResponses, prod)
 	}
 
 	c.JSON(http.StatusOK, createDataResp(c, productResponses, createPagination(queries.Page, queries.PageSize, productCnt), nil))
