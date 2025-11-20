@@ -11,7 +11,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
-// getCategoriesHandler retrieves a list of Categories.
+// GetCategoriesHandler retrieves a list of Categories.
 // @Summary Get a list of Categories
 // @Description Get a list of Categories
 // @ID get-Categories
@@ -24,7 +24,7 @@ import (
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /categories [get]
-func (sv *Server) getCategoriesHandler(c *gin.Context) {
+func (sv *Server) GetCategoriesHandler(c *gin.Context) {
 	var query PaginationQueryParams
 	if err := c.ShouldBindQuery(&query); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
@@ -70,7 +70,7 @@ func (sv *Server) getCategoriesHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, createDataResp(c, categoriesResp, createPagination(cnt, query.Page, query.PageSize), nil))
 }
 
-// getCategoryBySlugHandler retrieves a list of Products by Category Slug.
+// GetCategoryBySlugHandler retrieves a list of Products by Category Slug.
 // @Summary Get a list of Products by Category Slug
 // @Description Get a list of Products by Category Slug
 // @ID get-Products-by-Category-Slug
@@ -83,7 +83,7 @@ func (sv *Server) getCategoriesHandler(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /categories/slug/{slug} [get]
-func (sv *Server) getCategoryBySlugHandler(c *gin.Context) {
+func (sv *Server) GetCategoryBySlugHandler(c *gin.Context) {
 	var param SlugParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
@@ -111,6 +111,26 @@ func (sv *Server) getCategoryBySlugHandler(c *gin.Context) {
 		Description: category.Description,
 		ImageUrl:    category.ImageUrl,
 	}
+	products, err := sv.repo.GetDisplayProducts(c, repository.GetDisplayProductsParams{
+		CategoryIds: []uuid.UUID{category.ID},
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		return
+	}
+	productResponses := make([]CategoryLinkedProduct, len(products))
+	for i, product := range products {
+		price, _ := product.MinPrice.Float64Value()
+		productResponses[i] = CategoryLinkedProduct{
+			ID:           product.ID.String(),
+			Name:         product.Name,
+			VariantCount: int32(product.VariantCount),
+			Price:        price.Float64,
+			ImageUrl:     product.ImageUrl,
+			Sku:          product.BaseSku,
+		}
+	}
+	resp.Products = productResponses
 
 	c.JSON(http.StatusOK, createDataResp(c, resp, nil, nil))
 }
@@ -226,7 +246,7 @@ func (sv *Server) GetAdminCategoriesHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, createDataResp(c, categoriesResp, createPagination(query.Page, query.PageSize, count), nil))
 }
 
-// getCategoryByID retrieves a Category by its ID.
+// GetCategoryByID retrieves a Category by its ID.
 // @Summary Get a Category by ID
 // @Description Get a Category by ID
 // @ID get-Category-by-id
@@ -239,7 +259,7 @@ func (sv *Server) GetAdminCategoriesHandler(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/categories/{id} [get]
-func (sv *Server) getCategoryByID(c *gin.Context) {
+func (sv *Server) GetCategoryByID(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
@@ -270,7 +290,7 @@ func (sv *Server) getCategoryByID(c *gin.Context) {
 	c.JSON(http.StatusOK, createDataResp(c, resp, nil, nil))
 }
 
-// updateCategoryHandler updates a Category.
+// UpdateCategoryHandler updates a Category.
 // @Summary Update a Category
 // @Description Update a Category
 // @ID update-Category
@@ -283,7 +303,7 @@ func (sv *Server) getCategoryByID(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/categories/{id} [put]
-func (sv *Server) updateCategoryHandler(c *gin.Context) {
+func (sv *Server) UpdateCategoryHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
@@ -359,7 +379,7 @@ func (sv *Server) updateCategoryHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, createDataResp(c, col, nil, apiErr))
 }
 
-// deleteCategoryHandler delete a Category.
+// DeleteCategoryHandler delete a Category.
 // @Summary Delete a Category
 // @Description Delete a Category
 // @ID delete-Category
@@ -371,7 +391,7 @@ func (sv *Server) updateCategoryHandler(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/categories/{id} [delete]
-func (sv *Server) deleteCategoryHandler(c *gin.Context) {
+func (sv *Server) DeleteCategoryHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))

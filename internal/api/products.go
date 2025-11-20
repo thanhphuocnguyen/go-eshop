@@ -50,28 +50,6 @@ func (sv *Server) AddProductHandler(c *gin.Context) {
 		return
 	}
 
-	err = sv.repo.AddProductToCategory(c, repository.AddProductToCategoryParams{
-		CategoryID: uuid.MustParse(req.CategoryID),
-		ProductID:  product.ID,
-	})
-
-	if err != nil {
-		log.Error().Err(err).Msg("AddProductToCategory")
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
-		return
-	}
-
-	if req.CollectionID != nil {
-		err = sv.repo.AddProductToCollection(c, repository.AddProductToCollectionParams{
-			CollectionID: uuid.MustParse(*req.CollectionID),
-			ProductID:    product.ID,
-		})
-		if err != nil {
-			log.Error().Err(err).Msg("AddProductToCollection")
-			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
-			return
-		}
-	}
 	for _, attrID := range req.Attributes {
 		_, err = sv.repo.CreateProductAttribute(c, repository.CreateProductAttributeParams{
 			ProductID:   product.ID,
@@ -89,6 +67,37 @@ func (sv *Server) AddProductHandler(c *gin.Context) {
 
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
+	}
+
+	if len(req.CategoryIDs) > 0 {
+		categoryUUIDs := make([]repository.AddProductsToCategoryParams, len(req.CategoryIDs))
+		for i, catID := range req.CategoryIDs {
+			categoryUUIDs[i] = repository.AddProductsToCategoryParams{
+				CategoryID: uuid.MustParse(catID),
+				ProductID:  product.ID,
+			}
+		}
+		_, err = sv.repo.AddProductsToCategory(c, categoryUUIDs)
+		if err != nil {
+			log.Error().Err(err).Timestamp().Msg("AddProductsToCategory")
+			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+			return
+		}
+	}
+	if len(req.CollectionIDs) > 0 {
+		collectionUUIDs := make([]repository.AddProductsToCollectionParams, len(req.CollectionIDs))
+		for i, collID := range req.CollectionIDs {
+			collectionUUIDs[i] = repository.AddProductsToCollectionParams{
+				CollectionID: uuid.MustParse(collID),
+				ProductID:    product.ID,
+			}
+		}
+		_, err = sv.repo.AddProductsToCollection(c, collectionUUIDs)
+		if err != nil {
+			log.Error().Err(err).Timestamp().Msg("AddProductsToCollection")
+			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+			return
+		}
 	}
 
 	c.JSON(http.StatusCreated, createDataResp(c, product, nil, nil))
@@ -140,6 +149,7 @@ func (sv *Server) GetProductByIdHandler(c *gin.Context) {
 		attrs[i] = attr.AttributeID
 	}
 	productDetail.Attributes = attrs
+
 	c.JSON(http.StatusOK, createDataResp(c, productDetail, nil, nil))
 }
 
@@ -218,7 +228,7 @@ func (sv *Server) UpdateProductHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
-	uuid, err := uuid.Parse(param.ID)
+	productID, err := uuid.Parse(param.ID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -235,7 +245,7 @@ func (sv *Server) UpdateProductHandler(c *gin.Context) {
 	}
 
 	updateParams := repository.UpdateProductParams{
-		ID: uuid,
+		ID: productID,
 	}
 	if req.Name != nil {
 		updateParams.Name = req.Name
@@ -269,7 +279,7 @@ func (sv *Server) UpdateProductHandler(c *gin.Context) {
 	}
 
 	if req.Attributes != nil {
-		err = sv.repo.DeleteProductAttributesByProductID(c, uuid)
+		err = sv.repo.DeleteProductAttributesByProductID(c, productID)
 		if err != nil {
 			log.Error().Err(err).Msg("DeleteProductAttributesByProductID")
 			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
@@ -278,13 +288,58 @@ func (sv *Server) UpdateProductHandler(c *gin.Context) {
 		prodAttrParams := make([]repository.CreateBulkProductAttributesParams, len(*req.Attributes))
 		for i, attrID := range *req.Attributes {
 			prodAttrParams[i] = repository.CreateBulkProductAttributesParams{
-				ProductID:   uuid,
+				ProductID:   productID,
 				AttributeID: attrID,
 			}
 		}
 		_, err = sv.repo.CreateBulkProductAttributes(c, prodAttrParams)
 		if err != nil {
 			log.Error().Err(err).Msg("CreateBulkProductAttributes")
+			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+			return
+		}
+	}
+
+	if req.CategoryIDs != nil {
+		err = sv.repo.RemoveProductsFromCategory(c, productID)
+		if err != nil {
+			log.Error().Err(err).Msg("RemoveProductsFromCategory")
+			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+			return
+		}
+		categoryUUIDs := make([]repository.AddProductsToCategoryParams, len(*req.CategoryIDs))
+		for i, catID := range *req.CategoryIDs {
+			categoryUUIDs[i] = repository.AddProductsToCategoryParams{
+				CategoryID: uuid.MustParse(catID),
+				ProductID:  productID,
+			}
+		}
+		_, err = sv.repo.AddProductsToCategory(c, categoryUUIDs)
+		if err != nil {
+			log.Error().Err(err).Timestamp().Msg("AddProductsToCategory")
+			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+			return
+		}
+	}
+
+	if req.CollectionIDs != nil {
+		err = sv.repo.RemoveProductsFromCollection(c, productID)
+		if err != nil {
+			log.Error().Err(err).Msg("RemoveProductsFromCollection")
+			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+			return
+		}
+		collectionUUIDs := make([]repository.AddProductsToCollectionParams, len(*req.CollectionIDs))
+		for i, collID := range *req.CollectionIDs {
+			collectionUUIDs[i] = repository.AddProductsToCollectionParams{
+				CollectionID: uuid.MustParse(collID),
+				ProductID:    productID,
+			}
+		}
+
+		_, err = sv.repo.AddProductsToCollection(c, collectionUUIDs)
+		if err != nil {
+			log.Error().Err(err).Timestamp().Msg("AddProductsToCollection")
 			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 			return
 		}

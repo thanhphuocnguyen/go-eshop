@@ -72,10 +72,10 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 		categories := admin.Group("categories")
 		{
 			categories.GET("", sv.GetAdminCategoriesHandler)
-			categories.GET(":id", sv.getCategoryByID)
+			categories.GET(":id", sv.GetCategoryByID)
 			categories.POST("", sv.createCategoryHandler)
-			categories.PUT(":id", sv.updateCategoryHandler)
-			categories.DELETE(":id", sv.deleteCategoryHandler)
+			categories.PUT(":id", sv.UpdateCategoryHandler)
+			categories.DELETE(":id", sv.DeleteCategoryHandler)
 		}
 
 		brands := admin.Group("brands")
@@ -210,9 +210,9 @@ func (sv *Server) setupPaymentRoutes(rg *gin.RouterGroup) {
 func (sv *Server) setupCategoryRoutes(rg *gin.RouterGroup) {
 	categories := rg.Group("categories")
 	{
-		categories.GET("", sv.getCategoriesHandler)
-		categories.GET(":slug", sv.getCategoryBySlugHandler)
-		categories.GET(":slug/products", sv.getCategoryBySlugHandler)
+		categories.GET("", sv.GetCategoriesHandler)
+		categories.GET(":slug", sv.GetCategoryBySlugHandler)
+		categories.GET(":slug/products", sv.GetCategoryBySlugHandler)
 	}
 }
 

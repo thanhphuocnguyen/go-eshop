@@ -13,18 +13,9 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const addProductToCollection = `-- name: AddProductToCollection :exec
-INSERT INTO collection_products (collection_id, product_id) VALUES ($1, $2)
-`
-
-type AddProductToCollectionParams struct {
+type AddProductsToCollectionParams struct {
 	CollectionID uuid.UUID `json:"collectionId"`
 	ProductID    uuid.UUID `json:"productId"`
-}
-
-func (q *Queries) AddProductToCollection(ctx context.Context, arg AddProductToCollectionParams) error {
-	_, err := q.db.Exec(ctx, addProductToCollection, arg.CollectionID, arg.ProductID)
-	return err
 }
 
 const countCollections = `-- name: CountCollections :one
@@ -329,6 +320,15 @@ func (q *Queries) GetDisplayCollectionProducts(ctx context.Context, arg GetDispl
 		return nil, err
 	}
 	return items, nil
+}
+
+const removeProductsFromCollection = `-- name: RemoveProductsFromCollection :exec
+DELETE FROM collection_products WHERE product_id = $1
+`
+
+func (q *Queries) RemoveProductsFromCollection(ctx context.Context, productID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, removeProductsFromCollection, productID)
+	return err
 }
 
 type SeedCollectionsParams struct {

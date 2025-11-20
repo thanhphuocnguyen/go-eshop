@@ -14,8 +14,8 @@ import (
 type Querier interface {
 	AddBulkAttributes(ctx context.Context, name []string) (int64, error)
 	AddBulkProducts(ctx context.Context, arg []AddBulkProductsParams) (int64, error)
-	AddProductToCategory(ctx context.Context, arg AddProductToCategoryParams) error
-	AddProductToCollection(ctx context.Context, arg AddProductToCollectionParams) error
+	AddProductsToCategory(ctx context.Context, arg []AddProductsToCategoryParams) (int64, error)
+	AddProductsToCollection(ctx context.Context, arg []AddProductsToCollectionParams) (int64, error)
 	ArchiveProduct(ctx context.Context, arg ArchiveProductParams) error
 	ArchiveProductVariant(ctx context.Context, arg ArchiveProductVariantParams) error
 	CheckoutCart(ctx context.Context, arg CheckoutCartParams) error
@@ -113,7 +113,6 @@ type Querier interface {
 	GetCategories(ctx context.Context, arg GetCategoriesParams) ([]Category, error)
 	GetCategoryByID(ctx context.Context, id uuid.UUID) (Category, error)
 	GetCategoryBySlug(ctx context.Context, slug string) (Category, error)
-	GetCategoryProductsByID(ctx context.Context, id uuid.UUID) ([]GetCategoryProductsByIDRow, error)
 	GetCollectionByID(ctx context.Context, id uuid.UUID) (Collection, error)
 	GetCollectionBySlug(ctx context.Context, slug string) (Collection, error)
 	GetCollections(ctx context.Context, arg GetCollectionsParams) ([]Collection, error)
@@ -198,6 +197,8 @@ type Querier interface {
 	InsertSession(ctx context.Context, arg InsertSessionParams) (UserSession, error)
 	ListOrderItems(ctx context.Context, arg ListOrderItemsParams) ([]OrderItem, error)
 	RemoveProductFromCart(ctx context.Context, arg RemoveProductFromCartParams) error
+	RemoveProductsFromCategory(ctx context.Context, productID uuid.UUID) error
+	RemoveProductsFromCollection(ctx context.Context, productID uuid.UUID) error
 	ResetPrimaryAddress(ctx context.Context, userID uuid.UUID) error
 	SeedAddresses(ctx context.Context, arg []SeedAddressesParams) (int64, error)
 	SeedCategories(ctx context.Context, arg []SeedCategoriesParams) (int64, error)

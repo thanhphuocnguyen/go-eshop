@@ -7,9 +7,6 @@ SELECT * FROM categories WHERE id = $1 LIMIT 1;
 -- name: GetCategoryBySlug :one
 SELECT * FROM categories WHERE slug = $1 LIMIT 1;
 
--- name: GetCategoryProductsByID :many
-SELECT sqlc.embed(c), p.id, p.name as product_name, p.description as product_description FROM categories c LEFT JOIN products p ON c.id = p.id LEFT JOIN product_images pi ON pi.product_id = p.id WHERE c.id = $1;
-
 -- name: GetCategories :many
 SELECT * FROM categories WHERE published = COALESCE(sqlc.narg('published'), true) ORDER BY display_order LIMIT $1 OFFSET $2;
 
@@ -34,5 +31,8 @@ SELECT count(*) FROM categories;
 -- name: SeedCategories :copyfrom
 INSERT INTO categories (name, slug, description, image_url, image_id) VALUES ($1, $2, $3, $4, $5);
 
--- name: AddProductToCategory :exec
+-- name: AddProductsToCategory :copyfrom
 INSERT INTO category_products (category_id, product_id) VALUES ($1, $2);
+
+-- name: RemoveProductsFromCategory :exec
+DELETE FROM category_products WHERE product_id = $1;

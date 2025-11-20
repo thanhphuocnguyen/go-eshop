@@ -53,17 +53,18 @@ LEFT JOIN brands b ON p.brand_id = b.id
 LEFT JOIN product_variants pv ON pv.product_id = p.id
 WHERE
     p.is_active = COALESCE(sqlc.narg('is_active'), p.is_active) 
-    AND p.name ILIKE COALESCE(sqlc.narg('search'), p.name)
-    AND p.brand_id = ANY(COALESCE(sqlc.narg('brand_ids')::uuid[], '{}')::uuid[])
-    AND c.id = ANY(COALESCE(sqlc.narg('collection_ids')::uuid[], '{}')::uuid[])
-    AND cat.id = ANY(COALESCE(sqlc.narg('category_ids')::uuid[], '{}')::uuid[])
+    AND p.name ILIKE COALESCE(sqlc.narg('search'), '%')
+    AND (sqlc.narg('brand_ids')::uuid[] is null or p.brand_id = ANY(sqlc.narg('brand_ids')::uuid[]))
+    AND (sqlc.narg('collection_ids')::uuid[] is null or c.id = ANY(sqlc.narg('collection_ids')::uuid[]))
+    AND (sqlc.narg('category_ids')::uuid[] is null or cat.id = ANY(sqlc.narg('category_ids')::uuid[]))
     AND pv.stock > 0
-GROUP BY p.id ORDER BY @orderBy::text LIMIT $1 OFFSET $2;
+GROUP BY p.id
+ORDER BY @orderBy::text LIMIT $1 OFFSET $2;
 
 -- name: CountProducts :one
 SELECT COUNT(*) FROM products
 WHERE
-    is_active = COALESCE(sqlc.narg('is_active'), is_active) AND name ILIKE COALESCE(sqlc.narg('name'), name)
+    is_active = COALESCE(sqlc.narg('is_active'), is_active) AND name ILIKE COALESCE(sqlc.narg('name'), '%')
     AND brand_id = COALESCE(sqlc.narg('brand_id'), brand_id);
 
 -- name: UpdateProduct :one

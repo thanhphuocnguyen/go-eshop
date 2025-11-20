@@ -75,6 +75,72 @@ func (q *Queries) AddBulkProducts(ctx context.Context, arg []AddBulkProductsPara
 	return q.db.CopyFrom(ctx, []string{"products"}, []string{"brand_id", "name", "description"}, &iteratorForAddBulkProducts{rows: arg})
 }
 
+// iteratorForAddProductsToCategory implements pgx.CopyFromSource.
+type iteratorForAddProductsToCategory struct {
+	rows                 []AddProductsToCategoryParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForAddProductsToCategory) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForAddProductsToCategory) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].CategoryID,
+		r.rows[0].ProductID,
+	}, nil
+}
+
+func (r iteratorForAddProductsToCategory) Err() error {
+	return nil
+}
+
+func (q *Queries) AddProductsToCategory(ctx context.Context, arg []AddProductsToCategoryParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"category_products"}, []string{"category_id", "product_id"}, &iteratorForAddProductsToCategory{rows: arg})
+}
+
+// iteratorForAddProductsToCollection implements pgx.CopyFromSource.
+type iteratorForAddProductsToCollection struct {
+	rows                 []AddProductsToCollectionParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForAddProductsToCollection) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForAddProductsToCollection) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].CollectionID,
+		r.rows[0].ProductID,
+	}, nil
+}
+
+func (r iteratorForAddProductsToCollection) Err() error {
+	return nil
+}
+
+func (q *Queries) AddProductsToCollection(ctx context.Context, arg []AddProductsToCollectionParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"collection_products"}, []string{"collection_id", "product_id"}, &iteratorForAddProductsToCollection{rows: arg})
+}
+
 // iteratorForCreateAttributeValues implements pgx.CopyFromSource.
 type iteratorForCreateAttributeValues struct {
 	rows                 []CreateAttributeValuesParams

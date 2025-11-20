@@ -50,7 +50,7 @@ func (q *Queries) ArchiveProductVariant(ctx context.Context, arg ArchiveProductV
 const countProducts = `-- name: CountProducts :one
 SELECT COUNT(*) FROM products
 WHERE
-    is_active = COALESCE($1, is_active) AND name ILIKE COALESCE($2, name)
+    is_active = COALESCE($1, is_active) AND name ILIKE COALESCE($2, '%')
     AND brand_id = COALESCE($3, brand_id)
 `
 
@@ -199,12 +199,13 @@ LEFT JOIN brands b ON p.brand_id = b.id
 LEFT JOIN product_variants pv ON pv.product_id = p.id
 WHERE
     p.is_active = COALESCE($3, p.is_active) 
-    AND p.name ILIKE COALESCE($4, p.name)
-    AND p.brand_id = ANY(COALESCE($5::uuid[], '{}')::uuid[])
-    AND c.id = ANY(COALESCE($6::uuid[], '{}')::uuid[])
-    AND cat.id = ANY(COALESCE($7::uuid[], '{}')::uuid[])
+    AND p.name ILIKE COALESCE($4, '%')
+    AND ($5::uuid[] is null or p.brand_id = ANY($5::uuid[]))
+    AND ($6::uuid[] is null or c.id = ANY($6::uuid[]))
+    AND ($7::uuid[] is null or cat.id = ANY($7::uuid[]))
     AND pv.stock > 0
-GROUP BY p.id ORDER BY $8::text LIMIT $1 OFFSET $2
+GROUP BY p.id
+ORDER BY $8::text LIMIT $1 OFFSET $2
 `
 
 type GetDisplayProductsParams struct {

@@ -9,21 +9,11 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const addProductToCategory = `-- name: AddProductToCategory :exec
-INSERT INTO category_products (category_id, product_id) VALUES ($1, $2)
-`
-
-type AddProductToCategoryParams struct {
+type AddProductsToCategoryParams struct {
 	CategoryID uuid.UUID `json:"categoryId"`
 	ProductID  uuid.UUID `json:"productId"`
-}
-
-func (q *Queries) AddProductToCategory(ctx context.Context, arg AddProductToCategoryParams) error {
-	_, err := q.db.Exec(ctx, addProductToCategory, arg.CategoryID, arg.ProductID)
-	return err
 }
 
 const countCategories = `-- name: CountCategories :one
@@ -167,49 +157,13 @@ func (q *Queries) GetCategoryBySlug(ctx context.Context, slug string) (Category,
 	return i, err
 }
 
-const getCategoryProductsByID = `-- name: GetCategoryProductsByID :many
-SELECT c.id, c.name, c.description, c.image_url, c.image_id, c.published, c.slug, c.display_order, c.created_at, c.updated_at, p.id, p.name as product_name, p.description as product_description FROM categories c LEFT JOIN products p ON c.id = p.id LEFT JOIN product_images pi ON pi.product_id = p.id WHERE c.id = $1
+const removeProductsFromCategory = `-- name: RemoveProductsFromCategory :exec
+DELETE FROM category_products WHERE product_id = $1
 `
 
-type GetCategoryProductsByIDRow struct {
-	Category           Category    `json:"category"`
-	ID                 pgtype.UUID `json:"id"`
-	ProductName        *string     `json:"productName"`
-	ProductDescription *string     `json:"productDescription"`
-}
-
-func (q *Queries) GetCategoryProductsByID(ctx context.Context, id uuid.UUID) ([]GetCategoryProductsByIDRow, error) {
-	rows, err := q.db.Query(ctx, getCategoryProductsByID, id)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []GetCategoryProductsByIDRow{}
-	for rows.Next() {
-		var i GetCategoryProductsByIDRow
-		if err := rows.Scan(
-			&i.Category.ID,
-			&i.Category.Name,
-			&i.Category.Description,
-			&i.Category.ImageUrl,
-			&i.Category.ImageID,
-			&i.Category.Published,
-			&i.Category.Slug,
-			&i.Category.DisplayOrder,
-			&i.Category.CreatedAt,
-			&i.Category.UpdatedAt,
-			&i.ID,
-			&i.ProductName,
-			&i.ProductDescription,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) RemoveProductsFromCategory(ctx context.Context, productID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, removeProductsFromCategory, productID)
+	return err
 }
 
 type SeedCategoriesParams struct {

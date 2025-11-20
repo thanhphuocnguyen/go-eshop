@@ -56,5 +56,8 @@ SELECT count(*) FROM collections;
 -- name: SeedCollections :copyfrom
 INSERT INTO collections (name, description, image_url) VALUES ($1, $2, $3);
 
--- name: AddProductToCollection :exec
+-- name: AddProductsToCollection :copyfrom
 INSERT INTO collection_products (collection_id, product_id) VALUES ($1, $2);
+
+-- name: RemoveProductsFromCollection :exec
+DELETE FROM collection_products WHERE product_id = $1;

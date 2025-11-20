@@ -653,10 +653,10 @@ type CreateProductReq struct {
 	BaseSku          string  `json:"sku" binding:"required,min=3,max=100"`
 	IsActive         bool    `json:"isActive" binding:"required"`
 	Slug             string  `json:"slug" binding:"required,min=3,max=255"`
+	BrandID          string  `json:"brandId" binding:"omitempty,uuid"`
 
-	CollectionID *string `json:"collectionId" binding:"omitempty,uuid4"`
-	BrandID      string  `json:"brandId" binding:"omitempty,uuid4"`
-	CategoryID   string  `json:"categoryId" binding:"required,uuid4"`
+	CategoryIDs   []string `json:"categoryIds" binding:"omitempty,uuidslice"`
+	CollectionIDs []string `json:"collectionIds" binding:"omitempty,uuidslice"`
 }
 type UpdateProductReq struct {
 	Name             *string  `json:"name" binding:"min=3,max=255"`
@@ -667,10 +667,10 @@ type UpdateProductReq struct {
 	BaseSku          *string  `json:"sku" binding:"min=3,max=100"`
 	IsActive         *bool    `json:"isActive" binding:""`
 	Slug             *string  `json:"slug" binding:"min=3,max=255"`
+	BrandID          *string  `json:"brandId" binding:"omitempty,uuid"`
 
-	CollectionID *string `json:"collectionId" binding:"omitempty,uuid4"`
-	BrandID      *string `json:"brandId" binding:"omitempty,uuid4"`
-	CategoryID   *string `json:"categoryId" binding:"uuid4"`
+	CategoryIDs   *[]string `json:"categoryIds" binding:"omitempty,uuidslice"`
+	CollectionIDs *[]string `json:"collectionIds" binding:"omitempty,uuidslice"`
 }
 
 type CreateProdVariantReq struct {
@@ -694,4 +694,12 @@ type UpdateProdVariantReq struct {
 type URIVariantParam struct {
 	ProductID string `uri:"id" binding:"required,uuid"`
 	VariantID string `uri:"variantId" binding:"required,uuid"`
+}
+
+type LinkProductCategoriesReq struct {
+	Ids []string `json:"ids" binding:"required,uuidslice"`
+}
+
+type UnlinkProductCategoryReq struct {
+	Id string `json:"id" binding:"required,uuid"`
 }
