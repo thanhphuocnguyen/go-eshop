@@ -11,7 +11,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/paymentsrv"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/pmgateway"
 )
 
 func (sv *Server) getStripeConfig(c *gin.Context) {
@@ -32,7 +32,7 @@ func (sv *Server) getStripeConfig(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /payment [post]
-func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
+func (sv *Server) CreatePaymentIntentHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, createErr(UnauthorizedCode, errors.New("authorization payload is not provided")))
@@ -99,7 +99,7 @@ func (sv *Server) createPaymentIntentHandler(c *gin.Context) {
 	}
 	switch paymentMethod.Code {
 	case string(repository.PaymentMethodCodeStripe):
-		stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
+		stripeInstance, err := pmgateway.NewStripePayment(sv.config.StripeSecretKey)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 			return
@@ -161,7 +161,7 @@ func (sv *Server) getPaymentHandler(c *gin.Context) {
 		return
 	}
 	if paymentMethod.Code == repository.PaymentMethodCodeStripe {
-		stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
+		stripeInstance, err := pmgateway.NewStripePayment(sv.config.StripeSecretKey)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 			return

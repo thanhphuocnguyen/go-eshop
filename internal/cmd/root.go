@@ -23,7 +23,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/cachesrv"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/mailer"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/paymentsrv"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/pmgateway"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/upload"
 )
 
@@ -111,7 +111,7 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 			taskDistributor := worker.NewRedisTaskDistributor(redisCfg)
 			uploadService := upload.NewCloudinaryUploadService(cfg)
 			mailer := mailer.NewEmailSender(cfg.SmtpUsername, cfg.SmtpPassword, cfg.Env)
-			paymentCtx := &paymentsrv.PaymentContext{}
+			paymentCtx := &pmgateway.PaymentContext{}
 			taskProcessor := worker.NewRedisTaskProcessor(redisCfg, pgRepo, mailer, cfg)
 			cacheService := cachesrv.NewRedisCache(cfg)
 			api, err := api.NewAPI(cfg, pgRepo, cacheService, taskDistributor, uploadService, paymentCtx)

@@ -13,7 +13,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/paymentsrv"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/pmgateway"
 )
 
 // @Summary Create a new cart
@@ -584,7 +584,7 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 	params.CreatePaymentFn = func(orderID uuid.UUID, method string) (paymentIntentID string, clientSecretID *string, err error) {
 		switch method {
 		case repository.PaymentMethodCodeStripe:
-			stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
+			stripeInstance, err := pmgateway.NewStripePayment(sv.config.StripeSecretKey)
 			if err != nil {
 				return "", utils.StringPtr(""), err
 			}

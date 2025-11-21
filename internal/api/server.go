@@ -10,7 +10,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/cachesrv"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/paymentsrv"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/pmgateway"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/upload"
 )
 
@@ -28,7 +28,7 @@ type Server struct {
 	repo            repository.Repository
 	tokenGenerator  auth.TokenGenerator
 	uploadService   upload.UploadService
-	paymentCtx      *paymentsrv.PaymentContext
+	paymentCtx      *pmgateway.PaymentContext
 	cachesrv        cachesrv.Cache
 	taskDistributor worker.TaskDistributor
 }
@@ -39,7 +39,7 @@ func NewAPI(
 	cachesrv cachesrv.Cache,
 	taskDistributor worker.TaskDistributor,
 	uploadService upload.UploadService,
-	paymentCtx *paymentsrv.PaymentContext,
+	paymentCtx *pmgateway.PaymentContext,
 ) (*Server, error) {
 	tokenGenerator, err := auth.NewJwtGenerator(cfg.SymmetricKey)
 	if err != nil {

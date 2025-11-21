@@ -111,7 +111,7 @@ func (sv *Server) GetCategoryBySlugHandler(c *gin.Context) {
 		Description: category.Description,
 		ImageUrl:    category.ImageUrl,
 	}
-	products, err := sv.repo.GetDisplayProducts(c, repository.GetDisplayProductsParams{
+	products, err := sv.repo.GetProductList(c, repository.GetProductListParams{
 		CategoryIds: []uuid.UUID{category.ID},
 	})
 	if err != nil {

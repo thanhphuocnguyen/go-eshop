@@ -138,19 +138,62 @@ func (sv *Server) GetProductByIdHandler(c *gin.Context) {
 		return
 	}
 
-	productDetail := mapToProductResponse(productRow)
-	prodAttr, err := sv.repo.GetProductAttributesByProductID(c, productRow.ID)
+	productDetail := mapToProductDetailResponse(productRow)
+
+	c.JSON(http.StatusOK, createDataResp(c, productDetail, nil, nil))
+}
+
+// @Summary Get admin list of products
+// @Schemes http
+// @Description get admin list of products
+// @Tags products
+// @Accept json
+// @Param page query int true "Page number"
+// @Param pageSize query int true "Page size"
+// @Produce json
+// @Success 200 {array} ApiResponse[[]ManageProductListModel]
+// @Failure 404 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
+// @Router /admin/products [get]
+func (sv *Server) GetAdminProductsHandler(c *gin.Context) {
+	var queries ProductQueries
+	if err := c.ShouldBindQuery(&queries); err != nil {
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		return
+	}
+
+	dbParams := repository.GetAdminProductListParams{
+		Limit:  queries.PageSize,
+		Offset: (queries.Page - 1) * queries.PageSize,
+	}
+
+	if queries.Search != nil && len(*queries.Search) > 0 {
+		search := *queries.Search
+		search = strings.ReplaceAll(search, " ", "%")
+		search = strings.ReplaceAll(search, ",", "%")
+		search = strings.ReplaceAll(search, ":", "%")
+		search = "%" + search + "%"
+		dbParams.Search = &search
+	}
+
+	products, err := sv.repo.GetAdminProductList(c, dbParams)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-	attrs := make([]int32, len(prodAttr))
-	for i, attr := range prodAttr {
-		attrs[i] = attr.AttributeID
-	}
-	productDetail.Attributes = attrs
 
-	c.JSON(http.StatusOK, createDataResp(c, productDetail, nil, nil))
+	productCnt, err := sv.repo.CountProducts(c, repository.CountProductsParams{})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		return
+	}
+
+	productResponses := make([]ManageProductListModel, 0)
+	for _, product := range products {
+		productResponses = append(productResponses, mapToAdminProductResponse(product))
+	}
+
+	c.JSON(http.StatusOK, createDataResp(c, productResponses, createPagination(queries.Page, queries.PageSize, productCnt), nil))
 }
 
 // @Summary Get list of products
@@ -172,7 +215,7 @@ func (sv *Server) GetProductsHandler(c *gin.Context) {
 		return
 	}
 
-	dbParams := repository.GetProductsParams{
+	dbParams := repository.GetProductListParams{
 		Limit:  queries.PageSize,
 		Offset: (queries.Page - 1) * queries.PageSize,
 	}
@@ -186,11 +229,21 @@ func (sv *Server) GetProductsHandler(c *gin.Context) {
 		dbParams.Search = &search
 	}
 
-	if queries.BrandID != nil {
-		dbParams.BrandID = utils.GetPgTypeUUID(uuid.MustParse(*queries.BrandID))
+	if queries.BrandIDs != nil {
+		dbParams.BrandIds = make([]uuid.UUID, 0)
+		for _, id := range *queries.BrandIDs {
+			dbParams.BrandIds = append(dbParams.BrandIds, uuid.MustParse(id))
+		}
 	}
 
-	products, err := sv.repo.GetProducts(c, dbParams)
+	if queries.CategoryIDs != nil {
+		dbParams.CategoryIds = make([]uuid.UUID, len(*queries.CategoryIDs))
+		for i, id := range *queries.CategoryIDs {
+			dbParams.CategoryIds[i] = uuid.MustParse(id)
+		}
+	}
+
+	products, err := sv.repo.GetProductList(c, dbParams)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
@@ -202,9 +255,9 @@ func (sv *Server) GetProductsHandler(c *gin.Context) {
 		return
 	}
 
-	productResponses := make([]ManageProductListModel, 0)
+	productResponses := make([]ProductListModel, 0)
 	for _, product := range products {
-		productResponses = append(productResponses, mapToListProductResponse(product))
+		productResponses = append(productResponses, mapToShopProductResponse(product))
 	}
 
 	c.JSON(http.StatusOK, createDataResp(c, productResponses, createPagination(queries.Page, queries.PageSize, productCnt), nil))

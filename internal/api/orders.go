@@ -13,7 +13,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/paymentsrv"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/pmgateway"
 )
 
 // @Summary List orders
@@ -167,7 +167,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 		paymentInfo.PaymentIntentID != nil &&
 		order.PaymentMethod == repository.PaymentMethodCodeStripe {
 		resp.PaymentInfo.IntendID = paymentInfo.PaymentIntentID
-		stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
+		stripeInstance, err := pmgateway.NewStripePayment(sv.config.StripeSecretKey)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 			return
@@ -349,7 +349,7 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 		CancelPaymentFromMethod: func(paymentID string, method string) error {
 			switch method {
 			case repository.PaymentMethodCodeStripe:
-				stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
+				stripeInstance, err := pmgateway.NewStripePayment(sv.config.StripeSecretKey)
 				if err != nil {
 					c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 					return err
@@ -485,28 +485,28 @@ func (sv *Server) refundOrder(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, createErr(InvalidPaymentCode, errors.New("order cannot be refunded")))
 		return
 	}
-	var reason paymentsrv.RefundReason
+	var reason pmgateway.RefundReason
 	var amountRefund int64
 	switch req.Reason {
 	case "defective":
-		reason = paymentsrv.RefundReasonByDefectiveOrDamaged
+		reason = pmgateway.RefundReasonByDefectiveOrDamaged
 		amountRefund = order.TotalPrice.Int.Int64()
 	case "damaged":
-		reason = paymentsrv.RefundReasonByDefectiveOrDamaged
+		reason = pmgateway.RefundReasonByDefectiveOrDamaged
 		amountRefund = order.TotalPrice.Int.Int64()
 	case "fraudulent":
-		reason = paymentsrv.RefundReasonByFraudulent
+		reason = pmgateway.RefundReasonByFraudulent
 		amountRefund = order.TotalPrice.Int.Int64()
 	case "requested_by_customer":
 		amountRefund = order.TotalPrice.Int.Int64() * 90 / 100
-		reason = paymentsrv.RefundReasonRequestedByCustomer
+		reason = pmgateway.RefundReasonRequestedByCustomer
 	}
 	err = sv.repo.RefundOrderTx(c, repository.RefundOrderTxArgs{
 		OrderID: uuid.MustParse(params.ID),
 		RefundPaymentFromMethod: func(paymentID string, method string) (string, error) {
 			switch method {
 			case repository.PaymentMethodCodeStripe:
-				stripeInstance, err := paymentsrv.NewStripePayment(sv.config.StripeSecretKey)
+				stripeInstance, err := pmgateway.NewStripePayment(sv.config.StripeSecretKey)
 				if err != nil {
 					return "", err
 				}

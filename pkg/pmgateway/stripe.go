@@ -1,4 +1,4 @@
-package paymentsrv
+package pmgateway
 
 import (
 	"github.com/rs/zerolog/log"

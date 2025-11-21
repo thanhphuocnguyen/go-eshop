@@ -21,29 +21,51 @@ WHERE product_variants.id = $1 AND product_variants.product_id = $2 AND product_
 GROUP BY product_variants.id, attribute_values.id;
 
 -- name: GetProductDetail :one
-SELECT p.*, c.id AS category_id, c.name AS category_name, cl.id AS collection_id, cl.name AS collection_name, b.id AS brand_id, b.name AS brand_name
+SELECT p.*,
+    JSON_BUILD_OBJECT('id', b.id, 'name', b.name) AS brand,
+    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT(
+        'id', c.id,
+        'name', c.name
+    )) AS categories,
+    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT(
+        'id', cl.id,
+        'name', cl.name
+    )) AS collections,
+    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT(
+        'attribute_id', a.id,
+        'attribute_name', a.name,
+        'attribute_values', (
+            SELECT JSONB_AGG(JSONB_BUILD_OBJECT(
+                'value_id', av.id,
+                'value', av.value
+            ))
+            FROM attribute_values av
+            WHERE a.id = av.attribute_id
+        )
+    )) AS attributes
 FROM products p
-LEFT JOIN category_products AS cp ON p.id = cp.product_id
-LEFT JOIN categories as c ON cp.category_id = c.id
 LEFT JOIN brands AS b ON p.brand_id = b.id
+LEFT JOIN category_products AS cp ON p.id = cp.product_id
 LEFT JOIN collection_products AS colp ON p.id = colp.product_id
+LEFT JOIN categories as c ON cp.category_id = c.id
 LEFT JOIN collections as cl ON colp.collection_id = cl.id
+LEFT JOIN product_attributes pa ON p.id = pa.product_id
+LEFT JOIN attributes a ON pa.attribute_id = a.id
 WHERE (p.id = $1 OR p.slug = $2) AND p.is_active = COALESCE(sqlc.narg('is_active'), TRUE)
-GROUP BY p.id, c.id, cl.id, b.id LIMIT 1;
+GROUP BY p.id, b.id LIMIT 1;
 
 -- name: GetProductVariantList :many
 SELECT * FROM product_variants WHERE product_id = $1 AND is_active = COALESCE(sqlc.narg('is_active'), is_active) ORDER BY id, created_at DESC;
 
--- name: GetProducts :many
+-- name: GetAdminProductList :many
 SELECT p.* FROM products as p
 WHERE
     p.is_active = COALESCE(sqlc.narg('is_active'), p.is_active) 
     AND p.name ILIKE COALESCE(sqlc.narg('search'), p.name)
-    AND p.brand_id = COALESCE(sqlc.narg('brand_id'), p.brand_id)
     AND p.slug ILIKE COALESCE(sqlc.narg('slug'), p.slug)
 GROUP BY p.id ORDER BY @orderBy::text LIMIT $1 OFFSET $2;
 
--- name: GetDisplayProducts :many
+-- name: GetProductList :many
 SELECT p.*, MIN(pv.price) as min_price, COUNT(pv.id) as variant_count FROM products as p
 LEFT JOIN collection_products cp ON p.id = cp.product_id
 LEFT JOIN collections c ON cp.collection_id = c.id

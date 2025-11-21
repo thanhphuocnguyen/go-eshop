@@ -27,7 +27,7 @@ import (
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /users/{id} [patch]
-func (sv *Server) updateUserHandler(c *gin.Context) {
+func (sv *Server) UpdateUserHandler(c *gin.Context) {
 	authPayload, _ := c.MustGet(AuthPayLoad).(*auth.Payload)
 	var req UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

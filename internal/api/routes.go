@@ -25,6 +25,7 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 
 		productsGroup := admin.Group("products")
 		{
+			productsGroup.GET("", sv.GetAdminProductsHandler)
 			productsGroup.POST("", sv.AddProductHandler)
 			productsGroup.PUT(":id", sv.UpdateProductHandler)
 			productsGroup.DELETE(":id", sv.DeleteProductHandler)
@@ -107,8 +108,8 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 
 		discounts := admin.Group("discounts")
 		{
-			discounts.POST("", sv.createDiscountHandler)
-			discounts.GET("", sv.getDiscountsHandler)
+			discounts.POST("", sv.CreateDiscountHandler)
+			discounts.GET("", sv.GetDiscountsHandler)
 			discounts.GET(":id", sv.getDiscountByIDHandler)
 			discounts.GET(":id/products", sv.getDiscountProductsByIDHandler)
 			discounts.GET(":id/categories", sv.getDiscountCategoriesByIDHandler)
@@ -134,7 +135,7 @@ func (sv *Server) setupUserRoutes(rg *gin.RouterGroup) {
 	users := rg.Group("user", authenticateMiddleware(sv.tokenGenerator))
 	{
 		users.GET("me", sv.GetCurrentUserHandler)
-		users.PATCH("me", sv.updateUserHandler)
+		users.PATCH("me", sv.UpdateUserHandler)
 		users.POST("send-verify-email", sv.SendVerifyEmailHandler)
 		userAddresses := users.Group("addresses")
 		{
@@ -201,7 +202,7 @@ func (sv *Server) setupPaymentRoutes(rg *gin.RouterGroup) {
 	{
 		payments.GET(":id", sv.getPaymentHandler)
 		payments.GET("stripe-config", sv.getStripeConfig)
-		payments.POST("", sv.createPaymentIntentHandler)
+		payments.POST("", sv.CreatePaymentIntentHandler)
 		payments.PUT(":orderId", sv.changePaymentStatusHandler)
 	}
 }

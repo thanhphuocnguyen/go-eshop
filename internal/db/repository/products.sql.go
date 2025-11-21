@@ -189,79 +189,40 @@ func (q *Queries) DeleteProductVariant(ctx context.Context, arg DeleteProductVar
 	return err
 }
 
-const getDisplayProducts = `-- name: GetDisplayProducts :many
-SELECT p.id, p.name, p.description, p.short_description, p.base_price, p.base_sku, p.slug, p.is_active, p.image_url, p.image_id, p.avg_rating, p.rating_count, p.one_star_count, p.two_star_count, p.three_star_count, p.four_star_count, p.five_star_count, p.created_at, p.updated_at, p.brand_id, MIN(pv.price) as min_price, COUNT(pv.id) as variant_count FROM products as p
-LEFT JOIN collection_products cp ON p.id = cp.product_id
-LEFT JOIN collections c ON cp.collection_id = c.id
-LEFT JOIN category_products catp ON p.id = catp.product_id
-LEFT JOIN categories cat ON catp.category_id = cat.id
-LEFT JOIN brands b ON p.brand_id = b.id
-LEFT JOIN product_variants pv ON pv.product_id = p.id
+const getAdminProductList = `-- name: GetAdminProductList :many
+SELECT p.id, p.name, p.description, p.short_description, p.base_price, p.base_sku, p.slug, p.is_active, p.image_url, p.image_id, p.avg_rating, p.rating_count, p.one_star_count, p.two_star_count, p.three_star_count, p.four_star_count, p.five_star_count, p.created_at, p.updated_at, p.brand_id FROM products as p
 WHERE
     p.is_active = COALESCE($3, p.is_active) 
-    AND p.name ILIKE COALESCE($4, '%')
-    AND ($5::uuid[] is null or p.brand_id = ANY($5::uuid[]))
-    AND ($6::uuid[] is null or c.id = ANY($6::uuid[]))
-    AND ($7::uuid[] is null or cat.id = ANY($7::uuid[]))
-    AND pv.stock > 0
-GROUP BY p.id
-ORDER BY $8::text LIMIT $1 OFFSET $2
+    AND p.name ILIKE COALESCE($4, p.name)
+    AND p.slug ILIKE COALESCE($5, p.slug)
+GROUP BY p.id ORDER BY $6::text LIMIT $1 OFFSET $2
 `
 
-type GetDisplayProductsParams struct {
-	Limit         int64       `json:"limit"`
-	Offset        int64       `json:"offset"`
-	IsActive      *bool       `json:"isActive"`
-	Search        *string     `json:"search"`
-	BrandIds      []uuid.UUID `json:"brandIds"`
-	CollectionIds []uuid.UUID `json:"collectionIds"`
-	CategoryIds   []uuid.UUID `json:"categoryIds"`
-	Orderby       string      `json:"orderby"`
+type GetAdminProductListParams struct {
+	Limit    int64   `json:"limit"`
+	Offset   int64   `json:"offset"`
+	IsActive *bool   `json:"isActive"`
+	Search   *string `json:"search"`
+	Slug     *string `json:"slug"`
+	Orderby  string  `json:"orderby"`
 }
 
-type GetDisplayProductsRow struct {
-	ID               uuid.UUID      `json:"id"`
-	Name             string         `json:"name"`
-	Description      string         `json:"description"`
-	ShortDescription *string        `json:"shortDescription"`
-	BasePrice        pgtype.Numeric `json:"basePrice"`
-	BaseSku          string         `json:"baseSku"`
-	Slug             string         `json:"slug"`
-	IsActive         *bool          `json:"isActive"`
-	ImageUrl         *string        `json:"imageUrl"`
-	ImageID          *string        `json:"imageId"`
-	AvgRating        pgtype.Numeric `json:"avgRating"`
-	RatingCount      int32          `json:"ratingCount"`
-	OneStarCount     int32          `json:"oneStarCount"`
-	TwoStarCount     int32          `json:"twoStarCount"`
-	ThreeStarCount   int32          `json:"threeStarCount"`
-	FourStarCount    int32          `json:"fourStarCount"`
-	FiveStarCount    int32          `json:"fiveStarCount"`
-	CreatedAt        time.Time      `json:"createdAt"`
-	UpdatedAt        time.Time      `json:"updatedAt"`
-	BrandID          pgtype.UUID    `json:"brandId"`
-	MinPrice         pgtype.Numeric `json:"minPrice"`
-	VariantCount     int64          `json:"variantCount"`
-}
-
-func (q *Queries) GetDisplayProducts(ctx context.Context, arg GetDisplayProductsParams) ([]GetDisplayProductsRow, error) {
-	rows, err := q.db.Query(ctx, getDisplayProducts,
+func (q *Queries) GetAdminProductList(ctx context.Context, arg GetAdminProductListParams) ([]Product, error) {
+	rows, err := q.db.Query(ctx, getAdminProductList,
 		arg.Limit,
 		arg.Offset,
 		arg.IsActive,
 		arg.Search,
-		arg.BrandIds,
-		arg.CollectionIds,
-		arg.CategoryIds,
+		arg.Slug,
 		arg.Orderby,
 	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetDisplayProductsRow{}
+	items := []Product{}
 	for rows.Next() {
-		var i GetDisplayProductsRow
+		var i Product
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
@@ -283,8 +244,6 @@ func (q *Queries) GetDisplayProducts(ctx context.Context, arg GetDisplayProducts
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.BrandID,
-			&i.MinPrice,
-			&i.VariantCount,
 		); err != nil {
 			return nil, err
 		}
@@ -371,15 +330,38 @@ func (q *Queries) GetProductBySlug(ctx context.Context, arg GetProductBySlugPara
 }
 
 const getProductDetail = `-- name: GetProductDetail :one
-SELECT p.id, p.name, p.description, p.short_description, p.base_price, p.base_sku, p.slug, p.is_active, p.image_url, p.image_id, p.avg_rating, p.rating_count, p.one_star_count, p.two_star_count, p.three_star_count, p.four_star_count, p.five_star_count, p.created_at, p.updated_at, p.brand_id, c.id AS category_id, c.name AS category_name, cl.id AS collection_id, cl.name AS collection_name, b.id AS brand_id, b.name AS brand_name
+SELECT p.id, p.name, p.description, p.short_description, p.base_price, p.base_sku, p.slug, p.is_active, p.image_url, p.image_id, p.avg_rating, p.rating_count, p.one_star_count, p.two_star_count, p.three_star_count, p.four_star_count, p.five_star_count, p.created_at, p.updated_at, p.brand_id,
+    JSON_BUILD_OBJECT('id', b.id, 'name', b.name) AS brand,
+    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT(
+        'id', c.id,
+        'name', c.name
+    )) AS categories,
+    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT(
+        'id', cl.id,
+        'name', cl.name
+    )) AS collections,
+    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT(
+        'attribute_id', a.id,
+        'attribute_name', a.name,
+        'attribute_values', (
+            SELECT JSONB_AGG(JSONB_BUILD_OBJECT(
+                'value_id', av.id,
+                'value', av.value
+            ))
+            FROM attribute_values av
+            WHERE a.id = av.attribute_id
+        )
+    )) AS attributes
 FROM products p
-LEFT JOIN category_products AS cp ON p.id = cp.product_id
-LEFT JOIN categories as c ON cp.category_id = c.id
 LEFT JOIN brands AS b ON p.brand_id = b.id
+LEFT JOIN category_products AS cp ON p.id = cp.product_id
 LEFT JOIN collection_products AS colp ON p.id = colp.product_id
+LEFT JOIN categories as c ON cp.category_id = c.id
 LEFT JOIN collections as cl ON colp.collection_id = cl.id
+LEFT JOIN product_attributes pa ON p.id = pa.product_id
+LEFT JOIN attributes a ON pa.attribute_id = a.id
 WHERE (p.id = $1 OR p.slug = $2) AND p.is_active = COALESCE($3, TRUE)
-GROUP BY p.id, c.id, cl.id, b.id LIMIT 1
+GROUP BY p.id, b.id LIMIT 1
 `
 
 type GetProductDetailParams struct {
@@ -409,12 +391,10 @@ type GetProductDetailRow struct {
 	CreatedAt        time.Time      `json:"createdAt"`
 	UpdatedAt        time.Time      `json:"updatedAt"`
 	BrandID          pgtype.UUID    `json:"brandId"`
-	CategoryID       pgtype.UUID    `json:"categoryId"`
-	CategoryName     *string        `json:"categoryName"`
-	CollectionID     pgtype.UUID    `json:"collectionId"`
-	CollectionName   *string        `json:"collectionName"`
-	BrandID_2        pgtype.UUID    `json:"brandId2"`
-	BrandName        *string        `json:"brandName"`
+	Brand            []byte         `json:"brand"`
+	Categories       []byte         `json:"categories"`
+	Collections      []byte         `json:"collections"`
+	Attributes       []byte         `json:"attributes"`
 }
 
 func (q *Queries) GetProductDetail(ctx context.Context, arg GetProductDetailParams) (GetProductDetailRow, error) {
@@ -441,14 +421,119 @@ func (q *Queries) GetProductDetail(ctx context.Context, arg GetProductDetailPara
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.BrandID,
-		&i.CategoryID,
-		&i.CategoryName,
-		&i.CollectionID,
-		&i.CollectionName,
-		&i.BrandID_2,
-		&i.BrandName,
+		&i.Brand,
+		&i.Categories,
+		&i.Collections,
+		&i.Attributes,
 	)
 	return i, err
+}
+
+const getProductList = `-- name: GetProductList :many
+SELECT p.id, p.name, p.description, p.short_description, p.base_price, p.base_sku, p.slug, p.is_active, p.image_url, p.image_id, p.avg_rating, p.rating_count, p.one_star_count, p.two_star_count, p.three_star_count, p.four_star_count, p.five_star_count, p.created_at, p.updated_at, p.brand_id, MIN(pv.price) as min_price, COUNT(pv.id) as variant_count FROM products as p
+LEFT JOIN collection_products cp ON p.id = cp.product_id
+LEFT JOIN collections c ON cp.collection_id = c.id
+LEFT JOIN category_products catp ON p.id = catp.product_id
+LEFT JOIN categories cat ON catp.category_id = cat.id
+LEFT JOIN brands b ON p.brand_id = b.id
+LEFT JOIN product_variants pv ON pv.product_id = p.id
+WHERE
+    p.is_active = COALESCE($3, p.is_active) 
+    AND p.name ILIKE COALESCE($4, '%')
+    AND ($5::uuid[] is null or p.brand_id = ANY($5::uuid[]))
+    AND ($6::uuid[] is null or c.id = ANY($6::uuid[]))
+    AND ($7::uuid[] is null or cat.id = ANY($7::uuid[]))
+    AND pv.stock > 0
+GROUP BY p.id
+ORDER BY $8::text LIMIT $1 OFFSET $2
+`
+
+type GetProductListParams struct {
+	Limit         int64       `json:"limit"`
+	Offset        int64       `json:"offset"`
+	IsActive      *bool       `json:"isActive"`
+	Search        *string     `json:"search"`
+	BrandIds      []uuid.UUID `json:"brandIds"`
+	CollectionIds []uuid.UUID `json:"collectionIds"`
+	CategoryIds   []uuid.UUID `json:"categoryIds"`
+	Orderby       string      `json:"orderby"`
+}
+
+type GetProductListRow struct {
+	ID               uuid.UUID      `json:"id"`
+	Name             string         `json:"name"`
+	Description      string         `json:"description"`
+	ShortDescription *string        `json:"shortDescription"`
+	BasePrice        pgtype.Numeric `json:"basePrice"`
+	BaseSku          string         `json:"baseSku"`
+	Slug             string         `json:"slug"`
+	IsActive         *bool          `json:"isActive"`
+	ImageUrl         *string        `json:"imageUrl"`
+	ImageID          *string        `json:"imageId"`
+	AvgRating        pgtype.Numeric `json:"avgRating"`
+	RatingCount      int32          `json:"ratingCount"`
+	OneStarCount     int32          `json:"oneStarCount"`
+	TwoStarCount     int32          `json:"twoStarCount"`
+	ThreeStarCount   int32          `json:"threeStarCount"`
+	FourStarCount    int32          `json:"fourStarCount"`
+	FiveStarCount    int32          `json:"fiveStarCount"`
+	CreatedAt        time.Time      `json:"createdAt"`
+	UpdatedAt        time.Time      `json:"updatedAt"`
+	BrandID          pgtype.UUID    `json:"brandId"`
+	MinPrice         pgtype.Numeric `json:"minPrice"`
+	VariantCount     int64          `json:"variantCount"`
+}
+
+func (q *Queries) GetProductList(ctx context.Context, arg GetProductListParams) ([]GetProductListRow, error) {
+	rows, err := q.db.Query(ctx, getProductList,
+		arg.Limit,
+		arg.Offset,
+		arg.IsActive,
+		arg.Search,
+		arg.BrandIds,
+		arg.CollectionIds,
+		arg.CategoryIds,
+		arg.Orderby,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetProductListRow{}
+	for rows.Next() {
+		var i GetProductListRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.ShortDescription,
+			&i.BasePrice,
+			&i.BaseSku,
+			&i.Slug,
+			&i.IsActive,
+			&i.ImageUrl,
+			&i.ImageID,
+			&i.AvgRating,
+			&i.RatingCount,
+			&i.OneStarCount,
+			&i.TwoStarCount,
+			&i.ThreeStarCount,
+			&i.FourStarCount,
+			&i.FiveStarCount,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.BrandID,
+			&i.MinPrice,
+			&i.VariantCount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getProductVariantByID = `-- name: GetProductVariantByID :one
@@ -512,75 +597,6 @@ func (q *Queries) GetProductVariantList(ctx context.Context, arg GetProductVaria
 			&i.UpdatedAt,
 			&i.ImageUrl,
 			&i.ImageID,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getProducts = `-- name: GetProducts :many
-SELECT p.id, p.name, p.description, p.short_description, p.base_price, p.base_sku, p.slug, p.is_active, p.image_url, p.image_id, p.avg_rating, p.rating_count, p.one_star_count, p.two_star_count, p.three_star_count, p.four_star_count, p.five_star_count, p.created_at, p.updated_at, p.brand_id FROM products as p
-WHERE
-    p.is_active = COALESCE($3, p.is_active) 
-    AND p.name ILIKE COALESCE($4, p.name)
-    AND p.brand_id = COALESCE($5, p.brand_id)
-    AND p.slug ILIKE COALESCE($6, p.slug)
-GROUP BY p.id ORDER BY $7::text LIMIT $1 OFFSET $2
-`
-
-type GetProductsParams struct {
-	Limit    int64       `json:"limit"`
-	Offset   int64       `json:"offset"`
-	IsActive *bool       `json:"isActive"`
-	Search   *string     `json:"search"`
-	BrandID  pgtype.UUID `json:"brandId"`
-	Slug     *string     `json:"slug"`
-	Orderby  string      `json:"orderby"`
-}
-
-func (q *Queries) GetProducts(ctx context.Context, arg GetProductsParams) ([]Product, error) {
-	rows, err := q.db.Query(ctx, getProducts,
-		arg.Limit,
-		arg.Offset,
-		arg.IsActive,
-		arg.Search,
-		arg.BrandID,
-		arg.Slug,
-		arg.Orderby,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Product{}
-	for rows.Next() {
-		var i Product
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Description,
-			&i.ShortDescription,
-			&i.BasePrice,
-			&i.BaseSku,
-			&i.Slug,
-			&i.IsActive,
-			&i.ImageUrl,
-			&i.ImageID,
-			&i.AvgRating,
-			&i.RatingCount,
-			&i.OneStarCount,
-			&i.TwoStarCount,
-			&i.ThreeStarCount,
-			&i.FourStarCount,
-			&i.FiveStarCount,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.BrandID,
 		); err != nil {
 			return nil, err
 		}

@@ -1,7 +1,9 @@
 package api
 
 import (
-	"github.com/google/uuid"
+	"encoding/json"
+
+	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
@@ -37,7 +39,7 @@ func mapAddressToAddressResponse(address repository.UserAddress) AddressResponse
 	}
 }
 
-func mapToProductResponse(productRows repository.GetProductDetailRow) ManageProductDetailResp {
+func mapToProductDetailResponse(productRows repository.GetProductDetailRow) ManageProductDetailResp {
 	basePrice, _ := productRows.BasePrice.Float64Value()
 
 	resp := ManageProductDetailResp{
@@ -61,34 +63,32 @@ func mapToProductResponse(productRows repository.GetProductDetailRow) ManageProd
 		IsActive: *productRows.IsActive,
 		ImageUrl: productRows.ImageUrl,
 		ImageId:  productRows.ImageID,
+
+		// Initialize slices
+		Categories:  []GeneralCategoryResponse{},
+		Collections: []GeneralCategoryResponse{},
+		Attributes:  []ProductAttribute{},
+		Brand:       GeneralCategoryResponse{},
 	}
 
-	if productRows.BrandID.Valid {
-		id, _ := uuid.FromBytes(productRows.BrandID.Bytes[:])
-		resp.Brand = &GeneralCategoryResponse{
-			ID:   id.String(),
-			Name: *productRows.BrandName,
-		}
+	// Unmarshal JSON data
+	if err := json.Unmarshal(productRows.Attributes, &resp.Attributes); err != nil {
+		log.Error().Err(err).Msg("Unmarshal attributes")
 	}
-	if productRows.CategoryID.Valid {
-		id, _ := uuid.FromBytes(productRows.CategoryID.Bytes[:])
-		resp.Category = &GeneralCategoryResponse{
-			ID:   id.String(),
-			Name: *productRows.CategoryName,
-		}
+	if err := json.Unmarshal(productRows.Categories, &resp.Categories); err != nil {
+		log.Error().Err(err).Msg("Unmarshal categories")
 	}
-	if productRows.CollectionID.Valid {
-		collectionID, _ := uuid.FromBytes(productRows.CollectionID.Bytes[:])
-		resp.Collection = &GeneralCategoryResponse{
-			ID:   collectionID.String(),
-			Name: *productRows.CollectionName,
-		}
+	if err := json.Unmarshal(productRows.Collections, &resp.Collections); err != nil {
+		log.Error().Err(err).Msg("Unmarshal collections")
+	}
+	if err := json.Unmarshal(productRows.Brand, &resp.Brand); err != nil {
+		log.Error().Err(err).Msg("Unmarshal brand")
 	}
 
 	return resp
 }
 
-func mapToListProductResponse(productRow repository.Product) ManageProductListModel {
+func mapToAdminProductResponse(productRow repository.Product) ManageProductListModel {
 	basePrice, _ := productRow.BasePrice.Float64Value()
 
 	avgRating := utils.GetAvgRating(productRow.RatingCount, productRow.OneStarCount, productRow.TwoStarCount, productRow.ThreeStarCount, productRow.FourStarCount, productRow.FiveStarCount)
@@ -105,6 +105,26 @@ func mapToListProductResponse(productRow repository.Product) ManageProductListMo
 		ReviewCount: &productRow.RatingCount,
 		CreatedAt:   productRow.CreatedAt.String(),
 		UpdatedAt:   productRow.UpdatedAt.String(),
+	}
+
+	return product
+}
+
+func mapToShopProductResponse(productRow repository.GetProductListRow) ProductListModel {
+	price, _ := productRow.MinPrice.Float64Value()
+	avgRating := utils.GetAvgRating(productRow.RatingCount, productRow.OneStarCount, productRow.TwoStarCount, productRow.ThreeStarCount, productRow.FourStarCount, productRow.FiveStarCount)
+	product := ProductListModel{
+		ID:           productRow.ID.String(),
+		Name:         productRow.Name,
+		Price:        price.Float64,
+		VariantCount: int16(productRow.VariantCount),
+		Slug:         productRow.Slug,
+		AvgRating:    &avgRating,
+		ImageUrl:     productRow.ImageUrl,
+		ImageID:      productRow.ImageID,
+		ReviewCount:  &productRow.RatingCount,
+		CreatedAt:    productRow.CreatedAt.String(),
+		UpdatedAt:    productRow.UpdatedAt.String(),
 	}
 
 	return product

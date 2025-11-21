@@ -9,7 +9,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
-// createDiscountHandler godoc
+// CreateDiscountHandler godoc
 // @Summary Create a new discount
 // @Description Create a new discount
 // @Tags discounts
@@ -20,7 +20,7 @@ import (
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /discounts [post]
-func (sv *Server) createDiscountHandler(c *gin.Context) {
+func (sv *Server) CreateDiscountHandler(c *gin.Context) {
 	// Create a new discount
 	var req CreateDiscountRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -54,7 +54,7 @@ func (sv *Server) createDiscountHandler(c *gin.Context) {
 	c.JSON(http.StatusCreated, createDataResp(c, discount.String(), nil, nil))
 }
 
-// getDiscountsHandler godoc
+// GetDiscountsHandler godoc
 // @Summary Get all discounts
 // @Description Get all discounts
 // @Tags discounts
@@ -69,7 +69,7 @@ func (sv *Server) createDiscountHandler(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /discounts [get]
-func (sv *Server) getDiscountsHandler(c *gin.Context) {
+func (sv *Server) GetDiscountsHandler(c *gin.Context) {
 	var queries DiscountListQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))

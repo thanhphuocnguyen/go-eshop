@@ -126,12 +126,12 @@ type UpdateCategoryRequest struct {
 }
 
 type ProductQueries struct {
-	Page         int64    `form:"page,default=1" binding:"omitempty,min=1"`
-	PageSize     int64    `form:"pageSize,default=20" binding:"omitempty,min=1,max=100"`
-	Search       *string  `form:"search" binding:"omitempty,max=1000"`
-	CategoryIDs  []string `form:"categoryIds" binding:"omitempty,uuidslice"`
-	BrandID      *string  `form:"brandId" binding:"omitempty,uuid4"`
-	CollectionID *string  `form:"collectionId" binding:"omitempty,uuid4"`
+	Page         int64     `form:"page,default=1" binding:"omitempty,min=1"`
+	PageSize     int64     `form:"pageSize,default=20" binding:"omitempty,min=1,max=100"`
+	Search       *string   `form:"search" binding:"omitempty,max=1000"`
+	CategoryIDs  *[]string `form:"categoryIds" binding:"omitempty,uuidslice"`
+	BrandIDs     *[]string `form:"brandIds" binding:"omitempty,uuid4"`
+	CollectionID *[]string `form:"collectionIds" binding:"omitempty,uuid4"`
 }
 
 type OrderListQuery struct {
@@ -293,10 +293,10 @@ type ManageProductDetailResp struct {
 	UpdatedAt string `json:"updatedAt"`
 	CreatedAt string `json:"createdAt"`
 
-	Attributes []int32                  `json:"attributes,omitempty"`
-	Collection *GeneralCategoryResponse `json:"collection,omitempty"`
-	Brand      *GeneralCategoryResponse `json:"brand,omitempty"`
-	Category   *GeneralCategoryResponse `json:"category,omitempty"`
+	Attributes  []ProductAttribute        `json:"attributes,omitempty"`
+	Brand       GeneralCategoryResponse   `json:"brand,omitempty"`
+	Collections []GeneralCategoryResponse `json:"collections,omitempty"`
+	Categories  []GeneralCategoryResponse `json:"categories,omitempty"`
 }
 
 type GeneralCategoryResponse struct {
@@ -548,17 +548,30 @@ type ProductRatingModel struct {
 }
 
 type ManageProductListModel struct {
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	BasePrice   float64  `json:"basePrice,omitzero"`
+	Slug        string   `json:"slug,omitempty"`
+	Sku         string   `json:"sku"`
+	ImageUrl    *string  `json:"imageUrl,omitempty"`
+	AvgRating   *float64 `json:"avgRating,omitempty"`
+	ReviewCount *int32   `json:"reviewCount,omitempty"`
+	ImgID       *string  `json:"imageId,omitempty"`
+	CreatedAt   string   `json:"createdAt,omitempty"`
+	UpdatedAt   string   `json:"updatedAt,omitempty"`
+}
+
+type ProductListModel struct {
 	ID           string   `json:"id"`
 	Name         string   `json:"name"`
-	Description  string   `json:"description"`
-	VariantCount int64    `json:"variantCount,omitzero"`
-	BasePrice    float64  `json:"basePrice,omitzero"`
+	Price        float64  `json:"price,omitzero"`
 	Slug         string   `json:"slug,omitempty"`
-	Sku          string   `json:"sku"`
 	ImageUrl     *string  `json:"imageUrl,omitempty"`
 	AvgRating    *float64 `json:"avgRating,omitempty"`
+	VariantCount int16    `json:"variantCount,omitzero"`
 	ReviewCount  *int32   `json:"reviewCount,omitempty"`
-	ImgID        *string  `json:"imageId,omitempty"`
+	ImageID      *string  `json:"imageId,omitempty"`
 	CreatedAt    string   `json:"createdAt,omitempty"`
 	UpdatedAt    string   `json:"updatedAt,omitempty"`
 }
@@ -643,7 +656,15 @@ type AttributeRespModel struct {
 	Name   string           `json:"name"`
 	Values []AttributeValue `json:"values"`
 }
-
+type ProductAttributeValue struct {
+	Value   string `json:"value"`
+	ValueId int64  `json:"value_id"`
+}
+type ProductAttribute struct {
+	ID     int32            `json:"attribute_id"`
+	Name   string           `json:"attribute_name"`
+	Values []AttributeValue `json:"attribute_values"`
+}
 type CreateProductReq struct {
 	Name             string  `json:"name" binding:"required,min=3,max=255"`
 	Description      string  `json:"description" binding:"required"`
@@ -659,14 +680,14 @@ type CreateProductReq struct {
 	CollectionIDs []string `json:"collectionIds" binding:"omitempty,uuidslice"`
 }
 type UpdateProductReq struct {
-	Name             *string  `json:"name" binding:"min=3,max=255"`
-	Description      *string  `json:"description"`
+	Name             *string  `json:"name" binding:"omitempty,min=3,max=255"`
+	Description      *string  `json:"description" binding:"omitempty"`
 	ShortDescription *string  `json:"shortDescription" binding:"omitempty,max=1000"`
-	Attributes       *[]int32 `json:"attributes" binding:""`
-	BasePrice        *float64 `json:"price" binding:"gt=0"`
-	BaseSku          *string  `json:"sku" binding:"min=3,max=100"`
-	IsActive         *bool    `json:"isActive" binding:""`
-	Slug             *string  `json:"slug" binding:"min=3,max=255"`
+	Attributes       *[]int32 `json:"attributes" binding:"omitempty"`
+	BasePrice        *float64 `json:"price" binding:"omitempty,gt=0"`
+	BaseSku          *string  `json:"sku" binding:"omitempty,min=3,max=100"`
+	IsActive         *bool    `json:"isActive" binding:"omitempty"`
+	Slug             *string  `json:"slug" binding:"omitempty,min=3,max=255"`
 	BrandID          *string  `json:"brandId" binding:"omitempty,uuid"`
 
 	CategoryIDs   *[]string `json:"categoryIds" binding:"omitempty,uuidslice"`
