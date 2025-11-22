@@ -110,7 +110,7 @@ func (sv *Server) AddProductHandler(c *gin.Context) {
 // @Accept json
 // @Param productId path int true "Product ID"
 // @Produce json
-// @Success 200 {object} ApiResponse[ManageProductDetailResp]
+// @Success 200 {object} ApiResponse[ProductDetailDto]
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /products/{productId} [get]
@@ -151,7 +151,7 @@ func (sv *Server) GetProductByIdHandler(c *gin.Context) {
 // @Param page query int true "Page number"
 // @Param pageSize query int true "Page size"
 // @Produce json
-// @Success 200 {array} ApiResponse[[]ManageProductListModel]
+// @Success 200 {array} ApiResponse[[]ProductSummary]
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products [get]
@@ -204,7 +204,7 @@ func (sv *Server) GetAdminProductsHandler(c *gin.Context) {
 // @Param page query int true "Page number"
 // @Param pageSize query int true "Page size"
 // @Produce json
-// @Success 200 {array} ApiResponse[[]ManageProductListModel]
+// @Success 200 {array} ApiResponse[[]ProductSummary]
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /products [get]
@@ -531,6 +531,7 @@ func (sv *Server) AddVariantHandler(c *gin.Context) {
 		c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
 		return
 	}
+
 	prodAttrs, err := sv.repo.GetProductAttributesByProductID(c, prod.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
@@ -540,6 +541,7 @@ func (sv *Server) AddVariantHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("product has no attributes")))
 		return
 	}
+
 	prodAttrIds := make([]int32, len(prodAttrs))
 	for i, attr := range prodAttrs {
 		prodAttrIds[i] = attr.AttributeID
@@ -550,6 +552,12 @@ func (sv *Server) AddVariantHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
+
+	if len(attributeValues) != len(prodAttrIds) {
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("attribute values do not match product attributes")))
+		return
+	}
+
 	for _, attrVal := range attributeValues {
 		if !slices.Contains(prodAttrIds, attrVal.AttributeID) {
 			c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("attribute value does not belong to product attributes")))
@@ -601,7 +609,7 @@ func (sv *Server) AddVariantHandler(c *gin.Context) {
 // @Tags products
 // @Accept json
 // @Produce json
-// @Success 200 {object} ApiResponse[[]repository.ProductVariant]
+// @Success 200 {object} ApiResponse[[]VariantModelDto]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /products/{id}/variants [get]
@@ -623,7 +631,12 @@ func (sv *Server) GetVariantsHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, variantRows, nil, nil))
+	resp := make([]VariantModelDto, len(variantRows))
+	for i, row := range variantRows {
+		resp[i] = mapToVariantListModelDto(row)
+	}
+
+	c.JSON(http.StatusOK, createDataResp(c, resp, nil, nil))
 }
 
 // @Summary Get product variant
@@ -634,7 +647,7 @@ func (sv *Server) GetVariantsHandler(c *gin.Context) {
 // @Produce json
 // @Param id path string true "Product ID"
 // @Param variantID path string true "Product Variant ID"
-// @Success 200 {object} ApiResponse[VariantModel]
+// @Success 200 {object} ApiResponse[VariantModelDto]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /products/{id}/variants/{variantID} [get]
@@ -667,11 +680,11 @@ func (sv *Server) GetVariantHandler(c *gin.Context) {
 	}
 	first := rows[0]
 	price, _ := first.Price.Float64Value()
-	resp := VariantModel{
+	resp := VariantModelDto{
 		ID:         first.ID.String(),
 		Price:      price.Float64,
 		Stock:      first.Stock,
-		Sku:        &first.Sku,
+		Sku:        first.Sku,
 		Attributes: make([]AttributeValue, len(rows)),
 		CreatedAt:  first.CreatedAt.String(),
 		UpdatedAt:  first.UpdatedAt.String(),

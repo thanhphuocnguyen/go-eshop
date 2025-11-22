@@ -20,7 +20,7 @@ import (
 // @Produce json
 // @Param page query int false "Page number"
 // @Param pageSize query int false "Page size"
-// @Success 200 {object} ApiResponse[[]CategoryListResponse]
+// @Success 200 {object} ApiResponse[[]AdminCategoryDto]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /categories [get]
@@ -198,7 +198,7 @@ func (sv *Server) createCategoryHandler(c *gin.Context) {
 // @Produce json
 // @Param page query int false "Page number"
 // @Param pageSize query int false "Page size"
-// @Success 200 {object} ApiResponse[[]CategoryResponse]
+// @Success 200 {object} ApiResponse[[]CategoryDto]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/categories [get]

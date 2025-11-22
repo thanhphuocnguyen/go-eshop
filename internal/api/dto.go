@@ -19,7 +19,6 @@ type CreateCategoryRequest struct {
 	Slug         string                `form:"slug" binding:"required,min=3,max=255"`
 	Description  *string               `form:"description" binding:"omitempty,max=1000"`
 	DisplayOrder *int16                `form:"displayOrder" binding:"omitempty"`
-	Remarkable   *bool                 `form:"remarkable" binding:"omitempty"`
 	Image        *multipart.FileHeader `form:"image" binding:"omitempty"`
 }
 
@@ -80,6 +79,11 @@ type UpdateCartItemQtyRequest struct {
 	Quantity int16 `json:"quantity" binding:"required,gt=0"`
 }
 
+type AddCartItemReq struct {
+	VariantID string `json:"variantId" binding:"required,uuid"`
+	Quantity  int16  `json:"quantity" binding:"required,gt=0"`
+}
+
 type CheckoutAddress struct {
 	Phone    string  `json:"phone"`
 	Street   string  `json:"street"`
@@ -120,7 +124,6 @@ type UpdateCategoryRequest struct {
 	Description  *string               `form:"description" binding:"omitempty,max=1000"`
 	Slug         *string               `form:"slug" binding:"omitempty,min=3,max=255"`
 	Published    *bool                 `form:"published" binding:"omitempty"`
-	Remarkable   *bool                 `form:"remarkable" binding:"omitempty"`
 	DisplayOrder *int16                `form:"displayOrder" binding:"omitempty"`
 	Image        *multipart.FileHeader `form:"image" binding:"omitempty"`
 }
@@ -246,7 +249,6 @@ type MetaInfo struct {
 
 // Response types - unchanged
 type ApiResponse[T any] struct {
-	Success    bool        `json:"success"`
 	Message    string      `json:"message"`
 	Data       *T          `json:"data,omitempty,omitzero"`
 	Error      *ApiError   `json:"error,omitempty"`
@@ -271,7 +273,7 @@ type Pagination struct {
 	HasPreviousPage bool  `json:"hasPreviousPage"`
 }
 
-type ManageProductDetailResp struct {
+type ProductDetailDto struct {
 	ID               string  `json:"id"`
 	Name             string  `json:"name"`
 	Description      string  `json:"description"`
@@ -445,16 +447,16 @@ type UserDetail struct {
 }
 
 type CartItemResponse struct {
-	ID         string             `json:"id" binding:"required,uuid"`
-	ProductID  string             `json:"productId" binding:"required,uuid"`
-	VariantID  string             `json:"variantId" binding:"required,uuid"`
-	Name       string             `json:"name"`
-	Quantity   int16              `json:"quantity"`
-	Price      float64            `json:"price"`
-	StockQty   int32              `json:"stock"`
-	Sku        *string            `json:"sku,omitempty"`
-	ImageURL   *string            `json:"imageUrl,omitempty"`
-	Attributes []ProductAttribute `json:"attributes"`
+	ID         string           `json:"id" binding:"required,uuid"`
+	ProductID  string           `json:"productId" binding:"required,uuid"`
+	VariantID  string           `json:"variantId" binding:"required,uuid"`
+	Name       string           `json:"name"`
+	Quantity   int16            `json:"quantity"`
+	Price      float64          `json:"price"`
+	StockQty   int32            `json:"stock"`
+	Sku        *string          `json:"sku,omitempty"`
+	ImageURL   *string          `json:"imageUrl,omitempty"`
+	Attributes []AttributeValue `json:"attributes"`
 }
 
 type CartDetailResponse struct {
@@ -590,13 +592,13 @@ type ProductVariantImageModel struct {
 	ImageID   string `json:"imageId"`
 }
 
-type VariantModel struct {
+type VariantModelDto struct {
 	ID         string           `json:"id"`
 	Price      float64          `json:"price"`
 	Stock      int32            `json:"stock"`
 	IsActive   bool             `json:"isActive"`
+	Sku        string           `json:"sku,omitempty"`
 	Weight     *float64         `json:"weight,omitempty"`
-	Sku        *string          `json:"sku,omitempty"`
 	ImageUrl   *string          `json:"imageUrl,omitempty"`
 	ImageID    *string          `json:"imageId,omitempty"`
 	Attributes []AttributeValue `json:"attributeValues,omitempty"`
@@ -651,33 +653,32 @@ type ProductAttributeValue struct {
 type ProductAttribute struct {
 	ID     int32            `json:"attribute_id"`
 	Name   string           `json:"attribute_name"`
-	Values []AttributeValue `json:"attribute_values"`
+	Values []AttributeValue `json:"attribute_values.,omitempty"`
 }
 type CreateProductReq struct {
+	ShortDescription *string `json:"shortDescription" binding:"omitempty,max=1000"`
+	BasePrice        float64 `json:"price" binding:"required,gt=0"`
 	Name             string  `json:"name" binding:"required,min=3,max=255"`
 	Description      string  `json:"description" binding:"required"`
-	ShortDescription *string `json:"shortDescription" binding:"omitempty,max=1000"`
-	Attributes       []int32 `json:"attributes" binding:"required,required"`
-	BasePrice        float64 `json:"price" binding:"required,gt=0"`
 	BaseSku          string  `json:"sku" binding:"required,min=3,max=100"`
-	IsActive         bool    `json:"isActive" binding:"required"`
 	Slug             string  `json:"slug" binding:"required,min=3,max=255"`
-	BrandID          string  `json:"brandId" binding:"omitempty,uuid"`
+	BrandID          string  `json:"brandId" binding:"required,uuid"`
 
+	Attributes    []int32  `json:"attributes" binding:"omitempty"`
 	CategoryIDs   []string `json:"categoryIds" binding:"omitempty,uuidslice"`
 	CollectionIDs []string `json:"collectionIds" binding:"omitempty,uuidslice"`
 }
 type UpdateProductReq struct {
+	IsActive         *bool    `json:"isActive" binding:"omitempty"`
+	BasePrice        *float64 `json:"price" binding:"omitempty,gt=0"`
 	Name             *string  `json:"name" binding:"omitempty,min=3,max=255"`
 	Description      *string  `json:"description" binding:"omitempty"`
 	ShortDescription *string  `json:"shortDescription" binding:"omitempty,max=1000"`
-	Attributes       *[]int32 `json:"attributes" binding:"omitempty"`
-	BasePrice        *float64 `json:"price" binding:"omitempty,gt=0"`
 	BaseSku          *string  `json:"sku" binding:"omitempty,min=3,max=100"`
-	IsActive         *bool    `json:"isActive" binding:"omitempty"`
 	Slug             *string  `json:"slug" binding:"omitempty,min=3,max=255"`
 	BrandID          *string  `json:"brandId" binding:"omitempty,uuid"`
 
+	Attributes    *[]int32  `json:"attributes" binding:"omitempty"`
 	CategoryIDs   *[]string `json:"categoryIds" binding:"omitempty,uuidslice"`
 	CollectionIDs *[]string `json:"collectionIds" binding:"omitempty,uuidslice"`
 }

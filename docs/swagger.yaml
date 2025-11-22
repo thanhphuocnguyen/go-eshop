@@ -19,6 +19,29 @@ definitions:
       ward:
         type: string
     type: object
+  api.AdminCategoryDto:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      imageUrl:
+        type: string
+      name:
+        type: string
+      products:
+        items:
+          $ref: '#/definitions/api.ProductListDTO'
+        type: array
+      published:
+        type: boolean
+      slug:
+        type: string
+      updatedAt:
+        type: string
+    type: object
   api.ApiError:
     properties:
       code:
@@ -40,8 +63,6 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
     type: object
   api.ApiResponse-api_AttributeRespModel:
     properties:
@@ -55,8 +76,6 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
     type: object
   api.ApiResponse-api_CartDetailResponse:
     properties:
@@ -70,13 +89,11 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
     type: object
-  api.ApiResponse-api_CategoryResponse:
+  api.ApiResponse-api_CategoryDto:
     properties:
       data:
-        $ref: '#/definitions/api.CategoryResponse'
+        $ref: '#/definitions/api.CategoryDto'
       error:
         $ref: '#/definitions/api.ApiError'
       message:
@@ -85,8 +102,6 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
     type: object
   api.ApiResponse-api_DiscountDetailResponseModel:
     properties:
@@ -100,8 +115,6 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
     type: object
   api.ApiResponse-api_DiscountLinkObject:
     properties:
@@ -115,8 +128,6 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
     type: object
   api.ApiResponse-api_LoginResponse:
     properties:
@@ -130,23 +141,6 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
-    type: object
-  api.ApiResponse-api_ManageProductDetailResp:
-    properties:
-      data:
-        $ref: '#/definitions/api.ManageProductDetailResp'
-      error:
-        $ref: '#/definitions/api.ApiError'
-      message:
-        type: string
-      meta:
-        $ref: '#/definitions/api.MetaInfo'
-      pagination:
-        $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
     type: object
   api.ApiResponse-api_OrderDetailResponse:
     properties:
@@ -160,8 +154,6 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
     type: object
   api.ApiResponse-api_OrderListResponse:
     properties:
@@ -175,8 +167,6 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
     type: object
   api.ApiResponse-api_PaymentResponse:
     properties:
@@ -190,8 +180,19 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
+    type: object
+  api.ApiResponse-api_ProductDetailDto:
+    properties:
+      data:
+        $ref: '#/definitions/api.ProductDetailDto'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
     type: object
   api.ApiResponse-api_ProductRatingModel:
     properties:
@@ -205,8 +206,6 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
     type: object
   api.ApiResponse-api_RefreshTokenResponse:
     properties:
@@ -220,8 +219,6 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
     type: object
   api.ApiResponse-api_UserDetail:
     properties:
@@ -235,13 +232,11 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
     type: object
-  api.ApiResponse-api_VariantModel:
+  api.ApiResponse-api_VariantModelDto:
     properties:
       data:
-        $ref: '#/definitions/api.VariantModel'
+        $ref: '#/definitions/api.VariantModelDto'
       error:
         $ref: '#/definitions/api.ApiError'
       message:
@@ -250,8 +245,6 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
     type: object
   api.ApiResponse-array_api_AddressResponse:
     properties:
@@ -267,8 +260,21 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
+    type: object
+  api.ApiResponse-array_api_AdminCategoryDto:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/api.AdminCategoryDto'
+        type: array
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
     type: object
   api.ApiResponse-array_api_AttributeRespModel:
     properties:
@@ -284,14 +290,12 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
     type: object
-  api.ApiResponse-array_api_CategoryListResponse:
+  api.ApiResponse-array_api_CategoryDto:
     properties:
       data:
         items:
-          $ref: '#/definitions/api.CategoryListResponse'
+          $ref: '#/definitions/api.CategoryDto'
         type: array
       error:
         $ref: '#/definitions/api.ApiError'
@@ -301,25 +305,6 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
-    type: object
-  api.ApiResponse-array_api_CategoryResponse:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/api.CategoryResponse'
-        type: array
-      error:
-        $ref: '#/definitions/api.ApiError'
-      message:
-        type: string
-      meta:
-        $ref: '#/definitions/api.MetaInfo'
-      pagination:
-        $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
     type: object
   api.ApiResponse-array_api_DiscountListItemResponseModel:
     properties:
@@ -335,8 +320,6 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
     type: object
   api.ApiResponse-array_api_ImageResponse:
     properties:
@@ -352,25 +335,6 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
-    type: object
-  api.ApiResponse-array_api_ManageProductListModel:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/api.ManageProductListModel'
-        type: array
-      error:
-        $ref: '#/definitions/api.ApiError'
-      message:
-        type: string
-      meta:
-        $ref: '#/definitions/api.MetaInfo'
-      pagination:
-        $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
     type: object
   api.ApiResponse-array_api_OrderListResponse:
     properties:
@@ -386,8 +350,6 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
     type: object
   api.ApiResponse-array_api_ProductRatingModel:
     properties:
@@ -403,8 +365,21 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
+    type: object
+  api.ApiResponse-array_api_ProductSummary:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/api.ProductSummary'
+        type: array
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
     type: object
   api.ApiResponse-array_api_UserDetail:
     properties:
@@ -420,8 +395,21 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
+    type: object
+  api.ApiResponse-array_api_VariantModelDto:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/api.VariantModelDto'
+        type: array
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
     type: object
   api.ApiResponse-array_repository_GetAvailableDiscountsForCartRow:
     properties:
@@ -437,25 +425,6 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
-    type: object
-  api.ApiResponse-array_repository_ProductVariant:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/repository.ProductVariant'
-        type: array
-      error:
-        $ref: '#/definitions/api.ApiError'
-      message:
-        type: string
-      meta:
-        $ref: '#/definitions/api.MetaInfo'
-      pagination:
-        $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
     type: object
   api.ApiResponse-bool:
     properties:
@@ -469,8 +438,6 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
     type: object
   api.ApiResponse-repository_Attribute:
     properties:
@@ -484,8 +451,6 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
     type: object
   api.ApiResponse-repository_Category:
     properties:
@@ -499,8 +464,6 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
     type: object
   api.ApiResponse-repository_CreatePaymentResult:
     properties:
@@ -514,8 +477,19 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
+    type: object
+  api.ApiResponse-repository_Product:
+    properties:
+      data:
+        $ref: '#/definitions/repository.Product'
+      error:
+        $ref: '#/definitions/api.ApiError'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/api.MetaInfo'
+      pagination:
+        $ref: '#/definitions/api.Pagination'
     type: object
   api.ApiResponse-repository_ProductVariant:
     properties:
@@ -529,8 +503,6 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
     type: object
   api.ApiResponse-repository_UpdateUserRow:
     properties:
@@ -544,8 +516,6 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
     type: object
   api.ApiResponse-string:
     properties:
@@ -559,8 +529,6 @@ definitions:
         $ref: '#/definitions/api.MetaInfo'
       pagination:
         $ref: '#/definitions/api.Pagination'
-      success:
-        type: boolean
     type: object
   api.AttributeRequest:
     properties:
@@ -615,10 +583,8 @@ definitions:
     properties:
       attributes:
         items:
-          $ref: '#/definitions/repository.AttributeDataSnapshot'
+          $ref: '#/definitions/api.ProductAttribute'
         type: array
-      categoryId:
-        type: string
       id:
         type: string
       imageUrl:
@@ -642,18 +608,7 @@ definitions:
     - productId
     - variantId
     type: object
-  api.CategoryLinkedProduct:
-    properties:
-      id:
-        type: string
-      imageUrl:
-        type: string
-      name:
-        type: string
-      variantCount:
-        type: integer
-    type: object
-  api.CategoryListResponse:
+  api.CategoryDto:
     properties:
       createdAt:
         type: string
@@ -667,38 +622,11 @@ definitions:
         type: string
       products:
         items:
-          $ref: '#/definitions/api.ManageProductListModel'
-        type: array
-      published:
-        type: boolean
-      remarkable:
-        type: boolean
-      slug:
-        type: string
-      updatedAt:
-        type: string
-    type: object
-  api.CategoryResponse:
-    properties:
-      createdAt:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      imageUrl:
-        type: string
-      name:
-        type: string
-      products:
-        items:
-          $ref: '#/definitions/api.CategoryLinkedProduct'
+          $ref: '#/definitions/api.ProductSummary'
         type: array
       published:
         type: boolean
       slug:
-        type: string
-      updatedAt:
         type: string
     type: object
   api.CheckoutAddress:
@@ -782,8 +710,6 @@ definitions:
         maxLength: 255
         minLength: 3
         type: string
-      remarkable:
-        type: boolean
       slug:
         maxLength: 255
         minLength: 3
@@ -872,14 +798,16 @@ definitions:
         type: array
       brandId:
         type: string
-      categoryId:
-        type: string
-      collectionId:
-        type: string
+      categoryIds:
+        items:
+          type: string
+        type: array
+      collectionIds:
+        items:
+          type: string
+        type: array
       description:
         type: string
-      isActive:
-        type: boolean
       name:
         maxLength: 255
         minLength: 3
@@ -898,10 +826,8 @@ definitions:
         minLength: 3
         type: string
     required:
-    - attributes
-    - categoryId
+    - brandId
     - description
-    - isActive
     - name
     - price
     - sku
@@ -1050,84 +976,6 @@ definitions:
       sessionId:
         type: string
     type: object
-  api.ManageProductDetailResp:
-    properties:
-      attributes:
-        items:
-          type: integer
-        type: array
-      brand:
-        $ref: '#/definitions/api.GeneralCategoryResponse'
-      category:
-        $ref: '#/definitions/api.GeneralCategoryResponse'
-      collection:
-        $ref: '#/definitions/api.GeneralCategoryResponse'
-      createdAt:
-        type: string
-      description:
-        type: string
-      fiveStarCount:
-        type: integer
-      fourStarCount:
-        type: integer
-      id:
-        type: string
-      imageId:
-        type: string
-      imageUrl:
-        type: string
-      isActive:
-        type: boolean
-      name:
-        type: string
-      oneStarCount:
-        type: integer
-      price:
-        type: number
-      ratingCount:
-        type: integer
-      shortDescription:
-        type: string
-      sku:
-        type: string
-      slug:
-        type: string
-      threeStarCount:
-        type: integer
-      twoStarCount:
-        type: integer
-      updatedAt:
-        type: string
-    type: object
-  api.ManageProductListModel:
-    properties:
-      avgRating:
-        type: number
-      basePrice:
-        type: number
-      createdAt:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      imageId:
-        type: string
-      imageUrl:
-        type: string
-      name:
-        type: string
-      reviewCount:
-        type: integer
-      sku:
-        type: string
-      slug:
-        type: string
-      updatedAt:
-        type: string
-      variantCount:
-        type: integer
-    type: object
   api.MetaInfo:
     properties:
       method:
@@ -1261,6 +1109,97 @@ definitions:
       status:
         $ref: '#/definitions/repository.PaymentStatus'
     type: object
+  api.ProductAttribute:
+    properties:
+      attribute_id:
+        type: integer
+      attribute_name:
+        type: string
+      attribute_values.:
+        items:
+          $ref: '#/definitions/api.AttributeValue'
+        type: array
+    type: object
+  api.ProductDetailDto:
+    properties:
+      attributes:
+        items:
+          $ref: '#/definitions/api.ProductAttribute'
+        type: array
+      brand:
+        $ref: '#/definitions/api.GeneralCategoryResponse'
+      categories:
+        items:
+          $ref: '#/definitions/api.GeneralCategoryResponse'
+        type: array
+      collections:
+        items:
+          $ref: '#/definitions/api.GeneralCategoryResponse'
+        type: array
+      createdAt:
+        type: string
+      description:
+        type: string
+      fiveStarCount:
+        type: integer
+      fourStarCount:
+        type: integer
+      id:
+        type: string
+      imageId:
+        type: string
+      imageUrl:
+        type: string
+      isActive:
+        type: boolean
+      name:
+        type: string
+      oneStarCount:
+        type: integer
+      price:
+        type: number
+      ratingCount:
+        type: integer
+      shortDescription:
+        type: string
+      sku:
+        type: string
+      slug:
+        type: string
+      threeStarCount:
+        type: integer
+      twoStarCount:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  api.ProductListDTO:
+    properties:
+      avgRating:
+        type: number
+      basePrice:
+        type: number
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      imageId:
+        type: string
+      imageUrl:
+        type: string
+      name:
+        type: string
+      reviewCount:
+        type: integer
+      sku:
+        type: string
+      slug:
+        type: string
+      updatedAt:
+        type: string
+    type: object
   api.ProductRatingModel:
     properties:
       count:
@@ -1291,6 +1230,31 @@ definitions:
         type: string
       verifiedPurchase:
         type: boolean
+    type: object
+  api.ProductSummary:
+    properties:
+      avgRating:
+        type: number
+      createdAt:
+        type: string
+      id:
+        type: string
+      imageId:
+        type: string
+      imageUrl:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      reviewCount:
+        type: integer
+      slug:
+        type: string
+      updatedAt:
+        type: string
+      variantCount:
+        type: integer
     type: object
   api.RatingImageModel:
     properties:
@@ -1391,8 +1355,6 @@ definitions:
         type: string
       published:
         type: boolean
-      remarkable:
-        type: boolean
       slug:
         maxLength: 255
         minLength: 3
@@ -1426,10 +1388,14 @@ definitions:
         type: array
       brandId:
         type: string
-      categoryId:
-        type: string
-      collectionId:
-        type: string
+      categoryIds:
+        items:
+          type: string
+        type: array
+      collectionIds:
+        items:
+          type: string
+        type: array
       description:
         type: string
       isActive:
@@ -1516,7 +1482,7 @@ definitions:
       verifiedPhone:
         type: boolean
     type: object
-  api.VariantModel:
+  api.VariantModelDto:
     properties:
       attributeValues:
         items:
@@ -1702,6 +1668,49 @@ definitions:
     - PaymentStatusCancelled
     - PaymentStatusRefunded
     - PaymentStatusProcessing
+  repository.Product:
+    properties:
+      avgRating:
+        $ref: '#/definitions/pgtype.Numeric'
+      basePrice:
+        $ref: '#/definitions/pgtype.Numeric'
+      baseSku:
+        type: string
+      brandId:
+        type: string
+      createdAt:
+        type: string
+      description:
+        type: string
+      fiveStarCount:
+        type: integer
+      fourStarCount:
+        type: integer
+      id:
+        type: string
+      imageId:
+        type: string
+      imageUrl:
+        type: string
+      isActive:
+        type: boolean
+      name:
+        type: string
+      oneStarCount:
+        type: integer
+      ratingCount:
+        type: integer
+      shortDescription:
+        type: string
+      slug:
+        type: string
+      threeStarCount:
+        type: integer
+      twoStarCount:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
   repository.ProductVariant:
     properties:
       createdAt:
@@ -1958,6 +1967,37 @@ paths:
       summary: Set default address
       tags:
       - address
+  /admin/brands:
+    post:
+      consumes:
+      - application/json
+      description: Create a new Brand
+      operationId: create-Brand
+      parameters:
+      - description: Brand request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.CreateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/api.ApiResponse-api_CategoryDto'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+      summary: Create a new Brand
+      tags:
+      - Admin
   /admin/brands/{id}:
     delete:
       consumes:
@@ -2005,7 +2045,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryDto'
         "400":
           description: Bad Request
           schema:
@@ -2040,7 +2080,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryDto'
         "400":
           description: Bad Request
           schema:
@@ -2073,7 +2113,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_CategoryResponse'
+            $ref: '#/definitions/api.ApiResponse-array_api_CategoryDto'
         "400":
           description: Bad Request
           schema:
@@ -2103,7 +2143,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryDto'
         "400":
           description: Bad Request
           schema:
@@ -2160,7 +2200,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryDto'
         "400":
           description: Bad Request
           schema:
@@ -2232,7 +2272,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryDto'
         "400":
           description: Bad Request
           schema:
@@ -2262,7 +2302,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryDto'
         "400":
           description: Bad Request
           schema:
@@ -2319,7 +2359,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryDto'
         "400":
           description: Bad Request
           schema:
@@ -2358,7 +2398,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryDto'
         "400":
           description: Bad Request
           schema:
@@ -2451,6 +2491,42 @@ paths:
       summary: Get order details by ID (Admin endpoint)
       tags:
       - Admin
+  /admin/products:
+    get:
+      consumes:
+      - application/json
+      description: get admin list of products
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/api.ApiResponse-array_api_ProductSummary'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
+      summary: Get admin list of products
+      tags:
+      - products
   /admin/ratings:
     get:
       consumes:
@@ -2945,7 +3021,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_CategoryResponse'
+            $ref: '#/definitions/api.ApiResponse-array_api_CategoryDto'
         "400":
           description: Bad Request
           schema:
@@ -2957,37 +3033,7 @@ paths:
       summary: Get a list of brands
       tags:
       - Admin
-    post:
-      consumes:
-      - application/json
-      description: Create a new Brand
-      operationId: create-Brand
-      parameters:
-      - description: Brand request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/api.CreateCategoryRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
-      summary: Create a new Brand
-      tags:
-      - Admin
-  /cart:
+  /carts:
     get:
       consumes:
       - application/json
@@ -3056,7 +3102,7 @@ paths:
       summary: Create a new cart
       tags:
       - carts
-  /cart/checkoutHandler:
+  /carts/CheckoutHandler:
     post:
       consumes:
       - application/json
@@ -3098,7 +3144,7 @@ paths:
       summary: Update product items in the cart
       tags:
       - carts
-  /cart/clear:
+  /carts/clear:
     put:
       consumes:
       - application/json
@@ -3131,7 +3177,7 @@ paths:
       summary: Clear the cart
       tags:
       - carts
-  /cart/discounts:
+  /carts/discounts:
     get:
       consumes:
       - application/json
@@ -3154,7 +3200,7 @@ paths:
       summary: Get cart discounts
       tags:
       - carts
-  /cart/item/{id}:
+  /carts/items/{id}:
     delete:
       consumes:
       - application/json
@@ -3195,7 +3241,7 @@ paths:
       summary: Remove a product from the cart
       tags:
       - carts
-  /cart/item/{variant_id}:
+  /carts/items/{variant_id}:
     post:
       consumes:
       - application/json
@@ -3222,7 +3268,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
-      summary: Add a product to the cart
+      summary: update product quantity in the cart
       tags:
       - carts
   /categories:
@@ -3246,7 +3292,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_CategoryListResponse'
+            $ref: '#/definitions/api.ApiResponse-array_api_AdminCategoryDto'
         "400":
           description: Bad Request
           schema:
@@ -3280,7 +3326,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryDto'
         "400":
           description: Bad Request
           schema:
@@ -3310,7 +3356,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_CategoryResponse'
+            $ref: '#/definitions/api.ApiResponse-api_CategoryDto'
         "400":
           description: Bad Request
           schema:
@@ -4003,7 +4049,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/api.ApiResponse-array_api_ManageProductListModel'
+              $ref: '#/definitions/api.ApiResponse-array_api_ProductSummary'
             type: array
         "404":
           description: Not Found
@@ -4013,7 +4059,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
-      summary: Get list of display products
+      summary: Get list of products
       tags:
       - products
     post:
@@ -4033,7 +4079,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-string'
+            $ref: '#/definitions/api.ApiResponse-repository_Product'
         "400":
           description: Bad Request
           schema:
@@ -4108,7 +4154,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-array_repository_ProductVariant'
+            $ref: '#/definitions/api.ApiResponse-array_api_VariantModelDto'
         "400":
           description: Bad Request
           schema:
@@ -4171,7 +4217,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_VariantModel'
+            $ref: '#/definitions/api.ApiResponse-api_VariantModelDto'
         "400":
           description: Bad Request
           schema:
@@ -4211,40 +4257,6 @@ paths:
           schema:
             $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
       summary: Update a product variant
-      tags:
-      - products
-  /products/{id}/variants/{variantId}/image:
-    post:
-      consumes:
-      - multipart/form-data
-      description: upload product image
-      parameters:
-      - description: Product ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Product Variant ID
-        in: path
-        name: variantId
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ApiResponse-string'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
-      summary: Upload product image
       tags:
       - products
   /products/{id}/variants/{variantId}/images:
@@ -4313,7 +4325,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: get a display product by ID
+      description: get a product detail by ID
       parameters:
       - description: Product ID
         in: path
@@ -4326,7 +4338,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_ManageProductDetailResp'
+            $ref: '#/definitions/api.ApiResponse-api_ProductDetailDto'
         "404":
           description: Not Found
           schema:
@@ -4335,7 +4347,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp'
-      summary: Get a display product by ID
+      summary: Get a product detail by ID
       tags:
       - products
     put:
@@ -4360,7 +4372,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-api_ManageProductDetailResp'
+            $ref: '#/definitions/api.ApiResponse-repository_Product'
         "404":
           description: Not Found
           schema:
@@ -4612,7 +4624,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_CategoryResponse'
+            $ref: '#/definitions/api.ApiResponse-array_api_CategoryDto'
         "400":
           description: Bad Request
           schema:
@@ -4642,7 +4654,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ApiResponse-array_api_CategoryResponse'
+            $ref: '#/definitions/api.ApiResponse-array_api_CategoryDto'
         "400":
           description: Bad Request
           schema:

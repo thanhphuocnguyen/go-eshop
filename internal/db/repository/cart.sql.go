@@ -12,6 +12,36 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const addCartItem = `-- name: AddCartItem :one
+INSERT INTO cart_items (id, cart_id, variant_id, quantity) VALUES ($1, $2, $3, $4) RETURNING id, cart_id, variant_id, quantity, added_at
+`
+
+type AddCartItemParams struct {
+	ID        uuid.UUID `json:"id"`
+	CartID    uuid.UUID `json:"cartId"`
+	VariantID uuid.UUID `json:"variantId"`
+	Quantity  int16     `json:"quantity"`
+}
+
+// Cart Item Section
+func (q *Queries) AddCartItem(ctx context.Context, arg AddCartItemParams) (CartItem, error) {
+	row := q.db.QueryRow(ctx, addCartItem,
+		arg.ID,
+		arg.CartID,
+		arg.VariantID,
+		arg.Quantity,
+	)
+	var i CartItem
+	err := row.Scan(
+		&i.ID,
+		&i.CartID,
+		&i.VariantID,
+		&i.Quantity,
+		&i.AddedAt,
+	)
+	return i, err
+}
+
 const checkoutCart = `-- name: CheckoutCart :exec
 UPDATE carts SET order_id = $1 WHERE id = $2 RETURNING id, user_id, session_id, order_id, updated_at, created_at
 `
@@ -65,36 +95,6 @@ func (q *Queries) CreateCart(ctx context.Context, arg CreateCartParams) (Cart, e
 		&i.OrderID,
 		&i.UpdatedAt,
 		&i.CreatedAt,
-	)
-	return i, err
-}
-
-const createCartItem = `-- name: CreateCartItem :one
-INSERT INTO cart_items (id, cart_id, variant_id, quantity) VALUES ($1, $2, $3, $4) RETURNING id, cart_id, variant_id, quantity, added_at
-`
-
-type CreateCartItemParams struct {
-	ID        uuid.UUID `json:"id"`
-	CartID    uuid.UUID `json:"cartId"`
-	VariantID uuid.UUID `json:"variantId"`
-	Quantity  int16     `json:"quantity"`
-}
-
-// Cart Item Section
-func (q *Queries) CreateCartItem(ctx context.Context, arg CreateCartItemParams) (CartItem, error) {
-	row := q.db.QueryRow(ctx, createCartItem,
-		arg.ID,
-		arg.CartID,
-		arg.VariantID,
-		arg.Quantity,
-	)
-	var i CartItem
-	err := row.Scan(
-		&i.ID,
-		&i.CartID,
-		&i.VariantID,
-		&i.Quantity,
-		&i.AddedAt,
 	)
 	return i, err
 }

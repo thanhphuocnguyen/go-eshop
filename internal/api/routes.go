@@ -172,16 +172,19 @@ func (sv *Server) setupImageRoutes(rg *gin.RouterGroup) {
 
 // Setup cart-related routes
 func (sv *Server) setupCartRoutes(rg *gin.RouterGroup) {
-	cart := rg.Group("/cart", authenticateMiddleware(sv.tokenGenerator))
+	cart := rg.Group("/carts", authenticateMiddleware(sv.tokenGenerator))
 	{
 		cart.POST("", sv.CreateCart)
 		cart.GET("", sv.GetCartHandler)
+		cart.POST("checkout", sv.CheckoutHandler)
+		cart.PUT("clear", sv.ClearCart)
+
 		cart.GET("discounts", sv.GetCartDiscountsHandler)
-		cart.POST("checkout", sv.checkoutHandler)
-		cart.PUT("clear", sv.clearCart)
-		cartItems := cart.Group("item")
-		cartItems.DELETE(":id", sv.removeCartItem)
-		cartItems.PUT(":id/quantity", sv.UpdateCartItemQtyHandler)
+		cartItems := cart.Group("items")
+		{
+			cartItems.PUT(":id/quantity", sv.UpdateCartItemQtyHandler)
+			cartItems.DELETE(":id", sv.RemoveCartItem)
+		}
 	}
 }
 

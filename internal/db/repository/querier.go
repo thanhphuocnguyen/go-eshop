@@ -14,6 +14,8 @@ import (
 type Querier interface {
 	AddBulkAttributes(ctx context.Context, name []string) (int64, error)
 	AddBulkProducts(ctx context.Context, arg []AddBulkProductsParams) (int64, error)
+	// Cart Item Section
+	AddCartItem(ctx context.Context, arg AddCartItemParams) (CartItem, error)
 	AddProductsToCategory(ctx context.Context, arg []AddProductsToCategoryParams) (int64, error)
 	AddProductsToCollection(ctx context.Context, arg []AddProductsToCollectionParams) (int64, error)
 	ArchiveProduct(ctx context.Context, arg ArchiveProductParams) error
@@ -46,8 +48,6 @@ type Querier interface {
 	CreateBulkProductVariantAttribute(ctx context.Context, arg []CreateBulkProductVariantAttributeParams) (int64, error)
 	CreateBulkProductVariants(ctx context.Context, arg []CreateBulkProductVariantsParams) (int64, error)
 	CreateCart(ctx context.Context, arg CreateCartParams) (Cart, error)
-	// Cart Item Section
-	CreateCartItem(ctx context.Context, arg CreateCartItemParams) (CartItem, error)
 	CreateCategory(ctx context.Context, arg CreateCategoryParams) (Category, error)
 	CreateCollection(ctx context.Context, arg CreateCollectionParams) (Collection, error)
 	CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error)
@@ -158,7 +158,7 @@ type Querier interface {
 	GetProductVariantAttributeByID(ctx context.Context, variantID uuid.UUID) (VariantAttributeValue, error)
 	GetProductVariantAttributes(ctx context.Context, variantID uuid.UUID) ([]VariantAttributeValue, error)
 	GetProductVariantByID(ctx context.Context, arg GetProductVariantByIDParams) (ProductVariant, error)
-	GetProductVariantList(ctx context.Context, arg GetProductVariantListParams) ([]ProductVariant, error)
+	GetProductVariantList(ctx context.Context, arg GetProductVariantListParams) ([]GetProductVariantListRow, error)
 	GetRatingReplies(ctx context.Context, id uuid.UUID) (RatingReply, error)
 	GetRatingRepliesByRatingID(ctx context.Context, ratingID uuid.UUID) ([]GetRatingRepliesByRatingIDRow, error)
 	GetRatingRepliesByUserID(ctx context.Context, replyBy uuid.UUID) ([]GetRatingRepliesByUserIDRow, error)

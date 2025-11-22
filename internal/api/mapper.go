@@ -39,10 +39,10 @@ func mapAddressToAddressResponse(address repository.UserAddress) AddressResponse
 	}
 }
 
-func mapToProductDetailResponse(productRows repository.GetProductDetailRow) ManageProductDetailResp {
+func mapToProductDetailResponse(productRows repository.GetProductDetailRow) ProductDetailDto {
 	basePrice, _ := productRows.BasePrice.Float64Value()
 
-	resp := ManageProductDetailResp{
+	resp := ProductDetailDto{
 		ID:               productRows.ID.String(),
 		Name:             productRows.Name,
 		BasePrice:        basePrice.Float64,
@@ -128,6 +128,29 @@ func mapToShopProductResponse(productRow repository.GetProductListRow) ProductSu
 	}
 
 	return product
+}
+
+func mapToVariantListModelDto(row repository.GetProductVariantListRow) VariantModelDto {
+	price, _ := row.Price.Float64Value()
+	variant := VariantModelDto{
+		ID:       row.ID.String(),
+		Price:    price.Float64,
+		Stock:    row.Stock,
+		IsActive: *row.IsActive,
+		Sku:      row.Sku,
+		ImageUrl: row.ImageUrl,
+	}
+	variant.Attributes = []AttributeValue{}
+	err := json.Unmarshal(row.AttributeValues, &variant.Attributes)
+	if err != nil {
+		log.Error().Err(err).Msg("Unmarshal variant attribute values")
+	}
+	if row.Weight.Valid {
+		weight, _ := row.Weight.Float64Value()
+		variant.Weight = &weight.Float64
+	}
+
+	return variant
 }
 
 func mapAddressResponse(address repository.UserAddress) AddressResponse {

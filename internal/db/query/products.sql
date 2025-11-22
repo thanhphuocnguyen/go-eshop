@@ -23,26 +23,9 @@ GROUP BY product_variants.id, attribute_values.id;
 -- name: GetProductDetail :one
 SELECT p.*,
     JSON_BUILD_OBJECT('id', b.id, 'name', b.name) AS brand,
-    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT(
-        'id', c.id,
-        'name', c.name
-    )) AS categories,
-    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT(
-        'id', cl.id,
-        'name', cl.name
-    )) AS collections,
-    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT(
-        'attribute_id', a.id,
-        'attribute_name', a.name,
-        'attribute_values', (
-            SELECT JSONB_AGG(JSONB_BUILD_OBJECT(
-                'value_id', av.id,
-                'value', av.value
-            ))
-            FROM attribute_values av
-            WHERE a.id = av.attribute_id
-        )
-    )) AS attributes
+    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', c.id, 'name', c.name)) FILTER (WHERE c.id IS NOT NULL) AS categories,
+    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', cl.id, 'name', cl.name)) FILTER (WHERE cl.id IS NOT NULL) AS collections,
+    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('attribute_id', a.id,'attribute_name', a.name)) FILTER (WHERE a.id IS NOT NULL) AS attributes
 FROM products p
 LEFT JOIN brands AS b ON p.brand_id = b.id
 LEFT JOIN category_products AS cp ON p.id = cp.product_id
@@ -55,7 +38,16 @@ WHERE (p.id = $1 OR p.slug = $2) AND p.is_active = COALESCE(sqlc.narg('is_active
 GROUP BY p.id, b.id LIMIT 1;
 
 -- name: GetProductVariantList :many
-SELECT * FROM product_variants WHERE product_id = $1 AND is_active = COALESCE(sqlc.narg('is_active'), is_active) ORDER BY id, created_at DESC;
+SELECT v.*, 
+    JSONB_AGG(
+        DISTINCT JSONB_BUILD_OBJECT('id', av.id, 'value', av.value, 'attribute_id', av.attribute_id)
+    ) FILTER (WHERE av.id IS NOT NULL) AS attribute_values
+FROM product_variants v
+LEFT JOIN variant_attribute_values pva ON v.id = pva.variant_id
+LEFT JOIN attribute_values av ON pva.attribute_value_id = av.id
+WHERE v.product_id = $1 AND v.is_active = COALESCE(sqlc.narg('is_active'), v.is_active)
+GROUP BY v.id
+ORDER BY v.id, v.created_at DESC;
 
 -- name: GetAdminProductList :many
 SELECT p.* FROM products as p

@@ -21,7 +21,7 @@ import (
 // @Produce json
 // @Param page query int false "Page number"
 // @Param pageSize query int false "Page size"
-// @Success 200 {object} ApiResponse[[]CategoryResponse]
+// @Success 200 {object} ApiResponse[[]CategoryDto]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /shop/brands [get]
@@ -81,7 +81,7 @@ func (sv *Server) GetShopBrandsHandler(c *gin.Context) {
 // @Tags Brands
 // @Produce json
 // @Param slug path string true "Brand slug"
-// @Success 200 {object} ApiResponse[[]CategoryResponse]
+// @Success 200 {object} ApiResponse[[]CategoryDto]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /shop/brands/{slug} [get]
@@ -149,7 +149,7 @@ func (sv *Server) GetShopBrandBySlugHandler(c *gin.Context) {
 // @Success 201 {object} ApiResponse[CategoryDto]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /brands [post]
+// @Router /admin/brands [post]
 func (sv *Server) CreateBrandHandler(c *gin.Context) {
 	var req CreateCategoryRequest
 	if err := c.ShouldBind(&req); err != nil {
@@ -191,7 +191,7 @@ func (sv *Server) CreateBrandHandler(c *gin.Context) {
 // @Produce json
 // @Param page query int false "Page number"
 // @Param pageSize query int false "Page size"
-// @Success 200 {object} ApiResponse[[]CategoryResponse]
+// @Success 200 {object} ApiResponse[[]CategoryDto]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /brands [get]

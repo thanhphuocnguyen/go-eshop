@@ -17,7 +17,7 @@ UPDATE carts SET updated_at = NOW() WHERE id = $1 RETURNING *;
 UPDATE carts SET order_id = $1 WHERE id = $2 RETURNING *;
 
 -- Cart Item Section
--- name: CreateCartItem :one
+-- name: AddCartItem :one
 INSERT INTO cart_items (id, cart_id, variant_id, quantity) VALUES ($1, $2, $3, $4) RETURNING *;
 
 -- name: UpdateCartItemQuantity :exec

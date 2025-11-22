@@ -28,7 +28,7 @@ import (
 // @Failure 404 {object} ErrorResp
 // @Failure 403 {object} ErrorResp
 // @Failure 401 {object} ErrorResp
-// @Router /cart [post]
+// @Router /carts [post]
 func (sv *Server) CreateCart(c *gin.Context) {
 	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
@@ -82,7 +82,7 @@ func (sv *Server) CreateCart(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 403 {object} ErrorResp
 // @Failure 401 {object} ErrorResp
-// @Router /cart [get]
+// @Router /carts [get]
 func (sv *Server) GetCartHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
@@ -142,7 +142,7 @@ func (sv *Server) GetCartHandler(c *gin.Context) {
 // @Success 200 {object} ApiResponse[[]repository.GetAvailableDiscountsForCartRow]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /cart/discounts [get]
+// @Router /carts/discounts [get]
 func (sv *Server) GetCartDiscountsHandler(c *gin.Context) {
 	authPayload, _ := c.MustGet(AuthPayLoad).(*auth.Payload)
 	cart, err := sv.repo.GetCart(c, repository.GetCartParams{
@@ -168,7 +168,7 @@ func (sv *Server) GetCartDiscountsHandler(c *gin.Context) {
 
 }
 
-// @Summary Add a product to the cart
+// @Summary update product quantity in the cart
 // @Schemes http
 // @Description add a product to the cart
 // @Tags carts
@@ -178,7 +178,7 @@ func (sv *Server) GetCartDiscountsHandler(c *gin.Context) {
 // @Success 200 {object} ApiResponse[string]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /cart/item/{variant_id} [post]
+// @Router /carts/items/{variant_id} [post]
 func (sv *Server) UpdateCartItemQtyHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
@@ -224,7 +224,7 @@ func (sv *Server) UpdateCartItemQtyHandler(c *gin.Context) {
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			cartItem, err = sv.repo.CreateCartItem(c, repository.CreateCartItemParams{
+			cartItem, err = sv.repo.AddCartItem(c, repository.AddCartItemParams{
 				ID:        uuid.New(),
 				CartID:    cart.ID,
 				VariantID: uuid.MustParse(param.ID),
@@ -272,8 +272,8 @@ func (sv *Server) UpdateCartItemQtyHandler(c *gin.Context) {
 // @Failure 403 {object} ErrorResp
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /cart/item/{id} [delete]
-func (sv *Server) removeCartItem(c *gin.Context) {
+// @Router /carts/items/{id} [delete]
+func (sv *Server) RemoveCartItem(c *gin.Context) {
 	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("user not found")))
@@ -332,8 +332,8 @@ func (sv *Server) removeCartItem(c *gin.Context) {
 // @Failure 403 {object} ErrorResp
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /cart/checkoutHandler [post]
-func (sv *Server) checkoutHandler(c *gin.Context) {
+// @Router /carts/CheckoutHandler [post]
+func (sv *Server) CheckoutHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("user not found")))
@@ -627,8 +627,8 @@ func (sv *Server) checkoutHandler(c *gin.Context) {
 // @Failure 403 {object} ErrorResp
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /cart/clear [put]
-func (sv *Server) clearCart(c *gin.Context) {
+// @Router /carts/clear [put]
+func (sv *Server) ClearCart(c *gin.Context) {
 	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("user not found")))
@@ -668,12 +668,13 @@ func mapToCartItemsResp(rows []repository.GetCartItemsRow) ([]CartItemResponse, 
 	var totalPrice float64
 	for i, row := range rows {
 		// if it's the first item or the previous item is different
-		var attr []ProductAttribute
+		var attr []AttributeValue
 		err := json.Unmarshal(row.Attributes, &attr)
 		if err != nil {
 			log.Error().Err(err).Msg("Unmarshal cart item attributes")
 		}
 		price, _ := row.VariantPrice.Float64Value()
+		totalPrice += price.Float64 * float64(row.CartItem.Quantity)
 		cartItemsResp[i] = CartItemResponse{
 			ID:         row.CartItem.ID.String(),
 			ProductID:  row.ProductID.String(),

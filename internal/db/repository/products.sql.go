@@ -332,26 +332,9 @@ func (q *Queries) GetProductBySlug(ctx context.Context, arg GetProductBySlugPara
 const getProductDetail = `-- name: GetProductDetail :one
 SELECT p.id, p.name, p.description, p.short_description, p.base_price, p.base_sku, p.slug, p.is_active, p.image_url, p.image_id, p.avg_rating, p.rating_count, p.one_star_count, p.two_star_count, p.three_star_count, p.four_star_count, p.five_star_count, p.created_at, p.updated_at, p.brand_id,
     JSON_BUILD_OBJECT('id', b.id, 'name', b.name) AS brand,
-    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT(
-        'id', c.id,
-        'name', c.name
-    )) AS categories,
-    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT(
-        'id', cl.id,
-        'name', cl.name
-    )) AS collections,
-    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT(
-        'attribute_id', a.id,
-        'attribute_name', a.name,
-        'attribute_values', (
-            SELECT JSONB_AGG(JSONB_BUILD_OBJECT(
-                'value_id', av.id,
-                'value', av.value
-            ))
-            FROM attribute_values av
-            WHERE a.id = av.attribute_id
-        )
-    )) AS attributes
+    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', c.id, 'name', c.name)) FILTER (WHERE c.id IS NOT NULL) AS categories,
+    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', cl.id, 'name', cl.name)) FILTER (WHERE cl.id IS NOT NULL) AS collections,
+    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('attribute_id', a.id,'attribute_name', a.name)) FILTER (WHERE a.id IS NOT NULL) AS attributes
 FROM products p
 LEFT JOIN brands AS b ON p.brand_id = b.id
 LEFT JOIN category_products AS cp ON p.id = cp.product_id
@@ -567,7 +550,16 @@ func (q *Queries) GetProductVariantByID(ctx context.Context, arg GetProductVaria
 }
 
 const getProductVariantList = `-- name: GetProductVariantList :many
-SELECT id, product_id, description, sku, price, stock, weight, is_active, created_at, updated_at, image_url, image_id FROM product_variants WHERE product_id = $1 AND is_active = COALESCE($2, is_active) ORDER BY id, created_at DESC
+SELECT v.id, v.product_id, v.description, v.sku, v.price, v.stock, v.weight, v.is_active, v.created_at, v.updated_at, v.image_url, v.image_id, 
+    JSONB_AGG(
+        DISTINCT JSONB_BUILD_OBJECT('id', av.id, 'value', av.value, 'attribute_id', av.attribute_id)
+    ) FILTER (WHERE av.id IS NOT NULL) AS attribute_values
+FROM product_variants v
+LEFT JOIN variant_attribute_values pva ON v.id = pva.variant_id
+LEFT JOIN attribute_values av ON pva.attribute_value_id = av.id
+WHERE v.product_id = $1 AND v.is_active = COALESCE($2, v.is_active)
+GROUP BY v.id
+ORDER BY v.id, v.created_at DESC
 `
 
 type GetProductVariantListParams struct {
@@ -575,15 +567,31 @@ type GetProductVariantListParams struct {
 	IsActive  *bool     `json:"isActive"`
 }
 
-func (q *Queries) GetProductVariantList(ctx context.Context, arg GetProductVariantListParams) ([]ProductVariant, error) {
+type GetProductVariantListRow struct {
+	ID              uuid.UUID      `json:"id"`
+	ProductID       uuid.UUID      `json:"productId"`
+	Description     *string        `json:"description"`
+	Sku             string         `json:"sku"`
+	Price           pgtype.Numeric `json:"price"`
+	Stock           int32          `json:"stock"`
+	Weight          pgtype.Numeric `json:"weight"`
+	IsActive        *bool          `json:"isActive"`
+	CreatedAt       time.Time      `json:"createdAt"`
+	UpdatedAt       time.Time      `json:"updatedAt"`
+	ImageUrl        *string        `json:"imageUrl"`
+	ImageID         *string        `json:"imageId"`
+	AttributeValues []byte         `json:"attributeValues"`
+}
+
+func (q *Queries) GetProductVariantList(ctx context.Context, arg GetProductVariantListParams) ([]GetProductVariantListRow, error) {
 	rows, err := q.db.Query(ctx, getProductVariantList, arg.ProductID, arg.IsActive)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ProductVariant{}
+	items := []GetProductVariantListRow{}
 	for rows.Next() {
-		var i ProductVariant
+		var i GetProductVariantListRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.ProductID,
@@ -597,6 +605,7 @@ func (q *Queries) GetProductVariantList(ctx context.Context, arg GetProductVaria
 			&i.UpdatedAt,
 			&i.ImageUrl,
 			&i.ImageID,
+			&i.AttributeValues,
 		); err != nil {
 			return nil, err
 		}
