@@ -88,11 +88,11 @@ func mapToProductDetailResponse(productRows repository.GetProductDetailRow) Mana
 	return resp
 }
 
-func mapToAdminProductResponse(productRow repository.Product) ManageProductListModel {
+func mapToAdminProductResponse(productRow repository.Product) ProductListDTO {
 	basePrice, _ := productRow.BasePrice.Float64Value()
 
 	avgRating := utils.GetAvgRating(productRow.RatingCount, productRow.OneStarCount, productRow.TwoStarCount, productRow.ThreeStarCount, productRow.FourStarCount, productRow.FiveStarCount)
-	product := ManageProductListModel{
+	product := ProductListDTO{
 		ID:          productRow.ID.String(),
 		Name:        productRow.Name,
 		Description: productRow.Description,
@@ -110,10 +110,10 @@ func mapToAdminProductResponse(productRow repository.Product) ManageProductListM
 	return product
 }
 
-func mapToShopProductResponse(productRow repository.GetProductListRow) ProductListModel {
+func mapToShopProductResponse(productRow repository.GetProductListRow) ProductSummary {
 	price, _ := productRow.MinPrice.Float64Value()
 	avgRating := utils.GetAvgRating(productRow.RatingCount, productRow.OneStarCount, productRow.TwoStarCount, productRow.ThreeStarCount, productRow.FourStarCount, productRow.FiveStarCount)
-	product := ProductListModel{
+	product := ProductSummary{
 		ID:           productRow.ID.String(),
 		Name:         productRow.Name,
 		Price:        price.Float64,

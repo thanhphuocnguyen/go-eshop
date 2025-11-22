@@ -14,8 +14,8 @@ func (s *Server) getHomePageHandler(ctx *gin.Context) {
 	wg.Add(2)
 
 	// Use channels to collect results
-	categoriesChan := make(chan []CategoryResponse, 1)
-	collectionsChan := make(chan []CategoryResponse, 1)
+	categoriesChan := make(chan []CategoryDto, 1)
+	collectionsChan := make(chan []CategoryDto, 1)
 
 	// Fetch categories
 	go func() {
@@ -27,13 +27,13 @@ func (s *Server) getHomePageHandler(ctx *gin.Context) {
 		})
 
 		if err != nil {
-			categoriesChan <- []CategoryResponse{}
+			categoriesChan <- []CategoryDto{}
 			return
 		}
 
-		categoryModel := make([]CategoryResponse, len(categoryRows))
+		categoryModel := make([]CategoryDto, len(categoryRows))
 		for i, category := range categoryRows {
-			categoryModel[i] = CategoryResponse{
+			categoryModel[i] = CategoryDto{
 				ID:          category.ID.String(),
 				Name:        category.Name,
 				Description: category.Description,
@@ -54,13 +54,13 @@ func (s *Server) getHomePageHandler(ctx *gin.Context) {
 		})
 
 		if err != nil {
-			collectionsChan <- []CategoryResponse{}
+			collectionsChan <- []CategoryDto{}
 			return
 		}
 
-		collectionModel := make([]CategoryResponse, len(collectionRows))
+		collectionModel := make([]CategoryDto, len(collectionRows))
 		for i, collection := range collectionRows {
-			collectionModel[i] = CategoryResponse{
+			collectionModel[i] = CategoryDto{
 				ID:          collection.ID.String(),
 				Name:        collection.Name,
 				Description: collection.Description,

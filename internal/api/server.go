@@ -66,6 +66,6 @@ func (s *Server) Server(addr string) *http.Server {
 }
 
 type DashboardData struct {
-	Categories  []CategoryResponse `json:"categories"`
-	Collections []CategoryResponse `json:"collections"`
+	Categories  []CategoryDto `json:"categories"`
+	Collections []CategoryDto `json:"collections"`
 }

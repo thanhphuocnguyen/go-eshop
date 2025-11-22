@@ -23,18 +23,6 @@ LIMIT $1 OFFSET $2;
 -- name: GetCollections :many
 SELECT * FROM collections WHERE  published = COALESCE(sqlc.narg('published'), published) ORDER BY display_order LIMIT $1 OFFSET $2;
 
--- name: GetDisplayCollectionProducts :many
-SELECT 
-    p.*, COUNT(pv.id) AS variant_count, MIN(pv.price) AS price
-FROM collections AS c
-JOIN collection_products AS cp ON c.id = cp.collection_id
-JOIN products AS p ON cp.product_id = p.id
-LEFT JOIN product_variants AS pv ON pv.product_id = p.id
-WHERE c.id = $1 AND p.is_active = TRUE
-GROUP BY p.id
-ORDER BY p.created_at DESC
-LIMIT $2 OFFSET $3;
-
 -- name: UpdateCollectionWith :one
 UPDATE collections
 SET 

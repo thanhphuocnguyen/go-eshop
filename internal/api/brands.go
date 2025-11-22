@@ -53,17 +53,16 @@ func (sv *Server) GetShopBrandsHandler(c *gin.Context) {
 		return
 	}
 
-	data := make([]CategoryResponse, len(rows))
+	data := make([]CategoryDto, len(rows))
 
 	for i, row := range rows {
-		model := CategoryResponse{
+		model := CategoryDto{
 			ID:          row.ID.String(),
 			Name:        row.Name,
 			Description: row.Description,
 			Slug:        row.Slug,
 			Published:   row.Published,
 			CreatedAt:   row.CreatedAt.String(),
-			UpdatedAt:   row.UpdatedAt.String(),
 			ImageUrl:    row.ImageUrl,
 		}
 
@@ -123,10 +122,10 @@ func (sv *Server) GetShopBrandBySlugHandler(c *gin.Context) {
 		return
 	}
 
-	data := make([]CategoryResponse, len(rows))
+	data := make([]CategoryDto, len(rows))
 
 	for i, row := range rows {
-		data[i] = CategoryResponse{
+		data[i] = CategoryDto{
 			ID:          row.ID.String(),
 			Name:        row.Name,
 			Description: row.Description,
@@ -147,7 +146,7 @@ func (sv *Server) GetShopBrandBySlugHandler(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param request body CreateCategoryRequest true "Brand request"
-// @Success 201 {object} ApiResponse[CategoryResponse]
+// @Success 201 {object} ApiResponse[CategoryDto]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /brands [post]
@@ -222,10 +221,10 @@ func (sv *Server) GetBrandsHandler(c *gin.Context) {
 		return
 	}
 
-	data := make([]CategoryResponse, 0, len(rows))
+	data := make([]CategoryDto, 0, len(rows))
 
 	for _, row := range rows {
-		data = append(data, CategoryResponse{
+		data = append(data, CategoryDto{
 			ID:          row.ID.String(),
 			Name:        row.Name,
 			Description: row.Description,
@@ -247,7 +246,7 @@ func (sv *Server) GetBrandsHandler(c *gin.Context) {
 // @Tags Admin
 // @Produce json
 // @Param id path int true "Brand ID"
-// @Success 200 {object} ApiResponse[CategoryResponse]
+// @Success 200 {object} ApiResponse[CategoryDto]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/brands/{id} [get]
@@ -268,15 +267,15 @@ func (sv *Server) GetBrandByIDHandler(c *gin.Context) {
 		return
 	}
 
-	colResp := CategoryResponse{
+	colResp := AdminCategoryDto{
 		ID:          result.ID.String(),
 		Name:        result.Name,
 		Description: result.Description,
 		Slug:        result.Slug,
 		Published:   result.Published,
 		CreatedAt:   result.CreatedAt.Format("2006-01-02 15:04:05"),
-		UpdatedAt:   result.UpdatedAt.Format("2006-01-02 15:04:05"),
 		ImageUrl:    result.ImageUrl,
+		UpdatedAt:   result.UpdatedAt.String(),
 	}
 
 	c.JSON(http.StatusOK, createDataResp(c, colResp, nil, nil))
@@ -290,7 +289,7 @@ func (sv *Server) GetBrandByIDHandler(c *gin.Context) {
 // @Tags Admin
 // @Param id path int true "Brand ID"
 // @Param request body UpdateCategoryRequest true "Brand request"
-// @Success 200 {object} ApiResponse[CategoryResponse]
+// @Success 200 {object} ApiResponse[CategoryDto]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/brands/{id} [put]

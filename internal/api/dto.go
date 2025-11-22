@@ -304,29 +304,27 @@ type GeneralCategoryResponse struct {
 	Name string `json:"name"`
 }
 
-type CategoryListResponse struct {
-	ID          string                   `json:"id"`
-	Name        string                   `json:"name"`
-	Description *string                  `json:"description,omitempty"`
-	Slug        string                   `json:"slug"`
-	Published   bool                     `json:"published,omitempty"`
-	Remarkable  bool                     `json:"remarkable,omitempty"`
-	CreatedAt   string                   `json:"createdAt,omitempty"`
-	UpdatedAt   string                   `json:"updatedAt,omitempty"`
-	ImageUrl    *string                  `json:"imageUrl,omitempty"`
-	Products    []ManageProductListModel `json:"products,omitempty"`
+type AdminCategoryDto struct {
+	ID          string           `json:"id"`
+	Name        string           `json:"name"`
+	Description *string          `json:"description,omitempty"`
+	Slug        string           `json:"slug"`
+	Published   bool             `json:"published,omitempty"`
+	CreatedAt   string           `json:"createdAt,omitempty"`
+	UpdatedAt   string           `json:"updatedAt,omitempty"`
+	ImageUrl    *string          `json:"imageUrl,omitempty"`
+	Products    []ProductListDTO `json:"products,omitempty"`
 }
 
-type CategoryResponse struct {
-	ID          string                  `json:"id"`
-	Name        string                  `json:"name"`
-	Description *string                 `json:"description,omitempty"`
-	Slug        string                  `json:"slug"`
-	Published   bool                    `json:"published,omitempty"`
-	CreatedAt   string                  `json:"createdAt,omitempty"`
-	UpdatedAt   string                  `json:"updatedAt,omitempty"`
-	ImageUrl    *string                 `json:"imageUrl,omitempty"`
-	Products    []CategoryLinkedProduct `json:"products"`
+type CategoryDto struct {
+	ID          string           `json:"id"`
+	Name        string           `json:"name"`
+	Description *string          `json:"description,omitempty"`
+	Slug        string           `json:"slug"`
+	Published   bool             `json:"published,omitempty"`
+	CreatedAt   string           `json:"createdAt,omitempty"`
+	ImageUrl    *string          `json:"imageUrl,omitempty"`
+	Products    []ProductSummary `json:"products"`
 }
 
 type PublicIDParam struct {
@@ -354,10 +352,10 @@ type CollectionsQueryParams struct {
 }
 
 type CollectionDetailResponse struct {
-	CategoryResponse `json:",inline"`
-	Categories       []FiltersModel                `json:"categories"`
-	Brands           []FiltersModel                `json:"brands"`
-	Attributes       map[string][]FilterIntIDModel `json:"attributes"`
+	CategoryDto `json:",inline"`
+	Categories  []FiltersModel                `json:"categories"`
+	Brands      []FiltersModel                `json:"brands"`
+	Attributes  map[string][]FilterIntIDModel `json:"attributes"`
 }
 
 type RatingsQueryParams struct {
@@ -447,17 +445,16 @@ type UserDetail struct {
 }
 
 type CartItemResponse struct {
-	ID         string                             `json:"id" binding:"required,uuid"`
-	ProductID  string                             `json:"productId" binding:"required,uuid"`
-	VariantID  string                             `json:"variantId" binding:"required,uuid"`
-	Name       string                             `json:"name"`
-	Quantity   int16                              `json:"quantity"`
-	Price      float64                            `json:"price"`
-	StockQty   int32                              `json:"stock"`
-	Sku        *string                            `json:"sku,omitempty"`
-	ImageURL   *string                            `json:"imageUrl,omitempty"`
-	CategoryID *string                            `json:"categoryId,omitempty"`
-	Attributes []repository.AttributeDataSnapshot `json:"attributes"`
+	ID         string             `json:"id" binding:"required,uuid"`
+	ProductID  string             `json:"productId" binding:"required,uuid"`
+	VariantID  string             `json:"variantId" binding:"required,uuid"`
+	Name       string             `json:"name"`
+	Quantity   int16              `json:"quantity"`
+	Price      float64            `json:"price"`
+	StockQty   int32              `json:"stock"`
+	Sku        *string            `json:"sku,omitempty"`
+	ImageURL   *string            `json:"imageUrl,omitempty"`
+	Attributes []ProductAttribute `json:"attributes"`
 }
 
 type CartDetailResponse struct {
@@ -519,7 +516,7 @@ type DiscountDetailResponseModel struct {
 }
 
 type LoginResponse struct {
-	ID                    uuid.UUID `json:"sessionId"`
+	ID                    string    `json:"sessionId"`
 	AccessToken           string    `json:"accessToken"`
 	AccessTokenExpiresAt  time.Time `json:"accessTokenExpiresIn"`
 	RefreshToken          string    `json:"refreshToken"`
@@ -532,11 +529,11 @@ type RefreshTokenResponse struct {
 }
 
 type ProductRatingModel struct {
-	ID               uuid.UUID          `json:"id"`
+	ID               string             `json:"id"`
 	FirstName        string             `json:"firstName"`
 	LastName         string             `json:"lastName"`
 	ProductName      string             `json:"productName,omitempty"`
-	UserID           uuid.UUID          `json:"userId"`
+	UserID           string             `json:"userId"`
 	Rating           float64            `json:"rating"`
 	ReviewTitle      string             `json:"reviewTitle"`
 	IsVisible        bool               `json:"isVisible"`
@@ -547,7 +544,7 @@ type ProductRatingModel struct {
 	Images           []RatingImageModel `json:"images"`
 }
 
-type ManageProductListModel struct {
+type ProductListDTO struct {
 	ID          string   `json:"id"`
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
@@ -562,7 +559,7 @@ type ManageProductListModel struct {
 	UpdatedAt   string   `json:"updatedAt,omitempty"`
 }
 
-type ProductListModel struct {
+type ProductSummary struct {
 	ID           string   `json:"id"`
 	Name         string   `json:"name"`
 	Price        float64  `json:"price,omitzero"`
@@ -591,15 +588,6 @@ type ProductVariantImageModel struct {
 	VariantID string `json:"variantId,omitempty"`
 	ImageUrl  string `json:"imageUrl"`
 	ImageID   string `json:"imageId"`
-}
-
-type CategoryLinkedProduct struct {
-	ID           string  `json:"id"`
-	Name         string  `json:"name"`
-	VariantCount int32   `json:"variantCount"`
-	Price        float64 `json:"price"`
-	Sku          string  `json:"sku"`
-	ImageUrl     *string `json:"imageUrl,omitempty"`
 }
 
 type VariantModel struct {

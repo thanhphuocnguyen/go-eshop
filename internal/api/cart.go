@@ -1,9 +1,9 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
-	"math"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -29,7 +29,7 @@ import (
 // @Failure 403 {object} ErrorResp
 // @Failure 401 {object} ErrorResp
 // @Router /cart [post]
-func (sv *Server) createCart(c *gin.Context) {
+func (sv *Server) CreateCart(c *gin.Context) {
 	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("user not found")))
@@ -83,7 +83,7 @@ func (sv *Server) createCart(c *gin.Context) {
 // @Failure 403 {object} ErrorResp
 // @Failure 401 {object} ErrorResp
 // @Router /cart [get]
-func (sv *Server) getCartHandler(c *gin.Context) {
+func (sv *Server) GetCartHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("user not found")))
@@ -143,7 +143,7 @@ func (sv *Server) getCartHandler(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /cart/discounts [get]
-func (sv *Server) getCartDiscountsHandler(c *gin.Context) {
+func (sv *Server) GetCartDiscountsHandler(c *gin.Context) {
 	authPayload, _ := c.MustGet(AuthPayLoad).(*auth.Payload)
 	cart, err := sv.repo.GetCart(c, repository.GetCartParams{
 		UserID: utils.GetPgTypeUUID(authPayload.UserID),
@@ -179,7 +179,7 @@ func (sv *Server) getCartDiscountsHandler(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /cart/item/{variant_id} [post]
-func (sv *Server) updateCartItemQtyHandler(c *gin.Context) {
+func (sv *Server) UpdateCartItemQtyHandler(c *gin.Context) {
 	var param UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("invalid variant id")))
@@ -663,67 +663,28 @@ func (sv *Server) clearCart(c *gin.Context) {
 
 // ------------------------------ Mappers ------------------------------
 func mapToCartItemsResp(rows []repository.GetCartItemsRow) ([]CartItemResponse, float64) {
-	cartItemsResp := make([]CartItemResponse, 0)
+	cartItemsResp := make([]CartItemResponse, len(rows))
 
 	var totalPrice float64
-	for _, row := range rows {
+	for i, row := range rows {
 		// if it's the first item or the previous item is different
-
-		cartItemIdx := -1
-		for j, cartItem := range cartItemsResp {
-			if cartItem.ID == row.CartItem.ID.String() {
-				cartItemIdx = j
-				break
-			}
+		var attr []ProductAttribute
+		err := json.Unmarshal(row.Attributes, &attr)
+		if err != nil {
+			log.Error().Err(err).Msg("Unmarshal cart item attributes")
 		}
-		if cartItemIdx == -1 {
-			price, _ := row.Price.Float64Value()
-			attr := repository.AttributeDataSnapshot{
-				Name:  row.AttrName,
-				Value: row.AttrValue,
-			}
-			cartItem := CartItemResponse{
-				ID:        row.CartItemID.String(),
-				ProductID: row.ProductID.String(),
-				VariantID: row.VariantID.String(),
-				Name:      row.ProductName,
-				Quantity:  row.Quantity,
-				Price:     math.Round(price.Float64*100) / 100,
-				StockQty:  row.StockQty,
-				Sku:       &row.Sku,
-				Attributes: []repository.AttributeDataSnapshot{
-					attr,
-				},
-				ImageURL: row.ImageUrl,
-			}
-
-			// Populate CategoryID if available
-			// if row.CategoryID.Valid {
-			// 	categoryID := row.CategoryID.Bytes
-			// 	categoryUUID, err := uuid.FromBytes(categoryID[:])
-			// 	if err == nil {
-			// 		categoryIDStr := categoryUUID.String()
-			// 		cartItem.CategoryID = &categoryIDStr
-			// 	}
-			// }
-			cartItemsResp = append(cartItemsResp, cartItem)
-			totalPrice += cartItem.Price * float64(cartItem.Quantity)
-		} else {
-			attrIdx := -1
-			for i, attr := range cartItemsResp[cartItemIdx].Attributes {
-				if attr.Name == row.AttrName {
-					attrIdx = i
-					break
-				}
-			}
-			if attrIdx == -1 {
-				attr := repository.AttributeDataSnapshot{
-					Name:  row.AttrName,
-					Value: row.AttrValue,
-				}
-
-				cartItemsResp[cartItemIdx].Attributes = append(cartItemsResp[cartItemIdx].Attributes, attr)
-			}
+		price, _ := row.VariantPrice.Float64Value()
+		cartItemsResp[i] = CartItemResponse{
+			ID:         row.CartItem.ID.String(),
+			ProductID:  row.ProductID.String(),
+			VariantID:  row.CartItem.VariantID.String(),
+			Name:       row.ProductName,
+			Quantity:   row.CartItem.Quantity,
+			Price:      price.Float64,
+			StockQty:   row.VariantStock,
+			Sku:        &row.VariantSku,
+			ImageURL:   row.VariantImageUrl,
+			Attributes: attr,
 		}
 	}
 

@@ -50,10 +50,10 @@ func (sv *Server) GetCategoriesHandler(c *gin.Context) {
 		return
 	}
 
-	categoriesResp := make([]CategoryListResponse, len(categories))
+	categoriesResp := make([]AdminCategoryDto, len(categories))
 	catIds := make([]uuid.UUID, len(categories))
 	for i, category := range categories {
-		categoriesResp[i] = CategoryListResponse{
+		categoriesResp[i] = AdminCategoryDto{
 			ID:          category.ID.String(),
 			Name:        category.Name,
 			Slug:        category.Slug,
@@ -79,7 +79,7 @@ func (sv *Server) GetCategoriesHandler(c *gin.Context) {
 // @Produce json
 // @Param slug path string true "Category Slug"
 // @Param pageSize query int false "Page size"
-// @Success 200 {object} ApiResponse[CategoryResponse]
+// @Success 200 {object} ApiResponse[CategoryDto]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /categories/slug/{slug} [get]
@@ -89,7 +89,11 @@ func (sv *Server) GetCategoryBySlugHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
-
+	var query PaginationQueryParams
+	if err := c.ShouldBindQuery(&query); err != nil {
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		return
+	}
 	category, err := sv.repo.GetCategoryBySlug(c, param.Slug)
 
 	if err != nil {
@@ -101,34 +105,28 @@ func (sv *Server) GetCategoryBySlugHandler(c *gin.Context) {
 		return
 	}
 
-	resp := CategoryResponse{
+	resp := CategoryDto{
 		ID:          category.ID.String(),
 		Name:        category.Name,
 		Slug:        category.Slug,
 		Published:   category.Published,
 		CreatedAt:   category.CreatedAt.String(),
-		UpdatedAt:   category.UpdatedAt.String(),
 		Description: category.Description,
 		ImageUrl:    category.ImageUrl,
 	}
+
 	products, err := sv.repo.GetProductList(c, repository.GetProductListParams{
 		CategoryIds: []uuid.UUID{category.ID},
+		Limit:       query.PageSize,
+		Offset:      (query.PageSize) * int64(query.Page-1),
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-	productResponses := make([]CategoryLinkedProduct, len(products))
+	productResponses := make([]ProductSummary, len(products))
 	for i, product := range products {
-		price, _ := product.MinPrice.Float64Value()
-		productResponses[i] = CategoryLinkedProduct{
-			ID:           product.ID.String(),
-			Name:         product.Name,
-			VariantCount: int32(product.VariantCount),
-			Price:        price.Float64,
-			ImageUrl:     product.ImageUrl,
-			Sku:          product.BaseSku,
-		}
+		productResponses[i] = mapToShopProductResponse(product)
 	}
 	resp.Products = productResponses
 
@@ -144,7 +142,7 @@ func (sv *Server) GetCategoryBySlugHandler(c *gin.Context) {
 // @Tags Categories
 // @Produce json
 // @Param request body CreateCategoryRequest true "Category request"
-// @Success 201 {object} ApiResponse[CategoryResponse]
+// @Success 201 {object} ApiResponse[CategoryDto]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/categories [post]
@@ -178,13 +176,12 @@ func (sv *Server) createCategoryHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-	resp := CategoryResponse{
+	resp := CategoryDto{
 		ID:          col.ID.String(),
 		Name:        col.Name,
 		Slug:        col.Slug,
 		Published:   col.Published,
 		CreatedAt:   col.CreatedAt.String(),
-		UpdatedAt:   col.UpdatedAt.String(),
 		Description: col.Description,
 		ImageUrl:    col.ImageUrl,
 	}
@@ -229,18 +226,18 @@ func (sv *Server) GetAdminCategoriesHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-	categoriesResp := make([]CategoryResponse, len(categories))
+	categoriesResp := make([]AdminCategoryDto, len(categories))
 
 	for i, category := range categories {
-		categoriesResp[i] = CategoryResponse{
+		categoriesResp[i] = AdminCategoryDto{
 			ID:          category.ID.String(),
 			Name:        category.Name,
 			Slug:        category.Slug,
 			Published:   category.Published,
 			CreatedAt:   category.CreatedAt.String(),
-			UpdatedAt:   category.UpdatedAt.String(),
 			Description: category.Description,
 			ImageUrl:    category.ImageUrl,
+			UpdatedAt:   category.UpdatedAt.String(),
 		}
 	}
 	c.JSON(http.StatusOK, createDataResp(c, categoriesResp, createPagination(query.Page, query.PageSize, count), nil))
@@ -254,7 +251,7 @@ func (sv *Server) GetAdminCategoriesHandler(c *gin.Context) {
 // @Tags Categories
 // @Produce json
 // @Param id path int true "Category ID"
-// @Success 200 {object} ApiResponse[CategoryResponse]
+// @Success 200 {object} ApiResponse[CategoryDto]
 // @Failure 400 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
@@ -276,13 +273,12 @@ func (sv *Server) GetCategoryByID(c *gin.Context) {
 		return
 	}
 
-	resp := CategoryResponse{
+	resp := CategoryDto{
 		ID:          category.ID.String(),
 		Name:        category.Name,
 		Slug:        category.Slug,
 		Published:   category.Published,
 		CreatedAt:   category.CreatedAt.String(),
-		UpdatedAt:   category.UpdatedAt.String(),
 		Description: category.Description,
 		ImageUrl:    category.ImageUrl,
 	}

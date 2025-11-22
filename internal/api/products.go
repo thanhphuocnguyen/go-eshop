@@ -188,7 +188,7 @@ func (sv *Server) GetAdminProductsHandler(c *gin.Context) {
 		return
 	}
 
-	productResponses := make([]ManageProductListModel, 0)
+	productResponses := make([]ProductListDTO, 0)
 	for _, product := range products {
 		productResponses = append(productResponses, mapToAdminProductResponse(product))
 	}
@@ -255,7 +255,7 @@ func (sv *Server) GetProductsHandler(c *gin.Context) {
 		return
 	}
 
-	productResponses := make([]ProductListModel, 0)
+	productResponses := make([]ProductSummary, 0)
 	for _, product := range products {
 		productResponses = append(productResponses, mapToShopProductResponse(product))
 	}

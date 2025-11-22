@@ -20,7 +20,7 @@ import (
 // @Tags Collections
 // @Produce json
 // @Param slug path string true "Collection slug"
-// @Success 200 {object} ApiResponse[CategoryResponse]
+// @Success 200 {object} ApiResponse[CategoryDto]
 // @Failure 400 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
@@ -28,6 +28,12 @@ import (
 func (sv *Server) GetCollectionBySlugHandler(c *gin.Context) {
 	var param SlugParam
 	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode,
+			err))
+		return
+	}
+	var query PaginationQueryParams
+	if err := c.ShouldBindQuery(&query); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode,
 			err))
 		return
@@ -46,10 +52,10 @@ func (sv *Server) GetCollectionBySlugHandler(c *gin.Context) {
 		return
 	}
 
-	rows, err := sv.repo.GetDisplayCollectionProducts(c, repository.GetDisplayCollectionProductsParams{
-		ID:     collection.ID,
-		Limit:  1000,
-		Offset: 0,
+	rows, err := sv.repo.GetProductList(c, repository.GetProductListParams{
+		CollectionIds: []uuid.UUID{collection.ID},
+		Limit:         query.PageSize,
+		Offset:        (query.PageSize) * int64(query.Page-1),
 	})
 
 	if err != nil {
@@ -57,27 +63,17 @@ func (sv *Server) GetCollectionBySlugHandler(c *gin.Context) {
 			err))
 		return
 	}
-	collectionResp := CategoryResponse{
+	collectionResp := CategoryDto{
 		ID:          collection.ID.String(),
 		Name:        collection.Name,
 		Description: collection.Description,
 		Slug:        collection.Slug,
 		ImageUrl:    collection.ImageUrl,
 		CreatedAt:   collection.CreatedAt.String(),
-		Published:   collection.Published,
-		UpdatedAt:   collection.UpdatedAt.String(),
-		Products:    make([]CategoryLinkedProduct, len(rows)),
+		Products:    make([]ProductSummary, len(rows)),
 	}
 	for i, row := range rows {
-		price, _ := row.Price.Float64Value()
-		collectionResp.Products[i] = CategoryLinkedProduct{
-			ID:           row.ID.String(),
-			Name:         row.Name,
-			VariantCount: int32(row.VariantCount),
-			Price:        price.Float64,
-			Sku:          row.BaseSku,
-			ImageUrl:     row.ImageUrl,
-		}
+		collectionResp.Products[i] = mapToShopProductResponse(row)
 	}
 
 	c.JSON(http.StatusOK, createDataResp(c, collectionResp, nil, nil))
@@ -92,7 +88,7 @@ func (sv *Server) GetCollectionBySlugHandler(c *gin.Context) {
 // @Tags Admin
 // @Produce json
 // @Param request body CreateCategoryRequest true "Collection info"
-// @Success 201 {object} ApiResponse[CategoryResponse]
+// @Success 201 {object} ApiResponse[CategoryDto]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/collections [post]
@@ -143,7 +139,7 @@ func (sv *Server) CreateCollectionHandler(c *gin.Context) {
 // @Produce json
 // @Param page query int false "Page number"
 // @Param pageSize query int false "Page size"
-// @Success 200 {object} ApiResponse[CategoryResponse]
+// @Success 200 {object} ApiResponse[CategoryDto]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/collections [get]
@@ -186,7 +182,7 @@ func (sv *Server) GetCollectionsHandler(c *gin.Context) {
 // @Tags Admin
 // @Produce json
 // @Param id path int true "Collection ID"
-// @Success 200 {object} ApiResponse[CategoryResponse]
+// @Success 200 {object} ApiResponse[CategoryDto]
 // @Failure 400 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
@@ -211,7 +207,7 @@ func (sv *Server) GetCollectionByIDHandler(c *gin.Context) {
 		return
 	}
 
-	colResp := CategoryResponse{
+	colResp := AdminCategoryDto{
 		ID:          collection.ID.String(),
 		Slug:        collection.Slug,
 		Description: collection.Description,
@@ -220,7 +216,6 @@ func (sv *Server) GetCollectionByIDHandler(c *gin.Context) {
 		ImageUrl:    collection.ImageUrl,
 		CreatedAt:   collection.CreatedAt.Format("2006-01-02 15:04:05"),
 		UpdatedAt:   collection.UpdatedAt.Format("2006-01-02 15:04:05"),
-		Products:    []CategoryLinkedProduct{},
 	}
 
 	c.JSON(http.StatusOK, createDataResp(c, colResp, nil, nil))
@@ -234,7 +229,7 @@ func (sv *Server) GetCollectionByIDHandler(c *gin.Context) {
 // @Produce json
 // @Param id path int true "Collection ID"
 // @Param request body CreateCategoryRequest true "Collection info"
-// @Success 200 {object} ApiResponse[CategoryResponse]
+// @Success 200 {object} ApiResponse[CategoryDto]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/collections/{id} [put]

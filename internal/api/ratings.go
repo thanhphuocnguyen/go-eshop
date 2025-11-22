@@ -63,8 +63,8 @@ func (s *Server) postRatingHandler(c *gin.Context) {
 	}
 
 	resp := ProductRatingModel{
-		ID:               rating.ID,
-		UserID:           rating.UserID,
+		ID:               rating.ID.String(),
+		UserID:           rating.UserID.String(),
 		Rating:           req.Rating,
 		ReviewTitle:      *rating.ReviewTitle,
 		ReviewContent:    *rating.ReviewContent,
@@ -225,7 +225,7 @@ func (s *Server) getRatingsHandler(c *gin.Context) {
 		ratingPoint, _ := rating.Rating.Float64Value()
 		prIdx := -1
 		for i, pr := range productRatings {
-			if pr.ID == rating.ID {
+			if pr.ID == rating.ID.String() {
 				prIdx = i
 				break
 			}
@@ -238,8 +238,8 @@ func (s *Server) getRatingsHandler(c *gin.Context) {
 			continue
 		}
 		model := ProductRatingModel{
-			ID:               rating.ID,
-			UserID:           rating.UserID,
+			ID:               rating.ID.String(),
+			UserID:           rating.UserID.String(),
 			FirstName:        rating.FirstName,
 			LastName:         rating.LastName,
 			ProductName:      rating.ProductName,
@@ -307,7 +307,7 @@ func (s *Server) getRatingsByProductHandler(c *gin.Context) {
 		ratingPoint, _ := rating.Rating.Float64Value()
 		prIdx := -1
 		for i, pr := range productRatings {
-			if pr.ID == rating.ID {
+			if pr.ID == rating.ID.String() {
 				prIdx = i
 				break
 			}
@@ -320,8 +320,8 @@ func (s *Server) getRatingsByProductHandler(c *gin.Context) {
 			continue
 		}
 		model := ProductRatingModel{
-			ID:               rating.ID,
-			UserID:           rating.UserID,
+			ID:               rating.ID.String(),
+			UserID:           rating.UserID.String(),
 			FirstName:        rating.FirstName,
 			LastName:         rating.LastName,
 			Rating:           ratingPoint.Float64,

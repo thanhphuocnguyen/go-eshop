@@ -127,7 +127,6 @@ type Querier interface {
 	GetDiscountUsages(ctx context.Context, id uuid.UUID) ([]GetDiscountUsagesRow, error)
 	GetDiscountUsers(ctx context.Context, arg GetDiscountUsersParams) ([]GetDiscountUsersRow, error)
 	GetDiscounts(ctx context.Context, arg GetDiscountsParams) ([]GetDiscountsRow, error)
-	GetDisplayCollectionProducts(ctx context.Context, arg GetDisplayCollectionProductsParams) ([]GetDisplayCollectionProductsRow, error)
 	GetImageByID(ctx context.Context, id int64) (ProductImage, error)
 	GetImageByImageID(ctx context.Context, imageID string) (ProductImage, error)
 	GetImagesByProductID(ctx context.Context, productID uuid.UUID) ([]ProductImage, error)

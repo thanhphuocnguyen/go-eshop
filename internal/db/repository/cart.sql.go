@@ -237,39 +237,36 @@ func (q *Queries) GetCartItemByProductVariantID(ctx context.Context, arg GetCart
 
 const getCartItems = `-- name: GetCartItems :many
 SELECT
-    ci.id, ci.cart_id, ci.variant_id, ci.quantity, ci.added_at, 
-    pv.id AS variant_id, pv.price, pv.stock, pv.sku, pv.stock as stock_qty,
-    p.id AS product_id, p.name AS product_name,
-    ci.id as cart_item_id, ci.quantity,
-    av.id as attr_val_id, av.value as attr_value, a.name AS attr_name,
-    pi.id AS image_id, pi.image_url AS image_url
+    ci.id, ci.cart_id, ci.variant_id, ci.quantity, ci.added_at,
+    pv.price AS variant_price, pv.sku AS variant_sku, pv.stock AS variant_stock, pv.image_url AS variant_image_url,
+    p.name AS product_name, p.id AS product_id,
+    JSONB_AGG(
+    DISTINCT JSONB_BUILD_OBJECT(
+            'id', av.id,
+            'name', a.name,
+            'value', av.value
+        )
+    ) AS attributes
 FROM cart_items AS ci
 JOIN product_variants AS pv ON pv.id = ci.variant_id
 JOIN products AS p ON p.id = pv.product_id
 JOIN variant_attribute_values AS vav ON vav.variant_id = pv.id
 JOIN attribute_values AS av ON vav.attribute_value_id = av.id
 JOIN attributes AS a ON av.attribute_id = a.id
-LEFT JOIN product_images AS pi ON pi.product_id = p.id
 WHERE ci.cart_id = $1
+GROUP BY ci.id, pv.id, p.id
 ORDER BY ci.added_at, ci.id, pv.id DESC
 `
 
 type GetCartItemsRow struct {
-	CartItem    CartItem       `json:"cartItem"`
-	VariantID   uuid.UUID      `json:"variantId"`
-	Price       pgtype.Numeric `json:"price"`
-	Stock       int32          `json:"stock"`
-	Sku         string         `json:"sku"`
-	StockQty    int32          `json:"stockQty"`
-	ProductID   uuid.UUID      `json:"productId"`
-	ProductName string         `json:"productName"`
-	CartItemID  uuid.UUID      `json:"cartItemId"`
-	Quantity    int16          `json:"quantity"`
-	AttrValID   int64          `json:"attrValId"`
-	AttrValue   string         `json:"attrValue"`
-	AttrName    string         `json:"attrName"`
-	ImageID     *int64         `json:"imageId"`
-	ImageUrl    *string        `json:"imageUrl"`
+	CartItem        CartItem       `json:"cartItem"`
+	VariantPrice    pgtype.Numeric `json:"variantPrice"`
+	VariantSku      string         `json:"variantSku"`
+	VariantStock    int32          `json:"variantStock"`
+	VariantImageUrl *string        `json:"variantImageUrl"`
+	ProductName     string         `json:"productName"`
+	ProductID       uuid.UUID      `json:"productId"`
+	Attributes      []byte         `json:"attributes"`
 }
 
 func (q *Queries) GetCartItems(ctx context.Context, cartID uuid.UUID) ([]GetCartItemsRow, error) {
@@ -287,20 +284,13 @@ func (q *Queries) GetCartItems(ctx context.Context, cartID uuid.UUID) ([]GetCart
 			&i.CartItem.VariantID,
 			&i.CartItem.Quantity,
 			&i.CartItem.AddedAt,
-			&i.VariantID,
-			&i.Price,
-			&i.Stock,
-			&i.Sku,
-			&i.StockQty,
-			&i.ProductID,
+			&i.VariantPrice,
+			&i.VariantSku,
+			&i.VariantStock,
+			&i.VariantImageUrl,
 			&i.ProductName,
-			&i.CartItemID,
-			&i.Quantity,
-			&i.AttrValID,
-			&i.AttrValue,
-			&i.AttrName,
-			&i.ImageID,
-			&i.ImageUrl,
+			&i.ProductID,
+			&i.Attributes,
 		); err != nil {
 			return nil, err
 		}
@@ -314,7 +304,7 @@ func (q *Queries) GetCartItems(ctx context.Context, cartID uuid.UUID) ([]GetCart
 
 const getCartItemsForOrder = `-- name: GetCartItemsForOrder :many
 SELECT 
-    ci.id, ci.cart_id, ci.variant_id, ci.quantity, ci.added_at, 
+    ci.id, ci.cart_id, ci.variant_id, ci.quantity, ci.added_at,
     pv.id AS variant_id, pv.price, pv.stock, pv.sku, pv.stock as stock_qty,
     p.name AS product_name, p.id AS product_id,
     av.value as attr_value, a.name AS attr_name

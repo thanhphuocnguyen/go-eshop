@@ -34,25 +34,29 @@ SELECT * FROM cart_items WHERE variant_id = $1 AND cart_id = $2;
 
 -- name: GetCartItems :many
 SELECT
-    sqlc.embed(ci), 
-    pv.id AS variant_id, pv.price, pv.stock, pv.sku, pv.stock as stock_qty,
-    p.id AS product_id, p.name AS product_name,
-    ci.id as cart_item_id, ci.quantity,
-    av.id as attr_val_id, av.value as attr_value, a.name AS attr_name,
-    pi.id AS image_id, pi.image_url AS image_url
+    sqlc.embed(ci),
+    pv.price AS variant_price, pv.sku AS variant_sku, pv.stock AS variant_stock, pv.image_url AS variant_image_url,
+    p.name AS product_name, p.id AS product_id,
+    JSONB_AGG(
+    DISTINCT JSONB_BUILD_OBJECT(
+            'id', av.id,
+            'name', a.name,
+            'value', av.value
+        )
+    ) AS attributes
 FROM cart_items AS ci
 JOIN product_variants AS pv ON pv.id = ci.variant_id
 JOIN products AS p ON p.id = pv.product_id
 JOIN variant_attribute_values AS vav ON vav.variant_id = pv.id
 JOIN attribute_values AS av ON vav.attribute_value_id = av.id
 JOIN attributes AS a ON av.attribute_id = a.id
-LEFT JOIN product_images AS pi ON pi.product_id = p.id
 WHERE ci.cart_id = $1
+GROUP BY ci.id, pv.id, p.id
 ORDER BY ci.added_at, ci.id, pv.id DESC;
 
 -- name: GetCartItemsForOrder :many
 SELECT 
-    sqlc.embed(ci), 
+    sqlc.embed(ci),
     pv.id AS variant_id, pv.price, pv.stock, pv.sku, pv.stock as stock_qty,
     p.name AS product_name, p.id AS product_id,
     av.value as attr_value, a.name AS attr_name
