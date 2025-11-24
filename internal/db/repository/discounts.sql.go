@@ -713,6 +713,23 @@ func (q *Queries) RemoveDiscountUsage(ctx context.Context, arg RemoveDiscountUsa
 	return err
 }
 
+type SeedDiscountsParams struct {
+	Code              string             `json:"code"`
+	Name              string             `json:"name"`
+	Description       *string            `json:"description"`
+	DiscountType      DiscountType       `json:"discountType"`
+	DiscountValue     pgtype.Numeric     `json:"discountValue"`
+	MinOrderValue     pgtype.Numeric     `json:"minOrderValue"`
+	MaxDiscountAmount pgtype.Numeric     `json:"maxDiscountAmount"`
+	UsageLimit        *int32             `json:"usageLimit"`
+	UsagePerUser      *int32             `json:"usagePerUser"`
+	IsActive          *bool              `json:"isActive"`
+	IsStackable       *bool              `json:"isStackable"`
+	Priority          *int32             `json:"priority"`
+	ValidFrom         pgtype.Timestamptz `json:"validFrom"`
+	ValidUntil        pgtype.Timestamptz `json:"validUntil"`
+}
+
 const updateDiscount = `-- name: UpdateDiscount :one
 UPDATE discounts SET
     code = COALESCE($2, discounts.code),

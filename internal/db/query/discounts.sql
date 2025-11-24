@@ -106,3 +106,6 @@ SELECT COUNT(*) FROM discounts WHERE discount_type = $1;
 SELECT * FROM discounts WHERE priority = $1 LIMIT $2 OFFSET $3;
 -- name: CountDiscountsByPriority :one
 SELECT COUNT(*) FROM discounts WHERE priority = $1;
+
+-- name: SeedDiscounts :copyfrom
+INSERT INTO discounts (code, name, description, discount_type, discount_value, min_order_value, max_discount_amount, usage_limit, usage_per_user, is_active, is_stackable, priority, valid_from, valid_until) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14);

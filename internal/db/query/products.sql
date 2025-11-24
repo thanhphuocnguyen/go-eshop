@@ -10,6 +10,12 @@ SELECT products.* FROM products WHERE products.id = $1 AND is_active = COALESCE(
 -- name: GetProductBySlug :one
 SELECT products.* FROM products WHERE products.slug = $1 AND is_active = COALESCE(sqlc.narg('is_active'), TRUE);
 
+-- name: GetProductBySku :one
+SELECT products.* FROM products WHERE products.base_sku = $1 AND is_active = COALESCE(sqlc.narg('is_active'), TRUE);
+
+-- name: GetProductVariantsByProductID :many
+SELECT * FROM product_variants WHERE product_id = $1 AND is_active = COALESCE(sqlc.narg('is_active'), TRUE) ORDER BY created_at;
+
 -- name: GetProductVariantByID :one
 SELECT * FROM product_variants WHERE id = $1 AND product_id = $2 AND is_active = COALESCE(sqlc.narg('is_active'), TRUE) LIMIT 1;
 
@@ -143,9 +149,3 @@ INSERT INTO products (brand_id, name, description) VALUES ($1, $2, $3);
 
 -- name: UpdateProductStock :one
 UPDATE product_variants SET stock = stock - $1 WHERE id = $2 RETURNING *;
-
-
-
-
---- SHOP PRODUCT DISPLAY ----
--- name: GetShopProducts :many

@@ -8,7 +8,6 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
 
@@ -38,7 +37,7 @@ func authenticateMiddleware(tokenGenerator auth.TokenGenerator) gin.HandlerFunc 
 	}
 }
 
-func authorizeMiddleware(roles ...repository.Role) gin.HandlerFunc {
+func authorizeMiddleware(roles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 		if !ok {
@@ -48,7 +47,7 @@ func authorizeMiddleware(roles ...repository.Role) gin.HandlerFunc {
 
 		hasRole := false
 		for _, role := range roles {
-			if repository.Role(authPayload.RoleCode) == role {
+			if authPayload.RoleCode == role {
 				hasRole = true
 				break
 			}

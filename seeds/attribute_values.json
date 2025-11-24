@@ -1,0 +1,30 @@
+[
+  {
+    "attribute": "Color",
+    "values": ["Black", "White", "Red", "Blue", "Green", "Yellow", "Purple", "Orange", "Pink", "Gray", "Brown", "Silver", "Gold", "Navy", "Titanium", "Rose Gold", "Space Gray", "Natural Titanium", "Black Titanium", "Core Black", "Cloud White", "Stonewash", "Black-brown", "Oak effect"]
+  },
+  {
+    "attribute": "Size", 
+    "values": ["XS", "S", "M", "L", "XL", "XXL", "Small", "Medium", "Large", "X-Large", "6", "7", "8", "9", "10", "11", "12", "13", "28x30", "28x32", "30x30", "30x32", "30x34", "32x30", "32x32", "32x34", "34x30", "34x32", "34x34", "36x30", "36x32", "36x34"]
+  },
+  {
+    "attribute": "Material",
+    "values": ["Cotton", "Polyester", "Wool", "Silk", "Leather", "Denim", "Canvas", "Nylon", "Spandex", "Linen", "Cashmere", "Fleece", "Metal", "Plastic", "Wood", "Glass", "Ceramic", "Rubber", "Titanium", "Aluminum", "Carbon Fiber", "Particleboard"]
+  },
+  {
+    "attribute": "Storage",
+    "values": ["64GB", "128GB", "256GB", "512GB", "1TB", "2TB", "4TB", "8TB", "16GB", "32GB"]
+  },
+  {
+    "attribute": "Processor",
+    "values": ["Intel Core i3", "Intel Core i5", "Intel Core i7", "Intel Core i9", "AMD Ryzen 3", "AMD Ryzen 5", "AMD Ryzen 7", "AMD Ryzen 9", "M1", "M1 Pro", "M1 Max", "M2", "M2 Pro", "M2 Max", "M3", "M3 Pro", "M3 Max", "A17 Pro", "Snapdragon 8 Gen 3"]
+  },
+  {
+    "attribute": "Warranty",
+    "values": ["1 Year", "2 Years", "3 Years", "5 Years", "Limited Lifetime", "No Warranty"]
+  },
+  {
+    "attribute": "Style",
+    "values": ["Casual", "Formal", "Sports", "Business", "Vintage", "Modern", "Classic", "Trendy", "Minimalist", "Traditional"]
+  }
+]

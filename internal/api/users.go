@@ -40,7 +40,7 @@ func (sv *Server) UpdateUserHandler(c *gin.Context) {
 		return
 	}
 
-	if authPayload.RoleCode != repository.UserRoleCodeAdmin && user.ID != req.UserID {
+	if authPayload.RoleCode != "admin" && user.ID != req.UserID {
 		c.JSON(http.StatusUnauthorized, createErr(UnauthorizedCode, err))
 		return
 	}

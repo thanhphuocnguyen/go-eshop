@@ -52,7 +52,7 @@ func (sv *Server) RegisterHandler(c *gin.Context) {
 		return
 	}
 
-	userRole, err := sv.repo.GetRoleByCode(c, string(repository.UserRoleCodeUser))
+	userRole, err := sv.repo.GetRoleByCode(c, "user")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
@@ -68,7 +68,7 @@ func (sv *Server) RegisterHandler(c *gin.Context) {
 	}
 
 	if req.Username == "admin" {
-		adminRole, err := sv.repo.GetRoleByCode(c, string(repository.UserRoleCodeAdmin))
+		adminRole, err := sv.repo.GetRoleByCode(c, "admin")
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 			return
@@ -138,7 +138,7 @@ func (sv *Server) RegisterHandler(c *gin.Context) {
 		ID:            user.ID,
 		Username:      user.Username,
 		RoleID:        user.RoleID.String(),
-		RoleCode:      repository.Role(userRole.Code),
+		RoleCode:      userRole.Code,
 		Email:         user.Email,
 		CreatedAt:     user.CreatedAt.String(),
 		VerifiedEmail: user.VerifiedEmail,

@@ -11,11 +11,10 @@ import (
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	docs "github.com/thanhphuocnguyen/go-eshop/docs"
-	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 )
 
 func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
-	admin := rg.Group("/admin", authenticateMiddleware(sv.tokenGenerator), authorizeMiddleware(repository.UserRoleCodeAdmin))
+	admin := rg.Group("/admin", authenticateMiddleware(sv.tokenGenerator), authorizeMiddleware("admin"))
 	{
 		users := admin.Group("users")
 		{
@@ -160,7 +159,7 @@ func (sv *Server) setupImageRoutes(rg *gin.RouterGroup) {
 	{
 		images.DELETE(
 			"remove-external/:public_id",
-			authorizeMiddleware(repository.UserRoleCodeAdmin),
+			authorizeMiddleware("admin"),
 			sv.RemoveImageByPublicIDHandler)
 		images.GET("", sv.GetProductImagesHandler)
 	}

@@ -49,7 +49,7 @@ func (sv *Server) getOrdersHandler(c *gin.Context) {
 		Offset: (orderListQuery.Page - 1) * orderListQuery.PageSize,
 	}
 
-	if tokenPayload.RoleCode != repository.UserRoleCodeAdmin {
+	if tokenPayload.RoleCode != "admin" {
 		dbParams.CustomerID = utils.GetPgTypeUUID(tokenPayload.UserID)
 	}
 
@@ -323,8 +323,8 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-	userRole := repository.Role(c.GetString(UserRole))
-	if order.CustomerID != tokenPayload.UserID && userRole != repository.UserRoleCodeAdmin {
+	userRole := c.GetString(UserRole)
+	if order.CustomerID != tokenPayload.UserID && userRole != "admin" {
 		c.JSON(http.StatusForbidden, createErr(PermissionDeniedCode, errors.New("you do not have permission to access this order")))
 		return
 	}

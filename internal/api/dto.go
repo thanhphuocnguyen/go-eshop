@@ -429,7 +429,7 @@ type AddressResponse struct {
 type UserDetail struct {
 	ID                uuid.UUID         `json:"id"`
 	RoleID            string            `json:"roleId"`
-	RoleCode          repository.Role   `json:"roleCode"`
+	RoleCode          string            `json:"roleCode"`
 	Username          string            `json:"username"`
 	FirstName         string            `json:"firstName"`
 	LastName          string            `json:"lastName"`

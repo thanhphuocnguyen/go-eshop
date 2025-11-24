@@ -37,6 +37,9 @@ type Querier interface {
 	CountOrders(ctx context.Context, arg CountOrdersParams) (int64, error)
 	CountProductRatings(ctx context.Context, productID pgtype.UUID) (int64, error)
 	CountProducts(ctx context.Context, arg CountProductsParams) (int64, error)
+	CountShippingMethods(ctx context.Context) (int64, error)
+	CountShippingRates(ctx context.Context) (int64, error)
+	CountShippingZones(ctx context.Context) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
 	CountUsersUsingDiscount(ctx context.Context, discountID uuid.UUID) (int64, error)
 	// User Address Queries
@@ -65,6 +68,11 @@ type Querier interface {
 	CreateProductVariant(ctx context.Context, arg CreateProductVariantParams) (ProductVariant, error)
 	// Product Variant attributes
 	CreateProductVariantAttribute(ctx context.Context, arg CreateProductVariantAttributeParams) (VariantAttributeValue, error)
+	CreateShippingMethod(ctx context.Context, arg CreateShippingMethodParams) (ShippingMethod, error)
+	// SHIPPING RATES
+	CreateShippingRate(ctx context.Context, arg CreateShippingRateParams) (ShippingRate, error)
+	// SHIPPING ZONES
+	CreateShippingZone(ctx context.Context, arg CreateShippingZoneParams) (ShippingZone, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	// Verification Token Queries
 	CreateVerifyEmail(ctx context.Context, arg CreateVerifyEmailParams) (EmailVerification, error)
@@ -91,6 +99,9 @@ type Querier interface {
 	DeleteProductVariantAttributes(ctx context.Context, variantID uuid.UUID) error
 	DeleteRatingReplies(ctx context.Context, id uuid.UUID) error
 	DeleteRatingVotes(ctx context.Context, id uuid.UUID) error
+	DeleteShippingMethod(ctx context.Context, id uuid.UUID) error
+	DeleteShippingRate(ctx context.Context, id uuid.UUID) error
+	DeleteShippingZone(ctx context.Context, id uuid.UUID) error
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	GetActiveDiscounts(ctx context.Context) ([]Discount, error)
 	GetAddress(ctx context.Context, arg GetAddressParams) (UserAddress, error)
@@ -148,6 +159,7 @@ type Querier interface {
 	GetProductAttributeValuesByProductID(ctx context.Context, productID uuid.UUID) ([]GetProductAttributeValuesByProductIDRow, error)
 	GetProductAttributesByProductID(ctx context.Context, productID uuid.UUID) ([]GetProductAttributesByProductIDRow, error)
 	GetProductByID(ctx context.Context, arg GetProductByIDParams) (Product, error)
+	GetProductBySku(ctx context.Context, arg GetProductBySkuParams) (Product, error)
 	GetProductBySlug(ctx context.Context, arg GetProductBySlugParams) (Product, error)
 	GetProductDetail(ctx context.Context, arg GetProductDetailParams) (GetProductDetailRow, error)
 	GetProductImages(ctx context.Context, productIds []uuid.UUID) ([]GetProductImagesRow, error)
@@ -161,6 +173,7 @@ type Querier interface {
 	GetProductVariantAttributes(ctx context.Context, variantID uuid.UUID) ([]VariantAttributeValue, error)
 	GetProductVariantByID(ctx context.Context, arg GetProductVariantByIDParams) (ProductVariant, error)
 	GetProductVariantList(ctx context.Context, arg GetProductVariantListParams) ([]GetProductVariantListRow, error)
+	GetProductVariantsByProductID(ctx context.Context, arg GetProductVariantsByProductIDParams) ([]ProductVariant, error)
 	GetRatingReplies(ctx context.Context, id uuid.UUID) (RatingReply, error)
 	GetRatingRepliesByRatingID(ctx context.Context, ratingID uuid.UUID) ([]GetRatingRepliesByRatingIDRow, error)
 	GetRatingRepliesByUserID(ctx context.Context, replyBy uuid.UUID) ([]GetRatingRepliesByUserIDRow, error)
@@ -175,6 +188,13 @@ type Querier interface {
 	GetRoleByID(ctx context.Context, id uuid.UUID) (UserRole, error)
 	GetSession(ctx context.Context, id uuid.UUID) (UserSession, error)
 	GetSessionByRefreshToken(ctx context.Context, refreshToken string) (UserSession, error)
+	GetShippingMethodByID(ctx context.Context, id uuid.UUID) (ShippingMethod, error)
+	GetShippingMethods(ctx context.Context, isActive *bool) ([]ShippingMethod, error)
+	GetShippingRateByID(ctx context.Context, id uuid.UUID) (GetShippingRateByIDRow, error)
+	GetShippingRates(ctx context.Context, isActive *bool) ([]GetShippingRatesRow, error)
+	GetShippingRatesByZone(ctx context.Context, shippingZoneID uuid.UUID) ([]GetShippingRatesByZoneRow, error)
+	GetShippingZoneByID(ctx context.Context, id uuid.UUID) (ShippingZone, error)
+	GetShippingZones(ctx context.Context, isActive *bool) ([]ShippingZone, error)
 	GetTopUsedDiscounts(ctx context.Context, arg GetTopUsedDiscountsParams) ([]Discount, error)
 	GetTotalDiscountGiven(ctx context.Context, discountID uuid.UUID) (pgtype.Numeric, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
@@ -201,8 +221,12 @@ type Querier interface {
 	RemoveProductsFromCollection(ctx context.Context, productID uuid.UUID) error
 	ResetPrimaryAddress(ctx context.Context, userID uuid.UUID) error
 	SeedAddresses(ctx context.Context, arg []SeedAddressesParams) (int64, error)
+	SeedBrands(ctx context.Context, arg []SeedBrandsParams) (int64, error)
 	SeedCategories(ctx context.Context, arg []SeedCategoriesParams) (int64, error)
 	SeedCollections(ctx context.Context, arg []SeedCollectionsParams) (int64, error)
+	SeedDiscounts(ctx context.Context, arg []SeedDiscountsParams) (int64, error)
+	SeedShippingMethods(ctx context.Context, arg []SeedShippingMethodsParams) (int64, error)
+	SeedShippingZones(ctx context.Context, arg []SeedShippingZonesParams) (int64, error)
 	SeedUsers(ctx context.Context, arg []SeedUsersParams) (int64, error)
 	SetPrimaryAddress(ctx context.Context, arg SetPrimaryAddressParams) error
 	UpdateAddress(ctx context.Context, arg UpdateAddressParams) (UserAddress, error)
@@ -225,6 +249,9 @@ type Querier interface {
 	UpdateRatingReplies(ctx context.Context, arg UpdateRatingRepliesParams) (RatingReply, error)
 	UpdateRatingVote(ctx context.Context, arg UpdateRatingVoteParams) (RatingVote, error)
 	UpdateSession(ctx context.Context, arg UpdateSessionParams) (UserSession, error)
+	UpdateShippingMethod(ctx context.Context, arg UpdateShippingMethodParams) (ShippingMethod, error)
+	UpdateShippingRate(ctx context.Context, arg UpdateShippingRateParams) (ShippingRate, error)
+	UpdateShippingZone(ctx context.Context, arg UpdateShippingZoneParams) (ShippingZone, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateUserRow, error)
 	UpdateVerifyEmail(ctx context.Context, arg UpdateVerifyEmailParams) (EmailVerification, error)
 }

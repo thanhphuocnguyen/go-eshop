@@ -51,3 +51,26 @@ func GetAvgRating(ratingCnt int32, oneStarCnt,
 		fourStarCnt*4+fiveStarCnt*5) / float64(ratingCnt)
 	return avg
 }
+
+// Slugify converts a string to a URL-friendly slug
+func Slugify(s string) string {
+	// Convert to lowercase
+	s = strings.ToLower(s)
+	// Replace spaces and special characters with hyphens
+	s = strings.ReplaceAll(s, " ", "-")
+	s = strings.ReplaceAll(s, "&", "and")
+	// Remove other non-alphanumeric characters except hyphens
+	var result strings.Builder
+	for _, r := range s {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' {
+			result.WriteRune(r)
+		}
+	}
+	s = result.String()
+	// Remove multiple consecutive hyphens
+	for strings.Contains(s, "--") {
+		s = strings.ReplaceAll(s, "--", "-")
+	}
+	// Trim hyphens from start and end
+	return strings.Trim(s, "-")
+}

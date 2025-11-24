@@ -1,0 +1,72 @@
+[
+  {
+    "username": "admin",
+    "email": "admin@eshop.com",
+    "password": "admin123",
+    "fullname": "System Administrator",
+    "phone": "+1234567890"
+  },
+  {
+    "username": "john_doe",
+    "email": "john.doe@email.com",
+    "password": "password123",
+    "fullname": "John Doe",
+    "phone": "+1234567891"
+  },
+  {
+    "username": "jane_smith",
+    "email": "jane.smith@email.com",
+    "password": "password123",
+    "fullname": "Jane Smith",
+    "phone": "+1234567892"
+  },
+  {
+    "username": "mike_wilson",
+    "email": "mike.wilson@email.com",
+    "password": "password123",
+    "fullname": "Mike Wilson",
+    "phone": "+1234567893"
+  },
+  {
+    "username": "sarah_jones",
+    "email": "sarah.jones@email.com",
+    "password": "password123",
+    "fullname": "Sarah Jones",
+    "phone": "+1234567894"
+  },
+  {
+    "username": "david_brown",
+    "email": "david.brown@email.com",
+    "password": "password123",
+    "fullname": "David Brown",
+    "phone": "+1234567895"
+  },
+  {
+    "username": "emma_davis",
+    "email": "emma.davis@email.com",
+    "password": "password123",
+    "fullname": "Emma Davis",
+    "phone": "+1234567896"
+  },
+  {
+    "username": "alex_garcia",
+    "email": "alex.garcia@email.com",
+    "password": "password123",
+    "fullname": "Alex Garcia",
+    "phone": "+1234567897"
+  },
+  {
+    "username": "lisa_martinez",
+    "email": "lisa.martinez@email.com",
+    "password": "password123",
+    "fullname": "Lisa Martinez",
+    "phone": "+1234567898"
+  },
+  {
+    "username": "chris_taylor",
+    "email": "chris.taylor@email.com",
+    "password": "password123",
+    "fullname": "Chris Taylor",
+    "phone": "+1234567899"
+  }
+]

@@ -298,6 +298,45 @@ func (q *Queries) GetProductByID(ctx context.Context, arg GetProductByIDParams) 
 	return i, err
 }
 
+const getProductBySku = `-- name: GetProductBySku :one
+SELECT products.id, products.name, products.description, products.short_description, products.base_price, products.base_sku, products.slug, products.is_active, products.image_url, products.image_id, products.discount_percentage, products.purchased_count, products.avg_rating, products.rating_count, products.one_star_count, products.two_star_count, products.three_star_count, products.four_star_count, products.five_star_count, products.created_at, products.updated_at, products.brand_id FROM products WHERE products.base_sku = $1 AND is_active = COALESCE($2, TRUE)
+`
+
+type GetProductBySkuParams struct {
+	BaseSku  string `json:"baseSku"`
+	IsActive *bool  `json:"isActive"`
+}
+
+func (q *Queries) GetProductBySku(ctx context.Context, arg GetProductBySkuParams) (Product, error) {
+	row := q.db.QueryRow(ctx, getProductBySku, arg.BaseSku, arg.IsActive)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.ShortDescription,
+		&i.BasePrice,
+		&i.BaseSku,
+		&i.Slug,
+		&i.IsActive,
+		&i.ImageUrl,
+		&i.ImageID,
+		&i.DiscountPercentage,
+		&i.PurchasedCount,
+		&i.AvgRating,
+		&i.RatingCount,
+		&i.OneStarCount,
+		&i.TwoStarCount,
+		&i.ThreeStarCount,
+		&i.FourStarCount,
+		&i.FiveStarCount,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.BrandID,
+	)
+	return i, err
+}
+
 const getProductBySlug = `-- name: GetProductBySlug :one
 SELECT products.id, products.name, products.description, products.short_description, products.base_price, products.base_sku, products.slug, products.is_active, products.image_url, products.image_id, products.discount_percentage, products.purchased_count, products.avg_rating, products.rating_count, products.one_star_count, products.two_star_count, products.three_star_count, products.four_star_count, products.five_star_count, products.created_at, products.updated_at, products.brand_id FROM products WHERE products.slug = $1 AND is_active = COALESCE($2, TRUE)
 `
@@ -634,6 +673,48 @@ func (q *Queries) GetProductVariantList(ctx context.Context, arg GetProductVaria
 			&i.ImageUrl,
 			&i.ImageID,
 			&i.AttributeValues,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getProductVariantsByProductID = `-- name: GetProductVariantsByProductID :many
+SELECT id, product_id, description, sku, price, stock, weight, is_active, created_at, updated_at, image_url, image_id FROM product_variants WHERE product_id = $1 AND is_active = COALESCE($2, TRUE) ORDER BY created_at
+`
+
+type GetProductVariantsByProductIDParams struct {
+	ProductID uuid.UUID `json:"productId"`
+	IsActive  *bool     `json:"isActive"`
+}
+
+func (q *Queries) GetProductVariantsByProductID(ctx context.Context, arg GetProductVariantsByProductIDParams) ([]ProductVariant, error) {
+	rows, err := q.db.Query(ctx, getProductVariantsByProductID, arg.ProductID, arg.IsActive)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ProductVariant{}
+	for rows.Next() {
+		var i ProductVariant
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProductID,
+			&i.Description,
+			&i.Sku,
+			&i.Price,
+			&i.Stock,
+			&i.Weight,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ImageUrl,
+			&i.ImageID,
 		); err != nil {
 			return nil, err
 		}

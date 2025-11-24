@@ -1,0 +1,107 @@
+[
+  {
+    "street": "123 Main St",
+    "city": "New York",
+    "district": "Manhattan",
+    "ward": "Midtown",
+    "phone": "+1234567890"
+  },
+  {
+    "street": "456 Oak Avenue",
+    "city": "Los Angeles",
+    "district": "Beverly Hills",
+    "ward": "West Hollywood",
+    "phone": "+1234567891"
+  },
+  {
+    "street": "789 Pine Road",
+    "city": "Chicago",
+    "district": "Lincoln Park",
+    "ward": "Old Town",
+    "phone": "+1234567892"
+  },
+  {
+    "street": "321 Elm Street",
+    "city": "Houston",
+    "district": "Downtown",
+    "ward": "Theater District",
+    "phone": "+1234567893"
+  },
+  {
+    "street": "654 Maple Drive",
+    "city": "Phoenix",
+    "district": "Scottsdale",
+    "ward": "Old Town Scottsdale",
+    "phone": "+1234567894"
+  },
+  {
+    "street": "987 Cedar Lane",
+    "city": "Philadelphia",
+    "district": "Center City",
+    "ward": "Rittenhouse Square",
+    "phone": "+1234567895"
+  },
+  {
+    "street": "147 Birch Street",
+    "city": "San Antonio",
+    "district": "Riverwalk",
+    "ward": "Downtown",
+    "phone": "+1234567896"
+  },
+  {
+    "street": "258 Willow Way",
+    "city": "San Diego",
+    "district": "Gaslamp Quarter",
+    "ward": "Downtown",
+    "phone": "+1234567897"
+  },
+  {
+    "street": "369 Spruce Avenue",
+    "city": "Dallas",
+    "district": "Deep Ellum",
+    "ward": "Arts District",
+    "phone": "+1234567898"
+  },
+  {
+    "street": "741 Ash Boulevard",
+    "city": "San Jose",
+    "district": "Downtown",
+    "ward": "Santana Row",
+    "phone": "+1234567899"
+  },
+  {
+    "street": "852 Poplar Street",
+    "city": "Austin",
+    "district": "South by Southwest",
+    "ward": "Rainey Street",
+    "phone": "+1234567800"
+  },
+  {
+    "street": "963 Cherry Circle",
+    "city": "Jacksonville",
+    "district": "Riverside",
+    "ward": "Five Points",
+    "phone": "+1234567801"
+  },
+  {
+    "street": "159 Walnut Road",
+    "city": "Fort Worth",
+    "district": "Sundance Square",
+    "ward": "Downtown",
+    "phone": "+1234567802"
+  },
+  {
+    "street": "357 Hickory Lane",
+    "city": "Columbus",
+    "district": "Short North",
+    "ward": "Arena District",
+    "phone": "+1234567803"
+  },
+  {
+    "street": "468 Pecan Drive",
+    "city": "Charlotte",
+    "district": "Uptown",
+    "ward": "Fourth Ward",
+    "phone": "+1234567804"
+  }
+]

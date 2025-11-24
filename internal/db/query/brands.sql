@@ -36,3 +36,6 @@ DELETE FROM brands WHERE id = $1;
 
 -- name: CountBrands :one
 SELECT count(*) FROM brands;
+
+-- name: SeedBrands :copyfrom
+INSERT INTO brands (name, slug, description, display_order, published) VALUES ($1, $2, $3, $4, $5);

@@ -390,6 +390,42 @@ func (q *Queries) SeedAddresses(ctx context.Context, arg []SeedAddressesParams) 
 	return q.db.CopyFrom(ctx, []string{"user_addresses"}, []string{"user_id", "phone_number", "street", "ward", "district", "city", "is_default"}, &iteratorForSeedAddresses{rows: arg})
 }
 
+// iteratorForSeedBrands implements pgx.CopyFromSource.
+type iteratorForSeedBrands struct {
+	rows                 []SeedBrandsParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForSeedBrands) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForSeedBrands) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].Name,
+		r.rows[0].Slug,
+		r.rows[0].Description,
+		r.rows[0].DisplayOrder,
+		r.rows[0].Published,
+	}, nil
+}
+
+func (r iteratorForSeedBrands) Err() error {
+	return nil
+}
+
+func (q *Queries) SeedBrands(ctx context.Context, arg []SeedBrandsParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"brands"}, []string{"name", "slug", "description", "display_order", "published"}, &iteratorForSeedBrands{rows: arg})
+}
+
 // iteratorForSeedCategories implements pgx.CopyFromSource.
 type iteratorForSeedCategories struct {
 	rows                 []SeedCategoriesParams
@@ -458,6 +494,124 @@ func (r iteratorForSeedCollections) Err() error {
 
 func (q *Queries) SeedCollections(ctx context.Context, arg []SeedCollectionsParams) (int64, error) {
 	return q.db.CopyFrom(ctx, []string{"collections"}, []string{"name", "description", "image_url"}, &iteratorForSeedCollections{rows: arg})
+}
+
+// iteratorForSeedDiscounts implements pgx.CopyFromSource.
+type iteratorForSeedDiscounts struct {
+	rows                 []SeedDiscountsParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForSeedDiscounts) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForSeedDiscounts) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].Code,
+		r.rows[0].Name,
+		r.rows[0].Description,
+		r.rows[0].DiscountType,
+		r.rows[0].DiscountValue,
+		r.rows[0].MinOrderValue,
+		r.rows[0].MaxDiscountAmount,
+		r.rows[0].UsageLimit,
+		r.rows[0].UsagePerUser,
+		r.rows[0].IsActive,
+		r.rows[0].IsStackable,
+		r.rows[0].Priority,
+		r.rows[0].ValidFrom,
+		r.rows[0].ValidUntil,
+	}, nil
+}
+
+func (r iteratorForSeedDiscounts) Err() error {
+	return nil
+}
+
+func (q *Queries) SeedDiscounts(ctx context.Context, arg []SeedDiscountsParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"discounts"}, []string{"code", "name", "description", "discount_type", "discount_value", "min_order_value", "max_discount_amount", "usage_limit", "usage_per_user", "is_active", "is_stackable", "priority", "valid_from", "valid_until"}, &iteratorForSeedDiscounts{rows: arg})
+}
+
+// iteratorForSeedShippingMethods implements pgx.CopyFromSource.
+type iteratorForSeedShippingMethods struct {
+	rows                 []SeedShippingMethodsParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForSeedShippingMethods) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForSeedShippingMethods) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].Name,
+		r.rows[0].Description,
+		r.rows[0].IsActive,
+		r.rows[0].RequiresAddress,
+		r.rows[0].EstimatedDeliveryTime,
+	}, nil
+}
+
+func (r iteratorForSeedShippingMethods) Err() error {
+	return nil
+}
+
+func (q *Queries) SeedShippingMethods(ctx context.Context, arg []SeedShippingMethodsParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"shipping_methods"}, []string{"name", "description", "is_active", "requires_address", "estimated_delivery_time"}, &iteratorForSeedShippingMethods{rows: arg})
+}
+
+// iteratorForSeedShippingZones implements pgx.CopyFromSource.
+type iteratorForSeedShippingZones struct {
+	rows                 []SeedShippingZonesParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForSeedShippingZones) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForSeedShippingZones) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].Name,
+		r.rows[0].Description,
+		r.rows[0].Countries,
+		r.rows[0].States,
+		r.rows[0].ZipCodes,
+		r.rows[0].IsActive,
+	}, nil
+}
+
+func (r iteratorForSeedShippingZones) Err() error {
+	return nil
+}
+
+func (q *Queries) SeedShippingZones(ctx context.Context, arg []SeedShippingZonesParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"shipping_zones"}, []string{"name", "description", "countries", "states", "zip_codes", "is_active"}, &iteratorForSeedShippingZones{rows: arg})
 }
 
 // iteratorForSeedUsers implements pgx.CopyFromSource.

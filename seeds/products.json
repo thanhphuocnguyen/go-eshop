@@ -1,0 +1,465 @@
+[
+  {
+    "name": "iPhone 15 Pro",
+    "description": "The most Pro iPhone ever with titanium design, A17 Pro chip, and Pro camera system.",
+    "price": 999.00,
+    "stock": 50,
+    "sku": "IPHONE15PRO-128GB",
+    "variants": [
+      {
+        "price": 999.00,
+        "stock": 20,
+        "sku": "IPHONE15PRO-128GB-NAT",
+        "attributes": {
+          "Color": "Natural Titanium",
+          "Storage": "128GB"
+        }
+      },
+      {
+        "price": 999.00,
+        "stock": 15,
+        "sku": "IPHONE15PRO-128GB-BLK",
+        "attributes": {
+          "Color": "Black Titanium",
+          "Storage": "128GB"
+        }
+      },
+      {
+        "price": 1099.00,
+        "stock": 25,
+        "sku": "IPHONE15PRO-256GB-NAT",
+        "attributes": {
+          "Color": "Natural Titanium",
+          "Storage": "256GB"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Samsung Galaxy S24 Ultra",
+    "description": "Unleash your creativity with the Galaxy S24 Ultra featuring S Pen and AI-powered features.",
+    "price": 1199.00,
+    "stock": 40,
+    "sku": "GALAXYS24ULTRA-256GB",
+    "variants": [
+      {
+        "price": 1199.00,
+        "stock": 18,
+        "sku": "GALAXYS24ULTRA-256GB-BLK",
+        "attributes": {
+          "Color": "Titanium Black",
+          "Storage": "256GB"
+        }
+      },
+      {
+        "price": 1199.00,
+        "stock": 12,
+        "sku": "GALAXYS24ULTRA-256GB-GRY",
+        "attributes": {
+          "Color": "Titanium Gray",
+          "Storage": "256GB"
+        }
+      },
+      {
+        "price": 1399.00,
+        "stock": 10,
+        "sku": "GALAXYS24ULTRA-512GB-BLK",
+        "attributes": {
+          "Color": "Titanium Black",
+          "Storage": "512GB"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Nike Air Max 270",
+    "description": "Nike's most comfortable Air Max ever with a 270-degree Air unit for maximum comfort.",
+    "price": 150.00,
+    "stock": 100,
+    "sku": "AIRMAX270",
+    "variants": [
+      {
+        "price": 150.00,
+        "stock": 20,
+        "sku": "AIRMAX270-BLK-9",
+        "attributes": {
+          "Color": "Black/White",
+          "Size": "9"
+        }
+      },
+      {
+        "price": 150.00,
+        "stock": 25,
+        "sku": "AIRMAX270-BLK-10",
+        "attributes": {
+          "Color": "Black/White",
+          "Size": "10"
+        }
+      },
+      {
+        "price": 150.00,
+        "stock": 15,
+        "sku": "AIRMAX270-RED-9",
+        "attributes": {
+          "Color": "Red/Black",
+          "Size": "9"
+        }
+      },
+      {
+        "price": 150.00,
+        "stock": 20,
+        "sku": "AIRMAX270-RED-10",
+        "attributes": {
+          "Color": "Red/Black",
+          "Size": "10"
+        }
+      },
+      {
+        "price": 150.00,
+        "stock": 20,
+        "sku": "AIRMAX270-BLK-11",
+        "attributes": {
+          "Color": "Black/White",
+          "Size": "11"
+        }
+      }
+    ]
+  },
+  {
+    "name": "MacBook Pro 14\"",
+    "description": "Supercharged for pros with M3 Pro or M3 Max chip, incredible performance and battery life.",
+    "price": 1999.00,
+    "stock": 25,
+    "sku": "MBP14-M3PRO",
+    "variants": [
+      {
+        "price": 1999.00,
+        "stock": 10,
+        "sku": "MBP14-M3PRO-SLV-512GB",
+        "attributes": {
+          "Color": "Silver",
+          "Storage": "512GB",
+          "Processor": "M3 Pro"
+        }
+      },
+      {
+        "price": 1999.00,
+        "stock": 8,
+        "sku": "MBP14-M3PRO-GRY-512GB",
+        "attributes": {
+          "Color": "Space Gray",
+          "Storage": "512GB",
+          "Processor": "M3 Pro"
+        }
+      },
+      {
+        "price": 2399.00,
+        "stock": 7,
+        "sku": "MBP14-M3PRO-SLV-1TB",
+        "attributes": {
+          "Color": "Silver",
+          "Storage": "1TB",
+          "Processor": "M3 Pro"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Sony WH-1000XM5",
+    "description": "Industry-leading noise canceling headphones with premium comfort and sound quality.",
+    "price": 399.99,
+    "stock": 75,
+    "sku": "WH1000XM5",
+    "variants": [
+      {
+        "price": 399.99,
+        "stock": 40,
+        "sku": "WH1000XM5-BLK",
+        "attributes": {
+          "Color": "Black"
+        }
+      },
+      {
+        "price": 399.99,
+        "stock": 35,
+        "sku": "WH1000XM5-SLV",
+        "attributes": {
+          "Color": "Silver"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Levi's 501 Original Jeans",
+    "description": "The original straight fit jeans. Cut to sit at your waist with a straight leg.",
+    "price": 89.50,
+    "stock": 120,
+    "sku": "LEVIS501-ORIG",
+    "variants": [
+      {
+        "price": 89.50,
+        "stock": 15,
+        "sku": "LEVIS501-ORIG-30-32",
+        "attributes": {
+          "Color": "Stonewash",
+          "Size": "30x32"
+        }
+      },
+      {
+        "price": 89.50,
+        "stock": 20,
+        "sku": "LEVIS501-ORIG-32-32",
+        "attributes": {
+          "Color": "Stonewash",
+          "Size": "32x32"
+        }
+      },
+      {
+        "price": 89.50,
+        "stock": 18,
+        "sku": "LEVIS501-ORIG-34-32",
+        "attributes": {
+          "Color": "Stonewash",
+          "Size": "34x32"
+        }
+      },
+      {
+        "price": 89.50,
+        "stock": 12,
+        "sku": "LEVIS501-ORIG-30-34",
+        "attributes": {
+          "Color": "Stonewash",
+          "Size": "30x34"
+        }
+      },
+      {
+        "price": 89.50,
+        "stock": 25,
+        "sku": "LEVIS501-ORIG-32-34",
+        "attributes": {
+          "Color": "Stonewash",
+          "Size": "32x34"
+        }
+      },
+      {
+        "price": 89.50,
+        "stock": 15,
+        "sku": "LEVIS501-ORIG-34-34",
+        "attributes": {
+          "Color": "Stonewash",
+          "Size": "34x34"
+        }
+      },
+      {
+        "price": 89.50,
+        "stock": 15,
+        "sku": "LEVIS501-ORIG-36-32",
+        "attributes": {
+          "Color": "Stonewash",
+          "Size": "36x32"
+        }
+      }
+    ]
+  },
+  {
+    "name": "IKEA BILLY Bookcase",
+    "description": "A classic bookcase with adjustable shelves in wood veneer finish.",
+    "price": 60.00,
+    "stock": 50,
+    "sku": "BILLY-BOOKCASE",
+    "variants": [
+      {
+        "price": 60.00,
+        "stock": 20,
+        "sku": "BILLY-BOOKCASE-WHT",
+        "attributes": {
+          "Color": "White",
+          "Material": "Particleboard"
+        }
+      },
+      {
+        "price": 65.00,
+        "stock": 15,
+        "sku": "BILLY-BOOKCASE-BLK",
+        "attributes": {
+          "Color": "Black-brown",
+          "Material": "Particleboard"
+        }
+      },
+      {
+        "price": 70.00,
+        "stock": 15,
+        "sku": "BILLY-BOOKCASE-OAK",
+        "attributes": {
+          "Color": "Oak effect",
+          "Material": "Particleboard"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Under Armour HeatGear T-Shirt",
+    "description": "Ultra-soft fabric delivers incredible all-day comfort for any activity.",
+    "price": 25.00,
+    "stock": 200,
+    "sku": "UA-HEATGEAR-TEE",
+    "variants": [
+      {
+        "price": 25.00,
+        "stock": 30,
+        "sku": "UA-HEATGEAR-TEE-BLK-S",
+        "attributes": {
+          "Color": "Black",
+          "Size": "Small"
+        }
+      },
+      {
+        "price": 25.00,
+        "stock": 40,
+        "sku": "UA-HEATGEAR-TEE-BLK-M",
+        "attributes": {
+          "Color": "Black",
+          "Size": "Medium"
+        }
+      },
+      {
+        "price": 25.00,
+        "stock": 35,
+        "sku": "UA-HEATGEAR-TEE-BLK-L",
+        "attributes": {
+          "Color": "Black",
+          "Size": "Large"
+        }
+      },
+      {
+        "price": 25.00,
+        "stock": 25,
+        "sku": "UA-HEATGEAR-TEE-BLK-XL",
+        "attributes": {
+          "Color": "Black",
+          "Size": "X-Large"
+        }
+      },
+      {
+        "price": 25.00,
+        "stock": 25,
+        "sku": "UA-HEATGEAR-TEE-NVY-M",
+        "attributes": {
+          "Color": "Navy",
+          "Size": "Medium"
+        }
+      },
+      {
+        "price": 25.00,
+        "stock": 25,
+        "sku": "UA-HEATGEAR-TEE-NVY-L",
+        "attributes": {
+          "Color": "Navy",
+          "Size": "Large"
+        }
+      },
+      {
+        "price": 25.00,
+        "stock": 20,
+        "sku": "UA-HEATGEAR-TEE-GRY-M",
+        "attributes": {
+          "Color": "Gray",
+          "Size": "Medium"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Dell XPS 13 Laptop",
+    "description": "Ultra-portable laptop with InfinityEdge display and premium carbon fiber build.",
+    "price": 1299.00,
+    "stock": 30,
+    "sku": "DELLXPS13",
+    "variants": [
+      {
+        "price": 1299.00,
+        "stock": 12,
+        "sku": "DELLXPS13-512GB-SLV",
+        "attributes": {
+          "Color": "Silver",
+          "Storage": "512GB",
+          "Processor": "Intel Core i7"
+        }
+      },
+      {
+        "price": 1099.00,
+        "stock": 10,
+        "sku": "DELLXPS13-256GB-SLV",
+        "attributes": {
+          "Color": "Silver",
+          "Storage": "256GB",
+          "Processor": "Intel Core i5"
+        }
+      },
+      {
+        "price": 1599.00,
+        "stock": 8,
+        "sku": "DELLXPS13-1TB-SLV",
+        "attributes": {
+          "Color": "Silver",
+          "Storage": "1TB",
+          "Processor": "Intel Core i7"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Adidas Ultraboost 22",
+    "description": "Running shoe with responsive Boost midsole and Primeknit upper for adaptive fit.",
+    "price": 180.00,
+    "stock": 80,
+    "sku": "ULTRABOOST22",
+    "variants": [
+      {
+        "price": 180.00,
+        "stock": 15,
+        "sku": "ULTRABOOST22-BLK-9",
+        "attributes": {
+          "Color": "Core Black",
+          "Size": "9"
+        }
+      },
+      {
+        "price": 180.00,
+        "stock": 20,
+        "sku": "ULTRABOOST22-BLK-10",
+        "attributes": {
+          "Color": "Core Black",
+          "Size": "10"
+        }
+      },
+      {
+        "price": 180.00,
+        "stock": 15,
+        "sku": "ULTRABOOST22-WHT-9",
+        "attributes": {
+          "Color": "Cloud White",
+          "Size": "9"
+        }
+      },
+      {
+        "price": 180.00,
+        "stock": 15,
+        "sku": "ULTRABOOST22-WHT-10",
+        "attributes": {
+          "Color": "Cloud White",
+          "Size": "10"
+        }
+      },
+      {
+        "price": 180.00,
+        "stock": 15,
+        "sku": "ULTRABOOST22-BLK-11",
+        "attributes": {
+          "Color": "Core Black",
+          "Size": "11"
+        }
+      }
+    ]
+  }
+]

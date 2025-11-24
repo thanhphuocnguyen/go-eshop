@@ -1,0 +1,42 @@
+[
+  {
+    "name": "US Domestic",
+    "description": "United States domestic shipping zone",
+    "countries": ["US"],
+    "states": ["CA", "NY", "TX", "FL", "IL", "PA", "OH", "GA", "NC", "MI"],
+    "zip_codes": [],
+    "is_active": true
+  },
+  {
+    "name": "Canada",
+    "description": "Canada shipping zone",
+    "countries": ["CA"],
+    "states": ["ON", "QC", "BC", "AB", "MB", "SK", "NS", "NB"],
+    "zip_codes": [],
+    "is_active": true
+  },
+  {
+    "name": "Europe",
+    "description": "European Union shipping zone",
+    "countries": ["DE", "FR", "IT", "ES", "NL", "BE", "AT", "DK", "SE", "NO"],
+    "states": [],
+    "zip_codes": [],
+    "is_active": true
+  },
+  {
+    "name": "Asia Pacific",
+    "description": "Asia Pacific region shipping zone", 
+    "countries": ["JP", "AU", "SG", "HK", "KR", "TW"],
+    "states": [],
+    "zip_codes": [],
+    "is_active": true
+  },
+  {
+    "name": "Local Metro",
+    "description": "Local metropolitan area for same-day delivery",
+    "countries": ["US"],
+    "states": ["CA", "NY"],
+    "zip_codes": ["90210", "10001", "10002", "94102"],
+    "is_active": true
+  }
+]

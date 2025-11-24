@@ -111,7 +111,7 @@ func getPayloadFromParsedData(t *paseto.Token) (*Payload, error) {
 	return &Payload{
 		ID:       idUUID,
 		Username: username,
-		RoleCode: repository.Role(role),
+		RoleCode: role,
 		RoleID:   uuid.MustParse(roleId),
 		UserID:   userId,
 		IssuedAt: issuedAt,

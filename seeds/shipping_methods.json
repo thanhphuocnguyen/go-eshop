@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Standard Shipping",
+    "description": "Standard shipping for all domestic orders",
+    "is_active": true,
+    "requires_address": true,
+    "estimated_delivery_time": "5-7 business days"
+  },
+  {
+    "name": "Express Shipping",
+    "description": "Faster delivery option for urgent orders",
+    "is_active": true,
+    "requires_address": true,
+    "estimated_delivery_time": "2-3 business days"
+  },
+  {
+    "name": "Overnight Shipping",
+    "description": "Next day delivery for time-sensitive orders",
+    "is_active": true,
+    "requires_address": true,
+    "estimated_delivery_time": "1 business day"
+  },
+  {
+    "name": "Local Pickup",
+    "description": "Pick up your order at our store location",
+    "is_active": true,
+    "requires_address": false,
+    "estimated_delivery_time": "Same day"
+  },
+  {
+    "name": "Free Shipping",
+    "description": "Free standard shipping for qualifying orders",
+    "is_active": true,
+    "requires_address": true,
+    "estimated_delivery_time": "5-7 business days"
+  }
+]

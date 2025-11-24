@@ -1,0 +1,62 @@
+[
+  {
+    "name": "Apple",
+    "description": "Premium technology products and innovative solutions",
+    "sort_order": 1,
+    "published": true
+  },
+  {
+    "name": "Samsung",
+    "description": "Leading electronics manufacturer with wide product range",
+    "sort_order": 2,
+    "published": true
+  },
+  {
+    "name": "Nike",
+    "description": "Athletic footwear, apparel, equipment and accessories",
+    "sort_order": 3,
+    "published": true
+  },
+  {
+    "name": "Adidas",
+    "description": "German multinational corporation that designs and manufactures shoes, clothing and accessories",
+    "sort_order": 4,
+    "published": true
+  },
+  {
+    "name": "Sony",
+    "description": "Electronics, gaming, entertainment, and technology solutions",
+    "sort_order": 5,
+    "published": true
+  },
+  {
+    "name": "Dell",
+    "description": "Computer technology company that develops, sells, repairs, and supports computers",
+    "sort_order": 6,
+    "published": true
+  },
+  {
+    "name": "HP",
+    "description": "Technology company focusing on printers, personal computing, and enterprise products",
+    "sort_order": 7,
+    "published": true
+  },
+  {
+    "name": "Levi's",
+    "description": "American clothing company known globally for its Levi's brand of denim jeans",
+    "sort_order": 8,
+    "published": true
+  },
+  {
+    "name": "IKEA",
+    "description": "Swedish furniture and home accessories company",
+    "sort_order": 9,
+    "published": true
+  },
+  {
+    "name": "Under Armour",
+    "description": "American company that manufactures footwear, sports, and casual apparel",
+    "sort_order": 10,
+    "published": true
+  }
+]

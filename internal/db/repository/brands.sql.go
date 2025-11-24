@@ -225,6 +225,14 @@ func (q *Queries) GetBrandsByIDs(ctx context.Context, arg GetBrandsByIDsParams) 
 	return items, nil
 }
 
+type SeedBrandsParams struct {
+	Name         string  `json:"name"`
+	Slug         string  `json:"slug"`
+	Description  *string `json:"description"`
+	DisplayOrder *int32  `json:"displayOrder"`
+	Published    bool    `json:"published"`
+}
+
 const updateBrandWith = `-- name: UpdateBrandWith :one
 UPDATE brands
 SET 
