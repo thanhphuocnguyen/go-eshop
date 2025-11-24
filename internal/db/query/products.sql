@@ -25,7 +25,16 @@ SELECT p.*,
     JSON_BUILD_OBJECT('id', b.id, 'name', b.name) AS brand,
     JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', c.id, 'name', c.name)) FILTER (WHERE c.id IS NOT NULL) AS categories,
     JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', cl.id, 'name', cl.name)) FILTER (WHERE cl.id IS NOT NULL) AS collections,
-    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('attribute_id', a.id,'attribute_name', a.name)) FILTER (WHERE a.id IS NOT NULL) AS attributes
+    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('attributeId', a.id,'attributeName', a.name)) FILTER (WHERE a.id IS NOT NULL) AS attributes,
+    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT(
+        'id', pv.id,
+        'sku', pv.sku,
+        'price', pv.price,
+        'stock', pv.stock,
+        'isActive', pv.is_active,
+        'imageUrl', pv.image_url,
+        'imageId', pv.image_id
+    )) FILTER (WHERE pv.id IS NOT NULL) AS variants
 FROM products p
 LEFT JOIN brands AS b ON p.brand_id = b.id
 LEFT JOIN category_products AS cp ON p.id = cp.product_id
@@ -34,6 +43,7 @@ LEFT JOIN categories as c ON cp.category_id = c.id
 LEFT JOIN collections as cl ON colp.collection_id = cl.id
 LEFT JOIN product_attributes pa ON p.id = pa.product_id
 LEFT JOIN attributes a ON pa.attribute_id = a.id
+LEFT JOIN product_variants pv ON pv.product_id = p.id
 WHERE (p.id = $1 OR p.slug = $2) AND p.is_active = COALESCE(sqlc.narg('is_active'), TRUE)
 GROUP BY p.id, b.id LIMIT 1;
 

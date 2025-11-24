@@ -6,38 +6,36 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Create enum types first
-DO $$
-BEGIN
-    -- Create order_status enum type if it doesn't exist
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'order_status') THEN
-        CREATE TYPE "order_status" AS ENUM (
-          'pending',
-          'confirmed',
-          'delivering',
-          'delivered',
-          'cancelled',
-          'refunded',
-          'completed'
-        );
-    END IF;
+CREATE TYPE "order_status" AS ENUM (
+    'pending',
+    'confirmed',
+    'delivering',
+    'delivered',
+    'cancelled',
+    'refunded',
+    'completed'
+);
 
-    -- Create payment_status enum type if it doesn't exist
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payment_status') THEN
-        CREATE TYPE "payment_status" AS ENUM (
-          'pending',
-          'success',
-          'failed',
-          'cancelled',
-          'refunded',
-          'processing'
-        );
-    END IF;
+-- Create payment_status enum type if it doesn't exist
+CREATE TYPE "payment_status" AS ENUM (
+    'pending',
+    'success',
+    'failed',
+    'cancelled',
+    'refunded',
+    'processing'
+);
 
-    -- Create cart_status enum type if it doesn't exist
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'cart_status') THEN
-        CREATE TYPE "cart_status" AS ENUM ('active', 'checked_out');
-    END IF;
-END$$;
+-- Create discount enum types first
+CREATE TYPE "discount_type" AS ENUM (
+    'percentage',
+    'fixed_amount',
+    'buy_x_get_y',
+    'free_shipping',
+    'tiered'
+);
+
+CREATE TYPE "cart_status" AS ENUM ('active', 'checked_out');
 
 -- Create reference tables
 -- Create user_roles reference table
@@ -309,8 +307,7 @@ CREATE TABLE
     );
 
 -- Create products tables
-CREATE TABLE
-    products (
+CREATE TABLE products (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         name VARCHAR(255) NOT NULL,
         description TEXT NOT NULL,
@@ -321,6 +318,8 @@ CREATE TABLE
         is_active BOOLEAN DEFAULT TRUE,
         image_url TEXT,
         image_id VARCHAR(255),
+        discount_percentage NUMERIC(5, 2) DEFAULT 0,
+        purchased_count INT DEFAULT 0,
 
         avg_rating DECIMAL(2, 1) DEFAULT NULL,
         rating_count INT NOT NULL DEFAULT 0,
@@ -417,50 +416,6 @@ CREATE TABLE
         UNIQUE (featured_id, product_id)
     );
 
--- Create discounts tables
-CREATE TABLE IF NOT EXISTS discounts (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    code VARCHAR(50) UNIQUE NOT NULL,
-    description TEXT,
-    discount_type VARCHAR(20) NOT NULL CHECK (discount_type IN ('percentage', 'fixed_amount')),
-    discount_value NUMERIC(10, 2) NOT NULL CHECK (discount_value > 0),
-    min_purchase_amount NUMERIC(10, 2) CHECK (min_purchase_amount IS NULL OR min_purchase_amount > 0),
-    max_discount_amount NUMERIC(10, 2) CHECK (max_discount_amount IS NULL OR max_discount_amount > 0),
-    usage_limit INTEGER CHECK (usage_limit IS NULL OR usage_limit > 0),
-    used_count INTEGER NOT NULL DEFAULT 0 CHECK (used_count >= 0),
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    starts_at TIMESTAMPTZ NOT NULL,
-    expires_at TIMESTAMPTZ NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    deleted_at TIMESTAMPTZ,
-    CHECK (expires_at > starts_at)
-);
-
-CREATE TABLE IF NOT EXISTS discount_products (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    discount_id UUID NOT NULL REFERENCES discounts(id) ON DELETE CASCADE,
-    product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE (discount_id, product_id)
-);
-
-CREATE TABLE IF NOT EXISTS discount_categories (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    discount_id UUID NOT NULL REFERENCES discounts(id) ON DELETE CASCADE,
-    category_id UUID NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE (discount_id, category_id)
-);
-
-CREATE TABLE IF NOT EXISTS discount_users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    discount_id UUID NOT NULL REFERENCES discounts(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE (discount_id, user_id)
-);
-
 -- Create orders tables
 CREATE TABLE
     orders (
@@ -504,14 +459,46 @@ CREATE TABLE
         discounted_price DECIMAL(10, 2)
     );
 
-CREATE TABLE IF NOT EXISTS order_discounts (
+
+-- Enhanced discount tables
+CREATE TABLE discounts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-    discount_id UUID NOT NULL REFERENCES discounts(id) ON DELETE CASCADE,
-    discount_amount NUMERIC(10, 2) NOT NULL CHECK (discount_amount > 0),
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE (order_id, discount_id)
+    code VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    discount_type discount_type NOT NULL,
+    discount_value DECIMAL(10,2) NOT NULL,
+    min_order_value DECIMAL(10,2),
+    max_discount_amount DECIMAL(10,2),
+    usage_limit INTEGER,
+    usage_per_user INTEGER,
+    times_used INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT true,
+    is_stackable BOOLEAN DEFAULT false,
+    priority INTEGER DEFAULT 0,
+    valid_from TIMESTAMPTZ NOT NULL,
+    valid_until TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE discount_rules (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    discount_id UUID NOT NULL REFERENCES discounts(id) ON DELETE CASCADE,
+    rule_type VARCHAR(50) NOT NULL, -- 'product', 'category', 'customer_segment'
+    rule_value JSONB NOT NULL, -- flexible rule storage
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE discount_usage (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    discount_id UUID NOT NULL REFERENCES discounts(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    order_id UUID  NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    discount_amount DECIMAL(10,2) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 
 -- Create carts tables
 CREATE TABLE
@@ -556,6 +543,7 @@ CREATE TABLE
         updated_at TIMESTAMPTZ DEFAULT NOW ()
     );
 
+-- Create payment_transactions table
 CREATE TABLE
     payment_transactions (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -587,6 +575,7 @@ CREATE TABLE
         UNIQUE (product_id, user_id)
     );
 
+-- Create rating_votes and rating_replies tables
 CREATE TABLE
     rating_votes (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -598,6 +587,7 @@ CREATE TABLE
         UNIQUE (rating_id, user_id)
     );
 
+-- Create rating_replies table
 CREATE TABLE
     rating_replies (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -623,6 +613,7 @@ CREATE TABLE IF NOT EXISTS
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
+ -- Create shipping_zones table
 CREATE TABLE IF NOT EXISTS
     shipping_zones (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -729,7 +720,16 @@ EXECUTE FUNCTION update_discount_updated_at();
 -- Create function to update product average ratings
 CREATE OR REPLACE FUNCTION update_product_avg_rating() 
 RETURNS TRIGGER AS $$
+DECLARE
+    target_product_id UUID;
 BEGIN
+    -- Determine the product_id based on the operation
+    IF TG_OP = 'DELETE' THEN
+        target_product_id := OLD.product_id;
+    ELSE
+        target_product_id := NEW.product_id;
+    END IF;
+    
     -- Update the rating counts and average for the affected product
     WITH rating_stats AS (
         SELECT 
@@ -741,7 +741,7 @@ BEGIN
             COUNT(*) FILTER (WHERE ROUND(rating) = 4) AS four_star,
             COUNT(*) FILTER (WHERE ROUND(rating) = 5) AS five_star
         FROM product_ratings
-        WHERE product_id = NEW.product_id AND is_visible = TRUE AND is_approved = TRUE
+        WHERE product_id = target_product_id AND is_visible = TRUE AND is_approved = TRUE
     )
     UPDATE products
     SET 
@@ -753,9 +753,13 @@ BEGIN
         five_star_count = rating_stats.five_star,
         avg_rating = CASE WHEN rating_stats.total_count > 0 THEN rating_stats.avg ELSE NULL END
     FROM rating_stats
-    WHERE id = NEW.product_id;
+    WHERE id = target_product_id;
     
-    RETURN NEW;
+    IF TG_OP = 'DELETE' THEN
+        RETURN OLD;
+    ELSE
+        RETURN NEW;
+    END IF;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -811,16 +815,13 @@ CREATE INDEX idx_variant_attribute_values_attribute_value_id ON variant_attribut
 
 -- Discounts indexes
 CREATE INDEX IF NOT EXISTS idx_discounts_code ON discounts(code);
-CREATE INDEX IF NOT EXISTS idx_discounts_dates ON discounts(starts_at, expires_at);
-CREATE INDEX IF NOT EXISTS idx_discounts_active_dates ON discounts(starts_at, expires_at) WHERE is_active = true AND deleted_at IS NULL;
-CREATE INDEX IF NOT EXISTS idx_discount_products_discount_id ON discount_products(discount_id);
-CREATE INDEX IF NOT EXISTS idx_discount_products_product_id ON discount_products(product_id);
-CREATE INDEX IF NOT EXISTS idx_discount_categories_discount_id ON discount_categories(discount_id);
-CREATE INDEX IF NOT EXISTS idx_discount_categories_category_id ON discount_categories(category_id);
-CREATE INDEX IF NOT EXISTS idx_discount_users_discount_id ON discount_users(discount_id);
-CREATE INDEX IF NOT EXISTS idx_discount_users_user_id ON discount_users(user_id);
-CREATE INDEX IF NOT EXISTS idx_order_discounts_order_id ON order_discounts(order_id);
-CREATE INDEX IF NOT EXISTS idx_order_discounts_discount_id ON order_discounts(discount_id);
+CREATE INDEX IF NOT EXISTS idx_discounts_dates ON discounts(valid_from, valid_until);
+CREATE INDEX IF NOT EXISTS idx_discounts_active_dates ON discounts(valid_from, valid_until) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_discounts_is_active ON discounts(is_active);
+CREATE INDEX IF NOT EXISTS idx_discounts_type ON discounts(discount_type);
+CREATE INDEX IF NOT EXISTS idx_discount_rules_discount_id ON discount_rules(discount_id);
+CREATE INDEX IF NOT EXISTS idx_discount_usage_discount_id ON discount_usage(discount_id);
+CREATE INDEX IF NOT EXISTS idx_discount_usage_user_id ON discount_usage(user_id);
 
 -- Orders indexes
 CREATE INDEX idx_orders_customer_id ON orders (customer_id);

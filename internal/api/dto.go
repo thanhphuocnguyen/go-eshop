@@ -156,10 +156,10 @@ type CreateDiscountRequest struct {
 	DiscountType      string    `json:"discountType" binding:"required,oneof=percentage fixed_amount"`
 	DiscountValue     float64   `json:"discountValue" binding:"required,gt=0"`
 	IsActive          bool      `json:"isActive" binding:"required"`
-	StartsAt          time.Time `json:"startsAt" binding:"required" time_format:"RFC3339"`
-	ExpiresAt         time.Time `json:"expiresAt" binding:"omitempty" time_format:"RFC3339"`
+	ValidFrom         time.Time `json:"validFrom" binding:"required" time_format:"RFC3339"`
+	ValidUntil        time.Time `json:"validUntil" binding:"omitempty" time_format:"RFC3339"`
 	Description       *string   `json:"description" binding:"omitempty,max=1000"`
-	MinPurchaseAmount *float64  `json:"minPurchaseAmount" binding:"omitempty,gt=0"`
+	MinOrderValue     *float64  `json:"minOrderValue" binding:"omitempty,gt=0"`
 	MaxDiscountAmount *float64  `json:"maxDiscountAmount" binding:"omitempty,gt=0"`
 	UsageLimit        *int32    `json:"usageLimit" binding:"omitempty,gte=0"`
 
@@ -299,6 +299,7 @@ type ProductDetailDto struct {
 	Brand       GeneralCategoryResponse   `json:"brand,omitempty"`
 	Collections []GeneralCategoryResponse `json:"collections,omitempty"`
 	Categories  []GeneralCategoryResponse `json:"categories,omitempty"`
+	Variations  []VariantModelDto         `json:"variants,omitempty"`
 }
 
 type GeneralCategoryResponse struct {
@@ -463,25 +464,25 @@ type CartDetailResponse struct {
 	ID         uuid.UUID          `json:"id"`
 	TotalPrice float64            `json:"totalPrice"`
 	CartItems  []CartItemResponse `json:"cartItems"`
-	UpdatedAt  time.Time          `json:"updatedAt"`
+	UpdatedAt  *time.Time         `json:"updatedAt"`
 	CreatedAt  time.Time          `json:"createdAt"`
 }
 
 type DiscountListItemResponseModel struct {
-	ID            string  `json:"id"`
-	Code          string  `json:"code"`
-	Description   *string `json:"description"`
-	DiscountType  string  `json:"discountType"`
-	DiscountValue float64 `json:"discountValue"`
-	ExpiresAt     string  `json:"expiresAt"`
-	StartsAt      string  `json:"startsAt"`
-	UsedCount     int32   `json:"usedCount"`
-	UsageLimit    *int32  `json:"usageLimit"`
-	IsActive      bool    `json:"isActive"`
-	CreatedAt     string  `json:"createdAt"`
-	UpdatedAt     string  `json:"updatedAt"`
-	MinPurchase   float64 `json:"minPurchase"`
-	MaxDiscount   float64 `json:"maxDiscount"`
+	ID            string   `json:"id"`
+	Code          string   `json:"code"`
+	Description   *string  `json:"description"`
+	DiscountType  string   `json:"discountType"`
+	DiscountValue float64  `json:"discountValue"`
+	ValidUntil    string   `json:"validUntil"`
+	ValidFrom     string   `json:"validFrom"`
+	TimeUsed      int32    `json:"usedCount"`
+	IsActive      bool     `json:"isActive"`
+	CreatedAt     string   `json:"createdAt"`
+	UpdatedAt     string   `json:"updatedAt"`
+	UsageLimit    *int32   `json:"usageLimit,omitempty"`
+	MinPurchase   *float64 `json:"minPurchase,omitzero,omitempty"`
+	MaxDiscount   *float64 `json:"maxDiscount,omitempty"`
 }
 
 type DiscountLinkObject struct {
@@ -505,9 +506,9 @@ type DiscountDetailResponseModel struct {
 	Description   *string                `json:"description"`
 	DiscountType  string                 `json:"discountType"`
 	DiscountValue float64                `json:"discountValue"`
-	ExpiresAt     string                 `json:"expiresAt"`
-	StartsAt      string                 `json:"startsAt"`
-	UsedCount     int32                  `json:"usedCount"`
+	ValidUntil    string                 `json:"validUntil"`
+	ValidFrom     string                 `json:"validFrom"`
+	TimesUsed     int32                  `json:"timesUsed"`
 	UsageLimit    *int32                 `json:"usageLimit"`
 	IsActive      bool                   `json:"isActive"`
 	CreatedAt     string                 `json:"createdAt"`
@@ -602,8 +603,8 @@ type VariantModelDto struct {
 	ImageUrl   *string          `json:"imageUrl,omitempty"`
 	ImageID    *string          `json:"imageId,omitempty"`
 	Attributes []AttributeValue `json:"attributeValues,omitempty"`
-	CreatedAt  string           `json:"createdAt"`
-	UpdatedAt  string           `json:"updatedAt"`
+	CreatedAt  string           `json:"createdAt,omitempty"`
+	UpdatedAt  string           `json:"updatedAt,omitempty"`
 }
 
 type OrderItemAttribute struct {
@@ -648,12 +649,12 @@ type AttributeRespModel struct {
 }
 type ProductAttributeValue struct {
 	Value   string `json:"value"`
-	ValueId int64  `json:"value_id"`
+	ValueId int64  `json:"valueId"`
 }
 type ProductAttribute struct {
-	ID     int32            `json:"attribute_id"`
-	Name   string           `json:"attribute_name"`
-	Values []AttributeValue `json:"attribute_values.,omitempty"`
+	ID     int32            `json:"attributeId"`
+	Name   string           `json:"attributeName"`
+	Values []AttributeValue `json:"attributeValues,omitempty"`
 }
 type CreateProductReq struct {
 	ShortDescription *string `json:"shortDescription" binding:"omitempty,max=1000"`

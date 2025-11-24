@@ -1,18 +1,22 @@
 -- name: InsertDiscount :one
-INSERT INTO discounts (code, description, discount_type, discount_value, min_purchase_amount, max_discount_amount, is_active, usage_limit, starts_at, expires_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id;
+INSERT INTO discounts (code, name, description, discount_type, discount_value, min_order_value, max_discount_amount, usage_limit, usage_per_user, times_used, is_active, is_stackable, priority, valid_from, valid_until) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id;
 
 -- name: UpdateDiscount :one
-UPDATE discounts
-SET "description" = COALESCE(sqlc.narg('description'), discounts.description),
+UPDATE discounts SET
+    code = COALESCE(sqlc.narg('code'), discounts.code),
+    name = COALESCE(sqlc.narg('name'), discounts.name),
+    "description" = COALESCE(sqlc.narg('description'), discounts.description),
     discount_type = COALESCE(sqlc.narg('discount_type'), discounts.discount_type),
     discount_value = COALESCE(sqlc.narg('discount_value'), discounts.discount_value),
-    min_purchase_amount = COALESCE(sqlc.narg('min_purchase_amount'), discounts.min_purchase_amount),
+    min_order_value = COALESCE(sqlc.narg('min_order_value'), discounts.min_order_value),
     max_discount_amount = COALESCE(sqlc.narg('max_discount_amount'), discounts.max_discount_amount),
     usage_limit = COALESCE(sqlc.narg('usage_limit'), discounts.usage_limit),
-    used_count = COALESCE(sqlc.narg('used_count'), discounts.used_count),
     is_active = COALESCE(sqlc.narg('is_active'), discounts.is_active),
-    starts_at = COALESCE(sqlc.narg('starts_at'), discounts.starts_at),
-    expires_at = COALESCE(sqlc.narg('expires_at'), discounts.expires_at)
+    is_stackable = COALESCE(sqlc.narg('is_stackable'), discounts.is_stackable),
+    priority = COALESCE(sqlc.narg('priority'), discounts.priority),
+    valid_from = COALESCE(sqlc.narg('valid_from'), discounts.valid_from),
+    valid_until = COALESCE(sqlc.narg('valid_until'), discounts.valid_until),
+    updated_at = NOW()
 WHERE id = $1 RETURNING id;
 
 -- name: GetDiscountByID :one
@@ -22,85 +26,83 @@ SELECT * FROM discounts WHERE id = $1;
 SELECT * FROM discounts WHERE code = $1 LIMIT 1;
 
 -- name: GetDiscounts :many
-SELECT id, code, "description", discount_type, discount_value, min_purchase_amount, max_discount_amount, usage_limit, used_count, is_active, starts_at, expires_at
-FROM discounts
+SELECT * FROM discounts
 WHERE 
     discount_type = COALESCE(sqlc.narg('discount_type'), discounts.discount_type)
     AND is_active = COALESCE(sqlc.narg('is_active'), TRUE)
-    AND starts_at >= COALESCE(sqlc.narg('from_date'), discounts.starts_at)
-    AND starts_at <= COALESCE(sqlc.narg('to_date'), discounts.starts_at)
+    AND valid_from >= COALESCE(sqlc.narg('from_date'), discounts.valid_from)
+    AND valid_from <= COALESCE(sqlc.narg('to_date'), discounts.valid_from)
+    AND valid_until >= COALESCE(sqlc.narg('to_date'), discounts.valid_until)
     AND code ILIKE '%' || COALESCE(sqlc.narg('search'), discounts.code) || '%'
 LIMIT $1
 OFFSET $2;
 
 -- name: GetDiscountUsages :many
-SELECT usage_limit, used_count, discount_amount, customer_name, order_id, total_price, order_discounts.created_at
+SELECT usage_limit, times_used, discount_amount, customer_name, order_id, total_price, discount_usage.created_at
 FROM discounts
-JOIN order_discounts ON discounts.id = order_discounts.discount_id
-JOIN orders ON order_discounts.order_id = orders.id
+JOIN discount_usage ON discounts.id = discount_usage.discount_id
+JOIN orders ON discount_usage.order_id = orders.id
 WHERE discounts.id = $1 AND orders.status IN ('completed', 'confirmed');
 
 -- name: CountDiscounts :one
 SELECT COUNT(*) FROM discounts;
 
 -- name: DeleteDiscount :exec
-UPDATE discounts SET deleted_at = NOW() WHERE id = $1;
+DELETE FROM discounts WHERE id = $1;
 
--- name: InsertDiscountProduct :one
-INSERT INTO discount_products (discount_id, product_id) VALUES ($1, $2) RETURNING id;
+-- name: IncrementDiscountUsage :exec
+UPDATE discounts SET times_used = times_used + 1 WHERE id = $1;
 
--- name: InsertBulkProductDiscounts :copyfrom
-INSERT INTO discount_products (discount_id, product_id) VALUES ($1, $2);
+-- name: DecrementDiscountUsage :exec
+UPDATE discounts SET times_used = GREATEST(times_used - 1, 0) WHERE id = $1;
 
--- name: GetDiscountProducts :many
-SELECT dp.id, dp.discount_id, dp.product_id, p.name, p.base_price, d.discount_type, d.discount_value FROM discount_products dp
-JOIN products p ON dp.product_id = p.id
-JOIN discounts d ON dp.discount_id = d.id
-WHERE dp.discount_id = $1
-LIMIT $2
-OFFSET $3;
 
--- name: CountDiscountProducts :one
-SELECT COUNT(*) FROM discount_products WHERE discount_id = $1;
+-- name: AddDiscountUsage :one
+INSERT INTO discount_usage (discount_id, order_id, user_id, discount_amount) VALUES ($1, $2, $3, $4) RETURNING *;
 
--- name: DeleteProductDiscountsByDiscountID :exec
-DELETE FROM discount_products WHERE discount_id = $1;
+-- name: RemoveDiscountUsage :exec
+DELETE FROM discount_usage WHERE discount_id = $1 AND order_id = $2;
 
--- name: InsertDiscountCategory :one
-INSERT INTO discount_categories (discount_id, category_id) VALUES ($1, $2) RETURNING id;
+-- name: GetTotalDiscountGiven :one
+SELECT SUM(discount_amount) FROM discount_usage WHERE discount_id = $1;
 
--- name: DeleteCategoryDiscountsByDiscountID :exec
-DELETE FROM discount_categories WHERE discount_id = $1;
+-- name: CountDiscountUsages :one
+SELECT COUNT(*) FROM discount_usage WHERE discount_id = $1;
 
--- name: InsertBulkCategoryDiscounts :copyfrom
-INSERT INTO discount_categories (discount_id, category_id) VALUES ($1, $2);
+-- name: GetUsersUsingDiscount :many
+SELECT DISTINCT order_id FROM discount_usage WHERE discount_id = $1 LIMIT $2 OFFSET $3;
 
--- name: GetDiscountCategories :many
-SELECT dc.id, dc.discount_id, dc.category_id, c.name FROM discount_categories dc JOIN categories c ON dc.category_id = c.id WHERE dc.discount_id = $1 LIMIT $2 OFFSET $3;
+-- name: CountUsersUsingDiscount :one
+SELECT COUNT(DISTINCT order_id) FROM discount_usage WHERE discount_id = $1;
 
--- name: CountDiscountCategories :one
-SELECT COUNT(*) FROM discount_categories WHERE discount_id = $1;
+-- name: AddDiscountRule :one
+INSERT INTO discount_rules (discount_id, rule_type, rule_value) VALUES ($1, $2, $3) RETURNING *;
 
--- name: DeleteDiscountCategory :exec
-DELETE FROM discount_categories WHERE discount_id = $1 AND category_id = $2;
+-- name: GetDiscountRules :many
+SELECT * FROM discount_rules WHERE discount_id = $1;
 
--- name: InsertDiscountUser :one
-INSERT INTO discount_users (discount_id, user_id) VALUES ($1, $2) RETURNING id;
+-- name: DeleteDiscountRules :exec
+DELETE FROM discount_rules WHERE discount_id = $1;
 
--- name: InsertBulkUserDiscounts :copyfrom
-INSERT INTO discount_users (discount_id, user_id) VALUES ($1, $2);
+-- name: GetActiveDiscounts :many
+SELECT * FROM discounts WHERE is_active = TRUE AND (valid_from IS NULL OR valid_from <= NOW()) AND (valid_until IS NULL OR valid_until >= NOW());
 
--- name: GetDiscountUsers :many
-SELECT du.id, du.discount_id, du.user_id, CONCAT(u.first_name, ' ', u.last_name) as fullname, u.username FROM discount_users du JOIN users u ON du.user_id = u.id WHERE du.discount_id = $1 ORDER BY du.id LIMIT $2 OFFSET $3;
+-- name: GetExpiredDiscounts :many
+SELECT * FROM discounts WHERE is_active = TRUE AND valid_until IS NOT NULL AND valid_until < NOW();
 
--- name: CountDiscountUsers :one
-SELECT COUNT(*) FROM discount_users WHERE discount_id = $1;
+-- name: DeactivateDiscount :exec
+UPDATE discounts SET is_active = FALSE WHERE id = $1 RETURNING *;
 
--- name: DeleteUserDiscountsByDiscountID :exec
-DELETE FROM discount_users WHERE discount_id = $1;
+-- name: ReactivateDiscount :exec
+UPDATE discounts SET is_active = TRUE WHERE id = $1 RETURNING *;
 
--- name: InsertOrderDiscount :one
-INSERT INTO order_discounts (order_id, discount_id, discount_amount) VALUES ($1, $2, $3) RETURNING id;
-
--- name: GetDiscountProductsAndCategories :many
-SELECT dp.product_id, dc.category_id FROM discounts d LEFT JOIN discount_products dp ON d.id = dp.discount_id LEFT JOIN discount_categories dc ON d.id = dc.discount_id WHERE d.id = $1 AND (dp.product_id IS NOT NULL OR dc.category_id IS NOT NULL) ORDER BY dp.product_id, dc.category_id;
+-- name: GetTopUsedDiscounts :many
+SELECT * FROM discounts ORDER BY times_used DESC LIMIT $1 OFFSET $2;
+-- name: GetDiscountsByType :many
+SELECT * FROM discounts WHERE discount_type = $1 LIMIT $2 OFFSET $3;
+-- name: CountDiscountsByType :one
+SELECT COUNT(*) FROM discounts WHERE discount_type = $1;
+-- name: GetDiscountsByPriority :many
+SELECT * FROM discounts WHERE priority = $1 LIMIT $2 OFFSET $3;
+-- name: CountDiscountsByPriority :one
+SELECT COUNT(*) FROM discounts WHERE priority = $1;

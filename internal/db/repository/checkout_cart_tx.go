@@ -78,10 +78,11 @@ func (s *pgRepo) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxArgs) (Cr
 			if arg.DiscountPrice > arg.TotalPrice {
 				arg.DiscountPrice = arg.TotalPrice
 			}
-			_, err := q.InsertOrderDiscount(ctx, InsertOrderDiscountParams{
+			_, err := q.AddDiscountUsage(ctx, AddDiscountUsageParams{
 				OrderID:        order.ID,
 				DiscountID:     *arg.DiscountID,
 				DiscountAmount: utils.GetPgNumericFromFloat(arg.DiscountPrice),
+				UserID:         arg.UserID,
 			})
 			if err != nil {
 				log.Error().Err(err).Msg("GetDiscountByCode")

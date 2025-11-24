@@ -5,12 +5,194 @@
 package repository
 
 import (
+	"database/sql/driver"
+	"fmt"
 	"net/netip"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type CartStatus string
+
+const (
+	CartStatusActive     CartStatus = "active"
+	CartStatusCheckedOut CartStatus = "checked_out"
+)
+
+func (e *CartStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = CartStatus(s)
+	case string:
+		*e = CartStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for CartStatus: %T", src)
+	}
+	return nil
+}
+
+type NullCartStatus struct {
+	CartStatus CartStatus `json:"cartStatus"`
+	Valid      bool       `json:"valid"` // Valid is true if CartStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullCartStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.CartStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.CartStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullCartStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.CartStatus), nil
+}
+
+type DiscountType string
+
+const (
+	DiscountTypePercentage   DiscountType = "percentage"
+	DiscountTypeFixedAmount  DiscountType = "fixed_amount"
+	DiscountTypeBuyXGetY     DiscountType = "buy_x_get_y"
+	DiscountTypeFreeShipping DiscountType = "free_shipping"
+	DiscountTypeTiered       DiscountType = "tiered"
+)
+
+func (e *DiscountType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = DiscountType(s)
+	case string:
+		*e = DiscountType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for DiscountType: %T", src)
+	}
+	return nil
+}
+
+type NullDiscountType struct {
+	DiscountType DiscountType `json:"discountType"`
+	Valid        bool         `json:"valid"` // Valid is true if DiscountType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullDiscountType) Scan(value interface{}) error {
+	if value == nil {
+		ns.DiscountType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.DiscountType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullDiscountType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.DiscountType), nil
+}
+
+type OrderStatus string
+
+const (
+	OrderStatusPending    OrderStatus = "pending"
+	OrderStatusConfirmed  OrderStatus = "confirmed"
+	OrderStatusDelivering OrderStatus = "delivering"
+	OrderStatusDelivered  OrderStatus = "delivered"
+	OrderStatusCancelled  OrderStatus = "cancelled"
+	OrderStatusRefunded   OrderStatus = "refunded"
+	OrderStatusCompleted  OrderStatus = "completed"
+)
+
+func (e *OrderStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = OrderStatus(s)
+	case string:
+		*e = OrderStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for OrderStatus: %T", src)
+	}
+	return nil
+}
+
+type NullOrderStatus struct {
+	OrderStatus OrderStatus `json:"orderStatus"`
+	Valid       bool        `json:"valid"` // Valid is true if OrderStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullOrderStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.OrderStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.OrderStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullOrderStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.OrderStatus), nil
+}
+
+type PaymentStatus string
+
+const (
+	PaymentStatusPending    PaymentStatus = "pending"
+	PaymentStatusSuccess    PaymentStatus = "success"
+	PaymentStatusFailed     PaymentStatus = "failed"
+	PaymentStatusCancelled  PaymentStatus = "cancelled"
+	PaymentStatusRefunded   PaymentStatus = "refunded"
+	PaymentStatusProcessing PaymentStatus = "processing"
+)
+
+func (e *PaymentStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = PaymentStatus(s)
+	case string:
+		*e = PaymentStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for PaymentStatus: %T", src)
+	}
+	return nil
+}
+
+type NullPaymentStatus struct {
+	PaymentStatus PaymentStatus `json:"paymentStatus"`
+	Valid         bool          `json:"valid"` // Valid is true if PaymentStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullPaymentStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.PaymentStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.PaymentStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullPaymentStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.PaymentStatus), nil
+}
 
 type Attribute struct {
 	ID   int32  `json:"id"`
@@ -102,40 +284,39 @@ type CollectionProduct struct {
 type Discount struct {
 	ID                uuid.UUID          `json:"id"`
 	Code              string             `json:"code"`
+	Name              string             `json:"name"`
 	Description       *string            `json:"description"`
-	DiscountType      string             `json:"discountType"`
+	DiscountType      DiscountType       `json:"discountType"`
 	DiscountValue     pgtype.Numeric     `json:"discountValue"`
-	MinPurchaseAmount pgtype.Numeric     `json:"minPurchaseAmount"`
+	MinOrderValue     pgtype.Numeric     `json:"minOrderValue"`
 	MaxDiscountAmount pgtype.Numeric     `json:"maxDiscountAmount"`
 	UsageLimit        *int32             `json:"usageLimit"`
-	UsedCount         int32              `json:"usedCount"`
-	IsActive          bool               `json:"isActive"`
-	StartsAt          time.Time          `json:"startsAt"`
-	ExpiresAt         time.Time          `json:"expiresAt"`
+	UsagePerUser      *int32             `json:"usagePerUser"`
+	TimesUsed         *int32             `json:"timesUsed"`
+	IsActive          *bool              `json:"isActive"`
+	IsStackable       *bool              `json:"isStackable"`
+	Priority          *int32             `json:"priority"`
+	ValidFrom         time.Time          `json:"validFrom"`
+	ValidUntil        pgtype.Timestamptz `json:"validUntil"`
 	CreatedAt         time.Time          `json:"createdAt"`
 	UpdatedAt         time.Time          `json:"updatedAt"`
-	DeletedAt         pgtype.Timestamptz `json:"deletedAt"`
 }
 
-type DiscountCategory struct {
-	ID         uuid.UUID          `json:"id"`
-	DiscountID uuid.UUID          `json:"discountId"`
-	CategoryID uuid.UUID          `json:"categoryId"`
-	CreatedAt  pgtype.Timestamptz `json:"createdAt"`
+type DiscountRule struct {
+	ID         uuid.UUID `json:"id"`
+	DiscountID uuid.UUID `json:"discountId"`
+	RuleType   string    `json:"ruleType"`
+	RuleValue  []byte    `json:"ruleValue"`
+	CreatedAt  time.Time `json:"createdAt"`
 }
 
-type DiscountProduct struct {
-	ID         uuid.UUID          `json:"id"`
-	DiscountID uuid.UUID          `json:"discountId"`
-	ProductID  uuid.UUID          `json:"productId"`
-	CreatedAt  pgtype.Timestamptz `json:"createdAt"`
-}
-
-type DiscountUser struct {
-	ID         uuid.UUID          `json:"id"`
-	DiscountID uuid.UUID          `json:"discountId"`
-	UserID     uuid.UUID          `json:"userId"`
-	CreatedAt  pgtype.Timestamptz `json:"createdAt"`
+type DiscountUsage struct {
+	ID             uuid.UUID      `json:"id"`
+	DiscountID     uuid.UUID      `json:"discountId"`
+	UserID         uuid.UUID      `json:"userId"`
+	OrderID        uuid.UUID      `json:"orderId"`
+	DiscountAmount pgtype.Numeric `json:"discountAmount"`
+	CreatedAt      time.Time      `json:"createdAt"`
 }
 
 type EmailVerification struct {
@@ -189,14 +370,6 @@ type Order struct {
 	TrackingUrl           *string                 `json:"trackingUrl"`
 	ShippingProvider      *string                 `json:"shippingProvider"`
 	ShippingNotes         *string                 `json:"shippingNotes"`
-}
-
-type OrderDiscount struct {
-	ID             uuid.UUID          `json:"id"`
-	OrderID        uuid.UUID          `json:"orderId"`
-	DiscountID     uuid.UUID          `json:"discountId"`
-	DiscountAmount pgtype.Numeric     `json:"discountAmount"`
-	CreatedAt      pgtype.Timestamptz `json:"createdAt"`
 }
 
 type OrderItem struct {
@@ -278,26 +451,28 @@ type Permission struct {
 }
 
 type Product struct {
-	ID               uuid.UUID      `json:"id"`
-	Name             string         `json:"name"`
-	Description      string         `json:"description"`
-	ShortDescription *string        `json:"shortDescription"`
-	BasePrice        pgtype.Numeric `json:"basePrice"`
-	BaseSku          string         `json:"baseSku"`
-	Slug             string         `json:"slug"`
-	IsActive         *bool          `json:"isActive"`
-	ImageUrl         *string        `json:"imageUrl"`
-	ImageID          *string        `json:"imageId"`
-	AvgRating        pgtype.Numeric `json:"avgRating"`
-	RatingCount      int32          `json:"ratingCount"`
-	OneStarCount     int32          `json:"oneStarCount"`
-	TwoStarCount     int32          `json:"twoStarCount"`
-	ThreeStarCount   int32          `json:"threeStarCount"`
-	FourStarCount    int32          `json:"fourStarCount"`
-	FiveStarCount    int32          `json:"fiveStarCount"`
-	CreatedAt        time.Time      `json:"createdAt"`
-	UpdatedAt        time.Time      `json:"updatedAt"`
-	BrandID          pgtype.UUID    `json:"brandId"`
+	ID                 uuid.UUID      `json:"id"`
+	Name               string         `json:"name"`
+	Description        string         `json:"description"`
+	ShortDescription   *string        `json:"shortDescription"`
+	BasePrice          pgtype.Numeric `json:"basePrice"`
+	BaseSku            string         `json:"baseSku"`
+	Slug               string         `json:"slug"`
+	IsActive           *bool          `json:"isActive"`
+	ImageUrl           *string        `json:"imageUrl"`
+	ImageID            *string        `json:"imageId"`
+	DiscountPercentage pgtype.Numeric `json:"discountPercentage"`
+	PurchasedCount     *int32         `json:"purchasedCount"`
+	AvgRating          pgtype.Numeric `json:"avgRating"`
+	RatingCount        int32          `json:"ratingCount"`
+	OneStarCount       int32          `json:"oneStarCount"`
+	TwoStarCount       int32          `json:"twoStarCount"`
+	ThreeStarCount     int32          `json:"threeStarCount"`
+	FourStarCount      int32          `json:"fourStarCount"`
+	FiveStarCount      int32          `json:"fiveStarCount"`
+	CreatedAt          time.Time      `json:"createdAt"`
+	UpdatedAt          time.Time      `json:"updatedAt"`
+	BrandID            pgtype.UUID    `json:"brandId"`
 }
 
 type ProductAttribute struct {

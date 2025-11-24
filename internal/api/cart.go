@@ -63,7 +63,6 @@ func (sv *Server) CreateCart(c *gin.Context) {
 		ID:         newCart.ID,
 		TotalPrice: 0,
 		CartItems:  []CartItemResponse{},
-		UpdatedAt:  newCart.UpdatedAt,
 		CreatedAt:  newCart.CreatedAt,
 	}
 
@@ -106,7 +105,7 @@ func (sv *Server) GetCartHandler(c *gin.Context) {
 				ID:         cart.ID,
 				TotalPrice: 0,
 				CartItems:  []CartItemResponse{},
-				UpdatedAt:  cart.UpdatedAt,
+				UpdatedAt:  &cart.UpdatedAt,
 				CreatedAt:  cart.CreatedAt,
 			}, nil, nil))
 			return
@@ -119,7 +118,7 @@ func (sv *Server) GetCartHandler(c *gin.Context) {
 		ID:         cart.ID,
 		TotalPrice: 0,
 		CartItems:  []CartItemResponse{},
-		UpdatedAt:  cart.UpdatedAt,
+		UpdatedAt:  &cart.UpdatedAt,
 		CreatedAt:  cart.CreatedAt,
 	}
 	cartItemRows, err := sv.repo.GetCartItems(c, cart.ID)
@@ -145,7 +144,7 @@ func (sv *Server) GetCartHandler(c *gin.Context) {
 // @Router /carts/discounts [get]
 func (sv *Server) GetCartDiscountsHandler(c *gin.Context) {
 	authPayload, _ := c.MustGet(AuthPayLoad).(*auth.Payload)
-	cart, err := sv.repo.GetCart(c, repository.GetCartParams{
+	_, err := sv.repo.GetCart(c, repository.GetCartParams{
 		UserID: utils.GetPgTypeUUID(authPayload.UserID),
 	})
 
@@ -158,13 +157,12 @@ func (sv *Server) GetCartDiscountsHandler(c *gin.Context) {
 		return
 	}
 
-	cartDiscounts, err := sv.repo.GetAvailableDiscountsForCart(c, cart.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, cartDiscounts, nil, nil))
+	c.JSON(http.StatusOK, createDataResp(c, struct{}{}, nil, nil))
 
 }
 
@@ -212,9 +210,10 @@ func (sv *Server) UpdateCartItemQtyHandler(c *gin.Context) {
 				return
 			}
 			cart = newCart
+		} else {
+			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+			return
 		}
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
-		return
 	}
 
 	cartItem, err := sv.repo.GetCartItem(c, repository.GetCartItemParams{
@@ -332,7 +331,7 @@ func (sv *Server) RemoveCartItem(c *gin.Context) {
 // @Failure 403 {object} ErrorResp
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /carts/CheckoutHandler [post]
+// @Router /carts/checkout [post]
 func (sv *Server) CheckoutHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
@@ -429,7 +428,7 @@ func (sv *Server) CheckoutHandler(c *gin.Context) {
 		}
 	}
 
-	cartItemRows, err := sv.repo.GetCartItemsForOrder(c, cart.ID)
+	itemRows, err := sv.repo.GetCartItemsForOrder(c, cart.ID)
 	if err != nil {
 		log.Error().Err(err).Msg("GetCartItems")
 		return
@@ -439,7 +438,7 @@ func (sv *Server) CheckoutHandler(c *gin.Context) {
 	createOrderItemParams := make([]repository.CreateBulkOrderItemsParams, 0)
 	var totalPrice float64
 
-	for _, item := range cartItemRows {
+	for _, item := range itemRows {
 		variantIdx := -1
 		for j, param := range createOrderItemParams {
 			if param.VariantID == item.CartItem.VariantID {
@@ -521,60 +520,13 @@ func (sv *Server) CheckoutHandler(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 			return
 		}
+
 		discountID = &discount.ID
-		discountProductsAndCategories, err := sv.repo.GetDiscountProductsAndCategories(c, discount.ID)
 		if err != nil {
 			log.Error().Err(err).Msg("GetDiscountByCode")
 			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 			return
 		}
-		discountProductIDs := make(map[uuid.UUID]bool)
-		discountCategoryIDs := make(map[uuid.UUID]bool)
-		productIDs := make(map[uuid.UUID]bool)
-		for _, item := range discountProductsAndCategories {
-			if item.ProductID.Valid {
-				id, _ := uuid.FromBytes(item.ProductID.Bytes[:])
-				discountProductIDs[id] = true
-			}
-			if item.CategoryID.Valid {
-				id, _ := uuid.FromBytes(item.CategoryID.Bytes[:])
-				discountCategoryIDs[id] = true
-			}
-		}
-
-		discountValue, _ := discount.DiscountValue.Float64Value()
-		for _, item := range cartItemRows {
-			if productIDs[item.ProductID] {
-				// skip if the product is already counted
-				continue
-			}
-			productIDs[item.ProductID] = true
-			price, _ := item.Price.Float64Value()
-			lineTotal := price.Float64 * float64(item.CartItem.Quantity)
-			if _, ok := discountProductIDs[item.ProductID]; ok {
-				// if the item has a discount price, use it
-				if item.Price.Valid {
-					if discount.DiscountType == string(repository.PercentageDiscount) {
-						discountPrice += lineTotal * (discountValue.Float64 / 100)
-					} else {
-						discountPrice += lineTotal - discountValue.Float64
-					}
-				}
-			}
-			// else if item.CategoryID.Valid {
-			// 	catId, _ := uuid.FromBytes(item.CategoryID.Bytes[:])
-			// 	if _, ok := discountCategoryIDs[catId]; ok {
-			// 		if discount.DiscountType == string(repository.PercentageDiscount) {
-			// 			discountPrice += lineTotal * (discountValue.Float64 / 100)
-			// 		} else {
-			// 			discountPrice += lineTotal - discountValue.Float64
-			// 		}
-			// 	} else {
-			// 		log.Warn().Msgf("Category %s not found in discount categories", catId.String())
-			// 	}
-			// }
-		}
-
 	}
 
 	params.DiscountPrice = discountPrice
@@ -583,7 +535,7 @@ func (sv *Server) CheckoutHandler(c *gin.Context) {
 
 	params.CreatePaymentFn = func(orderID uuid.UUID, method string) (paymentIntentID string, clientSecretID *string, err error) {
 		switch method {
-		case repository.PaymentMethodCodeStripe:
+		case "Stripe":
 			stripeInstance, err := pmgateway.NewStripePayment(sv.config.StripeSecretKey)
 			if err != nil {
 				return "", utils.StringPtr(""), err

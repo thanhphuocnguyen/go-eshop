@@ -290,15 +290,15 @@ WHERE id = $1
 `
 
 type UpdatePaymentParams struct {
-	ID              uuid.UUID      `json:"id"`
-	Amount          pgtype.Numeric `json:"amount"`
-	RefundID        *string        `json:"refundId"`
-	Status          interface{}    `json:"status"`
-	Gateway         *string        `json:"gateway"`
-	PaymentIntentID *string        `json:"paymentIntentId"`
-	ChargeID        *string        `json:"chargeId"`
-	ErrorCode       *string        `json:"errorCode"`
-	ErrorMessage    *string        `json:"errorMessage"`
+	ID              uuid.UUID         `json:"id"`
+	Amount          pgtype.Numeric    `json:"amount"`
+	RefundID        *string           `json:"refundId"`
+	Status          NullPaymentStatus `json:"status"`
+	Gateway         *string           `json:"gateway"`
+	PaymentIntentID *string           `json:"paymentIntentId"`
+	ChargeID        *string           `json:"chargeId"`
+	ErrorCode       *string           `json:"errorCode"`
+	ErrorMessage    *string           `json:"errorMessage"`
 }
 
 func (q *Queries) UpdatePayment(ctx context.Context, arg UpdatePaymentParams) error {
@@ -328,12 +328,12 @@ WHERE id = $1
 `
 
 type UpdatePaymentTransactionParams struct {
-	ID                     uuid.UUID      `json:"id"`
-	Amount                 pgtype.Numeric `json:"amount"`
-	Status                 interface{}    `json:"status"`
-	GatewayTransactionID   *string        `json:"gatewayTransactionId"`
-	GatewayResponseCode    *string        `json:"gatewayResponseCode"`
-	GatewayResponseMessage *string        `json:"gatewayResponseMessage"`
+	ID                     uuid.UUID         `json:"id"`
+	Amount                 pgtype.Numeric    `json:"amount"`
+	Status                 NullPaymentStatus `json:"status"`
+	GatewayTransactionID   *string           `json:"gatewayTransactionId"`
+	GatewayResponseCode    *string           `json:"gatewayResponseCode"`
+	GatewayResponseMessage *string           `json:"gatewayResponseMessage"`
 }
 
 func (q *Queries) UpdatePaymentTransaction(ctx context.Context, arg UpdatePaymentTransactionParams) error {

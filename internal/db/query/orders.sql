@@ -11,14 +11,10 @@ SELECT
     pmt.id as payment_method_id,
     pm.gateway,
     pm.payment_intent_id,
-    pm.created_at as payment_created_at,
-    d.code,
-    od.discount_amount
+    pm.created_at as payment_created_at
 FROM orders
 JOIN payments pm ON orders.id = pm.order_id
 JOIN payment_methods pmt ON pm.payment_method_id = pmt.id
-LEFT JOIN order_discounts od ON orders.id = od.order_id
-LEFT JOIN discounts d ON od.discount_id = d.id
 WHERE orders.id = $1
 LIMIT 1;
 

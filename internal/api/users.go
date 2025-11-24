@@ -98,11 +98,6 @@ func (sv *Server) GetCurrentUserHandler(c *gin.Context) {
 	}
 
 	var userResp UserDetail
-	err := sv.cachesrv.Get(c, cachesrv.USER_KEY_PREFIX+authPayload.UserID.String(), &userResp)
-	if err == nil {
-		c.JSON(http.StatusOK, createDataResp(c, userResp, nil, nil))
-		return
-	}
 
 	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
 	if err != nil {
@@ -122,11 +117,6 @@ func (sv *Server) GetCurrentUserHandler(c *gin.Context) {
 	}
 	userResp = mapToUserResponse(user, authPayload.RoleCode)
 	userResp.Addresses = addressResp
-
-	if err = sv.cachesrv.Set(c, cachesrv.USER_KEY_PREFIX+authPayload.UserID.String(), userResp, &cachesrv.DEFAULT_EXPIRATION); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InternalServerErrorCode, err))
-		return
-	}
 
 	c.JSON(http.StatusOK, createDataResp(c, userResp, nil, nil))
 }

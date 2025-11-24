@@ -76,7 +76,7 @@ type CreateBulkProductVariantsParams struct {
 }
 
 const createProduct = `-- name: CreateProduct :one
-INSERT INTO products (name, description, short_description, base_price, base_sku, slug, brand_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, name, description, short_description, base_price, base_sku, slug, is_active, image_url, image_id, avg_rating, rating_count, one_star_count, two_star_count, three_star_count, four_star_count, five_star_count, created_at, updated_at, brand_id
+INSERT INTO products (name, description, short_description, base_price, base_sku, slug, brand_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, name, description, short_description, base_price, base_sku, slug, is_active, image_url, image_id, discount_percentage, purchased_count, avg_rating, rating_count, one_star_count, two_star_count, three_star_count, four_star_count, five_star_count, created_at, updated_at, brand_id
 `
 
 type CreateProductParams struct {
@@ -111,6 +111,8 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		&i.IsActive,
 		&i.ImageUrl,
 		&i.ImageID,
+		&i.DiscountPercentage,
+		&i.PurchasedCount,
 		&i.AvgRating,
 		&i.RatingCount,
 		&i.OneStarCount,
@@ -190,7 +192,7 @@ func (q *Queries) DeleteProductVariant(ctx context.Context, arg DeleteProductVar
 }
 
 const getAdminProductList = `-- name: GetAdminProductList :many
-SELECT p.id, p.name, p.description, p.short_description, p.base_price, p.base_sku, p.slug, p.is_active, p.image_url, p.image_id, p.avg_rating, p.rating_count, p.one_star_count, p.two_star_count, p.three_star_count, p.four_star_count, p.five_star_count, p.created_at, p.updated_at, p.brand_id FROM products as p
+SELECT p.id, p.name, p.description, p.short_description, p.base_price, p.base_sku, p.slug, p.is_active, p.image_url, p.image_id, p.discount_percentage, p.purchased_count, p.avg_rating, p.rating_count, p.one_star_count, p.two_star_count, p.three_star_count, p.four_star_count, p.five_star_count, p.created_at, p.updated_at, p.brand_id FROM products as p
 WHERE
     p.is_active = COALESCE($3, p.is_active) 
     AND p.name ILIKE COALESCE($4, p.name)
@@ -234,6 +236,8 @@ func (q *Queries) GetAdminProductList(ctx context.Context, arg GetAdminProductLi
 			&i.IsActive,
 			&i.ImageUrl,
 			&i.ImageID,
+			&i.DiscountPercentage,
+			&i.PurchasedCount,
 			&i.AvgRating,
 			&i.RatingCount,
 			&i.OneStarCount,
@@ -256,7 +260,7 @@ func (q *Queries) GetAdminProductList(ctx context.Context, arg GetAdminProductLi
 }
 
 const getProductByID = `-- name: GetProductByID :one
-SELECT products.id, products.name, products.description, products.short_description, products.base_price, products.base_sku, products.slug, products.is_active, products.image_url, products.image_id, products.avg_rating, products.rating_count, products.one_star_count, products.two_star_count, products.three_star_count, products.four_star_count, products.five_star_count, products.created_at, products.updated_at, products.brand_id FROM products WHERE products.id = $1 AND is_active = COALESCE($2, TRUE) GROUP BY products.id
+SELECT products.id, products.name, products.description, products.short_description, products.base_price, products.base_sku, products.slug, products.is_active, products.image_url, products.image_id, products.discount_percentage, products.purchased_count, products.avg_rating, products.rating_count, products.one_star_count, products.two_star_count, products.three_star_count, products.four_star_count, products.five_star_count, products.created_at, products.updated_at, products.brand_id FROM products WHERE products.id = $1 AND is_active = COALESCE($2, TRUE) GROUP BY products.id
 `
 
 type GetProductByIDParams struct {
@@ -278,6 +282,8 @@ func (q *Queries) GetProductByID(ctx context.Context, arg GetProductByIDParams) 
 		&i.IsActive,
 		&i.ImageUrl,
 		&i.ImageID,
+		&i.DiscountPercentage,
+		&i.PurchasedCount,
 		&i.AvgRating,
 		&i.RatingCount,
 		&i.OneStarCount,
@@ -293,7 +299,7 @@ func (q *Queries) GetProductByID(ctx context.Context, arg GetProductByIDParams) 
 }
 
 const getProductBySlug = `-- name: GetProductBySlug :one
-SELECT products.id, products.name, products.description, products.short_description, products.base_price, products.base_sku, products.slug, products.is_active, products.image_url, products.image_id, products.avg_rating, products.rating_count, products.one_star_count, products.two_star_count, products.three_star_count, products.four_star_count, products.five_star_count, products.created_at, products.updated_at, products.brand_id FROM products WHERE products.slug = $1 AND is_active = COALESCE($2, TRUE)
+SELECT products.id, products.name, products.description, products.short_description, products.base_price, products.base_sku, products.slug, products.is_active, products.image_url, products.image_id, products.discount_percentage, products.purchased_count, products.avg_rating, products.rating_count, products.one_star_count, products.two_star_count, products.three_star_count, products.four_star_count, products.five_star_count, products.created_at, products.updated_at, products.brand_id FROM products WHERE products.slug = $1 AND is_active = COALESCE($2, TRUE)
 `
 
 type GetProductBySlugParams struct {
@@ -315,6 +321,8 @@ func (q *Queries) GetProductBySlug(ctx context.Context, arg GetProductBySlugPara
 		&i.IsActive,
 		&i.ImageUrl,
 		&i.ImageID,
+		&i.DiscountPercentage,
+		&i.PurchasedCount,
 		&i.AvgRating,
 		&i.RatingCount,
 		&i.OneStarCount,
@@ -330,11 +338,20 @@ func (q *Queries) GetProductBySlug(ctx context.Context, arg GetProductBySlugPara
 }
 
 const getProductDetail = `-- name: GetProductDetail :one
-SELECT p.id, p.name, p.description, p.short_description, p.base_price, p.base_sku, p.slug, p.is_active, p.image_url, p.image_id, p.avg_rating, p.rating_count, p.one_star_count, p.two_star_count, p.three_star_count, p.four_star_count, p.five_star_count, p.created_at, p.updated_at, p.brand_id,
+SELECT p.id, p.name, p.description, p.short_description, p.base_price, p.base_sku, p.slug, p.is_active, p.image_url, p.image_id, p.discount_percentage, p.purchased_count, p.avg_rating, p.rating_count, p.one_star_count, p.two_star_count, p.three_star_count, p.four_star_count, p.five_star_count, p.created_at, p.updated_at, p.brand_id,
     JSON_BUILD_OBJECT('id', b.id, 'name', b.name) AS brand,
     JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', c.id, 'name', c.name)) FILTER (WHERE c.id IS NOT NULL) AS categories,
     JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', cl.id, 'name', cl.name)) FILTER (WHERE cl.id IS NOT NULL) AS collections,
-    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('attribute_id', a.id,'attribute_name', a.name)) FILTER (WHERE a.id IS NOT NULL) AS attributes
+    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('attributeId', a.id,'attributeName', a.name)) FILTER (WHERE a.id IS NOT NULL) AS attributes,
+    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT(
+        'id', pv.id,
+        'sku', pv.sku,
+        'price', pv.price,
+        'stock', pv.stock,
+        'isActive', pv.is_active,
+        'imageUrl', pv.image_url,
+        'imageId', pv.image_id
+    )) FILTER (WHERE pv.id IS NOT NULL) AS variants
 FROM products p
 LEFT JOIN brands AS b ON p.brand_id = b.id
 LEFT JOIN category_products AS cp ON p.id = cp.product_id
@@ -343,6 +360,7 @@ LEFT JOIN categories as c ON cp.category_id = c.id
 LEFT JOIN collections as cl ON colp.collection_id = cl.id
 LEFT JOIN product_attributes pa ON p.id = pa.product_id
 LEFT JOIN attributes a ON pa.attribute_id = a.id
+LEFT JOIN product_variants pv ON pv.product_id = p.id
 WHERE (p.id = $1 OR p.slug = $2) AND p.is_active = COALESCE($3, TRUE)
 GROUP BY p.id, b.id LIMIT 1
 `
@@ -354,30 +372,33 @@ type GetProductDetailParams struct {
 }
 
 type GetProductDetailRow struct {
-	ID               uuid.UUID      `json:"id"`
-	Name             string         `json:"name"`
-	Description      string         `json:"description"`
-	ShortDescription *string        `json:"shortDescription"`
-	BasePrice        pgtype.Numeric `json:"basePrice"`
-	BaseSku          string         `json:"baseSku"`
-	Slug             string         `json:"slug"`
-	IsActive         *bool          `json:"isActive"`
-	ImageUrl         *string        `json:"imageUrl"`
-	ImageID          *string        `json:"imageId"`
-	AvgRating        pgtype.Numeric `json:"avgRating"`
-	RatingCount      int32          `json:"ratingCount"`
-	OneStarCount     int32          `json:"oneStarCount"`
-	TwoStarCount     int32          `json:"twoStarCount"`
-	ThreeStarCount   int32          `json:"threeStarCount"`
-	FourStarCount    int32          `json:"fourStarCount"`
-	FiveStarCount    int32          `json:"fiveStarCount"`
-	CreatedAt        time.Time      `json:"createdAt"`
-	UpdatedAt        time.Time      `json:"updatedAt"`
-	BrandID          pgtype.UUID    `json:"brandId"`
-	Brand            []byte         `json:"brand"`
-	Categories       []byte         `json:"categories"`
-	Collections      []byte         `json:"collections"`
-	Attributes       []byte         `json:"attributes"`
+	ID                 uuid.UUID      `json:"id"`
+	Name               string         `json:"name"`
+	Description        string         `json:"description"`
+	ShortDescription   *string        `json:"shortDescription"`
+	BasePrice          pgtype.Numeric `json:"basePrice"`
+	BaseSku            string         `json:"baseSku"`
+	Slug               string         `json:"slug"`
+	IsActive           *bool          `json:"isActive"`
+	ImageUrl           *string        `json:"imageUrl"`
+	ImageID            *string        `json:"imageId"`
+	DiscountPercentage pgtype.Numeric `json:"discountPercentage"`
+	PurchasedCount     *int32         `json:"purchasedCount"`
+	AvgRating          pgtype.Numeric `json:"avgRating"`
+	RatingCount        int32          `json:"ratingCount"`
+	OneStarCount       int32          `json:"oneStarCount"`
+	TwoStarCount       int32          `json:"twoStarCount"`
+	ThreeStarCount     int32          `json:"threeStarCount"`
+	FourStarCount      int32          `json:"fourStarCount"`
+	FiveStarCount      int32          `json:"fiveStarCount"`
+	CreatedAt          time.Time      `json:"createdAt"`
+	UpdatedAt          time.Time      `json:"updatedAt"`
+	BrandID            pgtype.UUID    `json:"brandId"`
+	Brand              []byte         `json:"brand"`
+	Categories         []byte         `json:"categories"`
+	Collections        []byte         `json:"collections"`
+	Attributes         []byte         `json:"attributes"`
+	Variants           []byte         `json:"variants"`
 }
 
 func (q *Queries) GetProductDetail(ctx context.Context, arg GetProductDetailParams) (GetProductDetailRow, error) {
@@ -394,6 +415,8 @@ func (q *Queries) GetProductDetail(ctx context.Context, arg GetProductDetailPara
 		&i.IsActive,
 		&i.ImageUrl,
 		&i.ImageID,
+		&i.DiscountPercentage,
+		&i.PurchasedCount,
 		&i.AvgRating,
 		&i.RatingCount,
 		&i.OneStarCount,
@@ -408,12 +431,13 @@ func (q *Queries) GetProductDetail(ctx context.Context, arg GetProductDetailPara
 		&i.Categories,
 		&i.Collections,
 		&i.Attributes,
+		&i.Variants,
 	)
 	return i, err
 }
 
 const getProductList = `-- name: GetProductList :many
-SELECT p.id, p.name, p.description, p.short_description, p.base_price, p.base_sku, p.slug, p.is_active, p.image_url, p.image_id, p.avg_rating, p.rating_count, p.one_star_count, p.two_star_count, p.three_star_count, p.four_star_count, p.five_star_count, p.created_at, p.updated_at, p.brand_id, MIN(pv.price) as min_price, COUNT(pv.id) as variant_count FROM products as p
+SELECT p.id, p.name, p.description, p.short_description, p.base_price, p.base_sku, p.slug, p.is_active, p.image_url, p.image_id, p.discount_percentage, p.purchased_count, p.avg_rating, p.rating_count, p.one_star_count, p.two_star_count, p.three_star_count, p.four_star_count, p.five_star_count, p.created_at, p.updated_at, p.brand_id, MIN(pv.price) as min_price, COUNT(pv.id) as variant_count FROM products as p
 LEFT JOIN collection_products cp ON p.id = cp.product_id
 LEFT JOIN collections c ON cp.collection_id = c.id
 LEFT JOIN category_products catp ON p.id = catp.product_id
@@ -443,28 +467,30 @@ type GetProductListParams struct {
 }
 
 type GetProductListRow struct {
-	ID               uuid.UUID      `json:"id"`
-	Name             string         `json:"name"`
-	Description      string         `json:"description"`
-	ShortDescription *string        `json:"shortDescription"`
-	BasePrice        pgtype.Numeric `json:"basePrice"`
-	BaseSku          string         `json:"baseSku"`
-	Slug             string         `json:"slug"`
-	IsActive         *bool          `json:"isActive"`
-	ImageUrl         *string        `json:"imageUrl"`
-	ImageID          *string        `json:"imageId"`
-	AvgRating        pgtype.Numeric `json:"avgRating"`
-	RatingCount      int32          `json:"ratingCount"`
-	OneStarCount     int32          `json:"oneStarCount"`
-	TwoStarCount     int32          `json:"twoStarCount"`
-	ThreeStarCount   int32          `json:"threeStarCount"`
-	FourStarCount    int32          `json:"fourStarCount"`
-	FiveStarCount    int32          `json:"fiveStarCount"`
-	CreatedAt        time.Time      `json:"createdAt"`
-	UpdatedAt        time.Time      `json:"updatedAt"`
-	BrandID          pgtype.UUID    `json:"brandId"`
-	MinPrice         pgtype.Numeric `json:"minPrice"`
-	VariantCount     int64          `json:"variantCount"`
+	ID                 uuid.UUID      `json:"id"`
+	Name               string         `json:"name"`
+	Description        string         `json:"description"`
+	ShortDescription   *string        `json:"shortDescription"`
+	BasePrice          pgtype.Numeric `json:"basePrice"`
+	BaseSku            string         `json:"baseSku"`
+	Slug               string         `json:"slug"`
+	IsActive           *bool          `json:"isActive"`
+	ImageUrl           *string        `json:"imageUrl"`
+	ImageID            *string        `json:"imageId"`
+	DiscountPercentage pgtype.Numeric `json:"discountPercentage"`
+	PurchasedCount     *int32         `json:"purchasedCount"`
+	AvgRating          pgtype.Numeric `json:"avgRating"`
+	RatingCount        int32          `json:"ratingCount"`
+	OneStarCount       int32          `json:"oneStarCount"`
+	TwoStarCount       int32          `json:"twoStarCount"`
+	ThreeStarCount     int32          `json:"threeStarCount"`
+	FourStarCount      int32          `json:"fourStarCount"`
+	FiveStarCount      int32          `json:"fiveStarCount"`
+	CreatedAt          time.Time      `json:"createdAt"`
+	UpdatedAt          time.Time      `json:"updatedAt"`
+	BrandID            pgtype.UUID    `json:"brandId"`
+	MinPrice           pgtype.Numeric `json:"minPrice"`
+	VariantCount       int64          `json:"variantCount"`
 }
 
 func (q *Queries) GetProductList(ctx context.Context, arg GetProductListParams) ([]GetProductListRow, error) {
@@ -496,6 +522,8 @@ func (q *Queries) GetProductList(ctx context.Context, arg GetProductListParams) 
 			&i.IsActive,
 			&i.ImageUrl,
 			&i.ImageID,
+			&i.DiscountPercentage,
+			&i.PurchasedCount,
 			&i.AvgRating,
 			&i.RatingCount,
 			&i.OneStarCount,
@@ -698,7 +726,7 @@ SET
     image_url = coalesce($9, image_url),
     image_id = coalesce($10, image_id),
     updated_at = NOW()
-WHERE id = $11 RETURNING id, name, description, short_description, base_price, base_sku, slug, is_active, image_url, image_id, avg_rating, rating_count, one_star_count, two_star_count, three_star_count, four_star_count, five_star_count, created_at, updated_at, brand_id
+WHERE id = $11 RETURNING id, name, description, short_description, base_price, base_sku, slug, is_active, image_url, image_id, discount_percentage, purchased_count, avg_rating, rating_count, one_star_count, two_star_count, three_star_count, four_star_count, five_star_count, created_at, updated_at, brand_id
 `
 
 type UpdateProductParams struct {
@@ -741,6 +769,8 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		&i.IsActive,
 		&i.ImageUrl,
 		&i.ImageID,
+		&i.DiscountPercentage,
+		&i.PurchasedCount,
 		&i.AvgRating,
 		&i.RatingCount,
 		&i.OneStarCount,

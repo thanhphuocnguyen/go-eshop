@@ -27,7 +27,7 @@ import (
 // @Success 200 {object} ApiResponse[UserDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /users [post]
+// @Router /auth/register [post]
 func (sv *Server) RegisterHandler(c *gin.Context) {
 	var req RegisterRequestBody
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -82,23 +82,42 @@ func (sv *Server) RegisterHandler(c *gin.Context) {
 		return
 	}
 
-	createAddressArgs := repository.CreateAddressParams{
-		UserID:      user.ID,
-		PhoneNumber: req.Address.Phone,
-		Street:      req.Address.Street,
-		City:        req.Address.City,
-		District:    req.Address.District,
-		IsDefault:   true,
-	}
+	var address AddressResponse
+	if req.Address != nil {
 
-	if req.Address.Ward != nil {
-		createAddressArgs.Ward = req.Address.Ward
-	}
-	createdAddress, err := sv.repo.CreateAddress(c, createAddressArgs)
+		createAddressArgs := repository.CreateAddressParams{
+			UserID:      user.ID,
+			PhoneNumber: req.Address.Phone,
+			Street:      req.Address.Street,
+			City:        req.Address.City,
+			District:    req.Address.District,
+			IsDefault:   true,
+		}
 
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(AddressCodeCode, err))
-		return
+		if req.Address.Ward != nil {
+			createAddressArgs.Ward = req.Address.Ward
+		}
+
+		createdAddress, err := sv.repo.CreateAddress(c, createAddressArgs)
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, createErr(AddressCodeCode, err))
+			return
+		}
+		ward := ""
+		if createdAddress.Ward != nil {
+			ward = *createdAddress.Ward
+		}
+		address = AddressResponse{
+			ID:        createdAddress.ID.String(),
+			Phone:     createdAddress.PhoneNumber,
+			Street:    createdAddress.Street,
+			Ward:      &ward,
+			District:  createdAddress.District,
+			City:      createdAddress.City,
+			Default:   createdAddress.IsDefault,
+			CreatedAt: createdAddress.CreatedAt,
+		}
 	}
 
 	emailPayload := &worker.PayloadVerifyEmail{UserID: user.ID}
@@ -113,11 +132,6 @@ func (sv *Server) RegisterHandler(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErr(ActivateUserCode, err))
 		return
-	}
-
-	ward := ""
-	if createdAddress.Ward != nil {
-		ward = *createdAddress.Ward
 	}
 
 	userResp := &UserDetail{
@@ -136,16 +150,7 @@ func (sv *Server) RegisterHandler(c *gin.Context) {
 		AvatarURL:     user.AvatarUrl,
 		AvatarID:      user.AvatarImageID,
 		LastName:      user.LastName,
-		Addresses: []AddressResponse{{
-			ID:        createdAddress.ID.String(),
-			Phone:     createdAddress.PhoneNumber,
-			Street:    createdAddress.Street,
-			Ward:      &ward,
-			District:  createdAddress.District,
-			City:      createdAddress.City,
-			Default:   createdAddress.IsDefault,
-			CreatedAt: createdAddress.CreatedAt,
-		}},
+		Addresses:     []AddressResponse{address},
 	}
 
 	c.JSON(http.StatusOK, createDataResp(c, userResp, nil, nil))
@@ -161,7 +166,7 @@ func (sv *Server) RegisterHandler(c *gin.Context) {
 // @Success 200 {object} ApiResponse[LoginResponse]
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /users/LoginHandler [post]
+// @Router /auth/login [post]
 func (sv *Server) LoginHandler(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBind(&req); err != nil {
@@ -243,7 +248,7 @@ func (sv *Server) LoginHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, createDataResp(c, loginResp, nil, nil))
 }
 
-// refreshTokenHandler godoc
+// RefreshTokenHandler godoc
 // @Summary Refresh token
 // @Description Refresh token
 // @Tags users
@@ -252,8 +257,8 @@ func (sv *Server) LoginHandler(c *gin.Context) {
 // @Success 200 {object} ApiResponse[RefreshTokenResponse]
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /users/refresh-token [post]
-func (sv *Server) refreshTokenHandler(c *gin.Context) {
+// @Router /auth/refresh-token [post]
+func (sv *Server) RefreshTokenHandler(c *gin.Context) {
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {
 		c.JSON(http.StatusUnauthorized, createErr(UnauthorizedCode, fmt.Errorf("refresh token is required")))

@@ -11,18 +11,18 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
 
-// createAddressHandler godoc
-// @Summary Create a new address
-// @Description Create a new address
-// @Tags address
+// CreateAddressHandler godoc
+// @Summary Create a new addresses
+// @Description Create a new addresses
+// @Tags addresses
 // @Accept json
 // @Produce json
 // @Param input body CreateAddressRequest true "Create Address"
 // @Success 200 {object} ApiResponse[AddressResponse]
 // @Failure 400 {object} ErrorResp
 // @Failure 401 {object} ErrorResp
-// @Router /address [post]
-func (sv *Server) createAddressHandler(c *gin.Context) {
+// @Router //usersusers/addresses [post]
+func (sv *Server) CreateAddressHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, createErr(UnauthorizedCode, fmt.Errorf("authorization payload is not provided")))
@@ -59,18 +59,18 @@ func (sv *Server) createAddressHandler(c *gin.Context) {
 		payload.Ward = req.Ward
 	}
 
-	address, err := sv.repo.CreateAddress(c, payload)
+	created, err := sv.repo.CreateAddress(c, payload)
 
 	if req.IsDefault {
 		err := sv.repo.SetPrimaryAddressTx(c, repository.SetPrimaryAddressTxArgs{
-			NewPrimaryID: address.ID,
+			NewPrimaryID: created.ID,
 			UserID:       authPayload.UserID,
 		})
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, fmt.Errorf("failed to set primary address: %w", err)))
+			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, fmt.Errorf("failed to set primary addresses: %w", err)))
 			return
 		}
-		address.IsDefault = true
+		created.IsDefault = true
 	}
 
 	if err != nil {
@@ -78,14 +78,14 @@ func (sv *Server) createAddressHandler(c *gin.Context) {
 		return
 	}
 
-	addressDetail := mapAddressResponse(address)
+	addressDetail := mapAddressResponse(created)
 	c.JSON(http.StatusOK, createDataResp(c, addressDetail, nil, nil))
 }
 
 // getAddresses godoc
 // @Summary Get list of addresses
 // @Description Get list of addresses
-// @Tags address
+// @Tags addresses
 // @Accept json
 // @Produce json
 // @Param page query int false "Page number"
@@ -93,7 +93,7 @@ func (sv *Server) createAddressHandler(c *gin.Context) {
 // @Success 200 {object} ApiResponse[[]AddressResponse]
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /address [get]
+// @Router /users/addresses [get]
 func (sv *Server) getAddressesHandlers(c *gin.Context) {
 	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
@@ -107,17 +107,17 @@ func (sv *Server) getAddressesHandlers(c *gin.Context) {
 		return
 	}
 	addressesResponse := make([]AddressResponse, len(addresses))
-	for i, address := range addresses {
-		addressesResponse[i] = mapAddressResponse(address)
+	for i, addresses := range addresses {
+		addressesResponse[i] = mapAddressResponse(addresses)
 	}
 
 	c.JSON(http.StatusOK, createDataResp(c, addressesResponse, nil, nil))
 }
 
 // updateAddressHandlers godoc
-// @Summary Update an address
-// @Description Update an address
-// @Tags address
+// @Summary Update an addresses
+// @Description Update an addresses
+// @Tags addresses
 // @Accept json
 // @Produce json
 // @Param id path int true "Address ID"
@@ -127,7 +127,7 @@ func (sv *Server) getAddressesHandlers(c *gin.Context) {
 // @Failure 401 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /address/{id} [put]
+// @Router /users/addresses/{id} [put]
 func (sv *Server) updateAddressHandlers(c *gin.Context) {
 	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
@@ -190,25 +190,25 @@ func (sv *Server) updateAddressHandlers(c *gin.Context) {
 				UserID:       authPayload.UserID,
 			})
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, fmt.Errorf("failed to set primary address: %w", err)))
+				c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, fmt.Errorf("failed to set primary addresses: %w", err)))
 				return
 			}
 		}
 	}
 
-	address, err := sv.repo.UpdateAddress(c, payload)
+	addresses, err := sv.repo.UpdateAddress(c, payload)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-	addressDetail := mapAddressResponse(address)
+	addressDetail := mapAddressResponse(addresses)
 	c.JSON(http.StatusOK, createDataResp(c, addressDetail, nil, nil))
 }
 
 // RemoveAddressHandlers godoc
-// @Summary Remove an address
-// @Description Remove an address
-// @Tags address
+// @Summary Remove an addresses
+// @Description Remove an addresses
+// @Tags addresses
 // @Accept json
 // @Produce json
 // @Param id path int true "Address ID"
@@ -216,7 +216,7 @@ func (sv *Server) updateAddressHandlers(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 401 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
-// @Router /address/{id} [delete]
+// @Router /users/addresses/{id} [delete]
 func (sv *Server) RemoveAddressHandlers(c *gin.Context) {
 	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
@@ -229,7 +229,7 @@ func (sv *Server) RemoveAddressHandlers(c *gin.Context) {
 		return
 	}
 
-	address, err := sv.repo.GetAddress(c, repository.GetAddressParams{
+	addresses, err := sv.repo.GetAddress(c, repository.GetAddressParams{
 		ID:     uuid.MustParse(param.ID),
 		UserID: authPayload.UserID,
 	})
@@ -244,8 +244,8 @@ func (sv *Server) RemoveAddressHandlers(c *gin.Context) {
 	}
 
 	err = sv.repo.DeleteAddress(c, repository.DeleteAddressParams{
-		ID:     address.ID,
-		UserID: address.UserID,
+		ID:     addresses.ID,
+		UserID: addresses.UserID,
 	})
 
 	if err != nil {
@@ -260,9 +260,9 @@ func (sv *Server) RemoveAddressHandlers(c *gin.Context) {
 }
 
 // setDefaultAddressHandler godoc
-// @Summary Set default address
-// @Description Set default address
-// @Tags address
+// @Summary Set default addresses
+// @Description Set default addresses
+// @Tags addresses
 // @Accept json
 // @Produce json
 // @Param id path int true "Address ID"
@@ -270,7 +270,7 @@ func (sv *Server) RemoveAddressHandlers(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 401 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
-// @Router /address/{id}/default [put]
+// @Router /users/addresses/{id}/default [put]
 func (sv *Server) setDefaultAddressHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
@@ -302,7 +302,7 @@ func (sv *Server) setDefaultAddressHandler(c *gin.Context) {
 		UserID:       authPayload.UserID,
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, fmt.Errorf("failed to set primary address: %w", err)))
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, fmt.Errorf("failed to set primary addresses: %w", err)))
 		return
 	}
 	c.Status(http.StatusNoContent)

@@ -98,7 +98,7 @@ func (sv *Server) CreatePaymentIntentHandler(c *gin.Context) {
 		return
 	}
 	switch paymentMethod.Code {
-	case string(repository.PaymentMethodCodeStripe):
+	case "Stripe":
 		stripeInstance, err := pmgateway.NewStripePayment(sv.config.StripeSecretKey)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
@@ -160,7 +160,7 @@ func (sv *Server) getPaymentHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-	if paymentMethod.Code == repository.PaymentMethodCodeStripe {
+	if paymentMethod.Code == "Stripe" {
 		stripeInstance, err := pmgateway.NewStripePayment(sv.config.StripeSecretKey)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))

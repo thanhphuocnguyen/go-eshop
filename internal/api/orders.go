@@ -70,10 +70,8 @@ func (sv *Server) getOrdersHandler(c *gin.Context) {
 	for _, aggregated := range fetchedOrderRows {
 		// Convert PaymentStatus interface{} to PaymentStatus type
 		paymentStatus := repository.PaymentStatusPending
-		if aggregated.PaymentStatus != nil {
-			if ps, ok := aggregated.PaymentStatus.(repository.PaymentStatus); ok {
-				paymentStatus = ps
-			}
+		if aggregated.PaymentStatus.Valid {
+			paymentStatus = aggregated.PaymentStatus.PaymentStatus
 		}
 
 		total, _ := aggregated.TotalPrice.Float64Value()
@@ -165,7 +163,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 
 	if paymentInfo.Status == repository.PaymentStatusPending &&
 		paymentInfo.PaymentIntentID != nil &&
-		order.PaymentMethod == repository.PaymentMethodCodeStripe {
+		order.PaymentMethod == "Stripe" {
 		resp.PaymentInfo.IntendID = paymentInfo.PaymentIntentID
 		stripeInstance, err := pmgateway.NewStripePayment(sv.config.StripeSecretKey)
 		if err != nil {
@@ -348,7 +346,7 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 		OrderID: uuid.MustParse(params.ID),
 		CancelPaymentFromMethod: func(paymentID string, method string) error {
 			switch method {
-			case repository.PaymentMethodCodeStripe:
+			case "Stripe":
 				stripeInstance, err := pmgateway.NewStripePayment(sv.config.StripeSecretKey)
 				if err != nil {
 					c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
@@ -425,7 +423,7 @@ func (sv *Server) changeOrderStatus(c *gin.Context) {
 			Valid: true,
 		}
 	}
-	if status == repository.OrderStatusProcessing {
+	if status == repository.OrderStatusDelivering {
 		updateParams.DeliveredAt = pgtype.Timestamptz{
 			Time:  time.Now(),
 			Valid: true,
@@ -505,7 +503,7 @@ func (sv *Server) refundOrder(c *gin.Context) {
 		OrderID: uuid.MustParse(params.ID),
 		RefundPaymentFromMethod: func(paymentID string, method string) (string, error) {
 			switch method {
-			case repository.PaymentMethodCodeStripe:
+			case "Stripe":
 				stripeInstance, err := pmgateway.NewStripePayment(sv.config.StripeSecretKey)
 				if err != nil {
 					return "", err
@@ -601,10 +599,8 @@ func (sv *Server) getAdminOrdersHandler(c *gin.Context) {
 	for _, aggregated := range fetchedOrderRows {
 		// Convert PaymentStatus interface{} to PaymentStatus type
 		paymentStatus := repository.PaymentStatusPending
-		if aggregated.PaymentStatus != nil {
-			if ps, ok := aggregated.PaymentStatus.(repository.PaymentStatus); ok {
-				paymentStatus = ps
-			}
+		if aggregated.PaymentStatus.Valid {
+			paymentStatus = aggregated.PaymentStatus.PaymentStatus
 		}
 
 		total, _ := aggregated.TotalPrice.Float64Value()

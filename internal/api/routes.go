@@ -110,12 +110,8 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 		{
 			discounts.POST("", sv.CreateDiscountHandler)
 			discounts.GET("", sv.GetDiscountsHandler)
-			discounts.GET(":id", sv.getDiscountByIDHandler)
-			discounts.GET(":id/products", sv.getDiscountProductsByIDHandler)
-			discounts.GET(":id/categories", sv.getDiscountCategoriesByIDHandler)
-			discounts.GET(":id/users", sv.getDiscountUsersByIDHandler)
-			discounts.PUT(":id", sv.updateDiscountHandler)
-			discounts.DELETE(":id", sv.deleteDiscountHandler)
+			discounts.GET(":id", sv.GetDiscountByIDHandler)
+			// discounts.PUT(":id", sv.UpdateDiscountHandler)
 		}
 	}
 }
@@ -126,20 +122,20 @@ func (sv *Server) setupAuthRoutes(rg *gin.RouterGroup) {
 	{
 		auth.POST("register", sv.RegisterHandler)
 		auth.POST("login", sv.LoginHandler)
-		auth.POST("refresh-token", sv.refreshTokenHandler)
+		auth.POST("refresh-token", sv.RefreshTokenHandler)
 	}
 }
 
 // Setup user-related routes
 func (sv *Server) setupUserRoutes(rg *gin.RouterGroup) {
-	users := rg.Group("user", authenticateMiddleware(sv.tokenGenerator))
+	users := rg.Group("users", authenticateMiddleware(sv.tokenGenerator))
 	{
 		users.GET("me", sv.GetCurrentUserHandler)
 		users.PATCH("me", sv.UpdateUserHandler)
 		users.POST("send-verify-email", sv.SendVerifyEmailHandler)
 		userAddresses := users.Group("addresses")
 		{
-			userAddresses.POST("", sv.createAddressHandler)
+			userAddresses.POST("", sv.CreateAddressHandler)
 			userAddresses.PATCH(":id/default", sv.setDefaultAddressHandler)
 			userAddresses.GET("", sv.getAddressesHandlers)
 			userAddresses.PATCH(":id", sv.updateAddressHandlers)

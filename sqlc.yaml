@@ -36,6 +36,9 @@ sql:
         - db_type: "cart_status"
           go_type:
             type: "CartStatus"
+        - db_type: "discount_type"
+          go_type:
+            type: "DiscountType"
         emit_interface: true
         json_tags_case_style: "camel"
         emit_json_tags: true

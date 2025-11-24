@@ -39,50 +39,54 @@ func mapAddressToAddressResponse(address repository.UserAddress) AddressResponse
 	}
 }
 
-func mapToProductDetailResponse(productRows repository.GetProductDetailRow) ProductDetailDto {
-	basePrice, _ := productRows.BasePrice.Float64Value()
+func mapToProductDetailResponse(row repository.GetProductDetailRow) ProductDetailDto {
+	basePrice, _ := row.BasePrice.Float64Value()
 
 	resp := ProductDetailDto{
-		ID:               productRows.ID.String(),
-		Name:             productRows.Name,
+		ID:               row.ID.String(),
+		Name:             row.Name,
 		BasePrice:        basePrice.Float64,
-		ShortDescription: productRows.ShortDescription,
-		Description:      productRows.Description,
-		BaseSku:          productRows.BaseSku,
-		Slug:             productRows.Slug,
-		RatingCount:      productRows.RatingCount,
-		OneStarCount:     productRows.OneStarCount,
-		TwoStarCount:     productRows.TwoStarCount,
-		ThreeStarCount:   productRows.ThreeStarCount,
-		FourStarCount:    productRows.FourStarCount,
-		FiveStarCount:    productRows.FiveStarCount,
+		ShortDescription: row.ShortDescription,
+		Description:      row.Description,
+		BaseSku:          row.BaseSku,
+		Slug:             row.Slug,
+		RatingCount:      row.RatingCount,
+		OneStarCount:     row.OneStarCount,
+		TwoStarCount:     row.TwoStarCount,
+		ThreeStarCount:   row.ThreeStarCount,
+		FourStarCount:    row.FourStarCount,
+		FiveStarCount:    row.FiveStarCount,
 
-		UpdatedAt: productRows.UpdatedAt.String(),
-		CreatedAt: productRows.CreatedAt.String(),
+		UpdatedAt: row.UpdatedAt.String(),
+		CreatedAt: row.CreatedAt.String(),
 
-		IsActive: *productRows.IsActive,
-		ImageUrl: productRows.ImageUrl,
-		ImageId:  productRows.ImageID,
+		IsActive: *row.IsActive,
+		ImageUrl: row.ImageUrl,
+		ImageId:  row.ImageID,
 
 		// Initialize slices
 		Categories:  []GeneralCategoryResponse{},
 		Collections: []GeneralCategoryResponse{},
 		Attributes:  []ProductAttribute{},
 		Brand:       GeneralCategoryResponse{},
+		Variations:  []VariantModelDto{},
 	}
 
 	// Unmarshal JSON data
-	if err := json.Unmarshal(productRows.Attributes, &resp.Attributes); err != nil {
+	if err := json.Unmarshal(row.Attributes, &resp.Attributes); err != nil {
 		log.Error().Err(err).Msg("Unmarshal attributes")
 	}
-	if err := json.Unmarshal(productRows.Categories, &resp.Categories); err != nil {
+	if err := json.Unmarshal(row.Categories, &resp.Categories); err != nil {
 		log.Error().Err(err).Msg("Unmarshal categories")
 	}
-	if err := json.Unmarshal(productRows.Collections, &resp.Collections); err != nil {
+	if err := json.Unmarshal(row.Collections, &resp.Collections); err != nil {
 		log.Error().Err(err).Msg("Unmarshal collections")
 	}
-	if err := json.Unmarshal(productRows.Brand, &resp.Brand); err != nil {
+	if err := json.Unmarshal(row.Brand, &resp.Brand); err != nil {
 		log.Error().Err(err).Msg("Unmarshal brand")
+	}
+	if err := json.Unmarshal(row.Variants, &resp.Variations); err != nil {
+		log.Error().Err(err).Msg("Unmarshal variants")
 	}
 
 	return resp

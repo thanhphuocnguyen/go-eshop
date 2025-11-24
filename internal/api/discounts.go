@@ -29,17 +29,17 @@ func (sv *Server) CreateDiscountHandler(c *gin.Context) {
 	}
 	sqlParams := repository.InsertDiscountParams{
 		Code:          req.Code,
-		DiscountType:  req.DiscountType,
+		DiscountType:  repository.DiscountType(req.DiscountType),
 		DiscountValue: utils.GetPgNumericFromFloat(req.DiscountValue),
-		IsActive:      req.IsActive,
+		IsActive:      &req.IsActive,
 		UsageLimit:    req.UsageLimit,
 		Description:   req.Description,
-		StartsAt:      utils.GetPgTypeTimestamp(req.StartsAt),
-		ExpiresAt:     utils.GetPgTypeTimestamp(req.ExpiresAt),
+		ValidFrom:     utils.GetPgTypeTimestamp(req.ValidFrom),
+		ValidUntil:    utils.GetPgTypeTimestamp(req.ValidUntil),
 	}
 
-	if req.MinPurchaseAmount != nil {
-		sqlParams.MinPurchaseAmount = utils.GetPgNumericFromFloat(*req.MinPurchaseAmount)
+	if req.MinOrderValue != nil {
+		sqlParams.MinOrderValue = utils.GetPgNumericFromFloat(*req.MinOrderValue)
 	}
 	if req.MaxDiscountAmount != nil {
 		sqlParams.MaxDiscountAmount = utils.GetPgNumericFromFloat(*req.MaxDiscountAmount)
@@ -109,22 +109,25 @@ func (sv *Server) GetDiscountsHandler(c *gin.Context) {
 		listData[i] = DiscountListItemResponseModel{
 			ID:            discount.ID.String(),
 			Code:          discount.Code,
-			DiscountType:  discount.DiscountType,
+			DiscountType:  string(discount.DiscountType),
 			DiscountValue: discountValue.Float64,
-			IsActive:      discount.IsActive,
-			UsedCount:     discount.UsedCount,
+			IsActive:      *discount.IsActive,
+			TimeUsed:      *discount.TimesUsed,
 			UsageLimit:    discount.UsageLimit,
 			Description:   discount.Description,
-			StartsAt:      discount.StartsAt.String(),
-			ExpiresAt:     discount.ExpiresAt.String(),
+			ValidFrom:     discount.ValidFrom.String(),
 		}
-		if discount.MinPurchaseAmount.Valid {
-			minPurchaseAmount, _ := discount.MinPurchaseAmount.Float64Value()
-			listData[i].MinPurchase = minPurchaseAmount.Float64
+		if discount.ValidUntil.Valid {
+			listData[i].ValidUntil = discount.ValidUntil.Time.String()
 		}
+		if discount.MinOrderValue.Valid {
+			minPurchaseAmount, _ := discount.MinOrderValue.Float64Value()
+			listData[i].MinPurchase = &minPurchaseAmount.Float64
+		}
+
 		if discount.MaxDiscountAmount.Valid {
 			maxDiscountAmount, _ := discount.MaxDiscountAmount.Float64Value()
-			listData[i].MaxDiscount = maxDiscountAmount.Float64
+			listData[i].MaxDiscount = &maxDiscountAmount.Float64
 		}
 	}
 	pagination := createPagination(queries.Page, queries.PageSize, total)
@@ -132,7 +135,7 @@ func (sv *Server) GetDiscountsHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, createDataResp(c, listData, pagination, nil))
 }
 
-// getDiscountByIDHandler godoc
+// GetDiscountByIDHandler godoc
 // @Summary Get discount by ID
 // @Description Get discount by ID
 // @Tags discounts
@@ -144,7 +147,7 @@ func (sv *Server) GetDiscountsHandler(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /discounts/{id} [get]
-func (sv *Server) getDiscountByIDHandler(c *gin.Context) {
+func (sv *Server) GetDiscountByIDHandler(c *gin.Context) {
 	// Get discount by ID
 	id := c.Param("id")
 	if id == "" {
@@ -169,13 +172,14 @@ func (sv *Server) getDiscountByIDHandler(c *gin.Context) {
 		discountAmount, _ := usage.DiscountAmount.Float64Value()
 		amount, _ := usage.TotalPrice.Float64Value()
 		discountUsages[i] = DiscountUsageHistory{
-			OrderID:        usage.OrderID.String(),
 			ID:             discount.ID.String(),
 			CustomerName:   usage.CustomerName,
 			Amount:         amount.Float64,
 			DiscountAmount: discountAmount.Float64,
-			Date:           usage.CreatedAt.Time,
+			Date:           usage.CreatedAt,
+			OrderID:        usage.OrderID.String(),
 		}
+
 	}
 
 	discountValue, _ := discount.DiscountValue.Float64Value()
@@ -183,21 +187,23 @@ func (sv *Server) getDiscountByIDHandler(c *gin.Context) {
 	resp := DiscountDetailResponseModel{
 		ID:            discount.ID.String(),
 		Code:          discount.Code,
-		DiscountType:  discount.DiscountType,
+		DiscountType:  string(discount.DiscountType),
 		DiscountValue: discountValue.Float64,
-		IsActive:      discount.IsActive,
-		UsedCount:     discount.UsedCount,
+		IsActive:      *discount.IsActive,
+		TimesUsed:     *discount.TimesUsed,
 		UsageLimit:    discount.UsageLimit,
 		Description:   discount.Description,
-		StartsAt:      discount.StartsAt.String(),
-		ExpiresAt:     discount.ExpiresAt.String(),
+		ValidFrom:     discount.ValidFrom.String(),
+		UsageHistory:  discountUsages,
 		CreatedAt:     discount.CreatedAt.String(),
 		UpdatedAt:     discount.UpdatedAt.String(),
-		UsageHistory:  discountUsages,
+	}
+	if discount.ValidUntil.Valid {
+		resp.ValidUntil = discount.ValidUntil.Time.String()
 	}
 
-	if discount.MinPurchaseAmount.Valid {
-		minPurchaseAmount, _ := discount.MinPurchaseAmount.Float64Value()
+	if discount.MinOrderValue.Valid {
+		minPurchaseAmount, _ := discount.MinOrderValue.Float64Value()
 		resp.MinPurchase = minPurchaseAmount.Float64
 	}
 
@@ -207,224 +213,4 @@ func (sv *Server) getDiscountByIDHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, createDataResp(c, resp, nil, nil))
-}
-
-// getDiscountProductsByIDHandler godoc
-// @Summary Get discount products by ID
-// @Description Get discount products by ID
-// @Tags discounts
-// @Accept  json
-// @Produce  json
-// @Param id path string true "Discount ID"
-// @Param page query int false "Page number" default(1)
-// @Param pageSize query int false "Page size" default(10)
-// @Success 200 {object} ApiResponse[DiscountLinkObject]
-// @Failure 400 {object} ErrorResp
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
-// @Router /discounts/{id}/products [get]
-func (sv *Server) getDiscountProductsByIDHandler(c *gin.Context) {
-	var param UriIDParam
-	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
-		return
-	}
-	var queries PaginationQueryParams
-	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
-		return
-	}
-
-	// Get discount products by ID
-	discountProductRows, err := sv.repo.GetDiscountProducts(c,
-		repository.GetDiscountProductsParams{
-			DiscountID: uuid.MustParse(param.ID),
-			Limit:      queries.PageSize,
-			Offset:     (queries.Page - 1) * queries.PageSize,
-		})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
-		return
-	}
-
-	resp := make([]DiscountLinkObject, len(discountProductRows))
-
-	total, err := sv.repo.CountDiscountProducts(c, uuid.MustParse(param.ID))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
-		return
-	}
-	for i, discountProduct := range discountProductRows {
-		basePrice, _ := discountProduct.BasePrice.Float64Value()
-
-		resp[i] = DiscountLinkObject{
-			ID:    discountProduct.ProductID.String(),
-			Name:  discountProduct.Name,
-			Price: &basePrice.Float64,
-		}
-	}
-
-	pagination := createPagination(queries.Page, queries.PageSize, total)
-
-	c.JSON(http.StatusOK, createDataResp(c, resp, pagination, nil))
-}
-
-// getDiscountCategoriesByIDHandler godoc
-// @Summary Get discount categories by ID
-// @Description Get discount categories by ID
-// @Tags discounts
-// @Accept  json
-// @Produce  json
-// @Param id path string true "Discount ID"
-// @Param page query int false "Page number" default(1)
-// @Param pageSize query int false "Page size" default(10)
-// @Success 200 {object} ApiResponse[DiscountLinkObject]
-// @Failure 400 {object} ErrorResp
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
-// @Router /discounts/{id}/categories [get]
-func (sv *Server) getDiscountCategoriesByIDHandler(c *gin.Context) {
-	var param UriIDParam
-	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
-		return
-	}
-	var queries PaginationQueryParams
-	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
-		return
-	}
-
-	// Get discount categories by ID
-	discountCategoryRows, err := sv.repo.GetDiscountCategories(c,
-		repository.GetDiscountCategoriesParams{
-			DiscountID: uuid.MustParse(param.ID),
-			Limit:      queries.PageSize,
-			Offset:     (queries.Page - 1) * queries.PageSize,
-		})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
-		return
-	}
-
-	resp := make([]DiscountLinkObject, len(discountCategoryRows))
-
-	total, err := sv.repo.CountDiscountCategories(c, uuid.MustParse(param.ID))
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
-		return
-	}
-
-	for i, discountCategory := range discountCategoryRows {
-		resp[i] = DiscountLinkObject{
-			ID:   discountCategory.CategoryID.String(),
-			Name: discountCategory.Name,
-		}
-	}
-
-	pagination := createPagination(queries.Page, queries.PageSize, total)
-
-	c.JSON(http.StatusOK, createDataResp(c, resp, pagination, nil))
-}
-
-// getDiscountUsersByIDHandler godoc
-// @Summary Get discount users by ID
-// @Description Get discount users by ID
-// @Tags discounts
-// @Accept  json
-// @Produce  json
-// @Param id path string true "Discount ID"
-// @Param page query int false "Page number" default(1)
-// @Param pageSize query int false "Page size" default(10)
-// @Success 200 {object} ApiResponse[DiscountLinkObject]
-// @Failure 400 {object} ErrorResp
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
-// @Router /discounts/{id}/users [get]
-func (sv *Server) getDiscountUsersByIDHandler(c *gin.Context) {
-	var param UriIDParam
-	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
-		return
-	}
-	var queries PaginationQueryParams
-	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
-		return
-	}
-
-	// Get discount Users by ID
-	discountUserRows, err := sv.repo.GetDiscountUsers(c,
-		repository.GetDiscountUsersParams{
-			DiscountID: uuid.MustParse(param.ID),
-			Limit:      queries.PageSize,
-			Offset:     (queries.Page - 1) * queries.PageSize,
-		})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
-		return
-	}
-
-	resp := make([]DiscountLinkObject, len(discountUserRows))
-
-	total, err := sv.repo.CountDiscountUsers(c, uuid.MustParse(param.ID))
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
-		return
-	}
-
-	for i, discountUser := range discountUserRows {
-		name := ""
-		if discountUser.Fullname != nil {
-			name = *discountUser.Fullname
-		}
-		resp[i] = DiscountLinkObject{
-			ID:   discountUser.ID.String(),
-			Name: name,
-		}
-	}
-
-	pagination := createPagination(queries.Page, queries.PageSize, total)
-
-	c.JSON(http.StatusOK, createDataResp(c, resp, pagination, nil))
-}
-
-func (sv *Server) updateDiscountHandler(c *gin.Context) {
-	var param UriIDParam
-	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
-		return
-	}
-
-	var req repository.UpdateDiscountTxArgs
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
-		return
-	}
-	// Update discount
-	err := sv.repo.UpdateDiscountTx(c, uuid.MustParse(param.ID), req)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
-		return
-	}
-	c.JSON(http.StatusOK, createDataResp(c, struct{}{}, nil, nil))
-}
-
-func (sv *Server) deleteDiscountHandler(c *gin.Context) {
-	// Delete discount
-	id := c.Param("id")
-	if id == "" {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, nil))
-		return
-	}
-
-	err := sv.repo.DeleteDiscount(c, uuid.MustParse(id))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
-		return
-	}
-
-	c.Status(http.StatusNoContent)
 }

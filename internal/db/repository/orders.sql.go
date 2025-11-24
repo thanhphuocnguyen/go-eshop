@@ -26,9 +26,9 @@ WHERE
 `
 
 type CountOrdersParams struct {
-	Status        interface{}        `json:"status"`
+	Status        NullOrderStatus    `json:"status"`
 	CustomerID    pgtype.UUID        `json:"customerId"`
-	PaymentStatus interface{}        `json:"paymentStatus"`
+	PaymentStatus NullPaymentStatus  `json:"paymentStatus"`
 	StartDate     pgtype.Timestamptz `json:"startDate"`
 	EndDate       pgtype.Timestamptz `json:"endDate"`
 }
@@ -170,14 +170,10 @@ SELECT
     pmt.id as payment_method_id,
     pm.gateway,
     pm.payment_intent_id,
-    pm.created_at as payment_created_at,
-    d.code,
-    od.discount_amount
+    pm.created_at as payment_created_at
 FROM orders
 JOIN payments pm ON orders.id = pm.order_id
 JOIN payment_methods pmt ON pm.payment_method_id = pmt.id
-LEFT JOIN order_discounts od ON orders.id = od.order_id
-LEFT JOIN discounts d ON od.discount_id = d.id
 WHERE orders.id = $1
 LIMIT 1
 `
@@ -213,8 +209,6 @@ type GetOrderRow struct {
 	Gateway               *string                 `json:"gateway"`
 	PaymentIntentID       *string                 `json:"paymentIntentId"`
 	PaymentCreatedAt      pgtype.Timestamptz      `json:"paymentCreatedAt"`
-	Code                  *string                 `json:"code"`
-	DiscountAmount        pgtype.Numeric          `json:"discountAmount"`
 }
 
 func (q *Queries) GetOrder(ctx context.Context, id uuid.UUID) (GetOrderRow, error) {
@@ -251,8 +245,6 @@ func (q *Queries) GetOrder(ctx context.Context, id uuid.UUID) (GetOrderRow, erro
 		&i.Gateway,
 		&i.PaymentIntentID,
 		&i.PaymentCreatedAt,
-		&i.Code,
-		&i.DiscountAmount,
 	)
 	return i, err
 }
@@ -428,10 +420,10 @@ type GetOrdersParams struct {
 	Limit         int64              `json:"limit"`
 	Offset        int64              `json:"offset"`
 	CustomerID    pgtype.UUID        `json:"customerId"`
-	Status        interface{}        `json:"status"`
+	Status        NullOrderStatus    `json:"status"`
 	StartDate     pgtype.Timestamptz `json:"startDate"`
 	EndDate       pgtype.Timestamptz `json:"endDate"`
-	PaymentStatus interface{}        `json:"paymentStatus"`
+	PaymentStatus NullPaymentStatus  `json:"paymentStatus"`
 }
 
 type GetOrdersRow struct {
@@ -457,7 +449,7 @@ type GetOrdersRow struct {
 	TrackingUrl           *string                 `json:"trackingUrl"`
 	ShippingProvider      *string                 `json:"shippingProvider"`
 	ShippingNotes         *string                 `json:"shippingNotes"`
-	PaymentStatus         interface{}             `json:"paymentStatus"`
+	PaymentStatus         NullPaymentStatus       `json:"paymentStatus"`
 	TotalItems            int64                   `json:"totalItems"`
 }
 
@@ -569,7 +561,7 @@ WHERE id = $5 RETURNING orders.id
 `
 
 type UpdateOrderParams struct {
-	Status      interface{}        `json:"status"`
+	Status      NullOrderStatus    `json:"status"`
 	ConfirmedAt pgtype.Timestamptz `json:"confirmedAt"`
 	CancelledAt pgtype.Timestamptz `json:"cancelledAt"`
 	DeliveredAt pgtype.Timestamptz `json:"deliveredAt"`
