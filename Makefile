@@ -36,9 +36,15 @@ build-seed:
 build-server:
 	@echo "Building application..."
 	go build ./cmd/web
-serve-server:
+server:
 	@echo "Running application..."
 	go run ./cmd/web api
+seed:
+	@echo "Running application..."
+	go run ./cmd/seed
+seed-one:
+	@echo "Running application..."
+	go run ./cmd/seed $(entity)
 listen-stripe:
 	@echo "Listening to Stripe events..."
 	stripe listen --forward-to localhost:4000/webhook/v1/stripe
@@ -49,4 +55,4 @@ swagger:
 	@echo "Generating swagger..."
 	swag init -d internal/api -g server.go --parseInternal --parseDependency
 
-.PHONY: create-migration migrate-up migrate-up-1 migrate-down migrate-down-1 migrate-drop build-migrate build-server serve-server gen-sqlc gen-swagger build-seed serve-worker goto-migration force-migration migrate-version
+.PHONY: create-migration migrate-up migrate-up-1 migrate-down migrate-down-1 migrate-drop build-migrate build-server serve-server gen-sqlc gen-swagger build-seed seed serve-worker goto-migration force-migration migrate-version

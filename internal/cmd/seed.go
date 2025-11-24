@@ -186,6 +186,8 @@ func ExecuteSeed(ctx context.Context) int {
 					seedShippingZones(ctx, pg)
 				case "variants":
 					seedExistingProductVariants(ctx, pg)
+				case "user-addresses":
+					seedUserAddresses(ctx, pg)
 				default:
 					log.Error().Msg("invalid seed command")
 				}
@@ -520,7 +522,6 @@ func seedUsers(ctx context.Context, pg repository.Repository) {
 
 	log.Info().Int("user count", len(users)).Msg("creating users")
 	params := make([]repository.SeedUsersParams, len(users))
-	userIDs := make([]uuid.UUID, len(users))
 	role, err := pg.GetRoleByCode(ctx, "user")
 	adminRole, err := pg.GetRoleByCode(ctx, "admin")
 	if err != nil {
@@ -529,8 +530,6 @@ func seedUsers(ctx context.Context, pg repository.Repository) {
 	}
 	for i, user := range users {
 		hashed, _ := auth.HashPassword(user.Password)
-		usrID := uuid.New()
-		userIDs[i] = usrID
 		params[i] = repository.SeedUsersParams{
 			Email:          user.Email,
 			Username:       user.Username,
@@ -549,7 +548,8 @@ func seedUsers(ctx context.Context, pg repository.Repository) {
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create users")
 	}
-	seedUserAddresses(ctx, pg, userIDs)
+
+	seedUserAddresses(ctx, pg)
 	log.Info().Msg("users created")
 }
 
@@ -782,7 +782,7 @@ func seedShippingZones(ctx context.Context, repo repository.Repository) {
 	log.Info().Msg("shipping zones created")
 }
 
-func seedUserAddresses(ctx context.Context, repo repository.Repository, userIDs []uuid.UUID) {
+func seedUserAddresses(ctx context.Context, repo repository.Repository) {
 	countAddresses, err := repo.CountAddresses(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to count addresses")
@@ -808,7 +808,20 @@ func seedUserAddresses(ctx context.Context, repo repository.Repository, userIDs 
 		log.Error().Err(err).Msg("failed to parse address data")
 		return
 	}
+	userList, err := repo.GetUsers(ctx, repository.GetUsersParams{
+		Limit:  1000,
+		Offset: 0,
+	})
 
+	userIDs := make([]uuid.UUID, len(userList))
+	for i, user := range userList {
+		userIDs[i] = user.ID
+	}
+
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get created users")
+		return
+	}
 	log.Info().Msg("creating addresses")
 	log.Info().Int("addresses count", len(addresses))
 	params := make([]repository.SeedAddressesParams, len(addresses))
