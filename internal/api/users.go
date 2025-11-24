@@ -12,7 +12,6 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/cachesrv"
 )
 
 // UpdateUserHandler godoc
@@ -268,13 +267,7 @@ func (sv *Server) SendVerifyEmailHandler(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /users/verify-email [get]
-// @Security BearerAuth
 func (sv *Server) VerifyEmailHandler(c *gin.Context) {
-	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, errors.New("authorization payload is not provided")))
-		return
-	}
 	var query VerifyEmailQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidEmailCode, err))
@@ -299,10 +292,6 @@ func (sv *Server) VerifyEmailHandler(c *gin.Context) {
 
 	user, err := sv.repo.GetUserByID(c, verifyEmail.UserID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
-		return
-	}
-	if err := sv.cachesrv.Set(c, cachesrv.USER_KEY_PREFIX+user.ID.String(), mapToUserResponse(user, authPayload.RoleCode), &cachesrv.DEFAULT_EXPIRATION); err != nil {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}

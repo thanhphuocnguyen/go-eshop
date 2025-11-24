@@ -441,7 +441,7 @@ type UserDetail struct {
 	VerifiedEmail     bool              `json:"verifiedEmail,omitempty"`
 	VerifiedPhone     bool              `json:"verifiedPhone,omitempty"`
 	PasswordChangedAt string            `json:"passwordChangedAt,omitempty"`
-	Addresses         []AddressResponse `json:"addresses"`
+	Addresses         []AddressResponse `json:"addresses,omitempty"`
 	CreatedAt         string            `json:"createdAt,omitempty"`
 	LastLoginAt       string            `json:"lastLoginAt,omitempty"`
 	UpdatedAt         string            `json:"updatedAt,omitempty"`

@@ -150,7 +150,9 @@ func (sv *Server) RegisterHandler(c *gin.Context) {
 		AvatarURL:     user.AvatarUrl,
 		AvatarID:      user.AvatarImageID,
 		LastName:      user.LastName,
-		Addresses:     []AddressResponse{address},
+	}
+	if !isStructEmpty(address) {
+		userResp.Addresses = []AddressResponse{address}
 	}
 
 	c.JSON(http.StatusOK, createDataResp(c, userResp, nil, nil))

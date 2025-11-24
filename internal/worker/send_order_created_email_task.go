@@ -51,6 +51,11 @@ func (p *RedisTaskProcessor) ProcessSendOrderCreatedEmail(ctx context.Context, t
 		return fmt.Errorf("could not get order details: %w", asynq.SkipRetry)
 	}
 	orderItems, err := p.repo.GetOrderItems(ctx, payment.OrderID)
+
+	if err != nil {
+		return fmt.Errorf("could not get order items: %w", asynq.SkipRetry)
+	}
+
 	items := make([]OrderCreatedItems, 0)
 
 	for _, item := range orderItems {

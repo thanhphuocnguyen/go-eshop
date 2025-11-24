@@ -58,7 +58,7 @@ func (processor *RedisTaskProcessor) ProcessSendVerifyEmail(ctx context.Context,
 		return fmt.Errorf("could not create verify email: %w", err)
 	}
 
-	verifyLink := fmt.Sprintf("http://%s:%s/verify-email?verify_code=%s", processor.cfg.Domain, processor.cfg.Port, verifyCode)
+	verifyLink := fmt.Sprintf("http://%s:%s/verify-email?verifyCode=%s", processor.cfg.Domain, processor.cfg.Port, verifyCode)
 	emailData := VerifyEmailData{
 		UserID:     user.ID,
 		Email:      user.Email,
@@ -77,9 +77,13 @@ func (processor *RedisTaskProcessor) ProcessSendVerifyEmail(ctx context.Context,
 		return fmt.Errorf("could not send email: %w", err)
 	}
 
-	log.Info().
+	log := log.Info().
 		Str("username", user.Username).
-		Str("email", user.Email).
-		Msg("sent verify email to user")
+		Str("email", user.Email)
+	if processor.cfg.Env == "development" {
+		log.Msgf("sent verify email to user at verify link: %s", verifyLink)
+	} else {
+		log.Msg("sent verify email to user")
+	}
 	return nil
 }
