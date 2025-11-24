@@ -9,7 +9,8 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/cachesrv"
+	cachesrv "github.com/thanhphuocnguyen/go-eshop/pkg/cache"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/pmgateway"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/upload"
 )
@@ -28,8 +29,8 @@ type Server struct {
 	repo            repository.Repository
 	tokenGenerator  auth.TokenGenerator
 	uploadService   upload.UploadService
-	paymentCtx      *pmgateway.PaymentContext
-	cachesrv        cachesrv.Cache
+	paymentSrv      *payment.PaymentService
+	cacheSrv        cachesrv.Cache
 	taskDistributor worker.TaskDistributor
 }
 
@@ -51,8 +52,8 @@ func NewAPI(
 		config:          cfg,
 		taskDistributor: taskDistributor,
 		uploadService:   uploadService,
-		cachesrv:        cachesrv,
-		paymentCtx:      paymentCtx,
+		cacheSrv:        cachesrv,
+		paymentSrv:      paymentCtx,
 	}
 	server.initializeRouter()
 	return server, nil

@@ -41,19 +41,37 @@ type pgRepo struct {
 
 var once sync.Once
 var repoInstance *pgRepo
+var mu sync.Mutex
 
 func GetPostgresInstance(ctx context.Context, cfg config.Config) (Repository, error) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	// If instance is nil, reset once to allow re-initialization
+	if repoInstance == nil {
+		once = sync.Once{}
+	}
+
 	var err error
 	once.Do(func() {
 		repoInstance, err = initializePostgres(ctx, cfg)
 	})
-	err = repoInstance.DbPool.Ping(ctx)
 
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize postgres: %w", err)
+	}
+
+	if repoInstance.DbPool == nil {
+		return nil, fmt.Errorf("database pool is not initialized")
+	}
+
+	err = repoInstance.DbPool.Ping(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to postgres: %w", err)
 	}
+
 	log.Info().Msg("Connected to postgres")
-	return repoInstance, err
+	return repoInstance, nil
 }
 
 func initializePostgres(ctx context.Context, cfg config.Config) (*pgRepo, error) {
@@ -88,10 +106,32 @@ func initializePostgres(ctx context.Context, cfg config.Config) (*pgRepo, error)
 }
 
 func (repoConn *pgRepo) Close() {
-	if repoConn.DbPool != nil {
-		repoConn.DbPool.Close()
+	mu.Lock()
+	defer mu.Unlock()
+
+	if repoConn != nil && repoConn.DbPool != nil {
+		// Create a context with timeout for graceful shutdown
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		// Close the pool in a goroutine to avoid blocking
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			repoConn.DbPool.Close()
+		}()
+
+		// Wait for close to complete or timeout
+		select {
+		case <-done:
+			log.Info().Msg("Database pool closed successfully")
+		case <-ctx.Done():
+			log.Warn().Msg("Database pool close timed out")
+		}
+
 		repoConn.DbPool = nil
 	}
+
 	repoInstance = nil
 }
 

@@ -13,7 +13,6 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/pmgateway"
 )
 
 // @Summary Create a new cart
@@ -113,21 +112,26 @@ func (sv *Server) GetCartHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-
-	cartDetail := CartDetailResponse{
-		ID:         cart.ID,
-		TotalPrice: 0,
-		CartItems:  []CartItemResponse{},
-		UpdatedAt:  &cart.UpdatedAt,
-		CreatedAt:  cart.CreatedAt,
-	}
 	cartItemRows, err := sv.repo.GetCartItems(c, cart.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
+	cartDetail := CartDetailResponse{
+		ID:             cart.ID,
+		TotalPrice:     0,
+		DiscountAmount: 0,
+		CartItems:      make([]CartItemResponse, len(cartItemRows)),
+		UpdatedAt:      &cart.UpdatedAt,
+		CreatedAt:      cart.CreatedAt,
+	}
 
-	cartDetail.CartItems, cartDetail.TotalPrice = mapToCartItemsResp(cartItemRows)
+	for i, row := range cartItemRows {
+		item := mapToCartItemsResp(row)
+		cartDetail.CartItems[i] = item
+		cartDetail.TotalPrice += item.Price * float64(item.Quantity)
+		cartDetail.DiscountAmount += item.DiscountAmount
+	}
 
 	c.JSON(http.StatusOK, createDataResp(c, cartDetail, nil, nil))
 }
@@ -363,52 +367,25 @@ func (sv *Server) CheckoutHandler(c *gin.Context) {
 		return
 	}
 	var shippingAddr repository.ShippingAddressSnapshot
-	if req.AddressID == nil {
-		// create new address
-		if req.Address == nil {
-			c.JSON(http.StatusBadRequest, createErr(InternalServerErrorCode, errors.New("must provide address or address ID")))
+
+	address, err := sv.repo.GetAddress(c, repository.GetAddressParams{
+		ID:     uuid.MustParse(req.AddressId),
+		UserID: user.ID,
+	})
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, createErr(NotFoundCode, errors.New("address not found")))
 			return
 		}
-		address, err := sv.repo.CreateAddress(c, repository.CreateAddressParams{
-			UserID:      user.ID,
-			PhoneNumber: req.Address.Phone,
-			Street:      req.Address.Street,
-			Ward:        req.Address.Ward,
-			District:    req.Address.District,
-			City:        req.Address.City,
-			IsDefault:   false,
-		})
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
-			return
-		}
-		shippingAddr = repository.ShippingAddressSnapshot{
-			Street:   address.Street,
-			Ward:     *address.Ward,
-			District: address.District,
-			City:     address.City,
-			Phone:    address.PhoneNumber,
-		}
-	} else {
-		address, err := sv.repo.GetAddress(c, repository.GetAddressParams{
-			ID:     uuid.MustParse(*req.AddressID),
-			UserID: user.ID,
-		})
-		if err != nil {
-			if errors.Is(err, repository.ErrRecordNotFound) {
-				c.JSON(http.StatusNotFound, createErr(NotFoundCode, errors.New("address not found")))
-				return
-			}
-			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
-			return
-		}
-		shippingAddr = repository.ShippingAddressSnapshot{
-			Street:   address.Street,
-			Ward:     *address.Ward,
-			District: address.District,
-			City:     address.City,
-			Phone:    address.PhoneNumber,
-		}
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		return
+	}
+	shippingAddr = repository.ShippingAddressSnapshot{
+		Street:   address.Street,
+		Ward:     *address.Ward,
+		District: address.District,
+		City:     address.City,
+		Phone:    address.PhoneNumber,
 	}
 	if cart.UserID.Valid {
 		cartUserId, err := uuid.FromBytes(cart.UserID.Bytes[:])
@@ -481,25 +458,6 @@ func (sv *Server) CheckoutHandler(c *gin.Context) {
 		},
 		CreateOrderItemParams: createOrderItemParams,
 	}
-
-	if req.FirstName != nil || req.LastName != nil {
-		fullName := ""
-		if req.FirstName != nil {
-			fullName = *req.FirstName
-		}
-		if req.LastName != nil {
-			if fullName != "" {
-				fullName += " " + *req.LastName
-			} else {
-				fullName = *req.LastName
-			}
-		}
-		params.CustomerInfo.FullName = fullName
-	}
-
-	if req.Email != nil {
-		params.CustomerInfo.Email = *req.Email
-	}
 	var discountPrice float64
 	var discountID *uuid.UUID
 
@@ -530,18 +488,13 @@ func (sv *Server) CheckoutHandler(c *gin.Context) {
 
 	params.CreatePaymentFn = func(orderID uuid.UUID, method string) (paymentIntentID string, clientSecretID *string, err error) {
 		switch method {
-		case "Stripe":
-			stripeInstance, err := pmgateway.NewStripePayment(sv.config.StripeSecretKey)
-			if err != nil {
-				return "", utils.StringPtr(""), err
-			}
-			sv.paymentCtx.SetStrategy(stripeInstance)
+
 		default:
 			return "", utils.StringPtr(""), fmt.Errorf("unsupported payment method: %s", method)
 		}
 		receiptEmail := user.Email
 		// create payment intent
-		checkoutResult, err := sv.paymentCtx.CreatePaymentIntent(totalPrice, receiptEmail)
+		checkoutResult, err := sv.paymentSrv.CreatePaymentIntent(totalPrice, receiptEmail)
 		if err != nil {
 			return "", utils.StringPtr(""), err
 		}
@@ -609,39 +562,34 @@ func (sv *Server) ClearCart(c *gin.Context) {
 }
 
 // ------------------------------ Mappers ------------------------------
-func mapToCartItemsResp(rows []repository.GetCartItemsRow) ([]CartItemResponse, float64) {
-	cartItemsResp := make([]CartItemResponse, len(rows))
+func mapToCartItemsResp(row repository.GetCartItemsRow) CartItemResponse {
 
-	var totalPrice float64
-	for i, row := range rows {
-		// if it's the first item or the previous item is different
-		var attr []AttributeValue
-		err := json.Unmarshal(row.Attributes, &attr)
-		if err != nil {
-			log.Error().Err(err).Msg("Unmarshal cart item attributes")
-		}
-		price, _ := row.VariantPrice.Float64Value()
-		qty := row.CartItem.Quantity
-		amount := price.Float64 * float64(qty)
-		cartItemsResp[i] = CartItemResponse{
-			ID:         row.CartItem.ID.String(),
-			ProductID:  row.ProductID.String(),
-			VariantID:  row.CartItem.VariantID.String(),
-			Name:       row.ProductName,
-			Quantity:   row.CartItem.Quantity,
-			Price:      price.Float64,
-			StockQty:   row.VariantStock,
-			Sku:        &row.VariantSku,
-			ImageURL:   row.VariantImageUrl,
-			Attributes: attr,
-		}
-		totalPrice += amount
-		discountAmount := 0.0
-		if row.ProductDiscountPercentage != nil {
-			discountAmount = amount * float64(*row.ProductDiscountPercentage) / 100
-			cartItemsResp[i].DiscountAmount = discountAmount
-		}
+	// if it's the first item or the previous item is different
+	var attr []AttributeValue
+	err := json.Unmarshal(row.Attributes, &attr)
+	if err != nil {
+		log.Error().Err(err).Msg("Unmarshal cart item attributes")
+	}
+	price, _ := row.VariantPrice.Float64Value()
+	qty := row.CartItem.Quantity
+	amount := price.Float64 * float64(qty)
+	cartItemsResp := CartItemResponse{
+		ID:         row.CartItem.ID.String(),
+		ProductID:  row.ProductID.String(),
+		VariantID:  row.CartItem.VariantID.String(),
+		Name:       row.ProductName,
+		Quantity:   row.CartItem.Quantity,
+		Price:      price.Float64,
+		StockQty:   row.VariantStock,
+		Sku:        &row.VariantSku,
+		ImageURL:   row.VariantImageUrl,
+		Attributes: attr,
+	}
+	discountAmount := 0.0
+	if row.ProductDiscountPercentage != nil {
+		discountAmount = amount * float64(*row.ProductDiscountPercentage) / 100
+		cartItemsResp.DiscountAmount = discountAmount
 	}
 
-	return cartItemsResp, totalPrice
+	return cartItemsResp
 }

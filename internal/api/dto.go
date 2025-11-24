@@ -84,23 +84,11 @@ type AddCartItemReq struct {
 	Quantity  int16  `json:"quantity" binding:"required,gt=0"`
 }
 
-type CheckoutAddress struct {
-	Phone    string  `json:"phone"`
-	Street   string  `json:"street"`
-	Ward     *string `json:"ward,omitempty"`
-	District string  `json:"district"`
-	City     string  `json:"city"`
-}
-
 type CheckoutRequest struct {
-	PaymentMethodId string           `json:"paymentMethod" binding:"required,oneof=cod stripe"`
-	PaymentGateway  *string          `json:"paymentGateway" binding:"omitempty,oneof=stripe"`
-	AddressID       *string          `json:"addressId" binding:"omitempty,uuid"`
-	Email           *string          `json:"email" binding:"omitempty,email"`
-	FirstName       *string          `json:"firstName,omitempty" binding:"omitempty,min=3,max=32"`
-	LastName        *string          `json:"lastName,omitempty" binding:"omitempty,min=3,max=32"`
-	Address         *CheckoutAddress `json:"address" binding:"omitempty"`
-	DiscountCode    *string          `json:"discountCode" binding:"omitempty,min=5,max=32,alphanum"`
+	PaymentMethodId string  `json:"paymentMethod" binding:"required,oneof=cod stripe"`
+	AddressId       string  `json:"addressId" binding:"required,uuid"`
+	PaymentGateway  *string `json:"paymentGateway" binding:"omitempty,oneof=stripe"`
+	DiscountCode    *string `json:"discountCode" binding:"omitempty,min=5,max=32,alphanum"`
 }
 
 type AssignmentRequest struct {
@@ -463,11 +451,12 @@ type CartItemResponse struct {
 }
 
 type CartDetailResponse struct {
-	ID         uuid.UUID          `json:"id"`
-	TotalPrice float64            `json:"totalPrice"`
-	CartItems  []CartItemResponse `json:"cartItems"`
-	UpdatedAt  *time.Time         `json:"updatedAt"`
-	CreatedAt  time.Time          `json:"createdAt"`
+	ID             uuid.UUID          `json:"id"`
+	TotalPrice     float64            `json:"totalPrice"`
+	DiscountAmount float64            `json:"discountAmount"`
+	UpdatedAt      *time.Time         `json:"updatedAt"`
+	CreatedAt      time.Time          `json:"createdAt"`
+	CartItems      []CartItemResponse `json:"cartItems"`
 }
 
 type DiscountListItemResponseModel struct {

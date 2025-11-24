@@ -20,6 +20,7 @@ type Config struct {
 	CloudinaryFolder     string        `mapstructure:"CLOUDINARY_FOLDER"`
 	StripeSecretKey      string        `mapstructure:"STRIPE_SECRET_KEY"`
 	StripePublishableKey string        `mapstructure:"STRIPE_PUBLISHABLE_KEY"`
+	StripeWebhookSecret  string        `mapstructure:"STRIPE_WEBHOOK_SECRET"`
 	SmtpUsername         string        `mapstructure:"SMTP_USERNAME"`
 	SmtpPassword         string        `mapstructure:"SMTP_PASSWORD"`
 	SymmetricKey         string        `mapstructure:"SYMMETRIC_KEY"`

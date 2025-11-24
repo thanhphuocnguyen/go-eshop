@@ -47,6 +47,8 @@ type Product struct {
 	Sku                string             `json:"base_sku"`
 	Brand              string             `json:"brand,omitempty"`
 	Attributes         map[string]string  `json:"attributes,omitempty"`
+	Categories         []string           `json:"categories,omitempty"`
+	Collections        []string           `json:"collections,omitempty"`
 }
 
 type Categories struct {
@@ -127,22 +129,24 @@ type ShippingZone struct {
 }
 
 func ExecuteSeed(ctx context.Context) int {
+	cfg, err := config.LoadConfig(".")
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to load config")
+		return 1
+	}
+	pg, err := repository.GetPostgresInstance(ctx, cfg)
+
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get postgres instance")
+		return 1
+	}
+
 	var rootCmd = &cobra.Command{
 		Use:   "seed",
 		Short: "Seed data to database",
 		Long:  "Seed data to database from seed files",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.LoadConfig(".")
-			if err != nil {
-				log.Fatal().Err(err).Msg("failed to load config")
-				return err
-			}
-			pg, err := repository.GetPostgresInstance(ctx, cfg)
-			if err != nil {
-				log.Error().Err(err).Msg("failed to get postgres instance")
-				return err
-			}
-			defer pg.Close()
+
 			if len(args) == 0 {
 				log.Info().Msg("Starting comprehensive database seeding with error handling")
 
@@ -253,10 +257,17 @@ func ExecuteSeed(ctx context.Context) int {
 
 func seedProducts(ctx context.Context, repo repository.Repository) error {
 	// remove all products first
-	_, err := repo.QueryRaw(ctx, "TRUNCATE TABLE products CASCADE;")
+	cnt, err := repo.CountProducts(ctx, repository.CountProductsParams{})
 	if err != nil {
-		log.Error().Err(err).Msg("failed to truncate products table")
+		log.Error().Err(err).Msg("failed to count products")
 		return err
+	}
+	if cnt > 0 {
+		_, err := repo.QueryRaw(ctx, "TRUNCATE TABLE products CASCADE;")
+		if err != nil {
+			log.Error().Err(err).Msg("failed to truncate products table")
+			return err
+		}
 	}
 	log.Info().Msg("seeding products")
 	productData, err := os.ReadFile("seeds/products.json")
@@ -272,6 +283,8 @@ func seedProducts(ctx context.Context, repo repository.Repository) error {
 		log.Error().Err(err).Msg("failed to parse product data")
 		return err
 	}
+
+	// Get all reference data
 	brands, err := repo.GetBrands(ctx, repository.GetBrandsParams{
 		Limit:  1000,
 		Offset: 0,
@@ -280,30 +293,75 @@ func seedProducts(ctx context.Context, repo repository.Repository) error {
 		log.Error().Err(err).Msg("failed to get brands")
 	}
 
+	categories, err := repo.GetCategories(ctx, repository.GetCategoriesParams{
+		Limit:  1000,
+		Offset: 0,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get categories")
+	}
+
+	collections, err := repo.GetCollections(ctx, repository.GetCollectionsParams{
+		Limit:  1000,
+		Offset: 0,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get collections")
+	}
+
 	log.Info().Int("product count", len(products)).Msg("creating products")
 	for _, product := range products {
 
 		params := repository.CreateProductParams{
-			Name:             product.Name,
-			Description:      product.Description,
-			ShortDescription: product.ShortDescription,
-			BasePrice:        utils.GetPgNumericFromFloat(product.Price),
-			BaseSku:          product.Sku,
-
+			Name:               product.Name,
+			Description:        product.Description,
+			ShortDescription:   product.ShortDescription,
+			BasePrice:          utils.GetPgNumericFromFloat(product.Price),
+			BaseSku:            product.Sku,
 			Slug:               utils.Slugify(product.Name),
 			DiscountPercentage: product.DiscountPercentage,
 		}
-		brand := slices.IndexFunc(brands, func(b repository.Brand) bool {
-			return b.Name == product.Brand
-		})
-		if brand != -1 {
-			params.BrandID = utils.GetPgTypeUUID(brands[brand].ID)
+
+		// Find and set brand
+		if product.Brand != "" {
+			brand := slices.IndexFunc(brands, func(b repository.Brand) bool {
+				return strings.EqualFold(b.Name, product.Brand)
+			})
+			if brand != -1 {
+				params.BrandID = utils.GetPgTypeUUID(brands[brand].ID)
+			} else {
+				log.Warn().Str("brand", product.Brand).Str("product", product.Name).Msg("brand not found")
+			}
 		}
 
 		createdProduct, err := repo.CreateProduct(ctx, params)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to create product")
 			continue
+		}
+
+		// Create category relationships
+		if len(product.Categories) > 0 {
+			err := createProductCategoryRelationships(ctx, repo, createdProduct.ID, product.Categories, categories)
+			if err != nil {
+				log.Error().Err(err).Str("product", product.Name).Msg("failed to create category relationships")
+			}
+		}
+
+		// Create collection relationships
+		if len(product.Collections) > 0 {
+			err := createProductCollectionRelationships(ctx, repo, createdProduct.ID, product.Collections, collections)
+			if err != nil {
+				log.Error().Err(err).Str("product", product.Name).Msg("failed to create collection relationships")
+			}
+		}
+
+		// Create attribute relationships
+		if len(product.Attributes) > 0 {
+			err := createProductAttributeRelationships(ctx, repo, createdProduct.ID, product.Attributes)
+			if err != nil {
+				log.Error().Err(err).Str("product", product.Name).Msg("failed to create attribute relationships")
+			}
 		}
 
 		// Create variants for this product
@@ -320,11 +378,6 @@ func seedProducts(ctx context.Context, repo repository.Repository) error {
 }
 
 func seedProductVariants(ctx context.Context, repo repository.Repository, productID uuid.UUID, variants []VariantSeedModel) error {
-	_, err := repo.QueryRaw(ctx, "DELETE FROM product_variants WHERE product_id = $1;", productID)
-	if err != nil {
-		log.Error().Err(err).Str("product_id", productID.String()).Msg("failed to delete existing product variants")
-		return err
-	}
 	log.Info().Int("variant count", len(variants)).Str("product_id", productID.String()).Msg("creating product variants")
 
 	for _, variant := range variants {
@@ -366,11 +419,6 @@ func seedProductVariants(ctx context.Context, repo repository.Repository, produc
 }
 
 func createVariantAttributes(ctx context.Context, repo repository.Repository, variantID uuid.UUID, attributes map[string]string) error {
-	_, err := repo.QueryRaw(ctx, "DELETE FROM product_variant_attributes WHERE variant_id = $1;", variantID)
-	if err != nil {
-		log.Error().Err(err).Str("variant_id", variantID.String()).Msg("failed to delete existing variant attributes")
-		return err
-	}
 	log.Debug().Str("variant_id", variantID.String()).Interface("attributes", attributes).Msg("creating variant attributes")
 
 	var attributeValueParams []repository.CreateBulkProductVariantAttributeParams
@@ -838,11 +886,25 @@ func seedShippingZones(ctx context.Context, repo repository.Repository) error {
 
 func seedUserAddresses(ctx context.Context, repo repository.Repository) error {
 	// First, get users before truncating to avoid lock conflicts
+	cnt, err := repo.CountAddresses(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to count addresses")
+		return err
+	}
+	if cnt > 0 {
+		// Now truncate user_addresses table
+		_, err := repo.QueryRaw(ctx, "TRUNCATE TABLE user_addresses;")
+		if err != nil {
+			log.Error().Err(err).Msg("failed to truncate user_addresses table")
+			return err
+		}
+	}
 	log.Info().Msg("fetching users for address seeding")
 	userList, err := repo.GetUsers(ctx, repository.GetUsersParams{
-		Limit:  100,
+		Limit:  1000,
 		Offset: 0,
 	})
+
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get users for address seeding")
 		return err
@@ -856,13 +918,6 @@ func seedUserAddresses(ctx context.Context, repo repository.Repository) error {
 	userIDs := make([]uuid.UUID, len(userList))
 	for i, user := range userList {
 		userIDs[i] = user.ID
-	}
-
-	// Now truncate addresses table
-	_, err = repo.QueryRaw(ctx, "TRUNCATE TABLE addresses CASCADE;")
-	if err != nil {
-		log.Error().Err(err).Msg("failed to truncate addresses table")
-		return err
 	}
 
 	log.Info().Msg("parsing addresses json")
@@ -900,6 +955,97 @@ func seedUserAddresses(ctx context.Context, repo repository.Repository) error {
 		return err
 	}
 	log.Info().Msg("addresses created")
+	return nil
+}
+
+// Helper functions to create product relationships
+
+// createProductCategoryRelationships creates relationships between a product and its categories
+func createProductCategoryRelationships(ctx context.Context, repo repository.Repository, productID uuid.UUID, categoryNames []string, categories []repository.Category) error {
+	var categoryProductParams []repository.AddProductsToCategoryParams
+
+	for _, categoryName := range categoryNames {
+		category := slices.IndexFunc(categories, func(c repository.Category) bool {
+			return strings.EqualFold(c.Name, categoryName)
+		})
+
+		if category != -1 {
+			categoryProductParams = append(categoryProductParams, repository.AddProductsToCategoryParams{
+				CategoryID: categories[category].ID,
+				ProductID:  productID,
+			})
+		} else {
+			log.Warn().Str("category", categoryName).Str("product_id", productID.String()).Msg("category not found for product")
+		}
+	}
+
+	if len(categoryProductParams) > 0 {
+		_, err := repo.AddProductsToCategory(ctx, categoryProductParams)
+		if err != nil {
+			return fmt.Errorf("failed to add product to categories: %w", err)
+		}
+		log.Debug().Str("product_id", productID.String()).Int("categories", len(categoryProductParams)).Msg("product categories added")
+	}
+
+	return nil
+}
+
+// createProductCollectionRelationships creates relationships between a product and its collections
+func createProductCollectionRelationships(ctx context.Context, repo repository.Repository, productID uuid.UUID, collectionNames []string, collections []repository.Collection) error {
+	var collectionProductParams []repository.AddProductsToCollectionParams
+
+	for _, collectionName := range collectionNames {
+		collection := slices.IndexFunc(collections, func(c repository.Collection) bool {
+			return strings.EqualFold(c.Name, collectionName)
+		})
+
+		if collection != -1 {
+			collectionProductParams = append(collectionProductParams, repository.AddProductsToCollectionParams{
+				CollectionID: collections[collection].ID,
+				ProductID:    productID,
+			})
+		} else {
+			log.Warn().Str("collection", collectionName).Str("product_id", productID.String()).Msg("collection not found for product")
+		}
+	}
+
+	if len(collectionProductParams) > 0 {
+		_, err := repo.AddProductsToCollection(ctx, collectionProductParams)
+		if err != nil {
+			return fmt.Errorf("failed to add product to collections: %w", err)
+		}
+		log.Debug().Str("product_id", productID.String()).Int("collections", len(collectionProductParams)).Msg("product collections added")
+	}
+
+	return nil
+}
+
+// createProductAttributeRelationships creates relationships between a product and its attributes
+func createProductAttributeRelationships(ctx context.Context, repo repository.Repository, productID uuid.UUID, attributes map[string]string) error {
+	var productAttributeParams []repository.CreateBulkProductAttributesParams
+
+	for attributeName := range attributes {
+		// Get the attribute by name
+		attr, err := repo.GetAttributeByName(ctx, attributeName)
+		if err != nil {
+			log.Warn().Err(err).Str("attribute", attributeName).Str("product_id", productID.String()).Msg("attribute not found for product")
+			continue
+		}
+
+		productAttributeParams = append(productAttributeParams, repository.CreateBulkProductAttributesParams{
+			ProductID:   productID,
+			AttributeID: attr.ID,
+		})
+	}
+
+	if len(productAttributeParams) > 0 {
+		_, err := repo.CreateBulkProductAttributes(ctx, productAttributeParams)
+		if err != nil {
+			return fmt.Errorf("failed to add product attributes: %w", err)
+		}
+		log.Debug().Str("product_id", productID.String()).Int("attributes", len(productAttributeParams)).Msg("product attributes added")
+	}
+
 	return nil
 }
 

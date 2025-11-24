@@ -10,5 +10,4 @@ import (
 func main() {
 	ret := cmd.ExecuteSeed(context.Background())
 	os.Exit(ret)
-
 }

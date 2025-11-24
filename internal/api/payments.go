@@ -104,8 +104,8 @@ func (sv *Server) CreatePaymentIntentHandler(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 			return
 		}
-		sv.paymentCtx.SetStrategy(stripeInstance)
-		createPaymentIntentResult, err := sv.paymentCtx.CreatePaymentIntent(total.Float64, user.Email)
+		sv.paymentSrv.SetStrategy(stripeInstance)
+		createPaymentIntentResult, err := sv.paymentSrv.CreatePaymentIntent(total.Float64, user.Email)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 			return
@@ -166,9 +166,9 @@ func (sv *Server) getPaymentHandler(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 			return
 		}
-		sv.paymentCtx.SetStrategy(stripeInstance)
+		sv.paymentSrv.SetStrategy(stripeInstance)
 
-		details, err = sv.paymentCtx.GetPaymentObject(*payment.PaymentIntentID)
+		details, err = sv.paymentSrv.GetPaymentObject(*payment.PaymentIntentID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 			return

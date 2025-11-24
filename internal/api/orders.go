@@ -110,7 +110,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 
 	var resp *OrderDetailResponse
 
-	if err := sv.cachesrv.Get(c, "order_detail:"+params.ID, &resp); err == nil {
+	if err := sv.cacheSrv.Get(c, "order_detail:"+params.ID, &resp); err == nil {
 		if resp != nil {
 			c.JSON(http.StatusOK, createDataResp(c, resp, nil, nil))
 			return
@@ -170,8 +170,8 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 			return
 		}
-		sv.paymentCtx.SetStrategy(stripeInstance)
-		paymentDetail, err := sv.paymentCtx.GetPaymentObject(*paymentInfo.PaymentIntentID)
+		sv.paymentSrv.SetStrategy(stripeInstance)
+		paymentDetail, err := sv.paymentSrv.GetPaymentObject(*paymentInfo.PaymentIntentID)
 		if err != nil {
 			log.Err(err).Msg("failed to get payment intent")
 			apiErr = &ApiError{
@@ -214,7 +214,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 
 	resp.Products = orderItems
 
-	if err := sv.cachesrv.Set(c, "order_detail:"+params.ID, resp, utils.TimeDurationPtr(5*time.Minute)); err != nil {
+	if err := sv.cacheSrv.Set(c, "order_detail:"+params.ID, resp, utils.TimeDurationPtr(5*time.Minute)); err != nil {
 		log.Err(err).Msg("failed to cache order detail")
 		apiErr = &ApiError{
 			Code:    InternalServerErrorCode,
@@ -280,7 +280,7 @@ func (sv *Server) confirmOrderPayment(c *gin.Context) {
 		return
 	}
 	var apiErr *ApiError
-	if err := sv.cachesrv.Delete(c, "order_detail:"+params.ID); err != nil {
+	if err := sv.cacheSrv.Delete(c, "order_detail:"+params.ID); err != nil {
 		log.Err(err).Msg("failed to delete order detail cache")
 		apiErr = &ApiError{
 			Code:    InternalServerErrorCode,
@@ -352,8 +352,8 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 					c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 					return err
 				}
-				sv.paymentCtx.SetStrategy(stripeInstance)
-				_, err = sv.paymentCtx.CancelPayment(paymentID, req.Reason)
+				sv.paymentSrv.SetStrategy(stripeInstance)
+				_, err = sv.paymentSrv.CancelPayment(paymentID, req.Reason)
 				return err
 			default:
 				return nil
@@ -366,7 +366,7 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(repository.ErrDeadlockDetected.InternalQuery, err))
 		return
 	}
-	sv.cachesrv.Delete(c, "order_detail:"+params.ID)
+	sv.cacheSrv.Delete(c, "order_detail:"+params.ID)
 	c.JSON(http.StatusOK, createDataResp(c, ordId, nil, nil))
 }
 
@@ -437,12 +437,12 @@ func (sv *Server) changeOrderStatus(c *gin.Context) {
 		return
 	}
 
-	if err := sv.cachesrv.Delete(c, "order_detail:"+params.ID); err != nil {
+	if err := sv.cacheSrv.Delete(c, "order_detail:"+params.ID); err != nil {
 		log.Err(err).Msg("failed to delete order detail cache")
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-	sv.cachesrv.Delete(c, "order_detail:"+params.ID)
+	sv.cacheSrv.Delete(c, "order_detail:"+params.ID)
 
 	c.JSON(http.StatusOK, createDataResp(c, rs, nil, nil))
 }
@@ -508,9 +508,9 @@ func (sv *Server) refundOrder(c *gin.Context) {
 				if err != nil {
 					return "", err
 				}
-				sv.paymentCtx.SetStrategy(stripeInstance)
+				sv.paymentSrv.SetStrategy(stripeInstance)
 
-				return sv.paymentCtx.RefundPayment(paymentID, amountRefund, reason)
+				return sv.paymentSrv.RefundPayment(paymentID, amountRefund, reason)
 			default:
 				return "", nil
 			}
@@ -521,7 +521,7 @@ func (sv *Server) refundOrder(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-	sv.cachesrv.Delete(c, "order_detail:"+params.ID)
+	sv.cacheSrv.Delete(c, "order_detail:"+params.ID)
 
 	c.JSON(http.StatusOK, createDataResp(c, order, nil, nil))
 }

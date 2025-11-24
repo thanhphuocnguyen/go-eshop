@@ -21,9 +21,10 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/api"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/cachesrv"
+	cachesrv "github.com/thanhphuocnguyen/go-eshop/pkg/cache"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/gateways"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/mailer"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/pmgateway"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/upload"
 )
 
@@ -111,10 +112,27 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 			taskDistributor := worker.NewRedisTaskDistributor(redisCfg)
 			uploadService := upload.NewCloudinaryUploadService(cfg)
 			mailer := mailer.NewEmailSender(cfg.SmtpUsername, cfg.SmtpPassword, cfg.Env)
-			paymentCtx := &pmgateway.PaymentContext{}
+			service := payment.NewPaymentService()
+
+			// Register gateways
+			service.RegisterGateway("stripe", gateways.NewStripeGateway)
+			service.RegisterGateway("paypal", gateways.NewPaypalGateway)
+			stripeConfig := payment.GatewayConfig{
+				Name:          "stripe",
+				APIKey:        cfg.StripePublishableKey,
+				SecretKey:     cfg.StripeSecretKey,
+				WebhookSecret: cfg.StripeWebhookSecret,
+				Environment:   "sandbox",
+			}
+
+			if err := service.AddGateway(stripeConfig); err != nil {
+				log.Fatal().Err(err).Msg("failed to add stripe gateway")
+			}
+			service.SetPrimaryGateway("stripe")
+			service.SetFallbackGateways("paypal")
 			taskProcessor := worker.NewRedisTaskProcessor(redisCfg, pgRepo, mailer, cfg)
 			cacheService := cachesrv.NewRedisCache(cfg)
-			api, err := api.NewAPI(cfg, pgRepo, cacheService, taskDistributor, uploadService, paymentCtx)
+			api, err := api.NewAPI(cfg, pgRepo, cacheService, taskDistributor, uploadService, service)
 			if err != nil {
 				return err
 			}

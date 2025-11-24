@@ -126,7 +126,7 @@ func (sv *Server) CreateCollectionHandler(c *gin.Context) {
 			err))
 		return
 	}
-	sv.cachesrv.Delete(c, "collections-*")
+	sv.cacheSrv.Delete(c, "collections-*")
 
 	c.JSON(http.StatusCreated, createDataResp(c, col, nil, nil))
 }
