@@ -157,11 +157,6 @@ func (sv *Server) GetCartDiscountsHandler(c *gin.Context) {
 		return
 	}
 
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
-		return
-	}
-
 	c.JSON(http.StatusOK, createDataResp(c, struct{}{}, nil, nil))
 
 }
@@ -437,7 +432,6 @@ func (sv *Server) CheckoutHandler(c *gin.Context) {
 	// create order
 	createOrderItemParams := make([]repository.CreateBulkOrderItemsParams, 0)
 	var totalPrice float64
-
 	for _, item := range itemRows {
 		variantIdx := -1
 		for j, param := range createOrderItemParams {
@@ -464,6 +458,7 @@ func (sv *Server) CheckoutHandler(c *gin.Context) {
 
 			createOrderItemParams = append(createOrderItemParams, itemParam)
 			totalPrice += price.Float64 * float64(item.CartItem.Quantity)
+
 		} else {
 			createOrderItemParams[variantIdx].AttributesSnapshot = append(
 				createOrderItemParams[variantIdx].AttributesSnapshot,
@@ -626,7 +621,8 @@ func mapToCartItemsResp(rows []repository.GetCartItemsRow) ([]CartItemResponse, 
 			log.Error().Err(err).Msg("Unmarshal cart item attributes")
 		}
 		price, _ := row.VariantPrice.Float64Value()
-		totalPrice += price.Float64 * float64(row.CartItem.Quantity)
+		qty := row.CartItem.Quantity
+		amount := price.Float64 * float64(qty)
 		cartItemsResp[i] = CartItemResponse{
 			ID:         row.CartItem.ID.String(),
 			ProductID:  row.ProductID.String(),
@@ -638,6 +634,12 @@ func mapToCartItemsResp(rows []repository.GetCartItemsRow) ([]CartItemResponse, 
 			Sku:        &row.VariantSku,
 			ImageURL:   row.VariantImageUrl,
 			Attributes: attr,
+		}
+		totalPrice += amount
+		discountAmount := 0.0
+		if row.ProductDiscountPercentage != nil {
+			discountAmount = amount * float64(*row.ProductDiscountPercentage) / 100
+			cartItemsResp[i].DiscountAmount = discountAmount
 		}
 	}
 

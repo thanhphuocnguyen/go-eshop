@@ -485,6 +485,7 @@ func (r iteratorForSeedCollections) Values() ([]interface{}, error) {
 		r.rows[0].Name,
 		r.rows[0].Description,
 		r.rows[0].ImageUrl,
+		r.rows[0].Slug,
 	}, nil
 }
 
@@ -493,7 +494,7 @@ func (r iteratorForSeedCollections) Err() error {
 }
 
 func (q *Queries) SeedCollections(ctx context.Context, arg []SeedCollectionsParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"collections"}, []string{"name", "description", "image_url"}, &iteratorForSeedCollections{rows: arg})
+	return q.db.CopyFrom(ctx, []string{"collections"}, []string{"name", "description", "image_url", "slug"}, &iteratorForSeedCollections{rows: arg})
 }
 
 // iteratorForSeedDiscounts implements pgx.CopyFromSource.

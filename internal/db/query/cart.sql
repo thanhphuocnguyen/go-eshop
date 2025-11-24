@@ -36,7 +36,7 @@ SELECT * FROM cart_items WHERE variant_id = $1 AND cart_id = $2;
 SELECT
     sqlc.embed(ci),
     pv.price AS variant_price, pv.sku AS variant_sku, pv.stock AS variant_stock, pv.image_url AS variant_image_url,
-    p.name AS product_name, p.id AS product_id,
+    p.name AS product_name, p.id AS product_id, p.discount_percentage AS product_discount_percentage,
     JSONB_AGG(
     DISTINCT JSONB_BUILD_OBJECT(
             'id', av.id,

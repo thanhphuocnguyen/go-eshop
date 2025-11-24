@@ -32,15 +32,15 @@ func (sv *Server) AddProductHandler(c *gin.Context) {
 	}
 
 	createParams := repository.CreateProductParams{
-		Name:        req.Name,
-		Description: req.Description,
+		Name:               req.Name,
+		Description:        req.Description,
+		DiscountPercentage: req.DiscountPercentage,
 	}
 
 	createParams.BasePrice = utils.GetPgNumericFromFloat(req.BasePrice)
 	createParams.ShortDescription = req.ShortDescription
 	createParams.Slug = req.Slug
 	createParams.BaseSku = req.BaseSku
-
 	createParams.BrandID = utils.GetPgTypeUUIDFromString(req.BrandID)
 
 	product, err := sv.repo.CreateProduct(c, createParams)
@@ -298,7 +298,8 @@ func (sv *Server) UpdateProductHandler(c *gin.Context) {
 	}
 
 	updateParams := repository.UpdateProductParams{
-		ID: productID,
+		ID:                 productID,
+		DiscountPercentage: req.DiscountPercentage,
 	}
 	if req.Name != nil {
 		updateParams.Name = req.Name

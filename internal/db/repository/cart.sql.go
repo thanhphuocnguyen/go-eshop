@@ -173,7 +173,7 @@ const getCartItems = `-- name: GetCartItems :many
 SELECT
     ci.id, ci.cart_id, ci.variant_id, ci.quantity, ci.added_at,
     pv.price AS variant_price, pv.sku AS variant_sku, pv.stock AS variant_stock, pv.image_url AS variant_image_url,
-    p.name AS product_name, p.id AS product_id,
+    p.name AS product_name, p.id AS product_id, p.discount_percentage AS product_discount_percentage,
     JSONB_AGG(
     DISTINCT JSONB_BUILD_OBJECT(
             'id', av.id,
@@ -193,14 +193,15 @@ ORDER BY ci.added_at, ci.id, pv.id DESC
 `
 
 type GetCartItemsRow struct {
-	CartItem        CartItem       `json:"cartItem"`
-	VariantPrice    pgtype.Numeric `json:"variantPrice"`
-	VariantSku      string         `json:"variantSku"`
-	VariantStock    int32          `json:"variantStock"`
-	VariantImageUrl *string        `json:"variantImageUrl"`
-	ProductName     string         `json:"productName"`
-	ProductID       uuid.UUID      `json:"productId"`
-	Attributes      []byte         `json:"attributes"`
+	CartItem                  CartItem       `json:"cartItem"`
+	VariantPrice              pgtype.Numeric `json:"variantPrice"`
+	VariantSku                string         `json:"variantSku"`
+	VariantStock              int32          `json:"variantStock"`
+	VariantImageUrl           *string        `json:"variantImageUrl"`
+	ProductName               string         `json:"productName"`
+	ProductID                 uuid.UUID      `json:"productId"`
+	ProductDiscountPercentage *int16         `json:"productDiscountPercentage"`
+	Attributes                []byte         `json:"attributes"`
 }
 
 func (q *Queries) GetCartItems(ctx context.Context, cartID uuid.UUID) ([]GetCartItemsRow, error) {
@@ -224,6 +225,7 @@ func (q *Queries) GetCartItems(ctx context.Context, cartID uuid.UUID) ([]GetCart
 			&i.VariantImageUrl,
 			&i.ProductName,
 			&i.ProductID,
+			&i.ProductDiscountPercentage,
 			&i.Attributes,
 		); err != nil {
 			return nil, err

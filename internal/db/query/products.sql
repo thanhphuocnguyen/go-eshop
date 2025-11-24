@@ -1,5 +1,5 @@
 -- name: CreateProduct :one
-INSERT INTO products (name, description, short_description, base_price, base_sku, slug, brand_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
+INSERT INTO products (name, description, discount_percentage, short_description, base_price, base_sku, slug, brand_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *;
 
 -- name: CreateBulkProductVariants :copyfrom
 INSERT INTO product_variants (product_id, sku, price, stock, weight) VALUES ($1, $2, $3, $4, $5);
@@ -107,6 +107,7 @@ SET
     brand_id = coalesce(sqlc.narg('brand_id'), brand_id),
     slug = coalesce(sqlc.narg('slug'), slug),
     base_price = coalesce(sqlc.narg('base_price'), base_price),
+    discount_percentage = coalesce(sqlc.narg('discount_percentage'), discount_percentage),
     base_sku = coalesce(sqlc.narg('base_sku'), base_sku),
     is_active = coalesce(sqlc.narg('is_active'), is_active),
     image_url = coalesce(sqlc.narg('image_url'), image_url),
@@ -114,7 +115,10 @@ SET
     updated_at = NOW()
 WHERE id = sqlc.arg('id') RETURNING *;
 
--- name: DeleteProduct :exec
+-- name: UpdateProductPurchasedCount :one
+UPDATE products SET purchased_count = purchased_count + $1, updated_at = NOW() WHERE id = $2 RETURNING purchased_count;
+
+-- name: DeleteProduct :exec    
 DELETE FROM products WHERE id = $1;
 
 -- name: ArchiveProduct :exec

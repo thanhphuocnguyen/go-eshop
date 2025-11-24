@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"slices"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -23,10 +23,10 @@ import (
 var AttributesSeed = []string{"Color",
 	"Size",
 	"Material",
-	"Brand",
 	"Warranty",
 	"Storage",
 	"Style",
+	"Processor",
 }
 
 type VariantSeedModel struct {
@@ -37,12 +37,16 @@ type VariantSeedModel struct {
 	Attributes map[string]string `json:"attributes,omitempty"`
 }
 type Product struct {
-	Name        string             `json:"name"`
-	Description string             `json:"description"`
-	Variants    []VariantSeedModel `json:"variants"`
-	Price       float64            `json:"price"`
-	Stock       int32              `json:"stock"`
-	Sku         string             `json:"sku"`
+	Name               string             `json:"name"`
+	Description        string             `json:"description"`
+	ShortDescription   *string            `json:"short_description,omitempty"`
+	DiscountPercentage *int16             `json:"discount_percentage,omitempty"`
+	Variants           []VariantSeedModel `json:"variants"`
+	Price              float64            `json:"base_price"`
+	Stock              int32              `json:"stock"`
+	Sku                string             `json:"base_sku"`
+	Brand              string             `json:"brand,omitempty"`
+	Attributes         map[string]string  `json:"attributes,omitempty"`
 }
 
 type Categories struct {
@@ -80,6 +84,7 @@ type Collection struct {
 	Description string `json:"description"`
 	SortOrder   int    `json:"sort_order"`
 	Published   bool   `json:"published"`
+	Slug        string `json:"slug"`
 }
 
 type AttributeValues struct {
@@ -139,55 +144,97 @@ func ExecuteSeed(ctx context.Context) int {
 			}
 			defer pg.Close()
 			if len(args) == 0 {
-				log.Info().Msg("Starting comprehensive database seeding")
+				log.Info().Msg("Starting comprehensive database seeding with error handling")
 
+				// Execute all seeding operations with proper error handling
+				var seedingError error
 				// Seed base data first (sequential order matters)
-				seedAttributes(ctx, pg)
-				seedAttributeValues(ctx, pg)
-				seedCategories(ctx, pg)
-				seedBrands(ctx, pg)
-				seedCollections(ctx, pg)
-				seedShippingMethods(ctx, pg)
-				seedShippingZones(ctx, pg)
-				seedDiscounts(ctx, pg)
+				if seedingError = seedAttributes(ctx, pg); seedingError != nil {
+					return seedingError
+				}
+				if seedingError = seedAttributeValues(ctx, pg); seedingError != nil {
+					return seedingError
+				}
+				if seedingError = seedCategories(ctx, pg); seedingError != nil {
+					return seedingError
+				}
+				if seedingError = seedBrands(ctx, pg); seedingError != nil {
+					return seedingError
+				}
+				if seedingError = seedCollections(ctx, pg); seedingError != nil {
+					return seedingError
+				}
+				if seedingError = seedShippingMethods(ctx, pg); seedingError != nil {
+					return seedingError
+				}
+				if seedingError = seedShippingZones(ctx, pg); seedingError != nil {
+					return seedingError
+				}
+				if seedingError = seedDiscounts(ctx, pg); seedingError != nil {
+					return seedingError
+				}
+				if seedingError = seedUsers(ctx, pg); seedingError != nil {
+					return seedingError
+				}
+				if seedingError = seedUserAddresses(ctx, pg); seedingError != nil {
+					return seedingError
+				}
+				if seedingError = seedProducts(ctx, pg); seedingError != nil {
+					return seedingError
+				}
 
-				// Seed users and products in parallel
-				var waitGroup sync.WaitGroup
-				defer waitGroup.Wait()
-				waitGroup.Add(2)
-				go func() {
-					defer waitGroup.Done()
-					seedUsers(ctx, pg)
-				}()
-				go func() {
-					defer waitGroup.Done()
-					seedProducts(ctx, pg)
-				}()
+				log.Info().Msg("All seeding operations completed successfully")
+
 			} else {
+				// Individual seeding commands with error handling
 				switch args[0] {
 				case "products":
-					seedProducts(ctx, pg)
+					if err := seedProducts(ctx, pg); err != nil {
+						return err
+					}
 				case "users":
-					seedUsers(ctx, pg)
+					if err := seedUsers(ctx, pg); err != nil {
+						return err
+					}
 				case "categories":
-					seedCategories(ctx, pg)
+					if err := seedCategories(ctx, pg); err != nil {
+						return err
+					}
 				case "attributes":
-					seedAttributes(ctx, pg)
+					if err := seedAttributes(ctx, pg); err != nil {
+						return err
+					}
 				case "attribute-values":
-					seedAttributeValues(ctx, pg)
+					if err := seedAttributeValues(ctx, pg); err != nil {
+						return err
+					}
 				case "brands":
-					seedBrands(ctx, pg)
+					if err := seedBrands(ctx, pg); err != nil {
+						return err
+					}
 				case "collections":
-					seedCollections(ctx, pg)
+					if err := seedCollections(ctx, pg); err != nil {
+						return err
+					}
 				case "discounts":
-					seedDiscounts(ctx, pg)
+					if err := seedDiscounts(ctx, pg); err != nil {
+						return err
+					}
 				case "shipping":
-					seedShippingMethods(ctx, pg)
-					seedShippingZones(ctx, pg)
+					if err := seedShippingMethods(ctx, pg); err != nil {
+						return err
+					}
+					if err := seedShippingZones(ctx, pg); err != nil {
+						return err
+					}
 				case "variants":
-					seedExistingProductVariants(ctx, pg)
+					if err := seedExistingProductVariants(ctx, pg); err != nil {
+						return err
+					}
 				case "user-addresses":
-					seedUserAddresses(ctx, pg)
+					if err := seedUserAddresses(ctx, pg); err != nil {
+						return err
+					}
 				default:
 					log.Error().Msg("invalid seed command")
 				}
@@ -204,23 +251,18 @@ func ExecuteSeed(ctx context.Context) int {
 	return 0
 }
 
-func seedProducts(ctx context.Context, repo repository.Repository) {
-	countProducts, err := repo.CountProducts(ctx, repository.CountProductsParams{})
+func seedProducts(ctx context.Context, repo repository.Repository) error {
+	// remove all products first
+	_, err := repo.QueryRaw(ctx, "TRUNCATE TABLE products CASCADE;")
 	if err != nil {
-		log.Error().Err(err).Msg("failed to count products")
-		return
+		log.Error().Err(err).Msg("failed to truncate products table")
+		return err
 	}
-
-	if countProducts > 0 {
-		log.Info().Msg("products already seeded")
-		return
-	}
-
 	log.Info().Msg("seeding products")
 	productData, err := os.ReadFile("seeds/products.json")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to read product data")
-		return
+		return err
 	}
 
 	var products []Product
@@ -228,18 +270,36 @@ func seedProducts(ctx context.Context, repo repository.Repository) {
 	err = json.Unmarshal(productData, &products)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to parse product data")
-		return
+		return err
+	}
+	brands, err := repo.GetBrands(ctx, repository.GetBrandsParams{
+		Limit:  1000,
+		Offset: 0,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get brands")
 	}
 
 	log.Info().Int("product count", len(products)).Msg("creating products")
 	for _, product := range products {
+
 		params := repository.CreateProductParams{
-			Name:        product.Name,
-			Description: product.Description,
-			BasePrice:   utils.GetPgNumericFromFloat(product.Price),
-			BaseSku:     product.Sku,
-			Slug:        utils.Slugify(product.Name),
+			Name:             product.Name,
+			Description:      product.Description,
+			ShortDescription: product.ShortDescription,
+			BasePrice:        utils.GetPgNumericFromFloat(product.Price),
+			BaseSku:          product.Sku,
+
+			Slug:               utils.Slugify(product.Name),
+			DiscountPercentage: product.DiscountPercentage,
 		}
+		brand := slices.IndexFunc(brands, func(b repository.Brand) bool {
+			return b.Name == product.Brand
+		})
+		if brand != -1 {
+			params.BrandID = utils.GetPgTypeUUID(brands[brand].ID)
+		}
+
 		createdProduct, err := repo.CreateProduct(ctx, params)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to create product")
@@ -256,9 +316,15 @@ func seedProducts(ctx context.Context, repo repository.Repository) {
 	}
 
 	log.Info().Msg("products and variants created")
+	return nil
 }
 
 func seedProductVariants(ctx context.Context, repo repository.Repository, productID uuid.UUID, variants []VariantSeedModel) error {
+	_, err := repo.QueryRaw(ctx, "DELETE FROM product_variants WHERE product_id = $1;", productID)
+	if err != nil {
+		log.Error().Err(err).Str("product_id", productID.String()).Msg("failed to delete existing product variants")
+		return err
+	}
 	log.Info().Int("variant count", len(variants)).Str("product_id", productID.String()).Msg("creating product variants")
 
 	for _, variant := range variants {
@@ -300,6 +366,11 @@ func seedProductVariants(ctx context.Context, repo repository.Repository, produc
 }
 
 func createVariantAttributes(ctx context.Context, repo repository.Repository, variantID uuid.UUID, attributes map[string]string) error {
+	_, err := repo.QueryRaw(ctx, "DELETE FROM product_variant_attributes WHERE variant_id = $1;", variantID)
+	if err != nil {
+		log.Error().Err(err).Str("variant_id", variantID.String()).Msg("failed to delete existing variant attributes")
+		return err
+	}
 	log.Debug().Str("variant_id", variantID.String()).Interface("attributes", attributes).Msg("creating variant attributes")
 
 	var attributeValueParams []repository.CreateBulkProductVariantAttributeParams
@@ -361,23 +432,18 @@ func createVariantAttributes(ctx context.Context, repo repository.Repository, va
 	return nil
 }
 
-func seedCategories(ctx context.Context, repo repository.Repository) {
-	countCategories, err := repo.CountCategories(ctx)
+func seedCategories(ctx context.Context, repo repository.Repository) error {
+	_, err := repo.QueryRaw(ctx, "TRUNCATE TABLE categories CASCADE;")
 	if err != nil {
-		log.Error().Err(err).Msg("failed to count categories")
-		return
-	}
-
-	if countCategories > 0 {
-		log.Info().Msg("categories already seeded")
-		return
+		log.Error().Err(err).Msg("failed to truncate categories table")
+		return err
 	}
 
 	log.Info().Msg("seeding categories")
 	categoryData, err := os.ReadFile("seeds/categories.json")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to read category data")
-		return
+		return err
 	}
 
 	var categories []Categories
@@ -385,7 +451,7 @@ func seedCategories(ctx context.Context, repo repository.Repository) {
 	err = json.Unmarshal(categoryData, &categories)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to parse category data")
-		return
+		return err
 	}
 
 	log.Info().Msgf("category count: %d", len(categories))
@@ -400,35 +466,31 @@ func seedCategories(ctx context.Context, repo repository.Repository) {
 	_, err = repo.SeedCategories(ctx, params)
 	if err != nil {
 		log.Error().Err(err).Msgf("failed to create categories: %v", err)
-		return
+		return err
 	}
 	log.Info().Msg("categories created")
+	return nil
 }
 
-func seedBrands(ctx context.Context, repo repository.Repository) {
-	countBrands, err := repo.CountBrands(ctx)
+func seedBrands(ctx context.Context, repo repository.Repository) error {
+	_, err := repo.QueryRaw(ctx, "TRUNCATE TABLE brands CASCADE;")
 	if err != nil {
-		log.Error().Err(err).Msg("failed to count brands")
-		return
-	}
-
-	if countBrands > 0 {
-		log.Info().Msg("brands already seeded")
-		return
+		log.Error().Err(err).Msg("failed to truncate brands table")
+		return err
 	}
 
 	log.Info().Msg("seeding brands")
 	brandData, err := os.ReadFile("seeds/brands.json")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to read brand data")
-		return
+		return err
 	}
 
 	var brands []Brand
 	err = json.Unmarshal(brandData, &brands)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to parse brand data")
-		return
+		return err
 	}
 
 	log.Info().Msgf("brand count: %d", len(brands))
@@ -445,35 +507,31 @@ func seedBrands(ctx context.Context, repo repository.Repository) {
 	_, err = repo.SeedBrands(ctx, params)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create brands")
-		return
+		return err
 	}
 	log.Info().Msg("brands created")
+	return nil
 }
 
-func seedCollections(ctx context.Context, repo repository.Repository) {
-	countCollections, err := repo.CountCollections(ctx)
+func seedCollections(ctx context.Context, repo repository.Repository) error {
+	_, err := repo.QueryRaw(ctx, "TRUNCATE TABLE collections CASCADE;")
 	if err != nil {
-		log.Error().Err(err).Msg("failed to count collections")
-		return
-	}
-
-	if countCollections > 0 {
-		log.Info().Msg("collections already seeded")
-		return
+		log.Error().Err(err).Msg("failed to truncate collections table")
+		return err
 	}
 
 	log.Info().Msg("seeding collections")
 	collectionData, err := os.ReadFile("seeds/collections.json")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to read collection data")
-		return
+		return err
 	}
 
 	var collections []Collection
 	err = json.Unmarshal(collectionData, &collections)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to parse collection data")
-		return
+		return err
 	}
 
 	log.Info().Msgf("collection count: %d", len(collections))
@@ -483,33 +541,30 @@ func seedCollections(ctx context.Context, repo repository.Repository) {
 			Name:        collection.Name,
 			Description: &collection.Description,
 			ImageUrl:    nil,
+			Slug:        collection.Slug,
 		}
 	}
 	_, err = repo.SeedCollections(ctx, params)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create collections")
-		return
+		return err
 	}
 	log.Info().Msg("collections created")
+	return nil
 }
 
-func seedUsers(ctx context.Context, pg repository.Repository) {
-	countUsers, err := pg.CountUsers(ctx)
+func seedUsers(ctx context.Context, pg repository.Repository) error {
+	_, err := pg.QueryRaw(ctx, "TRUNCATE TABLE users CASCADE;")
 	if err != nil {
-		log.Error().Err(err).Msg("failed to count users")
-		return
-	}
-
-	if countUsers > 0 {
-		log.Info().Msg("users already seeded")
-		return
+		log.Error().Err(err).Msg("failed to truncate users table")
+		return err
 	}
 
 	log.Info().Str("from file", "users.json").Msg("parsing user data")
 	userData, err := os.ReadFile("seeds/users.json")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to read user data")
-		return
+		return err
 	}
 
 	var users []User
@@ -517,19 +572,24 @@ func seedUsers(ctx context.Context, pg repository.Repository) {
 	err = json.Unmarshal(userData, &users)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to parse user data")
-		return
+		return err
 	}
 
 	log.Info().Int("user count", len(users)).Msg("creating users")
 	params := make([]repository.SeedUsersParams, len(users))
 	role, err := pg.GetRoleByCode(ctx, "user")
-	adminRole, err := pg.GetRoleByCode(ctx, "admin")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get user role")
-		return
+		return err
+	}
+	adminRole, err := pg.GetRoleByCode(ctx, "admin")
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get admin role")
+		return err
 	}
 	for i, user := range users {
 		hashed, _ := auth.HashPassword(user.Password)
+		fields := strings.Fields(user.FullName)
 		params[i] = repository.SeedUsersParams{
 			Email:          user.Email,
 			Username:       user.Username,
@@ -538,6 +598,10 @@ func seedUsers(ctx context.Context, pg repository.Repository) {
 			FirstName:      user.FullName,
 			LastName:       "",
 			RoleID:         role.ID,
+		}
+		if len(fields) > 1 {
+			params[i].FirstName = fields[0]
+			params[i].LastName = strings.Join(fields[1:], " ")
 		}
 		if params[i].Username == "admin" {
 			params[i].RoleID = adminRole.ID
@@ -549,20 +613,15 @@ func seedUsers(ctx context.Context, pg repository.Repository) {
 		log.Error().Err(err).Msg("failed to create users")
 	}
 
-	seedUserAddresses(ctx, pg)
 	log.Info().Msg("users created")
+	return nil
 }
 
-func seedAttributes(ctx context.Context, repo repository.Repository) {
-	countAttributes, err := repo.CountAttributes(ctx)
+func seedAttributes(ctx context.Context, repo repository.Repository) error {
+	_, err := repo.QueryRaw(ctx, "TRUNCATE TABLE attributes CASCADE;")
 	if err != nil {
-		log.Error().Err(err).Msg("failed to count attributes")
-		return
-	}
-
-	if countAttributes > 0 {
-		log.Info().Msg("attributes already seeded")
-		return
+		log.Error().Err(err).Msg("failed to truncate attributes table")
+		return err
 	}
 
 	log.Info().Msg("seeding attributes")
@@ -570,26 +629,32 @@ func seedAttributes(ctx context.Context, repo repository.Repository) {
 		_, err := repo.CreateAttribute(ctx, attribute)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to create attribute")
-			return
+			return err
 		}
 	}
 
 	log.Info().Msg("attributes created")
+	return nil
 }
 
-func seedAttributeValues(ctx context.Context, repo repository.Repository) {
+func seedAttributeValues(ctx context.Context, repo repository.Repository) error {
+	_, err := repo.QueryRaw(ctx, "TRUNCATE TABLE attribute_values CASCADE;")
+	if err != nil {
+		log.Error().Err(err).Msg("failed to truncate attribute values table")
+		return err
+	}
 	log.Info().Msg("seeding attribute values")
 	attributeData, err := os.ReadFile("seeds/attribute_values.json")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to read attribute values data")
-		return
+		return err
 	}
 
 	var attributeValues []AttributeValues
 	err = json.Unmarshal(attributeData, &attributeValues)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to parse attribute values data")
-		return
+		return err
 	}
 
 	for _, attrVal := range attributeValues {
@@ -614,32 +679,28 @@ func seedAttributeValues(ctx context.Context, repo repository.Repository) {
 	}
 
 	log.Info().Msg("attribute values created")
+	return nil
 }
 
-func seedDiscounts(ctx context.Context, repo repository.Repository) {
-	countDiscounts, err := repo.CountDiscounts(ctx)
+func seedDiscounts(ctx context.Context, repo repository.Repository) error {
+	_, err := repo.QueryRaw(ctx, "TRUNCATE TABLE discounts CASCADE;")
 	if err != nil {
-		log.Error().Err(err).Msg("failed to count discounts")
-		return
-	}
-
-	if countDiscounts > 0 {
-		log.Info().Msg("discounts already seeded")
-		return
+		log.Error().Err(err).Msg("failed to truncate discounts table")
+		return err
 	}
 
 	log.Info().Msg("seeding discounts")
 	discountData, err := os.ReadFile("seeds/discounts.json")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to read discount data")
-		return
+		return err
 	}
 
 	var discounts []Discount
 	err = json.Unmarshal(discountData, &discounts)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to parse discount data")
-		return
+		return err
 	}
 
 	log.Info().Msgf("discount count: %d", len(discounts))
@@ -684,35 +745,31 @@ func seedDiscounts(ctx context.Context, repo repository.Repository) {
 	_, err = repo.SeedDiscounts(ctx, params)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create discounts")
-		return
+		return err
 	}
 	log.Info().Msg("discounts created")
+	return nil
 }
 
-func seedShippingMethods(ctx context.Context, repo repository.Repository) {
-	countMethods, err := repo.CountShippingMethods(ctx)
+func seedShippingMethods(ctx context.Context, repo repository.Repository) error {
+	_, err := repo.QueryRaw(ctx, "TRUNCATE TABLE shipping_methods CASCADE;")
 	if err != nil {
-		log.Error().Err(err).Msg("failed to count shipping methods")
-		return
-	}
-
-	if countMethods > 0 {
-		log.Info().Msg("shipping methods already seeded")
-		return
+		log.Error().Err(err).Msg("failed to truncate shipping methods table")
+		return err
 	}
 
 	log.Info().Msg("seeding shipping methods")
 	methodData, err := os.ReadFile("seeds/shipping_methods.json")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to read shipping method data")
-		return
+		return err
 	}
 
 	var methods []ShippingMethod
 	err = json.Unmarshal(methodData, &methods)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to parse shipping method data")
-		return
+		return err
 	}
 
 	log.Info().Msgf("shipping method count: %d", len(methods))
@@ -730,35 +787,31 @@ func seedShippingMethods(ctx context.Context, repo repository.Repository) {
 	_, err = repo.SeedShippingMethods(ctx, params)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create shipping methods")
-		return
+		return err
 	}
 	log.Info().Msg("shipping methods created")
+	return nil
 }
 
-func seedShippingZones(ctx context.Context, repo repository.Repository) {
-	countZones, err := repo.CountShippingZones(ctx)
+func seedShippingZones(ctx context.Context, repo repository.Repository) error {
+	_, err := repo.QueryRaw(ctx, "TRUNCATE TABLE shipping_zones CASCADE;")
 	if err != nil {
-		log.Error().Err(err).Msg("failed to count shipping zones")
-		return
-	}
-
-	if countZones > 0 {
-		log.Info().Msg("shipping zones already seeded")
-		return
+		log.Error().Err(err).Msg("failed to truncate shipping zones table")
+		return err
 	}
 
 	log.Info().Msg("seeding shipping zones")
 	zoneData, err := os.ReadFile("seeds/shipping_zones.json")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to read shipping zone data")
-		return
+		return err
 	}
 
 	var zones []ShippingZone
 	err = json.Unmarshal(zoneData, &zones)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to parse shipping zone data")
-		return
+		return err
 	}
 
 	log.Info().Msgf("shipping zone count: %d", len(zones))
@@ -777,28 +830,46 @@ func seedShippingZones(ctx context.Context, repo repository.Repository) {
 	_, err = repo.SeedShippingZones(ctx, params)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create shipping zones")
-		return
+		return err
 	}
 	log.Info().Msg("shipping zones created")
+	return nil
 }
 
-func seedUserAddresses(ctx context.Context, repo repository.Repository) {
-	countAddresses, err := repo.CountAddresses(ctx)
+func seedUserAddresses(ctx context.Context, repo repository.Repository) error {
+	// First, get users before truncating to avoid lock conflicts
+	log.Info().Msg("fetching users for address seeding")
+	userList, err := repo.GetUsers(ctx, repository.GetUsersParams{
+		Limit:  100,
+		Offset: 0,
+	})
 	if err != nil {
-		log.Error().Err(err).Msg("failed to count addresses")
-		return
+		log.Error().Err(err).Msg("failed to get users for address seeding")
+		return err
 	}
 
-	if countAddresses > 0 {
-		log.Info().Msg("addresses already seeded")
-		return
+	if len(userList) == 0 {
+		log.Warn().Msg("no users found, skipping address seeding")
+		return err
+	}
+
+	userIDs := make([]uuid.UUID, len(userList))
+	for i, user := range userList {
+		userIDs[i] = user.ID
+	}
+
+	// Now truncate addresses table
+	_, err = repo.QueryRaw(ctx, "TRUNCATE TABLE addresses CASCADE;")
+	if err != nil {
+		log.Error().Err(err).Msg("failed to truncate addresses table")
+		return err
 	}
 
 	log.Info().Msg("parsing addresses json")
 	addressData, err := os.ReadFile("seeds/addresses.json")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to read address data")
-		return
+		return err
 	}
 
 	var addresses []Address
@@ -806,22 +877,9 @@ func seedUserAddresses(ctx context.Context, repo repository.Repository) {
 	err = json.Unmarshal(addressData, &addresses)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to parse address data")
-		return
-	}
-	userList, err := repo.GetUsers(ctx, repository.GetUsersParams{
-		Limit:  1000,
-		Offset: 0,
-	})
-
-	userIDs := make([]uuid.UUID, len(userList))
-	for i, user := range userList {
-		userIDs[i] = user.ID
+		return err
 	}
 
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get created users")
-		return
-	}
 	log.Info().Msg("creating addresses")
 	log.Info().Int("addresses count", len(addresses))
 	params := make([]repository.SeedAddressesParams, len(addresses))
@@ -839,27 +897,34 @@ func seedUserAddresses(ctx context.Context, repo repository.Repository) {
 	_, err = repo.SeedAddresses(ctx, params)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to seed addresses")
-		return
+		return err
 	}
 	log.Info().Msg("addresses created")
+	return nil
 }
 
 // seedExistingProductVariants reads products.json and creates variants for existing products
-func seedExistingProductVariants(ctx context.Context, repo repository.Repository) {
+func seedExistingProductVariants(ctx context.Context, repo repository.Repository) error {
+	_, err := repo.QueryRaw(ctx, "TRUNCATE TABLE product_variants CASCADE;")
+	if err != nil {
+		log.Error().Err(err).Msg("failed to truncate product_variants table")
+		return err
+	}
+
 	log.Info().Msg("seeding variants for existing products")
 
 	// Read products data
 	productData, err := os.ReadFile("seeds/products.json")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to read product data")
-		return
+		return err
 	}
 
 	var products []Product
 	err = json.Unmarshal(productData, &products)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to parse product data")
-		return
+		return err
 	}
 
 	log.Info().Int("product count", len(products)).Msg("processing products for variant creation")
@@ -902,4 +967,5 @@ func seedExistingProductVariants(ctx context.Context, repo repository.Repository
 	}
 
 	log.Info().Msg("variant seeding completed")
+	return nil
 }

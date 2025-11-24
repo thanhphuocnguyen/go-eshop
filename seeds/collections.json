@@ -1,50 +1,191 @@
 [
   {
     "name": "Featured Products",
+    "slug": "featured-products",
     "description": "Handpicked products that we think you'll love",
     "sort_order": 1,
     "published": true
   },
   {
     "name": "New Arrivals",
+    "slug": "new-arrivals",
     "description": "Latest products added to our store",
     "sort_order": 2,
     "published": true
   },
   {
     "name": "Best Sellers",
+    "slug": "best-sellers",
     "description": "Most popular products among our customers",
     "sort_order": 3,
     "published": true
   },
   {
     "name": "Sale Items",
+    "slug": "sale-items",
     "description": "Products currently on special promotion",
     "sort_order": 4,
     "published": true
   },
   {
     "name": "Tech Essentials",
+    "slug": "tech-essentials",
     "description": "Must-have technology products for modern life",
     "sort_order": 5,
     "published": true
   },
   {
     "name": "Home Office",
+    "slug": "home-office",
     "description": "Everything you need for your home office setup",
     "sort_order": 6,
     "published": true
   },
   {
     "name": "Fitness & Wellness",
+    "slug": "fitness-wellness",
     "description": "Products to support your health and fitness journey",
     "sort_order": 7,
     "published": true
   },
   {
     "name": "Seasonal Collection",
+    "slug": "seasonal-collection",
     "description": "Products for the current season",
     "sort_order": 8,
+    "published": true
+  },
+  {
+    "name": "Premium Phones",
+    "slug": "premium-phones",
+    "description": "High-end smartphones with cutting-edge technology",
+    "sort_order": 9,
+    "published": true
+  },
+  {
+    "name": "Latest Tech",
+    "slug": "latest-tech",
+    "description": "The newest technology products and innovations",
+    "sort_order": 10,
+    "published": true
+  },
+  {
+    "name": "Android Flagship",
+    "slug": "android-flagship",
+    "description": "Top-tier Android smartphones",
+    "sort_order": 11,
+    "published": true
+  },
+  {
+    "name": "Nike Air Max",
+    "slug": "nike-air-max",
+    "description": "Nike Air Max collection with superior comfort",
+    "sort_order": 12,
+    "published": true
+  },
+  {
+    "name": "Running Shoes",
+    "slug": "running-shoes",
+    "description": "Performance footwear for runners",
+    "sort_order": 13,
+    "published": true
+  },
+  {
+    "name": "MacBook Pro",
+    "slug": "macbook-pro",
+    "description": "Professional laptops for power users",
+    "sort_order": 14,
+    "published": true
+  },
+  {
+    "name": "Professional Laptops",
+    "slug": "professional-laptops",
+    "description": "High-performance laptops for professional use",
+    "sort_order": 15,
+    "published": true
+  },
+  {
+    "name": "Premium Audio",
+    "slug": "premium-audio",
+    "description": "High-quality audio equipment and accessories",
+    "sort_order": 16,
+    "published": true
+  },
+  {
+    "name": "Noise Canceling",
+    "slug": "noise-canceling",
+    "description": "Audio products with noise cancellation technology",
+    "sort_order": 17,
+    "published": true
+  },
+  {
+    "name": "Levi's Classic",
+    "slug": "levis-classic",
+    "description": "Timeless denim styles from Levi's",
+    "sort_order": 18,
+    "published": true
+  },
+  {
+    "name": "Denim Essentials",
+    "slug": "denim-essentials",
+    "description": "Must-have denim clothing items",
+    "sort_order": 19,
+    "published": true
+  },
+  {
+    "name": "IKEA Classics",
+    "slug": "ikea-classics",
+    "description": "Iconic furniture pieces from IKEA",
+    "sort_order": 20,
+    "published": true
+  },
+  {
+    "name": "Home Storage",
+    "slug": "home-storage",
+    "description": "Storage solutions for your home",
+    "sort_order": 21,
+    "published": true
+  },
+  {
+    "name": "Under Armour HeatGear",
+    "slug": "under-armour-heatgear",
+    "description": "Performance apparel with moisture-wicking technology",
+    "sort_order": 22,
+    "published": true
+  },
+  {
+    "name": "Performance Wear",
+    "slug": "performance-wear",
+    "description": "Athletic clothing for peak performance",
+    "sort_order": 23,
+    "published": true
+  },
+  {
+    "name": "Dell XPS",
+    "slug": "dell-xps",
+    "description": "Premium laptops from Dell's XPS series",
+    "sort_order": 24,
+    "published": true
+  },
+  {
+    "name": "Ultrabooks",
+    "slug": "ultrabooks",
+    "description": "Ultra-portable lightweight laptops",
+    "sort_order": 25,
+    "published": true
+  },
+  {
+    "name": "Adidas Ultraboost",
+    "slug": "adidas-ultraboost",
+    "description": "Premium running shoes with Boost technology",
+    "sort_order": 26,
+    "published": true
+  },
+  {
+    "name": "Performance Running",
+    "slug": "performance-running",
+    "description": "High-performance running gear and footwear",
+    "sort_order": 27,
     "published": true
   }
 ]

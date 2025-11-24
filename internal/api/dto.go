@@ -274,16 +274,17 @@ type Pagination struct {
 }
 
 type ProductDetailDto struct {
-	ID               string  `json:"id"`
-	Name             string  `json:"name"`
-	Description      string  `json:"description"`
-	ShortDescription *string `json:"shortDescription"`
-	BasePrice        float64 `json:"price,omitzero"`
-	BaseSku          string  `json:"sku"`
-	IsActive         bool    `json:"isActive"`
-	Slug             string  `json:"slug"`
-	ImageUrl         *string `json:"imageUrl,omitempty"`
-	ImageId          *string `json:"imageId,omitempty"`
+	ID                 string  `json:"id"`
+	Name               string  `json:"name"`
+	Description        string  `json:"description"`
+	ShortDescription   *string `json:"shortDescription"`
+	BasePrice          float64 `json:"price,omitzero"`
+	BaseSku            string  `json:"sku"`
+	IsActive           bool    `json:"isActive"`
+	Slug               string  `json:"slug"`
+	ImageUrl           *string `json:"imageUrl,omitempty"`
+	ImageId            *string `json:"imageId,omitempty"`
+	DiscountPercentage *int16  `json:"discountPercentage,omitempty"`
 
 	RatingCount    int32 `json:"ratingCount"`
 	OneStarCount   int32 `json:"oneStarCount"`
@@ -448,16 +449,17 @@ type UserDetail struct {
 }
 
 type CartItemResponse struct {
-	ID         string           `json:"id" binding:"required,uuid"`
-	ProductID  string           `json:"productId" binding:"required,uuid"`
-	VariantID  string           `json:"variantId" binding:"required,uuid"`
-	Name       string           `json:"name"`
-	Quantity   int16            `json:"quantity"`
-	Price      float64          `json:"price"`
-	StockQty   int32            `json:"stock"`
-	Sku        *string          `json:"sku,omitempty"`
-	ImageURL   *string          `json:"imageUrl,omitempty"`
-	Attributes []AttributeValue `json:"attributes"`
+	ID             string           `json:"id" binding:"required,uuid"`
+	ProductID      string           `json:"productId" binding:"required,uuid"`
+	VariantID      string           `json:"variantId" binding:"required,uuid"`
+	Name           string           `json:"name"`
+	Quantity       int16            `json:"quantity"`
+	DiscountAmount float64          `json:"discountAmount"`
+	Price          float64          `json:"price"`
+	StockQty       int32            `json:"stock"`
+	Sku            *string          `json:"sku,omitempty"`
+	ImageURL       *string          `json:"imageUrl,omitempty"`
+	Attributes     []AttributeValue `json:"attributes"`
 }
 
 type CartDetailResponse struct {
@@ -548,18 +550,19 @@ type ProductRatingModel struct {
 }
 
 type ProductListDTO struct {
-	ID          string   `json:"id"`
-	Name        string   `json:"name"`
-	Description string   `json:"description"`
-	BasePrice   float64  `json:"basePrice,omitzero"`
-	Slug        string   `json:"slug,omitempty"`
-	Sku         string   `json:"sku"`
-	ImageUrl    *string  `json:"imageUrl,omitempty"`
-	AvgRating   *float64 `json:"avgRating,omitempty"`
-	ReviewCount *int32   `json:"reviewCount,omitempty"`
-	ImgID       *string  `json:"imageId,omitempty"`
-	CreatedAt   string   `json:"createdAt,omitempty"`
-	UpdatedAt   string   `json:"updatedAt,omitempty"`
+	ID                 string   `json:"id"`
+	Name               string   `json:"name"`
+	Description        string   `json:"description"`
+	BasePrice          float64  `json:"basePrice,omitzero"`
+	Slug               string   `json:"slug,omitempty"`
+	Sku                string   `json:"sku"`
+	ImageUrl           *string  `json:"imageUrl,omitempty"`
+	AvgRating          *float64 `json:"avgRating,omitempty"`
+	DiscountPercentage *int16   `json:"discountPercentage,omitzero"`
+	ReviewCount        *int32   `json:"reviewCount,omitempty"`
+	ImgID              *string  `json:"imageId,omitempty"`
+	CreatedAt          string   `json:"createdAt,omitempty"`
+	UpdatedAt          string   `json:"updatedAt,omitempty"`
 }
 
 type ProductSummary struct {
@@ -657,27 +660,29 @@ type ProductAttribute struct {
 	Values []AttributeValue `json:"attributeValues,omitempty"`
 }
 type CreateProductReq struct {
-	ShortDescription *string `json:"shortDescription" binding:"omitempty,max=1000"`
-	BasePrice        float64 `json:"price" binding:"required,gt=0"`
-	Name             string  `json:"name" binding:"required,min=3,max=255"`
-	Description      string  `json:"description" binding:"required"`
-	BaseSku          string  `json:"sku" binding:"required,min=3,max=100"`
-	Slug             string  `json:"slug" binding:"required,min=3,max=255"`
-	BrandID          string  `json:"brandId" binding:"required,uuid"`
+	BasePrice          float64 `json:"price" binding:"required,gt=0"`
+	DiscountPercentage *int16  `json:"discountPercentage" binding:"omitempty,gte=0,lte=100"`
+	ShortDescription   *string `json:"shortDescription" binding:"omitempty,max=1000"`
+	Name               string  `json:"name" binding:"required,min=3,max=255"`
+	Description        string  `json:"description" binding:"required"`
+	BaseSku            string  `json:"sku" binding:"required,min=3,max=100"`
+	Slug               string  `json:"slug" binding:"required,min=3,max=255"`
+	BrandID            string  `json:"brandId" binding:"required,uuid"`
 
 	Attributes    []int32  `json:"attributes" binding:"omitempty"`
 	CategoryIDs   []string `json:"categoryIds" binding:"omitempty,uuidslice"`
 	CollectionIDs []string `json:"collectionIds" binding:"omitempty,uuidslice"`
 }
 type UpdateProductReq struct {
-	IsActive         *bool    `json:"isActive" binding:"omitempty"`
-	BasePrice        *float64 `json:"price" binding:"omitempty,gt=0"`
-	Name             *string  `json:"name" binding:"omitempty,min=3,max=255"`
-	Description      *string  `json:"description" binding:"omitempty"`
-	ShortDescription *string  `json:"shortDescription" binding:"omitempty,max=1000"`
-	BaseSku          *string  `json:"sku" binding:"omitempty,min=3,max=100"`
-	Slug             *string  `json:"slug" binding:"omitempty,min=3,max=255"`
-	BrandID          *string  `json:"brandId" binding:"omitempty,uuid"`
+	IsActive           *bool    `json:"isActive" binding:"omitempty"`
+	BasePrice          *float64 `json:"price" binding:"omitempty,gt=0"`
+	DiscountPercentage *int16   `json:"discountPercentage" binding:"omitempty,gte=0,lte=100"`
+	Name               *string  `json:"name" binding:"omitempty,min=3,max=255"`
+	Description        *string  `json:"description" binding:"omitempty"`
+	ShortDescription   *string  `json:"shortDescription" binding:"omitempty,max=1000"`
+	BaseSku            *string  `json:"sku" binding:"omitempty,min=3,max=100"`
+	Slug               *string  `json:"slug" binding:"omitempty,min=3,max=255"`
+	BrandID            *string  `json:"brandId" binding:"omitempty,uuid"`
 
 	Attributes    *[]int32  `json:"attributes" binding:"omitempty"`
 	CategoryIDs   *[]string `json:"categoryIds" binding:"omitempty,uuidslice"`

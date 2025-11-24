@@ -76,23 +76,25 @@ type CreateBulkProductVariantsParams struct {
 }
 
 const createProduct = `-- name: CreateProduct :one
-INSERT INTO products (name, description, short_description, base_price, base_sku, slug, brand_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, name, description, short_description, base_price, base_sku, slug, is_active, image_url, image_id, discount_percentage, purchased_count, avg_rating, rating_count, one_star_count, two_star_count, three_star_count, four_star_count, five_star_count, created_at, updated_at, brand_id
+INSERT INTO products (name, description, discount_percentage, short_description, base_price, base_sku, slug, brand_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, name, description, short_description, base_price, base_sku, slug, is_active, image_url, image_id, discount_percentage, purchased_count, avg_rating, rating_count, one_star_count, two_star_count, three_star_count, four_star_count, five_star_count, created_at, updated_at, brand_id
 `
 
 type CreateProductParams struct {
-	Name             string         `json:"name"`
-	Description      string         `json:"description"`
-	ShortDescription *string        `json:"shortDescription"`
-	BasePrice        pgtype.Numeric `json:"basePrice"`
-	BaseSku          string         `json:"baseSku"`
-	Slug             string         `json:"slug"`
-	BrandID          pgtype.UUID    `json:"brandId"`
+	Name               string         `json:"name"`
+	Description        string         `json:"description"`
+	DiscountPercentage *int16         `json:"discountPercentage"`
+	ShortDescription   *string        `json:"shortDescription"`
+	BasePrice          pgtype.Numeric `json:"basePrice"`
+	BaseSku            string         `json:"baseSku"`
+	Slug               string         `json:"slug"`
+	BrandID            pgtype.UUID    `json:"brandId"`
 }
 
 func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error) {
 	row := q.db.QueryRow(ctx, createProduct,
 		arg.Name,
 		arg.Description,
+		arg.DiscountPercentage,
 		arg.ShortDescription,
 		arg.BasePrice,
 		arg.BaseSku,
@@ -421,7 +423,7 @@ type GetProductDetailRow struct {
 	IsActive           *bool          `json:"isActive"`
 	ImageUrl           *string        `json:"imageUrl"`
 	ImageID            *string        `json:"imageId"`
-	DiscountPercentage pgtype.Numeric `json:"discountPercentage"`
+	DiscountPercentage *int16         `json:"discountPercentage"`
 	PurchasedCount     *int32         `json:"purchasedCount"`
 	AvgRating          pgtype.Numeric `json:"avgRating"`
 	RatingCount        int32          `json:"ratingCount"`
@@ -516,7 +518,7 @@ type GetProductListRow struct {
 	IsActive           *bool          `json:"isActive"`
 	ImageUrl           *string        `json:"imageUrl"`
 	ImageID            *string        `json:"imageId"`
-	DiscountPercentage pgtype.Numeric `json:"discountPercentage"`
+	DiscountPercentage *int16         `json:"discountPercentage"`
 	PurchasedCount     *int32         `json:"purchasedCount"`
 	AvgRating          pgtype.Numeric `json:"avgRating"`
 	RatingCount        int32          `json:"ratingCount"`
@@ -802,26 +804,28 @@ SET
     brand_id = coalesce($4, brand_id),
     slug = coalesce($5, slug),
     base_price = coalesce($6, base_price),
-    base_sku = coalesce($7, base_sku),
-    is_active = coalesce($8, is_active),
-    image_url = coalesce($9, image_url),
-    image_id = coalesce($10, image_id),
+    discount_percentage = coalesce($7, discount_percentage),
+    base_sku = coalesce($8, base_sku),
+    is_active = coalesce($9, is_active),
+    image_url = coalesce($10, image_url),
+    image_id = coalesce($11, image_id),
     updated_at = NOW()
-WHERE id = $11 RETURNING id, name, description, short_description, base_price, base_sku, slug, is_active, image_url, image_id, discount_percentage, purchased_count, avg_rating, rating_count, one_star_count, two_star_count, three_star_count, four_star_count, five_star_count, created_at, updated_at, brand_id
+WHERE id = $12 RETURNING id, name, description, short_description, base_price, base_sku, slug, is_active, image_url, image_id, discount_percentage, purchased_count, avg_rating, rating_count, one_star_count, two_star_count, three_star_count, four_star_count, five_star_count, created_at, updated_at, brand_id
 `
 
 type UpdateProductParams struct {
-	Name             *string        `json:"name"`
-	Description      *string        `json:"description"`
-	ShortDescription *string        `json:"shortDescription"`
-	BrandID          pgtype.UUID    `json:"brandId"`
-	Slug             *string        `json:"slug"`
-	BasePrice        pgtype.Numeric `json:"basePrice"`
-	BaseSku          *string        `json:"baseSku"`
-	IsActive         *bool          `json:"isActive"`
-	ImageUrl         *string        `json:"imageUrl"`
-	ImageID          *string        `json:"imageId"`
-	ID               uuid.UUID      `json:"id"`
+	Name               *string        `json:"name"`
+	Description        *string        `json:"description"`
+	ShortDescription   *string        `json:"shortDescription"`
+	BrandID            pgtype.UUID    `json:"brandId"`
+	Slug               *string        `json:"slug"`
+	BasePrice          pgtype.Numeric `json:"basePrice"`
+	DiscountPercentage *int16         `json:"discountPercentage"`
+	BaseSku            *string        `json:"baseSku"`
+	IsActive           *bool          `json:"isActive"`
+	ImageUrl           *string        `json:"imageUrl"`
+	ImageID            *string        `json:"imageId"`
+	ID                 uuid.UUID      `json:"id"`
 }
 
 func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error) {
@@ -832,6 +836,7 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		arg.BrandID,
 		arg.Slug,
 		arg.BasePrice,
+		arg.DiscountPercentage,
 		arg.BaseSku,
 		arg.IsActive,
 		arg.ImageUrl,
@@ -864,6 +869,22 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		&i.BrandID,
 	)
 	return i, err
+}
+
+const updateProductPurchasedCount = `-- name: UpdateProductPurchasedCount :one
+UPDATE products SET purchased_count = purchased_count + $1, updated_at = NOW() WHERE id = $2 RETURNING purchased_count
+`
+
+type UpdateProductPurchasedCountParams struct {
+	PurchasedCount *int32    `json:"purchasedCount"`
+	ID             uuid.UUID `json:"id"`
+}
+
+func (q *Queries) UpdateProductPurchasedCount(ctx context.Context, arg UpdateProductPurchasedCountParams) (*int32, error) {
+	row := q.db.QueryRow(ctx, updateProductPurchasedCount, arg.PurchasedCount, arg.ID)
+	var purchased_count *int32
+	err := row.Scan(&purchased_count)
+	return purchased_count, err
 }
 
 const updateProductStock = `-- name: UpdateProductStock :one

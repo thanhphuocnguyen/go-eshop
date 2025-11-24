@@ -461,7 +461,7 @@ type Product struct {
 	IsActive           *bool          `json:"isActive"`
 	ImageUrl           *string        `json:"imageUrl"`
 	ImageID            *string        `json:"imageId"`
-	DiscountPercentage pgtype.Numeric `json:"discountPercentage"`
+	DiscountPercentage *int16         `json:"discountPercentage"`
 	PurchasedCount     *int32         `json:"purchasedCount"`
 	AvgRating          pgtype.Numeric `json:"avgRating"`
 	RatingCount        int32          `json:"ratingCount"`

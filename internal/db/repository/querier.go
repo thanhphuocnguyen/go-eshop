@@ -243,6 +243,7 @@ type Querier interface {
 	UpdatePaymentTransaction(ctx context.Context, arg UpdatePaymentTransactionParams) error
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
 	UpdateProductImage(ctx context.Context, arg UpdateProductImageParams) error
+	UpdateProductPurchasedCount(ctx context.Context, arg UpdateProductPurchasedCountParams) (*int32, error)
 	UpdateProductRating(ctx context.Context, arg UpdateProductRatingParams) (ProductRating, error)
 	UpdateProductStock(ctx context.Context, arg UpdateProductStockParams) (ProductVariant, error)
 	UpdateProductVariant(ctx context.Context, arg UpdateProductVariantParams) (ProductVariant, error)

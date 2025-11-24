@@ -248,6 +248,7 @@ type SeedCollectionsParams struct {
 	Name        string  `json:"name"`
 	Description *string `json:"description"`
 	ImageUrl    *string `json:"imageUrl"`
+	Slug        string  `json:"slug"`
 }
 
 const updateCollectionWith = `-- name: UpdateCollectionWith :one

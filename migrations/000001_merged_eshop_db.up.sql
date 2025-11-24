@@ -318,7 +318,7 @@ CREATE TABLE products (
         is_active BOOLEAN DEFAULT TRUE,
         image_url TEXT,
         image_id VARCHAR(255),
-        discount_percentage NUMERIC(5, 2) DEFAULT 0,
+        discount_percentage SMALLINT DEFAULT 0 CHECK (discount_percentage >= 0 AND discount_percentage <= 100),
         purchased_count INT DEFAULT 0,
 
         avg_rating DECIMAL(2, 1) DEFAULT NULL,
