@@ -343,7 +343,7 @@ func (sv *Server) UpdateCategoryHandler(c *gin.Context) {
 	if req.Published != nil {
 		updateParam.Published = req.Published
 	}
-	var apiErr *models.ApiError
+	var apiErr *dto.ApiError
 
 	imageID, imageURL := "", ""
 	if req.Image != nil {
@@ -353,7 +353,7 @@ func (sv *Server) UpdateCategoryHandler(c *gin.Context) {
 		if oldImageID != nil && oldImageURL != nil {
 			_, err = sv.uploadService.RemoveFile(c, *oldImageID)
 			if err != nil {
-				apiErr = &models.ApiError{
+				apiErr = &dto.ApiError{
 					Code:    UploadFileCode,
 					Details: err.Error(),
 					Stack:   err}

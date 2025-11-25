@@ -15,8 +15,8 @@ type AddDiscountModel struct {
 	Code              string    `json:"code" binding:"required,min=5,max=32,alphanum"`
 	Name              string    `json:"name" binding:"required,min=3,max=100"`
 	DiscountType      string    `json:"discountType" binding:"required"`
-	ValidFrom         time.Time `json:"validFrom" binding:"required"`
-	ValidUntil        time.Time `json:"validUntil" binding:"omitempty"`
+	ValidFrom         time.Time `json:"validFrom" binding:"required" time_format:"2006-01-02T15:04:05Z07:00"`
+	ValidUntil        time.Time `json:"validUntil" binding:"omitempty" time_format:"2006-01-02T15:04:05Z07:00"`
 	Priority          *int32    `json:"priority" binding:"omitempty,gte=0"`
 	Description       *string   `json:"description" binding:"omitempty,max=1000"`
 	MinOrderValue     *float64  `json:"minOrderValue" binding:"omitempty,gt=0"`
@@ -46,8 +46,8 @@ type UpdateDiscountModel struct {
 	Code              *string    `json:"code" binding:"omitempty,min=5,max=32,alphanum"`
 	Name              *string    `json:"name" binding:"omitempty,min=3,max=100"`
 	DiscountType      *string    `json:"discountType" binding:"omitempty"`
-	ValidFrom         *time.Time `json:"validFrom" binding:"omitempty"`
-	ValidUntil        *time.Time `json:"validUntil" binding:"omitempty"`
+	ValidFrom         *time.Time `json:"validFrom" binding:"omitempty" time_format:"2006-01-02T15:04:05Z07:00"`
+	ValidUntil        *time.Time `json:"validUntil" binding:"omitempty" time_format:"2006-01-02T15:04:05Z07:00"`
 	Priority          *int32     `json:"priority" binding:"omitempty,gte=0"`
 	Description       *string    `json:"description" binding:"omitempty,max=1000"`
 	MinOrderValue     *float64   `json:"minOrderValue" binding:"omitempty,gt=0"`
@@ -60,6 +60,6 @@ type DiscountListQuery struct {
 	DiscountType  *string    `form:"discountType" binding:"omitempty,oneof=percentage fixed_amount"`
 	IsActive      *bool      `from:"isActive" binding:"omitempty"`
 	DiscountValue *float64   `form:"discountValue" binding:"omitempty,gt=0"`
-	FromDate      *time.Time `form:"fromDate, default=" binding:"omitempty"`
-	ToDate        *time.Time `form:"toDate" binding:"omitempty"`
+	FromDate      *time.Time `form:"fromDate" binding:"omitempty" time_format:"2006-01-02T15:04:05Z07:00"`
+	ToDate        *time.Time `form:"toDate" binding:"omitempty" time_format:"2006-01-02T15:04:05Z07:00"`
 }

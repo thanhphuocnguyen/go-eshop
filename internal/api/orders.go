@@ -160,7 +160,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-	var apiErr *models.ApiError = nil
+	var apiErr *dto.ApiError = nil
 
 	if paymentInfo.Status == repository.PaymentStatusPending &&
 		paymentInfo.PaymentIntentID != nil {
@@ -168,7 +168,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 		paymentDetail, err := sv.paymentSrv.GetPayment(c, *paymentInfo.PaymentIntentID, *paymentInfo.Gateway)
 		if err != nil {
 			log.Err(err).Msg("failed to get payment intent")
-			apiErr = &models.ApiError{
+			apiErr = &dto.ApiError{
 				Code:    InternalServerErrorCode,
 				Details: "failed to get payment intent",
 				Stack:   err,
@@ -209,7 +209,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 
 	if err := sv.cacheSrv.Set(c, "order_detail:"+params.ID, resp, utils.TimeDurationPtr(5*time.Minute)); err != nil {
 		log.Err(err).Msg("failed to cache order detail")
-		apiErr = &models.ApiError{
+		apiErr = &dto.ApiError{
 			Code:    InternalServerErrorCode,
 			Details: "failed to cache order detail",
 			Stack:   err,
@@ -272,10 +272,10 @@ func (sv *Server) confirmOrderPayment(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-	var apiErr *models.ApiError
+	var apiErr *dto.ApiError
 	if err := sv.cacheSrv.Delete(c, "order_detail:"+params.ID); err != nil {
 		log.Err(err).Msg("failed to delete order detail cache")
-		apiErr = &models.ApiError{
+		apiErr = &dto.ApiError{
 			Code:    InternalServerErrorCode,
 			Details: "failed to delete order detail cache",
 			Stack:   err,
