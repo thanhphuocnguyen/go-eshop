@@ -9,11 +9,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
-	"github.com/stripe/stripe-go/v81"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/pmgateway"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
 )
 
 // @Summary List orders
@@ -162,16 +161,9 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 	var apiErr *ApiError = nil
 
 	if paymentInfo.Status == repository.PaymentStatusPending &&
-		paymentInfo.PaymentIntentID != nil &&
-		order.PaymentMethod == "Stripe" {
-		resp.PaymentInfo.IntendID = paymentInfo.PaymentIntentID
-		stripeInstance, err := pmgateway.NewStripePayment(sv.config.StripeSecretKey)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
-			return
-		}
-		sv.paymentSrv.SetStrategy(stripeInstance)
-		paymentDetail, err := sv.paymentSrv.GetPaymentObject(*paymentInfo.PaymentIntentID)
+		paymentInfo.PaymentIntentID != nil {
+
+		paymentDetail, err := sv.paymentSrv.GetPayment(c, *paymentInfo.PaymentIntentID, *paymentInfo.Gateway)
 		if err != nil {
 			log.Err(err).Msg("failed to get payment intent")
 			apiErr = &ApiError{
@@ -180,8 +172,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 				Stack:   err,
 			}
 		} else {
-			stripeObject, _ := paymentDetail.(*stripe.PaymentIntent)
-			resp.PaymentInfo.ClientSecret = &stripeObject.ClientSecret
+			resp.PaymentInfo.ClientSecret = &paymentDetail.ClientSecret
 		}
 	}
 
@@ -345,19 +336,12 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 	cancelOrderTxParams := repository.CancelOrderTxArgs{
 		OrderID: uuid.MustParse(params.ID),
 		CancelPaymentFromMethod: func(paymentID string, method string) error {
-			switch method {
-			case "Stripe":
-				stripeInstance, err := pmgateway.NewStripePayment(sv.config.StripeSecretKey)
-				if err != nil {
-					c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
-					return err
-				}
-				sv.paymentSrv.SetStrategy(stripeInstance)
-				_, err = sv.paymentSrv.CancelPayment(paymentID, req.Reason)
-				return err
-			default:
-				return nil
+			req := payment.RefundRequest{
+				TransactionID: paymentID,
+				Amount:        paymentRow.Amount.Int.Int64(),
 			}
+			_, err = sv.paymentSrv.RefundPayment(c, req, *paymentRow.Gateway)
+			return err
 		},
 	}
 	ordId, err := sv.repo.CancelOrderTx(c, cancelOrderTxParams)
@@ -483,37 +467,17 @@ func (sv *Server) refundOrder(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, createErr(InvalidPaymentCode, errors.New("order cannot be refunded")))
 		return
 	}
-	var reason pmgateway.RefundReason
-	var amountRefund int64
-	switch req.Reason {
-	case "defective":
-		reason = pmgateway.RefundReasonByDefectiveOrDamaged
-		amountRefund = order.TotalPrice.Int.Int64()
-	case "damaged":
-		reason = pmgateway.RefundReasonByDefectiveOrDamaged
-		amountRefund = order.TotalPrice.Int.Int64()
-	case "fraudulent":
-		reason = pmgateway.RefundReasonByFraudulent
-		amountRefund = order.TotalPrice.Int.Int64()
-	case "requested_by_customer":
-		amountRefund = order.TotalPrice.Int.Int64() * 90 / 100
-		reason = pmgateway.RefundReasonRequestedByCustomer
-	}
+
 	err = sv.repo.RefundOrderTx(c, repository.RefundOrderTxArgs{
 		OrderID: uuid.MustParse(params.ID),
 		RefundPaymentFromMethod: func(paymentID string, method string) (string, error) {
-			switch method {
-			case "Stripe":
-				stripeInstance, err := pmgateway.NewStripePayment(sv.config.StripeSecretKey)
-				if err != nil {
-					return "", err
-				}
-				sv.paymentSrv.SetStrategy(stripeInstance)
-
-				return sv.paymentSrv.RefundPayment(paymentID, amountRefund, reason)
-			default:
-				return "", nil
+			req := payment.RefundRequest{
+				TransactionID: paymentID,
+				Amount:        order.TotalPrice.Int.Int64(),
+				Reason:        req.Reason,
 			}
+			rs, err := sv.paymentSrv.RefundPayment(c, req, method)
+			return rs.Reason, err
 		},
 	})
 

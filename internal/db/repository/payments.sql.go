@@ -232,6 +232,48 @@ func (q *Queries) GetPaymentMethodByID(ctx context.Context, id uuid.UUID) (Payme
 	return i, err
 }
 
+const getPaymentMethods = `-- name: GetPaymentMethods :many
+SELECT id, code, name, description, is_active, gateway_supported, icon_url, requires_account, min_amount, max_amount, processing_fee_percentage, processing_fee_fixed, currency_supported, countries_supported, metadata, created_at, updated_at FROM payment_methods ORDER BY name ASC
+`
+
+func (q *Queries) GetPaymentMethods(ctx context.Context) ([]PaymentMethod, error) {
+	rows, err := q.db.Query(ctx, getPaymentMethods)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []PaymentMethod{}
+	for rows.Next() {
+		var i PaymentMethod
+		if err := rows.Scan(
+			&i.ID,
+			&i.Code,
+			&i.Name,
+			&i.Description,
+			&i.IsActive,
+			&i.GatewaySupported,
+			&i.IconUrl,
+			&i.RequiresAccount,
+			&i.MinAmount,
+			&i.MaxAmount,
+			&i.ProcessingFeePercentage,
+			&i.ProcessingFeeFixed,
+			&i.CurrencySupported,
+			&i.CountriesSupported,
+			&i.Metadata,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPaymentTransactionByID = `-- name: GetPaymentTransactionByID :one
 SELECT id, payment_id, amount, status, gateway_transaction_id, gateway_response_code, gateway_response_message, transaction_date, created_at FROM payment_transactions WHERE id = $1 LIMIT 1
 `

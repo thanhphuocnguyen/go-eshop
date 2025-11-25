@@ -54,20 +54,5 @@ WHERE ci.cart_id = $1
 GROUP BY ci.id, pv.id, p.id
 ORDER BY ci.added_at, ci.id, pv.id DESC;
 
--- name: GetCartItemsForOrder :many
-SELECT 
-    sqlc.embed(ci),
-    pv.id AS variant_id, pv.price, pv.stock, pv.sku, pv.stock as stock_qty,
-    p.name AS product_name, p.id AS product_id,
-    av.value as attr_value, a.name AS attr_name
-FROM cart_items AS ci
-JOIN product_variants AS pv ON pv.id = ci.variant_id
-JOIN products AS p ON p.id = pv.product_id
-JOIN variant_attribute_values AS vav ON vav.variant_id = pv.id
-JOIN attribute_values AS av ON vav.attribute_value_id = av.id
-JOIN attributes AS a ON av.attribute_id = a.id
-WHERE ci.cart_id = $1
-ORDER BY ci.added_at, ci.id, pv.id DESC;
-
 -- name: ClearCart :exec
 DELETE FROM cart_items WHERE id = $1;

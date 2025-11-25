@@ -21,7 +21,7 @@ import (
 // @Success 200 {object} ApiResponse[AddressResponse]
 // @Failure 400 {object} ErrorResp
 // @Failure 401 {object} ErrorResp
-// @Router //usersusers/addresses [post]
+// @Router /users/addresses [post]
 func (sv *Server) CreateAddressHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
@@ -94,7 +94,7 @@ func (sv *Server) CreateAddressHandler(c *gin.Context) {
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /users/addresses [get]
-func (sv *Server) getAddressesHandlers(c *gin.Context) {
+func (sv *Server) GetAddressesHandlers(c *gin.Context) {
 	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, createErr(UnauthorizedCode, fmt.Errorf("authorization payload is not provided")))
@@ -114,7 +114,7 @@ func (sv *Server) getAddressesHandlers(c *gin.Context) {
 	c.JSON(http.StatusOK, createDataResp(c, addressesResponse, nil, nil))
 }
 
-// updateAddressHandlers godoc
+// UpdateAddressHandlers godoc
 // @Summary Update an addresses
 // @Description Update an addresses
 // @Tags addresses
@@ -128,7 +128,7 @@ func (sv *Server) getAddressesHandlers(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /users/addresses/{id} [put]
-func (sv *Server) updateAddressHandlers(c *gin.Context) {
+func (sv *Server) UpdateAddressHandlers(c *gin.Context) {
 	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, createErr(UnauthorizedCode, fmt.Errorf("authorization payload is not provided")))
@@ -259,7 +259,7 @@ func (sv *Server) RemoveAddressHandlers(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// setDefaultAddressHandler godoc
+// SetDefaultAddressHandler godoc
 // @Summary Set default addresses
 // @Description Set default addresses
 // @Tags addresses
@@ -271,7 +271,7 @@ func (sv *Server) RemoveAddressHandlers(c *gin.Context) {
 // @Failure 401 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
 // @Router /users/addresses/{id}/default [put]
-func (sv *Server) setDefaultAddressHandler(c *gin.Context) {
+func (sv *Server) SetDefaultAddressHandler(c *gin.Context) {
 	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, createErr(UnauthorizedCode, fmt.Errorf("authorization payload is not provided")))

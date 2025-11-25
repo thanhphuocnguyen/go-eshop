@@ -53,3 +53,6 @@ DELETE FROM payment_transactions WHERE id = $1;
 -- Payment Methods --
 -- name: GetPaymentMethodByID :one
 SELECT * FROM payment_methods WHERE id = $1 LIMIT 1;
+
+-- name: GetPaymentMethods :many
+SELECT * FROM payment_methods ORDER BY name ASC;

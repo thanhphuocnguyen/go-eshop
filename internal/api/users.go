@@ -33,22 +33,24 @@ func (sv *Server) UpdateUserHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, createErr(InvalidEmailCode, err))
 		return
 	}
-
-	user, err := sv.repo.GetUserByID(c, req.UserID)
+	userId := uuid.MustParse(req.UserID)
+	user, err := sv.repo.GetUserByID(c, userId)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, createErr(UnauthorizedCode, err))
 		return
 	}
 
-	if authPayload.RoleCode != "admin" && user.ID != req.UserID {
+	if authPayload.RoleCode != "admin" && user.ID != userId {
 		c.JSON(http.StatusUnauthorized, createErr(UnauthorizedCode, err))
 		return
 	}
 
 	arg := repository.UpdateUserParams{
-		ID: req.UserID,
+		ID: userId,
 	}
+
 	boolVal := false
+
 	if req.Email != nil {
 		arg.Email = req.Email
 		if user.Email != *req.Email {
@@ -59,6 +61,7 @@ func (sv *Server) UpdateUserHandler(c *gin.Context) {
 	if req.FirstName != nil {
 		arg.FirstName = req.FirstName
 	}
+
 	if req.LastName != nil {
 		arg.LastName = req.LastName
 	}

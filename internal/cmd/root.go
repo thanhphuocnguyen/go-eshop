@@ -115,8 +115,19 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 			service := payment.NewPaymentService()
 
 			// Register gateways
-			service.RegisterGateway("stripe", gateways.NewStripeGateway)
-			service.RegisterGateway("paypal", gateways.NewPaypalGateway)
+			paymentGateways, err := pgRepo.GetPaymentMethods(ctx)
+			if err != nil {
+				log.Fatal().Err(err).Msg("failed to get payment methods from db")
+			}
+			for _, pg := range paymentGateways {
+				switch pg.Code {
+				case "stripe":
+					service.RegisterGateway(pg.Code, gateways.NewStripeGateway)
+				case "paypal":
+					service.RegisterGateway(pg.Code, gateways.NewPaypalGateway)
+				}
+			}
+
 			stripeConfig := payment.GatewayConfig{
 				Name:          "stripe",
 				APIKey:        cfg.StripePublishableKey,
@@ -128,8 +139,7 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 			if err := service.AddGateway(stripeConfig); err != nil {
 				log.Fatal().Err(err).Msg("failed to add stripe gateway")
 			}
-			service.SetPrimaryGateway("stripe")
-			service.SetFallbackGateways("paypal")
+
 			taskProcessor := worker.NewRedisTaskProcessor(redisCfg, pgRepo, mailer, cfg)
 			cacheService := cachesrv.NewRedisCache(cfg)
 			api, err := api.NewAPI(cfg, pgRepo, cacheService, taskDistributor, uploadService, service)

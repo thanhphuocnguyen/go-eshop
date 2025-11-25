@@ -9,10 +9,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
-	"github.com/stripe/stripe-go/v81"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
 )
 
 // @Summary Create a new cart
@@ -145,8 +145,8 @@ func (sv *Server) GetCartHandler(c *gin.Context) {
 // @Success 200 {object} ApiResponse[[]repository.GetAvailableDiscountsForCartRow]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /carts/discounts [get]
-func (sv *Server) GetCartDiscountsHandler(c *gin.Context) {
+// @Router /carts/available-discounts [get]
+func (sv *Server) GetCartAvailableDiscountsHandler(c *gin.Context) {
 	authPayload, _ := c.MustGet(AuthPayLoad).(*auth.Payload)
 	_, err := sv.repo.GetCart(c, repository.GetCartParams{
 		UserID: utils.GetPgTypeUUID(authPayload.UserID),
@@ -400,7 +400,7 @@ func (sv *Server) CheckoutHandler(c *gin.Context) {
 		}
 	}
 
-	itemRows, err := sv.repo.GetCartItemsForOrder(c, cart.ID)
+	itemRows, err := sv.repo.GetCartItems(c, cart.ID)
 	if err != nil {
 		log.Error().Err(err).Msg("GetCartItems")
 		return
@@ -410,40 +410,24 @@ func (sv *Server) CheckoutHandler(c *gin.Context) {
 	createOrderItemParams := make([]repository.CreateBulkOrderItemsParams, 0)
 	var totalPrice float64
 	for _, item := range itemRows {
-		variantIdx := -1
-		for j, param := range createOrderItemParams {
-			if param.VariantID == item.CartItem.VariantID {
-				variantIdx = j
-				break
-			}
+		price, _ := item.VariantPrice.Float64Value()
+		itemParam := repository.CreateBulkOrderItemsParams{
+			VariantID:            item.CartItem.VariantID,
+			Quantity:             item.CartItem.Quantity,
+			PricePerUnitSnapshot: item.VariantPrice,
+			VariantSkuSnapshot:   item.VariantSku,
+			ProductNameSnapshot:  item.ProductName,
+			LineTotalSnapshot:    utils.GetPgNumericFromFloat(float64(item.CartItem.Quantity) * price.Float64),
 		}
 
-		if variantIdx == -1 {
-			price, _ := item.Price.Float64Value()
-			itemParam := repository.CreateBulkOrderItemsParams{
-				VariantID:            item.CartItem.VariantID,
-				Quantity:             item.CartItem.Quantity,
-				PricePerUnitSnapshot: item.Price,
-				VariantSkuSnapshot:   item.Sku,
-				ProductNameSnapshot:  item.ProductName,
-				LineTotalSnapshot:    utils.GetPgNumericFromFloat(float64(item.CartItem.Quantity) * price.Float64),
-				AttributesSnapshot: []repository.AttributeDataSnapshot{{
-					Name:  item.AttrName,
-					Value: item.AttrValue,
-				}},
-			}
-
-			createOrderItemParams = append(createOrderItemParams, itemParam)
-			totalPrice += price.Float64 * float64(item.CartItem.Quantity)
-
-		} else {
-			createOrderItemParams[variantIdx].AttributesSnapshot = append(
-				createOrderItemParams[variantIdx].AttributesSnapshot,
-				repository.AttributeDataSnapshot{
-					Name:  item.AttrName,
-					Value: item.AttrValue,
-				})
+		err := json.Unmarshal(item.Attributes, &itemParam.AttributesSnapshot)
+		if err != nil {
+			log.Error().Err(err).Msg("Unmarshal attributes")
+			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+			return
 		}
+		createOrderItemParams = append(createOrderItemParams, itemParam)
+		totalPrice += price.Float64 * float64(item.CartItem.Quantity)
 	}
 
 	params := repository.CheckoutCartTxArgs{
@@ -459,51 +443,67 @@ func (sv *Server) CheckoutHandler(c *gin.Context) {
 		CreateOrderItemParams: createOrderItemParams,
 	}
 	var discountPrice float64
-	var discountID *uuid.UUID
+	var discountIDs []uuid.UUID
 
 	// check if there is a discount code
-	if req.DiscountCode != nil && *req.DiscountCode != "" {
-		discount, err := sv.repo.GetDiscountByCode(c, *req.DiscountCode)
-		if err != nil {
-			if errors.Is(err, repository.ErrRecordNotFound) {
-				c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, fmt.Errorf("discount code not found")))
+	if len(req.DiscountCodes) > 0 {
+		for _, code := range req.DiscountCodes {
+			discountRow, err := sv.repo.GetDiscountByCode(c, code)
+			if !discountRow.IsStackable && len(req.DiscountCodes) > 1 {
+				c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, fmt.Errorf("discount code %s is not stackable", code)))
 				return
 			}
-			log.Error().Err(err).Msg("GetDiscountByCode")
-			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
-			return
-		}
-
-		discountID = &discount.ID
-		if err != nil {
-			log.Error().Err(err).Msg("GetDiscountByCode")
-			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
-			return
+			if err != nil {
+				if errors.Is(err, repository.ErrRecordNotFound) {
+					c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, fmt.Errorf("discount code not found")))
+					return
+				}
+				log.Error().Err(err).Msg("GetDiscountByCode")
+				c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+				return
+			}
+			discountVal, _ := discountRow.DiscountValue.Float64Value()
+			if discountRow.MinOrderValue.Valid {
+				minOrderVal, _ := discountRow.MinOrderValue.Float64Value()
+				if totalPrice < minOrderVal.Float64 {
+					c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, fmt.Errorf("minimum order value for this discount is %.2f", minOrderVal.Float64)))
+					return
+				}
+			}
+			discountAmount := 0.0
+			switch discountRow.DiscountType {
+			case repository.DiscountTypeFixedAmount:
+				discountAmount = discountVal.Float64
+			case repository.DiscountTypePercentage:
+				discountAmount = totalPrice * discountVal.Float64 / 100
+			}
+			discountPrice += discountAmount
+			discountIDs = append(discountIDs, discountRow.ID)
+			if discountRow.MaxDiscountAmount.Valid {
+				maxDiscountVal, _ := discountRow.MaxDiscountAmount.Float64Value()
+				discountPrice = min(discountPrice, maxDiscountVal.Float64)
+			}
 		}
 	}
 
 	params.DiscountPrice = discountPrice
-	params.DiscountID = discountID
+	params.DiscountIDs = discountIDs
 	params.PaymentMethodID = uuid.MustParse(req.PaymentMethodId)
 
 	params.CreatePaymentFn = func(orderID uuid.UUID, method string) (paymentIntentID string, clientSecretID *string, err error) {
-		switch method {
-
-		default:
-			return "", utils.StringPtr(""), fmt.Errorf("unsupported payment method: %s", method)
-		}
-		receiptEmail := user.Email
 		// create payment intent
-		checkoutResult, err := sv.paymentSrv.CreatePaymentIntent(totalPrice, receiptEmail)
-		if err != nil {
-			return "", utils.StringPtr(""), err
-		}
+		intent, err := sv.paymentSrv.CreatePaymentIntent(c, method, payment.PaymentRequest{
+			Amount:      int64((totalPrice - discountPrice) * 100), // convert to cents
+			Currency:    "usd",
+			Email:       user.Email,
+			Description: "",
+		})
 
-		paymentIntent, ok := checkoutResult.(*stripe.PaymentIntent)
-		if !ok {
-			return "", utils.StringPtr(""), fmt.Errorf("unexpected payment intent type: %T", checkoutResult)
+		if err != nil {
+			log.Error().Err(err).Msg("CreatePaymentIntent")
+			return "", nil, err
 		}
-		return paymentIntent.ID, &paymentIntent.ClientSecret, nil
+		return intent.ID, &intent.ClientSecret, nil
 	}
 
 	rs, err := sv.repo.CheckoutCartTx(c, params)

@@ -7,11 +7,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/stripe/stripe-go/v81"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/pmgateway"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
 )
 
 func (sv *Server) getStripeConfig(c *gin.Context) {
@@ -47,7 +46,7 @@ func (sv *Server) CreatePaymentIntentHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-	var req PaymentRequest
+	var req PaymentAPIReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -68,13 +67,13 @@ func (sv *Server) CreatePaymentIntentHandler(c *gin.Context) {
 		return
 	}
 
-	payment, err := sv.repo.GetPaymentByOrderID(c, ord.ID)
+	pmRow, err := sv.repo.GetPaymentByOrderID(c, ord.ID)
 	if err != nil && !errors.Is(err, repository.ErrRecordNotFound) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, errors.New("order not found")))
 		return
 	}
 
-	if payment.ID != uuid.Nil && payment.Status != repository.PaymentStatusCancelled {
+	if pmRow.ID != uuid.Nil && pmRow.Status != repository.PaymentStatusCancelled {
 		c.JSON(http.StatusBadRequest, createErr(InvalidPaymentCode, errors.New("payment already exists")))
 		return
 	}
@@ -97,33 +96,29 @@ func (sv *Server) CreatePaymentIntentHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-	switch paymentMethod.Code {
-	case "Stripe":
-		stripeInstance, err := pmgateway.NewStripePayment(sv.config.StripeSecretKey)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
-			return
-		}
-		sv.paymentSrv.SetStrategy(stripeInstance)
-		createPaymentIntentResult, err := sv.paymentSrv.CreatePaymentIntent(total.Float64, user.Email)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
-			return
-		}
-		paymentIntent := createPaymentIntentResult.(*stripe.PaymentIntent)
-
-		createPaymentParams.PaymentIntentID = &paymentIntent.ID
-		resp.ClientSecret = &paymentIntent.ClientSecret
+	intent, err := sv.paymentSrv.CreatePaymentIntent(c, paymentMethod.Code, payment.PaymentRequest{
+		Amount:      int64(total.Float64 * 100), // convert to smallest currency unit
+		Currency:    payment.USD,
+		Email:       user.Email,
+		Description: "Payment for order " + ord.ID.String(),
+		Metadata:    map[string]string{"order_id": ord.ID.String()},
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		return
 	}
 
-	payment, err = sv.repo.CreatePayment(c, createPaymentParams)
+	createPaymentParams.PaymentIntentID = &intent.ID
+	resp.ClientSecret = &intent.ClientSecret
+
+	pmRow, err = sv.repo.CreatePayment(c, createPaymentParams)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
 
-	resp.PaymentID = payment.ID.String()
+	resp.PaymentID = pmRow.ID.String()
 	c.JSON(http.StatusOK, createDataResp(c, resp, nil, nil))
 }
 
@@ -160,21 +155,11 @@ func (sv *Server) getPaymentHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-	if paymentMethod.Code == "Stripe" {
-		stripeInstance, err := pmgateway.NewStripePayment(sv.config.StripeSecretKey)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
-			return
-		}
-		sv.paymentSrv.SetStrategy(stripeInstance)
-
-		details, err = sv.paymentSrv.GetPaymentObject(*payment.PaymentIntentID)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
-			return
-		}
+	details, err = sv.paymentSrv.GetPayment(c, *payment.PaymentIntentID, paymentMethod.Code)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		return
 	}
-
 	resp := PaymentResponse{
 		ID:      payment.ID.String(),
 		Gateway: payment.Gateway,

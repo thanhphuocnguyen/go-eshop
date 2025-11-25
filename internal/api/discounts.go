@@ -19,10 +19,10 @@ import (
 // @Success 201 {object} ApiResponse[DiscountDetailResponseModel]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /discounts [post]
+// @Router /admin/discounts [post]
 func (sv *Server) CreateDiscountHandler(c *gin.Context) {
 	// Create a new discount
-	var req CreateDiscountRequest
+	var req AddDiscountRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -31,7 +31,7 @@ func (sv *Server) CreateDiscountHandler(c *gin.Context) {
 		Code:          req.Code,
 		DiscountType:  repository.DiscountType(req.DiscountType),
 		DiscountValue: utils.GetPgNumericFromFloat(req.DiscountValue),
-		IsActive:      &req.IsActive,
+		IsActive:      req.IsActive,
 		UsageLimit:    req.UsageLimit,
 		Description:   req.Description,
 		ValidFrom:     utils.GetPgTypeTimestamp(req.ValidFrom),
@@ -111,11 +111,13 @@ func (sv *Server) GetDiscountsHandler(c *gin.Context) {
 			Code:          discount.Code,
 			DiscountType:  string(discount.DiscountType),
 			DiscountValue: discountValue.Float64,
-			IsActive:      *discount.IsActive,
-			TimeUsed:      *discount.TimesUsed,
+			IsActive:      discount.IsActive,
+			TimeUsed:      discount.TimesUsed,
 			UsageLimit:    discount.UsageLimit,
 			Description:   discount.Description,
 			ValidFrom:     discount.ValidFrom.String(),
+			CreatedAt:     discount.CreatedAt.String(),
+			UpdatedAt:     discount.UpdatedAt.String(),
 		}
 		if discount.ValidUntil.Valid {
 			listData[i].ValidUntil = discount.ValidUntil.Time.String()
@@ -189,8 +191,8 @@ func (sv *Server) GetDiscountByIDHandler(c *gin.Context) {
 		Code:          discount.Code,
 		DiscountType:  string(discount.DiscountType),
 		DiscountValue: discountValue.Float64,
-		IsActive:      *discount.IsActive,
-		TimesUsed:     *discount.TimesUsed,
+		IsActive:      discount.IsActive,
+		TimesUsed:     discount.TimesUsed,
 		UsageLimit:    discount.UsageLimit,
 		Description:   discount.Description,
 		ValidFrom:     discount.ValidFrom.String(),
@@ -213,4 +215,101 @@ func (sv *Server) GetDiscountByIDHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, createDataResp(c, resp, nil, nil))
+}
+
+// UpdateDiscountHandler godoc
+// @Summary Update discount by ID
+// @Description Update discount by ID
+// @Tags discounts
+// @Accept  json
+// @Produce  json
+// @Param id path string true "Discount ID"
+// @Param input body UpdateDiscountRequest true "Discount info"
+// @Success 200 {object} ApiResponse[string]
+// @Failure 400 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
+// @Router /discounts/{id} [put]
+func (sv *Server) UpdateDiscountHandler(c *gin.Context) {
+	// Update discount by ID
+	var param UriIDParam
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		return
+	}
+
+	var req UpdateDiscountRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		return
+	}
+	discount, err := sv.repo.GetDiscountByID(c, uuid.MustParse(param.ID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		return
+	}
+
+	sqlParams := repository.UpdateDiscountParams{
+		ID:          discount.ID,
+		Name:        req.Name,
+		Code:        req.Code,
+		IsActive:    req.IsActive,
+		UsageLimit:  req.UsageLimit,
+		IsStackable: req.IsStackable,
+		Priority:    req.Priority,
+		Description: req.Description,
+	}
+	if req.DiscountType != nil {
+		sqlParams.DiscountType.Scan(req.DiscountType)
+	}
+	if req.DiscountValue != nil {
+		sqlParams.DiscountValue = utils.GetPgNumericFromFloat(*req.DiscountValue)
+	}
+	if req.ValidFrom != nil {
+		sqlParams.ValidFrom = utils.GetPgTypeTimestamp(*req.ValidFrom)
+	}
+	if req.ValidUntil != nil {
+		sqlParams.ValidUntil = utils.GetPgTypeTimestamp(*req.ValidUntil)
+	}
+	if req.MinOrderValue != nil {
+		sqlParams.MinOrderValue = utils.GetPgNumericFromFloat(*req.MinOrderValue)
+	}
+	if req.MaxDiscountAmount != nil {
+		sqlParams.MaxDiscountAmount = utils.GetPgNumericFromFloat(*req.MaxDiscountAmount)
+	}
+
+	updated, err := sv.repo.UpdateDiscount(c, sqlParams)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		return
+	}
+
+	c.JSON(http.StatusOK, createDataResp(c, updated, nil, nil))
+}
+
+// DeleteDiscountHandler godoc
+// @Summary Delete discount by ID
+// @Description Delete discount by ID
+// @Tags discounts
+// @Accept  json
+// @Produce  json
+// @Param id path string true "Discount ID"
+// @Success 204
+// @Failure 400 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
+// @Router /discounts/{id} [delete]
+func (sv *Server) DeleteDiscountHandler(c *gin.Context) {
+	// Delete discount by ID
+	var param UriIDParam
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		return
+	}
+
+	err := sv.repo.DeleteDiscount(c, uuid.MustParse(param.ID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }

@@ -36,7 +36,7 @@ type CheckoutCartTxArgs struct {
 	CreateOrderItemParams []CreateBulkOrderItemsParams
 	TotalPrice            float64
 	DiscountPrice         float64
-	DiscountID            *uuid.UUID
+	DiscountIDs           []uuid.UUID
 	ShippingAddress       ShippingAddressSnapshot
 	PaymentMethodID       uuid.UUID
 	PaymentGateway        *string
@@ -78,15 +78,17 @@ func (s *pgRepo) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxArgs) (Cr
 			if arg.DiscountPrice > arg.TotalPrice {
 				arg.DiscountPrice = arg.TotalPrice
 			}
-			_, err := q.AddDiscountUsage(ctx, AddDiscountUsageParams{
-				OrderID:        order.ID,
-				DiscountID:     *arg.DiscountID,
-				DiscountAmount: utils.GetPgNumericFromFloat(arg.DiscountPrice),
-				UserID:         arg.UserID,
-			})
-			if err != nil {
-				log.Error().Err(err).Msg("GetDiscountByCode")
-				return err
+			for _, id := range arg.DiscountIDs {
+				_, err := q.AddDiscountUsage(ctx, AddDiscountUsageParams{
+					OrderID:        order.ID,
+					DiscountID:     id,
+					DiscountAmount: utils.GetPgNumericFromFloat(arg.DiscountPrice),
+					UserID:         arg.UserID,
+				})
+				if err != nil {
+					log.Error().Err(err).Msg("AddDiscountUsage")
+					return err
+				}
 			}
 		}
 

@@ -181,7 +181,7 @@ func (sv *Server) LoginHandler(c *gin.Context) {
 	}
 
 	var user repository.User
-	var err error
+	var err error = nil
 	if req.Username != nil {
 		user, err = sv.repo.GetUserByUsername(c, *req.Username)
 	} else {
@@ -197,7 +197,7 @@ func (sv *Server) LoginHandler(c *gin.Context) {
 		return
 	}
 
-	if err := auth.CheckPassword(req.Password, user.HashedPassword); err != nil {
+	if err = auth.CheckPassword(req.Password, user.HashedPassword); err != nil {
 		c.JSON(http.StatusUnauthorized, createErr(UnauthorizedCode, err))
 		return
 	}
@@ -207,6 +207,7 @@ func (sv *Server) LoginHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
+
 	accessToken, payload, err := sv.tokenGenerator.GenerateToken(user.ID, user.Username, role, sv.config.AccessTokenDuration)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErr(InvalidTokenCode, err))

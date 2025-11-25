@@ -26,7 +26,7 @@ import (
 // @Failure 500 {object} ErrorResp
 // @Router /shop/brands [get]
 func (sv *Server) GetShopBrandsHandler(c *gin.Context) {
-	var queries BrandsQueries
+	var queries PaginationQueryParams
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -97,7 +97,7 @@ func (sv *Server) GetShopBrandBySlugHandler(c *gin.Context) {
 		return
 	}
 
-	var queries BrandsQueries
+	var queries PaginationQueryParams
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -196,7 +196,7 @@ func (sv *Server) CreateBrandHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /brands [get]
 func (sv *Server) GetBrandsHandler(c *gin.Context) {
-	var queries BrandsQueries
+	var queries PaginationQueryParams
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return

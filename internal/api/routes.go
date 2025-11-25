@@ -13,7 +13,7 @@ import (
 	docs "github.com/thanhphuocnguyen/go-eshop/docs"
 )
 
-func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
+func (sv *Server) addAdminRoutes(rg *gin.RouterGroup) {
 	admin := rg.Group("/admin", authenticateMiddleware(sv.tokenGenerator), authorizeMiddleware("admin"))
 	{
 		users := admin.Group("users")
@@ -110,13 +110,14 @@ func (sv *Server) setupAdminRoutes(rg *gin.RouterGroup) {
 			discounts.POST("", sv.CreateDiscountHandler)
 			discounts.GET("", sv.GetDiscountsHandler)
 			discounts.GET(":id", sv.GetDiscountByIDHandler)
-			// discounts.PUT(":id", sv.UpdateDiscountHandler)
+			discounts.PUT(":id", sv.UpdateDiscountHandler)
+			discounts.DELETE(":id", sv.DeleteDiscountHandler)
 		}
 	}
 }
 
 // Setup authentication routes
-func (sv *Server) setupAuthRoutes(rg *gin.RouterGroup) {
+func (sv *Server) addAuthRoutes(rg *gin.RouterGroup) {
 	auth := rg.Group("/auth")
 	{
 		auth.POST("register", sv.RegisterHandler)
@@ -126,7 +127,7 @@ func (sv *Server) setupAuthRoutes(rg *gin.RouterGroup) {
 }
 
 // Setup user-related routes
-func (sv *Server) setupUserRoutes(rg *gin.RouterGroup) {
+func (sv *Server) addUserRoutes(rg *gin.RouterGroup) {
 	users := rg.Group("users", authenticateMiddleware(sv.tokenGenerator))
 	{
 		users.GET("me", sv.GetCurrentUserHandler)
@@ -135,16 +136,16 @@ func (sv *Server) setupUserRoutes(rg *gin.RouterGroup) {
 		userAddresses := users.Group("addresses")
 		{
 			userAddresses.POST("", sv.CreateAddressHandler)
-			userAddresses.PATCH(":id/default", sv.setDefaultAddressHandler)
-			userAddresses.GET("", sv.getAddressesHandlers)
-			userAddresses.PATCH(":id", sv.updateAddressHandlers)
+			userAddresses.PATCH(":id/default", sv.SetDefaultAddressHandler)
+			userAddresses.GET("", sv.GetAddressesHandlers)
+			userAddresses.PATCH(":id", sv.UpdateAddressHandlers)
 			userAddresses.DELETE(":id", sv.RemoveAddressHandlers)
 		}
 	}
 }
 
 // Setup product-related routes
-func (sv *Server) setupProductRoutes(rg *gin.RouterGroup) {
+func (sv *Server) addProductRoutes(rg *gin.RouterGroup) {
 	products := rg.Group("products")
 	{
 		products.GET("", sv.GetProductsHandler)
@@ -154,7 +155,7 @@ func (sv *Server) setupProductRoutes(rg *gin.RouterGroup) {
 }
 
 // Setup image-related routes
-func (sv *Server) setupImageRoutes(rg *gin.RouterGroup) {
+func (sv *Server) addImageRoutes(rg *gin.RouterGroup) {
 	images := rg.Group("images", authenticateMiddleware(sv.tokenGenerator))
 	{
 		images.DELETE(
@@ -166,7 +167,7 @@ func (sv *Server) setupImageRoutes(rg *gin.RouterGroup) {
 }
 
 // Setup cart-related routes
-func (sv *Server) setupCartRoutes(rg *gin.RouterGroup) {
+func (sv *Server) addCartRoutes(rg *gin.RouterGroup) {
 	cart := rg.Group("/carts", authenticateMiddleware(sv.tokenGenerator))
 	{
 		cart.POST("", sv.CreateCart)
@@ -174,7 +175,7 @@ func (sv *Server) setupCartRoutes(rg *gin.RouterGroup) {
 		cart.POST("checkout", sv.CheckoutHandler)
 		cart.PUT("clear", sv.ClearCart)
 
-		cart.GET("discounts", sv.GetCartDiscountsHandler)
+		cart.GET("available-discounts", sv.GetCartAvailableDiscountsHandler)
 		cartItems := cart.Group("items")
 		{
 			cartItems.PUT(":id/quantity", sv.UpdateCartItemQtyHandler)
@@ -184,7 +185,7 @@ func (sv *Server) setupCartRoutes(rg *gin.RouterGroup) {
 }
 
 // Setup order-related routes
-func (sv *Server) setupOrderRoutes(rg *gin.RouterGroup) {
+func (sv *Server) addOrderRoutes(rg *gin.RouterGroup) {
 	orders := rg.Group("/orders", authenticateMiddleware(sv.tokenGenerator))
 	{
 		orders.GET("", sv.getOrdersHandler)
@@ -195,7 +196,7 @@ func (sv *Server) setupOrderRoutes(rg *gin.RouterGroup) {
 }
 
 // Setup payment-related routes
-func (sv *Server) setupPaymentRoutes(rg *gin.RouterGroup) {
+func (sv *Server) addPaymentRoutes(rg *gin.RouterGroup) {
 	payments := rg.Group("/payments").Use(authenticateMiddleware(sv.tokenGenerator))
 	{
 		payments.GET(":id", sv.getPaymentHandler)
@@ -206,7 +207,7 @@ func (sv *Server) setupPaymentRoutes(rg *gin.RouterGroup) {
 }
 
 // Setup category-related routes
-func (sv *Server) setupCategoryRoutes(rg *gin.RouterGroup) {
+func (sv *Server) addCategoryRoutes(rg *gin.RouterGroup) {
 	categories := rg.Group("categories")
 	{
 		categories.GET("", sv.GetCategoriesHandler)
@@ -216,7 +217,7 @@ func (sv *Server) setupCategoryRoutes(rg *gin.RouterGroup) {
 }
 
 // Setup collection-related routes
-func (sv *Server) setupCollectionRoutes(rg *gin.RouterGroup) {
+func (sv *Server) addCollectionRoutes(rg *gin.RouterGroup) {
 	collections := rg.Group("collections")
 	{
 		collections.GET("", sv.GetCollectionsHandler)
@@ -225,7 +226,7 @@ func (sv *Server) setupCollectionRoutes(rg *gin.RouterGroup) {
 }
 
 // Setup brand-related routes
-func (sv *Server) setupBrandRoutes(rg *gin.RouterGroup) {
+func (sv *Server) addBrandRoutes(rg *gin.RouterGroup) {
 	brands := rg.Group("brands")
 	{
 		brands.GET("", sv.GetShopBrandsHandler)
@@ -234,7 +235,7 @@ func (sv *Server) setupBrandRoutes(rg *gin.RouterGroup) {
 }
 
 // Setup brand-related routes
-func (sv *Server) setupRatingRoutes(rg *gin.RouterGroup) {
+func (sv *Server) addRatingRoutes(rg *gin.RouterGroup) {
 	ratings := rg.Group("ratings", authenticateMiddleware(sv.tokenGenerator))
 	{
 		ratings.POST("", sv.postRatingHandler)
@@ -247,7 +248,7 @@ func (sv *Server) setupRatingRoutes(rg *gin.RouterGroup) {
 // Setup discount-related routes
 
 // Setup webhook routes
-func (sv *Server) setupWebhookRoutes(router *gin.Engine) {
+func (sv *Server) addWebhookRoutes(router *gin.Engine) {
 	webhooks := router.Group("/webhook/v1")
 	{
 		webhooks.POST("stripe", sv.stripeEventHandler)
@@ -288,22 +289,22 @@ func (sv *Server) initializeRouter() {
 		v1.GET("homepage", sv.getHomePageHandler)
 
 		// Register API route groups
-		sv.setupAuthRoutes(v1)
-		sv.setupAdminRoutes(v1)
-		sv.setupUserRoutes(v1)
-		sv.setupProductRoutes(v1)
-		sv.setupImageRoutes(v1)
-		sv.setupCartRoutes(v1)
-		sv.setupOrderRoutes(v1)
-		sv.setupPaymentRoutes(v1)
-		sv.setupCategoryRoutes(v1)
-		sv.setupCollectionRoutes(v1)
-		sv.setupBrandRoutes(v1)
-		sv.setupRatingRoutes(v1)
+		sv.addAuthRoutes(v1)
+		sv.addAdminRoutes(v1)
+		sv.addUserRoutes(v1)
+		sv.addProductRoutes(v1)
+		sv.addImageRoutes(v1)
+		sv.addCartRoutes(v1)
+		sv.addOrderRoutes(v1)
+		sv.addPaymentRoutes(v1)
+		sv.addCategoryRoutes(v1)
+		sv.addCollectionRoutes(v1)
+		sv.addBrandRoutes(v1)
+		sv.addRatingRoutes(v1)
 	}
 
 	// Setup webhook routes
-	sv.setupWebhookRoutes(router)
+	sv.addWebhookRoutes(router)
 
 	// Setup Swagger
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))

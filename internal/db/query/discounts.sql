@@ -17,7 +17,7 @@ UPDATE discounts SET
     valid_from = COALESCE(sqlc.narg('valid_from'), discounts.valid_from),
     valid_until = COALESCE(sqlc.narg('valid_until'), discounts.valid_until),
     updated_at = NOW()
-WHERE id = $1 RETURNING id;
+WHERE id = $1 RETURNING *;
 
 -- name: GetDiscountByID :one
 SELECT * FROM discounts WHERE id = $1;
@@ -109,3 +109,35 @@ SELECT COUNT(*) FROM discounts WHERE priority = $1;
 
 -- name: SeedDiscounts :copyfrom
 INSERT INTO discounts (code, name, description, discount_type, discount_value, min_order_value, max_discount_amount, usage_limit, usage_per_user, is_active, is_stackable, priority, valid_from, valid_until) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14);
+
+-- name: InsertDiscountRule :one
+INSERT INTO discount_rules (discount_id, rule_type, rule_value) VALUES ($1, $2, $3) RETURNING id;
+
+-- name: UpdateDiscountRule :one
+UPDATE discount_rules SET
+    rule_type = COALESCE(sqlc.narg('rule_type'), discount_rules.rule_type),
+    rule_value = COALESCE(sqlc.narg('rule_value'), discount_rules.rule_value)
+WHERE id = $1 RETURNING id;
+
+-- name: DeleteDiscountRule :exec
+DELETE FROM discount_rules WHERE id = $1;
+-- name: GetDiscountRuleByID :one
+SELECT * FROM discount_rules WHERE id = $1;
+-- name: CountDiscountRules :one
+SELECT COUNT(*) FROM discount_rules WHERE discount_id = $1;
+-- name: GetDiscountsWithRules :many
+SELECT d.*, dr.rule_type, dr.rule_value
+FROM discounts d
+LEFT JOIN discount_rules dr ON d.id = dr.discount_id
+WHERE d.id = COALESCE(sqlc.narg('discount_id'), d.id)
+AND dr.rule_type = COALESCE(sqlc.narg('rule_type'), dr.rule_type)
+LIMIT $1 OFFSET $2;
+-- name: GetActiveDiscountRules :many
+SELECT * FROM discount_rules
+WHERE discount_id = $1
+AND rule_type = COALESCE(sqlc.narg('rule_type'), rule_type)
+LIMIT $2 OFFSET $3;
+-- name: DeleteDiscountRulesByType :exec
+DELETE FROM discount_rules WHERE discount_id = $1 AND rule_type = $2;
+-- name: CountDiscountRulesByType :one
+SELECT COUNT(*) FROM discount_rules WHERE discount_id = $1 AND rule_type = $2;

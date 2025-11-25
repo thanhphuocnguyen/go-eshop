@@ -22,8 +22,6 @@ type GatewayFactory func(config GatewayConfig) (PaymentGateway, error)
 type PaymentService struct {
 	gateways  map[string]PaymentGateway
 	factories map[string]GatewayFactory
-	primary   string
-	fallbacks []string
 	mu        sync.RWMutex
 }
 
@@ -61,41 +59,12 @@ func (ps *PaymentService) AddGateway(config GatewayConfig) error {
 	return nil
 }
 
-// SetPrimaryGateway sets the primary payment gateway
-func (ps *PaymentService) SetPrimaryGateway(name string) error {
-	ps.mu.Lock()
-	defer ps.mu.Unlock()
-
-	if _, exists := ps.gateways[name]; !exists {
-		return ErrGatewayNotFound
-	}
-
-	ps.primary = name
-	return nil
-}
-
-// SetFallbackGateways sets fallback gateways in order of preference
-func (ps *PaymentService) SetFallbackGateways(names ...string) error {
-	ps.mu.Lock()
-	defer ps.mu.Unlock()
-
-	for _, name := range names {
-		if _, exists := ps.gateways[name]; !exists {
-			return fmt.Errorf("fallback gateway %s not found", name)
-		}
-	}
-
-	ps.fallbacks = names
-	return nil
-}
-
 // CreatePaymentIntent creates a payment intent using the primary gateway
-func (ps *PaymentService) CreatePaymentIntent(ctx context.Context, req PaymentRequest) (*PaymentIntent, error) {
+func (ps *PaymentService) CreatePaymentIntent(ctx context.Context, gatewayName string, req PaymentRequest) (*PaymentIntent, error) {
 	if err := ps.validatePaymentRequest(req); err != nil {
 		return nil, err
 	}
-
-	gateway, err := ps.getPrimaryGateway()
+	gateway, err := ps.getGateway(gatewayName)
 	if err != nil {
 		return nil, err
 	}
@@ -125,10 +94,6 @@ func (ps *PaymentService) ConfirmPayment(ctx context.Context, intentID string, g
 	}
 
 	result, err := gateway.ConfirmPayment(ctx, intentID)
-	if err != nil {
-		// Try fallback gateways if primary fails
-		return ps.confirmPaymentWithFallback(ctx, intentID)
-	}
 
 	return result, nil
 }
@@ -171,22 +136,6 @@ func (ps *PaymentService) validatePaymentRequest(req PaymentRequest) error {
 	return nil
 }
 
-func (ps *PaymentService) getPrimaryGateway() (PaymentGateway, error) {
-	ps.mu.RLock()
-	defer ps.mu.RUnlock()
-
-	if ps.primary == "" {
-		return nil, errors.New("no primary gateway configured")
-	}
-
-	gateway, exists := ps.gateways[ps.primary]
-	if !exists {
-		return nil, ErrGatewayNotFound
-	}
-
-	return gateway, nil
-}
-
 func (ps *PaymentService) getGateway(name string) (PaymentGateway, error) {
 	ps.mu.RLock()
 	defer ps.mu.RUnlock()
@@ -201,24 +150,4 @@ func (ps *PaymentService) getGateway(name string) (PaymentGateway, error) {
 
 func (ps *PaymentService) createPaymentIntentWithGateway(ctx context.Context, req PaymentRequest, gateway PaymentGateway) (*PaymentIntent, error) {
 	return gateway.CreatePaymentIntent(ctx, req)
-}
-
-func (ps *PaymentService) confirmPaymentWithFallback(ctx context.Context, intentID string) (*PaymentResult, error) {
-	ps.mu.RLock()
-	fallbacks := ps.fallbacks
-	ps.mu.RUnlock()
-
-	for _, gatewayName := range fallbacks {
-		gateway, err := ps.getGateway(gatewayName)
-		if err != nil {
-			continue
-		}
-
-		result, err := gateway.ConfirmPayment(ctx, intentID)
-		if err == nil {
-			return result, nil
-		}
-	}
-
-	return nil, errors.New("all payment gateways failed")
 }

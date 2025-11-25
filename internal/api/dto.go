@@ -15,10 +15,10 @@ type PaginationQueryParams struct {
 }
 
 type CreateCategoryRequest struct {
+	DisplayOrder *int16                `form:"displayOrder" binding:"omitempty"`
+	Description  *string               `form:"description" binding:"omitempty,max=1000"`
 	Name         string                `form:"name" binding:"required,min=3,max=255"`
 	Slug         string                `form:"slug" binding:"required,min=3,max=255"`
-	Description  *string               `form:"description" binding:"omitempty,max=1000"`
-	DisplayOrder *int16                `form:"displayOrder" binding:"omitempty"`
 	Image        *multipart.FileHeader `form:"image" binding:"omitempty"`
 }
 
@@ -35,7 +35,7 @@ type PostReplyRatingRequest struct {
 	Content  string `json:"content" binding:"required"`
 }
 
-type PaymentRequest struct {
+type PaymentAPIReq struct {
 	OrderID         string `json:"orderId" binding:"required,uuid"`
 	PaymentMethodID string `json:"paymentMethodId" binding:"required,uuid"`
 }
@@ -50,7 +50,7 @@ type OrderStatusRequest struct {
 }
 
 type RefundOrderRequest struct {
-	Reason string `json:"reason" binding:"required,oneof=defective damaged fraudulent requested_by_customer"`
+	Reason string `json:"reason" binding:"required"`
 }
 
 type CancelOrderRequest struct {
@@ -85,10 +85,9 @@ type AddCartItemReq struct {
 }
 
 type CheckoutRequest struct {
-	PaymentMethodId string  `json:"paymentMethod" binding:"required,oneof=cod stripe"`
-	AddressId       string  `json:"addressId" binding:"required,uuid"`
-	PaymentGateway  *string `json:"paymentGateway" binding:"omitempty,oneof=stripe"`
-	DiscountCode    *string `json:"discountCode" binding:"omitempty,min=5,max=32,alphanum"`
+	PaymentMethodId string   `json:"paymentMethod" binding:"required,oneof=cod stripe"`
+	AddressId       string   `json:"addressId" binding:"required,uuid"`
+	DiscountCodes   []string `json:"discountCodes" binding:"omitempty"`
 }
 
 type AssignmentRequest struct {
@@ -96,11 +95,11 @@ type AssignmentRequest struct {
 }
 
 type UpdateUserRequest struct {
-	UserID    uuid.UUID `json:"userId" binding:"required,uuid"`
-	FirstName *string   `json:"firstName,omitempty" binding:"omitempty,min=3,max=32"`
-	LastName  *string   `json:"lastName,omitempty" binding:"omitempty,min=3,max=32"`
-	Email     *string   `json:"email" binding:"email,max=255,min=6"`
-	Phone     *string   `json:"phone" binding:"omitempty,min=8,max=15"`
+	UserID    string  `json:"userId" binding:"required,uuid"`
+	FirstName *string `json:"firstName,omitempty" binding:"omitempty,min=3,max=32"`
+	LastName  *string `json:"lastName,omitempty" binding:"omitempty,min=3,max=32"`
+	Email     *string `json:"email" binding:"email,max=255,min=6"`
+	Phone     *string `json:"phone" binding:"omitempty,min=8,max=15"`
 }
 
 type CollectionProductRequest struct {
@@ -139,22 +138,36 @@ type PostRatingFormData struct {
 	Files       []*multipart.FileHeader `form:"files" binding:"omitempty"`
 }
 
-type CreateDiscountRequest struct {
-	Code              string    `json:"code" binding:"required,min=5,max=32,alphanum"`
-	DiscountType      string    `json:"discountType" binding:"required,oneof=percentage fixed_amount"`
-	DiscountValue     float64   `json:"discountValue" binding:"required,gt=0"`
+type AddDiscountRequest struct {
+	IsStackable       bool      `json:"isStackable" binding:"omitempty"`
 	IsActive          bool      `json:"isActive" binding:"required"`
-	ValidFrom         time.Time `json:"validFrom" binding:"required" time_format:"RFC3339"`
-	ValidUntil        time.Time `json:"validUntil" binding:"omitempty" time_format:"RFC3339"`
+	DiscountValue     float64   `json:"discountValue" binding:"required,gt=0"`
+	Code              string    `json:"code" binding:"required,min=5,max=32,alphanum"`
+	Name              string    `json:"name" binding:"required,min=3,max=100"`
+	DiscountType      string    `json:"discountType" binding:"required"`
+	ValidFrom         time.Time `json:"validFrom" binding:"required"`
+	ValidUntil        time.Time `json:"validUntil" binding:"omitempty"`
+	Priority          *int32    `json:"priority" binding:"omitempty,gte=0"`
 	Description       *string   `json:"description" binding:"omitempty,max=1000"`
 	MinOrderValue     *float64  `json:"minOrderValue" binding:"omitempty,gt=0"`
 	MaxDiscountAmount *float64  `json:"maxDiscountAmount" binding:"omitempty,gt=0"`
 	UsageLimit        *int32    `json:"usageLimit" binding:"omitempty,gte=0"`
+}
 
-	// Related entities
-	Products   []string `json:"products,omitempty" binding:"omitempty,uuidslice"`
-	Categories []string `json:"categories,omitempty" binding:"omitempty,uuidslice"`
-	Users      []string `json:"users,omitempty" binding:"omitempty,uuidslice"`
+type UpdateDiscountRequest struct {
+	IsStackable       *bool      `json:"isStackable" binding:"omitempty"`
+	IsActive          *bool      `json:"isActive" binding:"omitempty"`
+	DiscountValue     *float64   `json:"discountValue" binding:"omitempty,gt=0"`
+	Code              *string    `json:"code" binding:"omitempty,min=5,max=32,alphanum"`
+	Name              *string    `json:"name" binding:"omitempty,min=3,max=100"`
+	DiscountType      *string    `json:"discountType" binding:"omitempty"`
+	ValidFrom         *time.Time `json:"validFrom" binding:"omitempty"`
+	ValidUntil        *time.Time `json:"validUntil" binding:"omitempty"`
+	Priority          *int32     `json:"priority" binding:"omitempty,gte=0"`
+	Description       *string    `json:"description" binding:"omitempty,max=1000"`
+	MinOrderValue     *float64   `json:"minOrderValue" binding:"omitempty,gt=0"`
+	MaxDiscountAmount *float64   `json:"maxDiscountAmount" binding:"omitempty,gt=0"`
+	UsageLimit        *int32     `json:"usageLimit" binding:"omitempty,gte=0"`
 }
 
 type DiscountListQuery struct {
@@ -180,10 +193,6 @@ type LoginRequest struct {
 	Username *string `form:"username" binding:"omitempty,max=32"`
 	Email    *string `form:"email" binding:"omitempty,email,max=255"`
 	Password string  `form:"password" binding:"required,min=6,max=32"`
-}
-
-type BrandsQueries struct {
-	PaginationQueryParams
 }
 
 type BrandProductRequest struct {
@@ -284,8 +293,8 @@ type ProductDetailDto struct {
 	UpdatedAt string `json:"updatedAt"`
 	CreatedAt string `json:"createdAt"`
 
-	Attributes  []ProductAttribute        `json:"attributes,omitempty"`
 	Brand       GeneralCategoryResponse   `json:"brand,omitempty"`
+	Attributes  []ProductAttribute        `json:"attributes,omitempty"`
 	Collections []GeneralCategoryResponse `json:"collections,omitempty"`
 	Categories  []GeneralCategoryResponse `json:"categories,omitempty"`
 	Variations  []VariantModelDto         `json:"variants,omitempty"`

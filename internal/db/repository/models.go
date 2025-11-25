@@ -292,9 +292,9 @@ type Discount struct {
 	MaxDiscountAmount pgtype.Numeric     `json:"maxDiscountAmount"`
 	UsageLimit        *int32             `json:"usageLimit"`
 	UsagePerUser      *int32             `json:"usagePerUser"`
-	TimesUsed         *int32             `json:"timesUsed"`
-	IsActive          *bool              `json:"isActive"`
-	IsStackable       *bool              `json:"isStackable"`
+	TimesUsed         int32              `json:"timesUsed"`
+	IsActive          bool               `json:"isActive"`
+	IsStackable       bool               `json:"isStackable"`
 	Priority          *int32             `json:"priority"`
 	ValidFrom         time.Time          `json:"validFrom"`
 	ValidUntil        pgtype.Timestamptz `json:"validUntil"`
