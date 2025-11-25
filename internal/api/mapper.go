@@ -5,13 +5,14 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
-func mapToUserResponse(user repository.User, roleCode string) UserDetail {
-	return UserDetail{
+func mapToUserResponse(user repository.User, roleCode string) dto.UserDetail {
+	return dto.UserDetail{
 		ID:                user.ID,
-		Addresses:         []AddressResponse{},
+		Addresses:         []dto.AddressDetail{},
 		Email:             user.Email,
 		FirstName:         user.FirstName,
 		LastName:          user.LastName,
@@ -27,8 +28,8 @@ func mapToUserResponse(user repository.User, roleCode string) UserDetail {
 	}
 }
 
-func mapAddressToAddressResponse(address repository.UserAddress) AddressResponse {
-	return AddressResponse{
+func mapAddressToAddressResponse(address repository.UserAddress) dto.AddressDetail {
+	return dto.AddressDetail{
 		Phone:    address.PhoneNumber,
 		Street:   address.Street,
 		Ward:     address.Ward,
@@ -39,10 +40,10 @@ func mapAddressToAddressResponse(address repository.UserAddress) AddressResponse
 	}
 }
 
-func mapToProductDetailResponse(row repository.GetProductDetailRow) ProductDetailDto {
+func mapToProductDetailResponse(row repository.GetProductDetailRow) dto.ProductDetail {
 	basePrice, _ := row.BasePrice.Float64Value()
 
-	resp := ProductDetailDto{
+	resp := dto.ProductDetail{
 		ID:                 row.ID.String(),
 		Name:               row.Name,
 		BasePrice:          basePrice.Float64,
@@ -65,11 +66,11 @@ func mapToProductDetailResponse(row repository.GetProductDetailRow) ProductDetai
 		ImageId:  row.ImageID,
 
 		// Initialize slices
-		Categories:  []GeneralCategoryResponse{},
-		Collections: []GeneralCategoryResponse{},
-		Attributes:  []ProductAttribute{},
-		Brand:       GeneralCategoryResponse{},
-		Variations:  []VariantModelDto{},
+		Categories:  []dto.GeneralCategory{},
+		Collections: []dto.GeneralCategory{},
+		Attributes:  []dto.ProductAttribute{},
+		Brand:       dto.GeneralCategory{},
+		Variations:  []dto.VariantDetail{},
 	}
 
 	// Unmarshal JSON data
@@ -92,11 +93,11 @@ func mapToProductDetailResponse(row repository.GetProductDetailRow) ProductDetai
 	return resp
 }
 
-func mapToAdminProductResponse(productRow repository.Product) ProductListDTO {
+func mapToAdminProductResponse(productRow repository.Product) dto.ProductListItem {
 	basePrice, _ := productRow.BasePrice.Float64Value()
 
 	avgRating := utils.GetAvgRating(productRow.RatingCount, productRow.OneStarCount, productRow.TwoStarCount, productRow.ThreeStarCount, productRow.FourStarCount, productRow.FiveStarCount)
-	product := ProductListDTO{
+	product := dto.ProductListItem{
 		ID:                 productRow.ID.String(),
 		Name:               productRow.Name,
 		Description:        productRow.Description,
@@ -115,10 +116,10 @@ func mapToAdminProductResponse(productRow repository.Product) ProductListDTO {
 	return product
 }
 
-func mapToShopProductResponse(productRow repository.GetProductListRow) ProductSummary {
+func mapToShopProductResponse(productRow repository.GetProductListRow) dto.ProductSummary {
 	price, _ := productRow.MinPrice.Float64Value()
 	avgRating := utils.GetAvgRating(productRow.RatingCount, productRow.OneStarCount, productRow.TwoStarCount, productRow.ThreeStarCount, productRow.FourStarCount, productRow.FiveStarCount)
-	product := ProductSummary{
+	product := dto.ProductSummary{
 		ID:           productRow.ID.String(),
 		Name:         productRow.Name,
 		Price:        price.Float64,
@@ -135,9 +136,9 @@ func mapToShopProductResponse(productRow repository.GetProductListRow) ProductSu
 	return product
 }
 
-func mapToVariantListModelDto(row repository.GetProductVariantListRow) VariantModelDto {
+func mapToVariantListModelDto(row repository.GetProductVariantListRow) dto.VariantDetail {
 	price, _ := row.Price.Float64Value()
-	variant := VariantModelDto{
+	variant := dto.VariantDetail{
 		ID:       row.ID.String(),
 		Price:    price.Float64,
 		Stock:    row.Stock,
@@ -145,7 +146,7 @@ func mapToVariantListModelDto(row repository.GetProductVariantListRow) VariantMo
 		Sku:      row.Sku,
 		ImageUrl: row.ImageUrl,
 	}
-	variant.Attributes = []AttributeValue{}
+	variant.Attributes = []dto.AttributeValueDetail{}
 	err := json.Unmarshal(row.AttributeValues, &variant.Attributes)
 	if err != nil {
 		log.Error().Err(err).Msg("Unmarshal variant attribute values")
@@ -158,8 +159,8 @@ func mapToVariantListModelDto(row repository.GetProductVariantListRow) VariantMo
 	return variant
 }
 
-func mapAddressResponse(address repository.UserAddress) AddressResponse {
-	return AddressResponse{
+func mapAddressResponse(address repository.UserAddress) dto.AddressDetail {
+	return dto.AddressDetail{
 		ID:        address.ID.String(),
 		Default:   address.IsDefault,
 		CreatedAt: address.CreatedAt,

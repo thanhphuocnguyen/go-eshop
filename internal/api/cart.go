@@ -5,11 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
+	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
@@ -58,10 +61,10 @@ func (sv *Server) CreateCart(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-	resp := &CartDetailResponse{
+	resp := &dto.CartDetail{
 		ID:         newCart.ID,
 		TotalPrice: 0,
-		CartItems:  []CartItemResponse{},
+		CartItems:  []dto.CartItemDetail{},
 		CreatedAt:  newCart.CreatedAt,
 	}
 
@@ -100,10 +103,10 @@ func (sv *Server) GetCartHandler(c *gin.Context) {
 				c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 				return
 			}
-			c.JSON(http.StatusOK, createDataResp(c, CartDetailResponse{
+			c.JSON(http.StatusOK, createDataResp(c, dto.CartDetail{
 				ID:         cart.ID,
 				TotalPrice: 0,
-				CartItems:  []CartItemResponse{},
+				CartItems:  []dto.CartItemDetail{},
 				UpdatedAt:  &cart.UpdatedAt,
 				CreatedAt:  cart.CreatedAt,
 			}, nil, nil))
@@ -117,11 +120,11 @@ func (sv *Server) GetCartHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-	cartDetail := CartDetailResponse{
+	cartDetail := dto.CartDetail{
 		ID:             cart.ID,
 		TotalPrice:     0,
 		DiscountAmount: 0,
-		CartItems:      make([]CartItemResponse, len(cartItemRows)),
+		CartItems:      make([]dto.CartItemDetail, len(cartItemRows)),
 		UpdatedAt:      &cart.UpdatedAt,
 		CreatedAt:      cart.CreatedAt,
 	}
@@ -177,7 +180,7 @@ func (sv *Server) GetCartAvailableDiscountsHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /carts/items/{variant_id} [post]
 func (sv *Server) UpdateCartItemQtyHandler(c *gin.Context) {
-	var param UriIDParam
+	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("invalid variant id")))
 		return
@@ -189,7 +192,7 @@ func (sv *Server) UpdateCartItemQtyHandler(c *gin.Context) {
 		return
 	}
 
-	var req UpdateCartItemQtyRequest
+	var req models.UpdateCartItemQtyModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InternalServerErrorCode, err))
 		return
@@ -278,7 +281,7 @@ func (sv *Server) RemoveCartItem(c *gin.Context) {
 		return
 	}
 
-	var param UriIDParam
+	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InternalServerErrorCode, err))
 		return
@@ -338,7 +341,7 @@ func (sv *Server) CheckoutHandler(c *gin.Context) {
 		return
 	}
 
-	var req CheckoutRequest
+	var req models.CheckoutModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -380,6 +383,7 @@ func (sv *Server) CheckoutHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
+
 	shippingAddr = repository.ShippingAddressSnapshot{
 		Street:   address.Street,
 		Ward:     *address.Ward,
@@ -387,6 +391,7 @@ func (sv *Server) CheckoutHandler(c *gin.Context) {
 		City:     address.City,
 		Phone:    address.PhoneNumber,
 	}
+
 	if cart.UserID.Valid {
 		cartUserId, err := uuid.FromBytes(cart.UserID.Bytes[:])
 		if err != nil {
@@ -449,6 +454,12 @@ func (sv *Server) CheckoutHandler(c *gin.Context) {
 	if len(req.DiscountCodes) > 0 {
 		for _, code := range req.DiscountCodes {
 			discountRow, err := sv.repo.GetDiscountByCode(c, code)
+			if discountRow.ValidUntil.Valid {
+				if discountRow.ValidUntil.Time.Before(time.Now().UTC()) {
+					c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, fmt.Errorf("discount code %s has expired", code)))
+					return
+				}
+			}
 			if !discountRow.IsStackable && len(req.DiscountCodes) > 1 {
 				c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, fmt.Errorf("discount code %s is not stackable", code)))
 				return
@@ -493,10 +504,12 @@ func (sv *Server) CheckoutHandler(c *gin.Context) {
 	params.CreatePaymentFn = func(orderID uuid.UUID, method string) (paymentIntentID string, clientSecretID *string, err error) {
 		// create payment intent
 		intent, err := sv.paymentSrv.CreatePaymentIntent(c, method, payment.PaymentRequest{
-			Amount:      int64((totalPrice - discountPrice) * 100), // convert to cents
-			Currency:    "usd",
-			Email:       user.Email,
-			Description: "",
+			Amount:   int64((totalPrice - discountPrice) * 100), // convert to cents
+			Currency: "usd",
+			Email:    user.Email,
+			Metadata: map[string]string{
+				"OrderID": orderID.String(),
+			},
 		})
 
 		if err != nil {
@@ -562,10 +575,10 @@ func (sv *Server) ClearCart(c *gin.Context) {
 }
 
 // ------------------------------ Mappers ------------------------------
-func mapToCartItemsResp(row repository.GetCartItemsRow) CartItemResponse {
+func mapToCartItemsResp(row repository.GetCartItemsRow) dto.CartItemDetail {
 
 	// if it's the first item or the previous item is different
-	var attr []AttributeValue
+	var attr []dto.AttributeDetail
 	err := json.Unmarshal(row.Attributes, &attr)
 	if err != nil {
 		log.Error().Err(err).Msg("Unmarshal cart item attributes")
@@ -573,7 +586,7 @@ func mapToCartItemsResp(row repository.GetCartItemsRow) CartItemResponse {
 	price, _ := row.VariantPrice.Float64Value()
 	qty := row.CartItem.Quantity
 	amount := price.Float64 * float64(qty)
-	cartItemsResp := CartItemResponse{
+	cartItemsResp := dto.CartItemDetail{
 		ID:         row.CartItem.ID.String(),
 		ProductID:  row.ProductID.String(),
 		VariantID:  row.CartItem.VariantID.String(),

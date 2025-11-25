@@ -10,6 +10,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
+	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
@@ -28,7 +30,7 @@ import (
 // @Router /users/{id} [patch]
 func (sv *Server) UpdateUserHandler(c *gin.Context) {
 	authPayload, _ := c.MustGet(AuthPayLoad).(*auth.Payload)
-	var req UpdateUserRequest
+	var req models.UpdateUserModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidEmailCode, err))
 		return
@@ -99,7 +101,7 @@ func (sv *Server) GetCurrentUserHandler(c *gin.Context) {
 		return
 	}
 
-	var userResp UserDetail
+	var userResp dto.UserDetail
 
 	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
 	if err != nil {
@@ -113,7 +115,7 @@ func (sv *Server) GetCurrentUserHandler(c *gin.Context) {
 		return
 	}
 
-	addressResp := make([]AddressResponse, 0)
+	addressResp := make([]dto.AddressDetail, 0)
 	for _, address := range userAddress {
 		addressResp = append(addressResp, mapAddressToAddressResponse(address))
 	}
@@ -142,7 +144,7 @@ func (sv *Server) GetUsersHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, errors.New("authorization payload is not provided")))
 		return
 	}
-	var queries PaginationQueryParams
+	var queries models.PaginationQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -164,7 +166,7 @@ func (sv *Server) GetUsersHandler(c *gin.Context) {
 		return
 	}
 
-	userResp := make([]UserDetail, 0)
+	userResp := make([]dto.UserDetail, 0)
 	for _, user := range users {
 		userResp = append(userResp, mapToUserResponse(user, authPayload.RoleCode))
 	}
@@ -191,7 +193,7 @@ func (sv *Server) GetUserHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, errors.New("authorization payload is not provided")))
 		return
 	}
-	var param UriIDParam
+	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -271,7 +273,7 @@ func (sv *Server) SendVerifyEmailHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /users/verify-email [get]
 func (sv *Server) VerifyEmailHandler(c *gin.Context) {
-	var query VerifyEmailQuery
+	var query models.VerifyEmailQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidEmailCode, err))
 		return

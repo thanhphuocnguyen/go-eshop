@@ -1,9 +1,10 @@
-package dto
+package models
 
 import (
 	"encoding/json"
 
 	"github.com/google/uuid"
+	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 )
 
 type DiscountRule struct {
@@ -46,4 +47,23 @@ type CustomerSegmentRule struct {
 	IsNewCustomer     bool    `json:"is_new_customer"`
 	MaxPreviousOrders int     `json:"max_previous_orders"`
 	CustomerType      string  `json:"customer_type"`
+}
+
+type PaginationQuery struct {
+	Page     int64   `form:"page,default=1" binding:"omitempty,min=1"`
+	PageSize int64   `form:"pageSize,default=20" binding:"omitempty,min=1,max=100"`
+	Search   *string `form:"search" binding:"omitempty,omitzero,max=1000"`
+}
+
+type PaymentModel struct {
+	OrderID         string `json:"orderId" binding:"required,uuid"`
+	PaymentMethodID string `json:"paymentMethodId" binding:"required,uuid"`
+}
+
+type UpdatePaymentStatusModel struct {
+	Status repository.PaymentStatus `json:"status" binding:"required"`
+}
+
+type UpdateCartItemQtyModel struct {
+	Quantity int16 `json:"quantity" binding:"required,gt=0"`
 }

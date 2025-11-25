@@ -10,6 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hibiken/asynq"
 	repository "github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
+	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
@@ -29,7 +31,7 @@ import (
 // @Failure 500 {object} ErrorResp
 // @Router /auth/register [post]
 func (sv *Server) RegisterHandler(c *gin.Context) {
-	var req RegisterRequestBody
+	var req models.RegisterModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -82,7 +84,7 @@ func (sv *Server) RegisterHandler(c *gin.Context) {
 		return
 	}
 
-	var address AddressResponse
+	var address dto.AddressDetail
 	if req.Address != nil {
 
 		createAddressArgs := repository.CreateAddressParams{
@@ -108,7 +110,7 @@ func (sv *Server) RegisterHandler(c *gin.Context) {
 		if createdAddress.Ward != nil {
 			ward = *createdAddress.Ward
 		}
-		address = AddressResponse{
+		address = dto.AddressDetail{
 			ID:        createdAddress.ID.String(),
 			Phone:     createdAddress.PhoneNumber,
 			Street:    createdAddress.Street,
@@ -134,7 +136,7 @@ func (sv *Server) RegisterHandler(c *gin.Context) {
 		return
 	}
 
-	userResp := &UserDetail{
+	userResp := &dto.UserDetail{
 		ID:            user.ID,
 		Username:      user.Username,
 		RoleID:        user.RoleID.String(),
@@ -152,7 +154,7 @@ func (sv *Server) RegisterHandler(c *gin.Context) {
 		LastName:      user.LastName,
 	}
 	if !isStructEmpty(address) {
-		userResp.Addresses = []AddressResponse{address}
+		userResp.Addresses = []dto.AddressDetail{address}
 	}
 
 	c.JSON(http.StatusOK, createDataResp(c, userResp, nil, nil))
@@ -170,7 +172,7 @@ func (sv *Server) RegisterHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /auth/login [post]
 func (sv *Server) LoginHandler(c *gin.Context) {
-	var req LoginRequest
+	var req models.LoginModel
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -241,7 +243,7 @@ func (sv *Server) LoginHandler(c *gin.Context) {
 		return
 	}
 
-	loginResp := LoginResponse{
+	loginResp := dto.LoginResponse{
 		ID:                    session.ID.String(),
 		AccessToken:           accessToken,
 		AccessTokenExpiresAt:  payload.Expires,
@@ -322,6 +324,6 @@ func (sv *Server) RefreshTokenHandler(c *gin.Context) {
 		return
 	}
 
-	resp := RefreshTokenResponse{AccessToken: accessToken, AccessTokenExpiresAt: time.Now().Add(sv.config.AccessTokenDuration)}
+	resp := dto.RefreshToken{AccessToken: accessToken, AccessTokenExpiresAt: time.Now().Add(sv.config.AccessTokenDuration)}
 	c.JSON(http.StatusOK, createDataResp(c, resp, nil, nil))
 }

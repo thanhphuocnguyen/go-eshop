@@ -6,6 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
+	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
@@ -22,7 +24,7 @@ import (
 // @Router /admin/discounts [post]
 func (sv *Server) CreateDiscountHandler(c *gin.Context) {
 	// Create a new discount
-	var req AddDiscountRequest
+	var req models.AddDiscountModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -70,7 +72,7 @@ func (sv *Server) CreateDiscountHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /discounts [get]
 func (sv *Server) GetDiscountsHandler(c *gin.Context) {
-	var queries DiscountListQuery
+	var queries models.DiscountListQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -102,11 +104,11 @@ func (sv *Server) GetDiscountsHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-	listData := make([]DiscountListItemResponseModel, len(discounts))
+	listData := make([]dto.DiscountListItem, len(discounts))
 	for i, discount := range discounts {
 		discountValue, _ := discount.DiscountValue.Float64Value()
 
-		listData[i] = DiscountListItemResponseModel{
+		listData[i] = dto.DiscountListItem{
 			ID:            discount.ID.String(),
 			Code:          discount.Code,
 			DiscountType:  string(discount.DiscountType),
@@ -169,11 +171,11 @@ func (sv *Server) GetDiscountByIDHandler(c *gin.Context) {
 		return
 	}
 
-	discountUsages := make([]DiscountUsageHistory, len(discountUsageRows))
+	discountUsages := make([]dto.DiscountUsageHistory, len(discountUsageRows))
 	for i, usage := range discountUsageRows {
 		discountAmount, _ := usage.DiscountAmount.Float64Value()
 		amount, _ := usage.TotalPrice.Float64Value()
-		discountUsages[i] = DiscountUsageHistory{
+		discountUsages[i] = dto.DiscountUsageHistory{
 			ID:             discount.ID.String(),
 			CustomerName:   usage.CustomerName,
 			Amount:         amount.Float64,
@@ -186,7 +188,7 @@ func (sv *Server) GetDiscountByIDHandler(c *gin.Context) {
 
 	discountValue, _ := discount.DiscountValue.Float64Value()
 
-	resp := DiscountDetailResponseModel{
+	resp := dto.DiscountDetail{
 		ID:            discount.ID.String(),
 		Code:          discount.Code,
 		DiscountType:  string(discount.DiscountType),
@@ -231,13 +233,13 @@ func (sv *Server) GetDiscountByIDHandler(c *gin.Context) {
 // @Router /discounts/{id} [put]
 func (sv *Server) UpdateDiscountHandler(c *gin.Context) {
 	// Update discount by ID
-	var param UriIDParam
+	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 
-	var req UpdateDiscountRequest
+	var req models.UpdateDiscountModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -299,13 +301,184 @@ func (sv *Server) UpdateDiscountHandler(c *gin.Context) {
 // @Router /discounts/{id} [delete]
 func (sv *Server) DeleteDiscountHandler(c *gin.Context) {
 	// Delete discount by ID
-	var param UriIDParam
+	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 
 	err := sv.repo.DeleteDiscount(c, uuid.MustParse(param.ID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
+// AddDiscountRuleHandler godoc
+// @Summary Add a discount rule to a discount
+// @Description Add a discount rule to a discount
+// @Tags discounts
+// @Accept  json
+// @Produce  json
+// @Param id path string true "Discount ID"
+// @Param input body AddDiscountRuleRequest true "Discount rule info"
+// @Success 201 {object} ApiResponse[string]
+// @Failure 400 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
+// @Router /admin/discounts/{id}/rules [post]
+func (sv *Server) AddDiscountRuleHandler(c *gin.Context) {
+	// Add a discount rule to a discount
+	var param models.UriIDParam
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		return
+	}
+
+	var req models.AddDiscountRuleModel
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		return
+	}
+
+	sqlParams := repository.InsertDiscountRuleParams{
+		DiscountID: uuid.MustParse(param.ID),
+		RuleType:   req.RuleType,
+		RuleValue:  []byte(req.ConditionType),
+	}
+
+	rule, err := sv.repo.InsertDiscountRule(c, sqlParams)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		return
+	}
+
+	c.JSON(http.StatusCreated, createDataResp(c, rule.String(), nil, nil))
+}
+
+// GetDiscountRulesHandler godoc
+// @Summary Get all discount rules for a discount
+// @Description Get all discount rules for a specific discount
+// @Tags discounts
+// @Accept  json
+// @Produce  json
+// @Param id path string true "Discount ID"
+// @Success 200 {object} ApiResponse[[]DiscountRule]
+// @Failure 400 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
+// @Router /admin/discounts/{id}/rules [get]
+func (sv *Server) GetDiscountRulesHandler(c *gin.Context) {
+	var param models.UriIDParam
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		return
+	}
+
+	rules, err := sv.repo.GetDiscountRules(c, uuid.MustParse(param.ID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		return
+	}
+
+	c.JSON(http.StatusOK, createDataResp(c, rules, nil, nil))
+}
+
+// GetDiscountRuleByIDHandler godoc
+// @Summary Get a specific discount rule by ID
+// @Description Get a specific discount rule by ID
+// @Tags discounts
+// @Accept  json
+// @Produce  json
+// @Param id path string true "Discount ID"
+// @Param ruleId path string true "Rule ID"
+// @Success 200 {object} ApiResponse[DiscountRule]
+// @Failure 400 {object} ErrorResp
+// @Failure 404 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
+// @Router /admin/discounts/{id}/rules/{ruleId} [get]
+func (sv *Server) GetDiscountRuleByIDHandler(c *gin.Context) {
+	var param models.UriRuleIDParam
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		return
+	}
+
+	rule, err := sv.repo.GetDiscountRuleByID(c, uuid.MustParse(param.RuleID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		return
+	}
+
+	c.JSON(http.StatusOK, createDataResp(c, rule, nil, nil))
+}
+
+// UpdateDiscountRuleHandler godoc
+// @Summary Update a discount rule
+// @Description Update a discount rule
+// @Tags discounts
+// @Accept  json
+// @Produce  json
+// @Param id path string true "Discount ID"
+// @Param ruleId path string true "Rule ID"
+// @Param input body UpdateDiscountRuleModel true "Updated discount rule info"
+// @Success 200 {object} ApiResponse[string]
+// @Failure 400 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
+// @Router /admin/discounts/{id}/rules/{ruleId} [put]
+func (sv *Server) UpdateDiscountRuleHandler(c *gin.Context) {
+	var param models.UriRuleIDParam
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		return
+	}
+
+	var req models.UpdateDiscountRuleModel
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		return
+	}
+
+	sqlParams := repository.UpdateDiscountRuleParams{
+		ID: uuid.MustParse(param.RuleID),
+	}
+
+	if req.RuleType != nil {
+		sqlParams.RuleType = req.RuleType
+	}
+	if req.ConditionType != nil {
+		sqlParams.RuleValue = []byte(*req.ConditionType)
+	}
+
+	ruleID, err := sv.repo.UpdateDiscountRule(c, sqlParams)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		return
+	}
+
+	c.JSON(http.StatusOK, createDataResp(c, ruleID.String(), nil, nil))
+}
+
+// DeleteDiscountRuleHandler godoc
+// @Summary Delete a discount rule
+// @Description Delete a discount rule
+// @Tags discounts
+// @Accept  json
+// @Produce  json
+// @Param id path string true "Discount ID"
+// @Param ruleId path string true "Rule ID"
+// @Success 204 "No Content"
+// @Failure 400 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
+// @Router /admin/discounts/{id}/rules/{ruleId} [delete]
+func (sv *Server) DeleteDiscountRuleHandler(c *gin.Context) {
+	var param models.UriRuleIDParam
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		return
+	}
+
+	err := sv.repo.DeleteDiscountRule(c, uuid.MustParse(param.RuleID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return

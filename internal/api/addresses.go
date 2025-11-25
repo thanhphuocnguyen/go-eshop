@@ -8,6 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
+	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
 
@@ -29,7 +31,7 @@ func (sv *Server) CreateAddressHandler(c *gin.Context) {
 		return
 	}
 
-	var req CreateAddressRequest
+	var req models.CreateAddress
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -106,7 +108,7 @@ func (sv *Server) GetAddressesHandlers(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-	addressesResponse := make([]AddressResponse, len(addresses))
+	addressesResponse := make([]dto.AddressDetail, len(addresses))
 	for i, addresses := range addresses {
 		addressesResponse[i] = mapAddressResponse(addresses)
 	}
@@ -134,12 +136,12 @@ func (sv *Server) UpdateAddressHandlers(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, createErr(UnauthorizedCode, fmt.Errorf("authorization payload is not provided")))
 		return
 	}
-	var input UpdateAddressRequest
+	var input models.UpdateAddress
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
-	var param UriIDParam
+	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -223,7 +225,7 @@ func (sv *Server) RemoveAddressHandlers(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(UnauthorizedCode, fmt.Errorf("authorization payload is not provided")))
 		return
 	}
-	var param UriIDParam
+	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -277,7 +279,7 @@ func (sv *Server) SetDefaultAddressHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(UnauthorizedCode, fmt.Errorf("authorization payload is not provided")))
 		return
 	}
-	var param UriIDParam
+	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return

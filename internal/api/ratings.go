@@ -8,6 +8,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
+	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
@@ -31,7 +33,7 @@ import (
 func (s *Server) postRatingHandler(c *gin.Context) {
 	auth, _ := c.MustGet(AuthPayLoad).(*auth.Payload)
 
-	var req PostRatingFormData
+	var req models.PostRatingFormData
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(400, createErr(InvalidBodyCode, err))
 		return
@@ -62,7 +64,7 @@ func (s *Server) postRatingHandler(c *gin.Context) {
 		return
 	}
 
-	resp := ProductRatingModel{
+	resp := dto.ProductRatingDetail{
 		ID:               rating.ID.String(),
 		UserID:           rating.UserID.String(),
 		Rating:           req.Rating,
@@ -89,13 +91,13 @@ func (s *Server) postRatingHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /ratings/{ratingId}/helpful [post]
 func (s *Server) postRatingHelpfulHandler(c *gin.Context) {
-	var param UriIDParam
+	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(400, createErr(InvalidBodyCode, err))
 		return
 	}
 	auth, _ := c.MustGet(AuthPayLoad).(*auth.Payload)
-	var req PostHelpfulRatingRequest
+	var req models.PostHelpfulRatingModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(400, createErr(InvalidBodyCode, err))
 		return
@@ -138,14 +140,14 @@ func (s *Server) postRatingHelpfulHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /ratings/{ratingId}/reply [post]
 func (s *Server) postReplyRatingHandler(c *gin.Context) {
-	var param UriIDParam
+	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(400, createErr(InvalidBodyCode, err))
 		return
 	}
 	auth, _ := c.MustGet(AuthPayLoad).(*auth.Payload)
 
-	var req PostReplyRatingRequest
+	var req models.PostReplyRatingModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(400, createErr(InvalidBodyCode, err))
 		return
@@ -183,7 +185,7 @@ func (s *Server) postReplyRatingHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /admin/ratings [get]
 func (s *Server) getRatingsHandler(c *gin.Context) {
-	var queries RatingsQueryParams
+	var queries models.RatingsQueryParams
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(400, createErr(InvalidBodyCode, err))
 		return
@@ -220,7 +222,7 @@ func (s *Server) getRatingsHandler(c *gin.Context) {
 		return
 	}
 
-	productRatings := make([]ProductRatingModel, 0)
+	productRatings := make([]dto.ProductRatingDetail, 0)
 	for _, rating := range ratings {
 		ratingPoint, _ := rating.Rating.Float64Value()
 		prIdx := -1
@@ -231,13 +233,13 @@ func (s *Server) getRatingsHandler(c *gin.Context) {
 			}
 		}
 		if prIdx != -1 && rating.ImageID != nil {
-			productRatings[prIdx].Images = append(productRatings[prIdx].Images, RatingImageModel{
+			productRatings[prIdx].Images = append(productRatings[prIdx].Images, dto.RatingImage{
 				ID:  *rating.ImageID,
 				URL: *rating.ImageUrl,
 			})
 			continue
 		}
-		model := ProductRatingModel{
+		model := dto.ProductRatingDetail{
 			ID:               rating.ID.String(),
 			UserID:           rating.UserID.String(),
 			FirstName:        rating.FirstName,
@@ -252,7 +254,7 @@ func (s *Server) getRatingsHandler(c *gin.Context) {
 			Count:            ratingsCount,
 		}
 		if rating.ImageID != nil {
-			model.Images = append(model.Images, RatingImageModel{
+			model.Images = append(model.Images, dto.RatingImage{
 				ID:  *rating.ImageID,
 				URL: *rating.ImageUrl,
 			})
@@ -276,12 +278,12 @@ func (s *Server) getRatingsHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /ratings/products/{productId} [get]
 func (s *Server) getRatingsByProductHandler(c *gin.Context) {
-	var param UriIDParam
+	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(400, createErr(InvalidBodyCode, err))
 		return
 	}
-	var queries PaginationQueryParams
+	var queries models.PaginationQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(400, createErr(InvalidBodyCode, err))
 		return
@@ -302,7 +304,7 @@ func (s *Server) getRatingsByProductHandler(c *gin.Context) {
 		c.JSON(400, createErr(InvalidBodyCode, err))
 		return
 	}
-	productRatings := make([]ProductRatingModel, 0)
+	productRatings := make([]dto.ProductRatingDetail, 0)
 	for _, rating := range ratings {
 		ratingPoint, _ := rating.Rating.Float64Value()
 		prIdx := -1
@@ -313,13 +315,13 @@ func (s *Server) getRatingsByProductHandler(c *gin.Context) {
 			}
 		}
 		if prIdx != -1 && rating.ImageID != nil {
-			productRatings[prIdx].Images = append(productRatings[prIdx].Images, RatingImageModel{
+			productRatings[prIdx].Images = append(productRatings[prIdx].Images, dto.RatingImage{
 				ID:  *rating.ImageID,
 				URL: *rating.ImageUrl,
 			})
 			continue
 		}
-		model := ProductRatingModel{
+		model := dto.ProductRatingDetail{
 			ID:               rating.ID.String(),
 			UserID:           rating.UserID.String(),
 			FirstName:        rating.FirstName,
@@ -332,7 +334,7 @@ func (s *Server) getRatingsByProductHandler(c *gin.Context) {
 			VerifiedPurchase: rating.VerifiedPurchase,
 		}
 		if rating.ImageID != nil {
-			model.Images = append(model.Images, RatingImageModel{
+			model.Images = append(model.Images, dto.RatingImage{
 				ID:  *rating.ImageID,
 				URL: *rating.ImageUrl,
 			})

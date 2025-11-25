@@ -7,6 +7,7 @@ import (
 
 	"github.com/thanhphuocnguyen/go-eshop/config"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 	cachesrv "github.com/thanhphuocnguyen/go-eshop/pkg/cache"
@@ -66,6 +67,6 @@ func (s *Server) Server(addr string) *http.Server {
 }
 
 type DashboardData struct {
-	Categories  []CategoryDto `json:"categories"`
-	Collections []CategoryDto `json:"collections"`
+	Categories  []dto.CategoryDetail `json:"categories"`
+	Collections []dto.CategoryDetail `json:"collections"`
 }

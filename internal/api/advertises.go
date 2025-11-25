@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
@@ -14,8 +15,8 @@ func (s *Server) getHomePageHandler(ctx *gin.Context) {
 	wg.Add(2)
 
 	// Use channels to collect results
-	categoriesChan := make(chan []CategoryDto, 1)
-	collectionsChan := make(chan []CategoryDto, 1)
+	categoriesChan := make(chan []dto.CategoryDetail, 1)
+	collectionsChan := make(chan []dto.CategoryDetail, 1)
 
 	// Fetch categories
 	go func() {
@@ -27,13 +28,13 @@ func (s *Server) getHomePageHandler(ctx *gin.Context) {
 		})
 
 		if err != nil {
-			categoriesChan <- []CategoryDto{}
+			categoriesChan <- []dto.CategoryDetail{}
 			return
 		}
 
-		categoryModel := make([]CategoryDto, len(categoryRows))
+		categoryModel := make([]dto.CategoryDetail, len(categoryRows))
 		for i, category := range categoryRows {
-			categoryModel[i] = CategoryDto{
+			categoryModel[i] = dto.CategoryDetail{
 				ID:          category.ID.String(),
 				Name:        category.Name,
 				Description: category.Description,
@@ -54,13 +55,13 @@ func (s *Server) getHomePageHandler(ctx *gin.Context) {
 		})
 
 		if err != nil {
-			collectionsChan <- []CategoryDto{}
+			collectionsChan <- []dto.CategoryDetail{}
 			return
 		}
 
-		collectionModel := make([]CategoryDto, len(collectionRows))
+		collectionModel := make([]dto.CategoryDetail, len(collectionRows))
 		for i, collection := range collectionRows {
-			collectionModel[i] = CategoryDto{
+			collectionModel[i] = dto.CategoryDetail{
 				ID:          collection.ID.String(),
 				Name:        collection.Name,
 				Description: collection.Description,

@@ -8,6 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
+	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
@@ -46,7 +48,7 @@ func (sv *Server) CreatePaymentIntentHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-	var req PaymentAPIReq
+	var req models.PaymentModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -86,7 +88,7 @@ func (sv *Server) CreatePaymentIntentHandler(c *gin.Context) {
 		Amount:          utils.GetPgNumericFromFloat(total.Float64),
 		PaymentMethodID: paymentMethodId,
 	}
-	var resp CreatePaymentIntentResponse
+	var resp dto.PaymentIntentSecret
 	paymentMethod, err := sv.repo.GetPaymentMethodByID(c, paymentMethodId)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
@@ -137,7 +139,7 @@ func (sv *Server) CreatePaymentIntentHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /payment/{id} [get]
 func (sv *Server) getPaymentHandler(c *gin.Context) {
-	var param UriIDParam
+	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -160,7 +162,7 @@ func (sv *Server) getPaymentHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-	resp := PaymentResponse{
+	resp := dto.PaymentDetail{
 		ID:      payment.ID.String(),
 		Gateway: payment.Gateway,
 		Status:  payment.Status,
@@ -185,12 +187,12 @@ func (sv *Server) getPaymentHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /payment/{paymentId} [get]
 func (sv *Server) changePaymentStatusHandler(c *gin.Context) {
-	var param UriIDParam
+	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("order not found")))
 		return
 	}
-	var req UpdatePaymentStatusRequest
+	var req models.UpdatePaymentStatusModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("order not found")))
 		return
@@ -259,7 +261,7 @@ func (sv *Server) changePaymentStatusHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-	resp := PaymentResponse{
+	resp := dto.PaymentDetail{
 		ID:     payment.ID.String(),
 		Status: req.Status,
 	}

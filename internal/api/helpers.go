@@ -5,15 +5,16 @@ import (
 	"unsafe"
 
 	"github.com/gin-gonic/gin"
+	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 )
 
 type ErrorResp struct {
-	Error ApiError `json:"error"`
+	Error models.ApiError `json:"error"`
 }
 
 func createErr(code string, err error) ErrorResp {
 	return ErrorResp{
-		Error: ApiError{
+		Error: models.ApiError{
 			Code:    code,
 			Details: err.Error(),
 			Stack:   err,
@@ -21,11 +22,11 @@ func createErr(code string, err error) ErrorResp {
 	}
 }
 
-func createDataResp[T any](c *gin.Context, data T, pagination *Pagination, err *ApiError) ApiResponse[T] {
-	resp := ApiResponse[T]{
+func createDataResp[T any](c *gin.Context, data T, pagination *models.Pagination, err *models.ApiError) models.ApiResponse[T] {
+	resp := models.ApiResponse[T]{
 		Data:       &data,
 		Pagination: pagination,
-		Meta: &MetaInfo{
+		Meta: &models.MetaInfo{
 			Timestamp: time.Now().Format(time.RFC3339),
 			RequestID: c.GetString("RequestID"),
 			Path:      c.FullPath(),
@@ -39,8 +40,8 @@ func createDataResp[T any](c *gin.Context, data T, pagination *Pagination, err *
 	return resp
 }
 
-func createPagination(page, pageSize, total int64) *Pagination {
-	return &Pagination{
+func createPagination(page, pageSize, total int64) *models.Pagination {
+	return &models.Pagination{
 		Page:            page,
 		PageSize:        pageSize,
 		Total:           total,

@@ -9,6 +9,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
+	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
@@ -26,7 +28,7 @@ import (
 // @Failure 500 {object} ErrorResp
 // @Router /shop/brands [get]
 func (sv *Server) GetShopBrandsHandler(c *gin.Context) {
-	var queries PaginationQueryParams
+	var queries models.PaginationQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -53,10 +55,10 @@ func (sv *Server) GetShopBrandsHandler(c *gin.Context) {
 		return
 	}
 
-	data := make([]CategoryDto, len(rows))
+	data := make([]dto.CategoryDetail, len(rows))
 
 	for i, row := range rows {
-		model := CategoryDto{
+		model := dto.CategoryDetail{
 			ID:          row.ID.String(),
 			Name:        row.Name,
 			Description: row.Description,
@@ -86,18 +88,18 @@ func (sv *Server) GetShopBrandsHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /shop/brands/{slug} [get]
 func (sv *Server) GetShopBrandBySlugHandler(c *gin.Context) {
-	var param SlugParam
+	var param models.URISlugParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
-	var query PaginationQueryParams
+	var query models.PaginationQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 
-	var queries PaginationQueryParams
+	var queries models.PaginationQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -122,10 +124,10 @@ func (sv *Server) GetShopBrandBySlugHandler(c *gin.Context) {
 		return
 	}
 
-	data := make([]CategoryDto, len(rows))
+	data := make([]dto.CategoryDetail, len(rows))
 
 	for i, row := range rows {
-		data[i] = CategoryDto{
+		data[i] = dto.CategoryDetail{
 			ID:          row.ID.String(),
 			Name:        row.Name,
 			Description: row.Description,
@@ -151,7 +153,7 @@ func (sv *Server) GetShopBrandBySlugHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /admin/brands [post]
 func (sv *Server) CreateBrandHandler(c *gin.Context) {
-	var req CreateCategoryRequest
+	var req models.CreateCategoryModel
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -196,7 +198,7 @@ func (sv *Server) CreateBrandHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /brands [get]
 func (sv *Server) GetBrandsHandler(c *gin.Context) {
-	var queries PaginationQueryParams
+	var queries models.PaginationQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -221,10 +223,10 @@ func (sv *Server) GetBrandsHandler(c *gin.Context) {
 		return
 	}
 
-	data := make([]CategoryDto, 0, len(rows))
+	data := make([]dto.CategoryDetail, 0, len(rows))
 
 	for _, row := range rows {
-		data = append(data, CategoryDto{
+		data = append(data, dto.CategoryDetail{
 			ID:          row.ID.String(),
 			Name:        row.Name,
 			Description: row.Description,
@@ -251,7 +253,7 @@ func (sv *Server) GetBrandsHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /admin/brands/{id} [get]
 func (sv *Server) GetBrandByIDHandler(c *gin.Context) {
-	var param UriIDParam
+	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -267,7 +269,7 @@ func (sv *Server) GetBrandByIDHandler(c *gin.Context) {
 		return
 	}
 
-	colResp := AdminCategoryDto{
+	colResp := dto.AdminCategoryDetail{
 		ID:          result.ID.String(),
 		Name:        result.Name,
 		Description: result.Description,
@@ -294,12 +296,12 @@ func (sv *Server) GetBrandByIDHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /admin/brands/{id} [put]
 func (sv *Server) UpdateBrandHandler(c *gin.Context) {
-	var param UriIDParam
+	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
-	var req UpdateCategoryRequest
+	var req models.UpdateCategoryModel
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -376,7 +378,7 @@ func (sv *Server) UpdateBrandHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /admin/brands/{id} [delete]
 func (sv *Server) DeleteBrandHandler(c *gin.Context) {
-	var colID UriIDParam
+	var colID models.UriIDParam
 	if err := c.ShouldBindUri(&colID); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return

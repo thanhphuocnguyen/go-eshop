@@ -10,6 +10,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
+	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
@@ -25,7 +27,7 @@ import (
 // @Failure 500 {object} ErrorResp
 // @Router /products [post]
 func (sv *Server) AddProductHandler(c *gin.Context) {
-	var req CreateProductReq
+	var req models.CreateProductModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -115,7 +117,7 @@ func (sv *Server) AddProductHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /products/{productId} [get]
 func (sv *Server) GetProductByIdHandler(c *gin.Context) {
-	var params URISlugParam
+	var params models.UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -156,7 +158,7 @@ func (sv *Server) GetProductByIdHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products [get]
 func (sv *Server) GetAdminProductsHandler(c *gin.Context) {
-	var queries ProductQueries
+	var queries models.ProductQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -188,7 +190,7 @@ func (sv *Server) GetAdminProductsHandler(c *gin.Context) {
 		return
 	}
 
-	productResponses := make([]ProductListDTO, 0)
+	productResponses := make([]dto.ProductListItem, 0)
 	for _, product := range products {
 		productResponses = append(productResponses, mapToAdminProductResponse(product))
 	}
@@ -209,7 +211,7 @@ func (sv *Server) GetAdminProductsHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /products [get]
 func (sv *Server) GetProductsHandler(c *gin.Context) {
-	var queries ProductQueries
+	var queries models.ProductQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -255,7 +257,7 @@ func (sv *Server) GetProductsHandler(c *gin.Context) {
 		return
 	}
 
-	productResponses := make([]ProductSummary, 0)
+	productResponses := make([]dto.ProductSummary, 0)
 	for _, product := range products {
 		productResponses = append(productResponses, mapToShopProductResponse(product))
 	}
@@ -276,7 +278,7 @@ func (sv *Server) GetProductsHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /products/{productId} [put]
 func (sv *Server) UpdateProductHandler(c *gin.Context) {
-	var param UriIDParam
+	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -287,7 +289,7 @@ func (sv *Server) UpdateProductHandler(c *gin.Context) {
 		return
 	}
 
-	var req UpdateProductReq
+	var req models.UpdateProductModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -414,7 +416,7 @@ func (sv *Server) UpdateProductHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /products/{id}/image [post]
 func (sv *Server) UploadProductImageHandler(c *gin.Context) {
-	var param UriIDParam
+	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -475,7 +477,7 @@ func (sv *Server) UploadProductImageHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /products/{productId} [delete]
 func (sv *Server) DeleteProductHandler(c *gin.Context) {
-	var params UriIDParam
+	var params models.UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -512,12 +514,12 @@ func (sv *Server) DeleteProductHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /products/{id}/variants [post]
 func (sv *Server) AddVariantHandler(c *gin.Context) {
-	var prodId URISlugParam
+	var prodId models.ProductVariantParam
 	if err := c.ShouldBindUri(&prodId); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
-	var req CreateProdVariantReq
+	var req models.CreateProdVariantModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -615,7 +617,7 @@ func (sv *Server) AddVariantHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /products/{id}/variants [get]
 func (sv *Server) GetVariantsHandler(c *gin.Context) {
-	var prodId URISlugParam
+	var prodId models.ProductVariantParam
 	if err := c.ShouldBindUri(&prodId); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -632,7 +634,7 @@ func (sv *Server) GetVariantsHandler(c *gin.Context) {
 		return
 	}
 
-	resp := make([]VariantModelDto, len(variantRows))
+	resp := make([]dto.VariantDetail, len(variantRows))
 	for i, row := range variantRows {
 		resp[i] = mapToVariantListModelDto(row)
 	}
@@ -653,12 +655,12 @@ func (sv *Server) GetVariantsHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /products/{id}/variants/{variantID} [get]
 func (sv *Server) GetVariantHandler(c *gin.Context) {
-	var prodId URISlugParam
+	var prodId models.ProductVariantParam
 	if err := c.ShouldBindUri(&prodId); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
-	var variantId ProductVariantParam
+	var variantId models.URIVariantParam
 	if err := c.ShouldBindUri(&variantId); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -671,7 +673,7 @@ func (sv *Server) GetVariantHandler(c *gin.Context) {
 	}
 
 	rows, err := sv.repo.GetVariantDetailByID(c, repository.GetVariantDetailByIDParams{
-		ID:        uuid.MustParse(variantId.ID),
+		ID:        uuid.MustParse(variantId.VariantID),
 		ProductID: prod.ID,
 	})
 
@@ -681,12 +683,12 @@ func (sv *Server) GetVariantHandler(c *gin.Context) {
 	}
 	first := rows[0]
 	price, _ := first.Price.Float64Value()
-	resp := VariantModelDto{
+	resp := dto.VariantDetail{
 		ID:         first.ID.String(),
 		Price:      price.Float64,
 		Stock:      first.Stock,
 		Sku:        first.Sku,
-		Attributes: make([]AttributeValue, len(rows)),
+		Attributes: make([]dto.AttributeValueDetail, len(rows)),
 		CreatedAt:  first.CreatedAt.String(),
 		UpdatedAt:  first.UpdatedAt.String(),
 		IsActive:   *first.IsActive,
@@ -702,7 +704,7 @@ func (sv *Server) GetVariantHandler(c *gin.Context) {
 		resp.ImageID = first.ImageID
 	}
 	for i, row := range rows {
-		attr := AttributeValue{
+		attr := dto.AttributeValueDetail{
 			ID:    *row.AttributeValueID,
 			Value: *row.AttributeValue,
 		}
@@ -724,12 +726,12 @@ func (sv *Server) GetVariantHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /products/{id}/variants/{variantId} [put]
 func (sv *Server) UpdateVariantHandler(c *gin.Context) {
-	var uris URIVariantParam
+	var uris models.URIVariantParam
 	if err := c.ShouldBindUri(&uris); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
-	var req UpdateProdVariantReq
+	var req models.UpdateProdVariantModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -783,7 +785,7 @@ func (sv *Server) UpdateVariantHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /products/{id}/variants/{variantId}/images [post]
 func (sv *Server) UploadVariantImageHandler(c *gin.Context) {
-	var uris URIVariantParam
+	var uris models.URIVariantParam
 	if err := c.ShouldBindUri(&uris); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -856,7 +858,7 @@ func (sv *Server) UploadVariantImageHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /products/{id}/variant/{variantID} [delete]
 func (sv *Server) DeleteVariantHandler(c *gin.Context) {
-	var uris URIVariantParam
+	var uris models.URIVariantParam
 	if err := c.ShouldBindUri(&uris); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return

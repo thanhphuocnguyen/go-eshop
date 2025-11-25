@@ -10,6 +10,8 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
+	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
@@ -37,7 +39,7 @@ func (sv *Server) getOrdersHandler(c *gin.Context) {
 		return
 	}
 
-	var orderListQuery OrderListQuery
+	var orderListQuery models.OrderListQuery
 	if err := c.ShouldBindQuery(&orderListQuery); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -65,7 +67,7 @@ func (sv *Server) getOrdersHandler(c *gin.Context) {
 		return
 	}
 
-	var orderResponses []OrderListResponse
+	var orderResponses []dto.OrderListItem
 	for _, aggregated := range fetchedOrderRows {
 		// Convert PaymentStatus interface{} to PaymentStatus type
 		paymentStatus := repository.PaymentStatusPending
@@ -74,7 +76,7 @@ func (sv *Server) getOrdersHandler(c *gin.Context) {
 		}
 
 		total, _ := aggregated.TotalPrice.Float64Value()
-		orderResponses = append(orderResponses, OrderListResponse{
+		orderResponses = append(orderResponses, dto.OrderListItem{
 			ID:            aggregated.ID,
 			Total:         total.Float64,
 			TotalItems:    int32(aggregated.TotalItems),
@@ -101,13 +103,13 @@ func (sv *Server) getOrdersHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /order/{orderId} [get]
 func (sv *Server) getOrderDetailHandler(c *gin.Context) {
-	var params UriIDParam
+	var params models.UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 
-	var resp *OrderDetailResponse
+	var resp *dto.OrderDetail = nil
 
 	if err := sv.cacheSrv.Get(c, "order_detail:"+params.ID, &resp); err == nil {
 		if resp != nil {
@@ -128,14 +130,14 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 
 	total, _ := order.TotalPrice.Float64Value()
 	paymentAmount, _ := order.PaymentAmount.Float64Value()
-	resp = &OrderDetailResponse{
+	resp = &dto.OrderDetail{
 		ID:            order.ID,
 		Total:         total.Float64,
 		CustomerName:  order.CustomerName,
 		CustomerEmail: order.CustomerEmail,
 		Status:        order.Status,
 		ShippingInfo:  order.ShippingAddress,
-		PaymentInfo: PaymentInfoModel{
+		PaymentInfo: dto.PaymentInfo{
 			ID:       order.PaymentID.String(),
 			Amount:   paymentAmount.Float64,
 			IntendID: order.PaymentIntentID,
@@ -144,7 +146,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 			Status:   string(order.PaymentStatus),
 		},
 		CreatedAt: order.CreatedAt.UTC(),
-		Products:  []OrderItemResponse{},
+		Products:  []dto.OrderItemDetail{},
 	}
 
 	orderItemRows, err := sv.repo.GetOrderItems(c, order.ID)
@@ -158,7 +160,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-	var apiErr *ApiError = nil
+	var apiErr *models.ApiError = nil
 
 	if paymentInfo.Status == repository.PaymentStatusPending &&
 		paymentInfo.PaymentIntentID != nil {
@@ -166,7 +168,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 		paymentDetail, err := sv.paymentSrv.GetPayment(c, *paymentInfo.PaymentIntentID, *paymentInfo.Gateway)
 		if err != nil {
 			log.Err(err).Msg("failed to get payment intent")
-			apiErr = &ApiError{
+			apiErr = &models.ApiError{
 				Code:    InternalServerErrorCode,
 				Details: "failed to get payment intent",
 				Stack:   err,
@@ -176,11 +178,11 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 		}
 	}
 
-	orderItems := make([]OrderItemResponse, 0, len(orderItemRows))
+	orderItems := make([]dto.OrderItemDetail, 0, len(orderItemRows))
 
 	for _, item := range orderItemRows {
 		lineTotal, _ := item.LineTotalSnapshot.Float64Value()
-		itemResp := OrderItemResponse{
+		itemResp := dto.OrderItemDetail{
 			ID:                 item.ID.String(),
 			VariantID:          item.VariantID.String(),
 			Name:               item.ProductName,
@@ -192,7 +194,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 		if item.RatingID.Valid {
 			id, _ := uuid.FromBytes(item.RatingID.Bytes[:])
 			rating, _ := item.Rating.Float64Value()
-			itemResp.Rating = &RatingModel{
+			itemResp.Rating = &dto.RatingDetail{
 				ID:        id.String(),
 				Title:     *item.ReviewTitle,
 				Content:   *item.ReviewContent,
@@ -207,7 +209,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 
 	if err := sv.cacheSrv.Set(c, "order_detail:"+params.ID, resp, utils.TimeDurationPtr(5*time.Minute)); err != nil {
 		log.Err(err).Msg("failed to cache order detail")
-		apiErr = &ApiError{
+		apiErr = &models.ApiError{
 			Code:    InternalServerErrorCode,
 			Details: "failed to cache order detail",
 			Stack:   err,
@@ -231,7 +233,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 // @Router /order/{orderId}/confirm-received [put]
 func (sv *Server) confirmOrderPayment(c *gin.Context) {
 	tokenPayload, _ := c.MustGet(AuthPayLoad).(*auth.Payload)
-	var params UriIDParam
+	var params models.UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -270,10 +272,10 @@ func (sv *Server) confirmOrderPayment(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-	var apiErr *ApiError
+	var apiErr *models.ApiError
 	if err := sv.cacheSrv.Delete(c, "order_detail:"+params.ID); err != nil {
 		log.Err(err).Msg("failed to delete order detail cache")
-		apiErr = &ApiError{
+		apiErr = &models.ApiError{
 			Code:    InternalServerErrorCode,
 			Details: "failed to delete order detail cache",
 			Stack:   err,
@@ -298,12 +300,12 @@ func (sv *Server) confirmOrderPayment(c *gin.Context) {
 func (sv *Server) cancelOrder(c *gin.Context) {
 	tokenPayload, _ := c.MustGet(AuthPayLoad).(*auth.Payload)
 
-	var params UriIDParam
+	var params models.UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
-	var req CancelOrderRequest
+	var req models.CancelOrderModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -368,12 +370,12 @@ func (sv *Server) cancelOrder(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /order/{orderId}/status [put]
 func (sv *Server) changeOrderStatus(c *gin.Context) {
-	var params UriIDParam
+	var params models.UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
-	var req OrderStatusRequest
+	var req models.OrderStatusModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -444,12 +446,12 @@ func (sv *Server) changeOrderStatus(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /order/{orderId}/refund [put]
 func (sv *Server) refundOrder(c *gin.Context) {
-	var params UriIDParam
+	var params models.UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
-	var req RefundOrderRequest
+	var req models.RefundOrderModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -507,7 +509,7 @@ func (sv *Server) refundOrder(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /admin/orders [get]
 func (sv *Server) getAdminOrdersHandler(c *gin.Context) {
-	var orderListQuery OrderListQuery
+	var orderListQuery models.OrderListQuery
 	if err := c.ShouldBindQuery(&orderListQuery); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -559,7 +561,7 @@ func (sv *Server) getAdminOrdersHandler(c *gin.Context) {
 		return
 	}
 
-	var orderResponses []OrderListResponse
+	var orderResponses []dto.OrderListItem
 	for _, aggregated := range fetchedOrderRows {
 		// Convert PaymentStatus interface{} to PaymentStatus type
 		paymentStatus := repository.PaymentStatusPending
@@ -568,7 +570,7 @@ func (sv *Server) getAdminOrdersHandler(c *gin.Context) {
 		}
 
 		total, _ := aggregated.TotalPrice.Float64Value()
-		orderResponses = append(orderResponses, OrderListResponse{
+		orderResponses = append(orderResponses, dto.OrderListItem{
 			ID:            aggregated.ID,
 			Total:         total.Float64,
 			TotalItems:    int32(aggregated.TotalItems),

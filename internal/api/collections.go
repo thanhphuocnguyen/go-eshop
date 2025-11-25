@@ -9,6 +9,8 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
+	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 )
 
 // --- Public API ---
@@ -20,19 +22,19 @@ import (
 // @Tags Collections
 // @Produce json
 // @Param slug path string true "Collection slug"
-// @Success 200 {object} ApiResponse[CategoryDto]
+// @Success 200 {object} ApiResponse[dto.CategoryDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /collections/{slug} [get]
 func (sv *Server) GetCollectionBySlugHandler(c *gin.Context) {
-	var param SlugParam
+	var param models.URISlugParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode,
 			err))
 		return
 	}
-	var query PaginationQueryParams
+	var query models.PaginationQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode,
 			err))
@@ -63,14 +65,14 @@ func (sv *Server) GetCollectionBySlugHandler(c *gin.Context) {
 			err))
 		return
 	}
-	collectionResp := CategoryDto{
+	collectionResp := dto.CategoryDetail{
 		ID:          collection.ID.String(),
 		Name:        collection.Name,
 		Description: collection.Description,
 		Slug:        collection.Slug,
 		ImageUrl:    collection.ImageUrl,
 		CreatedAt:   collection.CreatedAt.String(),
-		Products:    make([]ProductSummary, len(rows)),
+		Products:    make([]dto.ProductSummary, len(rows)),
 	}
 	for i, row := range rows {
 		collectionResp.Products[i] = mapToShopProductResponse(row)
@@ -87,13 +89,13 @@ func (sv *Server) GetCollectionBySlugHandler(c *gin.Context) {
 // @Accept json
 // @Tags Admin
 // @Produce json
-// @Param request body CreateCategoryRequest true "Collection info"
-// @Success 201 {object} ApiResponse[CategoryDto]
+// @Param request body models.CreateCategoryModel true "Collection info"
+// @Success 201 {object} ApiResponse[dto.CategoryDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/collections [post]
 func (sv *Server) CreateCollectionHandler(c *gin.Context) {
-	var req CreateCategoryRequest
+	var req models.CreateCategoryModel
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode,
 			err))
@@ -139,12 +141,12 @@ func (sv *Server) CreateCollectionHandler(c *gin.Context) {
 // @Produce json
 // @Param page query int false "Page number"
 // @Param pageSize query int false "Page size"
-// @Success 200 {object} ApiResponse[CategoryDto]
+// @Success 200 {object} ApiResponse[dto.CategoryDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/collections [get]
 func (sv *Server) GetCollectionsHandler(c *gin.Context) {
-	var queries CollectionsQueryParams
+	var queries models.PaginationQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode,
 			err))
@@ -182,13 +184,13 @@ func (sv *Server) GetCollectionsHandler(c *gin.Context) {
 // @Tags Admin
 // @Produce json
 // @Param id path int true "Collection ID"
-// @Success 200 {object} ApiResponse[CategoryDto]
+// @Success 200 {object} ApiResponse[dto.CategoryDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/collections/{id} [get]
 func (sv *Server) GetCollectionByIDHandler(c *gin.Context) {
-	var param UriIDParam
+	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode,
 			err))
@@ -207,7 +209,7 @@ func (sv *Server) GetCollectionByIDHandler(c *gin.Context) {
 		return
 	}
 
-	colResp := AdminCategoryDto{
+	colResp := dto.CategoryDetail{
 		ID:          collection.ID.String(),
 		Slug:        collection.Slug,
 		Description: collection.Description,
@@ -215,7 +217,6 @@ func (sv *Server) GetCollectionByIDHandler(c *gin.Context) {
 		Name:        collection.Name,
 		ImageUrl:    collection.ImageUrl,
 		CreatedAt:   collection.CreatedAt.Format("2006-01-02 15:04:05"),
-		UpdatedAt:   collection.UpdatedAt.Format("2006-01-02 15:04:05"),
 	}
 
 	c.JSON(http.StatusOK, createDataResp(c, colResp, nil, nil))
@@ -228,19 +229,19 @@ func (sv *Server) GetCollectionByIDHandler(c *gin.Context) {
 // @Tags Admin
 // @Produce json
 // @Param id path int true "Collection ID"
-// @Param request body CreateCategoryRequest true "Collection info"
-// @Success 200 {object} ApiResponse[CategoryDto]
+// @Param request body models.CreateCategoryModel true "Collection info"
+// @Success 200 {object} ApiResponse[dto.CategoryDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/collections/{id} [put]
 func (sv *Server) UpdateCollectionHandler(c *gin.Context) {
-	var param UriIDParam
+	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode,
 			err))
 		return
 	}
-	var req UpdateCategoryRequest
+	var req models.UpdateCategoryModel
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode,
 			err))
@@ -320,7 +321,7 @@ func (sv *Server) UpdateCollectionHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /admin/collections/{id} [delete]
 func (sv *Server) DeleteCollectionHandler(c *gin.Context) {
-	var colID UriIDParam
+	var colID models.UriIDParam
 	if err := c.ShouldBindUri(&colID); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode,
 			err))

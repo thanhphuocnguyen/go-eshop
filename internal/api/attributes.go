@@ -8,6 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
+	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 )
 
 // @Summary Create an attribute
@@ -21,19 +23,19 @@ import (
 // @Failure 500 {object} ErrorResp
 // @Router /attributes [post]
 func (sv *Server) CreateAttributeHandler(c *gin.Context) {
-	var params AttributeRequest
-	if err := c.ShouldBindJSON(&params); err != nil {
+	var req models.AttributeModel
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 
-	attribute, err := sv.repo.CreateAttribute(c, params.Name)
+	attribute, err := sv.repo.CreateAttribute(c, req.Name)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, createErr(InvalidBodyCode, err))
 		return
 	}
 
-	attributeResp := AttributeRespModel{
+	attributeResp := dto.AttributeDetail{
 		ID:   attribute.ID,
 		Name: attribute.Name,
 	}
@@ -52,7 +54,7 @@ func (sv *Server) CreateAttributeHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /attributes/{id} [get]
 func (sv *Server) GetAttributeByIDHandler(c *gin.Context) {
-	var attributeParam AttributeParam
+	var attributeParam models.AttributeParam
 	if err := c.ShouldBindUri(&attributeParam); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -64,7 +66,7 @@ func (sv *Server) GetAttributeByIDHandler(c *gin.Context) {
 		return
 	}
 
-	attributeResp := AttributeRespModel{
+	attributeResp := dto.AttributeDetail{
 		Name: attr.Name,
 		ID:   attr.ID,
 	}
@@ -74,10 +76,10 @@ func (sv *Server) GetAttributeByIDHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
 		return
 	}
-	attributeResp.Values = make([]AttributeValue, len(values))
+	attributeResp.Values = make([]dto.AttributeValueDetail, len(values))
 
 	for i, val := range values {
-		attributeResp.Values[i] = AttributeValue{
+		attributeResp.Values[i] = dto.AttributeValueDetail{
 			ID:    val.ID,
 			Value: val.Value,
 		}
@@ -95,7 +97,7 @@ func (sv *Server) GetAttributeByIDHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /attributes [get]
 func (sv *Server) GetAttributesHandler(c *gin.Context) {
-	var queries GetAttributesQuery
+	var queries models.AttributesQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -107,25 +109,25 @@ func (sv *Server) GetAttributesHandler(c *gin.Context) {
 		return
 	}
 
-	var attributeResp = []AttributeRespModel{}
+	var attributeResp = []dto.AttributeDetail{}
 	for i := range attributeRows {
 		attrVal := attributeRows[i]
 		if i == 0 || attributeRows[i].ID != attributeRows[i-1].ID {
-			attributeResp = append(attributeResp, AttributeRespModel{
+			attributeResp = append(attributeResp, dto.AttributeDetail{
 				ID:     attrVal.ID,
 				Name:   attrVal.Name,
-				Values: []AttributeValue{},
+				Values: []dto.AttributeValueDetail{},
 			})
 			if attrVal.AttrValueID != nil {
 				id := *attrVal.AttrValueID
-				attributeResp[len(attributeResp)-1].Values = append(attributeResp[len(attributeResp)-1].Values, AttributeValue{
+				attributeResp[len(attributeResp)-1].Values = append(attributeResp[len(attributeResp)-1].Values, dto.AttributeValueDetail{
 					ID:    id,
 					Value: *attrVal.AttrValue,
 				})
 			}
 		} else if attrVal.AttrValueID != nil {
 			id := *attrVal.AttrValueID
-			attributeResp[len(attributeResp)-1].Values = append(attributeResp[len(attributeResp)-1].Values, AttributeValue{
+			attributeResp[len(attributeResp)-1].Values = append(attributeResp[len(attributeResp)-1].Values, dto.AttributeValueDetail{
 				ID:    id,
 				Value: *attrVal.AttrValue,
 			})
@@ -146,7 +148,7 @@ func (sv *Server) GetAttributesHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /attributes/product/{id} [get]
 func (sv *Server) GetAttributeValuesForProductHandler(c *gin.Context) {
-	var uri UriIDParam
+	var uri models.UriIDParam
 	if err := c.ShouldBindUri(&uri); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -158,16 +160,16 @@ func (sv *Server) GetAttributeValuesForProductHandler(c *gin.Context) {
 		return
 	}
 
-	resp := make([]AttributeRespModel, 0)
+	resp := make([]dto.AttributeDetail, 0)
 	for _, attr := range attrs {
 
-		if slices.ContainsFunc(resp, func(a AttributeRespModel) bool {
+		if slices.ContainsFunc(resp, func(a dto.AttributeDetail) bool {
 			return *attr.AttributeID == a.ID
 		}) {
 			// push value to existing attribute
 			for i, r := range resp {
 				if r.ID == *attr.AttributeID {
-					resp[i].Values = append(resp[i].Values, AttributeValue{
+					resp[i].Values = append(resp[i].Values, dto.AttributeValueDetail{
 						ID:    *attr.AttributeValueID,
 						Value: *attr.AttributeValue,
 					})
@@ -176,10 +178,10 @@ func (sv *Server) GetAttributeValuesForProductHandler(c *gin.Context) {
 			}
 		} else {
 			// create new attribute
-			attrResp := AttributeRespModel{
+			attrResp := dto.AttributeDetail{
 				ID:   *attr.AttributeID,
 				Name: *attr.AttributeName,
-				Values: []AttributeValue{
+				Values: []dto.AttributeValueDetail{
 					{
 						ID:    *attr.AttributeValueID,
 						Value: *attr.AttributeValue,
@@ -205,12 +207,12 @@ func (sv *Server) GetAttributeValuesForProductHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /attributes/{id} [put]
 func (sv *Server) UpdateAttributeHandler(c *gin.Context) {
-	var param AttributeParam
+	var param models.AttributeParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
-	var req AttributeRequest
+	var req models.AttributeModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -247,12 +249,12 @@ func (sv *Server) UpdateAttributeHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /attributes/{id}/create [post]
 func (sv *Server) AddAttributeValueHandler(c *gin.Context) {
-	var param AttributeParam
+	var param models.AttributeParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
-	var req AttributeValuesReq
+	var req models.AttributeValueModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -288,7 +290,7 @@ func (sv *Server) AddAttributeValueHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /attributes/{id}/update/{valueId} [put]
 func (sv *Server) UpdateAttrValueHandler(c *gin.Context) {
-	var param AttributeParam
+	var param models.AttributeParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -297,7 +299,7 @@ func (sv *Server) UpdateAttrValueHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, nil))
 		return
 	}
-	var req AttributeValuesReq
+	var req models.AttributeValueModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -333,7 +335,7 @@ func (sv *Server) UpdateAttrValueHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /attributes/{id}/remove/{valueId} [delete]
 func (sv *Server) RemoveAttrValueHandler(c *gin.Context) {
-	var param AttributeParam
+	var param models.AttributeParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
@@ -373,7 +375,7 @@ func (sv *Server) RemoveAttrValueHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /attributes/{id} [delete]
 func (sv *Server) RemoveAttributeHandler(c *gin.Context) {
-	var params AttributeParam
+	var params models.AttributeParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return

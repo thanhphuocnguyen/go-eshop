@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
 
@@ -20,13 +21,13 @@ import (
 // @Failure 500 {object} ErrorResp
 // @Router /images/product/{productId} [get]
 func (sv *Server) GetProductImagesHandler(c *gin.Context) {
-	var param UriIDParam
+	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, []ImageResponse{}, nil, nil))
+	c.JSON(http.StatusOK, createDataResp(c, []models.ImageModel{}, nil, nil))
 }
 
 // @Summary Remove a product by external ID
@@ -46,7 +47,7 @@ func (sv *Server) RemoveImageByPublicIDHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, createErr(UnauthorizedCode, errors.New("missing user payload in context")))
 		return
 	}
-	var params PublicIDParam
+	var params models.PublicIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
