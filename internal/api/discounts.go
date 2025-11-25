@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -341,11 +342,16 @@ func (sv *Server) AddDiscountRuleHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
 		return
 	}
-
+	var bs []byte
+	bs, err := json.Marshal(req.RuleValue)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		return
+	}
 	sqlParams := repository.InsertDiscountRuleParams{
 		DiscountID: uuid.MustParse(param.ID),
 		RuleType:   req.RuleType,
-		RuleValue:  []byte(req.ConditionType),
+		RuleValue:  bs,
 	}
 
 	rule, err := sv.repo.InsertDiscountRule(c, sqlParams)
@@ -446,8 +452,13 @@ func (sv *Server) UpdateDiscountRuleHandler(c *gin.Context) {
 	if req.RuleType != nil {
 		sqlParams.RuleType = req.RuleType
 	}
-	if req.ConditionType != nil {
-		sqlParams.RuleValue = []byte(*req.ConditionType)
+	if req.RuleValue != nil {
+		ruleValueBytes, err := json.Marshal(req.RuleValue)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+			return
+		}
+		sqlParams.RuleValue = ruleValueBytes
 	}
 
 	ruleID, err := sv.repo.UpdateDiscountRule(c, sqlParams)

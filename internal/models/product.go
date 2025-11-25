@@ -1,12 +1,13 @@
 package models
 
 type ProductVariantParam struct {
-	ID string `uri:"variantId" binding:"required,uuid"`
+	VariantID string `uri:"variantId" binding:"required,uuid"`
 }
 type URIVariantParam struct {
 	ProductID string `uri:"id" binding:"required,uuid"`
 	VariantID string `uri:"variantId" binding:"required,uuid"`
 }
+
 type ProductQuery struct {
 	Page         int64     `form:"page,default=1" binding:"omitempty,min=1"`
 	PageSize     int64     `form:"pageSize,default=20" binding:"omitempty,min=1,max=100"`

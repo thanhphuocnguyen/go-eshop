@@ -1,12 +1,11 @@
 package models
 
-import "time"
+import (
+	"encoding/json"
+	"time"
 
-type DiscountLinkObject struct {
-	ID    string   `json:"id"`
-	Name  string   `json:"name"`
-	Price *float64 `json:"price,omitempty"`
-}
+	"github.com/google/uuid"
+)
 
 type AddDiscountModel struct {
 	IsStackable       bool      `json:"isStackable" binding:"omitempty"`
@@ -25,13 +24,13 @@ type AddDiscountModel struct {
 }
 
 type AddDiscountRuleModel struct {
-	RuleType      string `json:"ruleType" binding:"required,oneof=condition action"`
-	ConditionType string `json:"conditionType" binding:"required,oneof=product_collection product_category product_brand product_attribute cart_total cart_item_quantity"`
+	RuleType  string                 `json:"ruleType" binding:"required,oneof=product category customer_segment"`
+	RuleValue map[string]interface{} `json:"ruleValue" binding:"required,min=1"`
 }
 
 type UpdateDiscountRuleModel struct {
-	RuleType      *string `json:"ruleType" binding:"omitempty,oneof=condition action"`
-	ConditionType *string `json:"conditionType" binding:"omitempty,oneof=product_collection product_category product_brand product_attribute cart_total cart_item_quantity"`
+	RuleType  *string                `json:"ruleType" binding:"omitempty,oneof=condition action"`
+	RuleValue map[string]interface{} `json:"ruleValue" binding:"omitempty,min=1"`
 }
 
 type UriRuleIDParam struct {
@@ -62,4 +61,41 @@ type DiscountListQuery struct {
 	DiscountValue *float64   `form:"discountValue" binding:"omitempty,gt=0"`
 	FromDate      *time.Time `form:"fromDate" binding:"omitempty" time_format:"2006-01-02T15:04:05Z07:00"`
 	ToDate        *time.Time `form:"toDate" binding:"omitempty" time_format:"2006-01-02T15:04:05Z07:00"`
+}
+
+type DiscountRule struct {
+	ID         uuid.UUID       `json:"id"`
+	DiscountID uuid.UUID       `json:"discount_id"`
+	RuleType   string          `json:"rule_type"`
+	RuleValue  json.RawMessage `json:"rule_value"`
+}
+
+// Example rule value structures
+type ProductRule struct {
+	ProductIDs []uuid.UUID `json:"product_ids"`
+}
+
+type CategoryRule struct {
+	CategoryIDs      []uuid.UUID `json:"category_ids"`
+	ExcludeSaleItems bool        `json:"exclude_sale_items"`
+}
+
+type PurchaseQuantityRule struct {
+	MinQuantity int `json:"min_quantity"`
+	MaxQuantity int `json:"max_quantity"`
+}
+
+type FirstTimeBuyerRule struct {
+	IsFirstTimeBuyer bool `json:"is_first_time_buyer"`
+}
+
+type BrandRule struct {
+	BrandIDs []uuid.UUID `json:"brand_ids"`
+}
+
+type CustomerSegmentRule struct {
+	MinTotalSpent     float64 `json:"min_total_spent"`
+	IsNewCustomer     bool    `json:"is_new_customer"`
+	MaxPreviousOrders int     `json:"max_previous_orders"`
+	CustomerType      string  `json:"customer_type"`
 }

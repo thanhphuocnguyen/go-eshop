@@ -529,7 +529,7 @@ func (sv *Server) AddVariantHandler(c *gin.Context) {
 		return
 	}
 
-	prod, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(prodId.ID)})
+	prod, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(prodId.VariantID)})
 	if err != nil {
 		c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
 		return
@@ -623,7 +623,7 @@ func (sv *Server) GetVariantsHandler(c *gin.Context) {
 		return
 	}
 
-	prod, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(prodId.ID)})
+	prod, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(prodId.VariantID)})
 	if err != nil {
 		c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
 		return
@@ -666,7 +666,7 @@ func (sv *Server) GetVariantHandler(c *gin.Context) {
 		return
 	}
 
-	prod, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(prodId.ID)})
+	prod, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(prodId.VariantID)})
 	if err != nil {
 		c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
 		return
