@@ -27,7 +27,7 @@ func NewPasetoTokenGenerator(config config.Config) TokenGenerator {
 	}
 }
 
-func (g *PasetoTokenGenerator) GenerateToken(userID uuid.UUID, username string, role repository.UserRole, duration time.Duration) (string, *Payload, error) {
+func (g *PasetoTokenGenerator) GenerateToken(userID uuid.UUID, username string, role repository.UserRole, duration time.Duration) (string, *TokenPayload, error) {
 	payload, err := NewPayload(userID, username, role, duration)
 	if err != nil {
 
@@ -43,7 +43,7 @@ func (g *PasetoTokenGenerator) GenerateToken(userID uuid.UUID, username string, 
 	return token.V4Encrypt(g.symmetricKey, g.implicit), payload, nil
 }
 
-func (g *PasetoTokenGenerator) VerifyToken(token string) (*Payload, error) {
+func (g *PasetoTokenGenerator) VerifyToken(token string) (*TokenPayload, error) {
 	parser := paseto.NewParser()
 	parser.AddRule(paseto.NotExpired())
 	parsedToken, err := parser.ParseV4Local(g.symmetricKey, token, g.implicit)
@@ -64,7 +64,7 @@ func (g *PasetoTokenGenerator) VerifyToken(token string) (*Payload, error) {
 	return payload, nil
 }
 
-func getPayloadFromParsedData(t *paseto.Token) (*Payload, error) {
+func getPayloadFromParsedData(t *paseto.Token) (*TokenPayload, error) {
 	username, err := t.GetString("username")
 	if err != nil {
 		return nil, err
@@ -108,7 +108,7 @@ func getPayloadFromParsedData(t *paseto.Token) (*Payload, error) {
 		return nil, err
 	}
 
-	return &Payload{
+	return &TokenPayload{
 		ID:       idUUID,
 		Username: username,
 		RoleCode: role,

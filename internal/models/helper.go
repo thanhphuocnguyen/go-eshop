@@ -6,7 +6,7 @@ import (
 	"reflect"
 )
 
-func SetField(obj interface{}, name string, value interface{}) error {
+func setField(obj interface{}, name string, value interface{}) error {
 	structValue := reflect.ValueOf(obj).Elem()
 	structFieldValue := structValue.FieldByName(name)
 
@@ -30,7 +30,7 @@ func SetField(obj interface{}, name string, value interface{}) error {
 
 func (s *BrandRule) FillStruct(m map[string]interface{}) error {
 	for k, v := range m {
-		err := SetField(s, k, v)
+		err := setField(s, k, v)
 		if err != nil {
 			return err
 		}
@@ -40,7 +40,7 @@ func (s *BrandRule) FillStruct(m map[string]interface{}) error {
 
 func (s *CategoryRule) FillStruct(m map[string]interface{}) error {
 	for k, v := range m {
-		err := SetField(s, k, v)
+		err := setField(s, k, v)
 		if err != nil {
 			return err
 		}
@@ -49,7 +49,7 @@ func (s *CategoryRule) FillStruct(m map[string]interface{}) error {
 }
 func (s *CustomerSegmentRule) FillStruct(m map[string]interface{}) error {
 	for k, v := range m {
-		err := SetField(s, k, v)
+		err := setField(s, k, v)
 		if err != nil {
 			return err
 		}
@@ -59,7 +59,7 @@ func (s *CustomerSegmentRule) FillStruct(m map[string]interface{}) error {
 
 func (s *FirstTimeBuyerRule) FillStruct(m map[string]interface{}) error {
 	for k, v := range m {
-		err := SetField(s, k, v)
+		err := setField(s, k, v)
 		if err != nil {
 			return err
 		}
@@ -68,7 +68,7 @@ func (s *FirstTimeBuyerRule) FillStruct(m map[string]interface{}) error {
 }
 func (s *PurchaseQuantityRule) FillStruct(m map[string]interface{}) error {
 	for k, v := range m {
-		err := SetField(s, k, v)
+		err := setField(s, k, v)
 		if err != nil {
 			return err
 		}

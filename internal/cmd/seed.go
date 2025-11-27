@@ -636,7 +636,7 @@ func seedUsers(ctx context.Context, pg repository.Repository) error {
 		return err
 	}
 	for i, user := range users {
-		hashed, _ := auth.HashPassword(user.Password)
+		hashed, _ := auth.HashPwd(user.Password)
 		fields := strings.Fields(user.FullName)
 		params[i] = repository.SeedUsersParams{
 			Email:          user.Email,

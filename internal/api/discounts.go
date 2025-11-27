@@ -27,7 +27,7 @@ func (sv *Server) CreateDiscountHandler(c *gin.Context) {
 	// Create a new discount
 	var req models.AddDiscountModel
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 	sqlParams := repository.InsertDiscountParams{
@@ -50,11 +50,11 @@ func (sv *Server) CreateDiscountHandler(c *gin.Context) {
 
 	discount, err := sv.repo.InsertDiscount(c, sqlParams)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
-	c.JSON(http.StatusCreated, createDataResp(c, discount.String(), nil, nil))
+	c.JSON(http.StatusCreated, dto.CreateDataResp(c, discount.String(), nil, nil))
 }
 
 // GetDiscountsHandler godoc
@@ -75,7 +75,7 @@ func (sv *Server) CreateDiscountHandler(c *gin.Context) {
 func (sv *Server) GetDiscountsHandler(c *gin.Context) {
 	var queries models.DiscountListQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
@@ -97,12 +97,12 @@ func (sv *Server) GetDiscountsHandler(c *gin.Context) {
 
 	discounts, err := sv.repo.GetDiscounts(c, sqlParams)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 	total, err := sv.repo.CountDiscounts(c)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 	listData := make([]dto.DiscountListItem, len(discounts))
@@ -135,9 +135,9 @@ func (sv *Server) GetDiscountsHandler(c *gin.Context) {
 			listData[i].MaxDiscount = &maxDiscountAmount.Float64
 		}
 	}
-	pagination := createPagination(queries.Page, queries.PageSize, total)
+	pagination := dto.CreatePagination(queries.Page, queries.PageSize, total)
 
-	c.JSON(http.StatusOK, createDataResp(c, listData, pagination, nil))
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, listData, pagination, nil))
 }
 
 // GetDiscountByIDHandler godoc
@@ -156,19 +156,19 @@ func (sv *Server) GetDiscountByIDHandler(c *gin.Context) {
 	// Get discount by ID
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, nil))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, nil))
 		return
 	}
 
 	discount, err := sv.repo.GetDiscountByID(c, uuid.MustParse(id))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
 	discountUsageRows, err := sv.repo.GetDiscountUsages(c, discount.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -217,7 +217,7 @@ func (sv *Server) GetDiscountByIDHandler(c *gin.Context) {
 		resp.MaxDiscount = maxDiscountAmount.Float64
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, resp, nil, nil))
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, resp, nil, nil))
 }
 
 // UpdateDiscountHandler godoc
@@ -236,18 +236,18 @@ func (sv *Server) UpdateDiscountHandler(c *gin.Context) {
 	// Update discount by ID
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
 	var req models.UpdateDiscountModel
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 	discount, err := sv.repo.GetDiscountByID(c, uuid.MustParse(param.ID))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -282,11 +282,11 @@ func (sv *Server) UpdateDiscountHandler(c *gin.Context) {
 
 	updated, err := sv.repo.UpdateDiscount(c, sqlParams)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, updated, nil, nil))
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, updated, nil, nil))
 }
 
 // DeleteDiscountHandler godoc
@@ -304,13 +304,13 @@ func (sv *Server) DeleteDiscountHandler(c *gin.Context) {
 	// Delete discount by ID
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
 	err := sv.repo.DeleteDiscount(c, uuid.MustParse(param.ID))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -333,19 +333,19 @@ func (sv *Server) AddDiscountRuleHandler(c *gin.Context) {
 	// Add a discount rule to a discount
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
 	var req models.AddDiscountRuleModel
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 	var bs []byte
 	bs, err := json.Marshal(req.RuleValue)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 	sqlParams := repository.InsertDiscountRuleParams{
@@ -356,11 +356,11 @@ func (sv *Server) AddDiscountRuleHandler(c *gin.Context) {
 
 	rule, err := sv.repo.InsertDiscountRule(c, sqlParams)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
-	c.JSON(http.StatusCreated, createDataResp(c, rule.String(), nil, nil))
+	c.JSON(http.StatusCreated, dto.CreateDataResp(c, rule.String(), nil, nil))
 }
 
 // GetDiscountRulesHandler godoc
@@ -377,17 +377,17 @@ func (sv *Server) AddDiscountRuleHandler(c *gin.Context) {
 func (sv *Server) GetDiscountRulesHandler(c *gin.Context) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
 	rules, err := sv.repo.GetDiscountRules(c, uuid.MustParse(param.ID))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, rules, nil, nil))
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, rules, nil, nil))
 }
 
 // GetDiscountRuleByIDHandler godoc
@@ -406,17 +406,17 @@ func (sv *Server) GetDiscountRulesHandler(c *gin.Context) {
 func (sv *Server) GetDiscountRuleByIDHandler(c *gin.Context) {
 	var param models.UriRuleIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
 	rule, err := sv.repo.GetDiscountRuleByID(c, uuid.MustParse(param.RuleID))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, rule, nil, nil))
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, rule, nil, nil))
 }
 
 // UpdateDiscountRuleHandler godoc
@@ -435,13 +435,13 @@ func (sv *Server) GetDiscountRuleByIDHandler(c *gin.Context) {
 func (sv *Server) UpdateDiscountRuleHandler(c *gin.Context) {
 	var param models.UriRuleIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
 	var req models.UpdateDiscountRuleModel
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
@@ -455,7 +455,7 @@ func (sv *Server) UpdateDiscountRuleHandler(c *gin.Context) {
 	if req.RuleValue != nil {
 		ruleValueBytes, err := json.Marshal(req.RuleValue)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+			c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 			return
 		}
 		sqlParams.RuleValue = ruleValueBytes
@@ -463,11 +463,11 @@ func (sv *Server) UpdateDiscountRuleHandler(c *gin.Context) {
 
 	ruleID, err := sv.repo.UpdateDiscountRule(c, sqlParams)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, ruleID.String(), nil, nil))
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, ruleID.String(), nil, nil))
 }
 
 // DeleteDiscountRuleHandler godoc
@@ -485,13 +485,13 @@ func (sv *Server) UpdateDiscountRuleHandler(c *gin.Context) {
 func (sv *Server) DeleteDiscountRuleHandler(c *gin.Context) {
 	var param models.UriRuleIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
 	err := sv.repo.DeleteDiscountRule(c, uuid.MustParse(param.RuleID))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 

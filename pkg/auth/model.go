@@ -14,7 +14,7 @@ var (
 	ErrInvalidToken = errors.New("token is invalid")
 )
 
-type Payload struct {
+type TokenPayload struct {
 	ID       uuid.UUID `json:"id"`
 	UserID   uuid.UUID `json:"userId"`
 	Username string    `json:"username"`
@@ -24,31 +24,31 @@ type Payload struct {
 	Expires  time.Time `json:"expires"`
 }
 
-func (payload *Payload) GetExpirationTime() (*jwt.NumericDate, error) {
+func (payload *TokenPayload) GetExpirationTime() (*jwt.NumericDate, error) {
 	return jwt.NewNumericDate(payload.Expires), nil
 }
-func (payload *Payload) GetIssuedAt() (*jwt.NumericDate, error) {
+func (payload *TokenPayload) GetIssuedAt() (*jwt.NumericDate, error) {
 	return jwt.NewNumericDate(payload.IssuedAt), nil
 }
-func (payload *Payload) GetNotBefore() (*jwt.NumericDate, error) {
+func (payload *TokenPayload) GetNotBefore() (*jwt.NumericDate, error) {
 	return jwt.NewNumericDate(payload.IssuedAt), nil
 }
-func (payload *Payload) GetIssuer() (string, error) {
-	return "simple-life-shop", nil
+func (payload *TokenPayload) GetIssuer() (string, error) {
+	return "e-shop", nil
 }
-func (payload *Payload) GetSubject() (string, error) {
+func (payload *TokenPayload) GetSubject() (string, error) {
 	return payload.Username, nil
 }
-func (payload *Payload) GetAudience() (jwt.ClaimStrings, error) {
+func (payload *TokenPayload) GetAudience() (jwt.ClaimStrings, error) {
 	return jwt.ClaimStrings{payload.Username}, nil
 }
 
-func NewPayload(userID uuid.UUID, username string, rol repository.UserRole, duration time.Duration) (*Payload, error) {
+func NewPayload(userID uuid.UUID, username string, rol repository.UserRole, duration time.Duration) (*TokenPayload, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
 	}
-	payload := &Payload{
+	payload := &TokenPayload{
 		ID:       id,
 		UserID:   userID,
 		RoleCode: rol.Code,

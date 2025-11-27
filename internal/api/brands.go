@@ -30,7 +30,7 @@ import (
 func (sv *Server) GetShopBrandsHandler(c *gin.Context) {
 	var queries models.PaginationQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 	var dbQueries repository.GetBrandsParams = repository.GetBrandsParams{
@@ -44,14 +44,14 @@ func (sv *Server) GetShopBrandsHandler(c *gin.Context) {
 
 	rows, err := sv.repo.GetBrands(c, dbQueries)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
 	cnt, err := sv.repo.CountBrands(c)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -71,7 +71,7 @@ func (sv *Server) GetShopBrandsHandler(c *gin.Context) {
 		data[i] = model
 	}
 
-	resp := createDataResp(c, data, createPagination(queries.Page, queries.PageSize, cnt), nil)
+	resp := dto.CreateDataResp(c, data, dto.CreatePagination(queries.Page, queries.PageSize, cnt), nil)
 
 	c.JSON(http.StatusOK, resp)
 }
@@ -90,18 +90,18 @@ func (sv *Server) GetShopBrandsHandler(c *gin.Context) {
 func (sv *Server) GetShopBrandBySlugHandler(c *gin.Context) {
 	var param models.URISlugParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 	var query models.PaginationQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
 	var queries models.PaginationQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 	var dbQueries repository.GetBrandsParams = repository.GetBrandsParams{
@@ -113,14 +113,14 @@ func (sv *Server) GetShopBrandBySlugHandler(c *gin.Context) {
 
 	rows, err := sv.repo.GetBrands(c, dbQueries)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
 	cnt, err := sv.repo.CountBrands(c)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -136,7 +136,7 @@ func (sv *Server) GetShopBrandBySlugHandler(c *gin.Context) {
 		}
 	}
 
-	resp := createDataResp(c, data, createPagination(queries.Page, queries.PageSize, cnt), nil)
+	resp := dto.CreateDataResp(c, data, dto.CreatePagination(queries.Page, queries.PageSize, cnt), nil)
 	c.JSON(http.StatusOK, resp)
 }
 
@@ -155,7 +155,7 @@ func (sv *Server) GetShopBrandBySlugHandler(c *gin.Context) {
 func (sv *Server) CreateBrandHandler(c *gin.Context) {
 	var req models.CreateCategoryModel
 	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 	params := repository.CreateBrandParams{
@@ -167,9 +167,9 @@ func (sv *Server) CreateBrandHandler(c *gin.Context) {
 		params.Description = req.Description
 	}
 	if req.Image != nil {
-		publicID, imgUrl, err := sv.uploadService.UploadFile(c, req.Image)
+		publicID, imgUrl, err := sv.uploadService.Upload(c, req.Image)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErr(UploadFileCode, err))
+			c.JSON(http.StatusInternalServerError, dto.CreateErr(UploadFileCode, err))
 			return
 		}
 		params.ImageUrl = &imgUrl
@@ -178,11 +178,11 @@ func (sv *Server) CreateBrandHandler(c *gin.Context) {
 
 	col, err := sv.repo.CreateBrand(c, params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
-	c.JSON(http.StatusCreated, createDataResp(c, col, nil, nil))
+	c.JSON(http.StatusCreated, dto.CreateDataResp(c, col, nil, nil))
 }
 
 // @Summary Get a list of brands
@@ -200,7 +200,7 @@ func (sv *Server) CreateBrandHandler(c *gin.Context) {
 func (sv *Server) GetBrandsHandler(c *gin.Context) {
 	var queries models.PaginationQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 	var dbQueries repository.GetBrandsParams = repository.GetBrandsParams{
@@ -212,14 +212,14 @@ func (sv *Server) GetBrandsHandler(c *gin.Context) {
 
 	rows, err := sv.repo.GetBrands(c, dbQueries)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
 	cnt, err := sv.repo.CountBrands(c)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -235,9 +235,9 @@ func (sv *Server) GetBrandsHandler(c *gin.Context) {
 		})
 	}
 
-	pagination := createPagination(queries.Page, queries.PageSize, cnt)
+	pagination := dto.CreatePagination(queries.Page, queries.PageSize, cnt)
 
-	resp := createDataResp(c, data, pagination, nil)
+	resp := dto.CreateDataResp(c, data, pagination, nil)
 	c.JSON(http.StatusOK, resp)
 }
 
@@ -255,17 +255,17 @@ func (sv *Server) GetBrandsHandler(c *gin.Context) {
 func (sv *Server) GetBrandByIDHandler(c *gin.Context) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
 	result, err := sv.repo.GetBrandByID(c, uuid.MustParse(param.ID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErr(NotFoundCode, fmt.Errorf("brand with ID %s not found", param.ID)))
+			c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, fmt.Errorf("brand with ID %s not found", param.ID)))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -280,7 +280,7 @@ func (sv *Server) GetBrandByIDHandler(c *gin.Context) {
 		UpdatedAt:   result.UpdatedAt.String(),
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, colResp, nil, nil))
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, colResp, nil, nil))
 }
 
 // @Summary Update a Brand
@@ -298,12 +298,12 @@ func (sv *Server) GetBrandByIDHandler(c *gin.Context) {
 func (sv *Server) UpdateBrandHandler(c *gin.Context) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 	var req models.UpdateCategoryModel
 	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
@@ -311,10 +311,10 @@ func (sv *Server) UpdateBrandHandler(c *gin.Context) {
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErr(NotFoundCode, fmt.Errorf("brand with ID %s not found", param.ID)))
+			c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, fmt.Errorf("brand with ID %s not found", param.ID)))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -325,20 +325,20 @@ func (sv *Server) UpdateBrandHandler(c *gin.Context) {
 
 	if req.Image != nil {
 
-		imgID, imgUrl, err := sv.uploadService.UploadFile(c, req.Image)
+		imgID, imgUrl, err := sv.uploadService.Upload(c, req.Image)
 		if err != nil {
 			log.Error().Err(err).Interface("value", req.Image.Header).Msg("error when upload image")
-			c.JSON(http.StatusInternalServerError, createErr(UploadFileCode, err))
+			c.JSON(http.StatusInternalServerError, dto.CreateErr(UploadFileCode, err))
 			return
 		}
 		updateParam.ImageUrl = &imgUrl
 		updateParam.ImageID = &imgID
 		oldImageID := brand.ImageID
 		if oldImageID != nil {
-			_, err := sv.uploadService.RemoveFile(c, *oldImageID)
+			_, err := sv.uploadService.Remove(c, *oldImageID)
 			if err != nil {
 				log.Error().Err(err).Msg("error when remove old image")
-				c.JSON(http.StatusInternalServerError, createErr(UploadFileCode, err))
+				c.JSON(http.StatusInternalServerError, dto.CreateErr(UploadFileCode, err))
 				return
 			}
 			log.Info().Msgf("old image %s removed", *oldImageID)
@@ -359,11 +359,11 @@ func (sv *Server) UpdateBrandHandler(c *gin.Context) {
 	col, err := sv.repo.UpdateBrandWith(c, updateParam)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, col, nil, nil))
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, col, nil, nil))
 }
 
 // @Summary Delete a Brand
@@ -380,24 +380,24 @@ func (sv *Server) UpdateBrandHandler(c *gin.Context) {
 func (sv *Server) DeleteBrandHandler(c *gin.Context) {
 	var colID models.UriIDParam
 	if err := c.ShouldBindUri(&colID); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
 	_, err := sv.repo.GetBrandByID(c, uuid.MustParse(colID.ID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErr(NotFoundCode, fmt.Errorf("brand with ID %s not found", colID.ID)))
+			c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, fmt.Errorf("brand with ID %s not found", colID.ID)))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
 	err = sv.repo.DeleteBrand(c, uuid.MustParse(colID.ID))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
-	c.JSON(http.StatusOK, createDataResp(c, true, nil, nil))
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, true, nil, nil))
 }

@@ -8,6 +8,6 @@ import (
 )
 
 type TokenGenerator interface {
-	GenerateToken(userID uuid.UUID, username string, role repository.UserRole, duration time.Duration) (string, *Payload, error)
-	VerifyToken(token string) (*Payload, error)
+	GenerateToken(userID uuid.UUID, username string, role repository.UserRole, duration time.Duration) (string, *TokenPayload, error)
+	VerifyToken(token string) (*TokenPayload, error)
 }

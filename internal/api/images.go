@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
@@ -23,11 +24,11 @@ import (
 func (sv *Server) GetProductImagesHandler(c *gin.Context) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, []models.ImageModel{}, nil, nil))
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, []models.ImageModel{}, nil, nil))
 }
 
 // @Summary Remove a product by external ID
@@ -42,19 +43,19 @@ func (sv *Server) GetProductImagesHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /images/{publicID} [delete]
 func (sv *Server) RemoveImageByPublicIDHandler(c *gin.Context) {
-	_, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
+	_, ok := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, createErr(UnauthorizedCode, errors.New("missing user payload in context")))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(UnauthorizedCode, errors.New("missing user payload in context")))
 		return
 	}
 	var params models.PublicIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 	_, err := sv.removeImageUtil(c, params.PublicID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -62,5 +63,5 @@ func (sv *Server) RemoveImageByPublicIDHandler(c *gin.Context) {
 }
 
 func (sv *Server) removeImageUtil(c *gin.Context, publicID string) (msg string, err error) {
-	return sv.uploadService.RemoveFile(c, publicID)
+	return sv.uploadService.Remove(c, publicID)
 }

@@ -18,30 +18,30 @@ var (
 // GatewayFactory creates payment gateway instances
 type GatewayFactory func(config GatewayConfig) (PaymentGateway, error)
 
-// PaymentService orchestrates payment operations across multiple gateways
-type PaymentService struct {
+// PaymentManager orchestrates payment operations across multiple gateways
+type PaymentManager struct {
 	gateways  map[string]PaymentGateway
 	factories map[string]GatewayFactory
 	mu        sync.RWMutex
 }
 
 // NewPaymentService creates a new payment service instance
-func NewPaymentService() *PaymentService {
-	return &PaymentService{
+func NewPaymentService() *PaymentManager {
+	return &PaymentManager{
 		gateways:  make(map[string]PaymentGateway),
 		factories: make(map[string]GatewayFactory),
 	}
 }
 
 // RegisterGateway registers a gateway factory
-func (ps *PaymentService) RegisterGateway(name string, factory GatewayFactory) {
+func (ps *PaymentManager) RegisterGateway(name string, factory GatewayFactory) {
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
 	ps.factories[name] = factory
 }
 
 // AddGateway adds a configured gateway
-func (ps *PaymentService) AddGateway(config GatewayConfig) error {
+func (ps *PaymentManager) AddGateway(config GatewayConfig) error {
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
 
@@ -60,7 +60,7 @@ func (ps *PaymentService) AddGateway(config GatewayConfig) error {
 }
 
 // CreatePaymentIntent creates a payment intent using the primary gateway
-func (ps *PaymentService) CreatePaymentIntent(ctx context.Context, gatewayName string, req PaymentRequest) (*PaymentIntent, error) {
+func (ps *PaymentManager) CreatePaymentIntent(ctx context.Context, gatewayName string, req PaymentRequest) (*PaymentIntent, error) {
 	if err := ps.validatePaymentRequest(req); err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (ps *PaymentService) CreatePaymentIntent(ctx context.Context, gatewayName s
 }
 
 // CreatePaymentIntentWithGateway creates a payment intent using a specific gateway
-func (ps *PaymentService) CreatePaymentIntentWithGateway(ctx context.Context, req PaymentRequest, gatewayName string) (*PaymentIntent, error) {
+func (ps *PaymentManager) CreatePaymentIntentWithGateway(ctx context.Context, req PaymentRequest, gatewayName string) (*PaymentIntent, error) {
 	if err := ps.validatePaymentRequest(req); err != nil {
 		return nil, err
 	}
@@ -87,19 +87,21 @@ func (ps *PaymentService) CreatePaymentIntentWithGateway(ctx context.Context, re
 }
 
 // ConfirmPayment confirms a payment with fallback support
-func (ps *PaymentService) ConfirmPayment(ctx context.Context, intentID string, gatewayName string) (*PaymentResult, error) {
+func (ps *PaymentManager) ConfirmPayment(ctx context.Context, intentID string, gatewayName string) (*PaymentResult, error) {
 	gateway, err := ps.getGateway(gatewayName)
 	if err != nil {
 		return nil, err
 	}
 
 	result, err := gateway.ConfirmPayment(ctx, intentID)
-
+	if err != nil {
+		return nil, err
+	}
 	return result, nil
 }
 
 // RefundPayment processes a refund
-func (ps *PaymentService) RefundPayment(ctx context.Context, req RefundRequest, gatewayName string) (*RefundResult, error) {
+func (ps *PaymentManager) RefundPayment(ctx context.Context, req RefundRequest, gatewayName string) (*RefundResult, error) {
 	gateway, err := ps.getGateway(gatewayName)
 	if err != nil {
 		return nil, err
@@ -109,7 +111,7 @@ func (ps *PaymentService) RefundPayment(ctx context.Context, req RefundRequest, 
 }
 
 // GetPayment retrieves payment details
-func (ps *PaymentService) GetPayment(ctx context.Context, transactionID string, gatewayName string) (*PaymentIntent, error) {
+func (ps *PaymentManager) GetPayment(ctx context.Context, transactionID string, gatewayName string) (*PaymentIntent, error) {
 	gateway, err := ps.getGateway(gatewayName)
 	if err != nil {
 		return nil, err
@@ -120,7 +122,7 @@ func (ps *PaymentService) GetPayment(ctx context.Context, transactionID string, 
 
 // Helper methods
 
-func (ps *PaymentService) validatePaymentRequest(req PaymentRequest) error {
+func (ps *PaymentManager) validatePaymentRequest(req PaymentRequest) error {
 	if req.Amount <= 0 {
 		return ErrInvalidAmount
 	}
@@ -136,7 +138,7 @@ func (ps *PaymentService) validatePaymentRequest(req PaymentRequest) error {
 	return nil
 }
 
-func (ps *PaymentService) getGateway(name string) (PaymentGateway, error) {
+func (ps *PaymentManager) getGateway(name string) (PaymentGateway, error) {
 	ps.mu.RLock()
 	defer ps.mu.RUnlock()
 
@@ -148,6 +150,6 @@ func (ps *PaymentService) getGateway(name string) (PaymentGateway, error) {
 	return gateway, nil
 }
 
-func (ps *PaymentService) createPaymentIntentWithGateway(ctx context.Context, req PaymentRequest, gateway PaymentGateway) (*PaymentIntent, error) {
+func (ps *PaymentManager) createPaymentIntentWithGateway(ctx context.Context, req PaymentRequest, gateway PaymentGateway) (*PaymentIntent, error) {
 	return gateway.CreatePaymentIntent(ctx, req)
 }

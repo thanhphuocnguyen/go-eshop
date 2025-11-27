@@ -29,21 +29,21 @@ import (
 // @Failure 500 {object} ErrorResp
 // @Router /users/{id} [patch]
 func (sv *Server) UpdateUserHandler(c *gin.Context) {
-	authPayload, _ := c.MustGet(AuthPayLoad).(*auth.Payload)
+	authPayload, _ := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
 	var req models.UpdateUserModel
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidEmailCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidEmailCode, err))
 		return
 	}
 	userId := uuid.MustParse(req.UserID)
 	user, err := sv.repo.GetUserByID(c, userId)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, createErr(UnauthorizedCode, err))
+		c.JSON(http.StatusUnauthorized, dto.CreateErr(UnauthorizedCode, err))
 		return
 	}
 
 	if authPayload.RoleCode != "admin" && user.ID != userId {
-		c.JSON(http.StatusUnauthorized, createErr(UnauthorizedCode, err))
+		c.JSON(http.StatusUnauthorized, dto.CreateErr(UnauthorizedCode, err))
 		return
 	}
 
@@ -77,11 +77,11 @@ func (sv *Server) UpdateUserHandler(c *gin.Context) {
 
 	updatedUser, err := sv.repo.UpdateUser(c, arg)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, updatedUser, nil, nil))
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, updatedUser, nil, nil))
 }
 
 // GetCurrentUserHandler godoc
@@ -95,9 +95,9 @@ func (sv *Server) UpdateUserHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /users/me [get]
 func (sv *Server) GetCurrentUserHandler(c *gin.Context) {
-	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, errors.New("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, errors.New("authorization payload is not provided")))
 		return
 	}
 
@@ -105,24 +105,24 @@ func (sv *Server) GetCurrentUserHandler(c *gin.Context) {
 
 	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, createErr(NotFoundCode, err))
+		c.JSON(http.StatusUnauthorized, dto.CreateErr(NotFoundCode, err))
 		return
 	}
 
 	userAddress, err := sv.repo.GetAddresses(c, user.ID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
 	addressResp := make([]dto.AddressDetail, 0)
 	for _, address := range userAddress {
-		addressResp = append(addressResp, mapAddressToAddressResponse(address))
+		addressResp = append(addressResp, dto.MapAddressToAddressResponse(address))
 	}
-	userResp = mapToUserResponse(user, authPayload.RoleCode)
+	userResp = dto.MapToUserResponse(user, authPayload.RoleCode)
 	userResp.Addresses = addressResp
 
-	c.JSON(http.StatusOK, createDataResp(c, userResp, nil, nil))
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, userResp, nil, nil))
 }
 
 // GetUsersHandler godoc
@@ -139,14 +139,14 @@ func (sv *Server) GetCurrentUserHandler(c *gin.Context) {
 // @Failure 401 {object} ErrorResp
 // @Router /admin/users [get]
 func (sv *Server) GetUsersHandler(c *gin.Context) {
-	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, errors.New("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, errors.New("authorization payload is not provided")))
 		return
 	}
 	var queries models.PaginationQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
@@ -156,23 +156,23 @@ func (sv *Server) GetUsersHandler(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
 	total, err := sv.repo.CountUsers(c)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
 	userResp := make([]dto.UserDetail, 0)
 	for _, user := range users {
-		userResp = append(userResp, mapToUserResponse(user, authPayload.RoleCode))
+		userResp = append(userResp, dto.MapToUserResponse(user, authPayload.RoleCode))
 	}
 
-	pagination := createPagination(queries.Page, queries.PageSize, total)
-	c.JSON(http.StatusOK, createDataResp(c, userResp, pagination, nil))
+	pagination := dto.CreatePagination(queries.Page, queries.PageSize, total)
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, userResp, pagination, nil))
 }
 
 // GetUserHandler godoc
@@ -188,29 +188,29 @@ func (sv *Server) GetUsersHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /admin/users/{id} [get]
 func (sv *Server) GetUserHandler(c *gin.Context) {
-	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, errors.New("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, errors.New("authorization payload is not provided")))
 		return
 	}
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
 	user, err := sv.repo.GetUserByID(c, uuid.MustParse(param.ID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
+			c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
-	userResp := mapToUserResponse(user, authPayload.RoleCode)
-	c.JSON(http.StatusOK, createDataResp(c, userResp, nil, nil))
+	userResp := dto.MapToUserResponse(user, authPayload.RoleCode)
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, userResp, nil, nil))
 }
 
 // SendVerifyEmailHandler godoc
@@ -226,18 +226,18 @@ func (sv *Server) GetUserHandler(c *gin.Context) {
 // @Router /users/verify-email [post]
 // @Security BearerAuth
 func (sv *Server) SendVerifyEmailHandler(c *gin.Context) {
-	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, errors.New("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, errors.New("authorization payload is not provided")))
 		return
 	}
 	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 	if user.VerifiedEmail {
-		c.JSON(http.StatusBadRequest, createErr(InvalidEmailCode, fmt.Errorf("email already verified")))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidEmailCode, fmt.Errorf("email already verified")))
 		return
 	}
 
@@ -251,7 +251,7 @@ func (sv *Server) SendVerifyEmailHandler(c *gin.Context) {
 		asynq.Queue(worker.QueueCritical),
 	)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -275,12 +275,12 @@ func (sv *Server) SendVerifyEmailHandler(c *gin.Context) {
 func (sv *Server) VerifyEmailHandler(c *gin.Context) {
 	var query models.VerifyEmailQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidEmailCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidEmailCode, err))
 		return
 	}
 	verifyEmail, err := sv.repo.GetVerifyEmailByVerifyCode(c, query.VerifyCode)
 	if err != nil {
-		c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
+		c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
 		return
 	}
 
@@ -291,13 +291,13 @@ func (sv *Server) VerifyEmailHandler(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
 	user, err := sv.repo.GetUserByID(c, verifyEmail.UserID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 

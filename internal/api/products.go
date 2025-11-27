@@ -29,7 +29,7 @@ import (
 func (sv *Server) AddProductHandler(c *gin.Context) {
 	var req models.CreateProductModel
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
@@ -48,7 +48,7 @@ func (sv *Server) AddProductHandler(c *gin.Context) {
 	product, err := sv.repo.CreateProduct(c, createParams)
 	if err != nil {
 		log.Error().Err(err).Timestamp().Msg("CreateProduct")
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -59,7 +59,7 @@ func (sv *Server) AddProductHandler(c *gin.Context) {
 		})
 		if err != nil {
 			log.Error().Err(err).Msg("CreateProductAttribute")
-			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+			c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 			return
 		}
 	}
@@ -67,7 +67,7 @@ func (sv *Server) AddProductHandler(c *gin.Context) {
 	if err != nil {
 		log.Error().Err(err).Timestamp().Msg("CreateProduct")
 
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -82,7 +82,7 @@ func (sv *Server) AddProductHandler(c *gin.Context) {
 		_, err = sv.repo.AddProductsToCategory(c, categoryUUIDs)
 		if err != nil {
 			log.Error().Err(err).Timestamp().Msg("AddProductsToCategory")
-			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+			c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 			return
 		}
 	}
@@ -97,12 +97,12 @@ func (sv *Server) AddProductHandler(c *gin.Context) {
 		_, err = sv.repo.AddProductsToCollection(c, collectionUUIDs)
 		if err != nil {
 			log.Error().Err(err).Timestamp().Msg("AddProductsToCollection")
-			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+			c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 			return
 		}
 	}
 
-	c.JSON(http.StatusCreated, createDataResp(c, product, nil, nil))
+	c.JSON(http.StatusCreated, dto.CreateDataResp(c, product, nil, nil))
 }
 
 // @Summary Get a product detail by ID
@@ -119,7 +119,7 @@ func (sv *Server) AddProductHandler(c *gin.Context) {
 func (sv *Server) GetProductByIdHandler(c *gin.Context) {
 	var params models.UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 	sqlParams := repository.GetProductDetailParams{}
@@ -133,16 +133,16 @@ func (sv *Server) GetProductByIdHandler(c *gin.Context) {
 	productRow, err := sv.repo.GetProductDetail(c, sqlParams)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
+			c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
-	productDetail := mapToProductDetailResponse(productRow)
+	productDetail := dto.MapToProductDetailResponse(productRow)
 
-	c.JSON(http.StatusOK, createDataResp(c, productDetail, nil, nil))
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, productDetail, nil, nil))
 }
 
 // @Summary Get admin list of products
@@ -160,7 +160,7 @@ func (sv *Server) GetProductByIdHandler(c *gin.Context) {
 func (sv *Server) GetAdminProductsHandler(c *gin.Context) {
 	var queries models.ProductQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
@@ -180,22 +180,22 @@ func (sv *Server) GetAdminProductsHandler(c *gin.Context) {
 
 	products, err := sv.repo.GetAdminProductList(c, dbParams)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
 	productCnt, err := sv.repo.CountProducts(c, repository.CountProductsParams{})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
 	productResponses := make([]dto.ProductListItem, 0)
 	for _, product := range products {
-		productResponses = append(productResponses, mapToAdminProductResponse(product))
+		productResponses = append(productResponses, dto.MapToAdminProductResponse(product))
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, productResponses, createPagination(queries.Page, queries.PageSize, productCnt), nil))
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, productResponses, dto.CreatePagination(queries.Page, queries.PageSize, productCnt), nil))
 }
 
 // @Summary Get list of products
@@ -213,7 +213,7 @@ func (sv *Server) GetAdminProductsHandler(c *gin.Context) {
 func (sv *Server) GetProductsHandler(c *gin.Context) {
 	var queries models.ProductQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
@@ -247,22 +247,22 @@ func (sv *Server) GetProductsHandler(c *gin.Context) {
 
 	products, err := sv.repo.GetProductList(c, dbParams)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
 	productCnt, err := sv.repo.CountProducts(c, repository.CountProductsParams{})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
 	productResponses := make([]dto.ProductSummary, 0)
 	for _, product := range products {
-		productResponses = append(productResponses, mapToShopProductResponse(product))
+		productResponses = append(productResponses, dto.MapToShopProductResponse(product))
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, productResponses, createPagination(queries.Page, queries.PageSize, productCnt), nil))
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, productResponses, dto.CreatePagination(queries.Page, queries.PageSize, productCnt), nil))
 }
 
 // @Summary Update a product by ID
@@ -280,22 +280,22 @@ func (sv *Server) GetProductsHandler(c *gin.Context) {
 func (sv *Server) UpdateProductHandler(c *gin.Context) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 	productID, err := uuid.Parse(param.ID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
 	var req models.UpdateProductModel
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
-	if isStructEmpty(req) {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("at least one field must be provided to update")))
+	if dto.IsStructEmpty(req) {
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, errors.New("at least one field must be provided to update")))
 		return
 	}
 
@@ -329,7 +329,7 @@ func (sv *Server) UpdateProductHandler(c *gin.Context) {
 	updated, err := sv.repo.UpdateProduct(c, updateParams)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
+			c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
 			return
 		}
 	}
@@ -338,7 +338,7 @@ func (sv *Server) UpdateProductHandler(c *gin.Context) {
 		err = sv.repo.DeleteProductAttributesByProductID(c, productID)
 		if err != nil {
 			log.Error().Err(err).Msg("DeleteProductAttributesByProductID")
-			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+			c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 			return
 		}
 		prodAttrParams := make([]repository.CreateBulkProductAttributesParams, len(*req.Attributes))
@@ -351,7 +351,7 @@ func (sv *Server) UpdateProductHandler(c *gin.Context) {
 		_, err = sv.repo.CreateBulkProductAttributes(c, prodAttrParams)
 		if err != nil {
 			log.Error().Err(err).Msg("CreateBulkProductAttributes")
-			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+			c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 			return
 		}
 	}
@@ -360,7 +360,7 @@ func (sv *Server) UpdateProductHandler(c *gin.Context) {
 		err = sv.repo.RemoveProductsFromCategory(c, productID)
 		if err != nil {
 			log.Error().Err(err).Msg("RemoveProductsFromCategory")
-			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+			c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 			return
 		}
 		categoryUUIDs := make([]repository.AddProductsToCategoryParams, len(*req.CategoryIDs))
@@ -373,7 +373,7 @@ func (sv *Server) UpdateProductHandler(c *gin.Context) {
 		_, err = sv.repo.AddProductsToCategory(c, categoryUUIDs)
 		if err != nil {
 			log.Error().Err(err).Timestamp().Msg("AddProductsToCategory")
-			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+			c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 			return
 		}
 	}
@@ -382,7 +382,7 @@ func (sv *Server) UpdateProductHandler(c *gin.Context) {
 		err = sv.repo.RemoveProductsFromCollection(c, productID)
 		if err != nil {
 			log.Error().Err(err).Msg("RemoveProductsFromCollection")
-			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+			c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 			return
 		}
 		collectionUUIDs := make([]repository.AddProductsToCollectionParams, len(*req.CollectionIDs))
@@ -396,12 +396,12 @@ func (sv *Server) UpdateProductHandler(c *gin.Context) {
 		_, err = sv.repo.AddProductsToCollection(c, collectionUUIDs)
 		if err != nil {
 			log.Error().Err(err).Timestamp().Msg("AddProductsToCollection")
-			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+			c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 			return
 		}
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, updated, nil, nil))
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, updated, nil, nil))
 }
 
 // @Summary Upload product image
@@ -418,35 +418,35 @@ func (sv *Server) UpdateProductHandler(c *gin.Context) {
 func (sv *Server) UploadProductImageHandler(c *gin.Context) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 	file, _ := c.FormFile("file")
 	if file == nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("image file is required")))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, errors.New("image file is required")))
 		return
 	}
 
 	prod, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(param.ID)})
 	if err != nil {
-		c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
+		c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
 		return
 	}
 	if prod.ImageID != nil {
-		msg, err := sv.uploadService.RemoveFile(c, *prod.ImageID)
+		msg, err := sv.uploadService.Remove(c, *prod.ImageID)
 		if err != nil {
 			log.Error().Err(err).Timestamp().Msg(msg)
-			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+			c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 			return
 		}
 		return
 	}
 
-	id, url, err := sv.uploadService.UploadFile(c, file)
+	id, url, err := sv.uploadService.Upload(c, file)
 	if err != nil {
 		log.Error().Err(err).Timestamp().Msg("UploadFile")
 
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -458,11 +458,11 @@ func (sv *Server) UploadProductImageHandler(c *gin.Context) {
 	if err != nil {
 		log.Error().Err(err).Timestamp().Msg("CreateProduct")
 
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
-	c.JSON(http.StatusCreated, createDataResp(c, updated, nil, nil))
+	c.JSON(http.StatusCreated, dto.CreateDataResp(c, updated, nil, nil))
 }
 
 // @Summary Remove a product by ID
@@ -479,23 +479,23 @@ func (sv *Server) UploadProductImageHandler(c *gin.Context) {
 func (sv *Server) DeleteProductHandler(c *gin.Context) {
 	var params models.UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
 	product, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(params.ID)})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
+			c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
 	err = sv.repo.DeleteProduct(c, product.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -516,32 +516,32 @@ func (sv *Server) DeleteProductHandler(c *gin.Context) {
 func (sv *Server) AddVariantHandler(c *gin.Context) {
 	var prodId models.ProductVariantParam
 	if err := c.ShouldBindUri(&prodId); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 	var req models.CreateProdVariantModel
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 	if len(req.AttributeValues) == 0 {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("attribute values are required")))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, errors.New("attribute values are required")))
 		return
 	}
 
 	prod, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(prodId.VariantID)})
 	if err != nil {
-		c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
+		c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
 		return
 	}
 
 	prodAttrs, err := sv.repo.GetProductAttributesByProductID(c, prod.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 	if len(prodAttrs) == 0 {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("product has no attributes")))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, errors.New("product has no attributes")))
 		return
 	}
 
@@ -552,18 +552,18 @@ func (sv *Server) AddVariantHandler(c *gin.Context) {
 
 	attributeValues, err := sv.repo.GetAttributeValuesByIDs(c, req.AttributeValues)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
 	if len(attributeValues) != len(prodAttrIds) {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("attribute values do not match product attributes")))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, errors.New("attribute values do not match product attributes")))
 		return
 	}
 
 	for _, attrVal := range attributeValues {
 		if !slices.Contains(prodAttrIds, attrVal.AttributeID) {
-			c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, errors.New("attribute value does not belong to product attributes")))
+			c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, errors.New("attribute value does not belong to product attributes")))
 			return
 		}
 	}
@@ -585,7 +585,7 @@ func (sv *Server) AddVariantHandler(c *gin.Context) {
 	if err != nil {
 		log.Error().Err(err).Timestamp().Msg("CreateProduct")
 
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 	variantAttrParams := make([]repository.CreateBulkProductVariantAttributeParams, len(req.AttributeValues))
@@ -599,11 +599,11 @@ func (sv *Server) AddVariantHandler(c *gin.Context) {
 	_, err = sv.repo.CreateBulkProductVariantAttribute(c, variantAttrParams)
 	if err != nil {
 		log.Error().Err(err).Msg("CreateBulkProductVariantAttribute")
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
-	c.JSON(http.StatusCreated, createDataResp(c, variant.ID.String(), nil, nil))
+	c.JSON(http.StatusCreated, dto.CreateDataResp(c, variant.ID.String(), nil, nil))
 }
 
 // @Summary Get product variants
@@ -619,27 +619,27 @@ func (sv *Server) AddVariantHandler(c *gin.Context) {
 func (sv *Server) GetVariantsHandler(c *gin.Context) {
 	var prodId models.ProductVariantParam
 	if err := c.ShouldBindUri(&prodId); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
 	prod, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(prodId.VariantID)})
 	if err != nil {
-		c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
+		c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
 		return
 	}
 	variantRows, err := sv.repo.GetProductVariantList(c, repository.GetProductVariantListParams{ProductID: prod.ID})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
 	resp := make([]dto.VariantDetail, len(variantRows))
 	for i, row := range variantRows {
-		resp[i] = mapToVariantListModelDto(row)
+		resp[i] = dto.MapToVariantListModelDto(row)
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, resp, nil, nil))
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, resp, nil, nil))
 }
 
 // @Summary Get product variant
@@ -657,18 +657,18 @@ func (sv *Server) GetVariantsHandler(c *gin.Context) {
 func (sv *Server) GetVariantHandler(c *gin.Context) {
 	var prodId models.ProductVariantParam
 	if err := c.ShouldBindUri(&prodId); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 	var variantId models.URIVariantParam
 	if err := c.ShouldBindUri(&variantId); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
 	prod, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(prodId.VariantID)})
 	if err != nil {
-		c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
+		c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
 		return
 	}
 
@@ -678,7 +678,7 @@ func (sv *Server) GetVariantHandler(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
+		c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
 		return
 	}
 	first := rows[0]
@@ -711,7 +711,7 @@ func (sv *Server) GetVariantHandler(c *gin.Context) {
 		resp.Attributes[i] = attr
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, resp, nil, nil))
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, resp, nil, nil))
 }
 
 // @Summary Update a product variant
@@ -728,18 +728,18 @@ func (sv *Server) GetVariantHandler(c *gin.Context) {
 func (sv *Server) UpdateVariantHandler(c *gin.Context) {
 	var uris models.URIVariantParam
 	if err := c.ShouldBindUri(&uris); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 	var req models.UpdateProdVariantModel
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
 	prod, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(uris.ProductID)})
 	if err != nil {
-		c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
+		c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
 		return
 	}
 
@@ -765,11 +765,11 @@ func (sv *Server) UpdateVariantHandler(c *gin.Context) {
 	if err != nil {
 		log.Error().Err(err).Timestamp().Msg("UpdateProductVariant")
 
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, updatedVariant, nil, nil))
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, updatedVariant, nil, nil))
 }
 
 // @Summary Upload a product variant image
@@ -787,19 +787,19 @@ func (sv *Server) UpdateVariantHandler(c *gin.Context) {
 func (sv *Server) UploadVariantImageHandler(c *gin.Context) {
 	var uris models.URIVariantParam
 	if err := c.ShouldBindUri(&uris); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
 	file, err := c.FormFile("file")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
 	prod, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(uris.ProductID)})
 	if err != nil {
-		c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
+		c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
 		return
 	}
 
@@ -809,24 +809,24 @@ func (sv *Server) UploadVariantImageHandler(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
+		c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
 		return
 	}
 
 	if variant.ImageID != nil {
-		msg, err := sv.uploadService.RemoveFile(c, *variant.ImageID)
+		msg, err := sv.uploadService.Remove(c, *variant.ImageID)
 		if err != nil {
 			log.Error().Err(err).Timestamp().Msg(msg)
-			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+			c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 			return
 		}
 	}
 
-	id, url, err := sv.uploadService.UploadFile(c, file)
+	id, url, err := sv.uploadService.Upload(c, file)
 	if err != nil {
 		log.Error().Err(err).Timestamp().Msg("UploadFile")
 
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 	updateParam := repository.UpdateProductVariantParams{
@@ -840,11 +840,11 @@ func (sv *Server) UploadVariantImageHandler(c *gin.Context) {
 	if err != nil {
 		log.Error().Err(err).Timestamp().Msg("UpdateProductVariant")
 
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, updatedVariant, nil, nil))
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, updatedVariant, nil, nil))
 }
 
 // @Summary Delete a product variant
@@ -860,13 +860,13 @@ func (sv *Server) UploadVariantImageHandler(c *gin.Context) {
 func (sv *Server) DeleteVariantHandler(c *gin.Context) {
 	var uris models.URIVariantParam
 	if err := c.ShouldBindUri(&uris); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
 	prod, err := sv.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(uris.ProductID)})
 	if err != nil {
-		c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
+		c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
 		return
 	}
 
@@ -877,8 +877,8 @@ func (sv *Server) DeleteVariantHandler(c *gin.Context) {
 
 	if err != nil {
 		log.Error().Err(err).Timestamp().Msg("DeleteVariant")
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
-	c.JSON(http.StatusNoContent, createDataResp(c, struct{}{}, nil, nil))
+	c.JSON(http.StatusNoContent, dto.CreateDataResp(c, struct{}{}, nil, nil))
 }

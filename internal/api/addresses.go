@@ -25,26 +25,26 @@ import (
 // @Failure 401 {object} ErrorResp
 // @Router /users/addresses [post]
 func (sv *Server) CreateAddressHandler(c *gin.Context) {
-	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, createErr(UnauthorizedCode, fmt.Errorf("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(UnauthorizedCode, fmt.Errorf("authorization payload is not provided")))
 		return
 	}
 
 	var req models.CreateAddress
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
 	addresses, err := sv.repo.GetAddresses(c, authPayload.UserID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
 	if len(addresses) >= 10 {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, fmt.Errorf("maximum number of addresses reached")))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, fmt.Errorf("maximum number of addresses reached")))
 		return
 	}
 
@@ -69,19 +69,19 @@ func (sv *Server) CreateAddressHandler(c *gin.Context) {
 			UserID:       authPayload.UserID,
 		})
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, fmt.Errorf("failed to set primary addresses: %w", err)))
+			c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, fmt.Errorf("failed to set primary addresses: %w", err)))
 			return
 		}
 		created.IsDefault = true
 	}
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
-	addressDetail := mapAddressResponse(created)
-	c.JSON(http.StatusOK, createDataResp(c, addressDetail, nil, nil))
+	addressDetail := dto.MapAddressResponse(created)
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, addressDetail, nil, nil))
 }
 
 // getAddresses godoc
@@ -97,23 +97,23 @@ func (sv *Server) CreateAddressHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /users/addresses [get]
 func (sv *Server) GetAddressesHandlers(c *gin.Context) {
-	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, createErr(UnauthorizedCode, fmt.Errorf("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(UnauthorizedCode, fmt.Errorf("authorization payload is not provided")))
 		return
 	}
 
 	addresses, err := sv.repo.GetAddresses(c, authPayload.UserID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 	addressesResponse := make([]dto.AddressDetail, len(addresses))
 	for i, addresses := range addresses {
-		addressesResponse[i] = mapAddressResponse(addresses)
+		addressesResponse[i] = dto.MapAddressResponse(addresses)
 	}
 
-	c.JSON(http.StatusOK, createDataResp(c, addressesResponse, nil, nil))
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, addressesResponse, nil, nil))
 }
 
 // UpdateAddressHandlers godoc
@@ -131,19 +131,19 @@ func (sv *Server) GetAddressesHandlers(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /users/addresses/{id} [put]
 func (sv *Server) UpdateAddressHandlers(c *gin.Context) {
-	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, createErr(UnauthorizedCode, fmt.Errorf("authorization payload is not provided")))
+		c.JSON(http.StatusUnauthorized, dto.CreateErr(UnauthorizedCode, fmt.Errorf("authorization payload is not provided")))
 		return
 	}
 	var input models.UpdateAddress
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
@@ -153,10 +153,10 @@ func (sv *Server) UpdateAddressHandlers(c *gin.Context) {
 	})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
+			c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -192,7 +192,7 @@ func (sv *Server) UpdateAddressHandlers(c *gin.Context) {
 				UserID:       authPayload.UserID,
 			})
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, fmt.Errorf("failed to set primary addresses: %w", err)))
+				c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, fmt.Errorf("failed to set primary addresses: %w", err)))
 				return
 			}
 		}
@@ -200,11 +200,11 @@ func (sv *Server) UpdateAddressHandlers(c *gin.Context) {
 
 	addresses, err := sv.repo.UpdateAddress(c, payload)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
-	addressDetail := mapAddressResponse(addresses)
-	c.JSON(http.StatusOK, createDataResp(c, addressDetail, nil, nil))
+	addressDetail := dto.MapAddressResponse(addresses)
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, addressDetail, nil, nil))
 }
 
 // RemoveAddressHandlers godoc
@@ -220,14 +220,14 @@ func (sv *Server) UpdateAddressHandlers(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Router /users/addresses/{id} [delete]
 func (sv *Server) RemoveAddressHandlers(c *gin.Context) {
-	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, createErr(UnauthorizedCode, fmt.Errorf("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(UnauthorizedCode, fmt.Errorf("authorization payload is not provided")))
 		return
 	}
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
@@ -238,10 +238,10 @@ func (sv *Server) RemoveAddressHandlers(c *gin.Context) {
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
+			c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -252,10 +252,10 @@ func (sv *Server) RemoveAddressHandlers(c *gin.Context) {
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
+			c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 	c.Status(http.StatusNoContent)
@@ -274,14 +274,14 @@ func (sv *Server) RemoveAddressHandlers(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Router /users/addresses/{id}/default [put]
 func (sv *Server) SetDefaultAddressHandler(c *gin.Context) {
-	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.Payload)
+	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, createErr(UnauthorizedCode, fmt.Errorf("authorization payload is not provided")))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(UnauthorizedCode, fmt.Errorf("authorization payload is not provided")))
 		return
 	}
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, createErr(InvalidBodyCode, err))
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
 
@@ -292,10 +292,10 @@ func (sv *Server) SetDefaultAddressHandler(c *gin.Context) {
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, createErr(NotFoundCode, err))
+			c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, err))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
 
@@ -304,7 +304,7 @@ func (sv *Server) SetDefaultAddressHandler(c *gin.Context) {
 		UserID:       authPayload.UserID,
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, createErr(InternalServerErrorCode, fmt.Errorf("failed to set primary addresses: %w", err)))
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, fmt.Errorf("failed to set primary addresses: %w", err)))
 		return
 	}
 	c.Status(http.StatusNoContent)

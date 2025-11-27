@@ -110,7 +110,7 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 			}
 
 			taskDistributor := worker.NewRedisTaskDistributor(redisCfg)
-			uploadService := upload.NewCloudinaryUploadService(cfg)
+			uploadService := upload.NewCloudinaryUploader(cfg)
 			mailer := mailer.NewEmailSender(cfg.SmtpUsername, cfg.SmtpPassword, cfg.Env)
 			service := payment.NewPaymentService()
 

@@ -1,18 +1,20 @@
-package api
+package dto
 
 import (
 	"encoding/json"
+	"time"
+	"unsafe"
 
+	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
-func mapToUserResponse(user repository.User, roleCode string) dto.UserDetail {
-	return dto.UserDetail{
+func MapToUserResponse(user repository.User, roleCode string) UserDetail {
+	return UserDetail{
 		ID:                user.ID,
-		Addresses:         []dto.AddressDetail{},
+		Addresses:         []AddressDetail{},
 		Email:             user.Email,
 		FirstName:         user.FirstName,
 		LastName:          user.LastName,
@@ -28,8 +30,8 @@ func mapToUserResponse(user repository.User, roleCode string) dto.UserDetail {
 	}
 }
 
-func mapAddressToAddressResponse(address repository.UserAddress) dto.AddressDetail {
-	return dto.AddressDetail{
+func MapAddressToAddressResponse(address repository.UserAddress) AddressDetail {
+	return AddressDetail{
 		Phone:    address.PhoneNumber,
 		Street:   address.Street,
 		Ward:     address.Ward,
@@ -40,10 +42,10 @@ func mapAddressToAddressResponse(address repository.UserAddress) dto.AddressDeta
 	}
 }
 
-func mapToProductDetailResponse(row repository.GetProductDetailRow) dto.ProductDetail {
+func MapToProductDetailResponse(row repository.GetProductDetailRow) ProductDetail {
 	basePrice, _ := row.BasePrice.Float64Value()
 
-	resp := dto.ProductDetail{
+	resp := ProductDetail{
 		ID:                 row.ID.String(),
 		Name:               row.Name,
 		BasePrice:          basePrice.Float64,
@@ -66,11 +68,11 @@ func mapToProductDetailResponse(row repository.GetProductDetailRow) dto.ProductD
 		ImageId:  row.ImageID,
 
 		// Initialize slices
-		Categories:  []dto.GeneralCategory{},
-		Collections: []dto.GeneralCategory{},
-		Attributes:  []dto.ProductAttribute{},
-		Brand:       dto.GeneralCategory{},
-		Variations:  []dto.VariantDetail{},
+		Categories:  []GeneralCategory{},
+		Collections: []GeneralCategory{},
+		Attributes:  []ProductAttribute{},
+		Brand:       GeneralCategory{},
+		Variations:  []VariantDetail{},
 	}
 
 	// Unmarshal JSON data
@@ -93,11 +95,19 @@ func mapToProductDetailResponse(row repository.GetProductDetailRow) dto.ProductD
 	return resp
 }
 
-func mapToAdminProductResponse(productRow repository.Product) dto.ProductListItem {
+func MapToAdminProductResponse(productRow repository.Product) ProductListItem {
 	basePrice, _ := productRow.BasePrice.Float64Value()
 
-	avgRating := utils.GetAvgRating(productRow.RatingCount, productRow.OneStarCount, productRow.TwoStarCount, productRow.ThreeStarCount, productRow.FourStarCount, productRow.FiveStarCount)
-	product := dto.ProductListItem{
+	avgRating := utils.GetAvgRating(
+		productRow.RatingCount,
+		productRow.OneStarCount,
+		productRow.TwoStarCount,
+		productRow.ThreeStarCount,
+		productRow.FourStarCount,
+		productRow.FiveStarCount,
+	)
+
+	product := ProductListItem{
 		ID:                 productRow.ID.String(),
 		Name:               productRow.Name,
 		Description:        productRow.Description,
@@ -116,10 +126,18 @@ func mapToAdminProductResponse(productRow repository.Product) dto.ProductListIte
 	return product
 }
 
-func mapToShopProductResponse(productRow repository.GetProductListRow) dto.ProductSummary {
+func MapToShopProductResponse(productRow repository.GetProductListRow) ProductSummary {
 	price, _ := productRow.MinPrice.Float64Value()
-	avgRating := utils.GetAvgRating(productRow.RatingCount, productRow.OneStarCount, productRow.TwoStarCount, productRow.ThreeStarCount, productRow.FourStarCount, productRow.FiveStarCount)
-	product := dto.ProductSummary{
+	avgRating := utils.GetAvgRating(
+		productRow.RatingCount,
+		productRow.OneStarCount,
+		productRow.TwoStarCount,
+		productRow.ThreeStarCount,
+		productRow.FourStarCount,
+		productRow.FiveStarCount,
+	)
+
+	product := ProductSummary{
 		ID:           productRow.ID.String(),
 		Name:         productRow.Name,
 		Price:        price.Float64,
@@ -136,9 +154,9 @@ func mapToShopProductResponse(productRow repository.GetProductListRow) dto.Produ
 	return product
 }
 
-func mapToVariantListModelDto(row repository.GetProductVariantListRow) dto.VariantDetail {
+func MapToVariantListModelDto(row repository.GetProductVariantListRow) VariantDetail {
 	price, _ := row.Price.Float64Value()
-	variant := dto.VariantDetail{
+	variant := VariantDetail{
 		ID:       row.ID.String(),
 		Price:    price.Float64,
 		Stock:    row.Stock,
@@ -146,7 +164,7 @@ func mapToVariantListModelDto(row repository.GetProductVariantListRow) dto.Varia
 		Sku:      row.Sku,
 		ImageUrl: row.ImageUrl,
 	}
-	variant.Attributes = []dto.AttributeValueDetail{}
+	variant.Attributes = []AttributeValueDetail{}
 	err := json.Unmarshal(row.AttributeValues, &variant.Attributes)
 	if err != nil {
 		log.Error().Err(err).Msg("Unmarshal variant attribute values")
@@ -159,8 +177,8 @@ func mapToVariantListModelDto(row repository.GetProductVariantListRow) dto.Varia
 	return variant
 }
 
-func mapAddressResponse(address repository.UserAddress) dto.AddressDetail {
-	return dto.AddressDetail{
+func MapAddressResponse(address repository.UserAddress) AddressDetail {
+	return AddressDetail{
 		ID:        address.ID.String(),
 		Default:   address.IsDefault,
 		CreatedAt: address.CreatedAt,
@@ -170,4 +188,51 @@ func mapAddressResponse(address repository.UserAddress) dto.AddressDetail {
 		District:  address.District,
 		City:      address.City,
 	}
+}
+
+type ErrorResp struct {
+	Error ApiError `json:"error"`
+}
+
+func CreateErr(code string, err error) ErrorResp {
+	return ErrorResp{
+		Error: ApiError{
+			Code:    code,
+			Details: err.Error(),
+			Stack:   err,
+		},
+	}
+}
+
+func CreateDataResp[T any](c *gin.Context, data T, pagination *Pagination, err *ApiError) ApiResponse[T] {
+	resp := ApiResponse[T]{
+		Data:       &data,
+		Pagination: pagination,
+		Meta: &MetaInfo{
+			Timestamp: time.Now().Format(time.RFC3339),
+			RequestID: c.GetString("RequestID"),
+			Path:      c.FullPath(),
+			Method:    c.Request.Method,
+		},
+	}
+
+	if err != nil {
+		resp.Error = err
+	}
+	return resp
+}
+
+func CreatePagination(page, pageSize, total int64) *Pagination {
+	return &Pagination{
+		Page:            page,
+		PageSize:        pageSize,
+		Total:           total,
+		TotalPages:      total / int64(pageSize),
+		HasNextPage:     total > int64(page*pageSize),
+		HasPreviousPage: page > 1,
+	}
+}
+
+func IsStructEmpty(s interface{}) bool {
+	return unsafe.Sizeof(s) == 0
 }

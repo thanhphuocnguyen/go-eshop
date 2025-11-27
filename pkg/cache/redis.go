@@ -10,17 +10,17 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/config"
 )
 
-type RedisCache struct {
+type RedisContainer struct {
 	Storage *cache.Cache
 }
 
 // Delete implements Cache.
-func (r *RedisCache) Delete(c context.Context, key string) error {
+func (r *RedisContainer) Delete(c context.Context, key string) error {
 	return r.Storage.Delete(c, key)
 }
 
 // Get implements Cache.
-func (r *RedisCache) Get(c context.Context, key string, value interface{}) error {
+func (r *RedisContainer) Get(c context.Context, key string, value interface{}) error {
 	err := r.Storage.Get(c, key, value)
 	if err != nil {
 		// Check if it's a cache miss (key not found)
@@ -33,7 +33,7 @@ func (r *RedisCache) Get(c context.Context, key string, value interface{}) error
 }
 
 // Set implements Cache.
-func (r *RedisCache) Set(c context.Context, key string, value interface{}, expireIn *time.Duration) error {
+func (r *RedisContainer) Set(c context.Context, key string, value interface{}, expireIn *time.Duration) error {
 	if expireIn == nil {
 		expireIn = &DEFAULT_EXPIRATION
 	}
@@ -45,7 +45,7 @@ func (r *RedisCache) Set(c context.Context, key string, value interface{}, expir
 	})
 }
 
-func NewRedisCache(cfg config.Config) Cache {
+func NewRedisCache(cfg config.Config) CacheContainer {
 	ring := redis.NewRing(&redis.RingOptions{
 		Addrs: map[string]string{
 			"api_cache_server": cfg.RedisUrl,
@@ -57,7 +57,7 @@ func NewRedisCache(cfg config.Config) Cache {
 		LocalCache: cache.NewTinyLFU(1000, time.Minute),
 	})
 
-	return &RedisCache{
+	return &RedisContainer{
 		storage,
 	}
 }

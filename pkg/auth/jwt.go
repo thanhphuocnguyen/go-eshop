@@ -23,7 +23,7 @@ func NewJwtGenerator(secretKey string) (TokenGenerator, error) {
 	return &JwtGenerator{secretKey}, nil
 }
 
-func (g *JwtGenerator) GenerateToken(userID uuid.UUID, username string, role repository.UserRole, duration time.Duration) (string, *Payload, error) {
+func (g *JwtGenerator) GenerateToken(userID uuid.UUID, username string, role repository.UserRole, duration time.Duration) (string, *TokenPayload, error) {
 	payload, err := NewPayload(userID, username, role, duration)
 	if err != nil {
 		return "", payload, err
@@ -35,7 +35,7 @@ func (g *JwtGenerator) GenerateToken(userID uuid.UUID, username string, role rep
 	return token, payload, err
 }
 
-func (g *JwtGenerator) VerifyToken(token string) (*Payload, error) {
+func (g *JwtGenerator) VerifyToken(token string) (*TokenPayload, error) {
 	keyFunc := func(t *jwt.Token) (interface{}, error) {
 		_, ok := t.Method.(*jwt.SigningMethodHMAC)
 		if !ok {
@@ -44,7 +44,7 @@ func (g *JwtGenerator) VerifyToken(token string) (*Payload, error) {
 
 		return []byte(g.secretKey), nil
 	}
-	jwtToken, err := jwt.ParseWithClaims(token, &Payload{}, keyFunc)
+	jwtToken, err := jwt.ParseWithClaims(token, &TokenPayload{}, keyFunc)
 
 	if err != nil {
 		if errors.Is(err, jwt.ErrTokenExpired) {
@@ -53,7 +53,7 @@ func (g *JwtGenerator) VerifyToken(token string) (*Payload, error) {
 		return nil, ErrInvalidToken
 	}
 	// .(*Payload) type assertion
-	payload, ok := jwtToken.Claims.(*Payload)
+	payload, ok := jwtToken.Claims.(*TokenPayload)
 	if !ok {
 		return nil, ErrInvalidToken
 	}

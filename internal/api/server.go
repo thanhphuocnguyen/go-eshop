@@ -28,19 +28,19 @@ type Server struct {
 	router          *gin.Engine
 	repo            repository.Repository
 	tokenGenerator  auth.TokenGenerator
-	uploadService   upload.UploadService
-	paymentSrv      *payment.PaymentService
-	cacheSrv        cachesrv.Cache
+	uploadService   upload.CdnUploader
+	paymentSrv      *payment.PaymentManager
+	cacheSrv        cachesrv.CacheContainer
 	taskDistributor worker.TaskDistributor
 }
 
 func NewAPI(
 	cfg config.Config,
 	repo repository.Repository,
-	cachesrv cachesrv.Cache,
+	cachesrv cachesrv.CacheContainer,
 	taskDistributor worker.TaskDistributor,
-	uploadService upload.UploadService,
-	paymentSrv *payment.PaymentService,
+	uploadService upload.CdnUploader,
+	paymentSrv *payment.PaymentManager,
 ) (*Server, error) {
 	tokenGenerator, err := auth.NewJwtGenerator(cfg.SymmetricKey)
 	if err != nil {

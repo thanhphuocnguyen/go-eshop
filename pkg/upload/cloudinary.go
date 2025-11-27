@@ -12,13 +12,13 @@ import (
 	applogger "github.com/thanhphuocnguyen/go-eshop/pkg/logger"
 )
 
-type CloudinaryUploadService struct {
+type CloudinaryUploader struct {
 	uniqFileName bool
 	cld          *cloudinary.Cloudinary
 	cfg          config.Config
 }
 
-func NewCloudinaryUploadService(cfg config.Config) UploadService {
+func NewCloudinaryUploader(cfg config.Config) CdnUploader {
 	cld, err := cloudinary.NewFromURL(cfg.CloudinaryUrl)
 	cld.Logger = &logger.Logger{
 		Writer: applogger.NewLogger(nil),
@@ -28,14 +28,14 @@ func NewCloudinaryUploadService(cfg config.Config) UploadService {
 		panic(err)
 	}
 
-	return &CloudinaryUploadService{
+	return &CloudinaryUploader{
 		cld:          cld,
 		cfg:          cfg,
 		uniqFileName: true,
 	}
 }
 
-func (s *CloudinaryUploadService) UploadFile(ctx context.Context, file interface{}) (publicID string, url string, err error) {
+func (s *CloudinaryUploader) Upload(ctx context.Context, file interface{}) (publicID string, url string, err error) {
 	useAssetFolderAsPublicIdPrefix := true
 	result, err := s.cld.Upload.Upload(ctx, file, uploader.UploadParams{
 		AssetFolder:                    s.cfg.CloudinaryFolder,
@@ -53,7 +53,7 @@ func (s *CloudinaryUploadService) UploadFile(ctx context.Context, file interface
 	return
 }
 
-func (s *CloudinaryUploadService) RemoveFile(ctx context.Context, publicID string) (string, error) {
+func (s *CloudinaryUploader) Remove(ctx context.Context, publicID string) (string, error) {
 	// publicIDWithPath := fmt.Sprintf("%s/%s", s.cfg.CloudinaryFolder, publicID)
 	result, err := s.cld.Upload.Destroy(ctx, uploader.DestroyParams{PublicID: publicID})
 	if err != nil {
