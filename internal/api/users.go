@@ -117,7 +117,7 @@ func (sv *Server) GetCurrentUserHandler(c *gin.Context) {
 
 	addressResp := make([]dto.AddressDetail, 0)
 	for _, address := range userAddress {
-		addressResp = append(addressResp, dto.MapAddressToAddressResponse(address))
+		addressResp = append(addressResp, dto.MapAddressResponse(address))
 	}
 	userResp = dto.MapToUserResponse(user, authPayload.RoleCode)
 	userResp.Addresses = addressResp

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 )
 
 type UserDetail struct {
@@ -38,4 +39,23 @@ type LoginResponse struct {
 type RefreshToken struct {
 	AccessToken          string    `json:"accessToken"`
 	AccessTokenExpiresAt time.Time `json:"accessTokenExpiresAt"`
+}
+
+func MapToUserResponse(user repository.User, roleCode string) UserDetail {
+	return UserDetail{
+		ID:                user.ID,
+		Addresses:         []AddressDetail{},
+		Email:             user.Email,
+		FirstName:         user.FirstName,
+		LastName:          user.LastName,
+		RoleID:            user.RoleID.String(),
+		RoleCode:          roleCode,
+		Phone:             user.PhoneNumber,
+		Username:          user.Username,
+		VerifiedEmail:     user.VerifiedEmail,
+		VerifiedPhone:     user.VerifiedPhone,
+		CreatedAt:         user.CreatedAt.String(),
+		UpdatedAt:         user.UpdatedAt.String(),
+		PasswordChangedAt: user.PasswordChangedAt.String(),
+	}
 }

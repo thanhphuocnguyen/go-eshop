@@ -117,7 +117,7 @@ INSERT INTO discount_rules (discount_id, rule_type, rule_value) VALUES ($1, $2, 
 UPDATE discount_rules SET
     rule_type = COALESCE(sqlc.narg('rule_type'), discount_rules.rule_type),
     rule_value = COALESCE(sqlc.narg('rule_value'), discount_rules.rule_value)
-WHERE id = $1 RETURNING id;
+WHERE id = $1 RETURNING *;
 
 -- name: DeleteDiscountRule :exec
 DELETE FROM discount_rules WHERE id = $1;

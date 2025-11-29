@@ -24,7 +24,7 @@ type AddDiscountModel struct {
 }
 
 type AddDiscountRuleModel struct {
-	RuleType  string                 `json:"ruleType" binding:"required,oneof=product category customer_segment"`
+	RuleType  string                 `json:"ruleType" binding:"required,oneof=product category customer_segment brand first_time_buyer purchase_quantity"`
 	RuleValue map[string]interface{} `json:"ruleValue" binding:"required,min=1"`
 }
 
@@ -66,8 +66,8 @@ type DiscountListQuery struct {
 type DiscountRule struct {
 	ID         uuid.UUID       `json:"id"`
 	DiscountID uuid.UUID       `json:"discount_id"`
-	RuleType   string          `json:"rule_type"`
-	RuleValue  json.RawMessage `json:"rule_value"`
+	RuleType   string          `json:"ruleType"`
+	RuleValue  json.RawMessage `json:"ruleValue"`
 }
 
 // Example rule value structures
@@ -76,26 +76,26 @@ type ProductRule struct {
 }
 
 type CategoryRule struct {
-	CategoryIDs      []uuid.UUID `json:"category_ids"`
-	ExcludeSaleItems bool        `json:"exclude_sale_items"`
+	CategoryIDs      []uuid.UUID `json:"categoryIds"`
+	ExcludeSaleItems bool        `json:"excludeSaleItems"`
 }
 
 type PurchaseQuantityRule struct {
-	MinQuantity int `json:"min_quantity"`
-	MaxQuantity int `json:"max_quantity"`
+	MinQuantity int `json:"minQuantity"`
+	MaxQuantity int `json:"maxQuantity"`
 }
 
 type FirstTimeBuyerRule struct {
-	IsFirstTimeBuyer bool `json:"is_first_time_buyer"`
+	IsFirstTimeBuyer bool `json:"isFirstTimeBuyer"`
 }
 
 type BrandRule struct {
-	BrandIDs []uuid.UUID `json:"brand_ids"`
+	BrandIDs []uuid.UUID `json:"brandIds"`
 }
 
 type CustomerSegmentRule struct {
-	MinTotalSpent     float64 `json:"min_total_spent"`
-	IsNewCustomer     bool    `json:"is_new_customer"`
-	MaxPreviousOrders int     `json:"max_previous_orders"`
-	CustomerType      string  `json:"customer_type"`
+	MinTotalSpent     float64 `json:"minTotalSpent"`
+	IsNewCustomer     bool    `json:"isNewCustomer"`
+	MaxPreviousOrders int     `json:"maxPreviousOrders"`
+	CustomerType      string  `json:"customerType"`
 }

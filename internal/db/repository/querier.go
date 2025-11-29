@@ -246,7 +246,7 @@ type Querier interface {
 	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error)
 	UpdateCollectionWith(ctx context.Context, arg UpdateCollectionWithParams) (Collection, error)
 	UpdateDiscount(ctx context.Context, arg UpdateDiscountParams) (Discount, error)
-	UpdateDiscountRule(ctx context.Context, arg UpdateDiscountRuleParams) (uuid.UUID, error)
+	UpdateDiscountRule(ctx context.Context, arg UpdateDiscountRuleParams) (DiscountRule, error)
 	UpdateOrder(ctx context.Context, arg UpdateOrderParams) (uuid.UUID, error)
 	UpdatePayment(ctx context.Context, arg UpdatePaymentParams) error
 	UpdatePaymentTransaction(ctx context.Context, arg UpdatePaymentTransactionParams) error

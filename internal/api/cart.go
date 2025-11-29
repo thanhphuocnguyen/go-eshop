@@ -574,6 +574,14 @@ func (sv *Server) ClearCart(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
+func checkDiscountApplicability(discounts []repository.Discount, cart dto.CartDetail) (bool, error) {
+	// TODO: implement discount applicability check
+	// get discount rules
+	// for each rule, check if the cart satisfies the rule
+	// if not, remove the discount from the cart
+	return true, nil
+}
+
 // ------------------------------ Mappers ------------------------------
 func mapToCartItemsResp(row repository.GetCartItemsRow) dto.CartItemDetail {
 

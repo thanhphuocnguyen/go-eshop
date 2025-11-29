@@ -1025,7 +1025,7 @@ const updateDiscountRule = `-- name: UpdateDiscountRule :one
 UPDATE discount_rules SET
     rule_type = COALESCE($2, discount_rules.rule_type),
     rule_value = COALESCE($3, discount_rules.rule_value)
-WHERE id = $1 RETURNING id
+WHERE id = $1 RETURNING id, discount_id, rule_type, rule_value, created_at
 `
 
 type UpdateDiscountRuleParams struct {
@@ -1034,9 +1034,15 @@ type UpdateDiscountRuleParams struct {
 	RuleValue []byte    `json:"ruleValue"`
 }
 
-func (q *Queries) UpdateDiscountRule(ctx context.Context, arg UpdateDiscountRuleParams) (uuid.UUID, error) {
+func (q *Queries) UpdateDiscountRule(ctx context.Context, arg UpdateDiscountRuleParams) (DiscountRule, error) {
 	row := q.db.QueryRow(ctx, updateDiscountRule, arg.ID, arg.RuleType, arg.RuleValue)
-	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
+	var i DiscountRule
+	err := row.Scan(
+		&i.ID,
+		&i.DiscountID,
+		&i.RuleType,
+		&i.RuleValue,
+		&i.CreatedAt,
+	)
+	return i, err
 }

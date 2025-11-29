@@ -1,6 +1,11 @@
 package dto
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+
+	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+)
 
 type DiscountListItem struct {
 	ID            string   `json:"id"`
@@ -44,4 +49,23 @@ type DiscountDetail struct {
 	MinPurchase   float64                `json:"minPurchase"`
 	MaxDiscount   float64                `json:"maxDiscount"`
 	UsageHistory  []DiscountUsageHistory `json:"usageHistory"`
+}
+
+type DiscountRuleDetail struct {
+	ID        string                 `json:"id"`
+	RuleType  string                 `json:"ruleType"`
+	RuleValue map[string]interface{} `json:"ruleValue"`
+}
+
+func MapToDiscountRuleDetail(rule repository.DiscountRule) (DiscountRuleDetail, error) {
+	var ruleValue map[string]interface{}
+	err := json.Unmarshal(rule.RuleValue, &ruleValue)
+	if err == nil {
+		return DiscountRuleDetail{
+			ID:        rule.ID.String(),
+			RuleType:  rule.RuleType,
+			RuleValue: ruleValue,
+		}, nil
+	}
+	return DiscountRuleDetail{}, err
 }
