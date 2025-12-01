@@ -2,8 +2,10 @@
 INSERT INTO carts (user_id, session_id) VALUES ($1, $2) RETURNING *;
 
 -- name: GetCart :one
-SELECT * FROM carts
-WHERE ((carts.user_id IS NOT NULL AND carts.user_id = $1) OR (carts.session_id IS NOT NULL AND carts.session_id = $2)) AND carts.order_id IS NULL 
+SELECT carts.*, COUNT(cart_items.id) AS item_count FROM carts
+LEFT JOIN cart_items ON cart_items.cart_id = carts.id
+WHERE ((carts.user_id IS NOT NULL AND carts.user_id = $1) OR (carts.session_id IS NOT NULL AND carts.session_id = $2)) AND carts.order_id IS NULL
+GROUP BY carts.id
 ORDER BY carts.updated_at DESC
 LIMIT 1;
 
@@ -36,20 +38,26 @@ SELECT * FROM cart_items WHERE variant_id = $1 AND cart_id = $2;
 SELECT
     sqlc.embed(ci),
     pv.price AS variant_price, pv.sku AS variant_sku, pv.stock AS variant_stock, pv.image_url AS variant_image_url,
-    p.name AS product_name, p.id AS product_id, p.discount_percentage AS product_discount_percentage,
+    p.name AS product_name, p.id AS product_id, p.discount_percentage AS product_discount_percentage, p.brand_id AS product_brand_id,
     JSONB_AGG(
     DISTINCT JSONB_BUILD_OBJECT(
             'id', av.id,
             'name', a.name,
             'value', av.value
         )
-    ) AS attributes
+    ) AS attributes,
+    ARRAY_AGG(DISTINCT c.id)::uuid[] AS category_ids,
+    ARRAY_AGG(DISTINCT col.id)::uuid[] AS collection_ids
 FROM cart_items AS ci
 JOIN product_variants AS pv ON pv.id = ci.variant_id
 JOIN products AS p ON p.id = pv.product_id
 JOIN variant_attribute_values AS vav ON vav.variant_id = pv.id
 JOIN attribute_values AS av ON vav.attribute_value_id = av.id
 JOIN attributes AS a ON av.attribute_id = a.id
+LEFT JOIN category_products AS pc ON pc.product_id = p.id
+LEFT JOIN categories AS c ON c.id = pc.category_id
+LEFT JOIN collection_products AS pcol ON pcol.product_id = p.id
+LEFT JOIN collections AS col ON col.id = pcol.collection_id
 WHERE ci.cart_id = $1
 GROUP BY ci.id, pv.id, p.id
 ORDER BY ci.added_at, ci.id, pv.id DESC;

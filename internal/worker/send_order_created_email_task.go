@@ -69,7 +69,7 @@ func (p *RedisTaskProcessor) ProcessSendOrderCreatedEmail(ctx context.Context, t
 		}
 	}
 
-	user, err := p.repo.GetUserByID(ctx, order.CustomerID)
+	user, err := p.repo.GetUserByID(ctx, order.UserID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return fmt.Errorf("could not find user: %w", asynq.SkipRetry)

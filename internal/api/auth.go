@@ -327,3 +327,13 @@ func (sv *Server) RefreshTokenHandler(c *gin.Context) {
 	resp := dto.RefreshToken{AccessToken: accessToken, AccessTokenExpiresAt: time.Now().Add(sv.config.AccessTokenDuration)}
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, resp, nil, nil))
 }
+
+// Setup authentication routes
+func (sv *Server) addAuthRoutes(rg *gin.RouterGroup) {
+	auth := rg.Group("/auth")
+	{
+		auth.POST("register", sv.RegisterHandler)
+		auth.POST("login", sv.LoginHandler)
+		auth.POST("refresh-token", sv.RefreshTokenHandler)
+	}
+}

@@ -16,11 +16,19 @@ UPDATE discounts SET
     priority = COALESCE(sqlc.narg('priority'), discounts.priority),
     valid_from = COALESCE(sqlc.narg('valid_from'), discounts.valid_from),
     valid_until = COALESCE(sqlc.narg('valid_until'), discounts.valid_until),
+    usage_per_user = COALESCE(sqlc.narg('usage_per_user'), discounts.usage_per_user),
     updated_at = NOW()
 WHERE id = $1 RETURNING *;
 
 -- name: GetDiscountByID :one
 SELECT * FROM discounts WHERE id = $1;
+
+-- name: GetDiscountByCodes :many
+SELECT discounts.*, JSONB_AGG(DISTINCT discount_rules.*) AS rules
+FROM discounts
+LEFT JOIN discount_rules ON discounts.id = discount_rules.discount_id
+WHERE code = ANY($1)
+GROUP BY discounts.id;
 
 -- name: GetDiscountByCode :one
 SELECT * FROM discounts WHERE code = $1 LIMIT 1;
@@ -141,3 +149,42 @@ LIMIT $2 OFFSET $3;
 DELETE FROM discount_rules WHERE discount_id = $1 AND rule_type = $2;
 -- name: CountDiscountRulesByType :one
 SELECT COUNT(*) FROM discount_rules WHERE discount_id = $1 AND rule_type = $2;
+
+-- name: GetAvailableDiscountsForUser :many
+SELECT d.* 
+FROM discounts d
+LEFT JOIN (
+  SELECT 
+    du.discount_id, 
+    COUNT(*) as user_usage_count
+  FROM discount_usage du
+  JOIN orders o ON du.order_id = o.id
+  WHERE o.user_id = $1
+  GROUP BY du.discount_id
+) user_usage ON d.id = user_usage.discount_id
+WHERE d.is_active = TRUE
+  AND (d.valid_from IS NULL OR d.valid_from <= NOW())
+  AND (d.valid_until IS NULL OR d.valid_until >= NOW())
+  AND (d.usage_limit IS NULL OR d.times_used < d.usage_limit)
+  AND (d.usage_per_user IS NULL OR COALESCE(user_usage.user_usage_count, 0) < d.usage_per_user)
+ORDER BY d.priority DESC, d.discount_value DESC
+LIMIT $2 OFFSET $3;
+
+-- name: CountDiscountUsageByDiscountAndUser :one
+SELECT COUNT(*) FROM discount_usage du
+JOIN orders o ON du.order_id = o.id
+WHERE du.discount_id = $1 AND o.user_id = $2;
+
+-- name: CountAvailableDiscountsForUser :one
+SELECT COUNT(*)
+FROM discounts d
+WHERE d.is_active = TRUE
+  AND (d.valid_from IS NULL OR d.valid_from <= NOW())
+  AND (d.valid_until IS NULL OR d.valid_until >= NOW())
+  AND (d.usage_limit IS NULL OR d.times_used < d.usage_limit)
+  AND d.id NOT IN (
+    SELECT DISTINCT du.discount_id 
+    FROM discount_usage du 
+    JOIN orders o ON du.order_id = o.id 
+    WHERE o.user_id = $1
+  );

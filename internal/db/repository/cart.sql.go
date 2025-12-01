@@ -7,6 +7,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -100,8 +101,10 @@ func (q *Queries) CreateCart(ctx context.Context, arg CreateCartParams) (Cart, e
 }
 
 const getCart = `-- name: GetCart :one
-SELECT id, user_id, session_id, order_id, updated_at, created_at FROM carts
-WHERE ((carts.user_id IS NOT NULL AND carts.user_id = $1) OR (carts.session_id IS NOT NULL AND carts.session_id = $2)) AND carts.order_id IS NULL 
+SELECT carts.id, carts.user_id, carts.session_id, carts.order_id, carts.updated_at, carts.created_at, COUNT(cart_items.id) AS item_count FROM carts
+LEFT JOIN cart_items ON cart_items.cart_id = carts.id
+WHERE ((carts.user_id IS NOT NULL AND carts.user_id = $1) OR (carts.session_id IS NOT NULL AND carts.session_id = $2)) AND carts.order_id IS NULL
+GROUP BY carts.id
 ORDER BY carts.updated_at DESC
 LIMIT 1
 `
@@ -111,9 +114,19 @@ type GetCartParams struct {
 	SessionID *string     `json:"sessionId"`
 }
 
-func (q *Queries) GetCart(ctx context.Context, arg GetCartParams) (Cart, error) {
+type GetCartRow struct {
+	ID        uuid.UUID   `json:"id"`
+	UserID    pgtype.UUID `json:"userId"`
+	SessionID *string     `json:"sessionId"`
+	OrderID   pgtype.UUID `json:"orderId"`
+	UpdatedAt time.Time   `json:"updatedAt"`
+	CreatedAt time.Time   `json:"createdAt"`
+	ItemCount int64       `json:"itemCount"`
+}
+
+func (q *Queries) GetCart(ctx context.Context, arg GetCartParams) (GetCartRow, error) {
 	row := q.db.QueryRow(ctx, getCart, arg.UserID, arg.SessionID)
-	var i Cart
+	var i GetCartRow
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
@@ -121,6 +134,7 @@ func (q *Queries) GetCart(ctx context.Context, arg GetCartParams) (Cart, error) 
 		&i.OrderID,
 		&i.UpdatedAt,
 		&i.CreatedAt,
+		&i.ItemCount,
 	)
 	return i, err
 }
@@ -173,20 +187,26 @@ const getCartItems = `-- name: GetCartItems :many
 SELECT
     ci.id, ci.cart_id, ci.variant_id, ci.quantity, ci.added_at,
     pv.price AS variant_price, pv.sku AS variant_sku, pv.stock AS variant_stock, pv.image_url AS variant_image_url,
-    p.name AS product_name, p.id AS product_id, p.discount_percentage AS product_discount_percentage,
+    p.name AS product_name, p.id AS product_id, p.discount_percentage AS product_discount_percentage, p.brand_id AS product_brand_id,
     JSONB_AGG(
     DISTINCT JSONB_BUILD_OBJECT(
             'id', av.id,
             'name', a.name,
             'value', av.value
         )
-    ) AS attributes
+    ) AS attributes,
+    ARRAY_AGG(DISTINCT c.id)::uuid[] AS category_ids,
+    ARRAY_AGG(DISTINCT col.id)::uuid[] AS collection_ids
 FROM cart_items AS ci
 JOIN product_variants AS pv ON pv.id = ci.variant_id
 JOIN products AS p ON p.id = pv.product_id
 JOIN variant_attribute_values AS vav ON vav.variant_id = pv.id
 JOIN attribute_values AS av ON vav.attribute_value_id = av.id
 JOIN attributes AS a ON av.attribute_id = a.id
+LEFT JOIN category_products AS pc ON pc.product_id = p.id
+LEFT JOIN categories AS c ON c.id = pc.category_id
+LEFT JOIN collection_products AS pcol ON pcol.product_id = p.id
+LEFT JOIN collections AS col ON col.id = pcol.collection_id
 WHERE ci.cart_id = $1
 GROUP BY ci.id, pv.id, p.id
 ORDER BY ci.added_at, ci.id, pv.id DESC
@@ -201,7 +221,10 @@ type GetCartItemsRow struct {
 	ProductName               string         `json:"productName"`
 	ProductID                 uuid.UUID      `json:"productId"`
 	ProductDiscountPercentage *int16         `json:"productDiscountPercentage"`
+	ProductBrandID            pgtype.UUID    `json:"productBrandId"`
 	Attributes                []byte         `json:"attributes"`
+	CategoryIds               []uuid.UUID    `json:"categoryIds"`
+	CollectionIds             []uuid.UUID    `json:"collectionIds"`
 }
 
 func (q *Queries) GetCartItems(ctx context.Context, cartID uuid.UUID) ([]GetCartItemsRow, error) {
@@ -226,7 +249,10 @@ func (q *Queries) GetCartItems(ctx context.Context, cartID uuid.UUID) ([]GetCart
 			&i.ProductName,
 			&i.ProductID,
 			&i.ProductDiscountPercentage,
+			&i.ProductBrandID,
 			&i.Attributes,
+			&i.CategoryIds,
+			&i.CollectionIds,
 		); err != nil {
 			return nil, err
 		}

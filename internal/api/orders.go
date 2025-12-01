@@ -14,8 +14,18 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
 )
+
+// Setup order-related routes
+func (sv *Server) addOrderRoutes(rg *gin.RouterGroup) {
+	orders := rg.Group("/orders", authenticateMiddleware(sv.tokenGenerator))
+	{
+		orders.GET("", sv.getOrdersHandler)
+		orders.GET(":id", sv.getOrderDetailHandler)
+		orders.PUT(":id/confirm-received", sv.confirmOrderPayment)
+		orders.POST(":id/cancel", sv.AdminCancelOrder)
+	}
+}
 
 // @Summary List orders
 // @Description List orders of the current user
@@ -51,7 +61,7 @@ func (sv *Server) getOrdersHandler(c *gin.Context) {
 	}
 
 	if tokenPayload.RoleCode != "admin" {
-		dbParams.CustomerID = utils.GetPgTypeUUID(tokenPayload.UserID)
+		dbParams.UserID = utils.GetPgTypeUUID(tokenPayload.UserID)
 	}
 
 	fetchedOrderRows, err := sv.repo.GetOrders(c, dbParams)
@@ -60,7 +70,7 @@ func (sv *Server) getOrdersHandler(c *gin.Context) {
 		return
 	}
 
-	count, err := sv.repo.CountOrders(c, repository.CountOrdersParams{CustomerID: utils.GetPgTypeUUID(tokenPayload.UserID)})
+	count, err := sv.repo.CountOrders(c, repository.CountOrdersParams{UserID: utils.GetPgTypeUUID(tokenPayload.UserID)})
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
@@ -247,7 +257,7 @@ func (sv *Server) confirmOrderPayment(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
-	if order.CustomerID != tokenPayload.UserID {
+	if order.UserID != tokenPayload.UserID {
 		c.JSON(http.StatusForbidden, dto.CreateErr(PermissionDeniedCode, errors.New("you do not have permission to access this order")))
 		return
 	}
@@ -283,323 +293,4 @@ func (sv *Server) confirmOrderPayment(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, true, nil, apiErr))
-}
-
-// @Summary Cancel order
-// @Description Cancel order by order ID
-// @Tags orders
-// @Accept json
-// @Produce json
-// @Param id path int true "Order ID"
-// @Security BearerAuth
-// @Success 200 {object} ApiResponse[OrderListResponse]
-// @Failure 400 {object} ErrorResp
-// @Failure 401 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
-// @Router /order/{orderId}/cancel [put]
-func (sv *Server) cancelOrder(c *gin.Context) {
-	tokenPayload, _ := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
-
-	var params models.UriIDParam
-	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
-		return
-	}
-	var req models.CancelOrderModel
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
-		return
-	}
-
-	order, err := sv.repo.GetOrder(c, uuid.MustParse(params.ID))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
-		return
-	}
-	userRole := c.GetString(UserRole)
-	if order.CustomerID != tokenPayload.UserID && userRole != "admin" {
-		c.JSON(http.StatusForbidden, dto.CreateErr(PermissionDeniedCode, errors.New("you do not have permission to access this order")))
-		return
-	}
-
-	paymentRow, err := sv.repo.GetPaymentByOrderID(c, order.ID)
-	if err != nil && !errors.Is(err, repository.ErrRecordNotFound) {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
-		return
-	}
-
-	// if order status is not pending or user is not admin
-	if order.Status != repository.OrderStatusPending || (paymentRow.Status != repository.PaymentStatusPending) {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(PermissionDeniedCode, errors.New("order cannot be cancelled")))
-		return
-	}
-
-	// if order
-	cancelOrderTxParams := repository.CancelOrderTxArgs{
-		OrderID: uuid.MustParse(params.ID),
-		CancelPaymentFromMethod: func(paymentID string, method string) error {
-			req := payment.RefundRequest{
-				TransactionID: paymentID,
-				Amount:        paymentRow.Amount.Int.Int64(),
-			}
-			_, err = sv.paymentSrv.RefundPayment(c, req, *paymentRow.Gateway)
-			return err
-		},
-	}
-	ordId, err := sv.repo.CancelOrderTx(c, cancelOrderTxParams)
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(repository.ErrDeadlockDetected.InternalQuery, err))
-		return
-	}
-	sv.cacheSrv.Delete(c, "order_detail:"+params.ID)
-	c.JSON(http.StatusOK, dto.CreateDataResp(c, ordId, nil, nil))
-}
-
-// @Summary Change order status
-// @Description Change order status by order ID
-// @Tags orders
-// @Accept json
-// @Produce json
-// @Param id path int true "Order ID"
-// @Param status body string true "Status"
-// @Security BearerAuth
-// @Success 200 {object} ApiResponse[OrderListResponse]
-// @Failure 400 {object} ErrorResp
-// @Failure 401 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
-// @Router /order/{orderId}/status [put]
-func (sv *Server) changeOrderStatus(c *gin.Context) {
-	var params models.UriIDParam
-	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
-		return
-	}
-	var req models.OrderStatusModel
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
-		return
-	}
-	order, err := sv.repo.GetOrder(c, uuid.MustParse(params.ID))
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
-			return
-		}
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
-		return
-	}
-	if order.Status == repository.OrderStatusDelivered || order.Status == repository.OrderStatusCancelled || order.Status == repository.OrderStatusRefunded {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidPaymentCode, errors.New("order cannot be changed")))
-		return
-	}
-
-	status := repository.OrderStatus(req.Status)
-
-	updateParams := repository.UpdateOrderParams{
-		ID: order.ID,
-		Status: repository.NullOrderStatus{
-			OrderStatus: status,
-			Valid:       true,
-		},
-	}
-	if status == repository.OrderStatusConfirmed {
-		updateParams.ConfirmedAt = pgtype.Timestamptz{
-			Time:  time.Now(),
-			Valid: true,
-		}
-	}
-	if status == repository.OrderStatusDelivering {
-		updateParams.DeliveredAt = pgtype.Timestamptz{
-			Time:  time.Now(),
-			Valid: true,
-		}
-	}
-
-	rs, err := sv.repo.UpdateOrder(c, updateParams)
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
-		return
-	}
-
-	if err := sv.cacheSrv.Delete(c, "order_detail:"+params.ID); err != nil {
-		log.Err(err).Msg("failed to delete order detail cache")
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
-		return
-	}
-	sv.cacheSrv.Delete(c, "order_detail:"+params.ID)
-
-	c.JSON(http.StatusOK, dto.CreateDataResp(c, rs, nil, nil))
-}
-
-// @Summary Refund order
-// @Description Refund order by order ID
-// @Tags orders
-// @Accept json
-// @Produce json
-// @Param id path int true "Order ID"
-// @Security BearerAuth
-// @Success 200 {object} ApiResponse[OrderListResponse]
-// @Failure 400 {object} ErrorResp
-// @Failure 401 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
-// @Router /order/{orderId}/refund [put]
-func (sv *Server) refundOrder(c *gin.Context) {
-	var params models.UriIDParam
-	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
-		return
-	}
-	var req models.RefundOrderModel
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
-		return
-	}
-	order, err := sv.repo.GetOrder(c, uuid.MustParse(params.ID))
-	if err != nil {
-		if err == repository.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
-		}
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
-		return
-	}
-
-	if order.Status != repository.OrderStatusDelivered {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidPaymentCode, errors.New("order cannot be refunded")))
-		return
-	}
-
-	err = sv.repo.RefundOrderTx(c, repository.RefundOrderTxArgs{
-		OrderID: uuid.MustParse(params.ID),
-		RefundPaymentFromMethod: func(paymentID string, method string) (string, error) {
-			req := payment.RefundRequest{
-				TransactionID: paymentID,
-				Amount:        order.TotalPrice.Int.Int64(),
-				Reason:        req.Reason,
-			}
-			rs, err := sv.paymentSrv.RefundPayment(c, req, method)
-			return rs.Reason, err
-		},
-	})
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
-		return
-	}
-	sv.cacheSrv.Delete(c, "order_detail:"+params.ID)
-
-	c.JSON(http.StatusOK, dto.CreateDataResp(c, order, nil, nil))
-}
-
-// --- Admin API ---
-
-// @Summary Get all orders (Admin endpoint)
-// @Description Get all orders with pagination and filtering
-// @Tags Admin
-// @Accept json
-// @Produce json
-// @Param page query int false "Page number"
-// @Param pageSize query int false "Page size"
-// @Param status query string false "Filter by status"
-// @Security BearerAuth
-// @Success 200 {object} ApiResponse[[]OrderListResponse]
-// @Failure 401 {object} ErrorResp
-// @Failure 403 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
-// @Router /admin/orders [get]
-func (sv *Server) getAdminOrdersHandler(c *gin.Context) {
-	var orderListQuery models.OrderListQuery
-	if err := c.ShouldBindQuery(&orderListQuery); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
-		return
-	}
-
-	dbParams := repository.GetOrdersParams{
-		Limit:  orderListQuery.PageSize,
-		Offset: (orderListQuery.Page - 1) * orderListQuery.PageSize,
-	}
-
-	if orderListQuery.Status != nil {
-		dbParams.Status = repository.NullOrderStatus{
-			OrderStatus: repository.OrderStatus(*orderListQuery.Status),
-			Valid:       true,
-		}
-	}
-
-	if orderListQuery.PaymentStatus != nil {
-		dbParams.PaymentStatus = repository.NullPaymentStatus{
-			PaymentStatus: repository.PaymentStatus(*orderListQuery.PaymentStatus),
-			Valid:         true,
-		}
-	}
-
-	fetchedOrderRows, err := sv.repo.GetOrders(c, dbParams)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
-		return
-	}
-
-	countParams := repository.CountOrdersParams{}
-	if orderListQuery.Status != nil {
-		countParams.Status = repository.NullOrderStatus{
-			OrderStatus: repository.OrderStatus(*orderListQuery.Status),
-			Valid:       true,
-		}
-	}
-
-	if orderListQuery.PaymentStatus != nil {
-		countParams.PaymentStatus = repository.NullPaymentStatus{
-			PaymentStatus: repository.PaymentStatus(*orderListQuery.PaymentStatus),
-			Valid:         true,
-		}
-	}
-
-	count, err := sv.repo.CountOrders(c, countParams)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
-		return
-	}
-
-	var orderResponses []dto.OrderListItem
-	for _, aggregated := range fetchedOrderRows {
-		// Convert PaymentStatus interface{} to PaymentStatus type
-		paymentStatus := repository.PaymentStatusPending
-		if aggregated.PaymentStatus.Valid {
-			paymentStatus = aggregated.PaymentStatus.PaymentStatus
-		}
-
-		total, _ := aggregated.TotalPrice.Float64Value()
-		orderResponses = append(orderResponses, dto.OrderListItem{
-			ID:            aggregated.ID,
-			Total:         total.Float64,
-			TotalItems:    int32(aggregated.TotalItems),
-			Status:        aggregated.Status,
-			CustomerName:  aggregated.CustomerName,
-			CustomerEmail: aggregated.CustomerEmail,
-			PaymentStatus: paymentStatus,
-			CreatedAt:     aggregated.CreatedAt.UTC(),
-			UpdatedAt:     aggregated.UpdatedAt.UTC(),
-		})
-	}
-
-	c.JSON(http.StatusOK, dto.CreateDataResp(c, orderResponses, dto.CreatePagination(orderListQuery.Page, orderListQuery.PageSize, count), nil))
-}
-
-// @Summary Get order details by ID (Admin endpoint)
-// @Description Get detailed information about an order by its ID
-// @Tags Admin
-// @Accept json
-// @Produce json
-// @Param id path string true "Order ID"
-// @Security BearerAuth
-// @Success 200 {object} ApiResponse[OrderDetailResponse]
-// @Failure 401 {object} ErrorResp
-// @Failure 403 {object} ErrorResp
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
-// @Router /admin/orders/{id} [get]
-func (sv *Server) getAdminOrderDetailHandler(c *gin.Context) {
-	// Reuse the existing order detail handler since admin has access to all orders
-	sv.getOrderDetailHandler(c)
 }

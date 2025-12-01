@@ -20,6 +20,8 @@ type Repository interface {
 	CancelOrderTx(ctx context.Context, params CancelOrderTxArgs) (uuid.UUID, error)
 	RefundOrderTx(ctx context.Context, params RefundOrderTxArgs) error
 	VerifyEmailTx(ctx context.Context, arg VerifyEmailTxArgs) error
+	CreateProductTx(ctx context.Context, arg CreateProductTxArgs) (Product, error)
+	UpdateProductTx(ctx context.Context, arg UpdateProductTxArgs) (Product, error)
 	QueryRaw(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error)
 	VoteHelpfulRatingTx(ctx context.Context, arg VoteHelpfulRatingTxArgs) (uuid.UUID, error)
 	UpdateDiscountTx(ctx context.Context, id uuid.UUID, arg UpdateDiscountTxArgs) error

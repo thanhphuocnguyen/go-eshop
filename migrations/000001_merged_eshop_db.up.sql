@@ -481,7 +481,7 @@ CREATE TABLE featured_products (
 -- Create orders tables
 CREATE TABLE orders (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), 
-  customer_id UUID NOT NULL REFERENCES users (id) ON DELETE RESTRICT, 
+  user_id UUID NOT NULL REFERENCES users (id) ON DELETE RESTRICT, 
   customer_email VARCHAR(255) NOT NULL, 
   customer_name VARCHAR(255) NOT NULL, 
   customer_phone VARCHAR(50) NOT NULL, 
@@ -869,7 +869,7 @@ CREATE INDEX IF NOT EXISTS idx_discount_rules_discount_id ON discount_rules(disc
 CREATE INDEX IF NOT EXISTS idx_discount_usage_discount_id ON discount_usage(discount_id);
 CREATE INDEX IF NOT EXISTS idx_discount_usage_user_id ON discount_usage(user_id);
 -- Orders indexes
-CREATE INDEX idx_orders_customer_id ON orders (customer_id);
+CREATE INDEX idx_orders_user_id ON orders (user_id);
 CREATE INDEX idx_orders_order_date ON orders (order_date);
 CREATE INDEX idx_orders_status ON orders (status);
 CREATE INDEX idx_orders_customer_email ON orders (customer_email);
@@ -913,3 +913,8 @@ CREATE INDEX idx_shipments_order_id ON shipments(order_id);
 CREATE INDEX idx_shipments_status ON shipments(status);
 CREATE INDEX idx_shipment_items_shipment_id ON shipment_items(shipment_id);
 CREATE INDEX idx_shipment_items_order_item_id ON shipment_items(order_item_id);
+
+-- Discount indexes
+CREATE INDEX idx_discounts_active_valid ON discounts(is_active, valid_from, valid_until);
+CREATE INDEX idx_discount_usage_user_discount ON discount_usage(order_id, discount_id);
+CREATE INDEX idx_orders_user_id ON orders(user_id);

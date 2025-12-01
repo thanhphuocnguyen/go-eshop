@@ -211,7 +211,14 @@ func (sv *Server) UpdateCartItemQtyHandler(c *gin.Context) {
 				c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, createCartErr))
 				return
 			}
-			cart = newCart
+			cart = repository.GetCartRow{
+				ID:        newCart.ID,
+				UserID:    newCart.UserID,
+				SessionID: newCart.SessionID,
+				ItemCount: 0,
+				CreatedAt: newCart.CreatedAt,
+				UpdatedAt: newCart.UpdatedAt,
+			}
 		} else {
 			c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 			return
@@ -347,7 +354,7 @@ func (sv *Server) CheckoutHandler(c *gin.Context) {
 		return
 	}
 
-	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
+	user, err := sv.repo.GetUserDetailsByID(c, authPayload.UserID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, errors.New("user not found")))
@@ -413,16 +420,42 @@ func (sv *Server) CheckoutHandler(c *gin.Context) {
 
 	// create order
 	createOrderItemParams := make([]repository.CreateBulkOrderItemsParams, 0)
+
+	var discountIDs []uuid.UUID
+	var discountRows []repository.GetDiscountByCodesRow
+	if len(req.DiscountCodes) > 0 {
+		discountRows, err = sv.repo.GetDiscountByCodes(c, req.DiscountCodes)
+		if err != nil {
+			log.Error().Err(err).Msg("GetDiscountByCodes")
+			c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+			return
+		}
+
+		err = checkDiscountApplicability(c, sv.repo, discountRows)
+		if err != nil {
+			log.Error().Err(err).Msg("checkDiscountRuleApplicability")
+			c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
+			return
+		}
+
+		for _, row := range discountRows {
+			discountIDs = append(discountIDs, row.ID)
+		}
+	}
+
 	var totalPrice float64
+	var totalDiscount float64
+
 	for _, item := range itemRows {
-		price, _ := item.VariantPrice.Float64Value()
+		itemPrice, _ := item.VariantPrice.Float64Value()
+		lineTotal := float64(item.CartItem.Quantity) * itemPrice.Float64
 		itemParam := repository.CreateBulkOrderItemsParams{
 			VariantID:            item.CartItem.VariantID,
 			Quantity:             item.CartItem.Quantity,
 			PricePerUnitSnapshot: item.VariantPrice,
 			VariantSkuSnapshot:   item.VariantSku,
 			ProductNameSnapshot:  item.ProductName,
-			LineTotalSnapshot:    utils.GetPgNumericFromFloat(float64(item.CartItem.Quantity) * price.Float64),
+			LineTotalSnapshot:    utils.GetPgNumericFromFloat(lineTotal),
 		}
 
 		err := json.Unmarshal(item.Attributes, &itemParam.AttributesSnapshot)
@@ -431,8 +464,109 @@ func (sv *Server) CheckoutHandler(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 			return
 		}
+
+		for _, row := range discountRows {
+			var discountRules []repository.DiscountRule
+			err := json.Unmarshal(row.Rules, &discountRules)
+			if err != nil {
+				log.Error().Err(err).Msg("Unmarshal discount rules")
+				c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+				return
+			}
+			for _, rule := range discountRules {
+				switch rule.RuleType {
+				case string(ProductRule):
+					var ruleValue models.ProductRule
+					err := json.Unmarshal(rule.RuleValue, &ruleValue)
+					if err != nil {
+						log.Error().Err(err).Msg("Unmarshal ProductRule")
+						c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+						return
+					}
+					// check if the product is in the rule
+					isApplicable := false
+					for _, pID := range ruleValue.ProductIDs {
+						if pID == item.ProductID {
+							isApplicable = true
+							break
+						}
+					}
+					if !isApplicable {
+						continue
+					}
+				case string(FirstTimeBuyerRule):
+					var ruleValue models.FirstTimeBuyerRule
+					err := json.Unmarshal(rule.RuleValue, &ruleValue)
+					if err != nil {
+						log.Error().Err(err).Msg("Unmarshal OrderValueRule")
+						c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+						return
+					}
+					if !ruleValue.IsFirstTimeBuyer {
+						continue
+					}
+					if user.TotalOrders > 0 {
+						continue
+					}
+				case string(CategoryRule):
+					var ruleValue models.CategoryRule
+					err := json.Unmarshal(rule.RuleValue, &ruleValue)
+					if err != nil {
+						log.Error().Err(err).Msg("Unmarshal CategoryRule")
+						c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+						return
+					}
+					// check if the product category is in the rule
+					isApplicable := false
+					for _, cID := range ruleValue.CategoryIDs {
+						for _, itemCId := range item.CategoryIds {
+							if cID == itemCId {
+								isApplicable = true
+								break
+							}
+						}
+					}
+					if !isApplicable {
+						continue
+					}
+				case string(BrandRule):
+					var ruleValue models.BrandRule
+					err := json.Unmarshal(rule.RuleValue, &ruleValue)
+					if err != nil {
+						log.Error().Err(err).Msg("Unmarshal BrandRule")
+						c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+						return
+					}
+					// check if the product brand is in the rule
+					isApplicable := false
+					for _, bID := range ruleValue.BrandIDs {
+						if item.ProductBrandID.Valid && bID == item.ProductBrandID.Bytes {
+							isApplicable = true
+							break
+						}
+					}
+					if !isApplicable {
+						continue
+					}
+				case string(PurchaseQuantityRule):
+					var ruleValue models.PurchaseQuantityRule
+					err := json.Unmarshal(rule.RuleValue, &ruleValue)
+					if err != nil {
+						log.Error().Err(err).Msg("Unmarshal PurchaseQuantityRule")
+						c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+						return
+					}
+					if int32(item.CartItem.Quantity) < int32(ruleValue.MinQuantity) {
+						continue
+					}
+					if int32(item.CartItem.Quantity) > int32(ruleValue.MaxQuantity) {
+						continue
+					}
+				}
+			}
+		}
 		createOrderItemParams = append(createOrderItemParams, itemParam)
-		totalPrice += price.Float64 * float64(item.CartItem.Quantity)
+		totalPrice += itemPrice.Float64 * float64(item.CartItem.Quantity)
 	}
 
 	params := repository.CheckoutCartTxArgs{
@@ -447,64 +581,15 @@ func (sv *Server) CheckoutHandler(c *gin.Context) {
 		},
 		CreateOrderItemParams: createOrderItemParams,
 	}
-	var discountPrice float64
-	var discountIDs []uuid.UUID
 
-	// check if there is a discount code
-	if len(req.DiscountCodes) > 0 {
-		for _, code := range req.DiscountCodes {
-			discountRow, err := sv.repo.GetDiscountByCode(c, code)
-			if discountRow.ValidUntil.Valid {
-				if discountRow.ValidUntil.Time.Before(time.Now().UTC()) {
-					c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, fmt.Errorf("discount code %s has expired", code)))
-					return
-				}
-			}
-			if !discountRow.IsStackable && len(req.DiscountCodes) > 1 {
-				c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, fmt.Errorf("discount code %s is not stackable", code)))
-				return
-			}
-			if err != nil {
-				if errors.Is(err, repository.ErrRecordNotFound) {
-					c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, fmt.Errorf("discount code not found")))
-					return
-				}
-				log.Error().Err(err).Msg("GetDiscountByCode")
-				c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
-				return
-			}
-			discountVal, _ := discountRow.DiscountValue.Float64Value()
-			if discountRow.MinOrderValue.Valid {
-				minOrderVal, _ := discountRow.MinOrderValue.Float64Value()
-				if totalPrice < minOrderVal.Float64 {
-					c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, fmt.Errorf("minimum order value for this discount is %.2f", minOrderVal.Float64)))
-					return
-				}
-			}
-			discountAmount := 0.0
-			switch discountRow.DiscountType {
-			case repository.DiscountTypeFixedAmount:
-				discountAmount = discountVal.Float64
-			case repository.DiscountTypePercentage:
-				discountAmount = totalPrice * discountVal.Float64 / 100
-			}
-			discountPrice += discountAmount
-			discountIDs = append(discountIDs, discountRow.ID)
-			if discountRow.MaxDiscountAmount.Valid {
-				maxDiscountVal, _ := discountRow.MaxDiscountAmount.Float64Value()
-				discountPrice = min(discountPrice, maxDiscountVal.Float64)
-			}
-		}
-	}
-
-	params.DiscountPrice = discountPrice
+	params.DiscountPrice = totalDiscount
 	params.DiscountIDs = discountIDs
 	params.PaymentMethodID = uuid.MustParse(req.PaymentMethodId)
 
 	params.CreatePaymentFn = func(orderID uuid.UUID, method string) (paymentIntentID string, clientSecretID *string, err error) {
 		// create payment intent
 		intent, err := sv.paymentSrv.CreatePaymentIntent(c, method, payment.PaymentRequest{
-			Amount:   int64((totalPrice - discountPrice) * 100), // convert to cents
+			Amount:   int64((totalPrice - totalDiscount) * 100), // convert to cents
 			Currency: "usd",
 			Email:    user.Email,
 			Metadata: map[string]string{
@@ -526,6 +611,79 @@ func (sv *Server) CheckoutHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, rs, nil, nil))
+}
+
+// checkDiscountApplicability checks if the discount rules are applicable to the cart
+// and returns the total discount amount
+// list checked rules:
+// - min order value
+// - valid from and until
+// - stackable
+// - usage per user
+// todo: implement other rules
+func checkDiscountApplicability(c *gin.Context, repo repository.Repository, discounts []repository.GetDiscountByCodesRow) (err error) {
+	authPayload, _ := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
+	stackCnt := 0
+	for _, row := range discounts {
+		if row.ValidFrom.After(time.Now().UTC()) {
+			return fmt.Errorf("discount code %s is not valid yet", row.Code)
+		}
+		if row.ValidUntil.Valid {
+			if row.ValidUntil.Time.Before(time.Now().UTC()) || row.ValidUntil.Time.Equal(time.Now().UTC()) {
+				return fmt.Errorf("discount code %s has expired", row.Code)
+			}
+		}
+		if row.IsStackable {
+			stackCnt++
+			if stackCnt > 1 {
+				return fmt.Errorf("only one stackable discount code is allowed")
+			}
+		}
+
+		if row.UsagePerUser != nil {
+			usageCount, err := repo.CountDiscountUsageByDiscountAndUser(c, repository.CountDiscountUsageByDiscountAndUserParams{
+				DiscountID: row.ID,
+				UserID:     authPayload.ID,
+			})
+			if err != nil {
+				log.Error().Err(err).Msg("CountDiscountUsageByDiscountAndUser")
+				c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+				return err
+			}
+			if int32(usageCount) >= *row.UsagePerUser {
+				c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, fmt.Errorf("you have reached the maximum usage for discount code %s", row.Code)))
+				return fmt.Errorf("maximum usage reached for discount code %s", row.Code)
+			}
+		}
+
+		if row.UsageLimit != nil && row.TimesUsed >= *row.UsageLimit {
+			c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, fmt.Errorf("discount code %s has reached its usage limit", row.Code)))
+			return fmt.Errorf("usage limit reached for discount code %s", row.Code)
+		}
+
+		var discountRules []repository.DiscountRule
+		err = json.Unmarshal(row.Rules, &discountRules)
+		if err != nil {
+			log.Error().Err(err).Msg("Unmarshal discount rules")
+			c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+			return err
+		}
+
+		for _, rule := range discountRules {
+			switch rule.RuleType {
+			case string(ProductRule):
+				var ruleValue models.ProductRule
+				err := json.Unmarshal(rule.RuleValue, &ruleValue)
+				if err != nil {
+					log.Error().Err(err).Msg("Unmarshal ProductRule")
+					c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+					return err
+				}
+			}
+
+		}
+	}
+	return nil
 }
 
 // @Summary  Clear the cart
@@ -574,14 +732,6 @@ func (sv *Server) ClearCart(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func checkDiscountApplicability(discounts []repository.Discount, cart dto.CartDetail) (bool, error) {
-	// TODO: implement discount applicability check
-	// get discount rules
-	// for each rule, check if the cart satisfies the rule
-	// if not, remove the discount from the cart
-	return true, nil
-}
-
 // ------------------------------ Mappers ------------------------------
 func mapToCartItemsResp(row repository.GetCartItemsRow) dto.CartItemDetail {
 
@@ -613,4 +763,22 @@ func mapToCartItemsResp(row repository.GetCartItemsRow) dto.CartItemDetail {
 	}
 
 	return cartItemsResp
+}
+
+// Setup cart-related routes
+func (sv *Server) addCartRoutes(rg *gin.RouterGroup) {
+	cart := rg.Group("/carts", authenticateMiddleware(sv.tokenGenerator))
+	{
+		cart.POST("", sv.CreateCart)
+		cart.GET("", sv.GetCartHandler)
+		cart.POST("checkout", sv.CheckoutHandler)
+		cart.PUT("clear", sv.ClearCart)
+
+		cart.GET("available-discounts", sv.GetCartAvailableDiscountsHandler)
+		cartItems := cart.Group("items")
+		{
+			cartItems.PUT(":id/quantity", sv.UpdateCartItemQtyHandler)
+			cartItems.DELETE(":id", sv.RemoveCartItem)
+		}
+	}
 }

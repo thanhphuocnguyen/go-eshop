@@ -1,5 +1,5 @@
 -- name: CreateOrder :one
-INSERT INTO orders (customer_id,customer_email,customer_name,customer_phone,total_price,shipping_address) VALUES ($1, $2, $3, $4,  $5, $6) RETURNING *;
+INSERT INTO orders (user_id,customer_email,customer_name,customer_phone,total_price,shipping_address) VALUES ($1, $2, $3, $4,  $5, $6) RETURNING *;
 
 -- name: GetOrder :one
 SELECT
@@ -37,7 +37,7 @@ FROM orders ord
 LEFT JOIN order_items oi ON ord.id = oi.id
 LEFT JOIN payments pm ON ord.id = pm.order_id
 WHERE
-    ord.customer_id = COALESCE(sqlc.narg('customer_id'), ord.customer_id) AND
+    ord.user_id = COALESCE(sqlc.narg('user_id'), ord.user_id) AND
     ord.status = COALESCE(sqlc.narg('status'), ord.status) AND
     ord.created_at >= COALESCE(sqlc.narg('start_date'), ord.created_at) AND
     ord.created_at <= COALESCE(sqlc.narg('end_date'), ord.created_at) AND
@@ -67,7 +67,7 @@ INSERT INTO order_items (order_id, variant_id, quantity, price_per_unit_snapshot
 INSERT INTO order_items (order_id, variant_id, quantity, price_per_unit_snapshot, variant_sku_snapshot, product_name_snapshot, line_total_snapshot, attributes_snapshot) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
 
 -- name: GetOrderItemByID :one
-SELECT oi.id as order_item_id, o.id as order_id, p.id as product_id, pv.id as variant_id, o.customer_id
+SELECT oi.id as order_item_id, o.id as order_id, p.id as product_id, pv.id as variant_id, o.user_id
 FROM order_items oi
 JOIN product_variants pv ON oi.variant_id = pv.id
 JOIN products p ON pv.product_id = p.id
@@ -76,7 +76,7 @@ WHERE oi.id = $1
 LIMIT 1;
 
 -- name: GetOrderItemsByOrderID :many
-SELECT oi.id as order_item_id, o.id as order_id, p.id as product_id, pv.id as variant_id, o.customer_id
+SELECT oi.id as order_item_id, o.id as order_id, p.id as product_id, pv.id as variant_id, o.user_id
 FROM order_items oi
 JOIN product_variants pv ON oi.variant_id = pv.id
 JOIN products p ON pv.product_id = p.id
@@ -93,7 +93,7 @@ FROM orders ord
 LEFT JOIN payments p ON ord.id = p.order_id
 WHERE
     ord.status = COALESCE(sqlc.narg('status'), ord.status) AND
-    customer_id = COALESCE(sqlc.narg('customer_id'), customer_id) AND
+    user_id = COALESCE(sqlc.narg('user_id'), user_id) AND
     p.status = COALESCE(sqlc.narg('payment_status'), p.status) AND
     ord.created_at >= COALESCE(sqlc.narg('start_date'), ord.created_at) AND
     ord.created_at <= COALESCE(sqlc.narg('end_date'), ord.created_at);

@@ -349,7 +349,7 @@ type FeaturedSection struct {
 
 type Order struct {
 	ID                    uuid.UUID               `json:"id"`
-	CustomerID            uuid.UUID               `json:"customerId"`
+	UserID                uuid.UUID               `json:"userId"`
 	CustomerEmail         string                  `json:"customerEmail"`
 	CustomerName          string                  `json:"customerName"`
 	CustomerPhone         string                  `json:"customerPhone"`

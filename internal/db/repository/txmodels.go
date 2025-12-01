@@ -28,6 +28,20 @@ type ProductTxResult struct {
 	ID uuid.UUID `json:"id"`
 }
 
+type CreateProductTxArgs struct {
+	Product       CreateProductParams
+	Attributes    []int32
+	CategoryIDs   []string
+	CollectionIDs []string
+}
+
+type UpdateProductTxArgs struct {
+	Product       UpdateProductParams
+	Attributes    *[]int32
+	CategoryIDs   *[]string
+	CollectionIDs *[]string
+}
+
 type AttributeDataSnapshot struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`

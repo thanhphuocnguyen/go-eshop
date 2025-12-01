@@ -15,6 +15,17 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
 )
 
+// Setup payment-related routes
+func (sv *Server) addPaymentRoutes(rg *gin.RouterGroup) {
+	payments := rg.Group("/payments").Use(authenticateMiddleware(sv.tokenGenerator))
+	{
+		payments.GET(":id", sv.getPaymentHandler)
+		payments.GET("stripe-config", sv.getStripeConfig)
+		payments.POST("", sv.CreatePaymentIntentHandler)
+		payments.PUT(":orderId", sv.changePaymentStatusHandler)
+	}
+}
+
 func (sv *Server) getStripeConfig(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"public_key": sv.config.StripePublishableKey})
 }
@@ -64,7 +75,7 @@ func (sv *Server) CreatePaymentIntentHandler(c *gin.Context) {
 		return
 	}
 
-	if ord.CustomerID != user.ID {
+	if ord.UserID != user.ID {
 		c.JSON(http.StatusForbidden, dto.CreateErr(PermissionDeniedCode, errors.New("permission denied")))
 		return
 	}

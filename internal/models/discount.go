@@ -21,6 +21,7 @@ type AddDiscountModel struct {
 	MinOrderValue     *float64  `json:"minOrderValue" binding:"omitempty,gt=0"`
 	MaxDiscountAmount *float64  `json:"maxDiscountAmount" binding:"omitempty,gt=0"`
 	UsageLimit        *int32    `json:"usageLimit" binding:"omitempty,gte=0"`
+	UsagePerUser      *int32    `json:"usagePerUser" binding:"omitempty,gte=0"`
 }
 
 type AddDiscountRuleModel struct {
@@ -52,6 +53,7 @@ type UpdateDiscountModel struct {
 	MinOrderValue     *float64   `json:"minOrderValue" binding:"omitempty,gt=0"`
 	MaxDiscountAmount *float64   `json:"maxDiscountAmount" binding:"omitempty,gt=0"`
 	UsageLimit        *int32     `json:"usageLimit" binding:"omitempty,gte=0"`
+	UsagePerUser      *int32     `json:"usagePerUser" binding:"omitempty,gte=0"`
 }
 
 type DiscountListQuery struct {

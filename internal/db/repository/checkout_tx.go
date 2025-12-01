@@ -47,7 +47,7 @@ func (s *pgRepo) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxArgs) (Cr
 	var result CreatePaymentResult
 	err := s.execTx(ctx, func(q *Queries) (err error) {
 		params := CreateOrderParams{
-			CustomerID:      arg.UserID,
+			UserID:          arg.UserID,
 			ShippingAddress: arg.ShippingAddress,
 			TotalPrice:      utils.GetPgNumericFromFloat(arg.TotalPrice),
 			CustomerEmail:   arg.CustomerInfo.Email,

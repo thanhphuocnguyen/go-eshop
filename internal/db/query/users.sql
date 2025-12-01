@@ -10,6 +10,15 @@ SELECT * FROM users WHERE email = $1 LIMIT 1;
 -- name: GetUserByID :one
 SELECT * FROM users WHERE id = $1 LIMIT 1;
 
+-- name: GetUserDetailsByID :one
+SELECT u.id, u.email, u.username, u.first_name, u.last_name, u.phone_number, u.role_id, ur.code AS role_code, u.verified_email, u.verified_phone, u.created_at, u.updated_at, COUNT(ord.id) AS total_orders
+FROM users u
+JOIN user_roles ur ON u.role_id = ur.id
+LEFT JOIN orders ord ON u.id = ord.user_id
+WHERE u.id = $1
+GROUP BY u.id, ur.code
+LIMIT 1;
+
 -- name: GetUsers :many
 SELECT * FROM users ORDER BY id LIMIT $1 OFFSET $2;
 

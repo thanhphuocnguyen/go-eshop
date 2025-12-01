@@ -125,94 +125,6 @@ func (sv *Server) GetCurrentUserHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, userResp, nil, nil))
 }
 
-// GetUsersHandler godoc
-// @Summary List users
-// @Description List users
-// @Tags users
-// @Accept  json
-// @Produce  json
-// @Param limit query int false "Limit"
-// @Param offset query int false "Offset"
-// @Success 200 {object} ApiResponse[[]UserDetail]
-// @Failure 500 {object} ErrorResp
-// @Failure 400 {object} ErrorResp
-// @Failure 401 {object} ErrorResp
-// @Router /admin/users [get]
-func (sv *Server) GetUsersHandler(c *gin.Context) {
-	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, errors.New("authorization payload is not provided")))
-		return
-	}
-	var queries models.PaginationQuery
-	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
-		return
-	}
-
-	users, err := sv.repo.GetUsers(c, repository.GetUsersParams{
-		Limit:  queries.PageSize,
-		Offset: (queries.Page - 1) * queries.PageSize,
-	})
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
-		return
-	}
-
-	total, err := sv.repo.CountUsers(c)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
-		return
-	}
-
-	userResp := make([]dto.UserDetail, 0)
-	for _, user := range users {
-		userResp = append(userResp, dto.MapToUserResponse(user, authPayload.RoleCode))
-	}
-
-	pagination := dto.CreatePagination(queries.Page, queries.PageSize, total)
-	c.JSON(http.StatusOK, dto.CreateDataResp(c, userResp, pagination, nil))
-}
-
-// GetUserHandler godoc
-// @Summary Get user info
-// @Description Get user info
-// @Tags Admin
-// @Accept  json
-// @Produce  json
-// @Param id path string true "User ID"
-// @Success 200 {object} ApiResponse[UserDetail]
-// @Failure 400 {object} ErrorResp
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
-// @Router /admin/users/{id} [get]
-func (sv *Server) GetUserHandler(c *gin.Context) {
-	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, errors.New("authorization payload is not provided")))
-		return
-	}
-	var param models.UriIDParam
-	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
-		return
-	}
-
-	user, err := sv.repo.GetUserByID(c, uuid.MustParse(param.ID))
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
-			return
-		}
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
-		return
-	}
-
-	userResp := dto.MapToUserResponse(user, authPayload.RoleCode)
-	c.JSON(http.StatusOK, dto.CreateDataResp(c, userResp, nil, nil))
-}
-
 // SendVerifyEmailHandler godoc
 // @Summary Send verify email
 // @Description Send verify email
@@ -307,4 +219,22 @@ func (sv *Server) VerifyEmailHandler(c *gin.Context) {
 		"username": user.Username,
 		"email":    user.Email,
 	})
+}
+
+// Setup user-related routes
+func (sv *Server) addUserRoutes(rg *gin.RouterGroup) {
+	users := rg.Group("users", authenticateMiddleware(sv.tokenGenerator))
+	{
+		users.GET("me", sv.GetCurrentUserHandler)
+		users.PATCH("me", sv.UpdateUserHandler)
+		users.POST("send-verify-email", sv.SendVerifyEmailHandler)
+		userAddresses := users.Group("addresses")
+		{
+			userAddresses.POST("", sv.CreateAddressHandler)
+			userAddresses.PATCH(":id/default", sv.SetDefaultAddressHandler)
+			userAddresses.GET("", sv.GetAddressesHandlers)
+			userAddresses.PATCH(":id", sv.UpdateAddressHandlers)
+			userAddresses.DELETE(":id", sv.RemoveAddressHandlers)
+		}
+	}
 }

@@ -32,7 +32,7 @@ DROP INDEX IF EXISTS idx_orders_created_at;
 DROP INDEX IF EXISTS idx_orders_customer_email;
 DROP INDEX IF EXISTS idx_orders_status;
 DROP INDEX IF EXISTS idx_orders_order_date;
-DROP INDEX IF EXISTS idx_orders_customer_id;
+DROP INDEX IF EXISTS idx_orders_user_id;
 DROP INDEX IF EXISTS idx_order_items_variant_id;
 DROP INDEX IF EXISTS idx_order_items_order_id;
 DROP INDEX IF EXISTS idx_discount_usage_user_id;
@@ -73,6 +73,9 @@ DROP INDEX IF EXISTS idx_card_types_code;
 DROP INDEX IF EXISTS idx_payment_methods_gateway;
 DROP INDEX IF EXISTS idx_payment_methods_is_active;
 DROP INDEX IF EXISTS idx_payment_methods_code;
+DROP INDEX IF EXISTS idx_discounts_active_valid;
+DROP INDEX IF EXISTS idx_discount_usage_user_discount;
+DROP INDEX IF EXISTS idx_orders_user_id;
 
 -- Drop all triggers
 DROP TRIGGER IF EXISTS after_rating_delete ON product_ratings;

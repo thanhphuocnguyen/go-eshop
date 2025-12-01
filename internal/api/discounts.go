@@ -40,6 +40,10 @@ func (sv *Server) CreateDiscountHandler(c *gin.Context) {
 		Description:   req.Description,
 		ValidFrom:     utils.GetPgTypeTimestamp(req.ValidFrom),
 		ValidUntil:    utils.GetPgTypeTimestamp(req.ValidUntil),
+		Name:          req.Name,
+		UsagePerUser:  req.UsagePerUser,
+		IsStackable:   req.IsStackable,
+		Priority:      req.Priority,
 	}
 
 	if req.MinOrderValue != nil {
@@ -253,15 +257,17 @@ func (sv *Server) UpdateDiscountHandler(c *gin.Context) {
 	}
 
 	sqlParams := repository.UpdateDiscountParams{
-		ID:          discount.ID,
-		Name:        req.Name,
-		Code:        req.Code,
-		IsActive:    req.IsActive,
-		UsageLimit:  req.UsageLimit,
-		IsStackable: req.IsStackable,
-		Priority:    req.Priority,
-		Description: req.Description,
+		ID:           discount.ID,
+		Name:         req.Name,
+		Code:         req.Code,
+		IsActive:     req.IsActive,
+		UsageLimit:   req.UsageLimit,
+		IsStackable:  req.IsStackable,
+		Priority:     req.Priority,
+		Description:  req.Description,
+		UsagePerUser: req.UsagePerUser,
 	}
+
 	if req.DiscountType != nil {
 		sqlParams.DiscountType.Scan(req.DiscountType)
 	}
@@ -560,4 +566,12 @@ func (sv *Server) DeleteDiscountRuleHandler(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+func (sv *Server) addDiscountRoutes(rg *gin.RouterGroup) {
+	discountsGroup := rg.Group("discounts")
+	{
+		discountsGroup.GET("", sv.GetDiscountsHandler)
+		discountsGroup.GET("/:id", sv.GetDiscountByIDHandler)
+	}
 }

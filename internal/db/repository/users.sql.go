@@ -378,6 +378,53 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 	return i, err
 }
 
+const getUserDetailsByID = `-- name: GetUserDetailsByID :one
+SELECT u.id, u.email, u.username, u.first_name, u.last_name, u.phone_number, u.role_id, ur.code AS role_code, u.verified_email, u.verified_phone, u.created_at, u.updated_at, COUNT(ord.id) AS total_orders
+FROM users u
+JOIN user_roles ur ON u.role_id = ur.id
+LEFT JOIN orders ord ON u.id = ord.user_id
+WHERE u.id = $1
+GROUP BY u.id, ur.code
+LIMIT 1
+`
+
+type GetUserDetailsByIDRow struct {
+	ID            uuid.UUID `json:"id"`
+	Email         string    `json:"email"`
+	Username      string    `json:"username"`
+	FirstName     string    `json:"firstName"`
+	LastName      string    `json:"lastName"`
+	PhoneNumber   string    `json:"phoneNumber"`
+	RoleID        uuid.UUID `json:"roleId"`
+	RoleCode      string    `json:"roleCode"`
+	VerifiedEmail bool      `json:"verifiedEmail"`
+	VerifiedPhone bool      `json:"verifiedPhone"`
+	CreatedAt     time.Time `json:"createdAt"`
+	UpdatedAt     time.Time `json:"updatedAt"`
+	TotalOrders   int64     `json:"totalOrders"`
+}
+
+func (q *Queries) GetUserDetailsByID(ctx context.Context, id uuid.UUID) (GetUserDetailsByIDRow, error) {
+	row := q.db.QueryRow(ctx, getUserDetailsByID, id)
+	var i GetUserDetailsByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Username,
+		&i.FirstName,
+		&i.LastName,
+		&i.PhoneNumber,
+		&i.RoleID,
+		&i.RoleCode,
+		&i.VerifiedEmail,
+		&i.VerifiedPhone,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.TotalOrders,
+	)
+	return i, err
+}
+
 const getUsers = `-- name: GetUsers :many
 SELECT id, role_id, username, email, phone_number, first_name, last_name, avatar_url, avatar_image_id, hashed_password, verified_email, verified_phone, locked, password_changed_at, updated_at, created_at FROM users ORDER BY id LIMIT $1 OFFSET $2
 `

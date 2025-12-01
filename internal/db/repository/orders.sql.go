@@ -19,7 +19,7 @@ FROM orders ord
 LEFT JOIN payments p ON ord.id = p.order_id
 WHERE
     ord.status = COALESCE($1, ord.status) AND
-    customer_id = COALESCE($2, customer_id) AND
+    user_id = COALESCE($2, user_id) AND
     p.status = COALESCE($3, p.status) AND
     ord.created_at >= COALESCE($4, ord.created_at) AND
     ord.created_at <= COALESCE($5, ord.created_at)
@@ -27,7 +27,7 @@ WHERE
 
 type CountOrdersParams struct {
 	Status        NullOrderStatus    `json:"status"`
-	CustomerID    pgtype.UUID        `json:"customerId"`
+	UserID        pgtype.UUID        `json:"userId"`
 	PaymentStatus NullPaymentStatus  `json:"paymentStatus"`
 	StartDate     pgtype.Timestamptz `json:"startDate"`
 	EndDate       pgtype.Timestamptz `json:"endDate"`
@@ -36,7 +36,7 @@ type CountOrdersParams struct {
 func (q *Queries) CountOrders(ctx context.Context, arg CountOrdersParams) (int64, error) {
 	row := q.db.QueryRow(ctx, countOrders,
 		arg.Status,
-		arg.CustomerID,
+		arg.UserID,
 		arg.PaymentStatus,
 		arg.StartDate,
 		arg.EndDate,
@@ -58,11 +58,11 @@ type CreateBulkOrderItemsParams struct {
 }
 
 const createOrder = `-- name: CreateOrder :one
-INSERT INTO orders (customer_id,customer_email,customer_name,customer_phone,total_price,shipping_address) VALUES ($1, $2, $3, $4,  $5, $6) RETURNING id, customer_id, customer_email, customer_name, customer_phone, shipping_address, total_price, status, confirmed_at, delivered_at, cancelled_at, shipping_method, refunded_at, order_date, updated_at, created_at, shipping_method_id, shipping_rate_id, estimated_delivery_date, tracking_url, shipping_provider, shipping_notes
+INSERT INTO orders (user_id,customer_email,customer_name,customer_phone,total_price,shipping_address) VALUES ($1, $2, $3, $4,  $5, $6) RETURNING id, user_id, customer_email, customer_name, customer_phone, shipping_address, total_price, status, confirmed_at, delivered_at, cancelled_at, shipping_method, refunded_at, order_date, updated_at, created_at, shipping_method_id, shipping_rate_id, estimated_delivery_date, tracking_url, shipping_provider, shipping_notes
 `
 
 type CreateOrderParams struct {
-	CustomerID      uuid.UUID               `json:"customerId"`
+	UserID          uuid.UUID               `json:"userId"`
 	CustomerEmail   string                  `json:"customerEmail"`
 	CustomerName    string                  `json:"customerName"`
 	CustomerPhone   string                  `json:"customerPhone"`
@@ -72,7 +72,7 @@ type CreateOrderParams struct {
 
 func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {
 	row := q.db.QueryRow(ctx, createOrder,
-		arg.CustomerID,
+		arg.UserID,
 		arg.CustomerEmail,
 		arg.CustomerName,
 		arg.CustomerPhone,
@@ -82,7 +82,7 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 	var i Order
 	err := row.Scan(
 		&i.ID,
-		&i.CustomerID,
+		&i.UserID,
 		&i.CustomerEmail,
 		&i.CustomerName,
 		&i.CustomerPhone,
@@ -162,7 +162,7 @@ func (q *Queries) DeleteOrder(ctx context.Context, id uuid.UUID) error {
 
 const getOrder = `-- name: GetOrder :one
 SELECT
-    orders.id, orders.customer_id, orders.customer_email, orders.customer_name, orders.customer_phone, orders.shipping_address, orders.total_price, orders.status, orders.confirmed_at, orders.delivered_at, orders.cancelled_at, orders.shipping_method, orders.refunded_at, orders.order_date, orders.updated_at, orders.created_at, orders.shipping_method_id, orders.shipping_rate_id, orders.estimated_delivery_date, orders.tracking_url, orders.shipping_provider, orders.shipping_notes,
+    orders.id, orders.user_id, orders.customer_email, orders.customer_name, orders.customer_phone, orders.shipping_address, orders.total_price, orders.status, orders.confirmed_at, orders.delivered_at, orders.cancelled_at, orders.shipping_method, orders.refunded_at, orders.order_date, orders.updated_at, orders.created_at, orders.shipping_method_id, orders.shipping_rate_id, orders.estimated_delivery_date, orders.tracking_url, orders.shipping_provider, orders.shipping_notes,
     pm.id as payment_id,
     pm.status as payment_status,
     pm.amount as payment_amount,
@@ -180,7 +180,7 @@ LIMIT 1
 
 type GetOrderRow struct {
 	ID                    uuid.UUID               `json:"id"`
-	CustomerID            uuid.UUID               `json:"customerId"`
+	UserID                uuid.UUID               `json:"userId"`
 	CustomerEmail         string                  `json:"customerEmail"`
 	CustomerName          string                  `json:"customerName"`
 	CustomerPhone         string                  `json:"customerPhone"`
@@ -216,7 +216,7 @@ func (q *Queries) GetOrder(ctx context.Context, id uuid.UUID) (GetOrderRow, erro
 	var i GetOrderRow
 	err := row.Scan(
 		&i.ID,
-		&i.CustomerID,
+		&i.UserID,
 		&i.CustomerEmail,
 		&i.CustomerName,
 		&i.CustomerPhone,
@@ -250,7 +250,7 @@ func (q *Queries) GetOrder(ctx context.Context, id uuid.UUID) (GetOrderRow, erro
 }
 
 const getOrderItemByID = `-- name: GetOrderItemByID :one
-SELECT oi.id as order_item_id, o.id as order_id, p.id as product_id, pv.id as variant_id, o.customer_id
+SELECT oi.id as order_item_id, o.id as order_id, p.id as product_id, pv.id as variant_id, o.user_id
 FROM order_items oi
 JOIN product_variants pv ON oi.variant_id = pv.id
 JOIN products p ON pv.product_id = p.id
@@ -264,7 +264,7 @@ type GetOrderItemByIDRow struct {
 	OrderID     uuid.UUID `json:"orderId"`
 	ProductID   uuid.UUID `json:"productId"`
 	VariantID   uuid.UUID `json:"variantId"`
-	CustomerID  uuid.UUID `json:"customerId"`
+	UserID      uuid.UUID `json:"userId"`
 }
 
 func (q *Queries) GetOrderItemByID(ctx context.Context, id uuid.UUID) (GetOrderItemByIDRow, error) {
@@ -275,7 +275,7 @@ func (q *Queries) GetOrderItemByID(ctx context.Context, id uuid.UUID) (GetOrderI
 		&i.OrderID,
 		&i.ProductID,
 		&i.VariantID,
-		&i.CustomerID,
+		&i.UserID,
 	)
 	return i, err
 }
@@ -356,7 +356,7 @@ func (q *Queries) GetOrderItems(ctx context.Context, orderID uuid.UUID) ([]GetOr
 }
 
 const getOrderItemsByOrderID = `-- name: GetOrderItemsByOrderID :many
-SELECT oi.id as order_item_id, o.id as order_id, p.id as product_id, pv.id as variant_id, o.customer_id
+SELECT oi.id as order_item_id, o.id as order_id, p.id as product_id, pv.id as variant_id, o.user_id
 FROM order_items oi
 JOIN product_variants pv ON oi.variant_id = pv.id
 JOIN products p ON pv.product_id = p.id
@@ -370,7 +370,7 @@ type GetOrderItemsByOrderIDRow struct {
 	OrderID     uuid.UUID `json:"orderId"`
 	ProductID   uuid.UUID `json:"productId"`
 	VariantID   uuid.UUID `json:"variantId"`
-	CustomerID  uuid.UUID `json:"customerId"`
+	UserID      uuid.UUID `json:"userId"`
 }
 
 func (q *Queries) GetOrderItemsByOrderID(ctx context.Context, orderID uuid.UUID) ([]GetOrderItemsByOrderIDRow, error) {
@@ -387,7 +387,7 @@ func (q *Queries) GetOrderItemsByOrderID(ctx context.Context, orderID uuid.UUID)
 			&i.OrderID,
 			&i.ProductID,
 			&i.VariantID,
-			&i.CustomerID,
+			&i.UserID,
 		); err != nil {
 			return nil, err
 		}
@@ -400,12 +400,12 @@ func (q *Queries) GetOrderItemsByOrderID(ctx context.Context, orderID uuid.UUID)
 }
 
 const getOrders = `-- name: GetOrders :many
-SELECT ord.id, ord.customer_id, ord.customer_email, ord.customer_name, ord.customer_phone, ord.shipping_address, ord.total_price, ord.status, ord.confirmed_at, ord.delivered_at, ord.cancelled_at, ord.shipping_method, ord.refunded_at, ord.order_date, ord.updated_at, ord.created_at, ord.shipping_method_id, ord.shipping_rate_id, ord.estimated_delivery_date, ord.tracking_url, ord.shipping_provider, ord.shipping_notes, pm.status as payment_status, COUNT(oi.id) as total_items
+SELECT ord.id, ord.user_id, ord.customer_email, ord.customer_name, ord.customer_phone, ord.shipping_address, ord.total_price, ord.status, ord.confirmed_at, ord.delivered_at, ord.cancelled_at, ord.shipping_method, ord.refunded_at, ord.order_date, ord.updated_at, ord.created_at, ord.shipping_method_id, ord.shipping_rate_id, ord.estimated_delivery_date, ord.tracking_url, ord.shipping_provider, ord.shipping_notes, pm.status as payment_status, COUNT(oi.id) as total_items
 FROM orders ord
 LEFT JOIN order_items oi ON ord.id = oi.id
 LEFT JOIN payments pm ON ord.id = pm.order_id
 WHERE
-    ord.customer_id = COALESCE($3, ord.customer_id) AND
+    ord.user_id = COALESCE($3, ord.user_id) AND
     ord.status = COALESCE($4, ord.status) AND
     ord.created_at >= COALESCE($5, ord.created_at) AND
     ord.created_at <= COALESCE($6, ord.created_at) AND
@@ -419,7 +419,7 @@ OFFSET $2
 type GetOrdersParams struct {
 	Limit         int64              `json:"limit"`
 	Offset        int64              `json:"offset"`
-	CustomerID    pgtype.UUID        `json:"customerId"`
+	UserID        pgtype.UUID        `json:"userId"`
 	Status        NullOrderStatus    `json:"status"`
 	StartDate     pgtype.Timestamptz `json:"startDate"`
 	EndDate       pgtype.Timestamptz `json:"endDate"`
@@ -428,7 +428,7 @@ type GetOrdersParams struct {
 
 type GetOrdersRow struct {
 	ID                    uuid.UUID               `json:"id"`
-	CustomerID            uuid.UUID               `json:"customerId"`
+	UserID                uuid.UUID               `json:"userId"`
 	CustomerEmail         string                  `json:"customerEmail"`
 	CustomerName          string                  `json:"customerName"`
 	CustomerPhone         string                  `json:"customerPhone"`
@@ -457,7 +457,7 @@ func (q *Queries) GetOrders(ctx context.Context, arg GetOrdersParams) ([]GetOrde
 	rows, err := q.db.Query(ctx, getOrders,
 		arg.Limit,
 		arg.Offset,
-		arg.CustomerID,
+		arg.UserID,
 		arg.Status,
 		arg.StartDate,
 		arg.EndDate,
@@ -472,7 +472,7 @@ func (q *Queries) GetOrders(ctx context.Context, arg GetOrdersParams) ([]GetOrde
 		var i GetOrdersRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.CustomerID,
+			&i.UserID,
 			&i.CustomerEmail,
 			&i.CustomerName,
 			&i.CustomerPhone,
