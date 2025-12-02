@@ -116,7 +116,10 @@ SELECT * FROM discounts WHERE priority = $1 LIMIT $2 OFFSET $3;
 SELECT COUNT(*) FROM discounts WHERE priority = $1;
 
 -- name: SeedDiscounts :copyfrom
-INSERT INTO discounts (code, name, description, discount_type, discount_value, min_order_value, max_discount_amount, usage_limit, usage_per_user, is_active, is_stackable, priority, valid_from, valid_until) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14);
+INSERT INTO discounts (
+  code, name, description, discount_type, discount_value,
+  min_order_value, max_discount_amount, usage_limit, usage_per_user,
+  is_active, is_stackable, priority, valid_from, valid_until) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14);
 
 -- name: InsertDiscountRule :one
 INSERT INTO discount_rules (discount_id, rule_type, rule_value) VALUES ($1, $2, $3) RETURNING id;

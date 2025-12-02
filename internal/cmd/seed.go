@@ -766,10 +766,10 @@ func seedDiscounts(ctx context.Context, repo repository.Repository) error {
 
 		var minOrderValue, maxDiscountAmt pgtype.Numeric
 		if discount.MinOrderValue != nil {
-			minOrderValue.Scan(*discount.MinOrderValue)
+			minOrderValue = utils.GetPgNumericFromFloat(*discount.MinOrderValue)
 		}
 		if discount.MaxDiscountAmt != nil {
-			maxDiscountAmt.Scan(*discount.MaxDiscountAmt)
+			maxDiscountAmt = utils.GetPgNumericFromFloat(*discount.MaxDiscountAmt)
 		}
 
 		params = append(params, repository.SeedDiscountsParams{

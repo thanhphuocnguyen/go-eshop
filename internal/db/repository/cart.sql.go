@@ -139,6 +139,38 @@ func (q *Queries) GetCart(ctx context.Context, arg GetCartParams) (GetCartRow, e
 	return i, err
 }
 
+const getCartDetails = `-- name: GetCartDetails :one
+SELECT carts.id, carts.user_id, carts.session_id, carts.order_id, carts.updated_at, carts.created_at, COUNT(cart_items.id) as item_count, SUM(cart_items.quantity * product_variants.price) AS total_price, SUM(cart_items.quantity) AS total_quantity FROM carts
+LEFT JOIN cart_items ON cart_items.cart_id = carts.id
+LEFT JOIN product_variants ON product_variants.id = cart_items.variant_id
+WHERE carts.id = $1
+GROUP BY carts.id
+`
+
+type GetCartDetailsRow struct {
+	Cart          Cart  `json:"cart"`
+	ItemCount     int64 `json:"itemCount"`
+	TotalPrice    int64 `json:"totalPrice"`
+	TotalQuantity int64 `json:"totalQuantity"`
+}
+
+func (q *Queries) GetCartDetails(ctx context.Context, id uuid.UUID) (GetCartDetailsRow, error) {
+	row := q.db.QueryRow(ctx, getCartDetails, id)
+	var i GetCartDetailsRow
+	err := row.Scan(
+		&i.Cart.ID,
+		&i.Cart.UserID,
+		&i.Cart.SessionID,
+		&i.Cart.OrderID,
+		&i.Cart.UpdatedAt,
+		&i.Cart.CreatedAt,
+		&i.ItemCount,
+		&i.TotalPrice,
+		&i.TotalQuantity,
+	)
+	return i, err
+}
+
 const getCartItem = `-- name: GetCartItem :one
 SELECT id, cart_id, variant_id, quantity, added_at FROM cart_items WHERE id = $1 AND cart_id = $2
 `

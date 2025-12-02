@@ -3,12 +3,14 @@
 -- Created: November 13, 2025
 -- Enable UUID extension if not already enabled
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- Create enum types first
 CREATE TYPE "order_status" AS ENUM (
   'pending', 'confirmed', 'delivering', 
   'delivered', 'cancelled', 'refunded', 
   'completed'
 );
+
 -- Create payment_status enum type if it doesn't exist
 CREATE TYPE "payment_status" AS ENUM (
   'pending', 'success', 'failed', 'cancelled', 

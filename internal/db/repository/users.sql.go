@@ -379,29 +379,51 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 }
 
 const getUserDetailsByID = `-- name: GetUserDetailsByID :one
-SELECT u.id, u.email, u.username, u.first_name, u.last_name, u.phone_number, u.role_id, ur.code AS role_code, u.verified_email, u.verified_phone, u.created_at, u.updated_at, COUNT(ord.id) AS total_orders
+SELECT u.id, u.email, u.username, u.first_name, u.last_name, 
+    u.phone_number, u.role_id, u.verified_email, 
+    u.verified_phone, u.created_at, u.updated_at, 
+    ur.code AS role_code, 
+    COUNT(CASE WHEN ord.status IN ('completed', 'delivered') AND p.status = 'success' THEN 1 END) AS total_orders,
+    COALESCE(SUM(CASE 
+        WHEN ord.status IN ('completed', 'delivered') AND p.status = 'success'
+        THEN ord.total_price - COALESCE(du.total_discount, 0)
+        ELSE 0 
+    END), 0) AS total_spent,
+    COALESCE(MAX(CASE 
+        WHEN ord.status IN ('completed', 'delivered') AND p.status = 'success'
+        THEN ord.total_price - COALESCE(du.total_discount, 0)
+        ELSE 0 
+    END), 0) AS largest_order_amount
 FROM users u
 JOIN user_roles ur ON u.role_id = ur.id
 LEFT JOIN orders ord ON u.id = ord.user_id
+LEFT JOIN payments p ON ord.id = p.order_id
+LEFT JOIN (
+    SELECT order_id, SUM(discount_amount) as total_discount
+    FROM discount_usage
+    GROUP BY order_id
+) du ON ord.id = du.order_id
 WHERE u.id = $1
 GROUP BY u.id, ur.code
 LIMIT 1
 `
 
 type GetUserDetailsByIDRow struct {
-	ID            uuid.UUID `json:"id"`
-	Email         string    `json:"email"`
-	Username      string    `json:"username"`
-	FirstName     string    `json:"firstName"`
-	LastName      string    `json:"lastName"`
-	PhoneNumber   string    `json:"phoneNumber"`
-	RoleID        uuid.UUID `json:"roleId"`
-	RoleCode      string    `json:"roleCode"`
-	VerifiedEmail bool      `json:"verifiedEmail"`
-	VerifiedPhone bool      `json:"verifiedPhone"`
-	CreatedAt     time.Time `json:"createdAt"`
-	UpdatedAt     time.Time `json:"updatedAt"`
-	TotalOrders   int64     `json:"totalOrders"`
+	ID                 uuid.UUID      `json:"id"`
+	Email              string         `json:"email"`
+	Username           string         `json:"username"`
+	FirstName          string         `json:"firstName"`
+	LastName           string         `json:"lastName"`
+	PhoneNumber        string         `json:"phoneNumber"`
+	RoleID             uuid.UUID      `json:"roleId"`
+	VerifiedEmail      bool           `json:"verifiedEmail"`
+	VerifiedPhone      bool           `json:"verifiedPhone"`
+	CreatedAt          time.Time      `json:"createdAt"`
+	UpdatedAt          time.Time      `json:"updatedAt"`
+	RoleCode           string         `json:"roleCode"`
+	TotalOrders        int64          `json:"totalOrders"`
+	TotalSpent         pgtype.Numeric `json:"totalSpent"`
+	LargestOrderAmount pgtype.Numeric `json:"largestOrderAmount"`
 }
 
 func (q *Queries) GetUserDetailsByID(ctx context.Context, id uuid.UUID) (GetUserDetailsByIDRow, error) {
@@ -415,14 +437,37 @@ func (q *Queries) GetUserDetailsByID(ctx context.Context, id uuid.UUID) (GetUser
 		&i.LastName,
 		&i.PhoneNumber,
 		&i.RoleID,
-		&i.RoleCode,
 		&i.VerifiedEmail,
 		&i.VerifiedPhone,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.RoleCode,
 		&i.TotalOrders,
+		&i.TotalSpent,
+		&i.LargestOrderAmount,
 	)
 	return i, err
+}
+
+const getUserTotalSpent = `-- name: GetUserTotalSpent :one
+SELECT COALESCE(SUM(o.total_price - COALESCE(du.total_discount, 0)), 0) as total_spent
+FROM orders o
+JOIN payments p ON o.id = p.order_id
+LEFT JOIN (
+    SELECT order_id, SUM(discount_amount) as total_discount
+    FROM discount_usage
+    GROUP BY order_id
+) du ON o.id = du.order_id
+WHERE o.user_id = $1 
+  AND o.status IN ('completed', 'delivered')
+  AND p.status = 'success'
+`
+
+func (q *Queries) GetUserTotalSpent(ctx context.Context, userID uuid.UUID) (pgtype.Numeric, error) {
+	row := q.db.QueryRow(ctx, getUserTotalSpent, userID)
+	var total_spent pgtype.Numeric
+	err := row.Scan(&total_spent)
+	return total_spent, err
 }
 
 const getUsers = `-- name: GetUsers :many

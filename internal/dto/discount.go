@@ -49,6 +49,7 @@ type DiscountDetail struct {
 	MinPurchase   float64                `json:"minPurchase"`
 	MaxDiscount   float64                `json:"maxDiscount"`
 	UsageHistory  []DiscountUsageHistory `json:"usageHistory"`
+	DiscountRules []DiscountRuleDetail   `json:"discountRules"`
 }
 
 type DiscountRuleDetail struct {

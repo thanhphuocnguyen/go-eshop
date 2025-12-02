@@ -11,10 +11,30 @@ SELECT * FROM users WHERE email = $1 LIMIT 1;
 SELECT * FROM users WHERE id = $1 LIMIT 1;
 
 -- name: GetUserDetailsByID :one
-SELECT u.id, u.email, u.username, u.first_name, u.last_name, u.phone_number, u.role_id, ur.code AS role_code, u.verified_email, u.verified_phone, u.created_at, u.updated_at, COUNT(ord.id) AS total_orders
+SELECT u.id, u.email, u.username, u.first_name, u.last_name, 
+    u.phone_number, u.role_id, u.verified_email, 
+    u.verified_phone, u.created_at, u.updated_at, 
+    ur.code AS role_code, 
+    COUNT(CASE WHEN ord.status IN ('completed', 'delivered') AND p.status = 'success' THEN 1 END) AS total_orders,
+    COALESCE(SUM(CASE 
+        WHEN ord.status IN ('completed', 'delivered') AND p.status = 'success'
+        THEN ord.total_price - COALESCE(du.total_discount, 0)
+        ELSE 0 
+    END), 0) AS total_spent,
+    COALESCE(MAX(CASE 
+        WHEN ord.status IN ('completed', 'delivered') AND p.status = 'success'
+        THEN ord.total_price - COALESCE(du.total_discount, 0)
+        ELSE 0 
+    END), 0) AS largest_order_amount
 FROM users u
 JOIN user_roles ur ON u.role_id = ur.id
 LEFT JOIN orders ord ON u.id = ord.user_id
+LEFT JOIN payments p ON ord.id = p.order_id
+LEFT JOIN (
+    SELECT order_id, SUM(discount_amount) as total_discount
+    FROM discount_usage
+    GROUP BY order_id
+) du ON ord.id = du.order_id
 WHERE u.id = $1
 GROUP BY u.id, ur.code
 LIMIT 1;
@@ -111,3 +131,16 @@ SELECT * FROM user_roles WHERE code = $1 LIMIT 1;
 
 -- name: GetRoleByID :one
 SELECT * FROM user_roles WHERE id = $1 LIMIT 1;
+
+-- name: GetUserTotalSpent :one
+SELECT COALESCE(SUM(o.total_price - COALESCE(du.total_discount, 0)), 0) as total_spent
+FROM orders o
+JOIN payments p ON o.id = p.order_id
+LEFT JOIN (
+    SELECT order_id, SUM(discount_amount) as total_discount
+    FROM discount_usage
+    GROUP BY order_id
+) du ON o.id = du.order_id
+WHERE o.user_id = $1 
+  AND o.status IN ('completed', 'delivered')
+  AND p.status = 'success';

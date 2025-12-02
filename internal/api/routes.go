@@ -81,6 +81,7 @@ func (sv *Server) initializeRouter() {
 		sv.addCollectionRoutes(v1)
 		sv.addBrandRoutes(v1)
 		sv.addRatingRoutes(v1)
+		sv.addDiscountRoutes(v1)
 	}
 
 	// Setup webhook routes

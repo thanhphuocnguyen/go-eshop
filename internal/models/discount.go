@@ -25,7 +25,7 @@ type AddDiscountModel struct {
 }
 
 type AddDiscountRuleModel struct {
-	RuleType  string                 `json:"ruleType" binding:"required,oneof=product category customer_segment brand first_time_buyer purchase_quantity"`
+	RuleType  string                 `json:"ruleType" binding:"required,oneof=product category customer_segment brand collection first_time_buyer purchase_quantity"`
 	RuleValue map[string]interface{} `json:"ruleValue" binding:"required,min=1"`
 }
 
@@ -82,6 +82,11 @@ type CategoryRule struct {
 	ExcludeSaleItems bool        `json:"excludeSaleItems"`
 }
 
+type CollectionRule struct {
+	CollectionIDs    []uuid.UUID `json:"collectionIds"`
+	ExcludeSaleItems bool        `json:"excludeSaleItems"`
+}
+
 type PurchaseQuantityRule struct {
 	MinQuantity int `json:"minQuantity"`
 	MaxQuantity int `json:"maxQuantity"`
@@ -96,8 +101,19 @@ type BrandRule struct {
 }
 
 type CustomerSegmentRule struct {
-	MinTotalSpent     float64 `json:"minTotalSpent"`
-	IsNewCustomer     bool    `json:"isNewCustomer"`
-	MaxPreviousOrders int     `json:"maxPreviousOrders"`
-	CustomerType      string  `json:"customerType"`
+	MinTotalSpent     *float64 `json:"minTotalSpent"`
+	IsNewCustomer     bool     `json:"isNewCustomer"`
+	MaxPreviousOrders *int     `json:"maxPreviousOrders"`
+	CustomerType      *string  `json:"customerType"`
+}
+
+type CheckDiscountApplicabilityRequest struct {
+	DiscountCode string `json:"discountCode" binding:"required"`
+	CartID       string `json:"cartId" binding:"required,uuids"`
+}
+
+type CheckDiscountApplicabilityResponse struct {
+	IsApplicable bool    `json:"isApplicable"`
+	Message      string  `json:"message,omitempty"`
+	DiscountAmt  float64 `json:"discountAmount,omitempty"`
 }

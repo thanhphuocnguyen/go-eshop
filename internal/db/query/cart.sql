@@ -9,6 +9,13 @@ GROUP BY carts.id
 ORDER BY carts.updated_at DESC
 LIMIT 1;
 
+-- name: GetCartDetails :one
+SELECT sqlc.embed(carts), COUNT(cart_items.id) as item_count, SUM(cart_items.quantity * product_variants.price) AS total_price, SUM(cart_items.quantity) AS total_quantity FROM carts
+LEFT JOIN cart_items ON cart_items.cart_id = carts.id
+JOIN product_variants ON product_variants.id = cart_items.variant_id
+WHERE carts.id = $1
+GROUP BY carts.id;
+
 -- name: RemoveProductFromCart :exec
 DELETE FROM cart_items WHERE cart_id = $1 AND id = $2;
 

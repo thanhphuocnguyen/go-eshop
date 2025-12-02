@@ -128,6 +128,7 @@ type Querier interface {
 	GetBrands(ctx context.Context, arg GetBrandsParams) ([]Brand, error)
 	GetBrandsByIDs(ctx context.Context, arg GetBrandsByIDsParams) ([]GetBrandsByIDsRow, error)
 	GetCart(ctx context.Context, arg GetCartParams) (GetCartRow, error)
+	GetCartDetails(ctx context.Context, id uuid.UUID) (GetCartDetailsRow, error)
 	GetCartItem(ctx context.Context, arg GetCartItemParams) (CartItem, error)
 	GetCartItemByProductVariantID(ctx context.Context, arg GetCartItemByProductVariantIDParams) (CartItem, error)
 	GetCartItems(ctx context.Context, cartID uuid.UUID) ([]GetCartItemsRow, error)
@@ -212,6 +213,7 @@ type Querier interface {
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
 	GetUserDetailsByID(ctx context.Context, id uuid.UUID) (GetUserDetailsByIDRow, error)
+	GetUserTotalSpent(ctx context.Context, userID uuid.UUID) (pgtype.Numeric, error)
 	GetUsers(ctx context.Context, arg GetUsersParams) ([]User, error)
 	GetUsersUsingDiscount(ctx context.Context, arg GetUsersUsingDiscountParams) ([]uuid.UUID, error)
 	GetVariantDetailByID(ctx context.Context, arg GetVariantDetailByIDParams) ([]GetVariantDetailByIDRow, error)
@@ -227,6 +229,7 @@ type Querier interface {
 	InsertRatingVotes(ctx context.Context, arg InsertRatingVotesParams) (RatingVote, error)
 	InsertSession(ctx context.Context, arg InsertSessionParams) (UserSession, error)
 	ListOrderItems(ctx context.Context, arg ListOrderItemsParams) ([]OrderItem, error)
+	MaxPreviousOrderByUserID(ctx context.Context, userID uuid.UUID) (Order, error)
 	ReactivateDiscount(ctx context.Context, id uuid.UUID) error
 	RemoveDiscountUsage(ctx context.Context, arg RemoveDiscountUsageParams) error
 	RemoveProductFromCart(ctx context.Context, arg RemoveProductFromCartParams) error

@@ -202,6 +202,7 @@ func (r iteratorForCreateBulkOrderItems) Values() ([]interface{}, error) {
 		r.rows[0].ProductNameSnapshot,
 		r.rows[0].LineTotalSnapshot,
 		r.rows[0].AttributesSnapshot,
+		r.rows[0].DiscountedPrice,
 	}, nil
 }
 
@@ -210,7 +211,7 @@ func (r iteratorForCreateBulkOrderItems) Err() error {
 }
 
 func (q *Queries) CreateBulkOrderItems(ctx context.Context, arg []CreateBulkOrderItemsParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"order_items"}, []string{"order_id", "variant_id", "quantity", "price_per_unit_snapshot", "variant_sku_snapshot", "product_name_snapshot", "line_total_snapshot", "attributes_snapshot"}, &iteratorForCreateBulkOrderItems{rows: arg})
+	return q.db.CopyFrom(ctx, []string{"order_items"}, []string{"order_id", "variant_id", "quantity", "price_per_unit_snapshot", "variant_sku_snapshot", "product_name_snapshot", "line_total_snapshot", "attributes_snapshot", "discounted_price"}, &iteratorForCreateBulkOrderItems{rows: arg})
 }
 
 // iteratorForCreateBulkProductAttributes implements pgx.CopyFromSource.

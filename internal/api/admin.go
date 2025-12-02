@@ -119,11 +119,11 @@ func (sv *Server) addAdminRoutes(rg *gin.RouterGroup) {
 			discounts.GET("", sv.GetDiscountsHandler)
 			discounts.GET(":id", sv.GetDiscountByIDHandler)
 			discounts.PUT(":id", sv.UpdateDiscountHandler)
-			discounts.DELETE(":id", sv.DeleteDiscountHandler)
+			discounts.DELETE(":id", sv.AdminDeleteDiscountHandler)
 
 			discountsGroup := discounts.Group(":id")
 			{
-				discountsGroup.POST("rules", sv.AddDiscountRuleHandler)
+				discountsGroup.POST("rules", sv.AdminAddDiscountRuleHandler)
 				discountsGroup.GET("rules", sv.GetDiscountRulesHandler)
 				discountsGroup.GET("rules/:ruleId", sv.GetDiscountRuleByIDHandler)
 				discountsGroup.PUT("rules/:ruleId", sv.UpdateDiscountRuleHandler)

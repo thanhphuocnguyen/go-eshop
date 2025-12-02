@@ -55,10 +55,11 @@ type CreateBulkOrderItemsParams struct {
 	ProductNameSnapshot  string                  `json:"productNameSnapshot"`
 	LineTotalSnapshot    pgtype.Numeric          `json:"lineTotalSnapshot"`
 	AttributesSnapshot   []AttributeDataSnapshot `json:"attributesSnapshot"`
+	DiscountedPrice      pgtype.Numeric          `json:"discountedPrice"`
 }
 
 const createOrder = `-- name: CreateOrder :one
-INSERT INTO orders (user_id,customer_email,customer_name,customer_phone,total_price,shipping_address) VALUES ($1, $2, $3, $4,  $5, $6) RETURNING id, user_id, customer_email, customer_name, customer_phone, shipping_address, total_price, status, confirmed_at, delivered_at, cancelled_at, shipping_method, refunded_at, order_date, updated_at, created_at, shipping_method_id, shipping_rate_id, estimated_delivery_date, tracking_url, shipping_provider, shipping_notes
+INSERT INTO orders (user_id, customer_email, customer_name, customer_phone, total_price, shipping_address) VALUES ($1, $2, $3, $4,  $5, $6) RETURNING id, user_id, customer_email, customer_name, customer_phone, shipping_address, total_price, status, confirmed_at, delivered_at, cancelled_at, shipping_method, refunded_at, order_date, updated_at, created_at, shipping_method_id, shipping_rate_id, estimated_delivery_date, tracking_url, shipping_provider, shipping_notes
 `
 
 type CreateOrderParams struct {
@@ -108,7 +109,7 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 }
 
 const createOrderItem = `-- name: CreateOrderItem :one
-INSERT INTO order_items (order_id, variant_id, quantity, price_per_unit_snapshot, variant_sku_snapshot, product_name_snapshot, line_total_snapshot, attributes_snapshot) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, order_id, variant_id, quantity, price_per_unit_snapshot, line_total_snapshot, product_name_snapshot, variant_sku_snapshot, attributes_snapshot, created_at, updated_at, discounted_price
+INSERT INTO order_items (order_id, variant_id, quantity, price_per_unit_snapshot, variant_sku_snapshot, product_name_snapshot, line_total_snapshot, attributes_snapshot, discounted_price) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id, order_id, variant_id, quantity, price_per_unit_snapshot, line_total_snapshot, product_name_snapshot, variant_sku_snapshot, attributes_snapshot, created_at, updated_at, discounted_price
 `
 
 type CreateOrderItemParams struct {
@@ -120,6 +121,7 @@ type CreateOrderItemParams struct {
 	ProductNameSnapshot  string                  `json:"productNameSnapshot"`
 	LineTotalSnapshot    pgtype.Numeric          `json:"lineTotalSnapshot"`
 	AttributesSnapshot   []AttributeDataSnapshot `json:"attributesSnapshot"`
+	DiscountedPrice      pgtype.Numeric          `json:"discountedPrice"`
 }
 
 func (q *Queries) CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (OrderItem, error) {
@@ -132,6 +134,7 @@ func (q *Queries) CreateOrderItem(ctx context.Context, arg CreateOrderItemParams
 		arg.ProductNameSnapshot,
 		arg.LineTotalSnapshot,
 		arg.AttributesSnapshot,
+		arg.DiscountedPrice,
 	)
 	var i OrderItem
 	err := row.Scan(
@@ -547,6 +550,43 @@ func (q *Queries) ListOrderItems(ctx context.Context, arg ListOrderItemsParams) 
 		return nil, err
 	}
 	return items, nil
+}
+
+const maxPreviousOrderByUserID = `-- name: MaxPreviousOrderByUserID :one
+SELECT id, user_id, customer_email, customer_name, customer_phone, shipping_address, total_price, status, confirmed_at, delivered_at, cancelled_at, shipping_method, refunded_at, order_date, updated_at, created_at, shipping_method_id, shipping_rate_id, estimated_delivery_date, tracking_url, shipping_provider, shipping_notes FROM orders
+WHERE user_id = $1
+ORDER BY created_at DESC
+LIMIT 1
+`
+
+func (q *Queries) MaxPreviousOrderByUserID(ctx context.Context, userID uuid.UUID) (Order, error) {
+	row := q.db.QueryRow(ctx, maxPreviousOrderByUserID, userID)
+	var i Order
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.CustomerEmail,
+		&i.CustomerName,
+		&i.CustomerPhone,
+		&i.ShippingAddress,
+		&i.TotalPrice,
+		&i.Status,
+		&i.ConfirmedAt,
+		&i.DeliveredAt,
+		&i.CancelledAt,
+		&i.ShippingMethod,
+		&i.RefundedAt,
+		&i.OrderDate,
+		&i.UpdatedAt,
+		&i.CreatedAt,
+		&i.ShippingMethodID,
+		&i.ShippingRateID,
+		&i.EstimatedDeliveryDate,
+		&i.TrackingUrl,
+		&i.ShippingProvider,
+		&i.ShippingNotes,
+	)
+	return i, err
 }
 
 const updateOrder = `-- name: UpdateOrder :one
