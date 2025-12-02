@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/thanhphuocnguyen/go-eshop/internal/constants"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
@@ -27,7 +28,7 @@ import (
 // @Failure 500 {object} ErrorResp
 // @Router /ratings [post]
 func (s *Server) postRatingHandler(c *gin.Context) {
-	auth, _ := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
+	auth, _ := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 
 	var req models.PostRatingFormData
 	if err := c.ShouldBind(&req); err != nil {
@@ -92,7 +93,7 @@ func (s *Server) postRatingHelpfulHandler(c *gin.Context) {
 		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
-	auth, _ := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
+	auth, _ := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	var req models.PostHelpfulRatingModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
@@ -141,7 +142,7 @@ func (s *Server) postReplyRatingHandler(c *gin.Context) {
 		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
 		return
 	}
-	auth, _ := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
+	auth, _ := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 
 	var req models.PostReplyRatingModel
 	if err := c.ShouldBindJSON(&req); err != nil {

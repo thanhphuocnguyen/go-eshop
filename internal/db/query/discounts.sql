@@ -24,14 +24,14 @@ WHERE id = $1 RETURNING *;
 SELECT * FROM discounts WHERE id = $1;
 
 -- name: GetDiscountByCodes :many
-SELECT discounts.*, JSONB_AGG(DISTINCT discount_rules.*) AS rules
-FROM discounts
-LEFT JOIN discount_rules ON discounts.id = discount_rules.discount_id
-WHERE code = ANY($1)
-GROUP BY discounts.id;
+SELECT * FROM discounts WHERE code = ANY($1);
 
 -- name: GetDiscountByCode :one
-SELECT * FROM discounts WHERE code = $1 LIMIT 1;
+SELECT discounts.*, JSONB_AGG(DISTINCT discount_rules.*) FROM discounts
+LEFT JOIN discount_rules ON discounts.id = discount_rules.discount_id
+WHERE code = $1 
+GROUP BY discounts.id
+LIMIT 1;
 
 -- name: GetDiscounts :many
 SELECT * FROM discounts
@@ -51,6 +51,13 @@ FROM discounts
 JOIN discount_usage ON discounts.id = discount_usage.discount_id
 JOIN orders ON discount_usage.order_id = orders.id
 WHERE discounts.id = $1 AND orders.status IN ('completed', 'confirmed');
+
+-- name: GetDiscountUsagesByUser :many
+SELECT usage_limit, times_used, discount_amount, customer_name, order_id, total_price, discount_usage.created_at
+FROM discounts
+JOIN discount_usage ON discounts.id = discount_usage.discount_id
+JOIN orders ON discount_usage.order_id = orders.id
+WHERE discounts.id = $1 AND discount_usage.user_id = $2 AND orders.status IN ('completed', 'confirmed');
 
 -- name: CountDiscounts :one
 SELECT COUNT(*) FROM discounts;
@@ -191,3 +198,12 @@ WHERE d.is_active = TRUE
     JOIN orders o ON du.order_id = o.id 
     WHERE o.user_id = $1
   );
+
+-- name: GetDiscountsWithUsageStatsByUserId :many
+SELECT d.*, 
+       COUNT(du.id) AS total_usages, 
+       SUM(du.discount_amount) AS total_discount_given
+FROM discounts d
+LEFT JOIN discount_usage du ON d.id = du.discount_id
+WHERE du.user_id = $1 AND d.code = ANY($2)
+GROUP BY d.id;

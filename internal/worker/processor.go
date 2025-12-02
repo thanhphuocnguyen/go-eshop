@@ -24,14 +24,14 @@ type TaskProcessor interface {
 }
 type RedisTaskProcessor struct {
 	asynqServer *asynq.Server
-	repo        repository.Repository
+	repo        repository.Store
 	mailer      mailer.EmailSender
 	cfg         config.Config
 }
 
 func NewRedisTaskProcessor(
 	redisOtp asynq.RedisClientOpt,
-	postgres repository.Repository,
+	postgres repository.Store,
 	mailer mailer.EmailSender,
 	cfg config.Config,
 ) TaskProcessor {

@@ -10,7 +10,7 @@ import (
 
 type RedisTaskScheduler struct {
 	scheduler *asynq.Scheduler
-	repo      repository.Repository
+	repo      repository.Store
 }
 
 // SendEmailConfirmation implements TaskScheduler.
@@ -28,7 +28,7 @@ type TaskScheduler interface {
 	SendOrderCreatedEmail() error
 }
 
-func NewRedisTaskScheduler(redisOtp asynq.RedisClientOpt, postgres repository.Repository) TaskScheduler {
+func NewRedisTaskScheduler(redisOtp asynq.RedisClientOpt, postgres repository.Store) TaskScheduler {
 	// Example of using America/Los_Angeles timezone instead of the default UTC timezone.
 	loc, err := time.LoadLocation("Vietnam/Ho_Chi_Minh")
 	if err != nil {

@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
+	"github.com/thanhphuocnguyen/go-eshop/internal/constants"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
@@ -43,7 +44,7 @@ func (sv *Server) addOrderRoutes(rg *gin.RouterGroup) {
 // @Failure 500 {object} ErrorResp
 // @Router /order/list [get]
 func (sv *Server) getOrdersHandler(c *gin.Context) {
-	tokenPayload, ok := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
+	tokenPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, dto.CreateErr(UnauthorizedCode, errors.New("authorization payload is not provided")))
 		return
@@ -242,7 +243,7 @@ func (sv *Server) getOrderDetailHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /order/{orderId}/confirm-received [put]
 func (sv *Server) confirmOrderPayment(c *gin.Context) {
-	tokenPayload, _ := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
+	tokenPayload, _ := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	var params models.UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))

@@ -8,19 +8,20 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
+	"github.com/thanhphuocnguyen/go-eshop/internal/constants"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
 
 func authenticateMiddleware(tokenGenerator auth.TokenGenerator) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		authorization := ctx.GetHeader(Authorization)
+		authorization := ctx.GetHeader(constants.Authorization)
 		if len(authorization) == 0 {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, dto.CreateErr(UnauthorizedCode, fmt.Errorf("authorization header is not provided")))
 			return
 		}
 		authGroup := strings.Fields(authorization)
-		if len(authGroup) != 2 || authGroup[0] != AuthorizationType {
+		if len(authGroup) != 2 || authGroup[0] != constants.AuthorizationType {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, dto.CreateErr(UnauthorizedCode, fmt.Errorf("authorization header is not valid format")))
 			return
 		}
@@ -32,15 +33,15 @@ func authenticateMiddleware(tokenGenerator auth.TokenGenerator) gin.HandlerFunc 
 			return
 		}
 
-		ctx.Set(AuthPayLoad, payload)
-		ctx.Set(UserRole, payload.RoleCode)
+		ctx.Set(constants.AuthPayLoad, payload)
+		ctx.Set(constants.UserRole, payload.RoleCode)
 		ctx.Next()
 	}
 }
 
 func authorizeMiddleware(roles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authPayload, ok := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
+		authPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 		if !ok {
 			c.AbortWithStatusJSON(http.StatusForbidden, dto.CreateErr(PermissionDeniedCode, fmt.Errorf("authorization payload is not provided")))
 			return

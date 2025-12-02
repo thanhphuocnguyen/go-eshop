@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
+	"github.com/thanhphuocnguyen/go-eshop/internal/constants"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
@@ -29,7 +30,7 @@ import (
 // @Failure 500 {object} ErrorResp
 // @Router /users/{id} [patch]
 func (sv *Server) UpdateUserHandler(c *gin.Context) {
-	authPayload, _ := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
+	authPayload := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	var req models.UpdateUserModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidEmailCode, err))
@@ -95,7 +96,7 @@ func (sv *Server) UpdateUserHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /users/me [get]
 func (sv *Server) GetCurrentUserHandler(c *gin.Context) {
-	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
+	authPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, errors.New("authorization payload is not provided")))
 		return
@@ -138,7 +139,7 @@ func (sv *Server) GetCurrentUserHandler(c *gin.Context) {
 // @Router /users/verify-email [post]
 // @Security BearerAuth
 func (sv *Server) SendVerifyEmailHandler(c *gin.Context) {
-	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
+	authPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, errors.New("authorization payload is not provided")))
 		return

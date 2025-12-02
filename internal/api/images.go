@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/thanhphuocnguyen/go-eshop/internal/constants"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
@@ -43,7 +44,7 @@ func (sv *Server) GetProductImagesHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /images/{publicID} [delete]
 func (sv *Server) RemoveImageByPublicIDHandler(c *gin.Context) {
-	_, ok := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
+	_, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, dto.CreateErr(UnauthorizedCode, errors.New("missing user payload in context")))
 		return

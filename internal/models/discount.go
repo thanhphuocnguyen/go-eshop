@@ -108,8 +108,8 @@ type CustomerSegmentRule struct {
 }
 
 type CheckDiscountApplicabilityRequest struct {
-	DiscountCode string `json:"discountCode" binding:"required"`
-	CartID       string `json:"cartId" binding:"required,uuids"`
+	DiscountCodes []string `json:"discountCodes" binding:"required"`
+	CartID        string   `json:"cartId" binding:"required,uuids"`
 }
 
 type CheckDiscountApplicabilityResponse struct {

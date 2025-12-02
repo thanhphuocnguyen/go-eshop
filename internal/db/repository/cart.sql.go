@@ -142,7 +142,7 @@ func (q *Queries) GetCart(ctx context.Context, arg GetCartParams) (GetCartRow, e
 const getCartDetails = `-- name: GetCartDetails :one
 SELECT carts.id, carts.user_id, carts.session_id, carts.order_id, carts.updated_at, carts.created_at, COUNT(cart_items.id) as item_count, SUM(cart_items.quantity * product_variants.price) AS total_price, SUM(cart_items.quantity) AS total_quantity FROM carts
 LEFT JOIN cart_items ON cart_items.cart_id = carts.id
-LEFT JOIN product_variants ON product_variants.id = cart_items.variant_id
+JOIN product_variants ON product_variants.id = cart_items.variant_id
 WHERE carts.id = $1
 GROUP BY carts.id
 `

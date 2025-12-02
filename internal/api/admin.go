@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
+	"github.com/thanhphuocnguyen/go-eshop/internal/constants"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
@@ -147,7 +148,7 @@ func (sv *Server) addAdminRoutes(rg *gin.RouterGroup) {
 // @Failure 401 {object} ErrorResp
 // @Router /admin/users [get]
 func (sv *Server) AdminGetUsersHandler(c *gin.Context) {
-	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
+	authPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, errors.New("authorization payload is not provided")))
 		return
@@ -196,7 +197,7 @@ func (sv *Server) AdminGetUsersHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /admin/users/{id} [get]
 func (sv *Server) AdminGetUserHandler(c *gin.Context) {
-	authPayload, ok := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
+	authPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, errors.New("authorization payload is not provided")))
 		return
@@ -1473,7 +1474,7 @@ func (sv *Server) AdminChangeOrderStatus(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /admin/orders/{orderId}/cancel [put]
 func (sv *Server) AdminCancelOrder(c *gin.Context) {
-	tokenPayload, _ := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
+	tokenPayload, _ := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 
 	var params models.UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
@@ -1491,7 +1492,7 @@ func (sv *Server) AdminCancelOrder(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
-	userRole := c.GetString(UserRole)
+	userRole := c.GetString(constants.UserRole)
 	if order.UserID != tokenPayload.UserID && userRole != "admin" {
 		c.JSON(http.StatusForbidden, dto.CreateErr(PermissionDeniedCode, errors.New("you do not have permission to access this order")))
 		return
@@ -2502,7 +2503,7 @@ func (s *Server) AdminGetRatingsHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /ratings/orders/{orderId} [get]
 func (s *Server) AdminGetOrderRatingsHandler(c *gin.Context) {
-	auth, _ := c.MustGet(AuthPayLoad).(*auth.TokenPayload)
+	auth, _ := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 
 	var param struct {
 		OrderID string `uri:"orderId" binding:"required,uuid"`

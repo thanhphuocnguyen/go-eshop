@@ -255,7 +255,7 @@ func ExecuteSeed(ctx context.Context) int {
 	return 0
 }
 
-func seedProducts(ctx context.Context, repo repository.Repository) error {
+func seedProducts(ctx context.Context, repo repository.Store) error {
 	// remove all products first
 	cnt, err := repo.CountProducts(ctx, repository.CountProductsParams{})
 	if err != nil {
@@ -377,7 +377,7 @@ func seedProducts(ctx context.Context, repo repository.Repository) error {
 	return nil
 }
 
-func seedProductVariants(ctx context.Context, repo repository.Repository, productID uuid.UUID, variants []VariantSeedModel) error {
+func seedProductVariants(ctx context.Context, repo repository.Store, productID uuid.UUID, variants []VariantSeedModel) error {
 	log.Info().Int("variant count", len(variants)).Str("product_id", productID.String()).Msg("creating product variants")
 
 	for _, variant := range variants {
@@ -418,7 +418,7 @@ func seedProductVariants(ctx context.Context, repo repository.Repository, produc
 	return nil
 }
 
-func createVariantAttributes(ctx context.Context, repo repository.Repository, variantID uuid.UUID, attributes map[string]string) error {
+func createVariantAttributes(ctx context.Context, repo repository.Store, variantID uuid.UUID, attributes map[string]string) error {
 	log.Debug().Str("variant_id", variantID.String()).Interface("attributes", attributes).Msg("creating variant attributes")
 
 	var attributeValueParams []repository.CreateBulkProductVariantAttributeParams
@@ -480,7 +480,7 @@ func createVariantAttributes(ctx context.Context, repo repository.Repository, va
 	return nil
 }
 
-func seedCategories(ctx context.Context, repo repository.Repository) error {
+func seedCategories(ctx context.Context, repo repository.Store) error {
 	_, err := repo.QueryRaw(ctx, "TRUNCATE TABLE categories CASCADE;")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to truncate categories table")
@@ -520,7 +520,7 @@ func seedCategories(ctx context.Context, repo repository.Repository) error {
 	return nil
 }
 
-func seedBrands(ctx context.Context, repo repository.Repository) error {
+func seedBrands(ctx context.Context, repo repository.Store) error {
 	_, err := repo.QueryRaw(ctx, "TRUNCATE TABLE brands CASCADE;")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to truncate brands table")
@@ -561,7 +561,7 @@ func seedBrands(ctx context.Context, repo repository.Repository) error {
 	return nil
 }
 
-func seedCollections(ctx context.Context, repo repository.Repository) error {
+func seedCollections(ctx context.Context, repo repository.Store) error {
 	_, err := repo.QueryRaw(ctx, "TRUNCATE TABLE collections CASCADE;")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to truncate collections table")
@@ -601,7 +601,7 @@ func seedCollections(ctx context.Context, repo repository.Repository) error {
 	return nil
 }
 
-func seedUsers(ctx context.Context, pg repository.Repository) error {
+func seedUsers(ctx context.Context, pg repository.Store) error {
 	_, err := pg.QueryRaw(ctx, "TRUNCATE TABLE users CASCADE;")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to truncate users table")
@@ -665,7 +665,7 @@ func seedUsers(ctx context.Context, pg repository.Repository) error {
 	return nil
 }
 
-func seedAttributes(ctx context.Context, repo repository.Repository) error {
+func seedAttributes(ctx context.Context, repo repository.Store) error {
 	_, err := repo.QueryRaw(ctx, "TRUNCATE TABLE attributes CASCADE;")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to truncate attributes table")
@@ -685,7 +685,7 @@ func seedAttributes(ctx context.Context, repo repository.Repository) error {
 	return nil
 }
 
-func seedAttributeValues(ctx context.Context, repo repository.Repository) error {
+func seedAttributeValues(ctx context.Context, repo repository.Store) error {
 	_, err := repo.QueryRaw(ctx, "TRUNCATE TABLE attribute_values CASCADE;")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to truncate attribute values table")
@@ -730,7 +730,7 @@ func seedAttributeValues(ctx context.Context, repo repository.Repository) error 
 	return nil
 }
 
-func seedDiscounts(ctx context.Context, repo repository.Repository) error {
+func seedDiscounts(ctx context.Context, repo repository.Store) error {
 	_, err := repo.QueryRaw(ctx, "TRUNCATE TABLE discounts CASCADE;")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to truncate discounts table")
@@ -799,7 +799,7 @@ func seedDiscounts(ctx context.Context, repo repository.Repository) error {
 	return nil
 }
 
-func seedShippingMethods(ctx context.Context, repo repository.Repository) error {
+func seedShippingMethods(ctx context.Context, repo repository.Store) error {
 	_, err := repo.QueryRaw(ctx, "TRUNCATE TABLE shipping_methods CASCADE;")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to truncate shipping methods table")
@@ -841,7 +841,7 @@ func seedShippingMethods(ctx context.Context, repo repository.Repository) error 
 	return nil
 }
 
-func seedShippingZones(ctx context.Context, repo repository.Repository) error {
+func seedShippingZones(ctx context.Context, repo repository.Store) error {
 	_, err := repo.QueryRaw(ctx, "TRUNCATE TABLE shipping_zones CASCADE;")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to truncate shipping zones table")
@@ -884,7 +884,7 @@ func seedShippingZones(ctx context.Context, repo repository.Repository) error {
 	return nil
 }
 
-func seedUserAddresses(ctx context.Context, repo repository.Repository) error {
+func seedUserAddresses(ctx context.Context, repo repository.Store) error {
 	// First, get users before truncating to avoid lock conflicts
 	cnt, err := repo.CountAddresses(ctx)
 	if err != nil {
@@ -961,7 +961,7 @@ func seedUserAddresses(ctx context.Context, repo repository.Repository) error {
 // Helper functions to create product relationships
 
 // createProductCategoryRelationships creates relationships between a product and its categories
-func createProductCategoryRelationships(ctx context.Context, repo repository.Repository, productID uuid.UUID, categoryNames []string, categories []repository.Category) error {
+func createProductCategoryRelationships(ctx context.Context, repo repository.Store, productID uuid.UUID, categoryNames []string, categories []repository.Category) error {
 	var categoryProductParams []repository.AddProductsToCategoryParams
 
 	for _, categoryName := range categoryNames {
@@ -991,7 +991,7 @@ func createProductCategoryRelationships(ctx context.Context, repo repository.Rep
 }
 
 // createProductCollectionRelationships creates relationships between a product and its collections
-func createProductCollectionRelationships(ctx context.Context, repo repository.Repository, productID uuid.UUID, collectionNames []string, collections []repository.Collection) error {
+func createProductCollectionRelationships(ctx context.Context, repo repository.Store, productID uuid.UUID, collectionNames []string, collections []repository.Collection) error {
 	var collectionProductParams []repository.AddProductsToCollectionParams
 
 	for _, collectionName := range collectionNames {
@@ -1021,7 +1021,7 @@ func createProductCollectionRelationships(ctx context.Context, repo repository.R
 }
 
 // createProductAttributeRelationships creates relationships between a product and its attributes
-func createProductAttributeRelationships(ctx context.Context, repo repository.Repository, productID uuid.UUID, attributes map[string]string) error {
+func createProductAttributeRelationships(ctx context.Context, repo repository.Store, productID uuid.UUID, attributes map[string]string) error {
 	var productAttributeParams []repository.CreateBulkProductAttributesParams
 
 	for attributeName := range attributes {
@@ -1050,7 +1050,7 @@ func createProductAttributeRelationships(ctx context.Context, repo repository.Re
 }
 
 // seedExistingProductVariants reads products.json and creates variants for existing products
-func seedExistingProductVariants(ctx context.Context, repo repository.Repository) error {
+func seedExistingProductVariants(ctx context.Context, repo repository.Store) error {
 	_, err := repo.QueryRaw(ctx, "TRUNCATE TABLE product_variants CASCADE;")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to truncate product_variants table")

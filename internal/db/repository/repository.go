@@ -13,7 +13,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/config"
 )
 
-type Repository interface {
+type Store interface {
 	Querier
 	CheckoutCartTx(ctx context.Context, arg CheckoutCartTxArgs) (CreatePaymentResult, error)
 	SetPrimaryAddressTx(ctx context.Context, arg SetPrimaryAddressTxArgs) error
@@ -45,7 +45,7 @@ var once sync.Once
 var repoInstance *pgRepo
 var mu sync.Mutex
 
-func GetPostgresInstance(ctx context.Context, cfg config.Config) (Repository, error) {
+func GetPostgresInstance(ctx context.Context, cfg config.Config) (Store, error) {
 	mu.Lock()
 	defer mu.Unlock()
 

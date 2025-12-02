@@ -402,12 +402,38 @@ func (q *Queries) GetAvailableDiscountsForUser(ctx context.Context, arg GetAvail
 }
 
 const getDiscountByCode = `-- name: GetDiscountByCode :one
-SELECT id, code, name, description, discount_type, discount_value, min_order_value, max_discount_amount, usage_limit, usage_per_user, times_used, is_active, is_stackable, priority, valid_from, valid_until, created_at, updated_at FROM discounts WHERE code = $1 LIMIT 1
+SELECT discounts.id, discounts.code, discounts.name, discounts.description, discounts.discount_type, discounts.discount_value, discounts.min_order_value, discounts.max_discount_amount, discounts.usage_limit, discounts.usage_per_user, discounts.times_used, discounts.is_active, discounts.is_stackable, discounts.priority, discounts.valid_from, discounts.valid_until, discounts.created_at, discounts.updated_at, JSONB_AGG(DISTINCT discount_rules.*) FROM discounts
+LEFT JOIN discount_rules ON discounts.id = discount_rules.discount_id
+WHERE code = $1 
+GROUP BY discounts.id
+LIMIT 1
 `
 
-func (q *Queries) GetDiscountByCode(ctx context.Context, code string) (Discount, error) {
+type GetDiscountByCodeRow struct {
+	ID                uuid.UUID          `json:"id"`
+	Code              string             `json:"code"`
+	Name              string             `json:"name"`
+	Description       *string            `json:"description"`
+	DiscountType      DiscountType       `json:"discountType"`
+	DiscountValue     pgtype.Numeric     `json:"discountValue"`
+	MinOrderValue     pgtype.Numeric     `json:"minOrderValue"`
+	MaxDiscountAmount pgtype.Numeric     `json:"maxDiscountAmount"`
+	UsageLimit        *int32             `json:"usageLimit"`
+	UsagePerUser      *int32             `json:"usagePerUser"`
+	TimesUsed         int32              `json:"timesUsed"`
+	IsActive          bool               `json:"isActive"`
+	IsStackable       bool               `json:"isStackable"`
+	Priority          *int32             `json:"priority"`
+	ValidFrom         time.Time          `json:"validFrom"`
+	ValidUntil        pgtype.Timestamptz `json:"validUntil"`
+	CreatedAt         time.Time          `json:"createdAt"`
+	UpdatedAt         time.Time          `json:"updatedAt"`
+	JsonbAgg          []byte             `json:"jsonbAgg"`
+}
+
+func (q *Queries) GetDiscountByCode(ctx context.Context, code string) (GetDiscountByCodeRow, error) {
 	row := q.db.QueryRow(ctx, getDiscountByCode, code)
-	var i Discount
+	var i GetDiscountByCodeRow
 	err := row.Scan(
 		&i.ID,
 		&i.Code,
@@ -427,49 +453,24 @@ func (q *Queries) GetDiscountByCode(ctx context.Context, code string) (Discount,
 		&i.ValidUntil,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.JsonbAgg,
 	)
 	return i, err
 }
 
 const getDiscountByCodes = `-- name: GetDiscountByCodes :many
-SELECT discounts.id, discounts.code, discounts.name, discounts.description, discounts.discount_type, discounts.discount_value, discounts.min_order_value, discounts.max_discount_amount, discounts.usage_limit, discounts.usage_per_user, discounts.times_used, discounts.is_active, discounts.is_stackable, discounts.priority, discounts.valid_from, discounts.valid_until, discounts.created_at, discounts.updated_at, JSONB_AGG(DISTINCT discount_rules.*) AS rules
-FROM discounts
-LEFT JOIN discount_rules ON discounts.id = discount_rules.discount_id
-WHERE code = ANY($1)
-GROUP BY discounts.id
+SELECT id, code, name, description, discount_type, discount_value, min_order_value, max_discount_amount, usage_limit, usage_per_user, times_used, is_active, is_stackable, priority, valid_from, valid_until, created_at, updated_at FROM discounts WHERE code = ANY($1)
 `
 
-type GetDiscountByCodesRow struct {
-	ID                uuid.UUID          `json:"id"`
-	Code              string             `json:"code"`
-	Name              string             `json:"name"`
-	Description       *string            `json:"description"`
-	DiscountType      DiscountType       `json:"discountType"`
-	DiscountValue     pgtype.Numeric     `json:"discountValue"`
-	MinOrderValue     pgtype.Numeric     `json:"minOrderValue"`
-	MaxDiscountAmount pgtype.Numeric     `json:"maxDiscountAmount"`
-	UsageLimit        *int32             `json:"usageLimit"`
-	UsagePerUser      *int32             `json:"usagePerUser"`
-	TimesUsed         int32              `json:"timesUsed"`
-	IsActive          bool               `json:"isActive"`
-	IsStackable       bool               `json:"isStackable"`
-	Priority          *int32             `json:"priority"`
-	ValidFrom         time.Time          `json:"validFrom"`
-	ValidUntil        pgtype.Timestamptz `json:"validUntil"`
-	CreatedAt         time.Time          `json:"createdAt"`
-	UpdatedAt         time.Time          `json:"updatedAt"`
-	Rules             []byte             `json:"rules"`
-}
-
-func (q *Queries) GetDiscountByCodes(ctx context.Context, code []string) ([]GetDiscountByCodesRow, error) {
+func (q *Queries) GetDiscountByCodes(ctx context.Context, code []string) ([]Discount, error) {
 	rows, err := q.db.Query(ctx, getDiscountByCodes, code)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetDiscountByCodesRow{}
+	items := []Discount{}
 	for rows.Next() {
-		var i GetDiscountByCodesRow
+		var i Discount
 		if err := rows.Scan(
 			&i.ID,
 			&i.Code,
@@ -489,7 +490,6 @@ func (q *Queries) GetDiscountByCodes(ctx context.Context, code []string) ([]GetD
 			&i.ValidUntil,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.Rules,
 		); err != nil {
 			return nil, err
 		}
@@ -605,6 +605,57 @@ func (q *Queries) GetDiscountUsages(ctx context.Context, id uuid.UUID) ([]GetDis
 	items := []GetDiscountUsagesRow{}
 	for rows.Next() {
 		var i GetDiscountUsagesRow
+		if err := rows.Scan(
+			&i.UsageLimit,
+			&i.TimesUsed,
+			&i.DiscountAmount,
+			&i.CustomerName,
+			&i.OrderID,
+			&i.TotalPrice,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getDiscountUsagesByUser = `-- name: GetDiscountUsagesByUser :many
+SELECT usage_limit, times_used, discount_amount, customer_name, order_id, total_price, discount_usage.created_at
+FROM discounts
+JOIN discount_usage ON discounts.id = discount_usage.discount_id
+JOIN orders ON discount_usage.order_id = orders.id
+WHERE discounts.id = $1 AND discount_usage.user_id = $2 AND orders.status IN ('completed', 'confirmed')
+`
+
+type GetDiscountUsagesByUserParams struct {
+	ID     uuid.UUID `json:"id"`
+	UserID uuid.UUID `json:"userId"`
+}
+
+type GetDiscountUsagesByUserRow struct {
+	UsageLimit     *int32         `json:"usageLimit"`
+	TimesUsed      int32          `json:"timesUsed"`
+	DiscountAmount pgtype.Numeric `json:"discountAmount"`
+	CustomerName   string         `json:"customerName"`
+	OrderID        uuid.UUID      `json:"orderId"`
+	TotalPrice     pgtype.Numeric `json:"totalPrice"`
+	CreatedAt      time.Time      `json:"createdAt"`
+}
+
+func (q *Queries) GetDiscountUsagesByUser(ctx context.Context, arg GetDiscountUsagesByUserParams) ([]GetDiscountUsagesByUserRow, error) {
+	rows, err := q.db.Query(ctx, getDiscountUsagesByUser, arg.ID, arg.UserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetDiscountUsagesByUserRow{}
+	for rows.Next() {
+		var i GetDiscountUsagesByUserRow
 		if err := rows.Scan(
 			&i.UsageLimit,
 			&i.TimesUsed,
@@ -866,6 +917,85 @@ func (q *Queries) GetDiscountsWithRules(ctx context.Context, arg GetDiscountsWit
 			&i.UpdatedAt,
 			&i.RuleType,
 			&i.RuleValue,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getDiscountsWithUsageStatsByUserId = `-- name: GetDiscountsWithUsageStatsByUserId :many
+SELECT d.id, d.code, d.name, d.description, d.discount_type, d.discount_value, d.min_order_value, d.max_discount_amount, d.usage_limit, d.usage_per_user, d.times_used, d.is_active, d.is_stackable, d.priority, d.valid_from, d.valid_until, d.created_at, d.updated_at, 
+       COUNT(du.id) AS total_usages, 
+       SUM(du.discount_amount) AS total_discount_given
+FROM discounts d
+LEFT JOIN discount_usage du ON d.id = du.discount_id
+WHERE du.user_id = $1 AND d.code = ANY($2)
+GROUP BY d.id
+`
+
+type GetDiscountsWithUsageStatsByUserIdParams struct {
+	UserID uuid.UUID `json:"userId"`
+	Code   []string  `json:"code"`
+}
+
+type GetDiscountsWithUsageStatsByUserIdRow struct {
+	ID                 uuid.UUID          `json:"id"`
+	Code               string             `json:"code"`
+	Name               string             `json:"name"`
+	Description        *string            `json:"description"`
+	DiscountType       DiscountType       `json:"discountType"`
+	DiscountValue      pgtype.Numeric     `json:"discountValue"`
+	MinOrderValue      pgtype.Numeric     `json:"minOrderValue"`
+	MaxDiscountAmount  pgtype.Numeric     `json:"maxDiscountAmount"`
+	UsageLimit         *int32             `json:"usageLimit"`
+	UsagePerUser       *int32             `json:"usagePerUser"`
+	TimesUsed          int32              `json:"timesUsed"`
+	IsActive           bool               `json:"isActive"`
+	IsStackable        bool               `json:"isStackable"`
+	Priority           *int32             `json:"priority"`
+	ValidFrom          time.Time          `json:"validFrom"`
+	ValidUntil         pgtype.Timestamptz `json:"validUntil"`
+	CreatedAt          time.Time          `json:"createdAt"`
+	UpdatedAt          time.Time          `json:"updatedAt"`
+	TotalUsages        int64              `json:"totalUsages"`
+	TotalDiscountGiven pgtype.Numeric     `json:"totalDiscountGiven"`
+}
+
+func (q *Queries) GetDiscountsWithUsageStatsByUserId(ctx context.Context, arg GetDiscountsWithUsageStatsByUserIdParams) ([]GetDiscountsWithUsageStatsByUserIdRow, error) {
+	rows, err := q.db.Query(ctx, getDiscountsWithUsageStatsByUserId, arg.UserID, arg.Code)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetDiscountsWithUsageStatsByUserIdRow{}
+	for rows.Next() {
+		var i GetDiscountsWithUsageStatsByUserIdRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Code,
+			&i.Name,
+			&i.Description,
+			&i.DiscountType,
+			&i.DiscountValue,
+			&i.MinOrderValue,
+			&i.MaxDiscountAmount,
+			&i.UsageLimit,
+			&i.UsagePerUser,
+			&i.TimesUsed,
+			&i.IsActive,
+			&i.IsStackable,
+			&i.Priority,
+			&i.ValidFrom,
+			&i.ValidUntil,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.TotalUsages,
+			&i.TotalDiscountGiven,
 		); err != nil {
 			return nil, err
 		}

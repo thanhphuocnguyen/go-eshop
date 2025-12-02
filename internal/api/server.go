@@ -8,6 +8,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/config"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
+	"github.com/thanhphuocnguyen/go-eshop/internal/processors"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 	cachesrv "github.com/thanhphuocnguyen/go-eshop/pkg/cache"
@@ -24,36 +25,39 @@ import (
 // @BasePath /api/v1
 // @host      localhost:4000
 type Server struct {
-	config          config.Config
-	router          *gin.Engine
-	repo            repository.Repository
-	tokenGenerator  auth.TokenGenerator
-	uploadService   upload.CdnUploader
-	paymentSrv      *payment.PaymentManager
-	cacheSrv        cachesrv.CacheContainer
-	taskDistributor worker.TaskDistributor
+	config            config.Config
+	router            *gin.Engine
+	repo              repository.Store
+	tokenGenerator    auth.TokenGenerator
+	uploadService     upload.CdnUploader
+	paymentSrv        *payment.PaymentManager
+	cacheSrv          cachesrv.CacheContainer
+	taskDistributor   worker.TaskDistributor
+	discountProcessor *processors.DiscountProcessor
 }
 
 func NewAPI(
 	cfg config.Config,
-	repo repository.Repository,
+	repo repository.Store,
 	cachesrv cachesrv.CacheContainer,
 	taskDistributor worker.TaskDistributor,
 	uploadService upload.CdnUploader,
 	paymentSrv *payment.PaymentManager,
+	discountProcessor *processors.DiscountProcessor,
 ) (*Server, error) {
 	tokenGenerator, err := auth.NewJwtGenerator(cfg.SymmetricKey)
 	if err != nil {
 		return nil, err
 	}
 	server := &Server{
-		tokenGenerator:  tokenGenerator,
-		repo:            repo,
-		config:          cfg,
-		taskDistributor: taskDistributor,
-		uploadService:   uploadService,
-		cacheSrv:        cachesrv,
-		paymentSrv:      paymentSrv,
+		tokenGenerator:    tokenGenerator,
+		repo:              repo,
+		config:            cfg,
+		taskDistributor:   taskDistributor,
+		uploadService:     uploadService,
+		cacheSrv:          cachesrv,
+		paymentSrv:        paymentSrv,
+		discountProcessor: discountProcessor,
 	}
 	server.initializeRouter()
 	return server, nil
