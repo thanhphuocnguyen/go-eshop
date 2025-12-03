@@ -122,7 +122,7 @@ type Querier interface {
 	GetAttributeWithValuesByIDs(ctx context.Context, ids []int32) ([]GetAttributeWithValuesByIDsRow, error)
 	GetAttributes(ctx context.Context, ids []int32) ([]GetAttributesRow, error)
 	GetAttributesByIDs(ctx context.Context, ids []int32) ([]Attribute, error)
-	GetAvailableDiscountsForUser(ctx context.Context, arg GetAvailableDiscountsForUserParams) ([]Discount, error)
+	GetAvailableDiscountsForUser(ctx context.Context, userID uuid.UUID) ([]Discount, error)
 	GetBrandByID(ctx context.Context, id uuid.UUID) (Brand, error)
 	GetBrandBySlug(ctx context.Context, slug string) (Brand, error)
 	GetBrands(ctx context.Context, arg GetBrandsParams) ([]Brand, error)

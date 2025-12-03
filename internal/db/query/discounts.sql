@@ -177,8 +177,7 @@ WHERE d.is_active = TRUE
   AND (d.valid_until IS NULL OR d.valid_until >= NOW())
   AND (d.usage_limit IS NULL OR d.times_used < d.usage_limit)
   AND (d.usage_per_user IS NULL OR COALESCE(user_usage.user_usage_count, 0) < d.usage_per_user)
-ORDER BY d.priority DESC, d.discount_value DESC
-LIMIT $2 OFFSET $3;
+ORDER BY d.priority DESC, d.discount_value DESC;
 
 -- name: CountDiscountUsageByDiscountAndUser :one
 SELECT COUNT(*) FROM discount_usage du

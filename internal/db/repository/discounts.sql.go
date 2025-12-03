@@ -353,17 +353,10 @@ WHERE d.is_active = TRUE
   AND (d.usage_limit IS NULL OR d.times_used < d.usage_limit)
   AND (d.usage_per_user IS NULL OR COALESCE(user_usage.user_usage_count, 0) < d.usage_per_user)
 ORDER BY d.priority DESC, d.discount_value DESC
-LIMIT $2 OFFSET $3
 `
 
-type GetAvailableDiscountsForUserParams struct {
-	UserID uuid.UUID `json:"userId"`
-	Limit  int64     `json:"limit"`
-	Offset int64     `json:"offset"`
-}
-
-func (q *Queries) GetAvailableDiscountsForUser(ctx context.Context, arg GetAvailableDiscountsForUserParams) ([]Discount, error) {
-	rows, err := q.db.Query(ctx, getAvailableDiscountsForUser, arg.UserID, arg.Limit, arg.Offset)
+func (q *Queries) GetAvailableDiscountsForUser(ctx context.Context, userID uuid.UUID) ([]Discount, error) {
+	rows, err := q.db.Query(ctx, getAvailableDiscountsForUser, userID)
 	if err != nil {
 		return nil, err
 	}
