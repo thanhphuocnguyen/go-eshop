@@ -27,7 +27,7 @@ UPDATE carts SET order_id = $1 WHERE id = $2 RETURNING *;
 
 -- Cart Item Section
 -- name: AddCartItem :one
-INSERT INTO cart_items (id, cart_id, variant_id, quantity) VALUES ($1, $2, $3, $4) RETURNING *;
+INSERT INTO cart_items (cart_id, variant_id, quantity) VALUES ($1, $2, $3) RETURNING *;
 
 -- name: UpdateCartItemQuantity :exec
 UPDATE cart_items SET quantity = $1 WHERE id = $2 RETURNING *;

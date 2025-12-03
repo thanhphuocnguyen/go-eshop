@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type AddDiscountModel struct {
+type AddDiscount struct {
 	IsStackable       bool      `json:"isStackable" binding:"omitempty"`
 	IsActive          bool      `json:"isActive" binding:"required"`
 	DiscountValue     float64   `json:"discountValue" binding:"required,gt=0"`
@@ -24,12 +24,12 @@ type AddDiscountModel struct {
 	UsagePerUser      *int32    `json:"usagePerUser" binding:"omitempty,gte=0"`
 }
 
-type AddDiscountRuleModel struct {
+type AddDiscountRule struct {
 	RuleType  string                 `json:"ruleType" binding:"required,oneof=product category customer_segment brand collection first_time_buyer purchase_quantity"`
 	RuleValue map[string]interface{} `json:"ruleValue" binding:"required,min=1"`
 }
 
-type UpdateDiscountRuleModel struct {
+type UpdateDiscountRule struct {
 	RuleType  *string                `json:"ruleType" binding:"omitempty,oneof=condition action"`
 	RuleValue map[string]interface{} `json:"ruleValue" binding:"omitempty,min=1"`
 }
@@ -39,7 +39,7 @@ type UriRuleIDParam struct {
 	RuleID string `uri:"ruleId" binding:"required,uuid"`
 }
 
-type UpdateDiscountModel struct {
+type UpdateDiscount struct {
 	IsStackable       *bool      `json:"isStackable" binding:"omitempty"`
 	IsActive          *bool      `json:"isActive" binding:"omitempty"`
 	DiscountValue     *float64   `json:"discountValue" binding:"omitempty,gt=0"`
@@ -78,8 +78,8 @@ type ProductRule struct {
 }
 
 type CategoryRule struct {
-	CategoryIDs      []uuid.UUID `json:"categoryIds"`
-	ExcludeSaleItems bool        `json:"excludeSaleItems"`
+	CategoryIDs      []string `json:"categoryIds"`
+	ExcludeSaleItems bool     `json:"excludeSaleItems"`
 }
 
 type CollectionRule struct {

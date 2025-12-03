@@ -76,7 +76,7 @@ func (sv *Server) CheckDiscountsApplicabilityHandler(c *gin.Context) {
 // @Router /admin/discounts [post]
 func (sv *Server) CreateDiscountHandler(c *gin.Context) {
 	// Create a new discount
-	var req models.AddDiscountModel
+	var req models.AddDiscount
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
@@ -310,7 +310,7 @@ func (sv *Server) UpdateDiscountHandler(c *gin.Context) {
 		return
 	}
 
-	var req models.UpdateDiscountModel
+	var req models.UpdateDiscount
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
@@ -409,7 +409,7 @@ func (sv *Server) AdminAddDiscountRuleHandler(c *gin.Context) {
 		return
 	}
 
-	var req models.AddDiscountRuleModel
+	var req models.AddDiscountRule
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return
@@ -573,7 +573,7 @@ func (sv *Server) UpdateDiscountRuleHandler(c *gin.Context) {
 		return
 	}
 
-	var req models.UpdateDiscountRuleModel
+	var req models.UpdateDiscountRule
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
 		return

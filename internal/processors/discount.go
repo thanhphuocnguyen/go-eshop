@@ -231,7 +231,7 @@ func (dp *DiscountProcessor) validateCategoryRule(item repository.GetCartItemsRo
 
 	for _, cID := range ruleValue.CategoryIDs {
 		for _, itemCId := range item.CategoryIds {
-			if cID == itemCId {
+			if cID == itemCId.String() {
 				return true
 			}
 		}

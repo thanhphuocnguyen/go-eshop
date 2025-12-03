@@ -212,12 +212,7 @@ func (sv *Server) UpdateCartItemQtyHandler(c *gin.Context) {
 				return
 			}
 			cart = repository.GetCartRow{
-				ID:        newCart.ID,
-				UserID:    newCart.UserID,
-				SessionID: newCart.SessionID,
-				ItemCount: 0,
-				CreatedAt: newCart.CreatedAt,
-				UpdatedAt: newCart.UpdatedAt,
+				ID: newCart.ID,
 			}
 		} else {
 			c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
@@ -233,7 +228,6 @@ func (sv *Server) UpdateCartItemQtyHandler(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			cartItem, err = sv.repo.AddCartItem(c, repository.AddCartItemParams{
-				ID:        uuid.New(),
 				CartID:    cart.ID,
 				VariantID: uuid.MustParse(param.ID),
 				Quantity:  req.Quantity,

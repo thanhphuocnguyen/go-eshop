@@ -262,7 +262,6 @@ func (s *UserService) CreateUser(ctx context.Context, req CreateUserRequest) (*U
 
     // 3. Database operation
     user := &User{
-        ID:             uuid.New(),
         Email:          req.Email,
         HashedPassword: hashedPassword,
         CreatedAt:      time.Now(),
