@@ -32,7 +32,7 @@ A modern, scalable e-commerce platform built with Go, designed for high performa
                       │
 ┌─────────────────────▼───────────────────────────────────────┐
 │                 Interface Adapters                         │
-│     (Handlers, Presenters, Gateways, Controllers)         │
+│     (s, Presenters, Gateways, Controllers)         │
 └─────────────────────┬───────────────────────────────────────┘
                       │
 ┌─────────────────────▼───────────────────────────────────────┐

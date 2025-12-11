@@ -14,7 +14,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
 
-// CreateAddressHandler godoc
+// CreateAddress godoc
 // @Summary Create a new addresses
 // @Description Create a new addresses
 // @Tags addresses
@@ -25,7 +25,7 @@ import (
 // @Failure 400 {object} ErrorResp
 // @Failure 401 {object} ErrorResp
 // @Router /users/addresses [post]
-func (sv *Server) CreateAddressHandler(c *gin.Context) {
+func (sv *Server) CreateAddress(c *gin.Context) {
 	authPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, dto.CreateErr(UnauthorizedCode, fmt.Errorf("authorization payload is not provided")))
@@ -97,7 +97,7 @@ func (sv *Server) CreateAddressHandler(c *gin.Context) {
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /users/addresses [get]
-func (sv *Server) GetAddressesHandlers(c *gin.Context) {
+func (sv *Server) GetAddressess(c *gin.Context) {
 	authPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, dto.CreateErr(UnauthorizedCode, fmt.Errorf("authorization payload is not provided")))
@@ -117,7 +117,7 @@ func (sv *Server) GetAddressesHandlers(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, addressesResponse, nil, nil))
 }
 
-// UpdateAddressHandlers godoc
+// UpdateAddresss godoc
 // @Summary Update an addresses
 // @Description Update an addresses
 // @Tags addresses
@@ -131,7 +131,7 @@ func (sv *Server) GetAddressesHandlers(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /users/addresses/{id} [put]
-func (sv *Server) UpdateAddressHandlers(c *gin.Context) {
+func (sv *Server) UpdateAddresss(c *gin.Context) {
 	authPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, dto.CreateErr(UnauthorizedCode, fmt.Errorf("authorization payload is not provided")))
@@ -208,7 +208,7 @@ func (sv *Server) UpdateAddressHandlers(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, addressDetail, nil, nil))
 }
 
-// RemoveAddressHandlers godoc
+// RemoveAddresss godoc
 // @Summary Remove an addresses
 // @Description Remove an addresses
 // @Tags addresses
@@ -220,7 +220,7 @@ func (sv *Server) UpdateAddressHandlers(c *gin.Context) {
 // @Failure 401 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
 // @Router /users/addresses/{id} [delete]
-func (sv *Server) RemoveAddressHandlers(c *gin.Context) {
+func (sv *Server) RemoveAddresss(c *gin.Context) {
 	authPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, dto.CreateErr(UnauthorizedCode, fmt.Errorf("authorization payload is not provided")))
@@ -262,7 +262,7 @@ func (sv *Server) RemoveAddressHandlers(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// SetDefaultAddressHandler godoc
+// SetDefaultAddress godoc
 // @Summary Set default addresses
 // @Description Set default addresses
 // @Tags addresses
@@ -274,7 +274,7 @@ func (sv *Server) RemoveAddressHandlers(c *gin.Context) {
 // @Failure 401 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
 // @Router /users/addresses/{id}/default [put]
-func (sv *Server) SetDefaultAddressHandler(c *gin.Context) {
+func (sv *Server) SetDefaultAddress(c *gin.Context) {
 	authPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, dto.CreateErr(UnauthorizedCode, fmt.Errorf("authorization payload is not provided")))

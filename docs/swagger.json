@@ -1976,7 +1976,7 @@
                 }
             }
         },
-        "/carts/CheckoutHandler": {
+        "/carts/Checkout": {
             "post": {
                 "description": "update product items in the cart",
                 "consumes": [
@@ -4408,7 +4408,7 @@
                 }
             }
         },
-        "/users/LoginHandler": {
+        "/users/Login": {
             "post": {
                 "description": "Login to the system",
                 "consumes": [

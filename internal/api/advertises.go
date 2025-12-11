@@ -10,7 +10,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
-func (s *Server) getHomePageHandler(ctx *gin.Context) {
+func (s *Server) getHomePage(ctx *gin.Context) {
 	var wg sync.WaitGroup
 	wg.Add(2)
 

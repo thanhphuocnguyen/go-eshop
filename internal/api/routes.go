@@ -20,8 +20,8 @@ func (sv *Server) addImageRoutes(rg *gin.RouterGroup) {
 		images.DELETE(
 			"remove-external/:public_id",
 			authorizeMiddleware("admin"),
-			sv.RemoveImageByPublicIDHandler)
-		images.GET("", sv.GetProductImagesHandler)
+			sv.RemoveImageByPublicID)
+		images.GET("", sv.GetProductImages)
 	}
 }
 
@@ -31,7 +31,7 @@ func (sv *Server) addImageRoutes(rg *gin.RouterGroup) {
 func (sv *Server) addWebhookRoutes(router *gin.Engine) {
 	webhooks := router.Group("/webhook/v1")
 	{
-		webhooks.POST("stripe", sv.stripeEventHandler)
+		webhooks.POST("stripe", sv.stripeEvent)
 	}
 }
 
@@ -57,7 +57,7 @@ func (sv *Server) initializeRouter() {
 
 	router.Static("/assets", "./assets")
 
-	router.GET("verify-email", sv.VerifyEmailHandler)
+	router.GET("verify-email", sv.VerifyEmail)
 	// Setup API routes
 	v1 := router.Group("/api/v1")
 	{
@@ -66,7 +66,7 @@ func (sv *Server) initializeRouter() {
 			ctx.JSON(http.StatusOK, gin.H{"status ": "ok"})
 		})
 
-		v1.GET("homepage", sv.getHomePageHandler)
+		v1.GET("homepage", sv.getHomePage)
 
 		// Register API route groups
 		sv.addAuthRoutes(v1)
@@ -75,6 +75,7 @@ func (sv *Server) initializeRouter() {
 		sv.addProductRoutes(v1)
 		sv.addImageRoutes(v1)
 		sv.addCartRoutes(v1)
+		sv.router.POST("checkout", sv.checkout)
 		sv.addOrderRoutes(v1)
 		sv.addPaymentRoutes(v1)
 		sv.addCategoryRoutes(v1)

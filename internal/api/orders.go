@@ -21,8 +21,8 @@ import (
 func (sv *Server) addOrderRoutes(rg *gin.RouterGroup) {
 	orders := rg.Group("/orders", authenticateMiddleware(sv.tokenGenerator))
 	{
-		orders.GET("", sv.getOrdersHandler)
-		orders.GET(":id", sv.getOrderDetailHandler)
+		orders.GET("", sv.getOrders)
+		orders.GET(":id", sv.getOrderDetail)
 		orders.PUT(":id/confirm-received", sv.confirmOrderPayment)
 		orders.POST(":id/cancel", sv.AdminCancelOrder)
 	}
@@ -43,7 +43,7 @@ func (sv *Server) addOrderRoutes(rg *gin.RouterGroup) {
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /order/list [get]
-func (sv *Server) getOrdersHandler(c *gin.Context) {
+func (sv *Server) getOrders(c *gin.Context) {
 	tokenPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, dto.CreateErr(UnauthorizedCode, errors.New("authorization payload is not provided")))
@@ -113,7 +113,7 @@ func (sv *Server) getOrdersHandler(c *gin.Context) {
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /order/{orderId} [get]
-func (sv *Server) getOrderDetailHandler(c *gin.Context) {
+func (sv *Server) getOrderDetail(c *gin.Context) {
 	var params models.UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))

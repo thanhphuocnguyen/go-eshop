@@ -27,7 +27,7 @@ import (
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /collections/{slug} [get]
-func (sv *Server) GetCollectionBySlugHandler(c *gin.Context) {
+func (sv *Server) GetCollectionBySlug(c *gin.Context) {
 	var param models.URISlugParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode,
@@ -85,7 +85,7 @@ func (sv *Server) GetCollectionBySlugHandler(c *gin.Context) {
 func (sv *Server) addCollectionRoutes(rg *gin.RouterGroup) {
 	collections := rg.Group("collections")
 	{
-		collections.GET("", sv.AdminGetCollectionsHandler)
-		collections.GET(":slug", sv.GetCollectionBySlugHandler)
+		collections.GET("", sv.AdminGetCollections)
+		collections.GET(":slug", sv.GetCollectionBySlug)
 	}
 }

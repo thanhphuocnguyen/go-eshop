@@ -3102,7 +3102,7 @@ paths:
       summary: Create a new cart
       tags:
       - carts
-  /carts/CheckoutHandler:
+  /carts/Checkout:
     post:
       consumes:
       - application/json
@@ -4730,7 +4730,7 @@ paths:
       summary: Update user info
       tags:
       - users
-  /users/LoginHandler:
+  /users/Login:
     post:
       consumes:
       - application/json

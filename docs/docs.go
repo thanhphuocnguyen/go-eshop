@@ -1983,7 +1983,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/carts/CheckoutHandler": {
+        "/carts/Checkout": {
             "post": {
                 "description": "update product items in the cart",
                 "consumes": [
@@ -4415,7 +4415,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/LoginHandler": {
+        "/users/Login": {
             "post": {
                 "description": "Login to the system",
                 "consumes": [

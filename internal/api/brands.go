@@ -23,7 +23,7 @@ import (
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /shop/brands [get]
-func (sv *Server) GetShopBrandsHandler(c *gin.Context) {
+func (sv *Server) GetShopBrands(c *gin.Context) {
 	var queries models.PaginationQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -83,7 +83,7 @@ func (sv *Server) GetShopBrandsHandler(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /shop/brands/{slug} [get]
-func (sv *Server) GetShopBrandBySlugHandler(c *gin.Context) {
+func (sv *Server) GetShopBrandBySlug(c *gin.Context) {
 	var param models.URISlugParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -140,7 +140,7 @@ func (sv *Server) GetShopBrandBySlugHandler(c *gin.Context) {
 func (sv *Server) addBrandRoutes(rg *gin.RouterGroup) {
 	brands := rg.Group("brands")
 	{
-		brands.GET("", sv.GetShopBrandsHandler)
-		brands.GET(":slug", sv.GetShopBrandBySlugHandler)
+		brands.GET("", sv.GetShopBrands)
+		brands.GET(":slug", sv.GetShopBrandBySlug)
 	}
 }

@@ -27,7 +27,7 @@ import (
 // @Failure 403 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /ratings [post]
-func (s *Server) postRatingHandler(c *gin.Context) {
+func (s *Server) postRating(c *gin.Context) {
 	auth, _ := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 
 	var req models.PostRatingFormData
@@ -87,7 +87,7 @@ func (s *Server) postRatingHandler(c *gin.Context) {
 // @Failure 403 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /ratings/{ratingId}/helpful [post]
-func (s *Server) postRatingHelpfulHandler(c *gin.Context) {
+func (s *Server) postRatingHelpful(c *gin.Context) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
@@ -136,7 +136,7 @@ func (s *Server) postRatingHelpfulHandler(c *gin.Context) {
 // @Failure 403 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /ratings/{ratingId}/reply [post]
-func (s *Server) postReplyRatingHandler(c *gin.Context) {
+func (s *Server) postReplyRating(c *gin.Context) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
@@ -181,7 +181,7 @@ func (s *Server) postReplyRatingHandler(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /ratings/products/{productId} [get]
-func (s *Server) getRatingsByProductHandler(c *gin.Context) {
+func (s *Server) getRatingsByProduct(c *gin.Context) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
@@ -253,9 +253,9 @@ func (s *Server) getRatingsByProductHandler(c *gin.Context) {
 func (sv *Server) addRatingRoutes(rg *gin.RouterGroup) {
 	ratings := rg.Group("ratings", authenticateMiddleware(sv.tokenGenerator))
 	{
-		ratings.POST("", sv.postRatingHandler)
-		ratings.GET(":orderId", sv.AdminGetOrderRatingsHandler)
-		ratings.POST(":id/helpful", sv.postRatingHelpfulHandler)
-		ratings.POST(":id/reply", sv.postReplyRatingHandler)
+		ratings.POST("", sv.postRating)
+		ratings.GET(":orderId", sv.AdminGetOrderRatings)
+		ratings.POST(":id/helpful", sv.postRatingHelpful)
+		ratings.POST(":id/reply", sv.postReplyRating)
 	}
 }

@@ -20,10 +20,10 @@ import (
 func (sv *Server) addPaymentRoutes(rg *gin.RouterGroup) {
 	payments := rg.Group("/payments").Use(authenticateMiddleware(sv.tokenGenerator))
 	{
-		payments.GET(":id", sv.getPaymentHandler)
+		payments.GET(":id", sv.getPayment)
 		payments.GET("stripe-config", sv.getStripeConfig)
-		payments.POST("", sv.CreatePaymentIntentHandler)
-		payments.PUT(":orderId", sv.changePaymentStatusHandler)
+		payments.POST("", sv.CreatePaymentIntent)
+		payments.PUT(":orderId", sv.changePaymentStatus)
 	}
 }
 
@@ -45,7 +45,7 @@ func (sv *Server) getStripeConfig(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /payment [post]
-func (sv *Server) CreatePaymentIntentHandler(c *gin.Context) {
+func (sv *Server) CreatePaymentIntent(c *gin.Context) {
 	authPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, dto.CreateErr(UnauthorizedCode, errors.New("authorization payload is not provided")))
@@ -150,7 +150,7 @@ func (sv *Server) CreatePaymentIntentHandler(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /payment/{id} [get]
-func (sv *Server) getPaymentHandler(c *gin.Context) {
+func (sv *Server) getPayment(c *gin.Context) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -198,7 +198,7 @@ func (sv *Server) getPaymentHandler(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /payment/{paymentId} [get]
-func (sv *Server) changePaymentStatusHandler(c *gin.Context) {
+func (sv *Server) changePaymentStatus(c *gin.Context) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, errors.New("order not found")))

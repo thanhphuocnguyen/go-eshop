@@ -22,7 +22,7 @@ import (
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /images/product/{productId} [get]
-func (sv *Server) GetProductImagesHandler(c *gin.Context) {
+func (sv *Server) GetProductImages(c *gin.Context) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -43,7 +43,7 @@ func (sv *Server) GetProductImagesHandler(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /images/{publicID} [delete]
-func (sv *Server) RemoveImageByPublicIDHandler(c *gin.Context) {
+func (sv *Server) RemoveImageByPublicID(c *gin.Context) {
 	_, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, dto.CreateErr(UnauthorizedCode, errors.New("missing user payload in context")))

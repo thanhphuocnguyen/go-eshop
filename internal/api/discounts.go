@@ -15,7 +15,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
 
-// GetAvailableDiscountsHandler godoc
+// GetAvailableDiscounts godoc
 // @Summary Get available discounts
 // @Description Get a list of available discounts
 // @Tags discounts
@@ -24,7 +24,7 @@ import (
 // @Success 200 {object} ApiResponse[[]DiscountListItemResponseModel]
 // @Failure 500 {object} ErrorResp
 // @Router /discounts/available [get]
-func (sv *Server) GetAvailableDiscountsHandler(c *gin.Context) {
+func (sv *Server) GetAvailableDiscounts(c *gin.Context) {
 	authPayload := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	// Get available discounts
 	discountRows, err := sv.repo.GetAvailableDiscountsForUser(c, authPayload.UserID)
@@ -55,7 +55,7 @@ func (sv *Server) GetAvailableDiscountsHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, discounts, nil, nil))
 }
 
-// CheckDiscountApplicabilityHandler godoc
+// CheckDiscountApplicability godoc
 // @Summary Check discount applicability
 // @Description Check if a discount code is applicable to the current cart
 // @Tags discounts
@@ -66,7 +66,7 @@ func (sv *Server) GetAvailableDiscountsHandler(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /discounts/check-applicability [post]
-func (sv *Server) CheckDiscountsApplicabilityHandler(c *gin.Context) {
+func (sv *Server) CheckDiscountsApplicability(c *gin.Context) {
 	// Check discount applicability
 	authPayload := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	var req models.CheckDiscountApplicabilityRequest
@@ -100,7 +100,7 @@ func (sv *Server) CheckDiscountsApplicabilityHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, discountResult, nil, nil))
 }
 
-// GetDiscountByIDHandler godoc
+// GetDiscountByID godoc
 // @Summary Get discount by ID
 // @Description Get discount by ID
 // @Tags discounts
@@ -112,7 +112,7 @@ func (sv *Server) CheckDiscountsApplicabilityHandler(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /discounts/{id} [get]
-func (sv *Server) GetDiscountByIDHandler(c *gin.Context) {
+func (sv *Server) GetDiscountByID(c *gin.Context) {
 	// Get discount by ID
 	id := c.Param("id")
 	if id == "" {
@@ -198,8 +198,8 @@ func (sv *Server) GetDiscountByIDHandler(c *gin.Context) {
 func (sv *Server) addDiscountRoutes(rg *gin.RouterGroup) {
 	discountsGroup := rg.Group("discounts", authenticateMiddleware(sv.tokenGenerator))
 	{
-		discountsGroup.GET("/available", sv.GetAvailableDiscountsHandler)
-		discountsGroup.POST("/check-applicability", sv.CheckDiscountsApplicabilityHandler)
-		discountsGroup.GET("/:id", sv.GetDiscountByIDHandler)
+		discountsGroup.GET("/available", sv.GetAvailableDiscounts)
+		discountsGroup.POST("/check-applicability", sv.CheckDiscountsApplicability)
+		discountsGroup.GET("/:id", sv.GetDiscountByID)
 	}
 }

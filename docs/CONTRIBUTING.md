@@ -434,7 +434,7 @@ type UserResponse struct {
 // @Failure 409 {object} ErrorResponse "User already exists"
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /users [post]
-func (s *Server) CreateUserHandler(c *gin.Context) {
+func (s *Server) CreateUser(c *gin.Context) {
     var req CreateUserRequest
 
     // 1. Parse and validate request
@@ -748,7 +748,7 @@ Use Swagger annotations for all endpoints:
 // @Failure 404 {object} ErrorResponse "User not found"
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /users/profile [get]
-func (s *Server) GetUserProfileHandler(c *gin.Context) {
+func (s *Server) GetUserProfile(c *gin.Context) {
     // Implementation
 }
 ```

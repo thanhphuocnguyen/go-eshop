@@ -17,7 +17,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
 
-// UpdateUserHandler godoc
+// UpdateUser godoc
 // @Summary Update user info
 // @Description Update user info
 // @Tags users
@@ -29,7 +29,7 @@ import (
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /users/{id} [patch]
-func (sv *Server) UpdateUserHandler(c *gin.Context) {
+func (sv *Server) UpdateUser(c *gin.Context) {
 	authPayload := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	var req models.UpdateUserModel
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -85,7 +85,7 @@ func (sv *Server) UpdateUserHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, updatedUser, nil, nil))
 }
 
-// GetCurrentUserHandler godoc
+// GetCurrentUser godoc
 // @Summary Get user info
 // @Description Get user info
 // @Tags users
@@ -95,7 +95,7 @@ func (sv *Server) UpdateUserHandler(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /users/me [get]
-func (sv *Server) GetCurrentUserHandler(c *gin.Context) {
+func (sv *Server) GetCurrentUser(c *gin.Context) {
 	authPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, errors.New("authorization payload is not provided")))
@@ -126,7 +126,7 @@ func (sv *Server) GetCurrentUserHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, userResp, nil, nil))
 }
 
-// SendVerifyEmailHandler godoc
+// SendVerifyEmail godoc
 // @Summary Send verify email
 // @Description Send verify email
 // @Tags users
@@ -138,7 +138,7 @@ func (sv *Server) GetCurrentUserHandler(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /users/verify-email [post]
 // @Security BearerAuth
-func (sv *Server) SendVerifyEmailHandler(c *gin.Context) {
+func (sv *Server) SendVerifyEmail(c *gin.Context) {
 	authPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, errors.New("authorization payload is not provided")))
@@ -171,7 +171,7 @@ func (sv *Server) SendVerifyEmailHandler(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// VerifyEmailHandler godoc
+// VerifyEmail godoc
 // @Summary Verify email
 // @Description Verify email
 // @Tags users
@@ -185,7 +185,7 @@ func (sv *Server) SendVerifyEmailHandler(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /users/verify-email [get]
-func (sv *Server) VerifyEmailHandler(c *gin.Context) {
+func (sv *Server) VerifyEmail(c *gin.Context) {
 	var query models.VerifyEmailQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidEmailCode, err))
@@ -226,16 +226,16 @@ func (sv *Server) VerifyEmailHandler(c *gin.Context) {
 func (sv *Server) addUserRoutes(rg *gin.RouterGroup) {
 	users := rg.Group("users", authenticateMiddleware(sv.tokenGenerator))
 	{
-		users.GET("me", sv.GetCurrentUserHandler)
-		users.PATCH("me", sv.UpdateUserHandler)
-		users.POST("send-verify-email", sv.SendVerifyEmailHandler)
+		users.GET("me", sv.GetCurrentUser)
+		users.PATCH("me", sv.UpdateUser)
+		users.POST("send-verify-email", sv.SendVerifyEmail)
 		userAddresses := users.Group("addresses")
 		{
-			userAddresses.POST("", sv.CreateAddressHandler)
-			userAddresses.PATCH(":id/default", sv.SetDefaultAddressHandler)
-			userAddresses.GET("", sv.GetAddressesHandlers)
-			userAddresses.PATCH(":id", sv.UpdateAddressHandlers)
-			userAddresses.DELETE(":id", sv.RemoveAddressHandlers)
+			userAddresses.POST("", sv.CreateAddress)
+			userAddresses.PATCH(":id/default", sv.SetDefaultAddress)
+			userAddresses.GET("", sv.GetAddressess)
+			userAddresses.PATCH(":id", sv.UpdateAddresss)
+			userAddresses.DELETE(":id", sv.RemoveAddresss)
 		}
 	}
 }
