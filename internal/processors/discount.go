@@ -11,7 +11,6 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/constants"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
 
 // DiscountProcessor handles discount validation and calculation
@@ -66,7 +65,7 @@ func (dp *DiscountProcessor) ProcessDiscounts(c *gin.Context, ctx DiscountContex
 	}
 
 	// Validate discount applicability
-	if err := dp.validateDiscountApplicability(c, discountRows); err != nil {
+	if err := dp.validateDiscountApplicability(c, ctx, discountRows); err != nil {
 		return nil, err
 	}
 
@@ -95,8 +94,7 @@ func (dp *DiscountProcessor) ProcessDiscounts(c *gin.Context, ctx DiscountContex
 }
 
 // validateDiscountApplicability validates basic discount rules
-func (dp *DiscountProcessor) validateDiscountApplicability(c *gin.Context, discounts []repository.Discount) error {
-	authPayload, _ := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
+func (dp *DiscountProcessor) validateDiscountApplicability(c *gin.Context, ctx DiscountContext, discounts []repository.Discount) error {
 	stackCnt := 0
 
 	for _, discount := range discounts {
@@ -109,15 +107,15 @@ func (dp *DiscountProcessor) validateDiscountApplicability(c *gin.Context, disco
 		}
 
 		// Check stacking rules
-		if discount.IsStackable {
-			stackCnt++
+		if !discount.IsStackable {
 			if stackCnt > 1 {
 				return fmt.Errorf("only one stackable discount code is allowed")
 			}
+			stackCnt++
 		}
 
 		// Check usage limits
-		if err := dp.validateUsageLimits(c, discount, authPayload.UserID); err != nil {
+		if err := dp.validateUsageLimits(c, discount, ctx.User.ID); err != nil {
 			return err
 		}
 	}

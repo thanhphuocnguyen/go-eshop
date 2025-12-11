@@ -199,6 +199,7 @@ func (sv *Server) addDiscountRoutes(rg *gin.RouterGroup) {
 	discountsGroup := rg.Group("discounts", authenticateMiddleware(sv.tokenGenerator))
 	{
 		discountsGroup.GET("/available", sv.GetAvailableDiscountsHandler)
+		discountsGroup.POST("/check-applicability", sv.CheckDiscountsApplicabilityHandler)
 		discountsGroup.GET("/:id", sv.GetDiscountByIDHandler)
 	}
 }
