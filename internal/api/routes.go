@@ -20,8 +20,8 @@ func (sv *Server) addImageRoutes(rg *gin.RouterGroup) {
 		images.DELETE(
 			"remove-external/:public_id",
 			authorizeMiddleware("admin"),
-			sv.RemoveImageByPublicID)
-		images.GET("", sv.GetProductImages)
+			sv.removeImageByPublicID)
+		images.GET("", sv.getProductImages)
 	}
 }
 
@@ -31,7 +31,7 @@ func (sv *Server) addImageRoutes(rg *gin.RouterGroup) {
 func (sv *Server) addWebhookRoutes(router *gin.Engine) {
 	webhooks := router.Group("/webhook/v1")
 	{
-		webhooks.POST("stripe", sv.stripeEvent)
+		webhooks.POST("stripe", sv.sendStripeEvent)
 	}
 }
 
@@ -75,7 +75,6 @@ func (sv *Server) initializeRouter() {
 		sv.addProductRoutes(v1)
 		sv.addImageRoutes(v1)
 		sv.addCartRoutes(v1)
-		sv.router.POST("checkout", sv.checkout)
 		sv.addOrderRoutes(v1)
 		sv.addPaymentRoutes(v1)
 		sv.addCategoryRoutes(v1)

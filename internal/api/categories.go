@@ -13,7 +13,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
-// GetCategories retrieves a list of Categories.
+// getCategories retrieves a list of Categories.
 // @Summary Get a list of Categories
 // @Description Get a list of Categories
 // @ID get-Categories
@@ -26,7 +26,7 @@ import (
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /categories [get]
-func (sv *Server) GetCategories(c *gin.Context) {
+func (sv *Server) getCategories(c *gin.Context) {
 	var query models.PaginationQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -72,7 +72,7 @@ func (sv *Server) GetCategories(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, categoriesResp, dto.CreatePagination(cnt, query.Page, query.PageSize), nil))
 }
 
-// GetCategoryBySlug retrieves a list of Products by Category Slug.
+// getCategoryBySlug retrieves a list of Products by Category Slug.
 // @Summary Get a list of Products by Category Slug
 // @Description Get a list of Products by Category Slug
 // @ID get-Products-by-Category-Slug
@@ -85,7 +85,7 @@ func (sv *Server) GetCategories(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /categories/slug/{slug} [get]
-func (sv *Server) GetCategoryBySlug(c *gin.Context) {
+func (sv *Server) getCategoryBySlug(c *gin.Context) {
 	var param models.URISlugParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -139,8 +139,8 @@ func (sv *Server) GetCategoryBySlug(c *gin.Context) {
 func (sv *Server) addCategoryRoutes(rg *gin.RouterGroup) {
 	categories := rg.Group("categories")
 	{
-		categories.GET("", sv.GetCategories)
-		categories.GET(":slug", sv.GetCategoryBySlug)
-		categories.GET(":slug/products", sv.GetCategoryBySlug)
+		categories.GET("", sv.getCategories)
+		categories.GET(":slug", sv.getCategoryBySlug)
+		categories.GET(":slug/products", sv.getCategoryBySlug)
 	}
 }

@@ -56,3 +56,6 @@ SELECT * FROM payment_methods WHERE id = $1 LIMIT 1;
 
 -- name: GetPaymentMethods :many
 SELECT * FROM payment_methods ORDER BY name ASC;
+
+-- name: ListPaymentMethods :many
+SELECT * FROM payment_methods WHERE is_active = TRUE ORDER BY name ASC;

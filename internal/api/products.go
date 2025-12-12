@@ -23,7 +23,7 @@ import (
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /products/{productId} [get]
-func (sv *Server) GetProductById(c *gin.Context) {
+func (sv *Server) getProductById(c *gin.Context) {
 	var params models.UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -64,7 +64,7 @@ func (sv *Server) GetProductById(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /products [get]
-func (sv *Server) GetProducts(c *gin.Context) {
+func (sv *Server) getProducts(c *gin.Context) {
 	var queries models.ProductQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -123,8 +123,8 @@ func (sv *Server) GetProducts(c *gin.Context) {
 func (sv *Server) addProductRoutes(rg *gin.RouterGroup) {
 	products := rg.Group("products")
 	{
-		products.GET("", sv.GetProducts)
-		products.GET(":id", sv.GetProductById)
+		products.GET("", sv.getProducts)
+		products.GET(":id", sv.getProductById)
 		products.GET(":id/ratings", sv.getRatingsByProduct)
 	}
 }

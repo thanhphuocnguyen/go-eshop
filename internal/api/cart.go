@@ -403,6 +403,7 @@ func (sv *Server) addCartRoutes(rg *gin.RouterGroup) {
 	cart := rg.Group("/carts", authenticateMiddleware(sv.tokenGenerator))
 	{
 		cart.POST("", sv.createCart)
+		cart.POST("checkout", sv.checkout)
 		cart.GET("", sv.getCart)
 		cart.PUT("clear", sv.clearCart)
 

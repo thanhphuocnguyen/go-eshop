@@ -17,7 +17,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
 
-// UpdateUser godoc
+// updateUser godoc
 // @Summary Update user info
 // @Description Update user info
 // @Tags users
@@ -29,7 +29,7 @@ import (
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /users/{id} [patch]
-func (sv *Server) UpdateUser(c *gin.Context) {
+func (sv *Server) updateUser(c *gin.Context) {
 	authPayload := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	var req models.UpdateUserModel
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -85,7 +85,7 @@ func (sv *Server) UpdateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, updatedUser, nil, nil))
 }
 
-// GetCurrentUser godoc
+// getCurrentUser godoc
 // @Summary Get user info
 // @Description Get user info
 // @Tags users
@@ -95,7 +95,7 @@ func (sv *Server) UpdateUser(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /users/me [get]
-func (sv *Server) GetCurrentUser(c *gin.Context) {
+func (sv *Server) getCurrentUser(c *gin.Context) {
 	authPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, errors.New("authorization payload is not provided")))
@@ -126,7 +126,7 @@ func (sv *Server) GetCurrentUser(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, userResp, nil, nil))
 }
 
-// SendVerifyEmail godoc
+// sendVerifyEmail godoc
 // @Summary Send verify email
 // @Description Send verify email
 // @Tags users
@@ -138,7 +138,7 @@ func (sv *Server) GetCurrentUser(c *gin.Context) {
 // @Failure 500 {object} ErrorResp
 // @Router /users/verify-email [post]
 // @Security BearerAuth
-func (sv *Server) SendVerifyEmail(c *gin.Context) {
+func (sv *Server) sendVerifyEmail(c *gin.Context) {
 	authPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, errors.New("authorization payload is not provided")))
@@ -226,16 +226,16 @@ func (sv *Server) VerifyEmail(c *gin.Context) {
 func (sv *Server) addUserRoutes(rg *gin.RouterGroup) {
 	users := rg.Group("users", authenticateMiddleware(sv.tokenGenerator))
 	{
-		users.GET("me", sv.GetCurrentUser)
-		users.PATCH("me", sv.UpdateUser)
-		users.POST("send-verify-email", sv.SendVerifyEmail)
+		users.GET("me", sv.getCurrentUser)
+		users.PATCH("me", sv.updateUser)
+		users.POST("send-verify-email", sv.sendVerifyEmail)
 		userAddresses := users.Group("addresses")
 		{
-			userAddresses.POST("", sv.CreateAddress)
-			userAddresses.PATCH(":id/default", sv.SetDefaultAddress)
-			userAddresses.GET("", sv.GetAddressess)
-			userAddresses.PATCH(":id", sv.UpdateAddresss)
-			userAddresses.DELETE(":id", sv.RemoveAddresss)
+			userAddresses.POST("", sv.createAddress)
+			userAddresses.PATCH(":id/default", sv.setDefaultAddress)
+			userAddresses.GET("", sv.getAddresses)
+			userAddresses.PATCH(":id", sv.updateAddress)
+			userAddresses.DELETE(":id", sv.removeAddress)
 		}
 	}
 }

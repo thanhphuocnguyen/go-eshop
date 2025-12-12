@@ -76,7 +76,7 @@ func (sv *Server) addAdminRoutes(rg *gin.RouterGroup) {
 			adminOrder.GET("", sv.AdminGetOrders)
 			adminOrder.GET(":id", sv.AdminGetOrderDetail)
 			adminOrder.PUT(":id/status", sv.AdminChangeOrderStatus)
-			adminOrder.POST(":id/cancel", sv.AdminCancelOrder)
+			adminOrder.POST(":id/cancel", sv.adminCancelOrder)
 			adminOrder.POST(":id/refund", sv.AdminRefundOrder)
 		}
 
@@ -101,7 +101,7 @@ func (sv *Server) addAdminRoutes(rg *gin.RouterGroup) {
 
 		collections := admin.Group("collections")
 		{
-			collections.GET("", sv.AdminGetCollections)
+			collections.GET("", sv.adminGetCollections)
 			collections.POST("", sv.AdminCreateCollection)
 			collections.GET(":id", sv.AdminGetCollectionByID)
 			collections.PUT(":id", sv.AdminUpdateCollection)
@@ -120,7 +120,7 @@ func (sv *Server) addAdminRoutes(rg *gin.RouterGroup) {
 		{
 			discounts.POST("", sv.AdminCreateDiscount)
 			discounts.GET("", sv.AdminGetDiscounts)
-			discounts.GET(":id", sv.GetDiscountByID)
+			discounts.GET(":id", sv.getDiscountByID)
 			discounts.PUT(":id", sv.AdminUpdateDiscount)
 			discounts.DELETE(":id", sv.AdminDeleteDiscount)
 
@@ -1475,7 +1475,7 @@ func (sv *Server) AdminChangeOrderStatus(c *gin.Context) {
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/orders/{orderId}/cancel [put]
-func (sv *Server) AdminCancelOrder(c *gin.Context) {
+func (sv *Server) adminCancelOrder(c *gin.Context) {
 	tokenPayload, _ := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 
 	var params models.UriIDParam
@@ -2194,7 +2194,7 @@ func (sv *Server) AdminCreateCollection(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/collections [get]
-func (sv *Server) AdminGetCollections(c *gin.Context) {
+func (sv *Server) adminGetCollections(c *gin.Context) {
 	var queries models.PaginationQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode,
@@ -2504,7 +2504,7 @@ func (s *Server) AdminGetRatings(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /ratings/orders/{orderId} [get]
-func (s *Server) AdminGetOrderRatings(c *gin.Context) {
+func (s *Server) adminGetOrderRatings(c *gin.Context) {
 	auth, _ := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 
 	var param struct {

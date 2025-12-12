@@ -254,7 +254,7 @@ func (sv *Server) addRatingRoutes(rg *gin.RouterGroup) {
 	ratings := rg.Group("ratings", authenticateMiddleware(sv.tokenGenerator))
 	{
 		ratings.POST("", sv.postRating)
-		ratings.GET(":orderId", sv.AdminGetOrderRatings)
+		ratings.GET(":orderId", sv.adminGetOrderRatings)
 		ratings.POST(":id/helpful", sv.postRatingHelpful)
 		ratings.POST(":id/reply", sv.postReplyRating)
 	}

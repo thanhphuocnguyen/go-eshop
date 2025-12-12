@@ -21,8 +21,9 @@ func (sv *Server) addPaymentRoutes(rg *gin.RouterGroup) {
 	payments := rg.Group("/payments").Use(authenticateMiddleware(sv.tokenGenerator))
 	{
 		payments.GET(":id", sv.getPayment)
+		payments.GET("methods", sv.getPaymentMethods)
 		payments.GET("stripe-config", sv.getStripeConfig)
-		payments.POST("", sv.CreatePaymentIntent)
+		payments.POST("", sv.createPaymentIntent)
 		payments.PUT(":orderId", sv.changePaymentStatus)
 	}
 }
@@ -45,7 +46,7 @@ func (sv *Server) getStripeConfig(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /payment [post]
-func (sv *Server) CreatePaymentIntent(c *gin.Context) {
+func (sv *Server) createPaymentIntent(c *gin.Context) {
 	authPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, dto.CreateErr(UnauthorizedCode, errors.New("authorization payload is not provided")))
@@ -276,6 +277,35 @@ func (sv *Server) changePaymentStatus(c *gin.Context) {
 	resp := dto.PaymentDetail{
 		ID:     payment.ID.String(),
 		Status: req.Status,
+	}
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, resp, nil, nil))
+}
+
+// @Summary Get payment methods
+// @Description Get payment methods
+// @Tags payment
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} ApiResponse[[]PaymentMethodResponse]
+// @Failure 400 {object} ErrorResp
+// @Failure 401 {object} ErrorResp
+// @Failure 403 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
+// @Router /payment/methods [get]
+func (sv *Server) getPaymentMethods(c *gin.Context) {
+	paymentMethods, err := sv.repo.ListPaymentMethods(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		return
+	}
+	var resp []dto.PaymentMethodResponse
+	for _, pm := range paymentMethods {
+		resp = append(resp, dto.PaymentMethodResponse{
+			ID:   pm.ID.String(),
+			Name: pm.Name,
+			Code: pm.Code,
+		})
 	}
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, resp, nil, nil))
 }

@@ -11,6 +11,7 @@ import (
 )
 
 // --- Public API ---
+
 // @Summary Get a list of brands for the shop
 // @Description Get a list of brands for the shop
 // @ID get-shop-brands
@@ -23,7 +24,7 @@ import (
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /shop/brands [get]
-func (sv *Server) GetShopBrands(c *gin.Context) {
+func (sv *Server) getShopBrands(c *gin.Context) {
 	var queries models.PaginationQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -83,7 +84,7 @@ func (sv *Server) GetShopBrands(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /shop/brands/{slug} [get]
-func (sv *Server) GetShopBrandBySlug(c *gin.Context) {
+func (sv *Server) getShopBrandBySlug(c *gin.Context) {
 	var param models.URISlugParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -140,7 +141,7 @@ func (sv *Server) GetShopBrandBySlug(c *gin.Context) {
 func (sv *Server) addBrandRoutes(rg *gin.RouterGroup) {
 	brands := rg.Group("brands")
 	{
-		brands.GET("", sv.GetShopBrands)
-		brands.GET(":slug", sv.GetShopBrandBySlug)
+		brands.GET("", sv.getShopBrands)
+		brands.GET(":slug", sv.getShopBrandBySlug)
 	}
 }

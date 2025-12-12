@@ -231,6 +231,7 @@ type Querier interface {
 	InsertRatingVotes(ctx context.Context, arg InsertRatingVotesParams) (RatingVote, error)
 	InsertSession(ctx context.Context, arg InsertSessionParams) (UserSession, error)
 	ListOrderItems(ctx context.Context, arg ListOrderItemsParams) ([]OrderItem, error)
+	ListPaymentMethods(ctx context.Context) ([]PaymentMethod, error)
 	MaxPreviousOrderByUserID(ctx context.Context, userID uuid.UUID) (Order, error)
 	ReactivateDiscount(ctx context.Context, id uuid.UUID) error
 	RemoveDiscountUsage(ctx context.Context, arg RemoveDiscountUsageParams) error

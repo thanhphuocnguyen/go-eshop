@@ -24,7 +24,7 @@ func (sv *Server) addOrderRoutes(rg *gin.RouterGroup) {
 		orders.GET("", sv.getOrders)
 		orders.GET(":id", sv.getOrderDetail)
 		orders.PUT(":id/confirm-received", sv.confirmOrderPayment)
-		orders.POST(":id/cancel", sv.AdminCancelOrder)
+		orders.POST(":id/cancel", sv.adminCancelOrder)
 	}
 }
 

@@ -19,7 +19,7 @@ import (
 
 // ------------------------------ s ------------------------------
 
-// Register godoc
+// register godoc
 // @Summary Create a new user
 // @Description Create a new user
 // @Tags users
@@ -30,7 +30,7 @@ import (
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /auth/register [post]
-func (sv *Server) Register(c *gin.Context) {
+func (sv *Server) register(c *gin.Context) {
 	var req models.RegisterModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -160,9 +160,9 @@ func (sv *Server) Register(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, userResp, nil, nil))
 }
 
-// Login godoc
-// @Summary Login to the system
-// @Description Login to the system
+// login godoc
+// @Summary login to the system
+// @Description login to the system
 // @Tags users
 // @Accept  json
 // @Produce  json
@@ -171,7 +171,7 @@ func (sv *Server) Register(c *gin.Context) {
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /auth/login [post]
-func (sv *Server) Login(c *gin.Context) {
+func (sv *Server) login(c *gin.Context) {
 	var req models.LoginModel
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -253,7 +253,7 @@ func (sv *Server) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, loginResp, nil, nil))
 }
 
-// RefreshToken godoc
+// refreshToken godoc
 // @Summary Refresh token
 // @Description Refresh token
 // @Tags users
@@ -263,7 +263,7 @@ func (sv *Server) Login(c *gin.Context) {
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /auth/refresh-token [post]
-func (sv *Server) RefreshToken(c *gin.Context) {
+func (sv *Server) refreshToken(c *gin.Context) {
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {
 		c.JSON(http.StatusUnauthorized, dto.CreateErr(UnauthorizedCode, fmt.Errorf("refresh token is required")))
@@ -332,8 +332,8 @@ func (sv *Server) RefreshToken(c *gin.Context) {
 func (sv *Server) addAuthRoutes(rg *gin.RouterGroup) {
 	auth := rg.Group("/auth")
 	{
-		auth.POST("register", sv.Register)
-		auth.POST("login", sv.Login)
-		auth.POST("refresh-token", sv.RefreshToken)
+		auth.POST("register", sv.register)
+		auth.POST("login", sv.login)
+		auth.POST("refresh-token", sv.refreshToken)
 	}
 }

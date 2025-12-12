@@ -26,3 +26,15 @@ type PaymentInfo struct {
 	Method       string  `json:"method"`
 	Status       string  `json:"status"`
 }
+
+type PaymentMethodResponse struct {
+	ID                 string    `json:"id"`
+	Code               string    `json:"code"`
+	Name               string    `json:"name"`
+	Description        *string   `json:"description,omitempty"`
+	Gateway            *string   `json:"gateway,omitempty"`
+	Thumbnail          *string   `json:"thumbnail,omitempty"`
+	IsActive           bool      `json:"isActive"`
+	CurrencySupported  *[]string `json:"currencySupported,omitempty"`
+	CountriesSupported *[]string `json:"countriesSupported,omitempty"`
+}

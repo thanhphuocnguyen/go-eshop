@@ -2,7 +2,6 @@ package models
 
 type CheckoutModel struct {
 	PaymentMethodId string   `json:"paymentMethodId" binding:"required,uuid"`
-	AddressId       string   `json:"addressId" binding:"required,uuid"`
 	DiscountCodes   []string `json:"discountCodes" binding:"omitempty"`
 }
 

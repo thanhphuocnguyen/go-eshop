@@ -38,7 +38,7 @@ func (sv *Server) checkout(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, errors.New("user not found")))
 		return
 	}
-
+	// verify request body
 	var req models.CheckoutModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -69,10 +69,7 @@ func (sv *Server) checkout(c *gin.Context) {
 	}
 	var shippingAddr repository.ShippingAddressSnapshot
 
-	address, err := sv.repo.GetAddress(c, repository.GetAddressParams{
-		ID:     uuid.MustParse(req.AddressId),
-		UserID: user.ID,
-	})
+	address, err := sv.repo.GetDefaultAddress(c, authPayload.UserID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, errors.New("address not found")))
@@ -167,7 +164,6 @@ func (sv *Server) checkout(c *gin.Context) {
 			Email:    user.Email,
 			Phone:    user.PhoneNumber,
 		},
-		PaymentGateway:        &req.PaymentMethodId,
 		CreateOrderItemParams: createOrderItemParams,
 		DiscountPrice:         discountResult.TotalDiscount,
 		DiscountIDs:           discountResult.AppliedDiscounts,

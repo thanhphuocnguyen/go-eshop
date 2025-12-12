@@ -39,7 +39,6 @@ type CheckoutCartTxArgs struct {
 	DiscountIDs           []uuid.UUID
 	ShippingAddress       ShippingAddressSnapshot
 	PaymentMethodID       uuid.UUID
-	PaymentGateway        *string
 	CreatePaymentFn       func(orderID uuid.UUID, method string) (paymentIntentID string, clientSecret *string, err error)
 }
 
@@ -61,18 +60,7 @@ func (s *pgRepo) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxArgs) (Cr
 			return err
 		}
 		paymentAmount := arg.TotalPrice - arg.DiscountPrice
-		if paymentAmount < 0 {
-			paymentAmount = 0
-		}
-		result.TotalPrice = paymentAmount
-
-		createPaymentArgs := CreatePaymentParams{
-			OrderID:         order.ID,
-			PaymentMethodID: arg.PaymentMethodID,
-			Amount:          utils.GetPgNumericFromFloat(paymentAmount),
-		}
-
-		createPaymentArgs.Gateway = arg.PaymentGateway
+		result.TotalPrice = max(paymentAmount, 0)
 
 		if arg.DiscountPrice != 0 {
 			if arg.DiscountPrice > arg.TotalPrice {
@@ -113,6 +101,22 @@ func (s *pgRepo) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxArgs) (Cr
 			log.Error().Err(err).Msg("CheckoutCart")
 			return err
 		}
+
+		// create payment transaction
+		createPaymentArgs := CreatePaymentParams{
+			OrderID:         order.ID,
+			PaymentMethodID: arg.PaymentMethodID,
+			Amount:          utils.GetPgNumericFromFloat(paymentAmount),
+			Status:          PaymentStatusPending,
+		}
+		gateWay, err := s.GetPaymentMethodByID(ctx, arg.PaymentMethodID)
+		if err != nil {
+			log.Error().Err(err).Msg("GetPaymentMethodByID")
+			return err
+		}
+
+		createPaymentArgs.Gateway = &gateWay.Code
+
 		if paymentAmount > 0 {
 			method, err := s.GetPaymentMethodByID(ctx, arg.PaymentMethodID)
 			if err != nil {
@@ -130,16 +134,12 @@ func (s *pgRepo) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxArgs) (Cr
 		} else {
 			createPaymentArgs.PaymentIntentID = nil
 			createPaymentArgs.Status = PaymentStatusSuccess
-
 		}
-
-		// create payment transaction
 		payment, err := q.CreatePayment(ctx, createPaymentArgs)
 		if err != nil {
 			log.Error().Err(err).Msg("CreatePayment")
 			return err
 		}
-
 		result.PaymentID = payment.ID.String()
 
 		return nil
