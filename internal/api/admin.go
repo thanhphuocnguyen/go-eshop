@@ -29,114 +29,114 @@ func (sv *Server) addAdminRoutes(rg *gin.RouterGroup) {
 	{
 		users := admin.Group("users")
 		{
-			users.GET("", sv.AdminGetUsers)
-			users.GET(":id", sv.AdminGetUser)
+			users.GET("", sv.adminGetUsers)
+			users.GET(":id", sv.adminGetUser)
 		}
 
 		productsGroup := admin.Group("products")
 		{
-			productsGroup.GET("", sv.AdminGetProducts)
-			productsGroup.POST("", sv.AdminAddProduct)
-			productsGroup.PUT(":id", sv.AdminUpdateProduct)
-			productsGroup.DELETE(":id", sv.AdminDeleteProduct)
+			productsGroup.GET("", sv.adminGetProducts)
+			productsGroup.POST("", sv.adminAddProduct)
+			productsGroup.PUT(":id", sv.adminUpdateProduct)
+			productsGroup.DELETE(":id", sv.adminDeleteProduct)
 
 			productGroup := productsGroup.Group(":id")
 			{
-				productGroup.POST("images", sv.AdminUploadProductImage)
+				productGroup.POST("images", sv.adminUploadProductImage)
 
 				variantGroup := productGroup.Group("variants")
-				variantGroup.POST("", sv.AdminAddVariant)
-				variantGroup.GET("", sv.AdminGetVariants)
-				variantGroup.GET(":variantId", sv.AdminGetVariant)
-				variantGroup.PUT(":variantId", sv.AdminUpdateVariant)
-				variantGroup.POST(":variantId/images", sv.AdminUploadVariantImage)
-				variantGroup.DELETE(":variantId", sv.AdminDeleteVariant)
+				variantGroup.POST("", sv.adminAddVariant)
+				variantGroup.GET("", sv.adminGetVariants)
+				variantGroup.GET(":variantId", sv.adminGetVariant)
+				variantGroup.PUT(":variantId", sv.adminUpdateVariant)
+				variantGroup.POST(":variantId/images", sv.adminUploadVariantImage)
+				variantGroup.DELETE(":variantId", sv.adminDeleteVariant)
 			}
 		}
 
 		attributeGroup := admin.Group("attributes")
 		{
-			attributeGroup.POST("", sv.AdminCreateAttribute)
-			attributeGroup.GET("", sv.AdminGetAttributes)
-			attributeGroup.GET(":id", sv.AdminGetAttributeByID)
-			attributeGroup.PUT(":id", sv.AdminUpdateAttribute)
-			attributeGroup.DELETE(":id", sv.AdminRemoveAttribute)
+			attributeGroup.POST("", sv.adminCreateAttribute)
+			attributeGroup.GET("", sv.adminGetAttributes)
+			attributeGroup.GET(":id", sv.adminGetAttributeByID)
+			attributeGroup.PUT(":id", sv.adminUpdateAttribute)
+			attributeGroup.DELETE(":id", sv.adminRemoveAttribute)
 
-			attributeGroup.GET("product/:id", sv.AdminGetAttributeValuesForProduct)
+			attributeGroup.GET("product/:id", sv.adminGetAttributeValuesForProduct)
 
 			attributeValue := attributeGroup.Group(":id")
 			{
-				attributeValue.POST("create", sv.AdminAddAttributeValue)
-				attributeValue.PUT("update/:valueId", sv.AdminUpdateAttrValue)
-				attributeValue.DELETE("remove/:valueId", sv.AdminRemoveAttrValue)
+				attributeValue.POST("create", sv.adminAddAttributeValue)
+				attributeValue.PUT("update/:valueId", sv.adminUpdateAttrValue)
+				attributeValue.DELETE("remove/:valueId", sv.adminRemoveAttrValue)
 			}
 		}
 		adminOrder := admin.Group("orders")
 		{
-			adminOrder.GET("", sv.AdminGetOrders)
-			adminOrder.GET(":id", sv.AdminGetOrderDetail)
-			adminOrder.PUT(":id/status", sv.AdminChangeOrderStatus)
+			adminOrder.GET("", sv.adminGetOrders)
+			adminOrder.GET(":id", sv.adminGetOrderDetail)
+			adminOrder.PUT(":id/status", sv.adminChangeOrderStatus)
 			adminOrder.POST(":id/cancel", sv.adminCancelOrder)
-			adminOrder.POST(":id/refund", sv.AdminRefundOrder)
+			adminOrder.POST(":id/refund", sv.adminRefundOrder)
 		}
 
 		categories := admin.Group("categories")
 		{
-			categories.GET("", sv.AdminGetCategories)
-			categories.GET(":id", sv.AdminGetCategoryByID)
-			categories.POST("", sv.AdminCreateCategory)
-			categories.PUT(":id", sv.AdminUpdateCategory)
-			categories.DELETE(":id", sv.AdminDeleteCategory)
+			categories.GET("", sv.adminGetCategories)
+			categories.GET(":id", sv.adminGetCategoryByID)
+			categories.POST("", sv.adminCreateCategory)
+			categories.PUT(":id", sv.adminUpdateCategory)
+			categories.DELETE(":id", sv.adminDeleteCategory)
 		}
 
 		brands := admin.Group("brands")
 		{
 
-			brands.GET("", sv.AdminGetBrands)
-			brands.GET(":id", sv.AdminGetBrandByID)
-			brands.POST("", sv.AdminCreateBrand)
-			brands.PUT(":id", sv.AdminUpdateBrand)
-			brands.DELETE(":id", sv.AdminDeleteBrand)
+			brands.GET("", sv.adminGetBrands)
+			brands.GET(":id", sv.adminGetBrandByID)
+			brands.POST("", sv.adminCreateBrand)
+			brands.PUT(":id", sv.adminUpdateBrand)
+			brands.DELETE(":id", sv.adminDeleteBrand)
 		}
 
 		collections := admin.Group("collections")
 		{
 			collections.GET("", sv.adminGetCollections)
-			collections.POST("", sv.AdminCreateCollection)
-			collections.GET(":id", sv.AdminGetCollectionByID)
-			collections.PUT(":id", sv.AdminUpdateCollection)
-			collections.DELETE(":id", sv.AdminDeleteCollection)
+			collections.POST("", sv.adminCreateCollection)
+			collections.GET(":id", sv.adminGetCollectionByID)
+			collections.PUT(":id", sv.adminUpdateCollection)
+			collections.DELETE(":id", sv.adminDeleteCollection)
 		}
 
 		ratings := admin.Group("ratings")
 		{
-			ratings.GET("", sv.AdminGetRatings)
-			ratings.DELETE(":id", sv.AdminDeleteRating)
-			ratings.PUT(":id/approve", sv.AdminApproveRating)
-			ratings.PUT(":id/ban", sv.AdminBanUserRating)
+			ratings.GET("", sv.adminGetRatings)
+			ratings.DELETE(":id", sv.adminDeleteRating)
+			ratings.PUT(":id/approve", sv.adminApproveRating)
+			ratings.PUT(":id/ban", sv.adminBanUserRating)
 		}
 
 		discounts := admin.Group("discounts")
 		{
-			discounts.POST("", sv.AdminCreateDiscount)
-			discounts.GET("", sv.AdminGetDiscounts)
+			discounts.POST("", sv.adminCreateDiscount)
+			discounts.GET("", sv.adminGetDiscounts)
 			discounts.GET(":id", sv.getDiscountByID)
-			discounts.PUT(":id", sv.AdminUpdateDiscount)
-			discounts.DELETE(":id", sv.AdminDeleteDiscount)
+			discounts.PUT(":id", sv.adminUpdateDiscount)
+			discounts.DELETE(":id", sv.adminDeleteDiscount)
 
 			discountsGroup := discounts.Group(":id")
 			{
-				discountsGroup.POST("rules", sv.AdminAddDiscountRule)
-				discountsGroup.GET("rules", sv.AdminGetDiscountRules)
-				discountsGroup.GET("rules/:ruleId", sv.AdminGetDiscountRuleByID)
-				discountsGroup.PUT("rules/:ruleId", sv.AdminUpdateDiscountRule)
-				discountsGroup.DELETE("rules/:ruleId", sv.AdminDeleteDiscountRule)
+				discountsGroup.POST("rules", sv.adminAddDiscountRule)
+				discountsGroup.GET("rules", sv.adminGetDiscountRules)
+				discountsGroup.GET("rules/:ruleId", sv.adminGetDiscountRuleByID)
+				discountsGroup.PUT("rules/:ruleId", sv.adminUpdateDiscountRule)
+				discountsGroup.DELETE("rules/:ruleId", sv.adminDeleteDiscountRule)
 			}
 		}
 	}
 }
 
-// AdminGetUsers godoc
+// adminGetUsers godoc
 // @Summary List users
 // @Description List users
 // @Tags users
@@ -149,7 +149,7 @@ func (sv *Server) addAdminRoutes(rg *gin.RouterGroup) {
 // @Failure 400 {object} ErrorResp
 // @Failure 401 {object} ErrorResp
 // @Router /admin/users [get]
-func (sv *Server) AdminGetUsers(c *gin.Context) {
+func (sv *Server) adminGetUsers(c *gin.Context) {
 	authPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, errors.New("authorization payload is not provided")))
@@ -186,10 +186,10 @@ func (sv *Server) AdminGetUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, userResp, pagination, nil))
 }
 
-// AdminGetUser godoc
+// adminGetUser godoc
 // @Summary Get user info
 // @Description Get user info
-// @Tags Admin
+// @Tags admin
 // @Accept  json
 // @Produce  json
 // @Param id path string true "User ID"
@@ -198,7 +198,7 @@ func (sv *Server) AdminGetUsers(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/users/{id} [get]
-func (sv *Server) AdminGetUser(c *gin.Context) {
+func (sv *Server) adminGetUser(c *gin.Context) {
 	authPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, errors.New("authorization payload is not provided")))
@@ -224,7 +224,7 @@ func (sv *Server) AdminGetUser(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, userResp, nil, nil))
 }
 
-// AdminGetProducts godoc
+// adminGetProducts godoc
 // @Summary Get admin list of products
 // @Schemes http
 // @Description get admin list of products
@@ -237,7 +237,7 @@ func (sv *Server) AdminGetUser(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products [get]
-func (sv *Server) AdminGetProducts(c *gin.Context) {
+func (sv *Server) adminGetProducts(c *gin.Context) {
 	var queries models.ProductQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -289,7 +289,7 @@ func (sv *Server) AdminGetProducts(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /products [post]
-func (sv *Server) AdminAddProduct(c *gin.Context) {
+func (sv *Server) adminAddProduct(c *gin.Context) {
 	var req models.CreateProductModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -338,7 +338,7 @@ func (sv *Server) AdminAddProduct(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{productId} [put]
-func (sv *Server) AdminUpdateProduct(c *gin.Context) {
+func (sv *Server) adminUpdateProduct(c *gin.Context) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -420,7 +420,7 @@ func (sv *Server) AdminUpdateProduct(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{productId} [delete]
-func (sv *Server) AdminDeleteProduct(c *gin.Context) {
+func (sv *Server) adminDeleteProduct(c *gin.Context) {
 	var params models.UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -457,7 +457,7 @@ func (sv *Server) AdminDeleteProduct(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{id}/image [post]
-func (sv *Server) AdminUploadProductImage(c *gin.Context) {
+func (sv *Server) adminUploadProductImage(c *gin.Context) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -518,7 +518,7 @@ func (sv *Server) AdminUploadProductImage(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{id}/variants [post]
-func (sv *Server) AdminAddVariant(c *gin.Context) {
+func (sv *Server) adminAddVariant(c *gin.Context) {
 	var prodId models.ProductVariantParam
 	if err := c.ShouldBindUri(&prodId); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -621,7 +621,7 @@ func (sv *Server) AdminAddVariant(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{id}/variants [get]
-func (sv *Server) AdminGetVariants(c *gin.Context) {
+func (sv *Server) adminGetVariants(c *gin.Context) {
 	var prodId models.ProductVariantParam
 	if err := c.ShouldBindUri(&prodId); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -659,7 +659,7 @@ func (sv *Server) AdminGetVariants(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{id}/variants/{variantID} [get]
-func (sv *Server) AdminGetVariant(c *gin.Context) {
+func (sv *Server) adminGetVariant(c *gin.Context) {
 	var prodId models.ProductVariantParam
 	if err := c.ShouldBindUri(&prodId); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -730,7 +730,7 @@ func (sv *Server) AdminGetVariant(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{id}/variants/{variantId} [put]
-func (sv *Server) AdminUpdateVariant(c *gin.Context) {
+func (sv *Server) adminUpdateVariant(c *gin.Context) {
 	var uris models.URIVariantParam
 	if err := c.ShouldBindUri(&uris); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -789,7 +789,7 @@ func (sv *Server) AdminUpdateVariant(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{id}/variants/{variantId}/images [post]
-func (sv *Server) AdminUploadVariantImage(c *gin.Context) {
+func (sv *Server) adminUploadVariantImage(c *gin.Context) {
 	var uris models.URIVariantParam
 	if err := c.ShouldBindUri(&uris); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -862,7 +862,7 @@ func (sv *Server) AdminUploadVariantImage(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{id}/variant/{variantID} [delete]
-func (sv *Server) AdminDeleteVariant(c *gin.Context) {
+func (sv *Server) adminDeleteVariant(c *gin.Context) {
 	var uris models.URIVariantParam
 	if err := c.ShouldBindUri(&uris); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -898,7 +898,7 @@ func (sv *Server) AdminDeleteVariant(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/attributes [post]
-func (sv *Server) AdminCreateAttribute(c *gin.Context) {
+func (sv *Server) adminCreateAttribute(c *gin.Context) {
 	var req models.AttributeModel
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -927,7 +927,7 @@ func (sv *Server) AdminCreateAttribute(c *gin.Context) {
 // @Success 200 {object} ApiResponse[[]AttributeRespModel]
 // @Failure 500 {object} ErrorResp
 // @Router /admin/attributes [get]
-func (sv *Server) AdminGetAttributes(c *gin.Context) {
+func (sv *Server) adminGetAttributes(c *gin.Context) {
 	var queries models.AttributesQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -978,7 +978,7 @@ func (sv *Server) AdminGetAttributes(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/attributes/{id} [get]
-func (sv *Server) AdminGetAttributeByID(c *gin.Context) {
+func (sv *Server) adminGetAttributeByID(c *gin.Context) {
 	var attributeParam models.AttributeParam
 	if err := c.ShouldBindUri(&attributeParam); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -1024,7 +1024,7 @@ func (sv *Server) AdminGetAttributeByID(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/attributes/{id} [put]
-func (sv *Server) AdminUpdateAttribute(c *gin.Context) {
+func (sv *Server) adminUpdateAttribute(c *gin.Context) {
 	var param models.AttributeParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -1064,7 +1064,7 @@ func (sv *Server) AdminUpdateAttribute(c *gin.Context) {
 // @Success 204 {object} nil
 // @Failure 500 {object} ErrorResp
 // @Router /admin/attributes/{id} [delete]
-func (sv *Server) AdminRemoveAttribute(c *gin.Context) {
+func (sv *Server) adminRemoveAttribute(c *gin.Context) {
 	var params models.AttributeParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -1100,7 +1100,7 @@ func (sv *Server) AdminRemoveAttribute(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/attributes/product/{id} [get]
-func (sv *Server) AdminGetAttributeValuesForProduct(c *gin.Context) {
+func (sv *Server) adminGetAttributeValuesForProduct(c *gin.Context) {
 	var uri models.UriIDParam
 	if err := c.ShouldBindUri(&uri); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -1159,7 +1159,7 @@ func (sv *Server) AdminGetAttributeValuesForProduct(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/attributes/{id}/create [post]
-func (sv *Server) AdminAddAttributeValue(c *gin.Context) {
+func (sv *Server) adminAddAttributeValue(c *gin.Context) {
 	var param models.AttributeParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -1200,7 +1200,7 @@ func (sv *Server) AdminAddAttributeValue(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/attributes/{id}/update/{valueId} [put]
-func (sv *Server) AdminUpdateAttrValue(c *gin.Context) {
+func (sv *Server) adminUpdateAttrValue(c *gin.Context) {
 	var param models.AttributeParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -1245,7 +1245,7 @@ func (sv *Server) AdminUpdateAttrValue(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/attributes/{id}/remove/{valueId} [delete]
-func (sv *Server) AdminRemoveAttrValue(c *gin.Context) {
+func (sv *Server) adminRemoveAttrValue(c *gin.Context) {
 	var param models.AttributeParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -1276,9 +1276,9 @@ func (sv *Server) AdminRemoveAttrValue(c *gin.Context) {
 	c.JSON(http.StatusNoContent, dto.CreateDataResp(c, struct{}{}, nil, nil))
 }
 
-// @Summary Get all orders (Admin endpoint)
+// @Summary Get all orders (admin endpoint)
 // @Description Get all orders with pagination and filtering
-// @Tags Admin
+// @Tags admin
 // @Accept json
 // @Produce json
 // @Param page query int false "Page number"
@@ -1290,7 +1290,7 @@ func (sv *Server) AdminRemoveAttrValue(c *gin.Context) {
 // @Failure 403 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/orders [get]
-func (sv *Server) AdminGetOrders(c *gin.Context) {
+func (sv *Server) adminGetOrders(c *gin.Context) {
 	var orderListQuery models.OrderListQuery
 	if err := c.ShouldBindQuery(&orderListQuery); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -1368,9 +1368,9 @@ func (sv *Server) AdminGetOrders(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, orderResponses, dto.CreatePagination(orderListQuery.Page, orderListQuery.PageSize, count), nil))
 }
 
-// @Summary Get order details by ID (Admin endpoint)
+// @Summary Get order details by ID (admin endpoint)
 // @Description Get detailed information about an order by its ID
-// @Tags Admin
+// @Tags admin
 // @Accept json
 // @Produce json
 // @Param id path string true "Order ID"
@@ -1381,7 +1381,7 @@ func (sv *Server) AdminGetOrders(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/orders/{id} [get]
-func (sv *Server) AdminGetOrderDetail(c *gin.Context) {
+func (sv *Server) adminGetOrderDetail(c *gin.Context) {
 	// Reuse the existing order detail handler since admin has access to all orders
 	sv.getOrderDetail(c)
 }
@@ -1399,7 +1399,7 @@ func (sv *Server) AdminGetOrderDetail(c *gin.Context) {
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/orders/{orderId}/status [put]
-func (sv *Server) AdminChangeOrderStatus(c *gin.Context) {
+func (sv *Server) adminChangeOrderStatus(c *gin.Context) {
 	var params models.UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -1552,7 +1552,7 @@ func (sv *Server) adminCancelOrder(c *gin.Context) {
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/order/{orderId}/refund [put]
-func (sv *Server) AdminRefundOrder(c *gin.Context) {
+func (sv *Server) adminRefundOrder(c *gin.Context) {
 	var params models.UriIDParam
 	if err := c.ShouldBindUri(&params); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -1599,7 +1599,7 @@ func (sv *Server) AdminRefundOrder(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, order, nil, nil))
 }
 
-// AdminGetCategories retrieves a list of Categories.
+// adminGetCategories retrieves a list of Categories.
 // @Summary Get a list of Categories
 // @Description Get a list of Categories
 // @ID get-admin-Categories
@@ -1612,7 +1612,7 @@ func (sv *Server) AdminRefundOrder(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/categories [get]
-func (sv *Server) AdminGetCategories(c *gin.Context) {
+func (sv *Server) adminGetCategories(c *gin.Context) {
 	var query models.PaginationQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -1653,7 +1653,7 @@ func (sv *Server) AdminGetCategories(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, categoriesResp, dto.CreatePagination(query.Page, query.PageSize, count), nil))
 }
 
-// AdminGetCategoryByID retrieves a Category by its ID.
+// adminGetCategoryByID retrieves a Category by its ID.
 // @Summary Get a Category by ID
 // @Description Get a Category by ID
 // @ID get-Category-by-id
@@ -1666,7 +1666,7 @@ func (sv *Server) AdminGetCategories(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/categories/{id} [get]
-func (sv *Server) AdminGetCategoryByID(c *gin.Context) {
+func (sv *Server) adminGetCategoryByID(c *gin.Context) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -1696,7 +1696,7 @@ func (sv *Server) AdminGetCategoryByID(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, resp, nil, nil))
 }
 
-// AdminCreateCategory creates a new Category.
+// adminCreateCategory creates a new Category.
 // @Summary Create a new Category
 // @Description Create a new Category
 // @ID create-Category
@@ -1708,7 +1708,7 @@ func (sv *Server) AdminGetCategoryByID(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/categories [post]
-func (sv *Server) AdminCreateCategory(c *gin.Context) {
+func (sv *Server) adminCreateCategory(c *gin.Context) {
 	var req models.CreateCategoryModel
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -1751,12 +1751,12 @@ func (sv *Server) AdminCreateCategory(c *gin.Context) {
 	c.JSON(http.StatusCreated, dto.CreateDataResp(c, resp, nil, nil))
 }
 
-// AdminUpdateCategory updates a Category.
+// adminUpdateCategory updates a Category.
 // @Summary Update a Category
 // @Description Update a Category
 // @ID update-Category
 // @Accept json
-// @Tags Admin
+// @Tags admin
 // @Produce json
 // @Param id path int true "Category ID"
 // @Param request body models.UpdateCategoryModel true "Category request"
@@ -1764,7 +1764,7 @@ func (sv *Server) AdminCreateCategory(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/categories/{id} [put]
-func (sv *Server) AdminUpdateCategory(c *gin.Context) {
+func (sv *Server) adminUpdateCategory(c *gin.Context) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -1840,19 +1840,19 @@ func (sv *Server) AdminUpdateCategory(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, col, nil, apiErr))
 }
 
-// AdminDeleteCategory delete a Category.
+// adminDeleteCategory delete a Category.
 // @Summary Delete a Category
 // @Description Delete a Category
 // @ID delete-Category
 // @Accept json
-// @Tags Admin
+// @Tags admin
 // @Produce json
 // @Param id path int true "Category ID"
 // @Success 204 {object} nil
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/categories/{id} [delete]
-func (sv *Server) AdminDeleteCategory(c *gin.Context) {
+func (sv *Server) adminDeleteCategory(c *gin.Context) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -1879,7 +1879,7 @@ func (sv *Server) AdminDeleteCategory(c *gin.Context) {
 
 // @Summary Create a new Brand
 // @Description Create a new Brand
-// @Tags Admin
+// @Tags admin
 // @ID create-Brand
 // @Accept json
 // @Produce json
@@ -1888,7 +1888,7 @@ func (sv *Server) AdminDeleteCategory(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/brands [post]
-func (sv *Server) AdminCreateBrand(c *gin.Context) {
+func (sv *Server) adminCreateBrand(c *gin.Context) {
 	var req models.CreateCategoryModel
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -1923,7 +1923,7 @@ func (sv *Server) AdminCreateBrand(c *gin.Context) {
 
 // @Summary Get a list of brands
 // @Description Get a list of brands
-// @Tags Admin
+// @Tags admin
 // @ID get-brands
 // @Accept json
 // @Produce json
@@ -1933,7 +1933,7 @@ func (sv *Server) AdminCreateBrand(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/brands [get]
-func (sv *Server) AdminGetBrands(c *gin.Context) {
+func (sv *Server) adminGetBrands(c *gin.Context) {
 	var queries models.PaginationQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -1981,14 +1981,14 @@ func (sv *Server) AdminGetBrands(c *gin.Context) {
 // @Description Get a Brand by ID
 // @ID get-Brand-by-id
 // @Accept json
-// @Tags Admin
+// @Tags admin
 // @Produce json
 // @Param id path int true "Brand ID"
 // @Success 200 {object} ApiResponse[CategoryDto]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/brands/{id} [get]
-func (sv *Server) AdminGetBrandByID(c *gin.Context) {
+func (sv *Server) adminGetBrandByID(c *gin.Context) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -2024,14 +2024,14 @@ func (sv *Server) AdminGetBrandByID(c *gin.Context) {
 // @ID update-Brand
 // @Accept json
 // @Produce json
-// @Tags Admin
+// @Tags admin
 // @Param id path int true "Brand ID"
 // @Param request body UpdateCategoryRequest true "Brand request"
 // @Success 200 {object} ApiResponse[CategoryDto]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/brands/{id} [put]
-func (sv *Server) AdminUpdateBrand(c *gin.Context) {
+func (sv *Server) adminUpdateBrand(c *gin.Context) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -2106,14 +2106,14 @@ func (sv *Server) AdminUpdateBrand(c *gin.Context) {
 // @Description Delete a Brand
 // @ID delete-Brand
 // @Accept json
-// @Tags Admin
+// @Tags admin
 // @Produce json
 // @Param id path int true "Brand ID"
 // @Success 204 {object} ApiResponse[bool]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/brands/{id} [delete]
-func (sv *Server) AdminDeleteBrand(c *gin.Context) {
+func (sv *Server) adminDeleteBrand(c *gin.Context) {
 	var colID models.UriIDParam
 	if err := c.ShouldBindUri(&colID); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -2142,14 +2142,14 @@ func (sv *Server) AdminDeleteBrand(c *gin.Context) {
 // @Description Create a new Collection
 // @ID create-Collection
 // @Accept json
-// @Tags Admin
+// @Tags admin
 // @Produce json
 // @Param request body models.CreateCategoryModel true "Collection info"
 // @Success 201 {object} ApiResponse[dto.CategoryDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/collections [post]
-func (sv *Server) AdminCreateCollection(c *gin.Context) {
+func (sv *Server) adminCreateCollection(c *gin.Context) {
 	var req models.CreateCategoryModel
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode,
@@ -2192,7 +2192,7 @@ func (sv *Server) AdminCreateCollection(c *gin.Context) {
 // @Description Get a list of Collections
 // @ID get-Collections
 // @Accept json
-// @Tags Admin
+// @Tags admin
 // @Produce json
 // @Param page query int false "Page number"
 // @Param pageSize query int false "Page size"
@@ -2236,7 +2236,7 @@ func (sv *Server) adminGetCollections(c *gin.Context) {
 // @Description Get a Collection by ID
 // @ID get-Collection-by-id
 // @Accept json
-// @Tags Admin
+// @Tags admin
 // @Produce json
 // @Param id path int true "Collection ID"
 // @Success 200 {object} ApiResponse[dto.CategoryDetail]
@@ -2244,7 +2244,7 @@ func (sv *Server) adminGetCollections(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/collections/{id} [get]
-func (sv *Server) AdminGetCollectionByID(c *gin.Context) {
+func (sv *Server) adminGetCollectionByID(c *gin.Context) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode,
@@ -2281,7 +2281,7 @@ func (sv *Server) AdminGetCollectionByID(c *gin.Context) {
 // @Description Update a Collection
 // @ID update-Collection
 // @Accept json
-// @Tags Admin
+// @Tags admin
 // @Produce json
 // @Param id path int true "Collection ID"
 // @Param request body models.CreateCategoryModel true "Collection info"
@@ -2289,7 +2289,7 @@ func (sv *Server) AdminGetCollectionByID(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/collections/{id} [put]
-func (sv *Server) AdminUpdateCollection(c *gin.Context) {
+func (sv *Server) adminUpdateCollection(c *gin.Context) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode,
@@ -2368,14 +2368,14 @@ func (sv *Server) AdminUpdateCollection(c *gin.Context) {
 // @Description Delete a Collection
 // @ID delete-Collection
 // @Accept json
-// @Tags Admin
+// @Tags admin
 // @Produce json
 // @Param id path int true "Collection ID"
 // @Success 204 {object} nil
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/collections/{id} [delete]
-func (sv *Server) AdminDeleteCollection(c *gin.Context) {
+func (sv *Server) adminDeleteCollection(c *gin.Context) {
 	var colID models.UriIDParam
 	if err := c.ShouldBindUri(&colID); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode,
@@ -2417,7 +2417,7 @@ func (sv *Server) AdminDeleteCollection(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/ratings [get]
-func (s *Server) AdminGetRatings(c *gin.Context) {
+func (s *Server) adminGetRatings(c *gin.Context) {
 	var queries models.RatingsQueryParams
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
@@ -2549,7 +2549,7 @@ func (s *Server) adminGetOrderRatings(c *gin.Context) {
 
 // @Summary Delete a rating
 // @Description Delete a product rating by ID
-// @Tags Admin, ratings
+// @Tags admin, ratings
 // @Accept json
 // @Produce json
 // @Param id path string true "Rating ID"
@@ -2559,7 +2559,7 @@ func (s *Server) adminGetOrderRatings(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/ratings/{id} [delete]
-func (sv *Server) AdminDeleteRating(c *gin.Context) {
+func (sv *Server) adminDeleteRating(c *gin.Context) {
 	// Parse the rating ID from the URL
 	var param struct {
 		ID string `uri:"id" binding:"required,uuid"`
@@ -2600,7 +2600,7 @@ func (sv *Server) AdminDeleteRating(c *gin.Context) {
 
 // @Summary Approve a rating
 // @Description Approve a product rating by ID
-// @Tags Admin, ratings
+// @Tags admin, ratings
 // @Accept json
 // @Produce json
 // @Param id path string true "Rating ID"
@@ -2610,7 +2610,7 @@ func (sv *Server) AdminDeleteRating(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/ratings/{id}/approve [post]
-func (sv *Server) AdminApproveRating(c *gin.Context) {
+func (sv *Server) adminApproveRating(c *gin.Context) {
 	// Parse the rating ID from the URL
 	var param struct {
 		ID string `uri:"id" binding:"required,uuid"`
@@ -2658,7 +2658,7 @@ func (sv *Server) AdminApproveRating(c *gin.Context) {
 
 // @Summary Ban a user from rating
 // @Description Ban a user from rating by setting their rating to invisible
-// @Tags Admin, ratings
+// @Tags admin, ratings
 // @Accept json
 // @Produce json
 // @Param id path string true "Rating ID"
@@ -2668,7 +2668,7 @@ func (sv *Server) AdminApproveRating(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/ratings/{id}/ban [post]
-func (sv *Server) AdminBanUserRating(c *gin.Context) {
+func (sv *Server) adminBanUserRating(c *gin.Context) {
 	// Parse the rating ID from the URL
 	var param struct {
 		ID string `uri:"id" binding:"required,uuid"`
@@ -2714,7 +2714,7 @@ func (sv *Server) AdminBanUserRating(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// AdminGetDiscounts godoc
+// adminGetDiscounts godoc
 // @Summary Get all discounts
 // @Description Get all discounts
 // @Tags discounts
@@ -2729,7 +2729,7 @@ func (sv *Server) AdminBanUserRating(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/discounts [get]
-func (sv *Server) AdminGetDiscounts(c *gin.Context) {
+func (sv *Server) adminGetDiscounts(c *gin.Context) {
 	var queries models.DiscountListQuery
 	if err := c.ShouldBindQuery(&queries); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -2797,7 +2797,7 @@ func (sv *Server) AdminGetDiscounts(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, listData, pagination, nil))
 }
 
-// AdminCreateDiscount godoc
+// adminCreateDiscount godoc
 // @Summary Create a new discount
 // @Description Create a new discount
 // @Tags discounts
@@ -2808,7 +2808,7 @@ func (sv *Server) AdminGetDiscounts(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/discounts [post]
-func (sv *Server) AdminCreateDiscount(c *gin.Context) {
+func (sv *Server) adminCreateDiscount(c *gin.Context) {
 	// Create a new discount
 	var req models.AddDiscount
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -2846,7 +2846,7 @@ func (sv *Server) AdminCreateDiscount(c *gin.Context) {
 	c.JSON(http.StatusCreated, dto.CreateDataResp(c, discount.String(), nil, nil))
 }
 
-// AdminUpdateDiscount godoc
+// adminUpdateDiscount godoc
 // @Summary Update discount by ID
 // @Description Update discount by ID
 // @Tags discounts
@@ -2858,7 +2858,7 @@ func (sv *Server) AdminCreateDiscount(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /discounts/{id} [put]
-func (sv *Server) AdminUpdateDiscount(c *gin.Context) {
+func (sv *Server) adminUpdateDiscount(c *gin.Context) {
 	// Update discount by ID
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
@@ -2917,7 +2917,7 @@ func (sv *Server) AdminUpdateDiscount(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, updated, nil, nil))
 }
 
-// AdminDeleteDiscount godoc
+// adminDeleteDiscount godoc
 // @Summary Delete discount by ID
 // @Description Delete discount by ID
 // @Tags discounts
@@ -2928,7 +2928,7 @@ func (sv *Server) AdminUpdateDiscount(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/discounts/{id} [delete]
-func (sv *Server) AdminDeleteDiscount(c *gin.Context) {
+func (sv *Server) adminDeleteDiscount(c *gin.Context) {
 	// Delete discount by ID
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
@@ -2945,7 +2945,7 @@ func (sv *Server) AdminDeleteDiscount(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// AdminAddDiscountRule godoc
+// adminAddDiscountRule godoc
 // @Summary Add a discount rule to a discount
 // @Description Add a discount rule to a discount
 // @Tags discounts
@@ -2957,7 +2957,7 @@ func (sv *Server) AdminDeleteDiscount(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/discounts/{id}/rules [post]
-func (sv *Server) AdminAddDiscountRule(c *gin.Context) {
+func (sv *Server) adminAddDiscountRule(c *gin.Context) {
 	// Add a discount rule to a discount
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
@@ -3039,7 +3039,7 @@ func (sv *Server) AdminAddDiscountRule(c *gin.Context) {
 	c.JSON(http.StatusCreated, dto.CreateDataResp(c, rule, nil, nil))
 }
 
-// AdminGetDiscountRules godoc
+// adminGetDiscountRules godoc
 // @Summary Get all discount rules for a discount
 // @Description Get all discount rules for a specific discount
 // @Tags discounts
@@ -3050,7 +3050,7 @@ func (sv *Server) AdminAddDiscountRule(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/discounts/{id}/rules [get]
-func (sv *Server) AdminGetDiscountRules(c *gin.Context) {
+func (sv *Server) adminGetDiscountRules(c *gin.Context) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -3075,7 +3075,7 @@ func (sv *Server) AdminGetDiscountRules(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, ruleDetails, nil, nil))
 }
 
-// AdminGetDiscountRuleByID godoc
+// adminGetDiscountRuleByID godoc
 // @Summary Get a specific discount rule by ID
 // @Description Get a specific discount rule by ID
 // @Tags discounts
@@ -3088,7 +3088,7 @@ func (sv *Server) AdminGetDiscountRules(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/discounts/{id}/rules/{ruleId} [get]
-func (sv *Server) AdminGetDiscountRuleByID(c *gin.Context) {
+func (sv *Server) adminGetDiscountRuleByID(c *gin.Context) {
 	var param models.UriRuleIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -3109,7 +3109,7 @@ func (sv *Server) AdminGetDiscountRuleByID(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, ruleDetail, nil, nil))
 }
 
-// AdminUpdateDiscountRule godoc
+// adminUpdateDiscountRule godoc
 // @Summary Update a discount rule
 // @Description Update a discount rule
 // @Tags discounts
@@ -3122,7 +3122,7 @@ func (sv *Server) AdminGetDiscountRuleByID(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/discounts/{id}/rules/{ruleId} [put]
-func (sv *Server) AdminUpdateDiscountRule(c *gin.Context) {
+func (sv *Server) adminUpdateDiscountRule(c *gin.Context) {
 	var param models.UriRuleIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -3160,7 +3160,7 @@ func (sv *Server) AdminUpdateDiscountRule(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, rule, nil, nil))
 }
 
-// AdminDeleteDiscountRule godoc
+// adminDeleteDiscountRule godoc
 // @Summary Delete a discount rule
 // @Description Delete a discount rule
 // @Tags discounts
@@ -3172,7 +3172,7 @@ func (sv *Server) AdminUpdateDiscountRule(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/discounts/{id}/rules/{ruleId} [delete]
-func (sv *Server) AdminDeleteDiscountRule(c *gin.Context) {
+func (sv *Server) adminDeleteDiscountRule(c *gin.Context) {
 	var param models.UriRuleIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
