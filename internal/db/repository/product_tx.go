@@ -9,10 +9,10 @@ import (
 
 // CreateProductTx creates a product with its attributes, categories, and collections
 // within a single database transaction to ensure consistency
-func (store *pgRepo) CreateProductTx(ctx context.Context, arg CreateProductTxArgs) (Product, error) {
+func (repo *pgRepo) CreateProductTx(ctx context.Context, arg CreateProductTxArgs) (Product, error) {
 	var result Product
 
-	err := store.execTx(ctx, func(q *Queries) error {
+	err := repo.execTx(ctx, func(q *Queries) error {
 		var err error
 
 		// Create the product first
@@ -74,10 +74,10 @@ func (store *pgRepo) CreateProductTx(ctx context.Context, arg CreateProductTxArg
 
 // UpdateProductTx updates a product with its attributes, categories, and collections
 // within a single database transaction to ensure consistency
-func (store *pgRepo) UpdateProductTx(ctx context.Context, arg UpdateProductTxArgs) (Product, error) {
+func (repo *pgRepo) UpdateProductTx(ctx context.Context, arg UpdateProductTxArgs) (Product, error) {
 	var result Product
 
-	err := store.execTx(ctx, func(q *Queries) error {
+	err := repo.execTx(ctx, func(q *Queries) error {
 		var err error
 
 		// Update the product first

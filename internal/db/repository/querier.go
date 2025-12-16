@@ -157,6 +157,7 @@ type Querier interface {
 	GetImageByImageID(ctx context.Context, imageID string) (ProductImage, error)
 	GetImagesByProductID(ctx context.Context, productID uuid.UUID) ([]ProductImage, error)
 	GetOrder(ctx context.Context, id uuid.UUID) (GetOrderRow, error)
+	GetOrderDiscounts(ctx context.Context, orderID uuid.UUID) ([]Discount, error)
 	GetOrderItemByID(ctx context.Context, id uuid.UUID) (GetOrderItemByIDRow, error)
 	GetOrderItems(ctx context.Context, orderID uuid.UUID) ([]GetOrderItemsRow, error)
 	GetOrderItemsByOrderID(ctx context.Context, orderID uuid.UUID) ([]GetOrderItemsByOrderIDRow, error)

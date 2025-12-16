@@ -20,7 +20,7 @@ func NewStripeGateway(config payment.GatewayConfig) (payment.PaymentGateway, err
 	if config.APIKey == "" {
 		return nil, fmt.Errorf("stripe API key is required")
 	}
-	client := stripe.NewClient(config.APIKey)
+	client := stripe.NewClient(config.SecretKey)
 
 	return &StripeGateway{
 		apiKey:        config.APIKey,
@@ -39,6 +39,7 @@ func (s *StripeGateway) CreatePaymentIntent(ctx context.Context, req payment.Pay
 	// This would use the actual Stripe SDK
 	intent, err := s.client.V1PaymentIntents.Create(ctx, &stripe.PaymentIntentCreateParams{
 		Amount:       &req.Amount,
+		Currency:     (*string)(&req.Currency),
 		Description:  &req.Description,
 		ReceiptEmail: &req.Email,
 		Metadata:     req.Metadata,
@@ -52,7 +53,7 @@ func (s *StripeGateway) CreatePaymentIntent(ctx context.Context, req payment.Pay
 		Amount:       intent.Amount,
 		Currency:     payment.Currency(intent.Currency),
 		Status:       payment.PaymentStatus(intent.Status),
-		Email:        intent.Customer.Email,
+		Email:        intent.ReceiptEmail,
 		Description:  intent.Description,
 		ClientSecret: intent.ClientSecret,
 		CreatedAt:    time.Unix(intent.Created, 0),
@@ -63,7 +64,7 @@ func (s *StripeGateway) CreatePaymentIntent(ctx context.Context, req payment.Pay
 func (s *StripeGateway) ConfirmPayment(ctx context.Context, intentID string) (*payment.PaymentResult, error) {
 	// Implement Stripe payment confirmation
 
-	rs, err := s.client.V1PaymentIntents.Confirm(ctx, intentID, nil)
+	rs, err := s.client.V1PaymentIntents.Confirm(ctx, intentID, &stripe.PaymentIntentConfirmParams{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to confirm Stripe payment intent: %w", err)
 	}
@@ -90,7 +91,7 @@ func (s *StripeGateway) GetPayment(ctx context.Context, transactionID string) (*
 		Amount:       intent.Amount,
 		Currency:     payment.Currency(intent.Currency),
 		Status:       payment.PaymentStatus(intent.Status),
-		Email:        intent.Customer.Email,
+		Email:        intent.ReceiptEmail,
 		Description:  intent.Description,
 		ClientSecret: intent.ClientSecret,
 		CreatedAt:    time.Unix(intent.Created, 0),

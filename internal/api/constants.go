@@ -23,3 +23,8 @@ const (
 	InvalidProductCode      = "invalid_product"
 	InvalidOrderCode        = "invalid_order"
 )
+
+const (
+	TestEnv = "test"
+	DevEnv  = "development"
+)

@@ -24,8 +24,8 @@ type UpdateDiscountTxArgs struct {
 	Users      []string `json:"users,omitempty" binding:"omitempty,uuidslice"`
 }
 
-func (s *pgRepo) UpdateDiscountTx(ctx context.Context, id uuid.UUID, arg UpdateDiscountTxArgs) error {
-	err := s.execTx(ctx, func(q *Queries) (err error) {
+func (repo *pgRepo) UpdateDiscountTx(ctx context.Context, id uuid.UUID, arg UpdateDiscountTxArgs) error {
+	err := repo.execTx(ctx, func(q *Queries) (err error) {
 		sqlParams := UpdateDiscountParams{
 			ID: id,
 		}

@@ -13,8 +13,8 @@ SELECT
     pm.payment_intent_id,
     pm.created_at as payment_created_at
 FROM orders
-JOIN payments pm ON orders.id = pm.order_id
-JOIN payment_methods pmt ON pm.payment_method_id = pmt.id
+LEFT JOIN  payments pm ON orders.id = pm.order_id
+LEFT JOIN payment_methods pmt ON pm.payment_method_id = pmt.id
 WHERE orders.id = $1
 LIMIT 1;
 
@@ -22,13 +22,10 @@ LIMIT 1;
 -- name: GetOrderItems :many
 SELECT
     oi.*,
-    p.name as product_name, pi.image_url as image_url,
-    rv.id as rating_id, rv.rating, rv.review_title, rv.review_content, rv.created_at as rating_created_at
+    p.name as product_name, pv.image_url as image_url, pv.sku as sku
 FROM order_items oi
 JOIN product_variants pv ON oi.variant_id = pv.id
 JOIN products p ON pv.product_id = p.id
-LEFT JOIN product_images AS pi ON pi.product_id = p.id
-LEFT JOIN product_ratings rv ON rv.order_item_id = oi.id
 WHERE oi.order_id = $1;
 
 -- name: GetOrders :many
@@ -41,7 +38,7 @@ WHERE
     ord.status = COALESCE(sqlc.narg('status'), ord.status) AND
     ord.created_at >= COALESCE(sqlc.narg('start_date'), ord.created_at) AND
     ord.created_at <= COALESCE(sqlc.narg('end_date'), ord.created_at) AND
-    pm.status = COALESCE(sqlc.narg('payment_status'), pm.status)
+    (pm.status IS NULL OR pm.status = COALESCE(sqlc.narg('payment_status'), pm.status))
 GROUP BY ord.id, pm.status
 ORDER BY ord.created_at DESC
 LIMIT $1
@@ -94,9 +91,9 @@ LEFT JOIN payments p ON ord.id = p.order_id
 WHERE
     ord.status = COALESCE(sqlc.narg('status'), ord.status) AND
     user_id = COALESCE(sqlc.narg('user_id'), user_id) AND
-    p.status = COALESCE(sqlc.narg('payment_status'), p.status) AND
     ord.created_at >= COALESCE(sqlc.narg('start_date'), ord.created_at) AND
-    ord.created_at <= COALESCE(sqlc.narg('end_date'), ord.created_at);
+    ord.created_at <= COALESCE(sqlc.narg('end_date'), ord.created_at) AND
+    (p.status IS NULL OR p.status = COALESCE(sqlc.narg('payment_status'), p.status));
 
 -- name: MaxPreviousOrderByUserID :one
 SELECT * FROM orders

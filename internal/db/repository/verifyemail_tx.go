@@ -16,8 +16,8 @@ type VerifyEmailTxArgs struct {
 
 // VerifyEmailTx updates both the verify email record and user's verification status
 // within a single database transaction to ensure consistency
-func (s *pgRepo) VerifyEmailTx(ctx context.Context, arg VerifyEmailTxArgs) error {
-	err := s.execTx(ctx, func(q *Queries) error {
+func (repo *pgRepo) VerifyEmailTx(ctx context.Context, arg VerifyEmailTxArgs) error {
+	err := repo.execTx(ctx, func(q *Queries) error {
 		// 1. Update the verify email record to mark it as used
 		_, err := q.UpdateVerifyEmail(ctx, UpdateVerifyEmailParams{
 			ID:         arg.VerifyEmail.ID,

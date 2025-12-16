@@ -13,7 +13,7 @@ import (
 )
 
 const createPayment = `-- name: CreatePayment :one
-INSERT INTO payments (order_id,amount,payment_method_id,gateway,status,payment_intent_id,charge_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, order_id, payment_method_id, amount, processing_fee, net_amount, status, gateway, gateway_reference, refund_id, payment_intent_id, charge_id, error_code, error_message, metadata, created_at, updated_at
+INSERT INTO payments (order_id, amount, payment_method_id, gateway, status, payment_intent_id, charge_id, net_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, order_id, payment_method_id, amount, processing_fee, net_amount, status, gateway, gateway_reference, refund_id, payment_intent_id, charge_id, error_code, error_message, metadata, created_at, updated_at
 `
 
 type CreatePaymentParams struct {
@@ -24,6 +24,7 @@ type CreatePaymentParams struct {
 	Status          PaymentStatus  `json:"status"`
 	PaymentIntentID *string        `json:"paymentIntentId"`
 	ChargeID        *string        `json:"chargeId"`
+	NetAmount       pgtype.Numeric `json:"netAmount"`
 }
 
 func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payment, error) {
@@ -35,6 +36,7 @@ func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) (P
 		arg.Status,
 		arg.PaymentIntentID,
 		arg.ChargeID,
+		arg.NetAmount,
 	)
 	var i Payment
 	err := row.Scan(

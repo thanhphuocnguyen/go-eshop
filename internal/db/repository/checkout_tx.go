@@ -39,12 +39,12 @@ type CheckoutCartTxArgs struct {
 	DiscountIDs           []uuid.UUID
 	ShippingAddress       ShippingAddressSnapshot
 	PaymentMethodID       uuid.UUID
-	CreatePaymentFn       func(orderID uuid.UUID, method string) (paymentIntentID string, clientSecret *string, err error)
+	CreatePaymentFn       func(ctx context.Context, orderID uuid.UUID, method string) (paymentIntentID string, clientSecret *string, err error)
 }
 
-func (s *pgRepo) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxArgs) (CreatePaymentResult, error) {
+func (repo *pgRepo) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxArgs) (CreatePaymentResult, error) {
 	var result CreatePaymentResult
-	err := s.execTx(ctx, func(q *Queries) (err error) {
+	err := repo.execTx(ctx, func(q *Queries) error {
 		params := CreateOrderParams{
 			UserID:          arg.UserID,
 			ShippingAddress: arg.ShippingAddress,
@@ -54,11 +54,12 @@ func (s *pgRepo) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxArgs) (Cr
 			CustomerPhone:   arg.CustomerInfo.Phone,
 		}
 
-		order, err := s.CreateOrder(ctx, params)
+		order, err := q.CreateOrder(ctx, params)
 		if err != nil {
 			log.Error().Err(err).Msg("CreateOrder")
 			return err
 		}
+
 		paymentAmount := arg.TotalPrice - arg.DiscountPrice
 		result.TotalPrice = max(paymentAmount, 0)
 
@@ -92,7 +93,7 @@ func (s *pgRepo) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxArgs) (Cr
 		}
 
 		// clear cart
-		err = s.CheckoutCart(ctx, CheckoutCartParams{
+		err = q.CheckoutCart(ctx, CheckoutCartParams{
 			OrderID: utils.GetPgTypeUUID(order.ID),
 			ID:      arg.CartID,
 		})
@@ -108,8 +109,9 @@ func (s *pgRepo) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxArgs) (Cr
 			PaymentMethodID: arg.PaymentMethodID,
 			Amount:          utils.GetPgNumericFromFloat(paymentAmount),
 			Status:          PaymentStatusPending,
+			NetAmount:       utils.GetPgNumericFromFloat(paymentAmount),
 		}
-		gateWay, err := s.GetPaymentMethodByID(ctx, arg.PaymentMethodID)
+		gateWay, err := q.GetPaymentMethodByID(ctx, arg.PaymentMethodID)
 		if err != nil {
 			log.Error().Err(err).Msg("GetPaymentMethodByID")
 			return err
@@ -118,29 +120,33 @@ func (s *pgRepo) CheckoutCartTx(ctx context.Context, arg CheckoutCartTxArgs) (Cr
 		createPaymentArgs.Gateway = &gateWay.Code
 
 		if paymentAmount > 0 {
-			method, err := s.GetPaymentMethodByID(ctx, arg.PaymentMethodID)
+			method, err := q.GetPaymentMethodByID(ctx, arg.PaymentMethodID)
 			if err != nil {
 				log.Error().Err(err).Msg("GetPaymentMethodByID")
 				return err
 			}
-			paymentIntentID, clientSecret, err := arg.CreatePaymentFn(order.ID, method.Code)
-			createPaymentArgs.PaymentIntentID = &paymentIntentID
+			paymentIntentID, clientSecret, err := arg.CreatePaymentFn(ctx, order.ID, method.Code)
 			if err != nil {
 				log.Error().Err(err).Msg("CreatePaymentFn")
 				return err
 			}
+			createPaymentArgs.PaymentIntentID = &paymentIntentID
 			result.ClientSecret = clientSecret
 			result.PaymentIntentID = paymentIntentID
 		} else {
 			createPaymentArgs.PaymentIntentID = nil
 			createPaymentArgs.Status = PaymentStatusSuccess
 		}
+
 		payment, err := q.CreatePayment(ctx, createPaymentArgs)
 		if err != nil {
 			log.Error().Err(err).Msg("CreatePayment")
 			return err
 		}
 		result.PaymentID = payment.ID.String()
+		result.OrderID = order.ID
+		result.Status = createPaymentArgs.Status
+		result.PaymentIntentID = *payment.PaymentIntentID
 
 		return nil
 	})

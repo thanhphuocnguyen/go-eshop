@@ -1043,6 +1043,52 @@ func (q *Queries) GetExpiredDiscounts(ctx context.Context) ([]Discount, error) {
 	return items, nil
 }
 
+const getOrderDiscounts = `-- name: GetOrderDiscounts :many
+SELECT d.id, d.code, d.name, d.description, d.discount_type, d.discount_value, d.min_order_value, d.max_discount_amount, d.usage_limit, d.usage_per_user, d.times_used, d.is_active, d.is_stackable, d.priority, d.valid_from, d.valid_until, d.created_at, d.updated_at
+FROM discounts d
+JOIN discount_usage du ON d.id = du.discount_id
+WHERE du.order_id = $1
+`
+
+func (q *Queries) GetOrderDiscounts(ctx context.Context, orderID uuid.UUID) ([]Discount, error) {
+	rows, err := q.db.Query(ctx, getOrderDiscounts, orderID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Discount{}
+	for rows.Next() {
+		var i Discount
+		if err := rows.Scan(
+			&i.ID,
+			&i.Code,
+			&i.Name,
+			&i.Description,
+			&i.DiscountType,
+			&i.DiscountValue,
+			&i.MinOrderValue,
+			&i.MaxDiscountAmount,
+			&i.UsageLimit,
+			&i.UsagePerUser,
+			&i.TimesUsed,
+			&i.IsActive,
+			&i.IsStackable,
+			&i.Priority,
+			&i.ValidFrom,
+			&i.ValidUntil,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getTopUsedDiscounts = `-- name: GetTopUsedDiscounts :many
 SELECT id, code, name, description, discount_type, discount_value, min_order_value, max_discount_amount, usage_limit, usage_per_user, times_used, is_active, is_stackable, priority, valid_from, valid_until, created_at, updated_at FROM discounts ORDER BY times_used DESC LIMIT $1 OFFSET $2
 `

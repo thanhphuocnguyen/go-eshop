@@ -15,20 +15,21 @@ type CancelOrderTxArgs struct {
 	CancelPaymentFromMethod func(ID string, method string) error
 }
 
-func (pg *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (orderID uuid.UUID, err error) {
-	pg.execTx(ctx, func(q *Queries) error {
+func (repo *pgRepo) CancelOrderTx(ctx context.Context, args CancelOrderTxArgs) (uuid.UUID, error) {
+	var orderID = args.OrderID
+	err := repo.execTx(ctx, func(q *Queries) error {
 		// cancel payment
 		payment, err := q.GetPaymentByOrderID(ctx, args.OrderID)
 		if !errors.Is(err, ErrRecordNotFound) {
 			log.Error().Err(err).Msg("GetPaymentTransactionByOrderID")
 		}
-		paymentMethod, err := q.GetPaymentMethodByID(ctx, payment.PaymentMethodID)
-		if err != nil {
+		paymentMethod, methodErr := q.GetPaymentMethodByID(ctx, payment.PaymentMethodID)
+		if err == nil && methodErr != nil {
 			log.Error().Err(err).Msg("GetPaymentMethodByID")
 			return err
 		}
 		// if payment is not found, we don't need to cancel it
-		if payment.Gateway != nil {
+		if !errors.Is(err, ErrRecordNotFound) && payment.Gateway != nil {
 			if payment.Status == PaymentStatusSuccess {
 				return errors.New("payment is already successful, need to refund")
 			}

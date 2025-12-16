@@ -1,5 +1,5 @@
 -- name: CreatePayment :one
-INSERT INTO payments (order_id,amount,payment_method_id,gateway,status,payment_intent_id,charge_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
+INSERT INTO payments (order_id, amount, payment_method_id, gateway, status, payment_intent_id, charge_id, net_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *;
 
 -- name: GetPaymentByID :one
 SELECT * FROM payments WHERE id = $1 LIMIT 1;

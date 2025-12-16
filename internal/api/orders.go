@@ -42,7 +42,7 @@ func (sv *Server) addOrderRoutes(rg *gin.RouterGroup) {
 // @Failure 400 {object} ErrorResp
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /order/list [get]
+// @Router /orders [get]
 func (sv *Server) getOrders(c *gin.Context) {
 	tokenPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
@@ -148,22 +148,21 @@ func (sv *Server) getOrderDetail(c *gin.Context) {
 		CustomerEmail: order.CustomerEmail,
 		Status:        order.Status,
 		ShippingInfo:  order.ShippingAddress,
-		PaymentInfo: dto.PaymentInfo{
-			ID:       order.PaymentID.String(),
+		CreatedAt:     order.CreatedAt.UTC(),
+		UpdatedAt:     order.UpdatedAt.UTC(),
+		LineItems:     []dto.LineItem{},
+	}
+
+	if order.PaymentID.Valid {
+		pmId, _ := uuid.FromBytes(order.PaymentID.Bytes[:])
+		resp.PaymentInfo = dto.PaymentInfo{
+			ID:       pmId.String(),
 			Amount:   paymentAmount.Float64,
 			IntendID: order.PaymentIntentID,
 			GateWay:  order.Gateway,
-			Method:   string(order.PaymentMethod),
-			Status:   string(order.PaymentStatus),
-		},
-		CreatedAt: order.CreatedAt.UTC(),
-		Products:  []dto.OrderItemDetail{},
-	}
-
-	orderItemRows, err := sv.repo.GetOrderItems(c, order.ID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
-		return
+			Method:   *order.PaymentMethod,
+			Status:   string(order.PaymentStatus.PaymentStatus),
+		}
 	}
 
 	paymentInfo, err := sv.repo.GetPaymentByOrderID(c, order.ID)
@@ -171,11 +170,11 @@ func (sv *Server) getOrderDetail(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
+
 	var apiErr *dto.ApiError = nil
 
 	if paymentInfo.Status == repository.PaymentStatusPending &&
 		paymentInfo.PaymentIntentID != nil {
-
 		paymentDetail, err := sv.paymentSrv.GetPayment(c, *paymentInfo.PaymentIntentID, *paymentInfo.Gateway)
 		if err != nil {
 			log.Err(err).Msg("failed to get payment intent")
@@ -189,43 +188,59 @@ func (sv *Server) getOrderDetail(c *gin.Context) {
 		}
 	}
 
-	orderItems := make([]dto.OrderItemDetail, 0, len(orderItemRows))
+	discountRows, err := sv.repo.GetOrderDiscounts(c, order.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		return
+	}
+	var discounts []dto.OrderDiscount
+	for _, discount := range discountRows {
+		discountValue, _ := discount.DiscountValue.Float64Value()
+		discounts = append(discounts, dto.OrderDiscount{
+			ID:            discount.ID.String(),
+			Code:          discount.Code,
+			Description:   discount.Description,
+			DiscountType:  string(discount.DiscountType),
+			DiscountValue: discountValue.Float64,
+		})
+	}
+	resp.Discounts = discounts
 
+	orderItemRows, err := sv.repo.GetOrderItems(c, order.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		return
+	}
+	lineItems := make([]dto.LineItem, 0, len(orderItemRows))
 	for _, item := range orderItemRows {
 		lineTotal, _ := item.LineTotalSnapshot.Float64Value()
-		itemResp := dto.OrderItemDetail{
+		var discountAmount float64
+		if item.DiscountedPrice.Valid {
+			discount, _ := item.DiscountedPrice.Float64Value()
+			discountAmount = discount.Float64
+		}
+		var price float64
+		if item.PricePerUnitSnapshot.Valid {
+			p, _ := item.PricePerUnitSnapshot.Float64Value()
+			price = p.Float64
+		}
+		itemResp := dto.LineItem{
 			ID:                 item.ID.String(),
 			VariantID:          item.VariantID.String(),
 			Name:               item.ProductName,
 			ImageUrl:           item.ImageUrl,
 			LineTotal:          lineTotal.Float64,
+			DiscountAmount:     discountAmount,
+			Price:              price,
 			AttributesSnapshot: item.AttributesSnapshot,
 			Quantity:           item.Quantity,
+			CreatedAt:          item.CreatedAt.UTC(),
+			UpdatedAt:          item.UpdatedAt.UTC(),
 		}
-		if item.RatingID.Valid {
-			id, _ := uuid.FromBytes(item.RatingID.Bytes[:])
-			rating, _ := item.Rating.Float64Value()
-			itemResp.Rating = &dto.RatingDetail{
-				ID:        id.String(),
-				Title:     *item.ReviewTitle,
-				Content:   *item.ReviewContent,
-				Rating:    rating.Float64,
-				CreatedAt: item.RatingCreatedAt.Time.UTC(),
-			}
-		}
-		orderItems = append(orderItems, itemResp)
+		lineItems = append(lineItems, itemResp)
 	}
 
-	resp.Products = orderItems
-
-	if err := sv.cacheSrv.Set(c, "order_detail:"+params.ID, resp, utils.TimeDurationPtr(5*time.Minute)); err != nil {
-		log.Err(err).Msg("failed to cache order detail")
-		apiErr = &dto.ApiError{
-			Code:    InternalServerErrorCode,
-			Details: "failed to cache order detail",
-			Stack:   err,
-		}
-	}
+	resp.LineItems = lineItems
 
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, resp, nil, apiErr))
 }

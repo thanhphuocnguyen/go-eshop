@@ -206,3 +206,9 @@ FROM discounts d
 LEFT JOIN discount_usage du ON d.id = du.discount_id
 WHERE du.user_id = $1 AND d.code = ANY($2)
 GROUP BY d.id;
+
+-- name: GetOrderDiscounts :many
+SELECT d.*
+FROM discounts d
+JOIN discount_usage du ON d.id = du.discount_id
+WHERE du.order_id = $1;

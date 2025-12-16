@@ -1494,6 +1494,12 @@ func (sv *Server) adminCancelOrder(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
+
+	if order.Status == repository.OrderStatusCancelled || order.Status == repository.OrderStatusRefunded {
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidPaymentCode, errors.New("order is already cancelled or refunded")))
+		return
+	}
+
 	userRole := c.GetString(constants.UserRole)
 	if order.UserID != tokenPayload.UserID && userRole != "admin" {
 		c.JSON(http.StatusForbidden, dto.CreateErr(PermissionDeniedCode, errors.New("you do not have permission to access this order")))
@@ -1507,7 +1513,7 @@ func (sv *Server) adminCancelOrder(c *gin.Context) {
 	}
 
 	// if order status is not pending or user is not admin
-	if order.Status != repository.OrderStatusPending || (paymentRow.Status != repository.PaymentStatusPending) {
+	if order.Status != repository.OrderStatusPending || (!errors.Is(err, repository.ErrRecordNotFound) && paymentRow.Status != repository.PaymentStatusPending) {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(PermissionDeniedCode, errors.New("order cannot be cancelled")))
 		return
 	}

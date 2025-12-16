@@ -13,8 +13,8 @@ type RefundOrderTxArgs struct {
 	RefundPaymentFromMethod func(paymentID string, method string) (string, error)
 }
 
-func (pg *pgRepo) RefundOrderTx(ctx context.Context, args RefundOrderTxArgs) (err error) {
-	pg.execTx(ctx, func(q *Queries) error {
+func (repo *pgRepo) RefundOrderTx(ctx context.Context, args RefundOrderTxArgs) (err error) {
+	repo.execTx(ctx, func(q *Queries) error {
 		// refund payment
 		payment, err := q.GetPaymentByOrderID(ctx, args.OrderID)
 		if err != nil {

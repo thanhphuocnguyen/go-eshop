@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -170,9 +171,9 @@ func (sv *Server) checkout(c *gin.Context) {
 		PaymentMethodID:       uuid.MustParse(req.PaymentMethodId),
 	}
 
-	params.CreatePaymentFn = func(orderID uuid.UUID, method string) (paymentIntentID string, clientSecretID *string, err error) {
+	params.CreatePaymentFn = func(ctx context.Context, orderID uuid.UUID, method string) (paymentIntentID string, clientSecretID *string, err error) {
 		// create payment intent
-		intent, err := sv.paymentSrv.CreatePaymentIntent(c, method, payment.PaymentRequest{
+		intent, err := sv.paymentSrv.CreatePaymentIntent(ctx, method, payment.PaymentRequest{
 			Amount:   int64((totalPrice - discountResult.TotalDiscount) * 100), // convert to cents
 			Currency: "usd",
 			Email:    user.Email,

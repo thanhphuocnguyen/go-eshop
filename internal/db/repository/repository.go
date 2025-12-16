@@ -35,7 +35,7 @@ const (
 
 type pgRepo struct {
 	*Queries
-	DbPool       *pgxpool.Pool
+	db           *pgxpool.Pool
 	connAttempts int
 	connTimeOut  time.Duration
 	maxPoolSize  int
@@ -63,11 +63,11 @@ func GetPostgresInstance(ctx context.Context, cfg config.Config) (Store, error) 
 		return nil, fmt.Errorf("failed to initialize postgres: %w", err)
 	}
 
-	if repoInstance.DbPool == nil {
+	if repoInstance.db == nil {
 		return nil, fmt.Errorf("database pool is not initialized")
 	}
 
-	err = repoInstance.DbPool.Ping(ctx)
+	err = repoInstance.db.Ping(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to postgres: %w", err)
 	}
@@ -91,27 +91,27 @@ func initializePostgres(ctx context.Context, cfg config.Config) (*pgRepo, error)
 	poolConfig.MaxConns = int32(repoInstance.maxPoolSize)
 
 	for repoInstance.connAttempts > 0 {
-		repoInstance.DbPool, err = pgxpool.NewWithConfig(ctx, poolConfig)
+		repoInstance.db, err = pgxpool.NewWithConfig(ctx, poolConfig)
 		if err == nil {
 			break
 		}
 		repoInstance.connAttempts--
 		time.Sleep(repoInstance.connTimeOut)
 	}
-	err = repoInstance.DbPool.Ping(ctx)
+	err = repoInstance.db.Ping(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to postgres: %w", err)
 	}
 	// Initialize queries
-	repoInstance.Queries = New(repoInstance.DbPool)
+	repoInstance.Queries = New(repoInstance.db)
 	return repoInstance, nil
 }
 
-func (repoConn *pgRepo) Close() {
+func (repo *pgRepo) Close() {
 	mu.Lock()
 	defer mu.Unlock()
 
-	if repoConn != nil && repoConn.DbPool != nil {
+	if repo != nil && repo.db != nil {
 		// Create a context with timeout for graceful shutdown
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
@@ -120,7 +120,7 @@ func (repoConn *pgRepo) Close() {
 		done := make(chan struct{})
 		go func() {
 			defer close(done)
-			repoConn.DbPool.Close()
+			repo.db.Close()
 		}()
 
 		// Wait for close to complete or timeout
@@ -131,14 +131,14 @@ func (repoConn *pgRepo) Close() {
 			log.Warn().Msg("Database pool close timed out")
 		}
 
-		repoConn.DbPool = nil
+		repo.db = nil
 	}
 
 	repoInstance = nil
 }
 
-func (store *pgRepo) execTx(ctx context.Context, fn func(*Queries) error) error {
-	tx, err := store.DbPool.BeginTx(ctx, pgx.TxOptions{})
+func (repo *pgRepo) execTx(ctx context.Context, fn func(*Queries) error) error {
+	tx, err := repo.db.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return err
 	}
@@ -153,6 +153,6 @@ func (store *pgRepo) execTx(ctx context.Context, fn func(*Queries) error) error 
 
 	return tx.Commit(ctx)
 }
-func (store *pgRepo) QueryRaw(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error) {
-	return store.DbPool.Query(ctx, query, args...)
+func (repo *pgRepo) QueryRaw(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error) {
+	return repo.db.Query(ctx, query, args...)
 }

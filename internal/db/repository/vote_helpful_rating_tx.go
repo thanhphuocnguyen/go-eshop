@@ -13,8 +13,8 @@ type VoteHelpfulRatingTxArgs struct {
 	UserID   uuid.UUID `json:"userId" binding:"required,uuid"`
 }
 
-func (s *pgRepo) VoteHelpfulRatingTx(ctx context.Context, arg VoteHelpfulRatingTxArgs) (id uuid.UUID, err error) {
-	err = s.execTx(ctx, func(q *Queries) (err error) {
+func (repo *pgRepo) VoteHelpfulRatingTx(ctx context.Context, arg VoteHelpfulRatingTxArgs) (id uuid.UUID, err error) {
+	err = repo.execTx(ctx, func(q *Queries) (err error) {
 		existedVote, err := q.GetRatingVote(ctx, GetRatingVoteParams{
 			RatingID: arg.RatingID,
 			UserID:   arg.UserID,

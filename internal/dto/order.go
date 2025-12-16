@@ -7,15 +7,26 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 )
 
-type OrderItemDetail struct {
+type LineItem struct {
 	ID                 string                             `json:"id"`
 	VariantID          string                             `json:"variantId"`
 	Name               string                             `json:"name"`
 	ImageUrl           *string                            `json:"imageUrl"`
+	Price              float64                            `json:"price"`
 	LineTotal          float64                            `json:"lineTotal"`
+	DiscountAmount     float64                            `json:"discountAmount"`
 	Quantity           int16                              `json:"quantity"`
 	AttributesSnapshot []repository.AttributeDataSnapshot `json:"attributesSnapshot"`
-	Rating             *RatingDetail                      `json:"rating,omitempty"`
+	CreatedAt          time.Time                          `json:"createdAt"`
+	UpdatedAt          time.Time                          `json:"updatedAt"`
+}
+
+type OrderDiscount struct {
+	ID            string  `json:"id"`
+	Code          string  `json:"code"`
+	Description   *string `json:"description"`
+	DiscountType  string  `json:"discountType"`
+	DiscountValue float64 `json:"discountValue"`
 }
 
 type OrderDetail struct {
@@ -26,8 +37,10 @@ type OrderDetail struct {
 	CustomerEmail string                             `json:"customerEmail"`
 	PaymentInfo   PaymentInfo                        `json:"paymentInfo"`
 	ShippingInfo  repository.ShippingAddressSnapshot `json:"shippingInfo"`
-	Products      []OrderItemDetail                  `json:"products"`
+	LineItems     []LineItem                         `json:"lineItems"`
+	Discounts     []OrderDiscount                    `json:"discounts"`
 	CreatedAt     time.Time                          `json:"createdAt"`
+	UpdatedAt     time.Time                          `json:"updatedAt"`
 }
 
 type OrderListItem struct {

@@ -21,6 +21,9 @@ func (sv *Server) addPaymentRoutes(rg *gin.RouterGroup) {
 	payments := rg.Group("/payments").Use(authenticateMiddleware(sv.tokenGenerator))
 	{
 		payments.GET(":id", sv.getPayment)
+		if sv.config.Env == DevEnv {
+			payments.POST(":id/confirm", sv.confirmPayment)
+		}
 		payments.GET("methods", sv.getPaymentMethods)
 		payments.GET("stripe-config", sv.getStripeConfig)
 		payments.POST("", sv.createPaymentIntent)
@@ -45,7 +48,7 @@ func (sv *Server) getStripeConfig(c *gin.Context) {
 // @Failure 403 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /payment [post]
+// @Router /payments [post]
 func (sv *Server) createPaymentIntent(c *gin.Context) {
 	authPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
 	if !ok {
@@ -150,7 +153,7 @@ func (sv *Server) createPaymentIntent(c *gin.Context) {
 // @Failure 403 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /payment/{id} [get]
+// @Router /payments/{id} [get]
 func (sv *Server) getPayment(c *gin.Context) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
@@ -198,7 +201,7 @@ func (sv *Server) getPayment(c *gin.Context) {
 // @Failure 403 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /payment/{paymentId} [get]
+// @Router /payments/{paymentId} [get]
 func (sv *Server) changePaymentStatus(c *gin.Context) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
@@ -292,7 +295,7 @@ func (sv *Server) changePaymentStatus(c *gin.Context) {
 // @Failure 401 {object} ErrorResp
 // @Failure 403 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /payment/methods [get]
+// @Router /payments/methods [get]
 func (sv *Server) getPaymentMethods(c *gin.Context) {
 	paymentMethods, err := sv.repo.ListPaymentMethods(c)
 	if err != nil {
@@ -308,4 +311,50 @@ func (sv *Server) getPaymentMethods(c *gin.Context) {
 		})
 	}
 	c.JSON(http.StatusOK, dto.CreateDataResp(c, resp, nil, nil))
+}
+
+// @Summary Confirm Payment
+// @Description Confirm Payment
+// @Tags payment
+// @Accept json
+// @Produce json
+// @Param request body ConfirmPaymentRequest true "Confirm Payment request"
+// @Security BearerAuth
+// @Success 200 {object} ApiResponse[ConfirmPaymentResponse]
+// @Failure 400 {object} ErrorResp
+// @Failure 401 {object} ErrorResp
+// @Failure 403 {object} ErrorResp
+// @Failure 404 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
+// @Router /payments/{id}/confirm [post]
+func (sv *Server) confirmPayment(c *gin.Context) {
+	var param models.UriIDParam
+	if err := c.ShouldBindUri(&param); err != nil {
+		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
+		return
+	}
+
+	payment, err := sv.repo.GetPaymentByID(c, uuid.MustParse(param.ID))
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
+			return
+		}
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		return
+	}
+
+	paymentMethod, err := sv.repo.GetPaymentMethodByID(c, payment.PaymentMethodID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		return
+	}
+
+	rs, err := sv.paymentSrv.ConfirmPayment(c, *payment.PaymentIntentID, paymentMethod.Code)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.CreateDataResp(c, rs, nil, nil))
 }

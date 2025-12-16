@@ -20,26 +20,26 @@ LEFT JOIN payments p ON ord.id = p.order_id
 WHERE
     ord.status = COALESCE($1, ord.status) AND
     user_id = COALESCE($2, user_id) AND
-    p.status = COALESCE($3, p.status) AND
-    ord.created_at >= COALESCE($4, ord.created_at) AND
-    ord.created_at <= COALESCE($5, ord.created_at)
+    ord.created_at >= COALESCE($3, ord.created_at) AND
+    ord.created_at <= COALESCE($4, ord.created_at) AND
+    (p.status IS NULL OR p.status = COALESCE($5, p.status))
 `
 
 type CountOrdersParams struct {
 	Status        NullOrderStatus    `json:"status"`
 	UserID        pgtype.UUID        `json:"userId"`
-	PaymentStatus NullPaymentStatus  `json:"paymentStatus"`
 	StartDate     pgtype.Timestamptz `json:"startDate"`
 	EndDate       pgtype.Timestamptz `json:"endDate"`
+	PaymentStatus NullPaymentStatus  `json:"paymentStatus"`
 }
 
 func (q *Queries) CountOrders(ctx context.Context, arg CountOrdersParams) (int64, error) {
 	row := q.db.QueryRow(ctx, countOrders,
 		arg.Status,
 		arg.UserID,
-		arg.PaymentStatus,
 		arg.StartDate,
 		arg.EndDate,
+		arg.PaymentStatus,
 	)
 	var count int64
 	err := row.Scan(&count)
@@ -175,8 +175,8 @@ SELECT
     pm.payment_intent_id,
     pm.created_at as payment_created_at
 FROM orders
-JOIN payments pm ON orders.id = pm.order_id
-JOIN payment_methods pmt ON pm.payment_method_id = pmt.id
+LEFT JOIN  payments pm ON orders.id = pm.order_id
+LEFT JOIN payment_methods pmt ON pm.payment_method_id = pmt.id
 WHERE orders.id = $1
 LIMIT 1
 `
@@ -204,11 +204,11 @@ type GetOrderRow struct {
 	TrackingUrl           *string                 `json:"trackingUrl"`
 	ShippingProvider      *string                 `json:"shippingProvider"`
 	ShippingNotes         *string                 `json:"shippingNotes"`
-	PaymentID             uuid.UUID               `json:"paymentId"`
-	PaymentStatus         PaymentStatus           `json:"paymentStatus"`
+	PaymentID             pgtype.UUID             `json:"paymentId"`
+	PaymentStatus         NullPaymentStatus       `json:"paymentStatus"`
 	PaymentAmount         pgtype.Numeric          `json:"paymentAmount"`
-	PaymentMethod         string                  `json:"paymentMethod"`
-	PaymentMethodID       uuid.UUID               `json:"paymentMethodId"`
+	PaymentMethod         *string                 `json:"paymentMethod"`
+	PaymentMethodID       pgtype.UUID             `json:"paymentMethodId"`
 	Gateway               *string                 `json:"gateway"`
 	PaymentIntentID       *string                 `json:"paymentIntentId"`
 	PaymentCreatedAt      pgtype.Timestamptz      `json:"paymentCreatedAt"`
@@ -286,13 +286,10 @@ func (q *Queries) GetOrderItemByID(ctx context.Context, id uuid.UUID) (GetOrderI
 const getOrderItems = `-- name: GetOrderItems :many
 SELECT
     oi.id, oi.order_id, oi.variant_id, oi.quantity, oi.price_per_unit_snapshot, oi.line_total_snapshot, oi.product_name_snapshot, oi.variant_sku_snapshot, oi.attributes_snapshot, oi.created_at, oi.updated_at, oi.discounted_price,
-    p.name as product_name, pi.image_url as image_url,
-    rv.id as rating_id, rv.rating, rv.review_title, rv.review_content, rv.created_at as rating_created_at
+    p.name as product_name, pv.image_url as image_url, pv.sku as sku
 FROM order_items oi
 JOIN product_variants pv ON oi.variant_id = pv.id
 JOIN products p ON pv.product_id = p.id
-LEFT JOIN product_images AS pi ON pi.product_id = p.id
-LEFT JOIN product_ratings rv ON rv.order_item_id = oi.id
 WHERE oi.order_id = $1
 `
 
@@ -311,11 +308,7 @@ type GetOrderItemsRow struct {
 	DiscountedPrice      pgtype.Numeric          `json:"discountedPrice"`
 	ProductName          string                  `json:"productName"`
 	ImageUrl             *string                 `json:"imageUrl"`
-	RatingID             pgtype.UUID             `json:"ratingId"`
-	Rating               pgtype.Numeric          `json:"rating"`
-	ReviewTitle          *string                 `json:"reviewTitle"`
-	ReviewContent        *string                 `json:"reviewContent"`
-	RatingCreatedAt      pgtype.Timestamptz      `json:"ratingCreatedAt"`
+	Sku                  string                  `json:"sku"`
 }
 
 func (q *Queries) GetOrderItems(ctx context.Context, orderID uuid.UUID) ([]GetOrderItemsRow, error) {
@@ -342,11 +335,7 @@ func (q *Queries) GetOrderItems(ctx context.Context, orderID uuid.UUID) ([]GetOr
 			&i.DiscountedPrice,
 			&i.ProductName,
 			&i.ImageUrl,
-			&i.RatingID,
-			&i.Rating,
-			&i.ReviewTitle,
-			&i.ReviewContent,
-			&i.RatingCreatedAt,
+			&i.Sku,
 		); err != nil {
 			return nil, err
 		}
@@ -412,7 +401,7 @@ WHERE
     ord.status = COALESCE($4, ord.status) AND
     ord.created_at >= COALESCE($5, ord.created_at) AND
     ord.created_at <= COALESCE($6, ord.created_at) AND
-    pm.status = COALESCE($7, pm.status)
+    (pm.status IS NULL OR pm.status = COALESCE($7, pm.status))
 GROUP BY ord.id, pm.status
 ORDER BY ord.created_at DESC
 LIMIT $1
