@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/thanhphuocnguyen/go-eshop/internal/constants"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
@@ -17,7 +18,7 @@ import (
 )
 
 // Setup payment-related routes
-func (sv *Server) addPaymentRoutes(rg *gin.RouterGroup) {
+func (sv *Server) addPaymentRoutes(r chi.Router) {
 	payments := rg.Group("/payments").Use(authenticateMiddleware(sv.tokenGenerator))
 	{
 		payments.GET(":id", sv.getPayment)

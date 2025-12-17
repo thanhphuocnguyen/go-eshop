@@ -2,93 +2,89 @@ package api
 
 import (
 	"encoding/gob"
+	"encoding/json"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/stripe/stripe-go/v81"
-	swaggerfiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
+	httpSwagger "github.com/swaggo/http-swagger"
 	docs "github.com/thanhphuocnguyen/go-eshop/docs"
 )
 
 // Setup image-related routes
-func (sv *Server) addImageRoutes(rg *gin.RouterGroup) {
-	images := rg.Group("images", authenticateMiddleware(sv.tokenGenerator))
-	{
-		images.DELETE(
-			"remove-external/:public_id",
-			authorizeMiddleware("admin"),
-			sv.removeImageByPublicID)
-		images.GET("", sv.getProductImages)
-	}
+func (sv *Server) addImageRoutes(r chi.Router) {
+	r.Route("/images", func(r chi.Router) {
+		r.Use(func(h http.Handler) http.Handler {
+			return authenticateMiddleware(h, sv.tokenGenerator)
+		})
+		r.Delete("/remove-external/{public_id}", sv.removeImageByPublicID)
+		r.Get("/", sv.getProductImages)
+	})
 }
 
 // Setup discount-related routes
 
 // Setup webhook routes
-func (sv *Server) addWebhookRoutes(router *gin.Engine) {
-	webhooks := router.Group("/webhook/v1")
-	{
-		webhooks.POST("stripe", sv.sendStripeEvent)
-	}
+func (sv *Server) addWebhookRoutes(r chi.Router) {
+	r.Route("/webhook/v1", func(r chi.Router) {
+		r.Post("/stripe", sv.sendStripeEvent)
+	})
 }
 
 func (sv *Server) initializeRouter() {
-	router := gin.Default()
+	router := chi.NewRouter()
 	gob.Register(&stripe.PaymentIntent{})
 
 	// Setup environment mode
 	sv.setEnvModeMiddleware(router)
 
-	// Load HTML templates
-	router.LoadHTMLGlob("static/templates/*")
-
-	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		v.RegisterValidation("uuidslice", uuidSlice)
-	}
+	// Setup validator
+	validate := validator.New()
+	validate.RegisterValidation("uuidslice", uuidSlice)
 
 	// Setup CORS
 	router.Use(corsMiddleware())
 
-	router.MaxMultipartMemory = 8 << 20 // 8 MiB
 	docs.SwaggerInfo.BasePath = "/api/v1"
 
-	router.Static("/assets", "./assets")
+	// Serve static files
+	fileServer := http.FileServer(http.Dir("./assets/"))
+	router.Handle("/assets/*", http.StripPrefix("/assets/", fileServer))
 
-	router.GET("verify-email", sv.VerifyEmail)
+	router.Get("/verify-email", sv.VerifyEmail)
 	// Setup API routes
-	v1 := router.Group("/api/v1")
-	{
+	router.Route("/api/v1", func(r chi.Router) {
 		// Health check endpoint
-		v1.GET("health", func(ctx *gin.Context) {
-			ctx.JSON(http.StatusOK, gin.H{"status ": "ok"})
+		r.Get("/health", func(w http.ResponseWriter, req *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 		})
 
-		v1.GET("homepage", sv.getHomePage)
+		r.Get("/homepage", sv.getHomePage)
 
 		// Register API route groups
-		sv.addAuthRoutes(v1)
-		sv.addAdminRoutes(v1)
-		sv.addUserRoutes(v1)
-		sv.addProductRoutes(v1)
-		sv.addImageRoutes(v1)
-		sv.addCartRoutes(v1)
-		sv.addOrderRoutes(v1)
-		sv.addPaymentRoutes(v1)
-		sv.addCategoryRoutes(v1)
-		sv.addCollectionRoutes(v1)
-		sv.addBrandRoutes(v1)
-		sv.addRatingRoutes(v1)
-		sv.addDiscountRoutes(v1)
-	}
+		sv.addAuthRoutes(r)
+		sv.addAdminRoutes(r)
+		sv.addUserRoutes(r)
+		sv.addProductRoutes(r)
+		sv.addImageRoutes(r)
+		sv.addCartRoutes(r)
+		sv.addOrderRoutes(r)
+		sv.addPaymentRoutes(r)
+		sv.addCategoryRoutes(r)
+		sv.addCollectionRoutes(r)
+		sv.addBrandRoutes(r)
+		sv.addRatingRoutes(r)
+		sv.addDiscountRoutes(r)
+	})
 
 	// Setup webhook routes
 	sv.addWebhookRoutes(router)
 
 	// Setup Swagger
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+	router.Get("/swagger/*", httpSwagger.WrapHandler)
 
 	sv.router = router
 }

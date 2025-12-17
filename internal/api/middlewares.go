@@ -1,49 +1,67 @@
 package api
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/constants"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
 
-func authenticateMiddleware(tokenGenerator auth.TokenGenerator) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		authorization := ctx.GetHeader(constants.Authorization)
+func authenticateMiddleware(next http.Handler, tokenGenerator auth.TokenGenerator) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		authorization := r.Header.Get(constants.Authorization)
+
 		if len(authorization) == 0 {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, dto.CreateErr(UnauthorizedCode, fmt.Errorf("authorization header is not provided")))
+			err := dto.CreateErr(UnauthorizedCode, fmt.Errorf("authorization header is not provided"))
+			w.WriteHeader(http.StatusUnauthorized)
+			jsoResp, _ := json.Marshal(err)
+			w.Write(jsoResp)
 			return
 		}
+
 		authGroup := strings.Fields(authorization)
 		if len(authGroup) != 2 || authGroup[0] != constants.AuthorizationType {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, dto.CreateErr(UnauthorizedCode, fmt.Errorf("authorization header is not valid format")))
+			err := dto.CreateErr(UnauthorizedCode, fmt.Errorf("invalid authorization header format"))
+			w.WriteHeader(http.StatusUnauthorized)
+			jsoResp, _ := json.Marshal(err)
+			w.Write(jsoResp)
 			return
 		}
 
 		payload, err := tokenGenerator.VerifyToken(authGroup[1])
 		if err != nil {
 			log.Error().Err(err).Msg("verify token")
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, dto.CreateErr(UnauthorizedCode, err))
+			err := dto.CreateErr(UnauthorizedCode, err)
+			w.WriteHeader(http.StatusUnauthorized)
+			jsoResp, _ := json.Marshal(err)
+			w.Write(jsoResp)
+
 			return
 		}
 
-		ctx.Set(constants.AuthPayLoad, payload)
-		ctx.Set(constants.UserRole, payload.RoleCode)
-		ctx.Next()
+		ctx := context.WithValue(r.Context(), "auth", payload)
+		next.ServeHTTP(w, r.WithContext(ctx))
+
 	}
 }
 
-func authorizeMiddleware(roles ...string) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		authPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
+func authorizeMiddleware(next http.Handler, roles ...string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		authPayload, ok := r.Context().Value("auth").(*auth.TokenPayload)
 		if !ok {
-			c.AbortWithStatusJSON(http.StatusForbidden, dto.CreateErr(PermissionDeniedCode, fmt.Errorf("authorization payload is not provided")))
+			err := dto.CreateErr(UnauthorizedCode, fmt.Errorf("unauthorized"))
+			w.WriteHeader(http.StatusUnauthorized)
+			jsoResp, _ := json.Marshal(err)
+			w.Write(jsoResp)
 			return
 		}
 
@@ -55,32 +73,33 @@ func authorizeMiddleware(roles ...string) gin.HandlerFunc {
 			}
 		}
 		if !hasRole {
-			c.AbortWithStatusJSON(http.StatusForbidden, dto.CreateErr(PermissionDeniedCode, fmt.Errorf("user does not have permission")))
+			err := dto.CreateErr(UnauthorizedCode, fmt.Errorf("forbidden"))
+			w.WriteHeader(http.StatusForbidden)
+			jsoResp, _ := json.Marshal(err)
+			w.Write(jsoResp)
 			return
 		}
-		c.Next()
+		next.ServeHTTP(w, r)
 	}
 }
 
 // Setup CORS configuration
-func corsMiddleware() gin.HandlerFunc {
-	return cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3001", "http://localhost:8080"},
-		AllowHeaders:     []string{"Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With"},
-		AllowFiles:       true,
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowCredentials: true,
+func corsMiddleware() func(next http.Handler) http.Handler {
+	return cors.Handler(cors.Options{
+		AllowedOrigins: []string{"http://localhost:3001", "http://localhost:8080"},
+		AllowedHeaders: []string{"Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		MaxAge:         300,
 		// AllowAllOrigins:  sv.config.Env == "development",
 	})
 }
 
 // Setup environment mode based on configuration
-func (sv *Server) setEnvModeMiddleware(router *gin.Engine) {
-	router.Use(gin.Recovery())
-	if sv.config.Env == "production" {
-		gin.SetMode(gin.ReleaseMode)
-	}
+func (sv *Server) setEnvModeMiddleware(r *chi.Mux) {
 	if sv.config.Env == "development" {
-		router.Use(gin.Logger())
+		r.Use(middleware.Logger)
 	}
+	r.Use(middleware.CleanPath)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Compress(5, "text/html", "text/css"))
 }

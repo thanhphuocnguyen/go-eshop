@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/constants"
@@ -399,7 +400,7 @@ func mapToCartItemsResp(row repository.GetCartItemsRow) dto.CartItemDetail {
 }
 
 // Setup cart-related routes
-func (sv *Server) addCartRoutes(rg *gin.RouterGroup) {
+func (sv *Server) addCartRoutes(r chi.Router) {
 	cart := rg.Group("/carts", authenticateMiddleware(sv.tokenGenerator))
 	{
 		cart.POST("", sv.createCart)

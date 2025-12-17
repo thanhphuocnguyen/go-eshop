@@ -1,7 +1,11 @@
 package api
 
 import (
+	"errors"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/thanhphuocnguyen/go-eshop/internal/constants"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
@@ -181,31 +185,32 @@ func (s *Server) postReplyRating(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /ratings/products/{productId} [get]
-func (s *Server) getRatingsByProduct(c *gin.Context) {
-	var param models.UriIDParam
-	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
-		return
-	}
-	var queries models.PaginationQuery
-	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
+func (s *Server) getRatingsByProduct(w http.ResponseWriter, r *http.Request) {
+	idParam := chi.URLParam(r, "id")
+	if idParam == "" {
+		RespondBadRequest(w, InvalidBodyCode, errors.New("id parameter is required"))
 		return
 	}
 
-	ratings, err := s.repo.GetProductRatings(c, repository.GetProductRatingsParams{
-		ProductID: utils.GetPgTypeUUID(uuid.MustParse(param.ID)),
-		Limit:     queries.PageSize,
-		Offset:    (queries.Page - 1) * queries.PageSize,
+	paginationQuery, err := ParsePaginationQuery(r)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
+	ratings, err := s.repo.GetProductRatings(r.Context(), repository.GetProductRatingsParams{
+		ProductID: utils.GetPgTypeUUID(uuid.MustParse(idParam)),
+		Limit:     paginationQuery.PageSize,
+		Offset:    (paginationQuery.Page - 1) * paginationQuery.PageSize,
 	})
 	if err != nil {
-		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
-	ratingsCount, err := s.repo.CountProductRatings(c, utils.GetPgTypeUUID(uuid.MustParse(param.ID)))
+	ratingsCount, err := s.repo.CountProductRatings(r.Context(), utils.GetPgTypeUUID(uuid.MustParse(idParam)))
 	if err != nil {
-		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 	productRatings := make([]dto.ProductRatingDetail, 0)
@@ -246,11 +251,11 @@ func (s *Server) getRatingsByProduct(c *gin.Context) {
 		productRatings = append(productRatings, model)
 	}
 
-	c.JSON(200, dto.CreateDataResp(c, productRatings, dto.CreatePagination(queries.Page, queries.PageSize, ratingsCount), nil))
+	RespondSuccessWithPagination(w, r, productRatings, dto.CreatePagination(paginationQuery.Page, paginationQuery.PageSize, ratingsCount))
 }
 
 // Setup brand-related routes
-func (sv *Server) addRatingRoutes(rg *gin.RouterGroup) {
+func (sv *Server) addRatingRoutes(r chi.Router) {
 	ratings := rg.Group("ratings", authenticateMiddleware(sv.tokenGenerator))
 	{
 		ratings.POST("", sv.postRating)

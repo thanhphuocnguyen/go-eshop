@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 
 	"github.com/thanhphuocnguyen/go-eshop/config"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
@@ -26,7 +26,7 @@ import (
 // @host      localhost:4000
 type Server struct {
 	config            config.Config
-	router            *gin.Engine
+	router            chi.Router
 	repo              repository.Store
 	tokenGenerator    auth.TokenGenerator
 	uploadService     upload.CdnUploader
@@ -66,7 +66,7 @@ func NewAPI(
 func (s *Server) Server(addr string) *http.Server {
 	return &http.Server{
 		Addr:    addr,
-		Handler: s.router.Handler(),
+		Handler: s.router,
 	}
 }
 

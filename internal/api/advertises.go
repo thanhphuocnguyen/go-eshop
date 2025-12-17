@@ -4,16 +4,20 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/gin-gonic/gin"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
-func (s *Server) getHomePage(ctx *gin.Context) {
+func (s *Server) getHomePage(w http.ResponseWriter, r *http.Request) {
 	var wg sync.WaitGroup
 	wg.Add(2)
+	ctx := r.Context()
 
+	type DashboardData struct {
+		Categories  []dto.CategoryDetail `json:"categories"`
+		Collections []dto.CategoryDetail `json:"collections"`
+	}
 	// Use channels to collect results
 	categoriesChan := make(chan []dto.CategoryDetail, 1)
 	collectionsChan := make(chan []dto.CategoryDetail, 1)
@@ -86,5 +90,5 @@ func (s *Server) getHomePage(ctx *gin.Context) {
 		Collections: collections,
 	}
 
-	ctx.JSON(http.StatusOK, dto.CreateDataResp(ctx, response, nil, nil))
+	RespondSuccess(w, r, response)
 }

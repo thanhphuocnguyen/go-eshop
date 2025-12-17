@@ -97,7 +97,7 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "api",
 		Args:  cobra.ExactArgs(0),
-		Short: "Run Gin Gonic API server",
+		Short: "Run Eshop API server",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			pgRepo, err := repository.GetPostgresInstance(ctx, cfg)
 			if err != nil {

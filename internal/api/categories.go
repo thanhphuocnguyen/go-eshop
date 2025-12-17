@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
@@ -26,7 +26,7 @@ import (
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /categories [get]
-func (sv *Server) getCategories(c *gin.Context) {
+func (sv *Server) getCategories(w http.ResponseWriter, r *http.Request) {
 	var query models.PaginationQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -85,7 +85,7 @@ func (sv *Server) getCategories(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /categories/slug/{slug} [get]
-func (sv *Server) getCategoryBySlug(c *gin.Context) {
+func (sv *Server) getCategoryBySlug(w http.ResponseWriter, r *http.Request) {
 	var param models.URISlugParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
@@ -136,7 +136,7 @@ func (sv *Server) getCategoryBySlug(c *gin.Context) {
 }
 
 // Setup category-related routes
-func (sv *Server) addCategoryRoutes(rg *gin.RouterGroup) {
+func (sv *Server) addCategoryRoutes(r chi.Router) {
 	categories := rg.Group("categories")
 	{
 		categories.GET("", sv.getCategories)

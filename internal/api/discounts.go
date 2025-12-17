@@ -1,13 +1,14 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
-	"github.com/thanhphuocnguyen/go-eshop/internal/constants"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
@@ -24,12 +25,16 @@ import (
 // @Success 200 {object} ApiResponse[[]DiscountListItemResponseModel]
 // @Failure 500 {object} ErrorResp
 // @Router /discounts/available [get]
-func (sv *Server) getAvailableDiscounts(c *gin.Context) {
-	authPayload := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
+func (sv *Server) getAvailableDiscounts(w http.ResponseWriter, r *http.Request) {
+	authPayload, ok := r.Context().Value("auth").(*auth.TokenPayload)
+	if !ok {
+		RespondInternalServerError(w, UnauthorizedCode, errors.New("authorization payload is not provided"))
+		return
+	}
 	// Get available discounts
-	discountRows, err := sv.repo.GetAvailableDiscountsForUser(c, authPayload.UserID)
+	discountRows, err := sv.repo.GetAvailableDiscountsForUser(r.Context(), authPayload.UserID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
@@ -52,7 +57,7 @@ func (sv *Server) getAvailableDiscounts(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, dto.CreateDataResp(c, discounts, nil, nil))
+	RespondSuccess(w, r, discounts)
 }
 
 // CheckDiscountApplicability godoc
@@ -66,38 +71,48 @@ func (sv *Server) getAvailableDiscounts(c *gin.Context) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /discounts/check-applicability [post]
-func (sv *Server) checkDiscountsApplicability(c *gin.Context) {
+func (sv *Server) checkDiscountsApplicability(w http.ResponseWriter, r *http.Request) {
 	// Check discount applicability
-	authPayload := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
-	var req models.CheckDiscountApplicabilityRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
+	authPayload, ok := r.Context().Value("auth").(*auth.TokenPayload)
+	if !ok {
+		RespondInternalServerError(w, UnauthorizedCode, errors.New("authorization payload is not provided"))
 		return
 	}
-	user, err := sv.repo.GetUserDetailsByID(c, authPayload.UserID)
-	if err != nil {
-		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, errors.New("user not found")))
-			return
-		}
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+	var req models.CheckDiscountApplicabilityRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
-	itemRows, err := sv.repo.GetCartItems(c, uuid.MustParse(req.CartID))
+	validate := validator.New()
+	if err := validate.Struct(&req); err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+	user, err := sv.repo.GetUserDetailsByID(r.Context(), authPayload.UserID)
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			RespondNotFound(w, NotFoundCode, errors.New("user not found"))
+			return
+		}
+		RespondInternalServerError(w, InternalServerErrorCode, err)
+		return
+	}
+
+	itemRows, err := sv.repo.GetCartItems(r.Context(), uuid.MustParse(req.CartID))
 	if err != nil {
 		log.Error().Err(err).Msg("GetCartItems")
 		return
 	}
 
-	discountResult, err := sv.discountProcessor.ProcessDiscounts(c, processors.DiscountContext{User: user, CartItems: itemRows}, req.DiscountCodes)
+	discountResult, err := sv.discountProcessor.ProcessDiscounts(r.Context(), processors.DiscountContext{User: user, CartItems: itemRows}, req.DiscountCodes)
 	if err != nil {
 		log.Error().Err(err).Msg("ProcessDiscounts")
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, dto.CreateDataResp(c, discountResult, nil, nil))
+	RespondSuccess(w, r, discountResult)
 }
 
 // getDiscountByID godoc
@@ -112,23 +127,23 @@ func (sv *Server) checkDiscountsApplicability(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /discounts/{id} [get]
-func (sv *Server) getDiscountByID(c *gin.Context) {
+func (sv *Server) getDiscountByID(w http.ResponseWriter, r *http.Request) {
 	// Get discount by ID
-	id := c.Param("id")
+	id := chi.URLParam(r, "id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, nil))
+		RespondBadRequest(w, InvalidBodyCode, errors.New("id parameter is required"))
 		return
 	}
 
-	discount, err := sv.repo.GetDiscountByID(c, uuid.MustParse(id))
+	discount, err := sv.repo.GetDiscountByID(r.Context(), uuid.MustParse(id))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	discountUsageRows, err := sv.repo.GetDiscountUsages(c, discount.ID)
+	discountUsageRows, err := sv.repo.GetDiscountUsages(r.Context(), discount.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
@@ -146,16 +161,16 @@ func (sv *Server) getDiscountByID(c *gin.Context) {
 		}
 	}
 
-	discountRuleRows, err := sv.repo.GetDiscountRules(c, discount.ID)
+	discountRuleRows, err := sv.repo.GetDiscountRules(r.Context(), discount.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 	discountRules := make([]dto.DiscountRuleDetail, len(discountRuleRows))
 	for i, rule := range discountRuleRows {
 		ruleDetail, err := dto.MapToDiscountRuleDetail(rule)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+			RespondInternalServerError(w, InternalServerErrorCode, err)
 			return
 		}
 		discountRules[i] = ruleDetail
@@ -192,14 +207,18 @@ func (sv *Server) getDiscountByID(c *gin.Context) {
 		resp.MaxDiscount = maxDiscountAmount.Float64
 	}
 
-	c.JSON(http.StatusOK, dto.CreateDataResp(c, resp, nil, nil))
+	RespondSuccess(w, r, resp)
 }
 
-func (sv *Server) addDiscountRoutes(rg *gin.RouterGroup) {
-	discountsGroup := rg.Group("discounts", authenticateMiddleware(sv.tokenGenerator))
-	{
-		discountsGroup.GET("/available", sv.getAvailableDiscounts)
-		discountsGroup.POST("/check-applicability", sv.checkDiscountsApplicability)
-		discountsGroup.GET("/:id", sv.getDiscountByID)
-	}
+func (sv *Server) addDiscountRoutes(r chi.Router) {
+	r.Route("/discounts", func(r chi.Router) {
+		// Apply authentication middleware
+		r.Use(func(h http.Handler) http.Handler {
+			return authenticateMiddleware(h, sv.tokenGenerator)
+		})
+
+		r.Get("/available", sv.getAvailableDiscounts)
+		r.Post("/check-applicability", sv.checkDiscountsApplicability)
+		r.Get("/{id}", sv.getDiscountByID)
+	})
 }

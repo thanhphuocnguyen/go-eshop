@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
@@ -82,7 +83,7 @@ func (sv *Server) getCollectionBySlug(c *gin.Context) {
 }
 
 // Setup collection-related routes
-func (sv *Server) addCollectionRoutes(rg *gin.RouterGroup) {
+func (sv *Server) addCollectionRoutes(r chi.Router) {
 	collections := rg.Group("collections")
 	{
 		collections.GET("", sv.adminGetCollections)

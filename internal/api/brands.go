@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
@@ -138,7 +139,7 @@ func (sv *Server) getShopBrandBySlug(c *gin.Context) {
 }
 
 // Setup brand-related routes
-func (sv *Server) addBrandRoutes(rg *gin.RouterGroup) {
+func (sv *Server) addBrandRoutes(r chi.Router) {
 	brands := rg.Group("brands")
 	{
 		brands.GET("", sv.getShopBrands)

@@ -5,7 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
@@ -23,33 +24,34 @@ import (
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /products/{productId} [get]
-func (sv *Server) getProductById(c *gin.Context) {
-	var params models.UriIDParam
-	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
+func (sv *Server) getProductById(w http.ResponseWriter, r *http.Request) {
+	idParam := chi.URLParam(r, "id")
+	if idParam == "" {
+		RespondBadRequest(w, InvalidBodyCode, errors.New("id parameter is required"))
 		return
 	}
+
 	sqlParams := repository.GetProductDetailParams{}
-	err := uuid.Validate(params.ID)
+	err := uuid.Validate(idParam)
 	if err == nil {
-		sqlParams.ID = uuid.MustParse(params.ID)
+		sqlParams.ID = uuid.MustParse(idParam)
 	} else {
-		sqlParams.Slug = params.ID
+		sqlParams.Slug = idParam
 	}
 
-	productRow, err := sv.repo.GetProductDetail(c, sqlParams)
+	productRow, err := sv.repo.GetProductDetail(r.Context(), sqlParams)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
+			RespondNotFound(w, NotFoundCode, err)
 			return
 		}
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
 	productDetail := dto.MapToProductDetailResponse(productRow)
 
-	c.JSON(http.StatusOK, dto.CreateDataResp(c, productDetail, nil, nil))
+	RespondSuccess(w, r, productDetail)
 }
 
 // @Summary Get list of products
@@ -64,10 +66,32 @@ func (sv *Server) getProductById(c *gin.Context) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /products [get]
-func (sv *Server) getProducts(c *gin.Context) {
+func (sv *Server) getProducts(w http.ResponseWriter, r *http.Request) {
+	paginationQuery := ParsePaginationQuery(r)
+
+	queryParams := r.URL.Query()
 	var queries models.ProductQuery
-	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
+	queries.Page = paginationQuery.Page
+	queries.PageSize = paginationQuery.PageSize
+
+	// Parse search parameter
+	if search := queryParams.Get("search"); search != "" {
+		queries.Search = &search
+	}
+
+	// Parse brandIds parameter
+	if brandIDs := queryParams["brandIds"]; len(brandIDs) > 0 {
+		queries.BrandIDs = &brandIDs
+	}
+
+	// Parse categoryIds parameter
+	if categoryIDs := queryParams["categoryIds"]; len(categoryIDs) > 0 {
+		queries.CategoryIDs = &categoryIDs
+	}
+
+	validate := validator.New()
+	if err := validate.Struct(&queries); err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
@@ -99,15 +123,15 @@ func (sv *Server) getProducts(c *gin.Context) {
 		}
 	}
 
-	products, err := sv.repo.GetProductList(c, dbParams)
+	products, err := sv.repo.GetProductList(r.Context(), dbParams)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	productCnt, err := sv.repo.CountProducts(c, repository.CountProductsParams{})
+	productCnt, err := sv.repo.CountProducts(r.Context(), repository.CountProductsParams{})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
@@ -116,15 +140,14 @@ func (sv *Server) getProducts(c *gin.Context) {
 		productResponses = append(productResponses, dto.MapToShopProductResponse(product))
 	}
 
-	c.JSON(http.StatusOK, dto.CreateDataResp(c, productResponses, dto.CreatePagination(queries.Page, queries.PageSize, productCnt), nil))
+	RespondSuccessWithPagination(w, r, productResponses, dto.CreatePagination(queries.Page, queries.PageSize, productCnt))
 }
 
 // Setup product-related routes
-func (sv *Server) addProductRoutes(rg *gin.RouterGroup) {
-	products := rg.Group("products")
-	{
-		products.GET("", sv.getProducts)
-		products.GET(":id", sv.getProductById)
-		products.GET(":id/ratings", sv.getRatingsByProduct)
-	}
+func (sv *Server) addProductRoutes(rg chi.Router) {
+	rg.Route("/products", func(r chi.Router) {
+		r.Get("/", sv.getProducts)
+		r.Get("/{id}", sv.getProductById)
+		r.Get("/{id}/ratings", sv.getRatingsByProduct)
+	})
 }

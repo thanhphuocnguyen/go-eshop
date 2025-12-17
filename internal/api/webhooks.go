@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
 	"github.com/stripe/stripe-go/v81"
@@ -25,8 +24,9 @@ import (
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /webhook/stripe [post]
-func (server *Server) sendStripeEvent(c *gin.Context) {
+func (server *Server) sendStripeEvent(w http.ResponseWriter, r *http.Request) {
 	var evt stripe.Event
+	err := json.NewDecoder(r.Body).Decode(&evt)
 	if err := c.ShouldBindJSON(&evt); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidEventCode, err))
 		return
