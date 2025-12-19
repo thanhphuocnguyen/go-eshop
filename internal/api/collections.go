@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
@@ -28,7 +27,7 @@ import (
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /collections/{slug} [get]
-func (sv *Server) getCollectionBySlug(c *gin.Context) {
+func (sv *Server) getCollectionBySlug(w http.ResponseWriter, r *http.Request) {
 	var param models.URISlugParam
 	if err := c.ShouldBindUri(&param); err != nil {
 		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode,

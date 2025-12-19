@@ -8,12 +8,13 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 )
 
 func authorizeMiddleware(next http.Handler, roles ...string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		authPayload, ok := r.Context().Value("auth").(*auth.TokenPayload)
+		_, claims, err := jwtauth.FromContext(r.Context())
 		if !ok {
 			err := dto.CreateErr(UnauthorizedCode, fmt.Errorf("unauthorized"))
 			w.WriteHeader(http.StatusUnauthorized)

@@ -380,7 +380,7 @@ type ErrorResponse struct {
 // @Failure 400 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /users [post]
-func (sv *Server) CreateUserHandler(c *gin.Context) {
+func (sv *Server) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
     var req CreateUserRequest
     if err := c.ShouldBindJSON(&req); err != nil {
         c.JSON(http.StatusBadRequest, errorResponse("VALIDATION_ERROR", err.Error()))
@@ -611,7 +611,7 @@ func validatePassword(fl validator.FieldLevel) bool {
 ```go
 // Middleware for authentication
 func authenticateMiddleware(tokenMaker auth.TokenGenerator) gin.HandlerFunc {
-    return gin.HandlerFunc(func(c *gin.Context) {
+    return gin.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         authHeader := c.GetHeader("Authorization")
         if authHeader == "" {
             c.AbortWithStatusJSON(http.StatusUnauthorized, 
@@ -640,7 +640,7 @@ func authenticateMiddleware(tokenMaker auth.TokenGenerator) gin.HandlerFunc {
 
 // Authorization middleware
 func authorizeMiddleware(allowedRoles ...string) gin.HandlerFunc {
-    return gin.HandlerFunc(func(c *gin.Context) {
+    return gin.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         payload := c.MustGet("auth_payload").(*auth.Payload)
         
         for _, role := range allowedRoles {
@@ -752,7 +752,7 @@ func LoggingMiddleware() gin.HandlerFunc {
 
 ```go
 // Health check endpoint
-func (sv *Server) HealthCheckHandler(c *gin.Context) {
+func (sv *Server) HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
     checks := map[string]string{
         "database": "ok",
         "redis":    "ok",

@@ -4,10 +4,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"
-	"github.com/thanhphuocnguyen/go-eshop/internal/constants"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
@@ -30,28 +29,28 @@ import (
 // @Failure 403 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /ratings [post]
-func (s *Server) postRating(c *gin.Context) {
-	auth, _ := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
+func (s *Server) postRating(w http.ResponseWriter, r *http.Request) {
+	_, claims, err := jwtauth.FromContext(r.Context())
 
 	var req models.PostRatingFormData
 	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
 	orderItem, err := s.repo.GetOrderItemByID(c, uuid.MustParse(req.OrderItemID))
 	if err != nil {
-		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
-	if orderItem.UserID != auth.UserID {
+	if orderItem.UserID != claims["userId"].(uuid.UUID) {
 		c.JSON(403, dto.CreateErr(InvalidBodyCode, nil))
 		return
 	}
 
 	rating, err := s.repo.InsertProductRating(c, repository.InsertProductRatingParams{
 		ProductID:        orderItem.ProductID,
-		UserID:           auth.UserID,
+		UserID:           claims["userId"].(uuid.UUID),
 		OrderItemID:      utils.GetPgTypeUUID(orderItem.OrderItemID),
 		Rating:           utils.GetPgNumericFromFloat(req.Rating),
 		ReviewTitle:      &req.Title,
@@ -90,31 +89,31 @@ func (s *Server) postRating(c *gin.Context) {
 // @Failure 403 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /ratings/{ratingId}/helpful [post]
-func (s *Server) postRatingHelpful(c *gin.Context) {
+func (s *Server) postRatingHelpful(w http.ResponseWriter, r *http.Request) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
-	auth, _ := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
+	_, claims, err := jwtauth.FromContext(r.Context())
 	var req models.PostHelpfulRatingModel
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
 	rating, err := s.repo.GetProductRating(c, uuid.MustParse(param.ID))
 	if err != nil {
-		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
-	if rating.UserID == auth.UserID {
+	if rating.UserID == claims["userId"].(uuid.UUID) {
 		c.JSON(403, dto.CreateErr(InvalidBodyCode, nil))
 		return
 	}
 
 	id, err := s.repo.VoteHelpfulRatingTx(c, repository.VoteHelpfulRatingTxArgs{
-		UserID:   auth.UserID,
+		UserID:   claims["userId"].(uuid.UUID),
 		RatingID: rating.ID,
 		Helpful:  req.Helpful,
 	})
@@ -139,28 +138,28 @@ func (s *Server) postRatingHelpful(c *gin.Context) {
 // @Failure 403 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /ratings/{ratingId}/reply [post]
-func (s *Server) postReplyRating(c *gin.Context) {
+func (s *Server) postReplyRating(w http.ResponseWriter, r *http.Request) {
 	var param models.UriIDParam
 	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
-	auth, _ := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
+	_, claims, err := jwtauth.FromContext(r.Context())
 
 	var req models.PostReplyRatingModel
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 	rating, err := s.repo.GetProductRating(c, uuid.MustParse(param.ID))
 	if err != nil {
-		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
 	reply, err := s.repo.InsertRatingReply(c, repository.InsertRatingReplyParams{
 		RatingID: rating.ID,
-		ReplyBy:  auth.UserID,
+		ReplyBy:  claims["userId"].(uuid.UUID),
 		Content:  req.Content,
 	})
 	if err != nil {

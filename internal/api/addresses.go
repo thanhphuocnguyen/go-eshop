@@ -106,13 +106,13 @@ func (sv *Server) createAddress(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResp
 // @Router /users/addresses [get]
 func (sv *Server) getAddresses(w http.ResponseWriter, r *http.Request) {
-	authPayload, ok := r.Context().Value("auth").(*auth.TokenPayload)
+	_, claims, err := jwtauth.FromContext(r.Context())
 	if !ok {
 		RespondInternalServerError(w, UnauthorizedCode, fmt.Errorf("authorization payload is not provided"))
 		return
 	}
 
-	addresses, err := sv.repo.GetAddresses(r.Context(), authPayload.UserID)
+	addresses, err := sv.repo.GetAddresses(r.Context(), userID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -140,7 +140,7 @@ func (sv *Server) getAddresses(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResp
 // @Router /users/addresses/{id} [put]
 func (sv *Server) updateAddress(w http.ResponseWriter, r *http.Request) {
-	authPayload, ok := r.Context().Value("auth").(*auth.TokenPayload)
+	_, claims, err := jwtauth.FromContext(r.Context())
 	if !ok {
 		RespondUnauthorized(w, UnauthorizedCode, fmt.Errorf("authorization payload is not provided"))
 		return
@@ -165,7 +165,7 @@ func (sv *Server) updateAddress(w http.ResponseWriter, r *http.Request) {
 
 	_, err := sv.repo.GetAddress(r.Context(), repository.GetAddressParams{
 		ID:     uuid.MustParse(idParam),
-		UserID: authPayload.UserID,
+		UserID: userID,
 	})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
@@ -178,7 +178,7 @@ func (sv *Server) updateAddress(w http.ResponseWriter, r *http.Request) {
 
 	payload := repository.UpdateAddressParams{
 		ID:     uuid.MustParse(idParam),
-		UserID: authPayload.UserID,
+		UserID: userID,
 	}
 
 	if input.Phone != nil {
@@ -205,7 +205,7 @@ func (sv *Server) updateAddress(w http.ResponseWriter, r *http.Request) {
 		if *input.IsDefault {
 			err := sv.repo.SetPrimaryAddressTx(r.Context(), repository.SetPrimaryAddressTxArgs{
 				NewPrimaryID: uuid.MustParse(idParam),
-				UserID:       authPayload.UserID,
+				UserID:       userID,
 			})
 			if err != nil {
 				RespondInternalServerError(w, InternalServerErrorCode, fmt.Errorf("failed to set primary addresses: %w", err))
@@ -236,7 +236,7 @@ func (sv *Server) updateAddress(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} ErrorResp
 // @Router /users/addresses/{id} [delete]
 func (sv *Server) removeAddress(w http.ResponseWriter, r *http.Request) {
-	authPayload, ok := r.Context().Value("auth").(*auth.TokenPayload)
+	_, claims, err := jwtauth.FromContext(r.Context())
 	if !ok {
 		RespondInternalServerError(w, UnauthorizedCode, fmt.Errorf("authorization payload is not provided"))
 		return
@@ -250,7 +250,7 @@ func (sv *Server) removeAddress(w http.ResponseWriter, r *http.Request) {
 
 	addresses, err := sv.repo.GetAddress(r.Context(), repository.GetAddressParams{
 		ID:     uuid.MustParse(idParam),
-		UserID: authPayload.UserID,
+		UserID: userID,
 	})
 
 	if err != nil {
@@ -291,7 +291,7 @@ func (sv *Server) removeAddress(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} ErrorResp
 // @Router /users/addresses/{id}/default [put]
 func (sv *Server) setDefaultAddress(w http.ResponseWriter, r *http.Request) {
-	authPayload, ok := r.Context().Value("auth").(*auth.TokenPayload)
+	_, claims, err := jwtauth.FromContext(r.Context())
 	if !ok {
 		RespondInternalServerError(w, UnauthorizedCode, fmt.Errorf("authorization payload is not provided"))
 		return
@@ -305,7 +305,7 @@ func (sv *Server) setDefaultAddress(w http.ResponseWriter, r *http.Request) {
 
 	_, err := sv.repo.GetAddress(r.Context(), repository.GetAddressParams{
 		ID:     uuid.MustParse(idParam),
-		UserID: authPayload.UserID,
+		UserID: userID,
 	})
 
 	if err != nil {
@@ -319,7 +319,7 @@ func (sv *Server) setDefaultAddress(w http.ResponseWriter, r *http.Request) {
 
 	err = sv.repo.SetPrimaryAddressTx(r.Context(), repository.SetPrimaryAddressTxArgs{
 		NewPrimaryID: uuid.MustParse(idParam),
-		UserID:       authPayload.UserID,
+		UserID:       userID,
 	})
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, fmt.Errorf("failed to set primary addresses: %w", err))

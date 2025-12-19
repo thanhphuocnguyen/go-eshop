@@ -6,12 +6,10 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
-	"github.com/thanhphuocnguyen/go-eshop/internal/constants"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 	"github.com/thanhphuocnguyen/go-eshop/internal/processors"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
@@ -32,50 +30,59 @@ import (
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /carts/checkout [post]
-func (sv *Server) checkout(c *gin.Context) {
-	authPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
-	if !ok {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, errors.New("user not found")))
+func (sv *Server) checkout(w http.ResponseWriter, r *http.Request) {
+	_, claims, err := jwtauth.FromContext(r.Context())
+	c := r.Context()
+
+	userID := claims["userId"].(uuid.UUID)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, errors.New("user not found"))
 		return
 	}
 	// verify request body
 	var req models.CheckoutModel
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
-	user, err := sv.repo.GetUserDetailsByID(c, authPayload.UserID)
+	// validate request
+	if err := sv.validator.Struct(req); err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
+	user, err := sv.repo.GetUserDetailsByID(c, userID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, errors.New("user not found")))
+			RespondNotFound(w, NotFoundCode, errors.New("user not found"))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
 	cart, err := sv.repo.GetCart(c, repository.GetCartParams{
-		UserID: utils.GetPgTypeUUID(authPayload.UserID),
+		UserID: utils.GetPgTypeUUID(userID),
 	})
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, dto.CreateErr(InternalServerErrorCode, errors.New("cart not found")))
+			RespondNotFound(w, InternalServerErrorCode, errors.New("cart not found"))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 	var shippingAddr repository.ShippingAddressSnapshot
 
-	address, err := sv.repo.GetDefaultAddress(c, authPayload.UserID)
+	address, err := sv.repo.GetDefaultAddress(c, userID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, errors.New("address not found")))
+			RespondNotFound(w, NotFoundCode, errors.New("address not found"))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
@@ -91,11 +98,11 @@ func (sv *Server) checkout(c *gin.Context) {
 		cartUserId, err := uuid.FromBytes(cart.UserID.Bytes[:])
 		if err != nil {
 			log.Error().Err(err).Msg("GetCart")
-			c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+			RespondInternalServerError(w, InternalServerErrorCode, err)
 			return
 		}
-		if cartUserId != authPayload.UserID {
-			c.JSON(http.StatusForbidden, dto.CreateErr(PermissionDeniedCode, errors.New("you are not allowed to access this cart")))
+		if cartUserId != userID {
+			RespondForbidden(w, PermissionDeniedCode, errors.New("you are not allowed to access this cart"))
 			return
 		}
 	}
@@ -110,7 +117,7 @@ func (sv *Server) checkout(c *gin.Context) {
 	discountResult, err := sv.discountProcessor.ProcessDiscounts(c, processors.DiscountContext{User: user, CartItems: itemRows}, req.DiscountCodes)
 	if err != nil {
 		log.Error().Err(err).Msg("ProcessDiscounts")
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
@@ -149,7 +156,7 @@ func (sv *Server) checkout(c *gin.Context) {
 		err := json.Unmarshal(item.Attributes, &createOrderItemParams[i].AttributesSnapshot)
 		if err != nil {
 			log.Error().Err(err).Msg("Unmarshal attributes")
-			c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+			RespondInternalServerError(w, InternalServerErrorCode, err)
 			return
 		}
 	}
@@ -158,7 +165,7 @@ func (sv *Server) checkout(c *gin.Context) {
 		CartID:          cart.ID,
 		TotalPrice:      totalPrice,
 		ShippingAddress: shippingAddr,
-		UserID:          authPayload.UserID,
+		UserID:          userID,
 		CustomerInfo: repository.CustomerInfoTxArgs{
 			FullName: user.FirstName + " " + user.LastName,
 			Email:    user.Email,
@@ -190,9 +197,9 @@ func (sv *Server) checkout(c *gin.Context) {
 
 	rs, err := sv.repo.CheckoutCartTx(c, params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, dto.CreateDataResp(c, rs, nil, nil))
+	RespondSuccess(w, r, rs)
 }

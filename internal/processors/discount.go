@@ -3,9 +3,9 @@ package processors
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/constants"
@@ -47,7 +47,7 @@ type DiscountResult struct {
 // ------------------------------ Discount Processing Methods ------------------------------
 
 // ProcessDiscounts processes all discount codes and calculates the final discount amounts
-func (dp *DiscountProcessor) ProcessDiscounts(c *gin.Context, ctx DiscountContext, discountCodes []string) (*DiscountResult, error) {
+func (dp *DiscountProcessor) ProcessDiscounts(w http.ResponseWriter, r *http.Request, ctx DiscountContext, discountCodes []string) (*DiscountResult, error) {
 	result := &DiscountResult{
 		ItemDiscounts:    []ItemDiscount{},
 		TotalDiscount:    0,
@@ -94,7 +94,7 @@ func (dp *DiscountProcessor) ProcessDiscounts(c *gin.Context, ctx DiscountContex
 }
 
 // validateDiscountApplicability validates basic discount rules
-func (dp *DiscountProcessor) validateDiscountApplicability(c *gin.Context, ctx DiscountContext, discounts []repository.Discount) error {
+func (dp *DiscountProcessor) validateDiscountApplicability(w http.ResponseWriter, r *http.Request, ctx DiscountContext, discounts []repository.Discount) error {
 	stackCnt := 0
 
 	for _, discount := range discounts {
@@ -124,7 +124,7 @@ func (dp *DiscountProcessor) validateDiscountApplicability(c *gin.Context, ctx D
 }
 
 // validateUsageLimits checks user and global usage limits
-func (dp *DiscountProcessor) validateUsageLimits(c *gin.Context, discount repository.Discount, userID uuid.UUID) error {
+func (dp *DiscountProcessor) validateUsageLimits(w http.ResponseWriter, r *http.Request, discount repository.Discount, userID uuid.UUID) error {
 	if discount.UsagePerUser != nil {
 		usageCount, err := dp.repo.CountDiscountUsageByDiscountAndUser(c, repository.CountDiscountUsageByDiscountAndUserParams{
 			DiscountID: discount.ID,
@@ -146,7 +146,7 @@ func (dp *DiscountProcessor) validateUsageLimits(c *gin.Context, discount reposi
 }
 
 // processDiscountForItems applies discount rules to cart items and calculates discount amounts
-func (dp *DiscountProcessor) processDiscountForItems(c *gin.Context, ctx DiscountContext, discount repository.Discount) ([]ItemDiscount, error) {
+func (dp *DiscountProcessor) processDiscountForItems(w http.ResponseWriter, r *http.Request, ctx DiscountContext, discount repository.Discount) ([]ItemDiscount, error) {
 	ruleRows, err := dp.repo.GetDiscountRules(c, discount.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get discount rules: %w", err)

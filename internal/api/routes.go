@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/go-playground/validator/v10"
-	"github.com/stripe/stripe-go/v81"
+	"github.com/stripe/stripe-go/v84"
 	httpSwagger "github.com/swaggo/http-swagger"
 	docs "github.com/thanhphuocnguyen/go-eshop/docs"
 )
@@ -66,7 +66,7 @@ func (sv *Server) initializeRouter() {
 		sv.addAuthRoutes(r)
 		sv.router.Group(func(r chi.Router) {
 			r.Use(jwtauth.Verifier(sv.tokenAuth))
-			r.Use(jwtauth.Authenticator)
+			r.Use(jwtauth.Authenticator(sv.tokenAuth))
 			sv.addAdminRoutes(r)
 			sv.addUserRoutes(r)
 			sv.addOrderRoutes(r)

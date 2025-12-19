@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -25,13 +26,13 @@ import (
 // @Failure 500 {object} ErrorResp
 // @Router /discounts/available [get]
 func (sv *Server) getAvailableDiscounts(w http.ResponseWriter, r *http.Request) {
-	authPayload, ok := r.Context().Value("auth").(*auth.TokenPayload)
+	_, claims, err := jwtauth.FromContext(r.Context())
 	if !ok {
 		RespondInternalServerError(w, UnauthorizedCode, errors.New("authorization payload is not provided"))
 		return
 	}
 	// Get available discounts
-	discountRows, err := sv.repo.GetAvailableDiscountsForUser(r.Context(), authPayload.UserID)
+	discountRows, err := sv.repo.GetAvailableDiscountsForUser(r.Context(), userID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -72,7 +73,7 @@ func (sv *Server) getAvailableDiscounts(w http.ResponseWriter, r *http.Request) 
 // @Router /discounts/check-applicability [post]
 func (sv *Server) checkDiscountsApplicability(w http.ResponseWriter, r *http.Request) {
 	// Check discount applicability
-	authPayload, ok := r.Context().Value("auth").(*auth.TokenPayload)
+	_, claims, err := jwtauth.FromContext(r.Context())
 	if !ok {
 		RespondInternalServerError(w, UnauthorizedCode, errors.New("authorization payload is not provided"))
 		return
@@ -88,7 +89,7 @@ func (sv *Server) checkDiscountsApplicability(w http.ResponseWriter, r *http.Req
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
-	user, err := sv.repo.GetUserDetailsByID(r.Context(), authPayload.UserID)
+	user, err := sv.repo.GetUserDetailsByID(r.Context(), userID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			RespondNotFound(w, NotFoundCode, errors.New("user not found"))

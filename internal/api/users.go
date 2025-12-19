@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
@@ -31,7 +32,7 @@ import (
 // @Failure 500 {object} ErrorResp
 // @Router /users/{id} [patch]
 func (sv *Server) updateUser(w http.ResponseWriter, r *http.Request) {
-	authPayload := r.Context().Value("auth").(*auth.TokenPayload)
+	_, claims, err := jwtauth.FromContext(r.Context())
 	var req models.UpdateUserModel
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		RespondBadRequest(w, InvalidEmailCode, err)
@@ -51,7 +52,7 @@ func (sv *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if authPayload.RoleCode != "admin" && user.ID != userId {
+	if claims["roleCode"] != "admin" && user.ID != userId {
 		RespondUnauthorized(w, UnauthorizedCode, fmt.Errorf("access denied"))
 		return
 	}
@@ -90,7 +91,7 @@ func (sv *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := dto.MapToUserResponse(updatedUser, authPayload.RoleCode)
+	resp := dto.MapToUserResponse(updatedUser, claims["roleCode"].(string))
 	RespondSuccess(w, r, resp)
 }
 
@@ -105,15 +106,17 @@ func (sv *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResp
 // @Router /users/me [get]
 func (sv *Server) getCurrentUser(w http.ResponseWriter, r *http.Request) {
-	authPayload, ok := r.Context().Value("auth").(*auth.TokenPayload)
-	if !ok {
+	_, claims, err := jwtauth.FromContext(r.Context())
+	userId := claims["userId"].(uuid.UUID)
+	roleCode := claims["roleCode"].(string)
+	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, errors.New("authorization payload is not provided"))
 		return
 	}
 
 	var userResp dto.UserDetail
 
-	user, err := sv.repo.GetUserByID(r.Context(), authPayload.UserID)
+	user, err := sv.repo.GetUserByID(r.Context(), userId)
 	if err != nil {
 		RespondNotFound(w, NotFoundCode, err)
 		return
@@ -129,7 +132,7 @@ func (sv *Server) getCurrentUser(w http.ResponseWriter, r *http.Request) {
 	for _, address := range userAddress {
 		addressResp = append(addressResp, dto.MapAddressResponse(address))
 	}
-	userResp = dto.MapToUserResponse(user, authPayload.RoleCode)
+	userResp = dto.MapToUserResponse(user, roleCode)
 	userResp.Addresses = addressResp
 
 	RespondSuccess(w, r, userResp)
@@ -148,12 +151,13 @@ func (sv *Server) getCurrentUser(w http.ResponseWriter, r *http.Request) {
 // @Router /users/verify-email [post]
 // @Security BearerAuth
 func (sv *Server) sendVerifyEmail(w http.ResponseWriter, r *http.Request) {
-	authPayload, ok := r.Context().Value("auth").(*auth.TokenPayload)
-	if !ok {
+	_, claims, err := jwtauth.FromContext(r.Context())
+	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, errors.New("authorization payload is not provided"))
 		return
 	}
-	user, err := sv.repo.GetUserByID(r.Context(), authPayload.UserID)
+	userId := claims["userId"].(uuid.UUID)
+	user, err := sv.repo.GetUserByID(r.Context(), userId)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -166,7 +170,7 @@ func (sv *Server) sendVerifyEmail(w http.ResponseWriter, r *http.Request) {
 	err = sv.taskDistributor.SendVerifyAccountEmail(
 		r.Context(),
 		&worker.PayloadVerifyEmail{
-			UserID: authPayload.UserID,
+			UserID: userId,
 		},
 		asynq.MaxRetry(3),
 		asynq.ProcessIn(5*time.Second),
