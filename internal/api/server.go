@@ -4,13 +4,13 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/jwtauth/v5"
 
 	"github.com/thanhphuocnguyen/go-eshop/config"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/processors"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 	cachesrv "github.com/thanhphuocnguyen/go-eshop/pkg/cache"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/upload"
@@ -31,6 +31,7 @@ type Server struct {
 	tokenGenerator    auth.TokenGenerator
 	uploadService     upload.CdnUploader
 	paymentSrv        *payment.PaymentManager
+	tokenAuth         *jwtauth.JWTAuth
 	cacheSrv          cachesrv.CacheContainer
 	taskDistributor   worker.TaskDistributor
 	discountProcessor *processors.DiscountProcessor
@@ -56,6 +57,7 @@ func NewAPI(
 		taskDistributor:   taskDistributor,
 		uploadService:     uploadService,
 		cacheSrv:          cachesrv,
+		tokenAuth:         jwtauth.New("HS256", []byte(cfg.SymmetricKey), nil),
 		paymentSrv:        paymentSrv,
 		discountProcessor: discountProcessor,
 	}

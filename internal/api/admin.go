@@ -22,7 +22,6 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
 )
 
@@ -34,113 +33,113 @@ func parseQuery(r *http.Request, dest interface{}) error {
 
 // Setup admin-related routes
 func (sv *Server) addAdminRoutes(r chi.Router) {
-	r.Route("/admin", func(r chi.Router) {
-		// Apply authentication and authorization middleware
-		r.Use(authenticateMiddleware(nil, sv.tokenGenerator))
+	r.Group(func(r chi.Router) {
 		r.Use(authorizeMiddleware(nil, "admin"))
+		r.Route("/admin", func(r chi.Router) {
+			// Apply authentication and authorization middleware
+			// User routes
+			r.Route("/users", func(r chi.Router) {
+				r.Get("/", sv.adminGetUsers)
+				r.Get("/{id}", sv.adminGetUser)
+			})
 
-		// User routes
-		r.Route("/users", func(r chi.Router) {
-			r.Get("/", sv.adminGetUsers)
-			r.Get("/{id}", sv.adminGetUser)
-		})
+			// Product routes
+			r.Route("/products", func(r chi.Router) {
+				r.Get("/", sv.adminGetProducts)
+				r.Post("/", sv.adminAddProduct)
+				r.Put("/{id}", sv.adminUpdateProduct)
+				r.Delete("/{id}", sv.adminDeleteProduct)
 
-		// Product routes
-		r.Route("/products", func(r chi.Router) {
-			r.Get("/", sv.adminGetProducts)
-			r.Post("/", sv.adminAddProduct)
-			r.Put("/{id}", sv.adminUpdateProduct)
-			r.Delete("/{id}", sv.adminDeleteProduct)
+				r.Route("/{id}", func(r chi.Router) {
+					r.Post("/images", sv.adminUploadProductImage)
 
-			r.Route("/{id}", func(r chi.Router) {
-				r.Post("/images", sv.adminUploadProductImage)
-
-				r.Route("/variants", func(r chi.Router) {
-					r.Post("/", sv.adminAddVariant)
-					r.Get("/", sv.adminGetVariants)
-					r.Get("/{variantId}", sv.adminGetVariant)
-					r.Put("/{variantId}", sv.adminUpdateVariant)
-					r.Post("/{variantId}/images", sv.adminUploadVariantImage)
-					r.Delete("/{variantId}", sv.adminDeleteVariant)
+					r.Route("/variants", func(r chi.Router) {
+						r.Post("/", sv.adminAddVariant)
+						r.Get("/", sv.adminGetVariants)
+						r.Get("/{variantId}", sv.adminGetVariant)
+						r.Put("/{variantId}", sv.adminUpdateVariant)
+						r.Post("/{variantId}/images", sv.adminUploadVariantImage)
+						r.Delete("/{variantId}", sv.adminDeleteVariant)
+					})
 				})
 			})
-		})
 
-		// Attribute routes
-		r.Route("/attributes", func(r chi.Router) {
-			r.Post("/", sv.adminCreateAttribute)
-			r.Get("/", sv.adminGetAttributes)
-			r.Get("/{id}", sv.adminGetAttributeByID)
-			r.Put("/{id}", sv.adminUpdateAttribute)
-			r.Delete("/{id}", sv.adminRemoveAttribute)
+			// Attribute routes
+			r.Route("/attributes", func(r chi.Router) {
+				r.Post("/", sv.adminCreateAttribute)
+				r.Get("/", sv.adminGetAttributes)
+				r.Get("/{id}", sv.adminGetAttributeByID)
+				r.Put("/{id}", sv.adminUpdateAttribute)
+				r.Delete("/{id}", sv.adminRemoveAttribute)
 
-			r.Get("/product/{id}", sv.adminGetAttributeValuesForProduct)
+				r.Get("/product/{id}", sv.adminGetAttributeValuesForProduct)
 
-			r.Route("/{id}", func(r chi.Router) {
-				r.Post("/create", sv.adminAddAttributeValue)
-				r.Put("/update/{valueId}", sv.adminUpdateAttrValue)
-				r.Delete("/remove/{valueId}", sv.adminRemoveAttrValue)
+				r.Route("/{id}", func(r chi.Router) {
+					r.Post("/create", sv.adminAddAttributeValue)
+					r.Put("/update/{valueId}", sv.adminUpdateAttrValue)
+					r.Delete("/remove/{valueId}", sv.adminRemoveAttrValue)
+				})
 			})
-		})
 
-		// Order routes
-		r.Route("/orders", func(r chi.Router) {
-			r.Get("/", sv.adminGetOrders)
-			r.Get("/{id}", sv.adminGetOrderDetail)
-			r.Put("/{id}/status", sv.adminChangeOrderStatus)
-			r.Post("/{id}/cancel", sv.adminCancelOrder)
-			r.Post("/{id}/refund", sv.adminRefundOrder)
-		})
+			// Order routes
+			r.Route("/orders", func(r chi.Router) {
+				r.Get("/", sv.adminGetOrders)
+				r.Get("/{id}", sv.adminGetOrderDetail)
+				r.Put("/{id}/status", sv.adminChangeOrderStatus)
+				r.Post("/{id}/cancel", sv.adminCancelOrder)
+				r.Post("/{id}/refund", sv.adminRefundOrder)
+			})
 
-		// Category routes
-		r.Route("/categories", func(r chi.Router) {
-			r.Get("/", sv.adminGetCategories)
-			r.Get("/{id}", sv.adminGetCategoryByID)
-			r.Post("/", sv.adminCreateCategory)
-			r.Put("/{id}", sv.adminUpdateCategory)
-			r.Delete("/{id}", sv.adminDeleteCategory)
-		})
+			// Category routes
+			r.Route("/categories", func(r chi.Router) {
+				r.Get("/", sv.adminGetCategories)
+				r.Get("/{id}", sv.adminGetCategoryByID)
+				r.Post("/", sv.adminCreateCategory)
+				r.Put("/{id}", sv.adminUpdateCategory)
+				r.Delete("/{id}", sv.adminDeleteCategory)
+			})
 
-		// Brand routes
-		r.Route("/brands", func(r chi.Router) {
-			r.Get("/", sv.adminGetBrands)
-			r.Get("/{id}", sv.adminGetBrandByID)
-			r.Post("/", sv.adminCreateBrand)
-			r.Put("/{id}", sv.adminUpdateBrand)
-			r.Delete("/{id}", sv.adminDeleteBrand)
-		})
+			// Brand routes
+			r.Route("/brands", func(r chi.Router) {
+				r.Get("/", sv.adminGetBrands)
+				r.Get("/{id}", sv.adminGetBrandByID)
+				r.Post("/", sv.adminCreateBrand)
+				r.Put("/{id}", sv.adminUpdateBrand)
+				r.Delete("/{id}", sv.adminDeleteBrand)
+			})
 
-		// Collection routes
-		r.Route("/collections", func(r chi.Router) {
-			r.Get("/", sv.adminGetCollections)
-			r.Post("/", sv.adminCreateCollection)
-			r.Get("/{id}", sv.adminGetCollectionByID)
-			r.Put("/{id}", sv.adminUpdateCollection)
-			r.Delete("/{id}", sv.adminDeleteCollection)
-		})
+			// Collection routes
+			r.Route("/collections", func(r chi.Router) {
+				r.Get("/", sv.adminGetCollections)
+				r.Post("/", sv.adminCreateCollection)
+				r.Get("/{id}", sv.adminGetCollectionByID)
+				r.Put("/{id}", sv.adminUpdateCollection)
+				r.Delete("/{id}", sv.adminDeleteCollection)
+			})
 
-		// Rating routes
-		r.Route("/ratings", func(r chi.Router) {
-			r.Get("/", sv.adminGetRatings)
-			r.Delete("/{id}", sv.adminDeleteRating)
-			r.Put("/{id}/approve", sv.adminApproveRating)
-			r.Put("/{id}/ban", sv.adminBanUserRating)
-		})
+			// Rating routes
+			r.Route("/ratings", func(r chi.Router) {
+				r.Get("/", sv.adminGetRatings)
+				r.Delete("/{id}", sv.adminDeleteRating)
+				r.Put("/{id}/approve", sv.adminApproveRating)
+				r.Put("/{id}/ban", sv.adminBanUserRating)
+			})
 
-		// Discount routes
-		r.Route("/discounts", func(r chi.Router) {
-			r.Post("/", sv.adminCreateDiscount)
-			r.Get("/", sv.adminGetDiscounts)
-			r.Get("/{id}", sv.getDiscountByID)
-			r.Put("/{id}", sv.adminUpdateDiscount)
-			r.Delete("/{id}", sv.adminDeleteDiscount)
+			// Discount routes
+			r.Route("/discounts", func(r chi.Router) {
+				r.Post("/", sv.adminCreateDiscount)
+				r.Get("/", sv.adminGetDiscounts)
+				r.Get("/{id}", sv.getDiscountByID)
+				r.Put("/{id}", sv.adminUpdateDiscount)
+				r.Delete("/{id}", sv.adminDeleteDiscount)
 
-			r.Route("/{id}/rules", func(r chi.Router) {
-				r.Post("/", sv.adminAddDiscountRule)
-				r.Get("/", sv.adminGetDiscountRules)
-				r.Get("/{ruleId}", sv.adminGetDiscountRuleByID)
-				r.Put("/{ruleId}", sv.adminUpdateDiscountRule)
-				r.Delete("/{ruleId}", sv.adminDeleteDiscountRule)
+				r.Route("/{id}/rules", func(r chi.Router) {
+					r.Post("/", sv.adminAddDiscountRule)
+					r.Get("/", sv.adminGetDiscountRules)
+					r.Get("/{ruleId}", sv.adminGetDiscountRuleByID)
+					r.Put("/{ruleId}", sv.adminUpdateDiscountRule)
+					r.Delete("/{ruleId}", sv.adminDeleteDiscountRule)
+				})
 			})
 		})
 	})
@@ -499,11 +498,6 @@ func (sv *Server) adminUploadProductImage(w http.ResponseWriter, r *http.Request
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(dto.CreateErr(InvalidBodyCode, err))
-		return
-	}
 
 	file, header, err := r.FormFile("file")
 	if err != nil {
@@ -562,10 +556,7 @@ func (sv *Server) adminUploadProductImage(w http.ResponseWriter, r *http.Request
 		json.NewEncoder(w).Encode(dto.CreateErr(InternalServerErrorCode, err))
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(dto.CreateDataResp(r, updated, nil, nil))
+	RespondSuccess(w, r, updated)
 }
 
 // @Summary Create a new product variant
@@ -691,9 +682,7 @@ func (sv *Server) adminAddVariant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(dto.CreateDataResp(r, variant.ID.String(), nil, nil))
+	RespondCreated(w, r, variant)
 }
 
 // @Summary Get product variants
@@ -735,9 +724,7 @@ func (sv *Server) adminGetVariants(w http.ResponseWriter, r *http.Request) {
 		resp[i] = dto.MapToVariantListModelDto(row)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.CreateDataResp(r, resp, nil, nil))
+	RespondSuccess(w, r, resp)
 }
 
 // @Summary Get product variant
@@ -776,9 +763,7 @@ func (sv *Server) adminGetVariant(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(dto.CreateErr(NotFoundCode, err))
+		RespondNotFound(w, NotFoundCode, err)
 		return
 	}
 	first := rows[0]

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/stripe/stripe-go/v81"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -15,9 +16,6 @@ import (
 // Setup image-related routes
 func (sv *Server) addImageRoutes(r chi.Router) {
 	r.Route("/images", func(r chi.Router) {
-		r.Use(func(h http.Handler) http.Handler {
-			return authenticateMiddleware(h, sv.tokenGenerator)
-		})
 		r.Delete("/remove-external/{public_id}", sv.removeImageByPublicID)
 		r.Get("/", sv.getProductImages)
 	})
@@ -66,17 +64,21 @@ func (sv *Server) initializeRouter() {
 
 		// Register API route groups
 		sv.addAuthRoutes(r)
-		sv.addAdminRoutes(r)
-		sv.addUserRoutes(r)
+		sv.router.Group(func(r chi.Router) {
+			r.Use(jwtauth.Verifier(sv.tokenAuth))
+			r.Use(jwtauth.Authenticator)
+			sv.addAdminRoutes(r)
+			sv.addUserRoutes(r)
+			sv.addOrderRoutes(r)
+			sv.addPaymentRoutes(r)
+			sv.addRatingRoutes(r)
+		})
 		sv.addProductRoutes(r)
 		sv.addImageRoutes(r)
 		sv.addCartRoutes(r)
-		sv.addOrderRoutes(r)
-		sv.addPaymentRoutes(r)
 		sv.addCategoryRoutes(r)
 		sv.addCollectionRoutes(r)
 		sv.addBrandRoutes(r)
-		sv.addRatingRoutes(r)
 		sv.addDiscountRoutes(r)
 	})
 

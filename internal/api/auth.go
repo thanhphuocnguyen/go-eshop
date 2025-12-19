@@ -15,7 +15,6 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
 
 // ------------------------------ s ------------------------------
@@ -247,9 +246,9 @@ func (sv *Server) login(w http.ResponseWriter, r *http.Request) {
 	loginResp := dto.LoginResponse{
 		ID:                    session.ID.String(),
 		AccessToken:           accessToken,
-		AccessTokenExpiresAt:  payload.Expires,
+		AccessTokenExpiresAt:  payload.ExpiresAt,
 		RefreshToken:          refreshToken,
-		RefreshTokenExpiresAt: rfPayload.Expires,
+		RefreshTokenExpiresAt: rfPayload.ExpiresAt,
 	}
 	RespondSuccess(w, r, loginResp)
 }

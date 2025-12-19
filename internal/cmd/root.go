@@ -144,6 +144,7 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 			taskProcessor := worker.NewRedisTaskProcessor(redisCfg, pgRepo, mailer, cfg)
 			cacheService := cachesrv.NewRedisCache(cfg)
 			discountProcessor := processors.NewDiscountProcessor(pgRepo)
+
 			api, err := api.NewAPI(cfg, pgRepo, cacheService, taskDistributor, uploadService, service, discountProcessor)
 			if err != nil {
 				return err

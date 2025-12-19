@@ -1,58 +1,15 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
-	"github.com/rs/zerolog/log"
-	"github.com/thanhphuocnguyen/go-eshop/internal/constants"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
-
-func authenticateMiddleware(next http.Handler, tokenGenerator auth.TokenGenerator) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		authorization := r.Header.Get(constants.Authorization)
-
-		if len(authorization) == 0 {
-			err := dto.CreateErr(UnauthorizedCode, fmt.Errorf("authorization header is not provided"))
-			w.WriteHeader(http.StatusUnauthorized)
-			jsoResp, _ := json.Marshal(err)
-			w.Write(jsoResp)
-			return
-		}
-
-		authGroup := strings.Fields(authorization)
-		if len(authGroup) != 2 || authGroup[0] != constants.AuthorizationType {
-			err := dto.CreateErr(UnauthorizedCode, fmt.Errorf("invalid authorization header format"))
-			w.WriteHeader(http.StatusUnauthorized)
-			jsoResp, _ := json.Marshal(err)
-			w.Write(jsoResp)
-			return
-		}
-
-		payload, err := tokenGenerator.VerifyToken(authGroup[1])
-		if err != nil {
-			log.Error().Err(err).Msg("verify token")
-			err := dto.CreateErr(UnauthorizedCode, err)
-			w.WriteHeader(http.StatusUnauthorized)
-			jsoResp, _ := json.Marshal(err)
-			w.Write(jsoResp)
-
-			return
-		}
-
-		ctx := context.WithValue(r.Context(), "auth", payload)
-		next.ServeHTTP(w, r.WithContext(ctx))
-
-	}
-}
 
 func authorizeMiddleware(next http.Handler, roles ...string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -100,6 +57,7 @@ func (sv *Server) setEnvModeMiddleware(r *chi.Mux) {
 		r.Use(middleware.Logger)
 	}
 	r.Use(middleware.CleanPath)
+
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Compress(5, "text/html", "text/css"))
 }

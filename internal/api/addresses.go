@@ -7,12 +7,12 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
 
 // createAddress godoc
@@ -27,8 +27,9 @@ import (
 // @Failure 401 {object} ErrorResp
 // @Router /users/addresses [post]
 func (sv *Server) createAddress(w http.ResponseWriter, r *http.Request) {
-	authPayload, ok := r.Context().Value("auth").(*auth.TokenPayload)
-	if !ok {
+	token, claims, err := jwtauth.FromContext(r.Context())
+	if err != nil {
+
 		RespondInternalServerError(w, UnauthorizedCode, fmt.Errorf("authorization payload is not provided"))
 		return
 	}
@@ -45,7 +46,7 @@ func (sv *Server) createAddress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	addresses, err := sv.repo.GetAddresses(r.Context(), authPayload.UserID)
+	addresses, err := sv.repo.GetAddresses(r.Context(), claims["user_id"].(uuid.UUID))
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -58,7 +59,7 @@ func (sv *Server) createAddress(w http.ResponseWriter, r *http.Request) {
 
 	payload := repository.CreateAddressParams{
 		PhoneNumber: req.Phone,
-		UserID:      authPayload.UserID,
+		UserID:      claims["userId"].(uuid.UUID),
 		Street:      req.Street,
 		IsDefault:   req.IsDefault,
 		City:        req.City,
@@ -74,7 +75,7 @@ func (sv *Server) createAddress(w http.ResponseWriter, r *http.Request) {
 	if req.IsDefault {
 		err := sv.repo.SetPrimaryAddressTx(r.Context(), repository.SetPrimaryAddressTxArgs{
 			NewPrimaryID: created.ID,
-			UserID:       authPayload.UserID,
+			UserID:       claims["user_id"].(uuid.UUID),
 		})
 		if err != nil {
 			RespondInternalServerError(w, InternalServerErrorCode, fmt.Errorf("failed to set primary addresses: %w", err))

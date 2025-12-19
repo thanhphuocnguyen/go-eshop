@@ -16,7 +16,6 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
 
 // updateUser godoc
@@ -261,11 +260,6 @@ func (sv *Server) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 // Setup user-related routes
 func (sv *Server) addUserRoutes(r chi.Router) {
 	r.Route("/users", func(r chi.Router) {
-		// Apply authentication middleware
-		r.Use(func(h http.Handler) http.Handler {
-			return authenticateMiddleware(h, sv.tokenGenerator)
-		})
-
 		r.Get("/me", sv.getCurrentUser)
 		r.Patch("/me", sv.updateUser)
 		r.Post("/send-verify-email", sv.sendVerifyEmail)

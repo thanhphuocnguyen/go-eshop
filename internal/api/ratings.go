@@ -12,7 +12,6 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
 
 // @Summary Post a rating
@@ -256,11 +255,10 @@ func (s *Server) getRatingsByProduct(w http.ResponseWriter, r *http.Request) {
 
 // Setup brand-related routes
 func (sv *Server) addRatingRoutes(r chi.Router) {
-	ratings := rg.Group("ratings", authenticateMiddleware(sv.tokenGenerator))
-	{
-		ratings.POST("", sv.postRating)
-		ratings.GET(":orderId", sv.adminGetOrderRatings)
-		ratings.POST(":id/helpful", sv.postRatingHelpful)
-		ratings.POST(":id/reply", sv.postReplyRating)
-	}
+	r.Route("ratings", func(r chi.Router) {
+		r.Post("", sv.postRating)
+		r.Get(":orderId", sv.adminGetOrderRatings)
+		r.Post(":id/helpful", sv.postRatingHelpful)
+		r.Post(":id/reply", sv.postReplyRating)
+	})
 }
