@@ -14,28 +14,27 @@ import (
 )
 
 // Setup image-related routes
-func (sv *Server) addImageRoutes(r chi.Router) {
+func (s *Server) addImageRoutes(r chi.Router) {
 	r.Route("/images", func(r chi.Router) {
-		r.Delete("/remove-external/{public_id}", sv.removeImageByPublicID)
-		r.Get("/", sv.getProductImages)
+		r.Get("/", s.getProductImages)
 	})
 }
 
 // Setup discount-related routes
 
 // Setup webhook routes
-func (sv *Server) addWebhookRoutes(r chi.Router) {
+func (s *Server) addWebhookRoutes(r chi.Router) {
 	r.Route("/webhook/v1", func(r chi.Router) {
-		r.Post("/stripe", sv.sendStripeEvent)
+		r.Post("/stripe", s.sendStripeEvent)
 	})
 }
 
-func (sv *Server) initializeRouter() {
+func (s *Server) initializeRouter() {
 	router := chi.NewRouter()
 	gob.Register(&stripe.PaymentIntent{})
 
 	// Setup environment mode
-	sv.setEnvModeMiddleware(router)
+	s.setEnvModeMiddleware(router)
 
 	// Setup validator
 	validate := validator.New()
@@ -50,7 +49,7 @@ func (sv *Server) initializeRouter() {
 	fileServer := http.FileServer(http.Dir("./assets/"))
 	router.Handle("/assets/*", http.StripPrefix("/assets/", fileServer))
 
-	router.Get("/verify-email", sv.VerifyEmail)
+	router.Get("/verify-email", s.VerifyEmail)
 	// Setup API routes
 	router.Route("/api/v1", func(r chi.Router) {
 		// Health check endpoint
@@ -60,33 +59,34 @@ func (sv *Server) initializeRouter() {
 			json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 		})
 
-		r.Get("/homepage", sv.getHomePage)
+		r.Get("/homepage", s.getHomePage)
 
 		// Register API route groups
-		sv.addAuthRoutes(r)
-		sv.router.Group(func(r chi.Router) {
-			r.Use(jwtauth.Verifier(sv.tokenAuth))
-			r.Use(jwtauth.Authenticator(sv.tokenAuth))
-			sv.addAdminRoutes(r)
-			sv.addUserRoutes(r)
-			sv.addOrderRoutes(r)
-			sv.addPaymentRoutes(r)
-			sv.addRatingRoutes(r)
+		s.addAuthRoutes(r)
+		s.router.Group(func(r chi.Router) {
+			r.Use(jwtauth.Verifier(s.tokenAuth))
+			r.Use(jwtauth.Authenticator(s.tokenAuth))
+			s.addAdminRoutes(r)
+			s.addUserRoutes(r)
+			s.addOrderRoutes(r)
+			s.addPaymentRoutes(r)
+			s.addRatingRoutes(r)
+			s.addDiscountRoutes(r)
+			r.Delete("/images/remove-external/{id}", s.removeImageByPublicID)
 		})
-		sv.addProductRoutes(r)
-		sv.addImageRoutes(r)
-		sv.addCartRoutes(r)
-		sv.addCategoryRoutes(r)
-		sv.addCollectionRoutes(r)
-		sv.addBrandRoutes(r)
-		sv.addDiscountRoutes(r)
+		s.addProductRoutes(r)
+		s.addImageRoutes(r)
+		s.addCartRoutes(r)
+		s.addCategoryRoutes(r)
+		s.addCollectionRoutes(r)
+		s.addBrandRoutes(r)
 	})
 
 	// Setup webhook routes
-	sv.addWebhookRoutes(router)
+	s.addWebhookRoutes(router)
 
 	// Setup Swagger
 	router.Get("/swagger/*", httpSwagger.WrapHandler)
 
-	sv.router = router
+	s.router = router
 }

@@ -9,12 +9,15 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
+	"github.com/lestrrat-go/jwx/v2/jwt"
 	repository "github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
 
 // ------------------------------ s ------------------------------
@@ -30,14 +33,14 @@ import (
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /auth/register [post]
-func (sv *Server) register(w http.ResponseWriter, r *http.Request) {
+func (s *Server) register(w http.ResponseWriter, r *http.Request) {
 	var req models.RegisterModel
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
-	_, err := sv.repo.GetUserByUsername(r.Context(), req.Username)
+	_, err := s.repo.GetUserByUsername(r.Context(), req.Username)
 	if err != nil && !errors.Is(err, repository.ErrRecordNotFound) {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -54,7 +57,7 @@ func (sv *Server) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userRole, err := sv.repo.GetRoleByCode(r.Context(), "user")
+	userRole, err := s.repo.GetRoleByCode(r.Context(), "user")
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -70,14 +73,14 @@ func (sv *Server) register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.Username == "admin" {
-		adminRole, err := sv.repo.GetRoleByCode(r.Context(), "admin")
+		adminRole, err := s.repo.GetRoleByCode(r.Context(), "admin")
 		if err != nil {
 			RespondInternalServerError(w, InternalServerErrorCode, err)
 			return
 		}
 		arg.RoleID = adminRole.ID
 	}
-	user, err := sv.repo.CreateUser(r.Context(), arg)
+	user, err := s.repo.CreateUser(r.Context(), arg)
 
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
@@ -100,7 +103,7 @@ func (sv *Server) register(w http.ResponseWriter, r *http.Request) {
 			createAddressArgs.Ward = req.Address.Ward
 		}
 
-		createdAddress, err := sv.repo.CreateAddress(r.Context(), createAddressArgs)
+		createdAddress, err := s.repo.CreateAddress(r.Context(), createAddressArgs)
 
 		if err != nil {
 			RespondInternalServerError(w, AddressCodeCode, err)
@@ -123,7 +126,7 @@ func (sv *Server) register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	emailPayload := &worker.PayloadVerifyEmail{UserID: user.ID}
-	err = sv.taskDistributor.SendVerifyAccountEmail(
+	err = s.taskDistributor.SendVerifyAccountEmail(
 		r.Context(),
 		emailPayload,
 		asynq.MaxRetry(3),
@@ -171,7 +174,8 @@ func (sv *Server) register(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /auth/login [post]
-func (sv *Server) login(w http.ResponseWriter, r *http.Request) {
+func (s *Server) login(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
 	var req models.LoginModel
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
@@ -185,9 +189,9 @@ func (sv *Server) login(w http.ResponseWriter, r *http.Request) {
 	var user repository.User
 	var err error = nil
 	if req.Username != nil {
-		user, err = sv.repo.GetUserByUsername(r.Context(), *req.Username)
+		user, err = s.repo.GetUserByUsername(c, *req.Username)
 	} else {
-		user, err = sv.repo.GetUserByEmail(r.Context(), *req.Email)
+		user, err = s.repo.GetUserByEmail(c, *req.Email)
 	}
 
 	if err != nil {
@@ -204,19 +208,19 @@ func (sv *Server) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	role, err := sv.repo.GetRoleByID(r.Context(), user.RoleID)
+	role, err := s.repo.GetRoleByID(r.Context(), user.RoleID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	accessToken, payload, err := sv.tokenGenerator.GenerateToken(user.ID, user.Username, role, sv.config.AccessTokenDuration)
+	payload, accessToken, err := s.generateToken(user.ID, user.Username, role, s.config.AccessTokenDuration)
 	if err != nil {
 		RespondInternalServerError(w, InvalidTokenCode, err)
 		return
 	}
 
-	refreshToken, rfPayload, err := sv.tokenGenerator.GenerateToken(user.ID, user.Username, role, sv.config.RefreshTokenDuration)
+	rfPayload, refreshToken, err := s.generateToken(user.ID, user.Username, role, s.config.RefreshTokenDuration)
 	if err != nil {
 		RespondInternalServerError(w, InvalidTokenCode, err)
 		return
@@ -227,15 +231,15 @@ func (sv *Server) login(w http.ResponseWriter, r *http.Request) {
 		// Fallback to localhost if parsing fails
 		clientIP = netip.MustParseAddr("127.0.0.1")
 	}
-
-	session, err := sv.repo.InsertSession(r.Context(), repository.InsertSessionParams{
-		ID:           rfPayload.ID,
+	id, _ := rfPayload.Get("id")
+	session, err := s.repo.InsertSession(r.Context(), repository.InsertSessionParams{
+		ID:           id.(uuid.UUID),
 		UserID:       user.ID,
 		RefreshToken: refreshToken,
 		UserAgent:    r.Header.Get("User-Agent"),
 		ClientIp:     clientIP,
 		Blocked:      false,
-		ExpiredAt:    utils.GetPgTypeTimestamp(time.Now().Add(sv.config.RefreshTokenDuration)),
+		ExpiredAt:    utils.GetPgTypeTimestamp(time.Now().Add(s.config.RefreshTokenDuration)),
 	})
 
 	if err != nil {
@@ -246,9 +250,9 @@ func (sv *Server) login(w http.ResponseWriter, r *http.Request) {
 	loginResp := dto.LoginResponse{
 		ID:                    session.ID.String(),
 		AccessToken:           accessToken,
-		AccessTokenExpiresAt:  payload.ExpiresAt,
+		AccessTokenExpiresAt:  payload.Expiration(),
 		RefreshToken:          refreshToken,
-		RefreshTokenExpiresAt: rfPayload.ExpiresAt,
+		RefreshTokenExpiresAt: rfPayload.Expiration(),
 	}
 	RespondSuccess(w, r, loginResp)
 }
@@ -263,7 +267,7 @@ func (sv *Server) login(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /auth/refresh-token [post]
-func (sv *Server) refreshToken(w http.ResponseWriter, r *http.Request) {
+func (s *Server) refreshToken(w http.ResponseWriter, r *http.Request) {
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
 		RespondUnauthorized(w, UnauthorizedCode, fmt.Errorf("refresh token is required"))
@@ -271,13 +275,14 @@ func (sv *Server) refreshToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	refreshToken := authHeader[len("Bearer "):]
-	refreshTokenPayload, err := sv.tokenGenerator.VerifyToken(refreshToken)
+	refreshTokenPayload, err := s.tokenAuth.Decode(refreshToken)
 	if err != nil {
 		RespondUnauthorized(w, UnauthorizedCode, err)
 		return
 	}
-
-	session, err := sv.repo.GetSession(r.Context(), refreshTokenPayload.ID)
+	id, _ := refreshTokenPayload.Get("id")
+	rfTkUUID := id.(uuid.UUID)
+	session, err := s.repo.GetSession(r.Context(), rfTkUUID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			RespondNotFound(w, NotFoundCode, fmt.Errorf("session not found"))
@@ -287,7 +292,7 @@ func (sv *Server) refreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if session.ID != refreshTokenPayload.ID {
+	if session.ID != rfTkUUID {
 		err := errors.New("refresh token is not valid")
 		RespondUnauthorized(w, InvalidTokenCode, err)
 		return
@@ -310,28 +315,46 @@ func (sv *Server) refreshToken(w http.ResponseWriter, r *http.Request) {
 		RespondUnauthorized(w, InvalidSessionCode, err)
 		return
 	}
-
-	role, err := sv.repo.GetRoleByID(r.Context(), refreshTokenPayload.RoleID)
+	roleID, _ := refreshTokenPayload.Get("roleID")
+	role, err := s.repo.GetRoleByID(r.Context(), roleID.(uuid.UUID))
+	if err != nil {
+		RespondInternalServerError(w, InternalServerErrorCode, err)
+		return
+	}
+	userName, _ := refreshTokenPayload.Get("username")
+	_, accessToken, err := s.generateToken(session.UserID, userName.(string), role, s.config.AccessTokenDuration)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	accessToken, _, err := sv.tokenGenerator.GenerateToken(session.UserID, refreshTokenPayload.Username, role, sv.config.AccessTokenDuration)
-	if err != nil {
-		RespondInternalServerError(w, InternalServerErrorCode, err)
-		return
-	}
-
-	resp := dto.RefreshToken{AccessToken: accessToken, AccessTokenExpiresAt: time.Now().Add(sv.config.AccessTokenDuration)}
+	resp := dto.RefreshToken{AccessToken: accessToken, AccessTokenExpiresAt: time.Now().Add(s.config.AccessTokenDuration)}
 	RespondSuccess(w, r, resp)
 }
 
+func (s *Server) generateToken(
+	userID uuid.UUID,
+	username string,
+	role repository.UserRole,
+	duration time.Duration,
+
+) (accessToken jwt.Token, tokenString string, err error) {
+	jwtClaims := map[string]interface{}{
+		"userId":   userID,
+		"username": username,
+		"roleId":   role.ID,
+		"roleCode": role.Code,
+		"exp":      time.Now().Add(duration).Unix(),
+	}
+	accessToken, tokenString, err = s.tokenAuth.Encode(jwtClaims)
+	return
+}
+
 // Setup authentication routes
-func (sv *Server) addAuthRoutes(r chi.Router) {
+func (s *Server) addAuthRoutes(r chi.Router) {
 	r.Route("/auth", func(r chi.Router) {
-		r.Post("/register", sv.register)
-		r.Post("/login", sv.login)
-		r.Post("/refresh-token", sv.refreshToken)
+		r.Post("/register", s.register)
+		r.Post("/login", s.login)
+		r.Post("/refresh-token", s.refreshToken)
 	})
 }

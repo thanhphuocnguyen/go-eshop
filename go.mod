@@ -15,6 +15,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/hibiken/asynq v0.25.0
 	github.com/jackc/pgx/v5 v5.7.1
+	github.com/lestrrat-go/jwx/v2 v2.1.3
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/cobra v1.8.1
@@ -57,7 +58,6 @@ require (
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
 	github.com/lestrrat-go/httprc v1.0.6 // indirect
 	github.com/lestrrat-go/iter v1.0.2 // indirect
-	github.com/lestrrat-go/jwx/v2 v2.1.3 // indirect
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/lib/pq v1.10.9 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect

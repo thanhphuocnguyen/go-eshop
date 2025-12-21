@@ -31,9 +31,9 @@ import (
 // @Router /ratings [post]
 func (s *Server) postRating(w http.ResponseWriter, r *http.Request) {
 	_, claims, err := jwtauth.FromContext(r.Context())
-
+	c := r.Context()
 	var req models.PostRatingFormData
-	if err := c.ShouldBind(&req); err != nil {
+	if err := s.GetRequestBody(r, req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
@@ -44,7 +44,7 @@ func (s *Server) postRating(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if orderItem.UserID != claims["userId"].(uuid.UUID) {
-		c.JSON(403, dto.CreateErr(InvalidBodyCode, nil))
+		RespondUnauthorized(w, UnauthorizedCode, err)
 		return
 	}
 
@@ -59,7 +59,7 @@ func (s *Server) postRating(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		c.JSON(500, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
@@ -73,7 +73,7 @@ func (s *Server) postRating(w http.ResponseWriter, r *http.Request) {
 		// Images:           images,
 	}
 
-	c.JSON(200, dto.CreateDataResp(c, resp, nil, nil))
+	RespondSuccess(w, r, resp)
 }
 
 // @Summary Post a helpful rating
@@ -88,27 +88,29 @@ func (s *Server) postRating(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} ErrorResp
 // @Failure 403 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /ratings/{ratingId}/helpful [post]
+// @Router /ratings/{Id}/helpful [post]
 func (s *Server) postRatingHelpful(w http.ResponseWriter, r *http.Request) {
-	var param models.UriIDParam
-	if err := c.ShouldBindUri(&param); err != nil {
-		RespondBadRequest(w, InvalidBodyCode, err)
-		return
-	}
-	_, claims, err := jwtauth.FromContext(r.Context())
-	var req models.PostHelpfulRatingModel
-	if err := c.ShouldBindJSON(&req); err != nil {
+	c := r.Context()
+	ratingId, err := GetUrlParam(r, "id")
+	if err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
-	rating, err := s.repo.GetProductRating(c, uuid.MustParse(param.ID))
+	_, claims, err := jwtauth.FromContext(r.Context())
+	var req models.PostHelpfulRatingModel
+	if err := s.GetRequestBody(r, req); err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
+	rating, err := s.repo.GetProductRating(c, uuid.MustParse(ratingId))
 	if err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 	if rating.UserID == claims["userId"].(uuid.UUID) {
-		c.JSON(403, dto.CreateErr(InvalidBodyCode, nil))
+		RespondUnauthorized(w, UnauthorizedCode, nil)
 		return
 	}
 
@@ -119,10 +121,10 @@ func (s *Server) postRatingHelpful(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		c.JSON(500, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 	}
 
-	c.JSON(200, dto.CreateDataResp(c, id, nil, nil))
+	RespondCreated(w, r, id)
 }
 
 // @Summary Post a reply to a rating
@@ -139,19 +141,20 @@ func (s *Server) postRatingHelpful(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResp
 // @Router /ratings/{ratingId}/reply [post]
 func (s *Server) postReplyRating(w http.ResponseWriter, r *http.Request) {
-	var param models.UriIDParam
-	if err := c.ShouldBindUri(&param); err != nil {
+	c := r.Context()
+	id, err := GetUrlParam(r, "id")
+	if err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 	_, claims, err := jwtauth.FromContext(r.Context())
 
 	var req models.PostReplyRatingModel
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := s.GetRequestBody(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
-	rating, err := s.repo.GetProductRating(c, uuid.MustParse(param.ID))
+	rating, err := s.repo.GetProductRating(c, uuid.MustParse(id))
 	if err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
@@ -163,11 +166,11 @@ func (s *Server) postReplyRating(w http.ResponseWriter, r *http.Request) {
 		Content:  req.Content,
 	})
 	if err != nil {
-		c.JSON(500, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	c.JSON(200, dto.CreateDataResp(c, reply.ID, nil, nil))
+	RespondSuccess(w, r, reply.ID)
 }
 
 // @Summary Get product ratings
@@ -190,11 +193,7 @@ func (s *Server) getRatingsByProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	paginationQuery, err := ParsePaginationQuery(r)
-	if err != nil {
-		RespondBadRequest(w, InvalidBodyCode, err)
-		return
-	}
+	paginationQuery := ParsePaginationQuery(r)
 
 	ratings, err := s.repo.GetProductRatings(r.Context(), repository.GetProductRatingsParams{
 		ProductID: utils.GetPgTypeUUID(uuid.MustParse(idParam)),
@@ -253,11 +252,11 @@ func (s *Server) getRatingsByProduct(w http.ResponseWriter, r *http.Request) {
 }
 
 // Setup brand-related routes
-func (sv *Server) addRatingRoutes(r chi.Router) {
+func (s *Server) addRatingRoutes(r chi.Router) {
 	r.Route("ratings", func(r chi.Router) {
-		r.Post("", sv.postRating)
-		r.Get(":orderId", sv.adminGetOrderRatings)
-		r.Post(":id/helpful", sv.postRatingHelpful)
-		r.Post(":id/reply", sv.postReplyRating)
+		r.Post("", s.postRating)
+		r.Get(":orderId", s.adminGetOrderRatings)
+		r.Post(":id/helpful", s.postRatingHelpful)
+		r.Post(":id/reply", s.postReplyRating)
 	})
 }

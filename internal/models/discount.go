@@ -57,7 +57,6 @@ type UpdateDiscount struct {
 }
 
 type DiscountListQuery struct {
-	PaginationQuery
 	DiscountType  *string    `form:"discountType" binding:"omitempty,oneof=percentage fixed_amount"`
 	IsActive      *bool      `from:"isActive" binding:"omitempty"`
 	DiscountValue *float64   `form:"discountValue" binding:"omitempty,gt=0"`

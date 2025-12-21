@@ -31,7 +31,7 @@ import (
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /users/{id} [patch]
-func (sv *Server) updateUser(w http.ResponseWriter, r *http.Request) {
+func (s *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 	_, claims, err := jwtauth.FromContext(r.Context())
 	var req models.UpdateUserModel
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -46,7 +46,7 @@ func (sv *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userId := uuid.MustParse(req.UserID)
-	user, err := sv.repo.GetUserByID(r.Context(), userId)
+	user, err := s.repo.GetUserByID(r.Context(), userId)
 	if err != nil {
 		RespondUnauthorized(w, UnauthorizedCode, err)
 		return
@@ -85,14 +85,13 @@ func (sv *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	updatedUser, err := sv.repo.UpdateUser(r.Context(), arg)
+	updatedUser, err := s.repo.UpdateUser(r.Context(), arg)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	resp := dto.MapToUserResponse(updatedUser, claims["roleCode"].(string))
-	RespondSuccess(w, r, resp)
+	RespondSuccess(w, r, updatedUser)
 }
 
 // getCurrentUser godoc
@@ -105,7 +104,7 @@ func (sv *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /users/me [get]
-func (sv *Server) getCurrentUser(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getCurrentUser(w http.ResponseWriter, r *http.Request) {
 	_, claims, err := jwtauth.FromContext(r.Context())
 	userId := claims["userId"].(uuid.UUID)
 	roleCode := claims["roleCode"].(string)
@@ -116,13 +115,13 @@ func (sv *Server) getCurrentUser(w http.ResponseWriter, r *http.Request) {
 
 	var userResp dto.UserDetail
 
-	user, err := sv.repo.GetUserByID(r.Context(), userId)
+	user, err := s.repo.GetUserByID(r.Context(), userId)
 	if err != nil {
 		RespondNotFound(w, NotFoundCode, err)
 		return
 	}
 
-	userAddress, err := sv.repo.GetAddresses(r.Context(), user.ID)
+	userAddress, err := s.repo.GetAddresses(r.Context(), user.ID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -150,14 +149,14 @@ func (sv *Server) getCurrentUser(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResp
 // @Router /users/verify-email [post]
 // @Security BearerAuth
-func (sv *Server) sendVerifyEmail(w http.ResponseWriter, r *http.Request) {
+func (s *Server) sendVerifyEmail(w http.ResponseWriter, r *http.Request) {
 	_, claims, err := jwtauth.FromContext(r.Context())
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, errors.New("authorization payload is not provided"))
 		return
 	}
 	userId := claims["userId"].(uuid.UUID)
-	user, err := sv.repo.GetUserByID(r.Context(), userId)
+	user, err := s.repo.GetUserByID(r.Context(), userId)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -167,7 +166,7 @@ func (sv *Server) sendVerifyEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = sv.taskDistributor.SendVerifyAccountEmail(
+	err = s.taskDistributor.SendVerifyAccountEmail(
 		r.Context(),
 		&worker.PayloadVerifyEmail{
 			UserID: userId,
@@ -198,7 +197,7 @@ func (sv *Server) sendVerifyEmail(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /users/verify-email [get]
-func (sv *Server) VerifyEmail(w http.ResponseWriter, r *http.Request) {
+func (s *Server) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 	queryParams, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
 		RespondBadRequest(w, InvalidEmailCode, err)
@@ -219,14 +218,14 @@ func (sv *Server) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	verifyEmail, err := sv.repo.GetVerifyEmailByVerifyCode(r.Context(), query.VerifyCode)
+	verifyEmail, err := s.repo.GetVerifyEmailByVerifyCode(r.Context(), query.VerifyCode)
 	if err != nil {
 		RespondNotFound(w, NotFoundCode, err)
 		return
 	}
 
 	// Create a transaction to ensure both operations succeed or fail together
-	err = sv.repo.VerifyEmailTx(r.Context(), repository.VerifyEmailTxArgs{
+	err = s.repo.VerifyEmailTx(r.Context(), repository.VerifyEmailTxArgs{
 		VerifyEmail: verifyEmail,
 		VerifyCode:  query.VerifyCode,
 	})
@@ -236,7 +235,7 @@ func (sv *Server) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := sv.repo.GetUserByID(r.Context(), verifyEmail.UserID)
+	user, err := s.repo.GetUserByID(r.Context(), verifyEmail.UserID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -262,19 +261,19 @@ func (sv *Server) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 }
 
 // Setup user-related routes
-func (sv *Server) addUserRoutes(r chi.Router) {
+func (s *Server) addUserRoutes(r chi.Router) {
 	r.Route("/users", func(r chi.Router) {
-		r.Get("/me", sv.getCurrentUser)
-		r.Patch("/me", sv.updateUser)
-		r.Post("/send-verify-email", sv.sendVerifyEmail)
+		r.Get("/me", s.getCurrentUser)
+		r.Patch("/me", s.updateUser)
+		r.Post("/send-verify-email", s.sendVerifyEmail)
 
 		// Address routes
 		r.Route("/addresses", func(r chi.Router) {
-			r.Post("/", sv.createAddress)
-			r.Patch("/{id}/default", sv.setDefaultAddress)
-			r.Get("/", sv.getAddresses)
-			r.Patch("/{id}", sv.updateAddress)
-			r.Delete("/{id}", sv.removeAddress)
+			r.Post("/", s.createAddress)
+			r.Patch("/{id}/default", s.setDefaultAddress)
+			r.Get("/", s.getAddresses)
+			r.Patch("/{id}", s.updateAddress)
+			r.Delete("/{id}", s.removeAddress)
 		})
 	})
 }

@@ -15,7 +15,7 @@ import (
 func authorizeMiddleware(next http.Handler, roles ...string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		_, claims, err := jwtauth.FromContext(r.Context())
-		if !ok {
+		if err != nil {
 			err := dto.CreateErr(UnauthorizedCode, fmt.Errorf("unauthorized"))
 			w.WriteHeader(http.StatusUnauthorized)
 			jsoResp, _ := json.Marshal(err)
@@ -25,7 +25,7 @@ func authorizeMiddleware(next http.Handler, roles ...string) http.HandlerFunc {
 
 		hasRole := false
 		for _, role := range roles {
-			if authPayload.RoleCode == role {
+			if claims["roleCode"] == role {
 				hasRole = true
 				break
 			}
@@ -53,8 +53,8 @@ func corsMiddleware() func(next http.Handler) http.Handler {
 }
 
 // Setup environment mode based on configuration
-func (sv *Server) setEnvModeMiddleware(r *chi.Mux) {
-	if sv.config.Env == "development" {
+func (s *Server) setEnvModeMiddleware(r *chi.Mux) {
+	if s.config.Env == "development" {
 		r.Use(middleware.Logger)
 	}
 	r.Use(middleware.CleanPath)

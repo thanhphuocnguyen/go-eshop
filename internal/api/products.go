@@ -24,7 +24,7 @@ import (
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /products/{productId} [get]
-func (sv *Server) getProductById(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getProductById(w http.ResponseWriter, r *http.Request) {
 	idParam := chi.URLParam(r, "id")
 	if idParam == "" {
 		RespondBadRequest(w, InvalidBodyCode, errors.New("id parameter is required"))
@@ -39,7 +39,7 @@ func (sv *Server) getProductById(w http.ResponseWriter, r *http.Request) {
 		sqlParams.Slug = idParam
 	}
 
-	productRow, err := sv.repo.GetProductDetail(r.Context(), sqlParams)
+	productRow, err := s.repo.GetProductDetail(r.Context(), sqlParams)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			RespondNotFound(w, NotFoundCode, err)
@@ -66,7 +66,7 @@ func (sv *Server) getProductById(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /products [get]
-func (sv *Server) getProducts(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 	paginationQuery := ParsePaginationQuery(r)
 
 	queryParams := r.URL.Query()
@@ -123,13 +123,13 @@ func (sv *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	products, err := sv.repo.GetProductList(r.Context(), dbParams)
+	products, err := s.repo.GetProductList(r.Context(), dbParams)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	productCnt, err := sv.repo.CountProducts(r.Context(), repository.CountProductsParams{})
+	productCnt, err := s.repo.CountProducts(r.Context(), repository.CountProductsParams{})
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -144,10 +144,10 @@ func (sv *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 }
 
 // Setup product-related routes
-func (sv *Server) addProductRoutes(rg chi.Router) {
+func (s *Server) addProductRoutes(rg chi.Router) {
 	rg.Route("/products", func(r chi.Router) {
-		r.Get("/", sv.getProducts)
-		r.Get("/{id}", sv.getProductById)
-		r.Get("/{id}/ratings", sv.getRatingsByProduct)
+		r.Get("/", s.getProducts)
+		r.Get("/{id}", s.getProductById)
+		r.Get("/{id}/ratings", s.getRatingsByProduct)
 	})
 }

@@ -30,7 +30,7 @@ import (
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /carts/checkout [post]
-func (sv *Server) checkout(w http.ResponseWriter, r *http.Request) {
+func (s *Server) checkout(w http.ResponseWriter, r *http.Request) {
 	_, claims, err := jwtauth.FromContext(r.Context())
 	c := r.Context()
 
@@ -47,12 +47,12 @@ func (sv *Server) checkout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// validate request
-	if err := sv.validator.Struct(req); err != nil {
+	if err := s.validator.Struct(req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
-	user, err := sv.repo.GetUserDetailsByID(c, userID)
+	user, err := s.repo.GetUserDetailsByID(c, userID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			RespondNotFound(w, NotFoundCode, errors.New("user not found"))
@@ -62,7 +62,7 @@ func (sv *Server) checkout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cart, err := sv.repo.GetCart(c, repository.GetCartParams{
+	cart, err := s.repo.GetCart(c, repository.GetCartParams{
 		UserID: utils.GetPgTypeUUID(userID),
 	})
 
@@ -76,7 +76,7 @@ func (sv *Server) checkout(w http.ResponseWriter, r *http.Request) {
 	}
 	var shippingAddr repository.ShippingAddressSnapshot
 
-	address, err := sv.repo.GetDefaultAddress(c, userID)
+	address, err := s.repo.GetDefaultAddress(c, userID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			RespondNotFound(w, NotFoundCode, errors.New("address not found"))
@@ -107,14 +107,14 @@ func (sv *Server) checkout(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	itemRows, err := sv.repo.GetCartItems(c, cart.ID)
+	itemRows, err := s.repo.GetCartItems(c, cart.ID)
 	if err != nil {
 		log.Error().Err(err).Msg("GetCartItems")
 		return
 	}
 
 	// Process discounts
-	discountResult, err := sv.discountProcessor.ProcessDiscounts(c, processors.DiscountContext{User: user, CartItems: itemRows}, req.DiscountCodes)
+	discountResult, err := s.discountProcessor.ProcessDiscounts(c, processors.DiscountContext{User: user, CartItems: itemRows}, req.DiscountCodes)
 	if err != nil {
 		log.Error().Err(err).Msg("ProcessDiscounts")
 		RespondBadRequest(w, InvalidBodyCode, err)
@@ -179,7 +179,7 @@ func (sv *Server) checkout(w http.ResponseWriter, r *http.Request) {
 
 	params.CreatePaymentFn = func(ctx context.Context, orderID uuid.UUID, method string) (paymentIntentID string, clientSecretID *string, err error) {
 		// create payment intent
-		intent, err := sv.paymentSrv.CreatePaymentIntent(ctx, method, payment.PaymentRequest{
+		intent, err := s.paymentSrv.CreatePaymentIntent(ctx, method, payment.PaymentRequest{
 			Amount:   int64((totalPrice - discountResult.TotalDiscount) * 100), // convert to cents
 			Currency: "usd",
 			Email:    user.Email,
@@ -195,7 +195,7 @@ func (sv *Server) checkout(w http.ResponseWriter, r *http.Request) {
 		return intent.ID, &intent.ClientSecret, nil
 	}
 
-	rs, err := sv.repo.CheckoutCartTx(c, params)
+	rs, err := s.repo.CheckoutCartTx(c, params)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return

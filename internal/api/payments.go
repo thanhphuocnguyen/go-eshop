@@ -17,25 +17,22 @@ import (
 )
 
 // Setup payment-related routes
-func (sv *Server) addPaymentRoutes(r chi.Router) {
-	r.Group(func(r chi.Router) {
-		r.Use(jwtauth.Verifier(sv.tokenGenerator))
-		r.Route("payments", func(r chi.Router) {
-			r.Get(":id", sv.getPayment)
-			if sv.config.Env == DevEnv {
-				r.Post(":id/confirm", sv.confirmPayment)
-			}
-			r.Get("methods", sv.getPaymentMethods)
-			r.Get("stripe-config", sv.getStripeConfig)
-			r.Post("", sv.createPaymentIntent)
-			r.Put(":orderId", sv.changePaymentStatus)
-		})
+func (s *Server) addPaymentRoutes(r chi.Router) {
+	r.Route("payments", func(r chi.Router) {
+		r.Get(":id", s.getPayment)
+		if s.config.Env == DevEnv {
+			r.Post(":id/confirm", s.confirmPayment)
+		}
+		r.Get("methods", s.getPaymentMethods)
+		r.Get("stripe-config", s.getStripeConfig)
+		r.Post("", s.createPaymentIntent)
+		r.Put(":orderId", s.changePaymentStatus)
 	})
 }
 
-func (sv *Server) getStripeConfig(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getStripeConfig(w http.ResponseWriter, r *http.Request) {
 	resp := map[string]string{
-		"public_key": sv.config.StripePublishableKey,
+		"public_key": s.config.StripePublishableKey,
 	}
 	RespondSuccess(w, r, resp)
 }
@@ -54,14 +51,14 @@ func (sv *Server) getStripeConfig(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /payments [post]
-func (sv *Server) createPaymentIntent(w http.ResponseWriter, r *http.Request) {
+func (s *Server) createPaymentIntent(w http.ResponseWriter, r *http.Request) {
 	_, claims, err := jwtauth.FromContext(r.Context())
 	if err != nil {
 		RespondUnauthorized(w, UnauthorizedCode, err)
 	}
 	userId := claims["userId"].(uuid.UUID)
 	c := r.Context()
-	user, err := sv.repo.GetUserByID(c, userId)
+	user, err := s.repo.GetUserByID(c, userId)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			RespondNotFound(w, NotFoundCode, err)
@@ -76,7 +73,7 @@ func (sv *Server) createPaymentIntent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ord, err := sv.repo.GetOrder(c, uuid.MustParse(req.OrderID))
+	ord, err := s.repo.GetOrder(c, uuid.MustParse(req.OrderID))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			RespondNotFound(w, NotFoundCode, err)
@@ -91,7 +88,7 @@ func (sv *Server) createPaymentIntent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pmRow, err := sv.repo.GetPaymentByOrderID(c, ord.ID)
+	pmRow, err := s.repo.GetPaymentByOrderID(c, ord.ID)
 	if err != nil && !errors.Is(err, repository.ErrRecordNotFound) {
 		RespondInternalServerError(w, InternalServerErrorCode, errors.New("order not found"))
 		return
@@ -111,7 +108,7 @@ func (sv *Server) createPaymentIntent(w http.ResponseWriter, r *http.Request) {
 		PaymentMethodID: paymentMethodId,
 	}
 	var resp dto.PaymentIntentSecret
-	paymentMethod, err := sv.repo.GetPaymentMethodByID(c, paymentMethodId)
+	paymentMethod, err := s.repo.GetPaymentMethodByID(c, paymentMethodId)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			RespondNotFound(w, NotFoundCode, err)
@@ -120,7 +117,7 @@ func (sv *Server) createPaymentIntent(w http.ResponseWriter, r *http.Request) {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
-	intent, err := sv.paymentSrv.CreatePaymentIntent(c, paymentMethod.Code, payment.PaymentRequest{
+	intent, err := s.paymentSrv.CreatePaymentIntent(c, paymentMethod.Code, payment.PaymentRequest{
 		Amount:      int64(total.Float64 * 100), // convert to smallest currency unit
 		Currency:    payment.USD,
 		Email:       user.Email,
@@ -135,7 +132,7 @@ func (sv *Server) createPaymentIntent(w http.ResponseWriter, r *http.Request) {
 	createPaymentParams.PaymentIntentID = &intent.ID
 	resp.ClientSecret = &intent.ClientSecret
 
-	pmRow, err = sv.repo.CreatePayment(c, createPaymentParams)
+	pmRow, err = s.repo.CreatePayment(c, createPaymentParams)
 
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
@@ -160,7 +157,7 @@ func (sv *Server) createPaymentIntent(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /payments/{id} [get]
-func (sv *Server) getPayment(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getPayment(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	id := chi.URLParam(r, "id")
 	if id == "" {
@@ -168,19 +165,19 @@ func (sv *Server) getPayment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payment, err := sv.repo.GetPaymentByID(c, uuid.MustParse(id))
+	payment, err := s.repo.GetPaymentByID(c, uuid.MustParse(id))
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
 	var details interface{}
-	paymentMethod, err := sv.repo.GetPaymentMethodByID(c, payment.PaymentMethodID)
+	paymentMethod, err := s.repo.GetPaymentMethodByID(c, payment.PaymentMethodID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
-	details, err = sv.paymentSrv.GetPayment(c, *payment.PaymentIntentID, paymentMethod.Code)
+	details, err = s.paymentSrv.GetPayment(c, *payment.PaymentIntentID, paymentMethod.Code)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -209,7 +206,7 @@ func (sv *Server) getPayment(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /payments/{paymentId} [get]
-func (sv *Server) changePaymentStatus(w http.ResponseWriter, r *http.Request) {
+func (s *Server) changePaymentStatus(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	orderId := chi.URLParam(r, "orderId")
 	if orderId == "" {
@@ -221,7 +218,7 @@ func (sv *Server) changePaymentStatus(w http.ResponseWriter, r *http.Request) {
 		RespondBadRequest(w, InvalidBodyCode, errors.New("invalid request body"))
 		return
 	}
-	payment, err := sv.repo.GetPaymentByID(c, uuid.MustParse(orderId))
+	payment, err := s.repo.GetPaymentByID(c, uuid.MustParse(orderId))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			RespondNotFound(w, NotFoundCode, errors.New("order not found"))
@@ -229,7 +226,7 @@ func (sv *Server) changePaymentStatus(w http.ResponseWriter, r *http.Request) {
 		RespondInternalServerError(w, InternalServerErrorCode, errors.New("order not found"))
 		return
 	}
-	order, err := sv.repo.GetOrder(c, payment.OrderID)
+	order, err := s.repo.GetOrder(c, payment.OrderID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			RespondNotFound(w, NotFoundCode, err)
@@ -259,7 +256,7 @@ func (sv *Server) changePaymentStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.Status == repository.PaymentStatusSuccess {
-		_, err := sv.repo.UpdateOrder(c, repository.UpdateOrderParams{
+		_, err := s.repo.UpdateOrder(c, repository.UpdateOrderParams{
 			ID: order.ID,
 			Status: repository.NullOrderStatus{
 				OrderStatus: repository.OrderStatusDelivered,
@@ -274,7 +271,7 @@ func (sv *Server) changePaymentStatus(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	err = sv.repo.UpdatePayment(c, repository.UpdatePaymentParams{
+	err = s.repo.UpdatePayment(c, repository.UpdatePaymentParams{
 		ID: payment.ID,
 		Status: repository.NullPaymentStatus{
 			PaymentStatus: req.Status,
@@ -304,9 +301,9 @@ func (sv *Server) changePaymentStatus(w http.ResponseWriter, r *http.Request) {
 // @Failure 403 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /payments/methods [get]
-func (sv *Server) getPaymentMethods(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getPaymentMethods(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
-	paymentMethods, err := sv.repo.ListPaymentMethods(c)
+	paymentMethods, err := s.repo.ListPaymentMethods(c)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -336,7 +333,7 @@ func (sv *Server) getPaymentMethods(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /payments/{id}/confirm [post]
-func (sv *Server) confirmPayment(w http.ResponseWriter, r *http.Request) {
+func (s *Server) confirmPayment(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	id := chi.URLParam(r, "id")
 	if id == "" {
@@ -344,7 +341,7 @@ func (sv *Server) confirmPayment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payment, err := sv.repo.GetPaymentByID(c, uuid.MustParse(id))
+	payment, err := s.repo.GetPaymentByID(c, uuid.MustParse(id))
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			RespondNotFound(w, NotFoundCode, err)
@@ -354,13 +351,13 @@ func (sv *Server) confirmPayment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	paymentMethod, err := sv.repo.GetPaymentMethodByID(c, payment.PaymentMethodID)
+	paymentMethod, err := s.repo.GetPaymentMethodByID(c, payment.PaymentMethodID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	rs, err := sv.paymentSrv.ConfirmPayment(c, *payment.PaymentIntentID, paymentMethod.Code)
+	rs, err := s.paymentSrv.ConfirmPayment(c, *payment.PaymentIntentID, paymentMethod.Code)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return

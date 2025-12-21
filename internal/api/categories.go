@@ -26,29 +26,27 @@ import (
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /categories [get]
-func (sv *Server) getCategories(w http.ResponseWriter, r *http.Request) {
-	var query models.PaginationQuery
-	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
-		return
-	}
-	params := repository.GetCategoriesParams{
+func (s *Server) getCategories(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	var query models.PaginationQuery = GetPaginationQuery(r)
+
+	dbParams := repository.GetCategoriesParams{
 		Limit:     10,
 		Offset:    0,
 		Published: utils.BoolPtr(true),
 	}
-	params.Offset = (params.Limit) * int64(query.Page-1)
-	params.Limit = int64(query.PageSize)
+	dbParams.Offset = (dbParams.Limit) * int64(query.Page-1)
+	dbParams.Limit = int64(query.PageSize)
 
-	categories, err := sv.repo.GetCategories(c, params)
+	categories, err := s.repo.GetCategories(c, dbParams)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	cnt, err := sv.repo.CountCategories(c)
+	cnt, err := s.repo.CountCategories(c)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
@@ -69,7 +67,7 @@ func (sv *Server) getCategories(w http.ResponseWriter, r *http.Request) {
 		catIds[i] = category.ID
 	}
 
-	c.JSON(http.StatusOK, dto.CreateDataResp(c, categoriesResp, dto.CreatePagination(cnt, query.Page, query.PageSize), nil))
+	RespondSuccess(w, r, dto.CreateDataResp(c, categoriesResp, dto.CreatePagination(cnt, query.Page, query.PageSize), nil))
 }
 
 // getCategoryBySlug retrieves a list of Products by Category Slug.
@@ -85,25 +83,23 @@ func (sv *Server) getCategories(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /categories/slug/{slug} [get]
-func (sv *Server) getCategoryBySlug(w http.ResponseWriter, r *http.Request) {
-	var param models.URISlugParam
-	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
+func (s *Server) getCategoryBySlug(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	slug, err := GetUrlParam(r, "slug")
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
-	var query models.PaginationQuery
-	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
-		return
-	}
-	category, err := sv.repo.GetCategoryBySlug(c, param.Slug)
+	var query models.PaginationQuery = GetPaginationQuery(r)
+
+	category, err := s.repo.GetCategoryBySlug(c, slug)
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, dto.CreateErr(InvalidBodyCode, fmt.Errorf("category with Slug %s not found", param.Slug)))
+			RespondNotFound(w, NotFoundCode, fmt.Errorf("category with Slug %s not found", slug))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
@@ -117,13 +113,13 @@ func (sv *Server) getCategoryBySlug(w http.ResponseWriter, r *http.Request) {
 		ImageUrl:    category.ImageUrl,
 	}
 
-	products, err := sv.repo.GetProductList(c, repository.GetProductListParams{
+	products, err := s.repo.GetProductList(c, repository.GetProductListParams{
 		CategoryIds: []uuid.UUID{category.ID},
 		Limit:       query.PageSize,
 		Offset:      (query.PageSize) * int64(query.Page-1),
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 	productResponses := make([]dto.ProductSummary, len(products))
@@ -132,15 +128,15 @@ func (sv *Server) getCategoryBySlug(w http.ResponseWriter, r *http.Request) {
 	}
 	resp.Products = productResponses
 
-	c.JSON(http.StatusOK, dto.CreateDataResp(c, resp, nil, nil))
+	RespondSuccess(w, r, resp)
 }
 
 // Setup category-related routes
-func (sv *Server) addCategoryRoutes(r chi.Router) {
+func (s *Server) addCategoryRoutes(r chi.Router) {
 	r.Route("categories", func(r chi.Router) {
-		r.Get("", sv.getCategories)
-		r.Get(":slug", sv.getCategoryBySlug)
-		r.Get(":slug/products", sv.getCategoryBySlug)
+		r.Get("", s.getCategories)
+		r.Get(":slug", s.getCategoryBySlug)
+		r.Get(":slug/products", s.getCategoryBySlug)
 	})
 
 }

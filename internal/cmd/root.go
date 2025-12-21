@@ -8,8 +8,6 @@ import (
 	"fmt"
 	_ "net/http/pprof"
 	"os"
-	"runtime"
-	"runtime/pprof"
 
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -20,9 +18,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/config"
 	"github.com/thanhphuocnguyen/go-eshop/internal/api"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/processors"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
-	cachesrv "github.com/thanhphuocnguyen/go-eshop/pkg/cache"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/gateways"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/mailer"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
@@ -48,36 +44,36 @@ func Execute(ctx context.Context) int {
 		Use:   "web",
 		Short: "web is a web server",
 		Long:  `web is a web server`,
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			if !profile {
-				return nil
-			}
+		// PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		// 	if !profile {
+		// 		return nil
+		// 	}
 
-			f, pErr := os.Create(("cpu.pprof"))
-			if pErr != nil {
-				return pErr
-			}
-			_ = pprof.StartCPUProfile(f)
+		// 	f, pErr := os.Create(("cpu.pprof"))
+		// 	if pErr != nil {
+		// 		return pErr
+		// 	}
+		// 	_ = pprof.StartCPUProfile(f)
 
-			return nil
-		},
-		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
-			if !profile {
-				return nil
-			}
-			pprof.StopCPUProfile()
+		// 	return nil
+		// },
+		// PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
+		// 	if !profile {
+		// 		return nil
+		// 	}
+		// 	pprof.StopCPUProfile()
 
-			f, pErr := os.Create(("mem.pprof"))
-			if pErr != nil {
-				return pErr
-			}
+		// 	f, pErr := os.Create(("mem.pprof"))
+		// 	if pErr != nil {
+		// 		return pErr
+		// 	}
 
-			defer f.Close()
+		// 	defer f.Close()
 
-			runtime.GC()
-			err := pprof.WriteHeapProfile(f)
-			return err
-		},
+		// 	runtime.GC()
+		// 	err := pprof.WriteHeapProfile(f)
+		// 	return err
+		// },
 	}
 
 	rootCmd.PersistentFlags().StringVarP(&cfg.Domain, "domain", "d", cfg.Domain, "HTTP domain")
@@ -142,10 +138,7 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 			}
 
 			taskProcessor := worker.NewRedisTaskProcessor(redisCfg, pgRepo, mailer, cfg)
-			cacheService := cachesrv.NewRedisCache(cfg)
-			discountProcessor := processors.NewDiscountProcessor(pgRepo)
-
-			api, err := api.NewAPI(cfg, pgRepo, cacheService, taskDistributor, uploadService, service, discountProcessor)
+			api, err := api.NewAPI(cfg, pgRepo, taskDistributor, uploadService, service)
 			if err != nil {
 				return err
 			}

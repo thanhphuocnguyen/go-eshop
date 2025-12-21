@@ -4,11 +4,6 @@ import (
 	"mime/multipart"
 )
 
-type RatingsQueryParams struct {
-	PaginationQuery
-	Status *string `form:"status" binding:"omitempty,oneof=approved rejected pending"`
-}
-
 type PostHelpfulRatingModel struct {
 	Helpful bool `json:"helpful"`
 }

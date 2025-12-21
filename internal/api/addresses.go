@@ -26,10 +26,9 @@ import (
 // @Failure 400 {object} ErrorResp
 // @Failure 401 {object} ErrorResp
 // @Router /users/addresses [post]
-func (sv *Server) createAddress(w http.ResponseWriter, r *http.Request) {
-	token, claims, err := jwtauth.FromContext(r.Context())
+func (s *Server) createAddress(w http.ResponseWriter, r *http.Request) {
+	_, claims, err := jwtauth.FromContext(r.Context())
 	if err != nil {
-
 		RespondInternalServerError(w, UnauthorizedCode, fmt.Errorf("authorization payload is not provided"))
 		return
 	}
@@ -46,7 +45,7 @@ func (sv *Server) createAddress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	addresses, err := sv.repo.GetAddresses(r.Context(), claims["user_id"].(uuid.UUID))
+	addresses, err := s.repo.GetAddresses(r.Context(), claims["user_id"].(uuid.UUID))
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -70,10 +69,10 @@ func (sv *Server) createAddress(w http.ResponseWriter, r *http.Request) {
 		payload.Ward = req.Ward
 	}
 
-	created, err := sv.repo.CreateAddress(r.Context(), payload)
+	created, err := s.repo.CreateAddress(r.Context(), payload)
 
 	if req.IsDefault {
-		err := sv.repo.SetPrimaryAddressTx(r.Context(), repository.SetPrimaryAddressTxArgs{
+		err := s.repo.SetPrimaryAddressTx(r.Context(), repository.SetPrimaryAddressTxArgs{
 			NewPrimaryID: created.ID,
 			UserID:       claims["user_id"].(uuid.UUID),
 		})
@@ -105,14 +104,14 @@ func (sv *Server) createAddress(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /users/addresses [get]
-func (sv *Server) getAddresses(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getAddresses(w http.ResponseWriter, r *http.Request) {
 	_, claims, err := jwtauth.FromContext(r.Context())
-	if !ok {
+	if err != nil {
 		RespondInternalServerError(w, UnauthorizedCode, fmt.Errorf("authorization payload is not provided"))
 		return
 	}
-
-	addresses, err := sv.repo.GetAddresses(r.Context(), userID)
+	userId := claims["userId"].(uuid.UUID)
+	addresses, err := s.repo.GetAddresses(r.Context(), userId)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -139,12 +138,13 @@ func (sv *Server) getAddresses(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /users/addresses/{id} [put]
-func (sv *Server) updateAddress(w http.ResponseWriter, r *http.Request) {
+func (s *Server) updateAddress(w http.ResponseWriter, r *http.Request) {
 	_, claims, err := jwtauth.FromContext(r.Context())
-	if !ok {
+	if err != nil {
 		RespondUnauthorized(w, UnauthorizedCode, fmt.Errorf("authorization payload is not provided"))
 		return
 	}
+	userID := claims["userId"].(uuid.UUID)
 	var input models.UpdateAddress
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
@@ -163,7 +163,7 @@ func (sv *Server) updateAddress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := sv.repo.GetAddress(r.Context(), repository.GetAddressParams{
+	_, err = s.repo.GetAddress(r.Context(), repository.GetAddressParams{
 		ID:     uuid.MustParse(idParam),
 		UserID: userID,
 	})
@@ -203,7 +203,7 @@ func (sv *Server) updateAddress(w http.ResponseWriter, r *http.Request) {
 
 	if input.IsDefault != nil {
 		if *input.IsDefault {
-			err := sv.repo.SetPrimaryAddressTx(r.Context(), repository.SetPrimaryAddressTxArgs{
+			err := s.repo.SetPrimaryAddressTx(r.Context(), repository.SetPrimaryAddressTxArgs{
 				NewPrimaryID: uuid.MustParse(idParam),
 				UserID:       userID,
 			})
@@ -214,7 +214,7 @@ func (sv *Server) updateAddress(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	addresses, err := sv.repo.UpdateAddress(r.Context(), payload)
+	addresses, err := s.repo.UpdateAddress(r.Context(), payload)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -235,20 +235,20 @@ func (sv *Server) updateAddress(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
 // @Router /users/addresses/{id} [delete]
-func (sv *Server) removeAddress(w http.ResponseWriter, r *http.Request) {
+func (s *Server) removeAddress(w http.ResponseWriter, r *http.Request) {
 	_, claims, err := jwtauth.FromContext(r.Context())
-	if !ok {
+	if err != nil {
 		RespondInternalServerError(w, UnauthorizedCode, fmt.Errorf("authorization payload is not provided"))
 		return
 	}
-
+	userID := claims["userId"].(uuid.UUID)
 	idParam := chi.URLParam(r, "id")
 	if idParam == "" {
 		RespondBadRequest(w, InvalidBodyCode, fmt.Errorf("id parameter is required"))
 		return
 	}
 
-	addresses, err := sv.repo.GetAddress(r.Context(), repository.GetAddressParams{
+	addresses, err := s.repo.GetAddress(r.Context(), repository.GetAddressParams{
 		ID:     uuid.MustParse(idParam),
 		UserID: userID,
 	})
@@ -262,7 +262,7 @@ func (sv *Server) removeAddress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = sv.repo.DeleteAddress(r.Context(), repository.DeleteAddressParams{
+	err = s.repo.DeleteAddress(r.Context(), repository.DeleteAddressParams{
 		ID:     addresses.ID,
 		UserID: addresses.UserID,
 	})
@@ -290,20 +290,20 @@ func (sv *Server) removeAddress(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
 // @Router /users/addresses/{id}/default [put]
-func (sv *Server) setDefaultAddress(w http.ResponseWriter, r *http.Request) {
+func (s *Server) setDefaultAddress(w http.ResponseWriter, r *http.Request) {
 	_, claims, err := jwtauth.FromContext(r.Context())
-	if !ok {
+	if err != nil {
 		RespondInternalServerError(w, UnauthorizedCode, fmt.Errorf("authorization payload is not provided"))
 		return
 	}
-
+	userID := claims["userId"].(uuid.UUID)
 	idParam := chi.URLParam(r, "id")
 	if idParam == "" {
 		RespondBadRequest(w, InvalidBodyCode, fmt.Errorf("id parameter is required"))
 		return
 	}
 
-	_, err := sv.repo.GetAddress(r.Context(), repository.GetAddressParams{
+	_, err = s.repo.GetAddress(r.Context(), repository.GetAddressParams{
 		ID:     uuid.MustParse(idParam),
 		UserID: userID,
 	})
@@ -317,7 +317,7 @@ func (sv *Server) setDefaultAddress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = sv.repo.SetPrimaryAddressTx(r.Context(), repository.SetPrimaryAddressTxArgs{
+	err = s.repo.SetPrimaryAddressTx(r.Context(), repository.SetPrimaryAddressTxArgs{
 		NewPrimaryID: uuid.MustParse(idParam),
 		UserID:       userID,
 	})
