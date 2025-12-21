@@ -23,10 +23,10 @@ import (
 // @Produce json
 // @Param id path int true "Order ID"
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[OrderListResponse]
-// @Failure 400 {object} ErrorResp
-// @Failure 401 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[uuid.UUID]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 401 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /admin/orders/{orderId}/cancel [put]
 func (s *Server) adminCancelOrder(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
@@ -106,10 +106,10 @@ func (s *Server) adminCancelOrder(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path int true "Order ID"
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[OrderListResponse]
-// @Failure 400 {object} ErrorResp
-// @Failure 401 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[repository.GetOrderRow]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 401 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /admin/order/{orderId}/refund [put]
 func (s *Server) adminRefundOrder(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
@@ -168,9 +168,9 @@ func (s *Server) adminRefundOrder(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param page query int false "Page number"
 // @Param pageSize query int false "Page size"
-// @Success 200 {object} ApiResponse[[]dto.CategoryDetail]
-// @Failure 400 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[[]dto.CategoryDetail]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /admin/categories [get]
 func (s *Server) adminGetCategories(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
@@ -231,10 +231,10 @@ func (s *Server) adminGetCategories(w http.ResponseWriter, r *http.Request) {
 // @Tags Categories
 // @Produce json
 // @Param id path int true "Category ID"
-// @Success 200 {object} ApiResponse[dto.CategoryDetail]
-// @Failure 400 {object} ErrorResp
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[dto.CategoryDetail]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 404 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /admin/categories/{id} [get]
 func (s *Server) adminGetCategoryByID(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
@@ -274,10 +274,10 @@ func (s *Server) adminGetCategoryByID(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Tags Categories
 // @Produce json
-// @Param request body CreateCategoryRequest true "Category request"
-// @Success 201 {object} ApiResponse[dto.CategoryDetail]
-// @Failure 400 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Param request body models.CreateCategoryModel true "Category request"
+// @Success 201 {object} dto.ApiResponse[dto.CategoryDetail]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /admin/categories [post]
 func (s *Server) adminCreateCategory(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
@@ -332,9 +332,9 @@ func (s *Server) adminCreateCategory(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path int true "Category ID"
 // @Param request body models.UpdateCategoryModel true "Category request"
-// @Success 200 {object} ApiResponse[repository.Category]
-// @Failure 400 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[repository.Category]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /admin/categories/{id} [put]
 func (s *Server) adminUpdateCategory(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
@@ -418,8 +418,8 @@ func (s *Server) adminUpdateCategory(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path int true "Category ID"
 // @Success 204 {object} nil
-// @Failure 400 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /admin/categories/{id} [delete]
 func (s *Server) adminDeleteCategory(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
@@ -453,10 +453,10 @@ func (s *Server) adminDeleteCategory(w http.ResponseWriter, r *http.Request) {
 // @ID create-Brand
 // @Accept json
 // @Produce json
-// @Param request body CreateCategoryRequest true "Brand request"
-// @Success 201 {object} ApiResponse[CategoryDto]
-// @Failure 400 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Param request body models.CreateCategoryModel true "Brand request"
+// @Success 201 {object} dto.ApiResponse[repository.Brand]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /admin/brands [post]
 func (s *Server) adminCreateBrand(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
@@ -500,9 +500,9 @@ func (s *Server) adminCreateBrand(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param page query int false "Page number"
 // @Param pageSize query int false "Page size"
-// @Success 200 {object} ApiResponse[[]CategoryDto]
-// @Failure 400 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[[]dto.CategoryDetail]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /admin/brands [get]
 func (s *Server) adminGetBrands(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
@@ -553,9 +553,9 @@ func (s *Server) adminGetBrands(w http.ResponseWriter, r *http.Request) {
 // @Tags admin
 // @Produce json
 // @Param id path int true "Brand ID"
-// @Success 200 {object} ApiResponse[CategoryDto]
-// @Failure 400 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[dto.CategoryDetail]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /admin/brands/{id} [get]
 func (s *Server) adminGetBrandByID(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
@@ -595,10 +595,10 @@ func (s *Server) adminGetBrandByID(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Tags admin
 // @Param id path int true "Brand ID"
-// @Param request body UpdateCategoryRequest true "Brand request"
-// @Success 200 {object} ApiResponse[CategoryDto]
-// @Failure 400 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Param request body models.UpdateCategoryModel true "Brand request"
+// @Success 200 {object} dto.ApiResponse[dto.CategoryDetail]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /admin/brands/{id} [put]
 func (s *Server) adminUpdateBrand(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
@@ -679,9 +679,9 @@ func (s *Server) adminUpdateBrand(w http.ResponseWriter, r *http.Request) {
 // @Tags admin
 // @Produce json
 // @Param id path int true "Brand ID"
-// @Success 204 {object} ApiResponse[bool]
-// @Failure 400 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 204 {object} dto.ApiResponse[bool]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /admin/brands/{id} [delete]
 func (s *Server) adminDeleteBrand(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
@@ -716,9 +716,9 @@ func (s *Server) adminDeleteBrand(w http.ResponseWriter, r *http.Request) {
 // @Tags admin
 // @Produce json
 // @Param request body models.CreateCategoryModel true "Collection info"
-// @Success 201 {object} ApiResponse[dto.CategoryDetail]
-// @Failure 400 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 201 {object} dto.ApiResponse[dto.CategoryDetail]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /admin/collections [post]
 func (s *Server) adminCreateCollection(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
@@ -765,9 +765,9 @@ func (s *Server) adminCreateCollection(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param page query int false "Page number"
 // @Param pageSize query int false "Page size"
-// @Success 200 {object} ApiResponse[dto.CategoryDetail]
-// @Failure 400 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[dto.CategoryDetail]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /admin/collections [get]
 func (s *Server) adminGetCollections(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
@@ -802,10 +802,10 @@ func (s *Server) adminGetCollections(w http.ResponseWriter, r *http.Request) {
 // @Tags admin
 // @Produce json
 // @Param id path int true "Collection ID"
-// @Success 200 {object} ApiResponse[dto.CategoryDetail]
-// @Failure 400 {object} ErrorResp
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[dto.CategoryDetail]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 404 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /admin/collections/{id} [get]
 func (s *Server) adminGetCollectionByID(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
@@ -846,9 +846,9 @@ func (s *Server) adminGetCollectionByID(w http.ResponseWriter, r *http.Request) 
 // @Produce json
 // @Param id path int true "Collection ID"
 // @Param request body models.CreateCategoryModel true "Collection info"
-// @Success 200 {object} ApiResponse[dto.CategoryDetail]
-// @Failure 400 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[dto.CategoryDetail]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /admin/collections/{id} [put]
 func (s *Server) adminUpdateCollection(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()

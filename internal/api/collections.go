@@ -20,10 +20,10 @@ import (
 // @Tags Collections
 // @Produce json
 // @Param slug path string true "Collection slug"
-// @Success 200 {object} ApiResponse[dto.CategoryDetail]
-// @Failure 400 {object} ErrorResp
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[dto.CategoryDetail]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 404 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /collections/{slug} [get]
 func (s *Server) getCollectionBySlug(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()

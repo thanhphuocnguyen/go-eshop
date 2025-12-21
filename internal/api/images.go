@@ -16,9 +16,9 @@ import (
 // @Accept json
 // @Param productId path int true "Product ID"
 // @Produce json
-// @Success 200 {object} ApiResponse[[]ImageResponse]
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[string]
+// @Failure 404 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /images/product/{productId} [get]
 func (s *Server) getProductImages(w http.ResponseWriter, r *http.Request) {
 	userId := r.PathValue("id")
@@ -34,9 +34,9 @@ func (s *Server) getProductImages(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Param publicID path int true "Product ID"
 // @Produce json
-// @Success 200 {object} ApiResponse[bool]
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[bool]
+// @Failure 404 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /images/{id} [delete]
 func (s *Server) removeImageByPublicID(w http.ResponseWriter, r *http.Request) {
 	publicID, err := GetUrlParam(r, "id")
@@ -52,9 +52,7 @@ func (s *Server) removeImageByPublicID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
-	jsoResp, _ := json.Marshal(dto.CreateDataResp(r.Context(), res, nil, nil))
-	w.Write(jsoResp)
+	RespondSuccess(w, r, res)
 }
 
 func (s *Server) removeImageUtil(ctx context.Context, publicID string) (msg string, err error) {

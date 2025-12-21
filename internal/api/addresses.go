@@ -21,8 +21,8 @@ import (
 // @Tags addresses
 // @Accept json
 // @Produce json
-// @Param input body CreateAddressRequest true "Create Address"
-// @Success 200 {object} ApiResponse[AddressResponse]
+// @Param input body models.CreateAddress true "Create Address"
+// @Success 200 {object} dto.ApiResponse[dto.AddressDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 401 {object} ErrorResp
 // @Router /users/addresses [post]
@@ -100,7 +100,7 @@ func (s *Server) createAddress(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param page query int false "Page number"
 // @Param pageSize query int false "Page size"
-// @Success 200 {object} ApiResponse[[]AddressResponse]
+// @Success 200 {object} dto.ApiResponse[[]dto.AddressDetail]
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /users/addresses [get]
@@ -131,8 +131,8 @@ func (s *Server) getAddresses(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Address ID"
-// @Param input body UpdateAddressRequest true "Update Address"
-// @Success 200 {object} ApiResponse[AddressResponse]
+// @Param input body models.UpdateAddress true "Update Address"
+// @Success 200 {object} dto.ApiResponse[dto.AddressDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 401 {object} ErrorResp
 // @Failure 404 {object} ErrorResp

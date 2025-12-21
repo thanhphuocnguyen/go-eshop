@@ -61,7 +61,7 @@ func (s *Server) adminDeleteCollection(w http.ResponseWriter, r *http.Request) {
 // @Param productId path string true "Product ID"
 // @Param page query int false "Page number" default(1)
 // @Param pageSize query int false "Page size" default(10)
-// @Success 200 {object} ApiResponse[[]ProductRatingModel]
+// @Success 200 {object} dto.ApiResponse[[]dto.ProductRatingDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
@@ -151,7 +151,7 @@ func (s *Server) adminGetRatings(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param orderId path string true "Order ID"
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[[]ProductRatingModel]
+// @Success 200 {object} dto.ApiResponse[[]repository.GetProductRatingsByOrderItemIDsRow]
 // @Failure 400 {object} ErrorResp
 // @Failure 403 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
@@ -361,7 +361,7 @@ func (s *Server) adminBanUserRating(w http.ResponseWriter, r *http.Request) {
 // @Param search query string false "Search by code"
 // @Param discountType query string false "Discount type" default(percentage)
 // @Param isActive query bool false "Is active" default(true)
-// @Success 200 {object} ApiResponse[[]DiscountListItemResponseModel]
+// @Success 200 {object} dto.ApiResponse[[]dto.DiscountListItem]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/discounts [get]
@@ -446,8 +446,8 @@ func (s *Server) adminGetDiscounts(w http.ResponseWriter, r *http.Request) {
 // @Tags discounts
 // @Accept  json
 // @Produce  json
-// @Param input body CreateDiscountRequest true "Discount info"
-// @Success 201 {object} ApiResponse[DiscountDetailResponseModel]
+// @Param input body models.AddDiscount true "Discount info"
+// @Success 201 {object} dto.ApiResponse[uuid.UUID]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/discounts [post]
@@ -497,8 +497,8 @@ func (s *Server) adminCreateDiscount(w http.ResponseWriter, r *http.Request) {
 // @Accept  json
 // @Produce  json
 // @Param id path string true "Discount ID"
-// @Param input body UpdateDiscountRequest true "Discount info"
-// @Success 200 {object} ApiResponse[string]
+// @Param input body models.UpdateDiscount true "Discount info"
+// @Success 200 {object} dto.ApiResponse[string]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /discounts/{id} [put]
@@ -598,8 +598,8 @@ func (s *Server) adminDeleteDiscount(w http.ResponseWriter, r *http.Request) {
 // @Accept  json
 // @Produce  json
 // @Param id path string true "Discount ID"
-// @Param input body AddDiscountRuleRequest true "Discount rule info"
-// @Success 201 {object} ApiResponse[string]
+// @Param input body models.AddDiscountRule true "Discount rule info"
+// @Success 201 {object} dto.ApiResponse[string]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/discounts/{id}/rules [post]
@@ -693,7 +693,7 @@ func (s *Server) adminAddDiscountRule(w http.ResponseWriter, r *http.Request) {
 // @Accept  json
 // @Produce  json
 // @Param id path string true "Discount ID"
-// @Success 200 {object} ApiResponse[[]DiscountRule]
+// @Success 200 {object} dto.ApiResponse[[]dto.DiscountRuleDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/discounts/{id}/rules [get]
@@ -731,7 +731,7 @@ func (s *Server) adminGetDiscountRules(w http.ResponseWriter, r *http.Request) {
 // @Produce  json
 // @Param id path string true "Discount ID"
 // @Param ruleId path string true "Rule ID"
-// @Success 200 {object} ApiResponse[DiscountRule]
+// @Success 200 {object} dto.ApiResponse[dto.DiscountRuleDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
@@ -766,8 +766,8 @@ func (s *Server) adminGetDiscountRuleByID(w http.ResponseWriter, r *http.Request
 // @Produce  json
 // @Param id path string true "Discount ID"
 // @Param ruleId path string true "Rule ID"
-// @Param input body UpdateDiscountRuleModel true "Updated discount rule info"
-// @Success 200 {object} ApiResponse[string]
+// @Param input body models.UpdateDiscountRule true "Updated discount rule info"
+// @Success 200 {object} dto.ApiResponse[string]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/discounts/{id}/rules/{ruleId} [put]

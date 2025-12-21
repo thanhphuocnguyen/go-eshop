@@ -28,8 +28,8 @@ import (
 // @Tags users
 // @Accept  json
 // @Produce  json
-// @Param input body RegisterRequestBody true "User info"
-// @Success 200 {object} ApiResponse[UserDetail]
+// @Param input body models.RegisterModel true "User info"
+// @Success 200 {object} dto.ApiResponse[dto.UserDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /auth/register [post]
@@ -169,8 +169,8 @@ func (s *Server) register(w http.ResponseWriter, r *http.Request) {
 // @Tags users
 // @Accept  json
 // @Produce  json
-// @Param input body LoginRequest true "User info"
-// @Success 200 {object} ApiResponse[LoginResponse]
+// @Param input body models.LoginModel true "User info"
+// @Success 200 {object} dto.ApiResponse[dto.LoginResponse]
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /auth/login [post]
@@ -263,7 +263,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 // @Tags users
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} ApiResponse[RefreshTokenResponse]
+// @Success 200 {object} dto.ApiResponse[dto.RefreshToken]
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /auth/refresh-token [post]

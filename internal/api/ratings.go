@@ -24,10 +24,10 @@ import (
 // @Param content formData string true "Review Content"
 // @Param files formData file false "Images"
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[ProductRatingModel]
-// @Failure 400 {object} ErrorResp
-// @Failure 403 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[dto.ProductRatingDetail]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 403 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /ratings [post]
 func (s *Server) postRating(w http.ResponseWriter, r *http.Request) {
 	_, claims, err := jwtauth.FromContext(r.Context())
@@ -84,10 +84,10 @@ func (s *Server) postRating(w http.ResponseWriter, r *http.Request) {
 // @Param ratingId body string true "Rating ID"
 // @Param helpful body bool true "Helpful"
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[string]
-// @Failure 400 {object} ErrorResp
-// @Failure 403 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[string]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 403 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /ratings/{Id}/helpful [post]
 func (s *Server) postRatingHelpful(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
@@ -135,10 +135,10 @@ func (s *Server) postRatingHelpful(w http.ResponseWriter, r *http.Request) {
 // @Param ratingId path string true "Rating ID"
 // @Param content body string true "Reply Content"
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[string]
-// @Failure 400 {object} ErrorResp
-// @Failure 403 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[string]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 403 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /ratings/{ratingId}/reply [post]
 func (s *Server) postReplyRating(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
@@ -181,10 +181,10 @@ func (s *Server) postReplyRating(w http.ResponseWriter, r *http.Request) {
 // @Param productId path string true "Product ID"
 // @Param page query int false "Page number" default(1)
 // @Param pageSize query int false "Page size" default(10)
-// @Success 200 {object} ApiResponse[[]ProductRatingModel]
-// @Failure 400 {object} ErrorResp
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[[]dto.ProductRatingDetail]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 404 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /ratings/products/{productId} [get]
 func (s *Server) getRatingsByProduct(w http.ResponseWriter, r *http.Request) {
 	idParam := chi.URLParam(r, "id")

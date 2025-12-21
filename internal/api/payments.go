@@ -42,14 +42,14 @@ func (s *Server) getStripeConfig(w http.ResponseWriter, r *http.Request) {
 // @Tags payment
 // @Accept json
 // @Produce json
-// @Param request body PaymentRequest true "Payment request"
+// @Param request body models.PaymentModel true "Payment request"
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[PaymentResponse]
-// @Failure 400 {object} ErrorResp
-// @Failure 401 {object} ErrorResp
-// @Failure 403 {object} ErrorResp
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[dto.PaymentIntentSecret]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 401 {object} dto.ErrorResp
+// @Failure 403 {object} dto.ErrorResp
+// @Failure 404 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /payments [post]
 func (s *Server) createPaymentIntent(w http.ResponseWriter, r *http.Request) {
 	_, claims, err := jwtauth.FromContext(r.Context())
@@ -150,12 +150,12 @@ func (s *Server) createPaymentIntent(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path int true "Order ID"
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[PaymentResponse]
-// @Failure 400 {object} ErrorResp
-// @Failure 401 {object} ErrorResp
-// @Failure 403 {object} ErrorResp
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[dto.PaymentDetail]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 401 {object} dto.ErrorResp
+// @Failure 403 {object} dto.ErrorResp
+// @Failure 404 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /payments/{id} [get]
 func (s *Server) getPayment(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
@@ -199,12 +199,12 @@ func (s *Server) getPayment(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param paymentId path string true "Payment ID"
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[PaymentResponse]
-// @Failure 400 {object} ErrorResp
-// @Failure 401 {object} ErrorResp
-// @Failure 403 {object} ErrorResp
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[dto.PaymentDetail]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 401 {object} dto.ErrorResp
+// @Failure 403 {object} dto.ErrorResp
+// @Failure 404 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /payments/{paymentId} [get]
 func (s *Server) changePaymentStatus(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
@@ -295,11 +295,11 @@ func (s *Server) changePaymentStatus(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[[]PaymentMethodResponse]
-// @Failure 400 {object} ErrorResp
-// @Failure 401 {object} ErrorResp
-// @Failure 403 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[[]dto.PaymentMethodResponse]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 401 {object} dto.ErrorResp
+// @Failure 403 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /payments/methods [get]
 func (s *Server) getPaymentMethods(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
@@ -324,14 +324,13 @@ func (s *Server) getPaymentMethods(w http.ResponseWriter, r *http.Request) {
 // @Tags payment
 // @Accept json
 // @Produce json
-// @Param request body ConfirmPaymentRequest true "Confirm Payment request"
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[ConfirmPaymentResponse]
-// @Failure 400 {object} ErrorResp
-// @Failure 401 {object} ErrorResp
-// @Failure 403 {object} ErrorResp
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[payment.PaymentResult]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 401 {object} dto.ErrorResp
+// @Failure 403 {object} dto.ErrorResp
+// @Failure 404 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /payments/{id}/confirm [post]
 func (s *Server) confirmPayment(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()

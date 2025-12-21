@@ -20,7 +20,7 @@ import (
 // @Produce json
 // @Param page query int false "Page number"
 // @Param pageSize query int false "Page size"
-// @Success 200 {object} ApiResponse[[]CategoryDto]
+// @Success 200 {object} dto.ApiResponse[[]dto.CategoryDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /shop/brands [get]
@@ -78,7 +78,7 @@ func (s *Server) getShopBrands(w http.ResponseWriter, r *http.Request) {
 // @Tags Brands
 // @Produce json
 // @Param slug path string true "Brand slug"
-// @Success 200 {object} ApiResponse[[]CategoryDto]
+// @Success 200 {object} dto.ApiResponse[[]dto.CategoryDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /shop/brands/{slug} [get]

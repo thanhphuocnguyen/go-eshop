@@ -20,9 +20,9 @@ import (
 // @Accept json
 // @Param productId path int true "Product ID"
 // @Produce json
-// @Success 200 {object} ApiResponse[ProductDetailDto]
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[dto.ProductDetail]
+// @Failure 404 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /products/{productId} [get]
 func (s *Server) getProductById(w http.ResponseWriter, r *http.Request) {
 	idParam := chi.URLParam(r, "id")
@@ -62,9 +62,9 @@ func (s *Server) getProductById(w http.ResponseWriter, r *http.Request) {
 // @Param page query int true "Page number"
 // @Param pageSize query int true "Page size"
 // @Produce json
-// @Success 200 {array} ApiResponse[[]ProductSummary]
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {array} dto.ApiResponse[[]dto.ProductSummary]
+// @Failure 404 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /products [get]
 func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 	paginationQuery := ParsePaginationQuery(r)

@@ -21,7 +21,7 @@ import (
 // @Tags carts
 // @Accept json
 // @Produce json
-// @Success 200 {object} ApiResponse[CartDetailResponse]
+// @Success 200 {object} dto.ApiResponse[dto.CartDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
@@ -77,7 +77,7 @@ func (s *Server) createCart(w http.ResponseWriter, r *http.Request) {
 // @Tags cart
 // @Accept json
 // @Produce json
-// @Success 200 {object} ApiResponse[CartDetailResponse]
+// @Success 200 {object} dto.ApiResponse[dto.CartDetail]
 // @Failure 500 {object} ErrorResp
 // @Failure 400 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
@@ -147,7 +147,7 @@ func (s *Server) getCart(w http.ResponseWriter, r *http.Request) {
 // @Tags carts
 // @Accept json
 // @Produce json
-// @Success 200 {object} ApiResponse[[]repository.GetAvailableDiscountsForCartRow]
+// @Success 200 {object} dto.ApiResponse[[]repository.GetCartRow]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /carts/available-discounts [get]
@@ -181,9 +181,9 @@ func (s *Server) getCartAvailableDiscounts(w http.ResponseWriter, r *http.Reques
 // @Description add a product to the cart
 // @Tags carts
 // @Accept json
-// @Param input body UpdateCartItemQtyRequest true "Add product to cart input"
+// @Param input body models.UpdateCartItemQtyModel true "Add product to cart input"
 // @Produce json
-// @Success 200 {object} ApiResponse[string]
+// @Success 200 {object} dto.ApiResponse[string]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /carts/items/{variant_id} [post]
@@ -278,7 +278,7 @@ func (s *Server) updateCartItemQty(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Param id path int true "Product ID"
 // @Produce json
-// @Success 200 {object} ApiResponse[string]
+// @Success 200 {object} dto.ApiResponse[string]
 // @Failure 400 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
 // @Failure 403 {object} ErrorResp

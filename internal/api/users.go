@@ -25,11 +25,11 @@ import (
 // @Tags users
 // @Accept  json
 // @Produce  json
-// @Param input body UpdateUserRequest true "User info"
-// @Success 200 {object} ApiResponse[repository.UpdateUserRow]
-// @Failure 400 {object} ErrorResp
-// @Failure 401 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Param input body models.UpdateUserModel true "User info"
+// @Success 200 {object} dto.ApiResponse[repository.UpdateUserRow]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 401 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /users/{id} [patch]
 func (s *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 	_, claims, err := jwtauth.FromContext(r.Context())
@@ -100,9 +100,9 @@ func (s *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 // @Tags users
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} ApiResponse[UserDetail]
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[UserDetail]
+// @Failure 404 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /users/me [get]
 func (s *Server) getCurrentUser(w http.ResponseWriter, r *http.Request) {
 	_, claims, err := jwtauth.FromContext(r.Context())
@@ -144,9 +144,9 @@ func (s *Server) getCurrentUser(w http.ResponseWriter, r *http.Request) {
 // @Accept  json
 // @Produce  json
 // @Success 204 {object} nil
-// @Failure 400 {object} ErrorResp
-// @Failure 401 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 401 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /users/verify-email [post]
 // @Security BearerAuth
 func (s *Server) sendVerifyEmail(w http.ResponseWriter, r *http.Request) {
@@ -192,10 +192,10 @@ func (s *Server) sendVerifyEmail(w http.ResponseWriter, r *http.Request) {
 // @Param id query int true "ID"
 // @Param verify_code query string true "Verify code"
 // @Success 200 {object} nil
-// @Failure 400 {object} ErrorResp
-// @Failure 401 {object} ErrorResp
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 401 {object} dto.ErrorResp
+// @Failure 404 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /users/verify-email [get]
 func (s *Server) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 	queryParams, err := url.ParseQuery(r.URL.RawQuery)

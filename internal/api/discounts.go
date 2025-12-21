@@ -22,8 +22,8 @@ import (
 // @Tags discounts
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} ApiResponse[[]DiscountListItemResponseModel]
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[[]dto.DiscountListItem]
+// @Failure 500 {object} dto.ErrorResp
 // @Router /discounts/available [get]
 func (s *Server) getAvailableDiscounts(w http.ResponseWriter, r *http.Request) {
 	_, claims, err := jwtauth.FromContext(r.Context())
@@ -66,10 +66,10 @@ func (s *Server) getAvailableDiscounts(w http.ResponseWriter, r *http.Request) {
 // @Tags discounts
 // @Accept  json
 // @Produce  json
-// @Param input body CheckDiscountApplicabilityRequest true "Discount applicability info"
-// @Success 200 {object} ApiResponse[CheckDiscountApplicabilityResponseModel]
-// @Failure 400 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Param input body models.CheckDiscountApplicabilityRequest true "Discount applicability info"
+// @Success 200 {object} dto.ApiResponse[processors.DiscountResult]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /discounts/check-applicability [post]
 func (s *Server) checkDiscountsApplicability(w http.ResponseWriter, r *http.Request) {
 	// Check discount applicability
@@ -123,10 +123,10 @@ func (s *Server) checkDiscountsApplicability(w http.ResponseWriter, r *http.Requ
 // @Accept  json
 // @Produce  json
 // @Param id path string true "Discount ID"
-// @Success 200 {object} ApiResponse[DiscountDetailResponseModel]
-// @Failure 400 {object} ErrorResp
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[dto.DiscountDetail]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 404 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /discounts/{id} [get]
 func (s *Server) getDiscountByID(w http.ResponseWriter, r *http.Request) {
 	// Get discount by ID

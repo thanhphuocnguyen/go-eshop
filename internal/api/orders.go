@@ -37,10 +37,10 @@ func (s *Server) addOrderRoutes(r chi.Router) {
 // @Param status query string false "Filter by status"
 // @Param payment_status query string false "Filter by payment status"
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[[]OrderListResponse]
-// @Failure 400 {object} ErrorResp
-// @Failure 401 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[[]dto.OrderListItem]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 401 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /orders [get]
 func (s *Server) getOrders(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
@@ -123,10 +123,10 @@ func (s *Server) getOrders(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path int true "Order ID"
 // @Security BearerAuth
-// @Success 200 {object} OrderDetailResponse
-// @Failure 400 {object} ErrorResp
-// @Failure 401 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[dto.OrderDetail]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 401 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /order/{orderId} [get]
 func (s *Server) getOrderDetail(w http.ResponseWriter, r *http.Request) {
 	idParam := chi.URLParam(r, "id")
@@ -268,10 +268,10 @@ func (s *Server) getOrderDetail(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path int true "Order ID"
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[bool]
-// @Failure 400 {object} ErrorResp
-// @Failure 401 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[bool]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 401 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /order/{orderId}/confirm-received [put]
 func (s *Server) confirmOrderPayment(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()

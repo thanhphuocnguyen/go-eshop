@@ -21,14 +21,14 @@ import (
 // @Description update product items in the cart
 // @Tags carts
 // @Accept json
-// @Param input body CheckoutRequest true "Checkout input"
+// @Param input body models.CheckoutModel true "Checkout input"
 // @Produce json
-// @Success 200 {object} ApiResponse[repository.CreatePaymentResult]
-// @Failure 400 {object} ErrorResp
-// @Failure 404 {object} ErrorResp
-// @Failure 403 {object} ErrorResp
-// @Failure 401 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[repository.CreatePaymentResult]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 404 {object} dto.ErrorResp
+// @Failure 403 {object} dto.ErrorResp
+// @Failure 401 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /carts/checkout [post]
 func (s *Server) checkout(w http.ResponseWriter, r *http.Request) {
 	_, claims, err := jwtauth.FromContext(r.Context())

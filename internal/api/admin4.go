@@ -24,9 +24,9 @@ import (
 // @Description update a product with the input payload
 // @Tags products
 // @Accept json
-// @Param input body UpdateProdVariantReq true "Product variant input"
+// @Param input body models.UpdateProdVariantModel true "Product variant input"
 // @Produce json
-// @Success 200 {object} ApiResponse[repository.ProductVariant]
+// @Success 200 {object} dto.ApiResponse[repository.ProductVariant]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{id}/variants/{variantId} [put]
@@ -87,7 +87,7 @@ func (s *Server) adminUpdateVariant(w http.ResponseWriter, r *http.Request) {
 // @Param id path string true "Product ID"
 // @Param variantId path string true "Product Variant ID"
 // @Produce json
-// @Success 200 {object} ApiResponse[repository.ProductVariant]
+// @Success 200 {object} dto.ApiResponse[repository.ProductVariant]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{id}/variants/{variantId}/images [post]
@@ -180,7 +180,7 @@ func (s *Server) adminUploadVariantImage(w http.ResponseWriter, r *http.Request)
 // @Tags products
 // @Accept json
 // @Produce json
-// @Success 200 {object} ApiResponse[string]
+// @Success 200 {object} dto.ApiResponse[string]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{id}/variant/{variantID} [delete]
@@ -217,8 +217,8 @@ func (s *Server) adminDeleteVariant(w http.ResponseWriter, r *http.Request) {
 // @Tags attributes
 // @Accept json
 // @Produce json
-// @Param params body AttributeValuesReq true "Attribute name"
-// @Success 201 {object} ApiResponse[AttributeRespModel]
+// @Param params body models.AttributeModel true "Attribute name"
+// @Success 201 {object} dto.ApiResponse[dto.AttributeDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/attributes [post]
@@ -249,7 +249,7 @@ func (s *Server) adminCreateAttribute(w http.ResponseWriter, r *http.Request) {
 // @Tags attributes
 // @Accept json
 // @Produce json
-// @Success 200 {object} ApiResponse[[]AttributeRespModel]
+// @Success 200 {object} dto.ApiResponse[[]dto.AttributeDetail]
 // @Failure 500 {object} ErrorResp
 // @Router /admin/attributes [get]
 func (s *Server) adminGetAttributes(w http.ResponseWriter, r *http.Request) {
@@ -308,7 +308,7 @@ func (s *Server) adminGetAttributes(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Attribute ID"
-// @Success 200 {object} ApiResponse[AttributeRespModel]
+// @Success 200 {object} dto.ApiResponse[dto.AttributeDetail]
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/attributes/{id} [get]
@@ -356,8 +356,8 @@ func (s *Server) adminGetAttributeByID(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Attribute ID"
-// @Param params body AttributeRequest true "Attribute name"
-// @Success 200 {object} ApiResponse[repository.Attribute]
+// @Param params body models.AttributeModel true "Attribute name"
+// @Success 200 {object} dto.ApiResponse[repository.Attribute]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/attributes/{id} [put]
@@ -439,7 +439,7 @@ func (s *Server) adminRemoveAttribute(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param id path string true "Product ID"
-// @Success 200 {object} ApiResponse[[]AttributeRespModel]
+// @Success 200 {object} dto.ApiResponse[[]dto.AttributeDetail]
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/attributes/product/{id} [get]
@@ -498,8 +498,8 @@ func (s *Server) adminGetAttributeValuesForProduct(w http.ResponseWriter, r *htt
 // @Accept json
 // @Produce json
 // @Param id path int true "Attribute ID"
-// @Param params body AttributeValuesReq true "Attribute value"
-// @Success 200 {object} ApiResponse[bool]
+// @Param params body models.AttributeValueModel true "Attribute value"
+// @Success 200 {object} dto.ApiResponse[bool]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/attributes/{id}/create [post]
@@ -542,8 +542,8 @@ func (s *Server) adminAddAttributeValue(w http.ResponseWriter, r *http.Request) 
 // @Accept json
 // @Produce json
 // @Param id path int true "Attribute ID"
-// @Param params body AttributeValuesReq true "Attribute value"
-// @Success 200 {object} ApiResponse[bool]
+// @Param params body models.AttributeValueModel true "Attribute value"
+// @Success 200 {object} dto.ApiResponse[bool]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/attributes/{id}/update/{valueId} [put]
@@ -649,7 +649,7 @@ func (s *Server) adminRemoveAttrValue(w http.ResponseWriter, r *http.Request) {
 // @Param pageSize query int false "Page size"
 // @Param status query string false "Filter by status"
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[[]OrderListResponse]
+// @Success 200 {object} dto.ApiResponse[[]dto.OrderListItem]
 // @Failure 401 {object} ErrorResp
 // @Failure 403 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
@@ -732,7 +732,7 @@ func (s *Server) adminGetOrders(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path string true "Order ID"
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[OrderDetailResponse]
+// @Success 200 {object} dto.ApiResponse[dto.OrderDetail]
 // @Failure 401 {object} ErrorResp
 // @Failure 403 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
@@ -751,7 +751,7 @@ func (s *Server) adminGetOrderDetail(w http.ResponseWriter, r *http.Request) {
 // @Param id path int true "Order ID"
 // @Param status body string true "Status"
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[OrderListResponse]
+// @Success 200 {object} dto.ApiResponse[uuid.UUID]
 // @Failure 400 {object} ErrorResp
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp

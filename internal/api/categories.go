@@ -22,7 +22,7 @@ import (
 // @Produce json
 // @Param page query int false "Page number"
 // @Param pageSize query int false "Page size"
-// @Success 200 {object} ApiResponse[[]dto.AdminCategoryDetail]
+// @Success 200 {object} dto.ApiResponse[[]dto.AdminCategoryDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /categories [get]
@@ -79,7 +79,7 @@ func (s *Server) getCategories(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param slug path string true "Category Slug"
 // @Param pageSize query int false "Page size"
-// @Success 200 {object} ApiResponse[dto.CategoryDetail]
+// @Success 200 {object} dto.ApiResponse[dto.CategoryDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /categories/slug/{slug} [get]

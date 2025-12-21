@@ -142,7 +142,7 @@ func (s *Server) addAdminRoutes(r chi.Router) {
 // @Produce  json
 // @Param limit query int false "Limit"
 // @Param offset query int false "Offset"
-// @Success 200 {object} ApiResponse[[]UserDetail]
+// @Success 200 {object} dto.ApiResponse[[]dto.UserDetail]
 // @Failure 500 {object} ErrorResp
 // @Failure 400 {object} ErrorResp
 // @Failure 401 {object} ErrorResp
@@ -191,7 +191,7 @@ func (s *Server) adminGetUsers(w http.ResponseWriter, r *http.Request) {
 // @Accept  json
 // @Produce  json
 // @Param id path string true "User ID"
-// @Success 200 {object} ApiResponse[UserDetail]
+// @Success 200 {object} dto.ApiResponse[dto.UserDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
@@ -233,7 +233,7 @@ func (s *Server) adminGetUser(w http.ResponseWriter, r *http.Request) {
 // @Param page query int true "Page number"
 // @Param pageSize query int true "Page size"
 // @Produce json
-// @Success 200 {array} ApiResponse[[]ProductSummary]
+// @Success 200 {array} dto.ApiResponse[[]dto.ProductSummary]
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products [get]
@@ -298,9 +298,9 @@ func (s *Server) adminGetProducts(w http.ResponseWriter, r *http.Request) {
 // @Description create a new product with the input payload
 // @Tags products
 // @Accept json
-// @Param input body CreateProductReq true "Product input"
+// @Param input body models.CreateProductModel true "Product input"
 // @Produce json
-// @Success 200 {object} ApiResponse[repository.Product]
+// @Success 200 {object} dto.ApiResponse[repository.Product]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /products [post]
@@ -348,9 +348,9 @@ func (s *Server) adminAddProduct(w http.ResponseWriter, r *http.Request) {
 // @Tags products
 // @Accept json
 // @Param productId path int true "Product ID"
-// @Param input body UpdateProductReq true "Product update input"
+// @Param input body models.UpdateProductModel true "Product update input"
 // @Produce json
-// @Success 200 {object} ApiResponse[repository.Product]
+// @Success 200 {object} dto.ApiResponse[repository.Product]
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{productId} [put]
@@ -434,7 +434,7 @@ func (s *Server) adminUpdateProduct(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Param productId path int true "Product ID"
 // @Produce json
-// @Success 200 {object} ApiResponse[string]
+// @Success 200 {object} dto.ApiResponse[string]
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{productId} [delete]
@@ -472,7 +472,7 @@ func (s *Server) adminDeleteProduct(w http.ResponseWriter, r *http.Request) {
 // @Accept multipart/form-data
 // @Param id path string true "Product ID"
 // @Produce json
-// @Success 200 {object} ApiResponse[string]
+// @Success 200 {object} dto.ApiResponse[string]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{id}/image [post]
@@ -548,9 +548,9 @@ func (s *Server) adminUploadProductImage(w http.ResponseWriter, r *http.Request)
 // @Description create a new product with the input payload
 // @Tags products
 // @Accept json
-// @Param input body CreateProdVariantReq true "Product variant input"
+// @Param input body models.CreateProdVariantModel true "Product variant input"
 // @Produce json
-// @Success 200 {object} ApiResponse[string]
+// @Success 200 {object} dto.ApiResponse[string]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{id}/variants [post]
@@ -654,7 +654,7 @@ func (s *Server) adminAddVariant(w http.ResponseWriter, r *http.Request) {
 // @Tags products
 // @Accept json
 // @Produce json
-// @Success 200 {object} ApiResponse[[]VariantModelDto]
+// @Success 200 {object} dto.ApiResponse[[]dto.VariantDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{id}/variants [get]
@@ -693,7 +693,7 @@ func (s *Server) adminGetVariants(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path string true "Product ID"
 // @Param variantID path string true "Product Variant ID"
-// @Success 200 {object} ApiResponse[VariantModelDto]
+// @Success 200 {object} dto.ApiResponse[dto.VariantDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{id}/variants/{variantID} [get]
