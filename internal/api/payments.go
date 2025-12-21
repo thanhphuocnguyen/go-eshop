@@ -18,15 +18,15 @@ import (
 
 // Setup payment-related routes
 func (s *Server) addPaymentRoutes(r chi.Router) {
-	r.Route("payments", func(r chi.Router) {
-		r.Get(":id", s.getPayment)
+	r.Route("/payments", func(r chi.Router) {
+		r.Get("/{id}", s.getPayment)
 		if s.config.Env == DevEnv {
-			r.Post(":id/confirm", s.confirmPayment)
+			r.Post("/{id}/confirm", s.confirmPayment)
 		}
-		r.Get("methods", s.getPaymentMethods)
-		r.Get("stripe-config", s.getStripeConfig)
-		r.Post("", s.createPaymentIntent)
-		r.Put(":orderId", s.changePaymentStatus)
+		r.Get("/methods", s.getPaymentMethods)
+		r.Get("/stripe-config", s.getStripeConfig)
+		r.Post("/", s.createPaymentIntent)
+		r.Put("/{orderId}", s.changePaymentStatus)
 	})
 }
 

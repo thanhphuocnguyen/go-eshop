@@ -253,10 +253,10 @@ func (s *Server) getRatingsByProduct(w http.ResponseWriter, r *http.Request) {
 
 // Setup brand-related routes
 func (s *Server) addRatingRoutes(r chi.Router) {
-	r.Route("ratings", func(r chi.Router) {
-		r.Post("", s.postRating)
-		r.Get(":orderId", s.adminGetOrderRatings)
-		r.Post(":id/helpful", s.postRatingHelpful)
-		r.Post(":id/reply", s.postReplyRating)
+	r.Route("/ratings", func(r chi.Router) {
+		r.Post("/", s.postRating)
+		r.Get("/{orderId}", s.adminGetOrderRatings)
+		r.Post("/{id}/helpful", s.postRatingHelpful)
+		r.Post("/{id}/reply", s.postReplyRating)
 	})
 }

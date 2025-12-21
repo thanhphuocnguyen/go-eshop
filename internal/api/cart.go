@@ -413,15 +413,15 @@ func mapToCartItemsResp(row repository.GetCartItemsRow) dto.CartItemDetail {
 // Setup cart-related routes
 func (s *Server) addCartRoutes(r chi.Router) {
 	r.Route("/carts", func(r chi.Router) {
-		r.Post("", s.createCart)
-		r.Post("checkout", s.checkout)
-		r.Get("", s.getCart)
-		r.Put("clear", s.clearCart)
+		r.Post("/", s.createCart)
+		r.Post("/checkout", s.checkout)
+		r.Get("/", s.getCart)
+		r.Put("/clear", s.clearCart)
 
-		r.Get("available-discounts", s.getCartAvailableDiscounts)
-		r.Route("items", func(r chi.Router) {
-			r.Put(":id/quantity", s.updateCartItemQty)
-			r.Delete(":id", s.removeCartItem)
+		r.Get("/available-discounts", s.getCartAvailableDiscounts)
+		r.Route("/items", func(r chi.Router) {
+			r.Put("/{id}/quantity", s.updateCartItemQty)
+			r.Delete("/{id}", s.removeCartItem)
 		})
 	})
 }

@@ -133,10 +133,10 @@ func (s *Server) getCategoryBySlug(w http.ResponseWriter, r *http.Request) {
 
 // Setup category-related routes
 func (s *Server) addCategoryRoutes(r chi.Router) {
-	r.Route("categories", func(r chi.Router) {
-		r.Get("", s.getCategories)
-		r.Get(":slug", s.getCategoryBySlug)
-		r.Get(":slug/products", s.getCategoryBySlug)
+	r.Route("/categories", func(r chi.Router) {
+		r.Get("/", s.getCategories)
+		r.Get("/:slug", s.getCategoryBySlug)
+		r.Get("/:slug/products", s.getCategoryBySlug)
 	})
 
 }

@@ -10,7 +10,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/jwtauth/v5"
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
@@ -18,12 +17,6 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
-
-// parseQuery is a utility function to parse URL query parameters into a struct
-func parseQuery(r *http.Request, dest interface{}) error {
-	validate := validator.New()
-	return validate.Struct(dest)
-}
 
 // Setup admin-related routes
 func (s *Server) addAdminRoutes(r chi.Router) {

@@ -102,8 +102,8 @@ func (s *Server) getShopBrandBySlug(w http.ResponseWriter, r *http.Request) {
 
 // Setup brand-related routes
 func (s *Server) addBrandRoutes(r chi.Router) {
-	r.Route("brands", func(r chi.Router) {
-		r.Get("", s.getShopBrands)
-		r.Get(":slug", s.getShopBrandBySlug)
+	r.Route("/brands", func(r chi.Router) {
+		r.Get("/", s.getShopBrands)
+		r.Get("/{slug}", s.getShopBrandBySlug)
 	})
 }

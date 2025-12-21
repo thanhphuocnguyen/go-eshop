@@ -33,60 +33,79 @@ func (s *Server) initializeRouter() {
 	router := chi.NewRouter()
 	gob.Register(&stripe.PaymentIntent{})
 
-	// Setup environment mode
+	// Setup global middleware
 	s.setEnvModeMiddleware(router)
+	router.Use(corsMiddleware())
 
-	// Setup validator
+	// Setup validator (consider moving to server initialization if used elsewhere)
 	validate := validator.New()
 	validate.RegisterValidation("uuidslice", uuidSlice)
 
-	// Setup CORS
-	router.Use(corsMiddleware())
-
 	docs.SwaggerInfo.BasePath = "/api/v1"
 
-	// Serve static files
-	fileServer := http.FileServer(http.Dir("./assets/"))
-	router.Handle("/assets/*", http.StripPrefix("/assets/", fileServer))
+	// Assign router to server
+	s.router = router
 
-	router.Get("/verify-email", s.VerifyEmail)
-	// Setup API routes
-	router.Route("/api/v1", func(r chi.Router) {
-		// Health check endpoint
-		r.Get("/health", func(w http.ResponseWriter, req *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
-		})
+	// Setup static file serving
+	s.setupStaticRoutes()
 
-		r.Get("/homepage", s.getHomePage)
+	// Setup main routes
+	s.setupMainRoutes()
 
-		// Register API route groups
-		s.addAuthRoutes(r)
-		s.router.Group(func(r chi.Router) {
-			r.Use(jwtauth.Verifier(s.tokenAuth))
-			r.Use(jwtauth.Authenticator(s.tokenAuth))
-			s.addAdminRoutes(r)
-			s.addUserRoutes(r)
-			s.addOrderRoutes(r)
-			s.addPaymentRoutes(r)
-			s.addRatingRoutes(r)
-			s.addDiscountRoutes(r)
-			r.Delete("/images/remove-external/{id}", s.removeImageByPublicID)
-		})
-		s.addProductRoutes(r)
-		s.addImageRoutes(r)
-		s.addCartRoutes(r)
-		s.addCategoryRoutes(r)
-		s.addCollectionRoutes(r)
-		s.addBrandRoutes(r)
-	})
-
-	// Setup webhook routes
-	s.addWebhookRoutes(router)
+	// Setup webhook routes (outside API versioning)
+	s.addWebhookRoutes(s.router)
 
 	// Setup Swagger
-	router.Get("/swagger/*", httpSwagger.WrapHandler)
+	s.router.Get("/swagger/*", httpSwagger.WrapHandler)
+}
 
-	s.router = router
+// setupStaticRoutes handles static file serving
+func (s *Server) setupStaticRoutes() {
+	fileServer := http.FileServer(http.Dir("./assets/"))
+	s.router.Handle("/assets/*", http.StripPrefix("/assets/", fileServer))
+	s.router.Get("/verify-email", s.VerifyEmail)
+}
+
+// setupMainRoutes organizes API routes into public and protected groups
+func (s *Server) setupMainRoutes() {
+	s.router.Route("/api/v1", func(r chi.Router) {
+		// Health check endpoint
+		r.Get("/health", s.healthCheck)
+
+		// Public routes
+		r.Get("/homepage", s.getHomePage)
+		s.addAuthRoutes(r)
+		s.addPublicRoutes(r)
+
+		// Protected routes (require authentication)
+		r.Group(func(protected chi.Router) {
+			protected.Use(jwtauth.Verifier(s.tokenAuth))
+			protected.Use(jwtauth.Authenticator(s.tokenAuth))
+
+			s.addAdminRoutes(protected)
+			s.addUserRoutes(protected)
+			s.addOrderRoutes(protected)
+			s.addPaymentRoutes(protected)
+			s.addRatingRoutes(protected)
+			s.addDiscountRoutes(protected)
+			protected.Delete("/images/remove-external/{id}", s.removeImageByPublicID)
+		})
+	})
+}
+
+// addPublicRoutes groups all public routes that don't require authentication
+func (s *Server) addPublicRoutes(r chi.Router) {
+	s.addProductRoutes(r)
+	s.addImageRoutes(r)
+	s.addCartRoutes(r)
+	s.addCategoryRoutes(r)
+	s.addCollectionRoutes(r)
+	s.addBrandRoutes(r)
+}
+
+// healthCheck handles the health check endpoint
+func (s *Server) healthCheck(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }

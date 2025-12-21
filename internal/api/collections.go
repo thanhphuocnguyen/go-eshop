@@ -74,8 +74,8 @@ func (s *Server) getCollectionBySlug(w http.ResponseWriter, r *http.Request) {
 
 // Setup collection-related routes
 func (s *Server) addCollectionRoutes(r chi.Router) {
-	r.Route("collections", func(r chi.Router) {
-		r.Get("", s.adminGetCollections)
+	r.Route("/collections", func(r chi.Router) {
+		r.Get("/", s.adminGetCollections)
 		r.Get("/{slug}", s.getCollectionBySlug)
 	})
 }
