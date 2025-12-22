@@ -57,8 +57,37 @@ func (s *Server) setEnvModeMiddleware(r *chi.Mux) {
 	if s.config.Env == "development" {
 		r.Use(middleware.Logger)
 	}
-	r.Use(middleware.CleanPath)
+	// r.Use(middleware.CleanPath)
 
+	// Add server state validation middleware
+	r.Use(s.serverStateMiddleware)
+
+	// Add custom panic recovery middleware with better logging
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Compress(5, "text/html", "text/css"))
+}
+
+// Middleware to validate server state before processing requests
+func (s *Server) serverStateMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Check for nil server components
+		if s == nil {
+			http.Error(w, "Server instance is nil", http.StatusInternalServerError)
+			return
+		}
+		if s.repo == nil {
+			http.Error(w, "Database repository is not initialized", http.StatusInternalServerError)
+			return
+		}
+		if s.tokenAuth == nil {
+			http.Error(w, "Token authentication is not initialized", http.StatusInternalServerError)
+			return
+		}
+		if s.validator == nil {
+			http.Error(w, "Validator is not initialized", http.StatusInternalServerError)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }

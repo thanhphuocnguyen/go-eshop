@@ -30,12 +30,12 @@ func (s *Server) addWebhookRoutes(r chi.Router) {
 }
 
 func (s *Server) initializeRouter() {
-	router := chi.NewRouter()
+	s.router = chi.NewRouter()
 	gob.Register(&stripe.PaymentIntent{})
 
 	// Setup global middleware
-	s.setEnvModeMiddleware(router)
-	router.Use(corsMiddleware())
+	s.setEnvModeMiddleware(s.router)
+	s.router.Use(corsMiddleware())
 
 	// Setup validator (consider moving to server initialization if used elsewhere)
 	validate := validator.New()
@@ -44,7 +44,6 @@ func (s *Server) initializeRouter() {
 	docs.SwaggerInfo.BasePath = "/api/v1"
 
 	// Assign router to server
-	s.router = router
 
 	// Setup static file serving
 	s.setupStaticRoutes()

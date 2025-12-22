@@ -34,13 +34,14 @@ import (
 // @Failure 500 {object} ErrorResp
 // @Router /auth/register [post]
 func (s *Server) register(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
 	var req models.RegisterModel
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
-	_, err := s.repo.GetUserByUsername(r.Context(), req.Username)
+	_, err := s.repo.GetUserByUsername(c, req.Username)
 	if err != nil && !errors.Is(err, repository.ErrRecordNotFound) {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -57,7 +58,7 @@ func (s *Server) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userRole, err := s.repo.GetRoleByCode(r.Context(), "user")
+	userRole, err := s.repo.GetRoleByCode(c, "user")
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -73,14 +74,14 @@ func (s *Server) register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.Username == "admin" {
-		adminRole, err := s.repo.GetRoleByCode(r.Context(), "admin")
+		adminRole, err := s.repo.GetRoleByCode(c, "admin")
 		if err != nil {
 			RespondInternalServerError(w, InternalServerErrorCode, err)
 			return
 		}
 		arg.RoleID = adminRole.ID
 	}
-	user, err := s.repo.CreateUser(r.Context(), arg)
+	user, err := s.repo.CreateUser(c, arg)
 
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
@@ -103,7 +104,7 @@ func (s *Server) register(w http.ResponseWriter, r *http.Request) {
 			createAddressArgs.Ward = req.Address.Ward
 		}
 
-		createdAddress, err := s.repo.CreateAddress(r.Context(), createAddressArgs)
+		createdAddress, err := s.repo.CreateAddress(c, createAddressArgs)
 
 		if err != nil {
 			RespondInternalServerError(w, AddressCodeCode, err)
@@ -127,7 +128,7 @@ func (s *Server) register(w http.ResponseWriter, r *http.Request) {
 
 	emailPayload := &worker.PayloadVerifyEmail{UserID: user.ID}
 	err = s.taskDistributor.SendVerifyAccountEmail(
-		r.Context(),
+		c,
 		emailPayload,
 		asynq.MaxRetry(3),
 		asynq.ProcessIn(5*time.Second),
@@ -208,7 +209,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	role, err := s.repo.GetRoleByID(r.Context(), user.RoleID)
+	role, err := s.repo.GetRoleByID(c, user.RoleID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -232,7 +233,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 		clientIP = netip.MustParseAddr("127.0.0.1")
 	}
 	id, _ := rfPayload.Get("id")
-	session, err := s.repo.InsertSession(r.Context(), repository.InsertSessionParams{
+	session, err := s.repo.InsertSession(c, repository.InsertSessionParams{
 		ID:           id.(uuid.UUID),
 		UserID:       user.ID,
 		RefreshToken: refreshToken,
@@ -268,6 +269,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResp
 // @Router /auth/refresh-token [post]
 func (s *Server) refreshToken(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
 		RespondUnauthorized(w, UnauthorizedCode, fmt.Errorf("refresh token is required"))
@@ -282,7 +284,7 @@ func (s *Server) refreshToken(w http.ResponseWriter, r *http.Request) {
 	}
 	id, _ := refreshTokenPayload.Get("id")
 	rfTkUUID := id.(uuid.UUID)
-	session, err := s.repo.GetSession(r.Context(), rfTkUUID)
+	session, err := s.repo.GetSession(c, rfTkUUID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			RespondNotFound(w, NotFoundCode, fmt.Errorf("session not found"))
@@ -316,7 +318,7 @@ func (s *Server) refreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	roleID, _ := refreshTokenPayload.Get("roleID")
-	role, err := s.repo.GetRoleByID(r.Context(), roleID.(uuid.UUID))
+	role, err := s.repo.GetRoleByID(c, roleID.(uuid.UUID))
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return

@@ -6,6 +6,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"net/http"
 	_ "net/http/pprof"
 	"os"
 
@@ -107,9 +108,24 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 			}
 
 			taskDistributor := worker.NewRedisTaskDistributor(redisCfg)
+			if taskDistributor == nil {
+				return fmt.Errorf("failed to create task distributor")
+			}
+
 			uploadService := upload.NewCloudinaryUploader(cfg)
+			if uploadService == nil {
+				return fmt.Errorf("failed to create upload service")
+			}
+
 			mailer := mailer.NewEmailSender(cfg.SmtpUsername, cfg.SmtpPassword, cfg.Env)
+			if mailer == nil {
+				return fmt.Errorf("failed to create mailer service")
+			}
+
 			service := payment.NewPaymentService()
+			if service == nil {
+				return fmt.Errorf("failed to create payment service")
+			}
 
 			// Register gateways
 			paymentGateways, err := pgRepo.GetPaymentMethods(ctx)
@@ -138,15 +154,34 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 			}
 
 			taskProcessor := worker.NewRedisTaskProcessor(redisCfg, pgRepo, mailer, cfg)
+			if taskProcessor == nil {
+				return fmt.Errorf("failed to create task processor")
+			}
+
 			api, err := api.NewAPI(cfg, pgRepo, taskDistributor, uploadService, service)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to create API server: %w", err)
+			}
+			if api == nil {
+				return fmt.Errorf("API server is nil")
 			}
 
 			server := api.Server(fmt.Sprintf(":%s", cfg.Port))
+			if server == nil {
+				return fmt.Errorf("HTTP server is nil")
+			}
+
+			// Validate all server dependencies before starting
+			if err := api.ValidateServerDependencies(ctx); err != nil {
+				return fmt.Errorf("server dependency validation failed: %w", err)
+			}
+			log.Info().Msg("Server dependency validation completed successfully")
+
 			go func() {
 				log.Info().Str("addr", fmt.Sprintf("http://%s:%s", cfg.Domain, cfg.Port)).Msg("API server started")
-				_ = server.ListenAndServe()
+				if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+					log.Error().Err(err).Msg("HTTP server error")
+				}
 			}()
 
 			go func() {

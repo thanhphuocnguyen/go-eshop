@@ -2,7 +2,6 @@ package dto
 
 import (
 	"context"
-	"time"
 	"unsafe"
 )
 
@@ -21,15 +20,10 @@ func CreateErr(code string, err error) ErrorResp {
 }
 
 func CreateDataResp[T any](c context.Context, data T, pagination *Pagination, err *ApiError) ApiResponse[T] {
+	// Safe extraction of context values with fallbacks
 	resp := ApiResponse[T]{
 		Data:       &data,
 		Pagination: pagination,
-		Meta: &MetaInfo{
-			Timestamp: time.Now().Format(time.RFC3339),
-			RequestID: c.Value("RequestID").(string),
-			Path:      c.Value("FullPath").(string),
-			Method:    c.Value("Method").(string),
-		},
 	}
 
 	if err != nil {

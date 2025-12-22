@@ -144,8 +144,8 @@ func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 }
 
 // Setup product-related routes
-func (s *Server) addProductRoutes(rg chi.Router) {
-	rg.Route("/products", func(r chi.Router) {
+func (s *Server) addProductRoutes(r chi.Router) {
+	r.Route("/products", func(r chi.Router) {
 		r.Get("/", s.getProducts)
 		r.Get("/{id}", s.getProductById)
 		r.Get("/{id}/ratings", s.getRatingsByProduct)

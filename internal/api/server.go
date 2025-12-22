@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -27,7 +28,7 @@ import (
 // @host      localhost:4000
 type Server struct {
 	config            config.Config
-	router            chi.Router
+	router            *chi.Mux
 	repo              repository.Store
 	uploadService     upload.CdnUploader
 	paymentSrv        *payment.PaymentManager
@@ -45,9 +46,37 @@ func NewAPI(
 	uploadService upload.CdnUploader,
 	paymentSrv *payment.PaymentManager,
 ) (*Server, error) {
+	// Add nil checks for critical dependencies
+	if repo == nil {
+		return nil, fmt.Errorf("repository cannot be nil")
+	}
+	if taskDistributor == nil {
+		return nil, fmt.Errorf("task distributor cannot be nil")
+	}
+	if uploadService == nil {
+		return nil, fmt.Errorf("upload service cannot be nil")
+	}
+	if paymentSrv == nil {
+		return nil, fmt.Errorf("payment service cannot be nil")
+	}
+	if cfg.SymmetricKey == "" {
+		return nil, fmt.Errorf("symmetric key cannot be empty")
+	}
+
 	discountProcessor := processors.NewDiscountProcessor(repo)
+	if discountProcessor == nil {
+		return nil, fmt.Errorf("failed to create discount processor")
+	}
+
 	cacheService := cache.NewRedisCache(cfg)
+	if cacheService == nil {
+		return nil, fmt.Errorf("failed to create cache service")
+	}
+
 	tokenAuth := jwtauth.New("HS256", []byte(cfg.SymmetricKey), nil)
+	if tokenAuth == nil {
+		return nil, fmt.Errorf("failed to create token auth")
+	}
 
 	server := &Server{
 		repo:              repo,
@@ -60,11 +89,24 @@ func NewAPI(
 		discountProcessor: discountProcessor,
 		validator:         validator.New(),
 	}
+
+	if server.validator == nil {
+		return nil, fmt.Errorf("failed to create validator")
+	}
+
 	server.initializeRouter()
+
+	if server.router == nil {
+		return nil, fmt.Errorf("failed to initialize router")
+	}
+
 	return server, nil
 }
 
 func (s *Server) Server(addr string) *http.Server {
+	if s.router == nil {
+		panic("router is nil - server not properly initialized")
+	}
 	return &http.Server{
 		Addr:    addr,
 		Handler: s.router,
