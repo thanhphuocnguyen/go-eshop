@@ -106,7 +106,8 @@ func (s *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 // @Router /users/me [get]
 func (s *Server) getCurrentUser(w http.ResponseWriter, r *http.Request) {
 	_, claims, err := jwtauth.FromContext(r.Context())
-	userId := claims["userId"].(uuid.UUID)
+
+	userID := uuid.MustParse(claims["userId"].(string))
 	roleCode := claims["roleCode"].(string)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, errors.New("authorization payload is not provided"))
@@ -115,7 +116,7 @@ func (s *Server) getCurrentUser(w http.ResponseWriter, r *http.Request) {
 
 	var userResp dto.UserDetail
 
-	user, err := s.repo.GetUserByID(r.Context(), userId)
+	user, err := s.repo.GetUserByID(r.Context(), userID)
 	if err != nil {
 		RespondNotFound(w, NotFoundCode, err)
 		return
@@ -155,8 +156,8 @@ func (s *Server) sendVerifyEmail(w http.ResponseWriter, r *http.Request) {
 		RespondInternalServerError(w, InternalServerErrorCode, errors.New("authorization payload is not provided"))
 		return
 	}
-	userId := claims["userId"].(uuid.UUID)
-	user, err := s.repo.GetUserByID(r.Context(), userId)
+	userID := uuid.MustParse(claims["userId"].(string))
+	user, err := s.repo.GetUserByID(r.Context(), userID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -169,7 +170,7 @@ func (s *Server) sendVerifyEmail(w http.ResponseWriter, r *http.Request) {
 	err = s.taskDistributor.SendVerifyAccountEmail(
 		r.Context(),
 		&worker.PayloadVerifyEmail{
-			UserID: userId,
+			UserID: userID,
 		},
 		asynq.MaxRetry(3),
 		asynq.ProcessIn(5*time.Second),

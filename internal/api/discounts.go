@@ -32,7 +32,9 @@ func (s *Server) getAvailableDiscounts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Get available discounts
-	discountRows, err := s.repo.GetAvailableDiscountsForUser(r.Context(), claims["userId"].(uuid.UUID))
+	userID := uuid.MustParse(claims["userId"].(string))
+
+	discountRows, err := s.repo.GetAvailableDiscountsForUser(r.Context(), userID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -78,7 +80,7 @@ func (s *Server) checkDiscountsApplicability(w http.ResponseWriter, r *http.Requ
 		RespondInternalServerError(w, UnauthorizedCode, errors.New("authorization payload is not provided"))
 		return
 	}
-	userID := claims["userId"].(uuid.UUID)
+	userID := uuid.MustParse(claims["userId"].(string))
 	var req models.CheckDiscountApplicabilityRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)

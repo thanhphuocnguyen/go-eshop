@@ -43,14 +43,16 @@ func (s *Server) postRating(w http.ResponseWriter, r *http.Request) {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
-	if orderItem.UserID != claims["userId"].(uuid.UUID) {
+	userID := uuid.MustParse(claims["userId"].(string))
+
+	if orderItem.UserID != userID {
 		RespondUnauthorized(w, UnauthorizedCode, err)
 		return
 	}
 
 	rating, err := s.repo.InsertProductRating(c, repository.InsertProductRatingParams{
 		ProductID:        orderItem.ProductID,
-		UserID:           claims["userId"].(uuid.UUID),
+		UserID:           userID,
 		OrderItemID:      utils.GetPgTypeUUID(orderItem.OrderItemID),
 		Rating:           utils.GetPgNumericFromFloat(req.Rating),
 		ReviewTitle:      &req.Title,
@@ -98,6 +100,7 @@ func (s *Server) postRatingHelpful(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, claims, err := jwtauth.FromContext(r.Context())
+	userID := uuid.MustParse(claims["userId"].(string))
 	var req models.PostHelpfulRatingModel
 	if err := s.GetRequestBody(r, req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
@@ -109,13 +112,13 @@ func (s *Server) postRatingHelpful(w http.ResponseWriter, r *http.Request) {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
-	if rating.UserID == claims["userId"].(uuid.UUID) {
+	if rating.UserID == userID {
 		RespondUnauthorized(w, UnauthorizedCode, nil)
 		return
 	}
 
 	id, err := s.repo.VoteHelpfulRatingTx(c, repository.VoteHelpfulRatingTxArgs{
-		UserID:   claims["userId"].(uuid.UUID),
+		UserID:   userID,
 		RatingID: rating.ID,
 		Helpful:  req.Helpful,
 	})
@@ -159,10 +162,11 @@ func (s *Server) postReplyRating(w http.ResponseWriter, r *http.Request) {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
+	userID := uuid.MustParse(claims["userId"].(string))
 
 	reply, err := s.repo.InsertRatingReply(c, repository.InsertRatingReplyParams{
 		RatingID: rating.ID,
-		ReplyBy:  claims["userId"].(uuid.UUID),
+		ReplyBy:  userID,
 		Content:  req.Content,
 	})
 	if err != nil {

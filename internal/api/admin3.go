@@ -172,7 +172,9 @@ func (s *Server) adminGetOrderRatings(w http.ResponseWriter, r *http.Request) {
 		RespondNotFound(w, NotFoundCode, nil)
 		return
 	}
-	if orderItems[0].UserID != claims["userId"].(uuid.UUID) {
+	userID := uuid.MustParse(claims["userId"].(string))
+
+	if orderItems[0].UserID != userID {
 		RespondForbidden(w, PermissionDeniedCode, nil)
 		return
 	}

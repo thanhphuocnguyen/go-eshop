@@ -32,7 +32,8 @@ func (s *Server) createCart(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	_, claims, err := jwtauth.FromContext(c)
 
-	userID := claims["userId"].(uuid.UUID)
+	userID := uuid.MustParse(claims["userId"].(string))
+
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, errors.New("user not found"))
 		return
@@ -91,7 +92,8 @@ func (s *Server) getCart(w http.ResponseWriter, r *http.Request) {
 		RespondInternalServerError(w, InternalServerErrorCode, errors.New("user not found"))
 		return
 	}
-	userID := claims["userId"].(uuid.UUID)
+
+	userID := uuid.MustParse(claims["userId"].(string))
 	cart, err := s.repo.GetCart(c, repository.GetCartParams{
 		UserID: utils.GetPgTypeUUID(userID),
 	})
@@ -158,9 +160,10 @@ func (s *Server) getCartAvailableDiscounts(w http.ResponseWriter, r *http.Reques
 		RespondInternalServerError(w, InternalServerErrorCode, errors.New("authorization payload is not provided"))
 		return
 	}
-	userId := claims["userId"].(uuid.UUID)
+	userID := uuid.MustParse(claims["userId"].(string))
+
 	cart, err := s.repo.GetCart(c, repository.GetCartParams{
-		UserID: utils.GetPgTypeUUID(userId),
+		UserID: utils.GetPgTypeUUID(userID),
 	})
 
 	if err != nil {
@@ -199,7 +202,8 @@ func (s *Server) updateCartItemQty(w http.ResponseWriter, r *http.Request) {
 		RespondInternalServerError(w, InternalServerErrorCode, errors.New("user not found"))
 		return
 	}
-	userID := claims["userId"].(uuid.UUID)
+	userID := uuid.MustParse(claims["userId"].(string))
+
 	c := r.Context()
 
 	var req models.UpdateCartItemQtyModel
@@ -291,7 +295,8 @@ func (s *Server) removeCartItem(w http.ResponseWriter, r *http.Request) {
 		RespondInternalServerError(w, InternalServerErrorCode, errors.New("authorization payload is not provided"))
 		return
 	}
-	userID := claims["userId"].(uuid.UUID)
+	userID := uuid.MustParse(claims["userId"].(string))
+
 	c := r.Context()
 	id, err := GetUrlParam(r, "id")
 	if err != nil {
@@ -351,9 +356,10 @@ func (s *Server) clearCart(w http.ResponseWriter, r *http.Request) {
 		RespondInternalServerError(w, InternalServerErrorCode, errors.New("authorization payload is not provided"))
 		return
 	}
-	userId := claims["userId"].(uuid.UUID)
+	userID := uuid.MustParse(claims["userId"].(string))
+
 	cart, err := s.repo.GetCart(c, repository.GetCartParams{
-		UserID: utils.GetPgTypeUUID(userId),
+		UserID: utils.GetPgTypeUUID(userID),
 	})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
@@ -364,7 +370,7 @@ func (s *Server) clearCart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if string(cart.UserID.Bytes[:]) != userId.String() {
+	if string(cart.UserID.Bytes[:]) != userID.String() {
 		RespondForbidden(w, UnauthorizedCode, errors.New("forbidden"))
 		return
 	}

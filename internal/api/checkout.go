@@ -34,7 +34,7 @@ func (s *Server) checkout(w http.ResponseWriter, r *http.Request) {
 	_, claims, err := jwtauth.FromContext(r.Context())
 	c := r.Context()
 
-	userID := claims["userId"].(uuid.UUID)
+	userID := uuid.MustParse(claims["userId"].(string))
 	if err != nil {
 		RespondBadRequest(w, InvalidBodyCode, errors.New("user not found"))
 		return

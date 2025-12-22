@@ -59,7 +59,8 @@ func (s *Server) adminCancelOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userRole := claims["role"].(string)
-	userID := claims["userId"].(uuid.UUID)
+	userID := uuid.MustParse(claims["userId"].(string))
+
 	if order.UserID != userID && userRole != "admin" {
 		RespondForbidden(w, PermissionDeniedCode, errors.New("you do not have permission to access this order"))
 		return

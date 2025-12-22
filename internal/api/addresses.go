@@ -55,10 +55,11 @@ func (s *Server) createAddress(w http.ResponseWriter, r *http.Request) {
 		RespondBadRequest(w, InvalidBodyCode, fmt.Errorf("maximum number of addresses reached"))
 		return
 	}
+	userID := uuid.MustParse(claims["userId"].(string))
 
 	payload := repository.CreateAddressParams{
 		PhoneNumber: req.Phone,
-		UserID:      claims["userId"].(uuid.UUID),
+		UserID:      userID,
 		Street:      req.Street,
 		IsDefault:   req.IsDefault,
 		City:        req.City,
@@ -110,8 +111,9 @@ func (s *Server) getAddresses(w http.ResponseWriter, r *http.Request) {
 		RespondInternalServerError(w, UnauthorizedCode, fmt.Errorf("authorization payload is not provided"))
 		return
 	}
-	userId := claims["userId"].(uuid.UUID)
-	addresses, err := s.repo.GetAddresses(r.Context(), userId)
+	userID := uuid.MustParse(claims["userId"].(string))
+
+	addresses, err := s.repo.GetAddresses(r.Context(), userID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -144,7 +146,8 @@ func (s *Server) updateAddress(w http.ResponseWriter, r *http.Request) {
 		RespondUnauthorized(w, UnauthorizedCode, fmt.Errorf("authorization payload is not provided"))
 		return
 	}
-	userID := claims["userId"].(uuid.UUID)
+	userID := uuid.MustParse(claims["userId"].(string))
+
 	var input models.UpdateAddress
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
@@ -241,7 +244,8 @@ func (s *Server) removeAddress(w http.ResponseWriter, r *http.Request) {
 		RespondInternalServerError(w, UnauthorizedCode, fmt.Errorf("authorization payload is not provided"))
 		return
 	}
-	userID := claims["userId"].(uuid.UUID)
+	userID := uuid.MustParse(claims["userId"].(string))
+
 	idParam := chi.URLParam(r, "id")
 	if idParam == "" {
 		RespondBadRequest(w, InvalidBodyCode, fmt.Errorf("id parameter is required"))
@@ -296,7 +300,8 @@ func (s *Server) setDefaultAddress(w http.ResponseWriter, r *http.Request) {
 		RespondInternalServerError(w, UnauthorizedCode, fmt.Errorf("authorization payload is not provided"))
 		return
 	}
-	userID := claims["userId"].(uuid.UUID)
+	userID := uuid.MustParse(claims["userId"].(string))
+
 	idParam := chi.URLParam(r, "id")
 	if idParam == "" {
 		RespondBadRequest(w, InvalidBodyCode, fmt.Errorf("id parameter is required"))

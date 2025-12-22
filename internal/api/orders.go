@@ -75,9 +75,9 @@ func (s *Server) getOrders(w http.ResponseWriter, r *http.Request) {
 		Limit:  orderListQuery.PageSize,
 		Offset: (orderListQuery.Page - 1) * orderListQuery.PageSize,
 	}
-
+	userID := uuid.MustParse(claims["userId"].(string))
 	if claims["roleCode"] != "admin" {
-		dbParams.UserID = utils.GetPgTypeUUID(claims["userId"].(uuid.UUID))
+		dbParams.UserID = utils.GetPgTypeUUID(userID)
 	}
 
 	fetchedOrderRows, err := s.repo.GetOrders(r.Context(), dbParams)
@@ -86,7 +86,7 @@ func (s *Server) getOrders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	count, err := s.repo.CountOrders(r.Context(), repository.CountOrdersParams{UserID: utils.GetPgTypeUUID(claims["userId"].(uuid.UUID))})
+	count, err := s.repo.CountOrders(r.Context(), repository.CountOrdersParams{UserID: utils.GetPgTypeUUID(userID)})
 
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
@@ -296,7 +296,9 @@ func (s *Server) confirmOrderPayment(w http.ResponseWriter, r *http.Request) {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
-	if order.UserID != claims["userId"].(uuid.UUID) {
+	userID := uuid.MustParse(claims["userId"].(string))
+
+	if order.UserID != userID {
 		RespondForbidden(w, PermissionDeniedCode, errors.New("you do not have permission to access this order"))
 		return
 	}

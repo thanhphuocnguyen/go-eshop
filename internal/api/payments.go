@@ -56,9 +56,9 @@ func (s *Server) createPaymentIntent(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		RespondUnauthorized(w, UnauthorizedCode, err)
 	}
-	userId := claims["userId"].(uuid.UUID)
+	userID := uuid.MustParse(claims["userId"].(string))
 	c := r.Context()
-	user, err := s.repo.GetUserByID(c, userId)
+	user, err := s.repo.GetUserByID(c, userID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			RespondNotFound(w, NotFoundCode, err)

@@ -341,7 +341,9 @@ func (s *Server) generateToken(
 	duration time.Duration,
 
 ) (accessToken jwt.Token, tokenString string, err error) {
+	id, _ := uuid.NewRandom()
 	jwtClaims := map[string]interface{}{
+		"id":       id,
 		"userId":   userID,
 		"username": username,
 		"roleId":   role.ID,

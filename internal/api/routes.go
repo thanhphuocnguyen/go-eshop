@@ -81,6 +81,7 @@ func (s *Server) setupMainRoutes() {
 			protected.Use(jwtauth.Verifier(s.tokenAuth))
 			protected.Use(jwtauth.Authenticator(s.tokenAuth))
 
+			s.addCartRoutes(protected)
 			s.addAdminRoutes(protected)
 			s.addUserRoutes(protected)
 			s.addOrderRoutes(protected)
@@ -96,7 +97,6 @@ func (s *Server) setupMainRoutes() {
 func (s *Server) addPublicRoutes(r chi.Router) {
 	s.addProductRoutes(r)
 	s.addImageRoutes(r)
-	s.addCartRoutes(r)
 	s.addCategoryRoutes(r)
 	s.addCollectionRoutes(r)
 	s.addBrandRoutes(r)
