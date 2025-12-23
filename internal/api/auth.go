@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -36,7 +35,7 @@ import (
 func (s *Server) register(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	var req models.RegisterModel
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := s.GetRequestBody(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
@@ -161,7 +160,7 @@ func (s *Server) register(w http.ResponseWriter, r *http.Request) {
 		userResp.Addresses = []dto.AddressDetail{address}
 	}
 
-	RespondSuccess(w, r, userResp)
+	RespondSuccess(w, userResp)
 }
 
 // login godoc
@@ -178,7 +177,7 @@ func (s *Server) register(w http.ResponseWriter, r *http.Request) {
 func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	var req models.LoginModel
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := s.GetRequestBody(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
@@ -255,7 +254,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 		RefreshToken:          refreshToken,
 		RefreshTokenExpiresAt: rfPayload.Expiration(),
 	}
-	RespondSuccess(w, r, loginResp)
+	RespondSuccess(w, loginResp)
 }
 
 // refreshToken godoc
@@ -331,7 +330,7 @@ func (s *Server) refreshToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := dto.RefreshToken{AccessToken: accessToken, AccessTokenExpiresAt: time.Now().Add(s.config.AccessTokenDuration)}
-	RespondSuccess(w, r, resp)
+	RespondSuccess(w, resp)
 }
 
 func (s *Server) generateToken(

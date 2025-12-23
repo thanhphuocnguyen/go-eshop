@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"slices"
@@ -36,10 +35,10 @@ func (s *Server) addAdminRoutes(r chi.Router) {
 			r.Route("/products", func(r chi.Router) {
 				r.Get("/", s.adminGetProducts)
 				r.Post("/", s.adminAddProduct)
-				r.Put("/{id}", s.adminUpdateProduct)
-				r.Delete("/{id}", s.adminDeleteProduct)
 
 				r.Route("/{id}", func(r chi.Router) {
+					r.Put("/", s.adminUpdateProduct)
+					r.Delete("/", s.adminDeleteProduct)
 					r.Post("/images", s.adminUploadProductImage)
 
 					r.Route("/variants", func(r chi.Router) {
@@ -181,7 +180,7 @@ func (s *Server) adminGetUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pagination := dto.CreatePagination(queries.Page, queries.PageSize, total)
-	RespondSuccessWithPagination(w, r, userResp, pagination)
+	RespondSuccessWithPagination(w, userResp, pagination)
 }
 
 // adminGetUser godoc
@@ -221,7 +220,7 @@ func (s *Server) adminGetUser(w http.ResponseWriter, r *http.Request) {
 	}
 	roleCode := claims["role_code"].(string)
 	userResp := dto.MapToUserResponse(user, roleCode)
-	RespondSuccess(w, r, userResp)
+	RespondSuccess(w, userResp)
 }
 
 // adminGetProducts godoc
@@ -290,7 +289,7 @@ func (s *Server) adminGetProducts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pagination := dto.CreatePagination(queries.Page, queries.PageSize, productCnt)
-	RespondSuccessWithPagination(w, r, productResponses, pagination)
+	RespondSuccessWithPagination(w, productResponses, pagination)
 }
 
 // @Summary Create a new product
@@ -307,7 +306,7 @@ func (s *Server) adminGetProducts(w http.ResponseWriter, r *http.Request) {
 func (s *Server) adminAddProduct(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	var req models.CreateProductModel
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := s.GetRequestBody(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
@@ -339,7 +338,7 @@ func (s *Server) adminAddProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondCreated(w, r, product)
+	RespondCreated(w, product)
 }
 
 // @Summary Update a product by ID
@@ -361,15 +360,15 @@ func (s *Server) adminUpdateProduct(w http.ResponseWriter, r *http.Request) {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
-
 	productID, err := uuid.Parse(id)
+
 	if err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
 	var req models.UpdateProductModel
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := s.GetRequestBody(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
@@ -424,7 +423,7 @@ func (s *Server) adminUpdateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondSuccess(w, r, updated)
+	RespondSuccess(w, updated)
 }
 
 // @Summary Remove a product by ID
@@ -540,7 +539,7 @@ func (s *Server) adminUploadProductImage(w http.ResponseWriter, r *http.Request)
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
-	RespondSuccess(w, r, updated)
+	RespondSuccess(w, updated)
 }
 
 // @Summary Create a new product variant
@@ -563,7 +562,7 @@ func (s *Server) adminAddVariant(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req models.CreateProdVariantModel
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := s.GetRequestBody(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
@@ -645,7 +644,7 @@ func (s *Server) adminAddVariant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondCreated(w, r, variant)
+	RespondCreated(w, variant)
 }
 
 // @Summary Get product variants
@@ -682,7 +681,7 @@ func (s *Server) adminGetVariants(w http.ResponseWriter, r *http.Request) {
 		resp[i] = dto.MapToVariantListModelDto(row)
 	}
 
-	RespondSuccess(w, r, resp)
+	RespondSuccess(w, resp)
 }
 
 // @Summary Get product variant
@@ -751,5 +750,5 @@ func (s *Server) adminGetVariant(w http.ResponseWriter, r *http.Request) {
 		resp.Attributes[i] = attr
 	}
 
-	RespondSuccess(w, r, resp)
+	RespondSuccess(w, resp)
 }

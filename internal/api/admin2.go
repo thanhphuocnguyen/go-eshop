@@ -97,7 +97,7 @@ func (s *Server) adminCancelOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.cacheSrv.Delete(c, "order_detail:"+id)
-	RespondSuccess(w, r, ordId)
+	RespondSuccess(w, ordId)
 }
 
 // @Summary Refund order
@@ -157,7 +157,7 @@ func (s *Server) adminRefundOrder(w http.ResponseWriter, r *http.Request) {
 	}
 	s.cacheSrv.Delete(c, "order_detail:"+id)
 
-	RespondSuccess(w, r, order)
+	RespondSuccess(w, order)
 }
 
 // adminGetCategories retrieves a list of Categories.
@@ -221,7 +221,7 @@ func (s *Server) adminGetCategories(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	pagination := dto.CreatePagination(query.Page, query.PageSize, count)
-	RespondSuccessWithPagination(w, r, categoriesResp, pagination)
+	RespondSuccessWithPagination(w, categoriesResp, pagination)
 }
 
 // adminGetCategoryByID retrieves a Category by its ID.
@@ -265,7 +265,7 @@ func (s *Server) adminGetCategoryByID(w http.ResponseWriter, r *http.Request) {
 		ImageUrl:    category.ImageUrl,
 	}
 
-	RespondSuccess(w, r, resp)
+	RespondSuccess(w, resp)
 }
 
 // adminCreateCategory creates a new Category.
@@ -321,7 +321,7 @@ func (s *Server) adminCreateCategory(w http.ResponseWriter, r *http.Request) {
 		ImageUrl:    col.ImageUrl,
 	}
 
-	RespondSuccess(w, r, resp)
+	RespondSuccess(w, resp)
 }
 
 // adminUpdateCategory updates a Category.
@@ -407,7 +407,7 @@ func (s *Server) adminUpdateCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondSuccessWithError(w, r, col, apiErr)
+	RespondSuccessWithError(w, col, apiErr)
 }
 
 // adminDeleteCategory delete a Category.
@@ -490,7 +490,7 @@ func (s *Server) adminCreateBrand(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondSuccess(w, r, col)
+	RespondSuccess(w, col)
 }
 
 // @Summary Get a list of brands
@@ -543,8 +543,8 @@ func (s *Server) adminGetBrands(w http.ResponseWriter, r *http.Request) {
 
 	pagination := dto.CreatePagination(queries.Page, queries.PageSize, cnt)
 
-	resp := dto.CreateDataResp(c, data, pagination, nil)
-	RespondSuccess(w, r, resp)
+	resp := dto.CreateDataResp(data, pagination, nil)
+	RespondSuccess(w, resp)
 }
 
 // @Summary Get a Brand by ID
@@ -586,7 +586,7 @@ func (s *Server) adminGetBrandByID(w http.ResponseWriter, r *http.Request) {
 		UpdatedAt:   result.UpdatedAt.String(),
 	}
 
-	RespondSuccess(w, r, colResp)
+	RespondSuccess(w, colResp)
 }
 
 // @Summary Update a Brand
@@ -670,7 +670,7 @@ func (s *Server) adminUpdateBrand(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondSuccess(w, r, col)
+	RespondSuccess(w, col)
 }
 
 // @Summary Delete a Brand
@@ -755,7 +755,7 @@ func (s *Server) adminCreateCollection(w http.ResponseWriter, r *http.Request) {
 	}
 	s.cacheSrv.Delete(c, "collections-*")
 
-	RespondCreated(w, r, col)
+	RespondCreated(w, col)
 }
 
 // @Summary Get a list of Collections
@@ -793,7 +793,7 @@ func (s *Server) adminGetCollections(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondSuccessWithPagination(w, r, collectionRows, dto.CreatePagination(cnt, queries.Page, queries.PageSize))
+	RespondSuccessWithPagination(w, collectionRows, dto.CreatePagination(cnt, queries.Page, queries.PageSize))
 }
 
 // @Summary Get a Collection by ID
@@ -836,7 +836,7 @@ func (s *Server) adminGetCollectionByID(w http.ResponseWriter, r *http.Request) 
 		CreatedAt:   collection.CreatedAt.Format("2006-01-02 15:04:05"),
 	}
 
-	RespondSuccess(w, r, colResp)
+	RespondSuccess(w, colResp)
 }
 
 // @Summary Update a Collection
@@ -913,5 +913,5 @@ func (s *Server) adminUpdateCollection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondSuccess(w, r, col)
+	RespondSuccess(w, col)
 }

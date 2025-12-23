@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -27,14 +26,15 @@ import (
 // @Failure 401 {object} ErrorResp
 // @Router /users/addresses [post]
 func (s *Server) createAddress(w http.ResponseWriter, r *http.Request) {
-	_, claims, err := jwtauth.FromContext(r.Context())
+	c := r.Context()
+	_, claims, err := jwtauth.FromContext(c)
 	if err != nil {
 		RespondInternalServerError(w, UnauthorizedCode, fmt.Errorf("authorization payload is not provided"))
 		return
 	}
 
 	var req models.CreateAddress
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := s.GetRequestBody(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
@@ -45,7 +45,7 @@ func (s *Server) createAddress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	addresses, err := s.repo.GetAddresses(r.Context(), claims["user_id"].(uuid.UUID))
+	addresses, err := s.repo.GetAddresses(c, claims["user_id"].(uuid.UUID))
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -70,10 +70,10 @@ func (s *Server) createAddress(w http.ResponseWriter, r *http.Request) {
 		payload.Ward = req.Ward
 	}
 
-	created, err := s.repo.CreateAddress(r.Context(), payload)
+	created, err := s.repo.CreateAddress(c, payload)
 
 	if req.IsDefault {
-		err := s.repo.SetPrimaryAddressTx(r.Context(), repository.SetPrimaryAddressTxArgs{
+		err := s.repo.SetPrimaryAddressTx(c, repository.SetPrimaryAddressTxArgs{
 			NewPrimaryID: created.ID,
 			UserID:       claims["user_id"].(uuid.UUID),
 		})
@@ -90,7 +90,7 @@ func (s *Server) createAddress(w http.ResponseWriter, r *http.Request) {
 	}
 
 	addressDetail := dto.MapAddressResponse(created)
-	RespondSuccess(w, r, addressDetail)
+	RespondSuccess(w, addressDetail)
 }
 
 // getAddresses godoc
@@ -106,14 +106,15 @@ func (s *Server) createAddress(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResp
 // @Router /users/addresses [get]
 func (s *Server) getAddresses(w http.ResponseWriter, r *http.Request) {
-	_, claims, err := jwtauth.FromContext(r.Context())
+	c := r.Context()
+	_, claims, err := jwtauth.FromContext(c)
 	if err != nil {
 		RespondInternalServerError(w, UnauthorizedCode, fmt.Errorf("authorization payload is not provided"))
 		return
 	}
 	userID := uuid.MustParse(claims["userId"].(string))
 
-	addresses, err := s.repo.GetAddresses(r.Context(), userID)
+	addresses, err := s.repo.GetAddresses(c, userID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -123,7 +124,7 @@ func (s *Server) getAddresses(w http.ResponseWriter, r *http.Request) {
 		addressesResponse[i] = dto.MapAddressResponse(addresses)
 	}
 
-	RespondSuccess(w, r, addressesResponse)
+	RespondSuccess(w, addressesResponse)
 }
 
 // updateAddress godoc
@@ -141,21 +142,22 @@ func (s *Server) getAddresses(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResp
 // @Router /users/addresses/{id} [put]
 func (s *Server) updateAddress(w http.ResponseWriter, r *http.Request) {
-	_, claims, err := jwtauth.FromContext(r.Context())
+	c := r.Context()
+	_, claims, err := jwtauth.FromContext(c)
 	if err != nil {
 		RespondUnauthorized(w, UnauthorizedCode, fmt.Errorf("authorization payload is not provided"))
 		return
 	}
 	userID := uuid.MustParse(claims["userId"].(string))
 
-	var input models.UpdateAddress
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+	var req models.UpdateAddress
+	if err := s.GetRequestBody(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
 	validate := validator.New()
-	if err := validate.Struct(&input); err != nil {
+	if err := validate.Struct(&req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
@@ -166,7 +168,7 @@ func (s *Server) updateAddress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = s.repo.GetAddress(r.Context(), repository.GetAddressParams{
+	_, err = s.repo.GetAddress(c, repository.GetAddressParams{
 		ID:     uuid.MustParse(idParam),
 		UserID: userID,
 	})
@@ -184,29 +186,29 @@ func (s *Server) updateAddress(w http.ResponseWriter, r *http.Request) {
 		UserID: userID,
 	}
 
-	if input.Phone != nil {
-		payload.PhoneNumber = input.Phone
+	if req.Phone != nil {
+		payload.PhoneNumber = req.Phone
 	}
 
-	if input.City != nil {
-		payload.City = input.City
+	if req.City != nil {
+		payload.City = req.City
 	}
 
-	if input.Address != nil {
-		payload.Street = input.Address
+	if req.Address != nil {
+		payload.Street = req.Address
 	}
 
-	if input.Ward != nil {
-		payload.Ward = input.Ward
+	if req.Ward != nil {
+		payload.Ward = req.Ward
 	}
 
-	if input.District != nil {
-		payload.District = input.District
+	if req.District != nil {
+		payload.District = req.District
 	}
 
-	if input.IsDefault != nil {
-		if *input.IsDefault {
-			err := s.repo.SetPrimaryAddressTx(r.Context(), repository.SetPrimaryAddressTxArgs{
+	if req.IsDefault != nil {
+		if *req.IsDefault {
+			err := s.repo.SetPrimaryAddressTx(c, repository.SetPrimaryAddressTxArgs{
 				NewPrimaryID: uuid.MustParse(idParam),
 				UserID:       userID,
 			})
@@ -217,13 +219,13 @@ func (s *Server) updateAddress(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	addresses, err := s.repo.UpdateAddress(r.Context(), payload)
+	addresses, err := s.repo.UpdateAddress(c, payload)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 	addressDetail := dto.MapAddressResponse(addresses)
-	RespondSuccess(w, r, addressDetail)
+	RespondSuccess(w, addressDetail)
 }
 
 // removeAddress godoc
@@ -239,7 +241,8 @@ func (s *Server) updateAddress(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} ErrorResp
 // @Router /users/addresses/{id} [delete]
 func (s *Server) removeAddress(w http.ResponseWriter, r *http.Request) {
-	_, claims, err := jwtauth.FromContext(r.Context())
+	c := r.Context()
+	_, claims, err := jwtauth.FromContext(c)
 	if err != nil {
 		RespondInternalServerError(w, UnauthorizedCode, fmt.Errorf("authorization payload is not provided"))
 		return
@@ -252,7 +255,7 @@ func (s *Server) removeAddress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	addresses, err := s.repo.GetAddress(r.Context(), repository.GetAddressParams{
+	addresses, err := s.repo.GetAddress(c, repository.GetAddressParams{
 		ID:     uuid.MustParse(idParam),
 		UserID: userID,
 	})
@@ -266,7 +269,7 @@ func (s *Server) removeAddress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.repo.DeleteAddress(r.Context(), repository.DeleteAddressParams{
+	err = s.repo.DeleteAddress(c, repository.DeleteAddressParams{
 		ID:     addresses.ID,
 		UserID: addresses.UserID,
 	})
@@ -295,7 +298,8 @@ func (s *Server) removeAddress(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} ErrorResp
 // @Router /users/addresses/{id}/default [put]
 func (s *Server) setDefaultAddress(w http.ResponseWriter, r *http.Request) {
-	_, claims, err := jwtauth.FromContext(r.Context())
+	c := r.Context()
+	_, claims, err := jwtauth.FromContext(c)
 	if err != nil {
 		RespondInternalServerError(w, UnauthorizedCode, fmt.Errorf("authorization payload is not provided"))
 		return
@@ -308,7 +312,7 @@ func (s *Server) setDefaultAddress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = s.repo.GetAddress(r.Context(), repository.GetAddressParams{
+	_, err = s.repo.GetAddress(c, repository.GetAddressParams{
 		ID:     uuid.MustParse(idParam),
 		UserID: userID,
 	})
@@ -322,7 +326,7 @@ func (s *Server) setDefaultAddress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.repo.SetPrimaryAddressTx(r.Context(), repository.SetPrimaryAddressTxArgs{
+	err = s.repo.SetPrimaryAddressTx(c, repository.SetPrimaryAddressTxArgs{
 		NewPrimaryID: uuid.MustParse(idParam),
 		UserID:       userID,
 	})

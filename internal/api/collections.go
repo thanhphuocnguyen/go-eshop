@@ -69,7 +69,7 @@ func (s *Server) getCollectionBySlug(w http.ResponseWriter, r *http.Request) {
 		collectionResp.Products[i] = dto.MapToShopProductResponse(row)
 	}
 
-	RespondSuccess(w, r, collectionResp)
+	RespondSuccess(w, collectionResp)
 }
 
 // Setup collection-related routes

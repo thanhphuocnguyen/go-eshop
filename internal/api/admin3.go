@@ -141,7 +141,7 @@ func (s *Server) adminGetRatings(w http.ResponseWriter, r *http.Request) {
 		}
 		productRatings = append(productRatings, model)
 	}
-	RespondSuccessWithPagination(w, r, productRatings, dto.CreatePagination(queries.Page, queries.PageSize, ratingsCount))
+	RespondSuccessWithPagination(w, productRatings, dto.CreatePagination(queries.Page, queries.PageSize, ratingsCount))
 }
 
 // @Summary Get order ratings
@@ -159,7 +159,7 @@ func (s *Server) adminGetRatings(w http.ResponseWriter, r *http.Request) {
 // @Router /ratings/orders/{orderId} [get]
 func (s *Server) adminGetOrderRatings(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
-	_, claims, err := jwtauth.FromContext(r.Context())
+	_, claims, err := jwtauth.FromContext(c)
 
 	orderId, err := GetUrlParam(r, "orderId")
 
@@ -188,7 +188,7 @@ func (s *Server) adminGetOrderRatings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondSuccess(w, r, ratings)
+	RespondSuccess(w, ratings)
 }
 
 // @Summary Delete a rating
@@ -439,7 +439,7 @@ func (s *Server) adminGetDiscounts(w http.ResponseWriter, r *http.Request) {
 	}
 	pagination := dto.CreatePagination(queries.Page, queries.PageSize, total)
 
-	RespondSuccessWithPagination(w, r, listData, pagination)
+	RespondSuccessWithPagination(w, listData, pagination)
 }
 
 // adminCreateDiscount godoc
@@ -489,7 +489,7 @@ func (s *Server) adminCreateDiscount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondSuccess(w, r, discount.String())
+	RespondSuccess(w, discount.String())
 }
 
 // adminUpdateDiscount godoc
@@ -561,7 +561,7 @@ func (s *Server) adminUpdateDiscount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondSuccess(w, r, updated)
+	RespondSuccess(w, updated)
 }
 
 // adminDeleteDiscount godoc
@@ -685,7 +685,7 @@ func (s *Server) adminAddDiscountRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondCreated(w, r, dto.CreateDataResp(c, rule, nil, nil))
+	RespondCreated(w, dto.CreateDataResp(rule, nil, nil))
 }
 
 // adminGetDiscountRules godoc
@@ -722,7 +722,7 @@ func (s *Server) adminGetDiscountRules(w http.ResponseWriter, r *http.Request) {
 		ruleDetails = append(ruleDetails, ruleDetail)
 	}
 
-	RespondSuccess(w, r, dto.CreateDataResp(c, ruleDetails, nil, nil))
+	RespondSuccess(w, dto.CreateDataResp(ruleDetails, nil, nil))
 }
 
 // adminGetDiscountRuleByID godoc
@@ -757,7 +757,7 @@ func (s *Server) adminGetDiscountRuleByID(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	RespondSuccess(w, r, dto.CreateDataResp(c, ruleDetail, nil, nil))
+	RespondSuccess(w, dto.CreateDataResp(ruleDetail, nil, nil))
 }
 
 // adminUpdateDiscountRule godoc
@@ -809,7 +809,7 @@ func (s *Server) adminUpdateDiscountRule(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	RespondSuccess(w, r, dto.CreateDataResp(c, rule, nil, nil))
+	RespondSuccess(w, dto.CreateDataResp(rule, nil, nil))
 }
 
 // adminDeleteDiscountRule godoc

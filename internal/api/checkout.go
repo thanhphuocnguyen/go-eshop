@@ -31,8 +31,8 @@ import (
 // @Failure 500 {object} dto.ErrorResp
 // @Router /carts/checkout [post]
 func (s *Server) checkout(w http.ResponseWriter, r *http.Request) {
-	_, claims, err := jwtauth.FromContext(r.Context())
 	c := r.Context()
+	_, claims, err := jwtauth.FromContext(c)
 
 	userID := uuid.MustParse(claims["userId"].(string))
 	if err != nil {
@@ -41,7 +41,7 @@ func (s *Server) checkout(w http.ResponseWriter, r *http.Request) {
 	}
 	// verify request body
 	var req models.CheckoutModel
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := s.GetRequestBody(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
@@ -201,5 +201,5 @@ func (s *Server) checkout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondSuccess(w, r, rs)
+	RespondSuccess(w, rs)
 }

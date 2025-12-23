@@ -90,5 +90,5 @@ func (s *Server) getHomePage(w http.ResponseWriter, r *http.Request) {
 		Collections: collections,
 	}
 
-	RespondSuccess(w, r, response)
+	RespondSuccess(w, response)
 }

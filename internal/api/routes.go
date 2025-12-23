@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/jwtauth/v5"
-	"github.com/go-playground/validator/v10"
 	"github.com/stripe/stripe-go/v84"
 	httpSwagger "github.com/swaggo/http-swagger"
 	docs "github.com/thanhphuocnguyen/go-eshop/docs"
@@ -34,12 +33,7 @@ func (s *Server) initializeRouter() {
 	gob.Register(&stripe.PaymentIntent{})
 
 	// Setup global middleware
-	s.setEnvModeMiddleware(s.router)
-	s.router.Use(corsMiddleware())
-
-	// Setup validator (consider moving to server initialization if used elsewhere)
-	validate := validator.New()
-	validate.RegisterValidation("uuidslice", uuidSlice)
+	s.registerMiddlewares(s.router)
 
 	docs.SwaggerInfo.BasePath = "/api/v1"
 

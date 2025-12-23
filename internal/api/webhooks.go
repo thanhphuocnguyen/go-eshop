@@ -55,7 +55,7 @@ func (s *Server) sendStripeEvent(w http.ResponseWriter, r *http.Request) {
 			if errors.Is(err, repository.ErrRecordNotFound) {
 				// If the payment is not found, we can ignore the event
 				log.Info().Msgf("Payment not found for payment intent ID: %s", *id)
-				RespondSuccess(w, r, nil)
+				RespondSuccess(w, nil)
 				return
 			}
 			RespondBadRequest(w, InternalServerErrorCode, err)
@@ -99,7 +99,7 @@ func (s *Server) sendStripeEvent(w http.ResponseWriter, r *http.Request) {
 
 		default:
 			log.Info().Msgf("Unhandled event type: %s", evt.Type)
-			RespondSuccess(w, r, nil)
+			RespondSuccess(w, nil)
 			return
 		}
 		err = s.repo.UpdatePayment(c, updateTransactionStatus)
@@ -120,7 +120,7 @@ func (s *Server) sendStripeEvent(w http.ResponseWriter, r *http.Request) {
 			if errors.Is(err, repository.ErrRecordNotFound) {
 				// If the payment is not found, we can ignore the event
 				log.Info().Msgf("Payment not found for payment intent ID: %s", *paymentIntentID)
-				RespondSuccess(w, r, nil)
+				RespondSuccess(w, nil)
 				return
 			}
 			RespondBadRequest(w, InternalServerErrorCode, err)
@@ -181,5 +181,5 @@ func (s *Server) sendStripeEvent(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	RespondSuccess(w, r, nil)
+	RespondSuccess(w, nil)
 }

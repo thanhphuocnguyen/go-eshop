@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"time"
@@ -34,7 +33,7 @@ func (s *Server) getStripeConfig(w http.ResponseWriter, r *http.Request) {
 	resp := map[string]string{
 		"public_key": s.config.StripePublishableKey,
 	}
-	RespondSuccess(w, r, resp)
+	RespondSuccess(w, resp)
 }
 
 // @Summary Initiate payment
@@ -52,12 +51,12 @@ func (s *Server) getStripeConfig(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} dto.ErrorResp
 // @Router /payments [post]
 func (s *Server) createPaymentIntent(w http.ResponseWriter, r *http.Request) {
-	_, claims, err := jwtauth.FromContext(r.Context())
+	c := r.Context()
+	_, claims, err := jwtauth.FromContext(c)
 	if err != nil {
 		RespondUnauthorized(w, UnauthorizedCode, err)
 	}
 	userID := uuid.MustParse(claims["userId"].(string))
-	c := r.Context()
 	user, err := s.repo.GetUserByID(c, userID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
@@ -68,7 +67,7 @@ func (s *Server) createPaymentIntent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req models.PaymentModel
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := s.GetRequestBody(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
@@ -140,7 +139,7 @@ func (s *Server) createPaymentIntent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp.PaymentID = pmRow.ID.String()
-	RespondSuccess(w, r, resp)
+	RespondSuccess(w, resp)
 }
 
 // @Summary Get payment  by order ID
@@ -189,7 +188,7 @@ func (s *Server) getPayment(w http.ResponseWriter, r *http.Request) {
 		Details: details,
 	}
 
-	RespondSuccess(w, r, resp)
+	RespondSuccess(w, resp)
 }
 
 // @Summary Change payment status
@@ -214,7 +213,7 @@ func (s *Server) changePaymentStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req models.UpdatePaymentStatusModel
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := s.GetRequestBody(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, errors.New("invalid request body"))
 		return
 	}
@@ -286,7 +285,7 @@ func (s *Server) changePaymentStatus(w http.ResponseWriter, r *http.Request) {
 		ID:     payment.ID.String(),
 		Status: req.Status,
 	}
-	RespondSuccess(w, r, resp)
+	RespondSuccess(w, resp)
 }
 
 // @Summary Get payment methods
@@ -316,7 +315,7 @@ func (s *Server) getPaymentMethods(w http.ResponseWriter, r *http.Request) {
 			Code: pm.Code,
 		})
 	}
-	RespondSuccess(w, r, resp)
+	RespondSuccess(w, resp)
 }
 
 // @Summary Confirm Payment
@@ -362,5 +361,5 @@ func (s *Server) confirmPayment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondSuccess(w, r, rs)
+	RespondSuccess(w, rs)
 }

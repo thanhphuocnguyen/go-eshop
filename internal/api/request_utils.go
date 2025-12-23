@@ -83,7 +83,8 @@ func ParsePaginationQuery(r *http.Request) models.PaginationQuery {
 
 // GetUserClaimsFromContext safely extracts JWT claims from request context
 func GetUserClaimsFromContext(r *http.Request) (map[string]interface{}, error) {
-	_, claims, err := jwtauth.FromContext(r.Context())
+	c := r.Context()
+	_, claims, err := jwtauth.FromContext(c)
 	if err != nil {
 		return nil, err
 	}

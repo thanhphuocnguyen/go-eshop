@@ -9,14 +9,14 @@ type PostHelpfulRatingModel struct {
 }
 
 type PostReplyRatingModel struct {
-	RatingID string `json:"ratingId" binding:"required"`
-	Content  string `json:"content" binding:"required"`
+	RatingID string `json:"ratingId" validate:"required"`
+	Content  string `json:"content" validate:"required"`
 }
 
 type PostRatingFormData struct {
-	OrderItemID string                  `form:"orderItemId" binding:"required"`
-	Rating      float64                 `form:"rating" binding:"required,min=1,max=5"`
-	Title       string                  `form:"title" binding:"required"`
-	Content     string                  `form:"content" binding:"required"`
-	Files       []*multipart.FileHeader `form:"files" binding:"omitempty"`
+	OrderItemID string                  `form:"orderItemId" validate:"required"`
+	Rating      float64                 `form:"rating" validate:"required,min=1,max=5"`
+	Title       string                  `form:"title" validate:"required"`
+	Content     string                  `form:"content" validate:"required"`
+	Files       []*multipart.FileHeader `form:"files" validate:"omitempty"`
 }

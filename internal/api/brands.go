@@ -66,9 +66,9 @@ func (s *Server) getShopBrands(w http.ResponseWriter, r *http.Request) {
 		data[i] = model
 	}
 
-	resp := dto.CreateDataResp(c, data, dto.CreatePagination(queries.Page, queries.PageSize, cnt), nil)
+	resp := dto.CreateDataResp(data, dto.CreatePagination(queries.Page, queries.PageSize, cnt), nil)
 
-	RespondSuccess(w, r, resp)
+	RespondSuccess(w, resp)
 }
 
 // @Summary Get a list of brands for the shop
@@ -96,8 +96,8 @@ func (s *Server) getShopBrandBySlug(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := dto.CreateDataResp(c, brandRow, nil, nil)
-	RespondSuccess(w, r, resp)
+	resp := dto.CreateDataResp(brandRow, nil, nil)
+	RespondSuccess(w, resp)
 }
 
 // Setup brand-related routes

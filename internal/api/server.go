@@ -87,12 +87,12 @@ func NewAPI(
 		tokenAuth:         tokenAuth,
 		paymentSrv:        paymentSrv,
 		discountProcessor: discountProcessor,
-		validator:         validator.New(),
 	}
 
-	if server.validator == nil {
-		return nil, fmt.Errorf("failed to create validator")
-	}
+	// Setup validator (consider moving to server initialization if used elsewhere)
+	validate := validator.New()
+	validate.RegisterValidation("uuidslice", uuidSlice)
+	server.validator = validate
 
 	server.initializeRouter()
 

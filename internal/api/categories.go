@@ -67,7 +67,7 @@ func (s *Server) getCategories(w http.ResponseWriter, r *http.Request) {
 		catIds[i] = category.ID
 	}
 
-	RespondSuccess(w, r, dto.CreateDataResp(c, categoriesResp, dto.CreatePagination(cnt, query.Page, query.PageSize), nil))
+	RespondSuccess(w, dto.CreateDataResp(categoriesResp, dto.CreatePagination(cnt, query.Page, query.PageSize), nil))
 }
 
 // getCategoryBySlug retrieves a list of Products by Category Slug.
@@ -128,7 +128,7 @@ func (s *Server) getCategoryBySlug(w http.ResponseWriter, r *http.Request) {
 	}
 	resp.Products = productResponses
 
-	RespondSuccess(w, r, resp)
+	RespondSuccess(w, resp)
 }
 
 // Setup category-related routes

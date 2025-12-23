@@ -30,7 +30,7 @@ func (s *Server) getProductById(w http.ResponseWriter, r *http.Request) {
 		RespondBadRequest(w, InvalidBodyCode, errors.New("id parameter is required"))
 		return
 	}
-
+	c := r.Context()
 	sqlParams := repository.GetProductDetailParams{}
 	err := uuid.Validate(idParam)
 	if err == nil {
@@ -39,7 +39,7 @@ func (s *Server) getProductById(w http.ResponseWriter, r *http.Request) {
 		sqlParams.Slug = idParam
 	}
 
-	productRow, err := s.repo.GetProductDetail(r.Context(), sqlParams)
+	productRow, err := s.repo.GetProductDetail(c, sqlParams)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			RespondNotFound(w, NotFoundCode, err)
@@ -51,7 +51,7 @@ func (s *Server) getProductById(w http.ResponseWriter, r *http.Request) {
 
 	productDetail := dto.MapToProductDetailResponse(productRow)
 
-	RespondSuccess(w, r, productDetail)
+	RespondSuccess(w, productDetail)
 }
 
 // @Summary Get list of products
@@ -67,8 +67,8 @@ func (s *Server) getProductById(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} dto.ErrorResp
 // @Router /products [get]
 func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
 	paginationQuery := ParsePaginationQuery(r)
-
 	queryParams := r.URL.Query()
 	var queries models.ProductQuery
 	queries.Page = paginationQuery.Page
@@ -123,13 +123,13 @@ func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	products, err := s.repo.GetProductList(r.Context(), dbParams)
+	products, err := s.repo.GetProductList(c, dbParams)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	productCnt, err := s.repo.CountProducts(r.Context(), repository.CountProductsParams{})
+	productCnt, err := s.repo.CountProducts(c, repository.CountProductsParams{})
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -140,7 +140,7 @@ func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 		productResponses = append(productResponses, dto.MapToShopProductResponse(product))
 	}
 
-	RespondSuccessWithPagination(w, r, productResponses, dto.CreatePagination(queries.Page, queries.PageSize, productCnt))
+	RespondSuccessWithPagination(w, productResponses, dto.CreatePagination(queries.Page, queries.PageSize, productCnt))
 }
 
 // Setup product-related routes

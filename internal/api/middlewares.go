@@ -41,30 +41,22 @@ func authorizeMiddleware(next http.Handler, roles ...string) http.HandlerFunc {
 	}
 }
 
-// Setup CORS configuration
-func corsMiddleware() func(next http.Handler) http.Handler {
-	return cors.Handler(cors.Options{
-		AllowedOrigins: []string{"http://localhost:3001", "http://localhost:8080"},
-		AllowedHeaders: []string{"Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With"},
-		AllowedMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		MaxAge:         300,
-		// AllowAllOrigins:  sv.config.Env == "development",
-	})
-}
-
 // Setup environment mode based on configuration
-func (s *Server) setEnvModeMiddleware(r *chi.Mux) {
-	if s.config.Env == "development" {
-		r.Use(middleware.Logger)
-	}
-	// r.Use(middleware.CleanPath)
-
+func (s *Server) registerMiddlewares(r *chi.Mux) {
 	// Add server state validation middleware
 	r.Use(s.serverStateMiddleware)
-
 	// Add custom panic recovery middleware with better logging
+	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Compress(5, "text/html", "text/css"))
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "PUT", "POST", "DELETE", "HEAD", "OPTION"},
+		AllowedHeaders:   []string{"User-Agent", "Content-Type", "Accept", "Accept-Encoding", "Accept-Language", "Cache-Control", "Connection", "DNT", "Host", "Origin", "Pragma", "Referer"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	}))
 }
 
 // Middleware to validate server state before processing requests

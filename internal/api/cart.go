@@ -69,7 +69,7 @@ func (s *Server) createCart(w http.ResponseWriter, r *http.Request) {
 		CreatedAt:  newCart.CreatedAt,
 	}
 
-	RespondSuccess(w, r, dto.CreateDataResp(c, resp, nil, nil))
+	RespondSuccess(w, dto.CreateDataResp(resp, nil, nil))
 }
 
 // @Summary Get cart details by user ID
@@ -107,7 +107,7 @@ func (s *Server) getCart(w http.ResponseWriter, r *http.Request) {
 				RespondInternalServerError(w, InternalServerErrorCode, err)
 				return
 			}
-			RespondSuccess(w, r, dto.CreateDataResp(c, dto.CartDetail{
+			RespondSuccess(w, dto.CreateDataResp(dto.CartDetail{
 				ID:         cart.ID,
 				TotalPrice: 0,
 				CartItems:  []dto.CartItemDetail{},
@@ -140,7 +140,7 @@ func (s *Server) getCart(w http.ResponseWriter, r *http.Request) {
 		cartDetail.DiscountAmount += item.DiscountAmount
 	}
 
-	RespondSuccess(w, r, dto.CreateDataResp(c, cartDetail, nil, nil))
+	RespondSuccess(w, dto.CreateDataResp(cartDetail, nil, nil))
 }
 
 // @Summary Get cart discounts
@@ -175,7 +175,7 @@ func (s *Server) getCartAvailableDiscounts(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	RespondSuccess(w, r, dto.CreateDataResp(c, cart, nil, nil))
+	RespondSuccess(w, dto.CreateDataResp(cart, nil, nil))
 
 }
 
@@ -192,22 +192,21 @@ func (s *Server) getCartAvailableDiscounts(w http.ResponseWriter, r *http.Reques
 // @Router /carts/items/{variant_id} [post]
 func (s *Server) updateCartItemQty(w http.ResponseWriter, r *http.Request) {
 	id, err := GetUrlParam(r, "variant_id")
+	c := r.Context()
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	_, claims, err := jwtauth.FromContext(r.Context())
+	_, claims, err := jwtauth.FromContext(c)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, errors.New("user not found"))
 		return
 	}
 	userID := uuid.MustParse(claims["userId"].(string))
 
-	c := r.Context()
-
 	var req models.UpdateCartItemQtyModel
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := s.GetRequestBody(r, &req); err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
@@ -272,7 +271,7 @@ func (s *Server) updateCartItemQty(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondSuccess(w, r, dto.CreateDataResp(c, cartItem.ID, nil, nil))
+	RespondSuccess(w, dto.CreateDataResp(cartItem.ID, nil, nil))
 }
 
 // @Summary Remove a product from the cart
@@ -290,14 +289,14 @@ func (s *Server) updateCartItemQty(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResp
 // @Router /carts/items/{id} [delete]
 func (s *Server) removeCartItem(w http.ResponseWriter, r *http.Request) {
-	_, claims, err := jwtauth.FromContext(r.Context())
+	c := r.Context()
+	_, claims, err := jwtauth.FromContext(c)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, errors.New("authorization payload is not provided"))
 		return
 	}
 	userID := uuid.MustParse(claims["userId"].(string))
 
-	c := r.Context()
 	id, err := GetUrlParam(r, "id")
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
@@ -350,8 +349,8 @@ func (s *Server) removeCartItem(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} ErrorResp
 // @Router /carts/clear [put]
 func (s *Server) clearCart(w http.ResponseWriter, r *http.Request) {
-	_, claims, err := jwtauth.FromContext(r.Context())
 	c := r.Context()
+	_, claims, err := jwtauth.FromContext(c)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, errors.New("authorization payload is not provided"))
 		return

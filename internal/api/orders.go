@@ -80,13 +80,13 @@ func (s *Server) getOrders(w http.ResponseWriter, r *http.Request) {
 		dbParams.UserID = utils.GetPgTypeUUID(userID)
 	}
 
-	fetchedOrderRows, err := s.repo.GetOrders(r.Context(), dbParams)
+	fetchedOrderRows, err := s.repo.GetOrders(c, dbParams)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	count, err := s.repo.CountOrders(r.Context(), repository.CountOrdersParams{UserID: utils.GetPgTypeUUID(userID)})
+	count, err := s.repo.CountOrders(c, repository.CountOrdersParams{UserID: utils.GetPgTypeUUID(userID)})
 
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
@@ -113,7 +113,7 @@ func (s *Server) getOrders(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	RespondSuccessWithPagination(w, r, orderResponses, dto.CreatePagination(orderListQuery.Page, orderListQuery.PageSize, count))
+	RespondSuccessWithPagination(w, orderResponses, dto.CreatePagination(orderListQuery.Page, orderListQuery.PageSize, count))
 }
 
 // @Summary Get order detail
@@ -130,6 +130,7 @@ func (s *Server) getOrders(w http.ResponseWriter, r *http.Request) {
 // @Router /order/{orderId} [get]
 func (s *Server) getOrderDetail(w http.ResponseWriter, r *http.Request) {
 	idParam := chi.URLParam(r, "id")
+	c := r.Context()
 	if idParam == "" {
 		RespondBadRequest(w, InvalidBodyCode, errors.New("id parameter is required"))
 		return
@@ -137,14 +138,14 @@ func (s *Server) getOrderDetail(w http.ResponseWriter, r *http.Request) {
 
 	var resp *dto.OrderDetail = nil
 
-	if err := s.cacheSrv.Get(r.Context(), "order_detail:"+idParam, &resp); err == nil {
+	if err := s.cacheSrv.Get(c, "order_detail:"+idParam, &resp); err == nil {
 		if resp != nil {
-			RespondSuccess(w, r, resp)
+			RespondSuccess(w, resp)
 			return
 		}
 	}
 
-	order, err := s.repo.GetOrder(r.Context(), uuid.MustParse(idParam))
+	order, err := s.repo.GetOrder(c, uuid.MustParse(idParam))
 	if err != nil {
 		if err == repository.ErrRecordNotFound {
 			RespondNotFound(w, NotFoundCode, err)
@@ -180,7 +181,7 @@ func (s *Server) getOrderDetail(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	paymentInfo, err := s.repo.GetPaymentByOrderID(r.Context(), order.ID)
+	paymentInfo, err := s.repo.GetPaymentByOrderID(c, order.ID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -190,7 +191,7 @@ func (s *Server) getOrderDetail(w http.ResponseWriter, r *http.Request) {
 
 	if paymentInfo.Status == repository.PaymentStatusPending &&
 		paymentInfo.PaymentIntentID != nil {
-		paymentDetail, err := s.paymentSrv.GetPayment(r.Context(), *paymentInfo.PaymentIntentID, *paymentInfo.Gateway)
+		paymentDetail, err := s.paymentSrv.GetPayment(c, *paymentInfo.PaymentIntentID, *paymentInfo.Gateway)
 		if err != nil {
 			log.Err(err).Msg("failed to get payment intent")
 			apiErr = &dto.ApiError{
@@ -203,7 +204,7 @@ func (s *Server) getOrderDetail(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	discountRows, err := s.repo.GetOrderDiscounts(r.Context(), order.ID)
+	discountRows, err := s.repo.GetOrderDiscounts(c, order.ID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -221,7 +222,7 @@ func (s *Server) getOrderDetail(w http.ResponseWriter, r *http.Request) {
 	}
 	resp.Discounts = discounts
 
-	orderItemRows, err := s.repo.GetOrderItems(r.Context(), order.ID)
+	orderItemRows, err := s.repo.GetOrderItems(c, order.ID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -257,7 +258,7 @@ func (s *Server) getOrderDetail(w http.ResponseWriter, r *http.Request) {
 
 	resp.LineItems = lineItems
 
-	response := dto.CreateDataResp(r.Context(), resp, nil, apiErr)
+	response := dto.CreateDataResp(resp, nil, apiErr)
 	RespondJSON(w, http.StatusOK, response)
 }
 
@@ -287,7 +288,7 @@ func (s *Server) confirmOrderPayment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	order, err := s.repo.GetOrder(r.Context(), uuid.MustParse(idParam))
+	order, err := s.repo.GetOrder(c, uuid.MustParse(idParam))
 	if err != nil {
 		if err == repository.ErrRecordNotFound {
 			RespondNotFound(w, NotFoundCode, err)
@@ -318,13 +319,13 @@ func (s *Server) confirmOrderPayment(w http.ResponseWriter, r *http.Request) {
 			Valid: true,
 		},
 	}
-	_, err = s.repo.UpdateOrder(r.Context(), orderUpdateParams)
+	_, err = s.repo.UpdateOrder(c, orderUpdateParams)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 	var apiErr *dto.ApiError
-	if err := s.cacheSrv.Delete(r.Context(), "order_detail:"+idParam); err != nil {
+	if err := s.cacheSrv.Delete(c, "order_detail:"+idParam); err != nil {
 		log.Err(err).Msg("failed to delete order detail cache")
 		apiErr = &dto.ApiError{
 			Code:    InternalServerErrorCode,
@@ -333,6 +334,6 @@ func (s *Server) confirmOrderPayment(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	response := dto.CreateDataResp(r.Context(), true, nil, apiErr)
+	response := dto.CreateDataResp(true, nil, apiErr)
 	RespondJSON(w, http.StatusOK, response)
 }

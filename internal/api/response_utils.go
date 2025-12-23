@@ -15,24 +15,24 @@ func RespondJSON(w http.ResponseWriter, statusCode int, data interface{}) {
 }
 
 // RespondSuccess sends a successful JSON response with data
-func RespondSuccess(w http.ResponseWriter, r *http.Request, data interface{}) {
-	response := dto.CreateDataResp(r.Context(), data, nil, nil)
+func RespondSuccess(w http.ResponseWriter, data interface{}) {
+	response := dto.CreateDataResp(data, nil, nil)
 	RespondJSON(w, http.StatusOK, response)
 }
-func RespondSuccessWithError(w http.ResponseWriter, r *http.Request, data interface{}, err *dto.ApiError) {
-	response := dto.CreateDataResp(r.Context(), data, nil, err)
+func RespondSuccessWithError(w http.ResponseWriter, data interface{}, err *dto.ApiError) {
+	response := dto.CreateDataResp(data, nil, err)
 	RespondJSON(w, http.StatusOK, response)
 }
 
 // RespondSuccessWithPagination sends a successful JSON response with data and pagination
-func RespondSuccessWithPagination(w http.ResponseWriter, r *http.Request, data interface{}, pagination *dto.Pagination) {
-	response := dto.CreateDataResp(r.Context(), data, pagination, nil)
+func RespondSuccessWithPagination(w http.ResponseWriter, data interface{}, pagination *dto.Pagination) {
+	response := dto.CreateDataResp(data, pagination, nil)
 	RespondJSON(w, http.StatusOK, response)
 }
 
 // RespondCreated sends a 201 Created response with data
-func RespondCreated(w http.ResponseWriter, r *http.Request, data interface{}) {
-	response := dto.CreateDataResp(r.Context(), data, nil, nil)
+func RespondCreated(w http.ResponseWriter, data interface{}) {
+	response := dto.CreateDataResp(data, nil, nil)
 	RespondJSON(w, http.StatusCreated, response)
 }
 

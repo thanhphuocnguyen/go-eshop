@@ -40,7 +40,7 @@ func (s *Server) adminUpdateVariant(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req models.UpdateProdVariantModel
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := s.GetRequestBody(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
@@ -76,7 +76,7 @@ func (s *Server) adminUpdateVariant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondSuccess(w, r, updatedVariant)
+	RespondSuccess(w, updatedVariant)
 }
 
 // @Summary Upload a product variant image
@@ -171,7 +171,7 @@ func (s *Server) adminUploadVariantImage(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	RespondSuccess(w, r, updatedVariant)
+	RespondSuccess(w, updatedVariant)
 }
 
 // @Summary Delete a product variant
@@ -225,7 +225,7 @@ func (s *Server) adminDeleteVariant(w http.ResponseWriter, r *http.Request) {
 func (s *Server) adminCreateAttribute(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	var req models.AttributeModel
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := s.GetRequestBody(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
@@ -241,7 +241,7 @@ func (s *Server) adminCreateAttribute(w http.ResponseWriter, r *http.Request) {
 		Name: attribute.Name,
 	}
 
-	RespondSuccess(w, r, attributeResp)
+	RespondSuccess(w, attributeResp)
 }
 
 // @Summary Get all attributes
@@ -255,18 +255,17 @@ func (s *Server) adminCreateAttribute(w http.ResponseWriter, r *http.Request) {
 func (s *Server) adminGetAttributes(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	query := r.URL.Query().Get("ids")
-	if query != "" {
-		RespondBadRequest(w, InvalidBodyCode, errors.New("ids parameter is required"))
-		return
-	}
+
 	ids := []int32{}
-	for _, idStr := range strings.Split(query, ",") {
-		id, err := strconv.ParseInt(strings.TrimSpace(idStr), 10, 32)
-		if err != nil {
-			RespondBadRequest(w, InvalidBodyCode, err)
-			return
+	if query != "" {
+		for _, idStr := range strings.Split(query, ",") {
+			id, err := strconv.ParseInt(strings.TrimSpace(idStr), 10, 32)
+			if err != nil {
+				RespondBadRequest(w, InvalidBodyCode, err)
+				return
+			}
+			ids = append(ids, int32(id))
 		}
-		ids = append(ids, int32(id))
 	}
 	attributeRows, err := s.repo.GetAttributes(c, ids)
 	if err != nil {
@@ -299,7 +298,7 @@ func (s *Server) adminGetAttributes(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	RespondSuccess(w, r, attributeResp)
+	RespondSuccess(w, attributeResp)
 }
 
 // @Summary Get an attribute
@@ -347,7 +346,7 @@ func (s *Server) adminGetAttributeByID(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	RespondSuccess(w, r, attributeResp)
+	RespondSuccess(w, attributeResp)
 }
 
 // @Summary Update an attribute
@@ -392,7 +391,7 @@ func (s *Server) adminUpdateAttribute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondSuccess(w, r, attribute)
+	RespondSuccess(w, attribute)
 }
 
 // @Summary Delete an attribute
@@ -489,7 +488,7 @@ func (s *Server) adminGetAttributeValuesForProduct(w http.ResponseWriter, r *htt
 		}
 	}
 
-	RespondSuccess(w, r, resp)
+	RespondSuccess(w, resp)
 }
 
 // @Summary Add new attribute value
@@ -533,7 +532,7 @@ func (s *Server) adminAddAttributeValue(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	RespondCreated(w, r, obj)
+	RespondCreated(w, obj)
 }
 
 // @Summary update attribute value
@@ -588,7 +587,7 @@ func (s *Server) adminUpdateAttrValue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondSuccess(w, r, res)
+	RespondSuccess(w, res)
 }
 
 // @Summary remove an attribute value
@@ -722,7 +721,7 @@ func (s *Server) adminGetOrders(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	RespondSuccessWithPagination(w, r, orderResponses, dto.CreatePagination(orderListQuery.Page, orderListQuery.PageSize, count))
+	RespondSuccessWithPagination(w, orderResponses, dto.CreatePagination(orderListQuery.Page, orderListQuery.PageSize, count))
 }
 
 // @Summary Get order details by ID (admin endpoint)
@@ -814,5 +813,5 @@ func (s *Server) adminChangeOrderStatus(w http.ResponseWriter, r *http.Request) 
 	}
 	s.cacheSrv.Delete(c, "order_detail:"+id)
 
-	RespondSuccess(w, r, rs)
+	RespondSuccess(w, rs)
 }

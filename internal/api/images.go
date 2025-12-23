@@ -52,7 +52,7 @@ func (s *Server) removeImageByPublicID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondSuccess(w, r, res)
+	RespondSuccess(w, res)
 }
 
 func (s *Server) removeImageUtil(ctx context.Context, publicID string) (msg string, err error) {

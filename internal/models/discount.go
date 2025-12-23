@@ -8,60 +8,60 @@ import (
 )
 
 type AddDiscount struct {
-	IsStackable       bool      `json:"isStackable" binding:"omitempty"`
-	IsActive          bool      `json:"isActive" binding:"required"`
-	DiscountValue     float64   `json:"discountValue" binding:"required,gt=0"`
-	Code              string    `json:"code" binding:"required,min=5,max=32,alphanum"`
-	Name              string    `json:"name" binding:"required,min=3,max=100"`
-	DiscountType      string    `json:"discountType" binding:"required"`
-	ValidFrom         time.Time `json:"validFrom" binding:"required" time_format:"2006-01-02T15:04:05Z07:00"`
-	ValidUntil        time.Time `json:"validUntil" binding:"omitempty" time_format:"2006-01-02T15:04:05Z07:00"`
-	Priority          *int32    `json:"priority" binding:"omitempty,gte=0"`
-	Description       *string   `json:"description" binding:"omitempty,max=1000"`
-	MinOrderValue     *float64  `json:"minOrderValue" binding:"omitempty,gt=0"`
-	MaxDiscountAmount *float64  `json:"maxDiscountAmount" binding:"omitempty,gt=0"`
-	UsageLimit        *int32    `json:"usageLimit" binding:"omitempty,gte=0"`
-	UsagePerUser      *int32    `json:"usagePerUser" binding:"omitempty,gte=0"`
+	IsStackable       bool      `json:"isStackable" validate:"omitempty"`
+	IsActive          bool      `json:"isActive" validate:"required"`
+	DiscountValue     float64   `json:"discountValue" validate:"required,gt=0"`
+	Code              string    `json:"code" validate:"required,min=5,max=32,alphanum"`
+	Name              string    `json:"name" validate:"required,min=3,max=100"`
+	DiscountType      string    `json:"discountType" validate:"required"`
+	ValidFrom         time.Time `json:"validFrom" validate:"required" time_format:"2006-01-02T15:04:05Z07:00"`
+	ValidUntil        time.Time `json:"validUntil" validate:"omitempty" time_format:"2006-01-02T15:04:05Z07:00"`
+	Priority          *int32    `json:"priority" validate:"omitempty,gte=0"`
+	Description       *string   `json:"description" validate:"omitempty,max=1000"`
+	MinOrderValue     *float64  `json:"minOrderValue" validate:"omitempty,gt=0"`
+	MaxDiscountAmount *float64  `json:"maxDiscountAmount" validate:"omitempty,gt=0"`
+	UsageLimit        *int32    `json:"usageLimit" validate:"omitempty,gte=0"`
+	UsagePerUser      *int32    `json:"usagePerUser" validate:"omitempty,gte=0"`
 }
 
 type AddDiscountRule struct {
-	RuleType  string                 `json:"ruleType" binding:"required,oneof=product category customer_segment brand collection first_time_buyer purchase_quantity"`
-	RuleValue map[string]interface{} `json:"ruleValue" binding:"required,min=1"`
+	RuleType  string                 `json:"ruleType" validate:"required,oneof=product category customer_segment brand collection first_time_buyer purchase_quantity"`
+	RuleValue map[string]interface{} `json:"ruleValue" validate:"required,min=1"`
 }
 
 type UpdateDiscountRule struct {
-	RuleType  *string                `json:"ruleType" binding:"omitempty,oneof=condition action"`
-	RuleValue map[string]interface{} `json:"ruleValue" binding:"omitempty,min=1"`
+	RuleType  *string                `json:"ruleType" validate:"omitempty,oneof=condition action"`
+	RuleValue map[string]interface{} `json:"ruleValue" validate:"omitempty,min=1"`
 }
 
 type UriRuleIDParam struct {
-	ID     string `uri:"id" binding:"required,uuid"`
-	RuleID string `uri:"ruleId" binding:"required,uuid"`
+	ID     string `uri:"id" validate:"required,uuid"`
+	RuleID string `uri:"ruleId" validate:"required,uuid"`
 }
 
 type UpdateDiscount struct {
-	IsStackable       *bool      `json:"isStackable" binding:"omitempty"`
-	IsActive          *bool      `json:"isActive" binding:"omitempty"`
-	DiscountValue     *float64   `json:"discountValue" binding:"omitempty,gt=0"`
-	Code              *string    `json:"code" binding:"omitempty,min=5,max=32,alphanum"`
-	Name              *string    `json:"name" binding:"omitempty,min=3,max=100"`
-	DiscountType      *string    `json:"discountType" binding:"omitempty"`
-	ValidFrom         *time.Time `json:"validFrom" binding:"omitempty" time_format:"2006-01-02T15:04:05Z07:00"`
-	ValidUntil        *time.Time `json:"validUntil" binding:"omitempty" time_format:"2006-01-02T15:04:05Z07:00"`
-	Priority          *int32     `json:"priority" binding:"omitempty,gte=0"`
-	Description       *string    `json:"description" binding:"omitempty,max=1000"`
-	MinOrderValue     *float64   `json:"minOrderValue" binding:"omitempty,gt=0"`
-	MaxDiscountAmount *float64   `json:"maxDiscountAmount" binding:"omitempty,gt=0"`
-	UsageLimit        *int32     `json:"usageLimit" binding:"omitempty,gte=0"`
-	UsagePerUser      *int32     `json:"usagePerUser" binding:"omitempty,gte=0"`
+	IsStackable       *bool      `json:"isStackable" validate:"omitempty"`
+	IsActive          *bool      `json:"isActive" validate:"omitempty"`
+	DiscountValue     *float64   `json:"discountValue" validate:"omitempty,gt=0"`
+	Code              *string    `json:"code" validate:"omitempty,min=5,max=32,alphanum"`
+	Name              *string    `json:"name" validate:"omitempty,min=3,max=100"`
+	DiscountType      *string    `json:"discountType" validate:"omitempty"`
+	ValidFrom         *time.Time `json:"validFrom" validate:"omitempty" time_format:"2006-01-02T15:04:05Z07:00"`
+	ValidUntil        *time.Time `json:"validUntil" validate:"omitempty" time_format:"2006-01-02T15:04:05Z07:00"`
+	Priority          *int32     `json:"priority" validate:"omitempty,gte=0"`
+	Description       *string    `json:"description" validate:"omitempty,max=1000"`
+	MinOrderValue     *float64   `json:"minOrderValue" validate:"omitempty,gt=0"`
+	MaxDiscountAmount *float64   `json:"maxDiscountAmount" validate:"omitempty,gt=0"`
+	UsageLimit        *int32     `json:"usageLimit" validate:"omitempty,gte=0"`
+	UsagePerUser      *int32     `json:"usagePerUser" validate:"omitempty,gte=0"`
 }
 
 type DiscountListQuery struct {
-	DiscountType  *string    `form:"discountType" binding:"omitempty,oneof=percentage fixed_amount"`
-	IsActive      *bool      `from:"isActive" binding:"omitempty"`
-	DiscountValue *float64   `form:"discountValue" binding:"omitempty,gt=0"`
-	FromDate      *time.Time `form:"fromDate" binding:"omitempty" time_format:"2006-01-02T15:04:05Z07:00"`
-	ToDate        *time.Time `form:"toDate" binding:"omitempty" time_format:"2006-01-02T15:04:05Z07:00"`
+	DiscountType  *string    `form:"discountType" validate:"omitempty,oneof=percentage fixed_amount"`
+	IsActive      *bool      `from:"isActive" validate:"omitempty"`
+	DiscountValue *float64   `form:"discountValue" validate:"omitempty,gt=0"`
+	FromDate      *time.Time `form:"fromDate" validate:"omitempty" time_format:"2006-01-02T15:04:05Z07:00"`
+	ToDate        *time.Time `form:"toDate" validate:"omitempty" time_format:"2006-01-02T15:04:05Z07:00"`
 }
 
 type DiscountRule struct {
@@ -107,8 +107,8 @@ type CustomerSegmentRule struct {
 }
 
 type CheckDiscountApplicabilityRequest struct {
-	DiscountCodes []string `json:"discountCodes" binding:"required"`
-	CartID        string   `json:"cartId" binding:"required,uuid"`
+	DiscountCodes []string `json:"discountCodes" validate:"required"`
+	CartID        string   `json:"cartId" validate:"required,uuid"`
 }
 
 type CheckDiscountApplicabilityResponse struct {

@@ -1,7 +1,6 @@
 package dto
 
 import (
-	"context"
 	"unsafe"
 )
 
@@ -19,7 +18,7 @@ func CreateErr(code string, err error) ErrorResp {
 	}
 }
 
-func CreateDataResp[T any](c context.Context, data T, pagination *Pagination, err *ApiError) ApiResponse[T] {
+func CreateDataResp[T any](data T, pagination *Pagination, err *ApiError) ApiResponse[T] {
 	// Safe extraction of context values with fallbacks
 	resp := ApiResponse[T]{
 		Data:       &data,

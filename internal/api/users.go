@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -32,9 +31,10 @@ import (
 // @Failure 500 {object} dto.ErrorResp
 // @Router /users/{id} [patch]
 func (s *Server) updateUser(w http.ResponseWriter, r *http.Request) {
-	_, claims, err := jwtauth.FromContext(r.Context())
+	c := r.Context()
+	_, claims, err := jwtauth.FromContext(c)
 	var req models.UpdateUserModel
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := s.GetRequestBody(r, &req); err != nil {
 		RespondBadRequest(w, InvalidEmailCode, err)
 		return
 	}
@@ -46,7 +46,7 @@ func (s *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userId := uuid.MustParse(req.UserID)
-	user, err := s.repo.GetUserByID(r.Context(), userId)
+	user, err := s.repo.GetUserByID(c, userId)
 	if err != nil {
 		RespondUnauthorized(w, UnauthorizedCode, err)
 		return
@@ -85,13 +85,13 @@ func (s *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	updatedUser, err := s.repo.UpdateUser(r.Context(), arg)
+	updatedUser, err := s.repo.UpdateUser(c, arg)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	RespondSuccess(w, r, updatedUser)
+	RespondSuccess(w, updatedUser)
 }
 
 // getCurrentUser godoc
@@ -105,7 +105,8 @@ func (s *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} dto.ErrorResp
 // @Router /users/me [get]
 func (s *Server) getCurrentUser(w http.ResponseWriter, r *http.Request) {
-	_, claims, err := jwtauth.FromContext(r.Context())
+	c := r.Context()
+	_, claims, err := jwtauth.FromContext(c)
 
 	userID := uuid.MustParse(claims["userId"].(string))
 	roleCode := claims["roleCode"].(string)
@@ -116,13 +117,13 @@ func (s *Server) getCurrentUser(w http.ResponseWriter, r *http.Request) {
 
 	var userResp dto.UserDetail
 
-	user, err := s.repo.GetUserByID(r.Context(), userID)
+	user, err := s.repo.GetUserByID(c, userID)
 	if err != nil {
 		RespondNotFound(w, NotFoundCode, err)
 		return
 	}
 
-	userAddress, err := s.repo.GetAddresses(r.Context(), user.ID)
+	userAddress, err := s.repo.GetAddresses(c, user.ID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -135,7 +136,7 @@ func (s *Server) getCurrentUser(w http.ResponseWriter, r *http.Request) {
 	userResp = dto.MapToUserResponse(user, roleCode)
 	userResp.Addresses = addressResp
 
-	RespondSuccess(w, r, userResp)
+	RespondSuccess(w, userResp)
 }
 
 // sendVerifyEmail godoc
@@ -151,13 +152,14 @@ func (s *Server) getCurrentUser(w http.ResponseWriter, r *http.Request) {
 // @Router /users/verify-email [post]
 // @Security BearerAuth
 func (s *Server) sendVerifyEmail(w http.ResponseWriter, r *http.Request) {
-	_, claims, err := jwtauth.FromContext(r.Context())
+	c := r.Context()
+	_, claims, err := jwtauth.FromContext(c)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, errors.New("authorization payload is not provided"))
 		return
 	}
 	userID := uuid.MustParse(claims["userId"].(string))
-	user, err := s.repo.GetUserByID(r.Context(), userID)
+	user, err := s.repo.GetUserByID(c, userID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -168,7 +170,7 @@ func (s *Server) sendVerifyEmail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = s.taskDistributor.SendVerifyAccountEmail(
-		r.Context(),
+		c,
 		&worker.PayloadVerifyEmail{
 			UserID: userID,
 		},
@@ -199,6 +201,7 @@ func (s *Server) sendVerifyEmail(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} dto.ErrorResp
 // @Router /users/verify-email [get]
 func (s *Server) VerifyEmail(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
 	queryParams, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
 		RespondBadRequest(w, InvalidEmailCode, err)
@@ -219,14 +222,14 @@ func (s *Server) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	verifyEmail, err := s.repo.GetVerifyEmailByVerifyCode(r.Context(), query.VerifyCode)
+	verifyEmail, err := s.repo.GetVerifyEmailByVerifyCode(c, query.VerifyCode)
 	if err != nil {
 		RespondNotFound(w, NotFoundCode, err)
 		return
 	}
 
 	// Create a transaction to ensure both operations succeed or fail together
-	err = s.repo.VerifyEmailTx(r.Context(), repository.VerifyEmailTxArgs{
+	err = s.repo.VerifyEmailTx(c, repository.VerifyEmailTxArgs{
 		VerifyEmail: verifyEmail,
 		VerifyCode:  query.VerifyCode,
 	})
@@ -236,7 +239,7 @@ func (s *Server) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := s.repo.GetUserByID(r.Context(), verifyEmail.UserID)
+	user, err := s.repo.GetUserByID(c, verifyEmail.UserID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return

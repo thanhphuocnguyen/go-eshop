@@ -30,8 +30,8 @@ import (
 // @Failure 500 {object} dto.ErrorResp
 // @Router /ratings [post]
 func (s *Server) postRating(w http.ResponseWriter, r *http.Request) {
-	_, claims, err := jwtauth.FromContext(r.Context())
 	c := r.Context()
+	_, claims, err := jwtauth.FromContext(c)
 	var req models.PostRatingFormData
 	if err := s.GetRequestBody(r, req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
@@ -75,7 +75,7 @@ func (s *Server) postRating(w http.ResponseWriter, r *http.Request) {
 		// Images:           images,
 	}
 
-	RespondSuccess(w, r, resp)
+	RespondSuccess(w, resp)
 }
 
 // @Summary Post a helpful rating
@@ -99,7 +99,7 @@ func (s *Server) postRatingHelpful(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, claims, err := jwtauth.FromContext(r.Context())
+	_, claims, err := jwtauth.FromContext(c)
 	userID := uuid.MustParse(claims["userId"].(string))
 	var req models.PostHelpfulRatingModel
 	if err := s.GetRequestBody(r, req); err != nil {
@@ -127,7 +127,7 @@ func (s *Server) postRatingHelpful(w http.ResponseWriter, r *http.Request) {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 	}
 
-	RespondCreated(w, r, id)
+	RespondCreated(w, id)
 }
 
 // @Summary Post a reply to a rating
@@ -150,7 +150,7 @@ func (s *Server) postReplyRating(w http.ResponseWriter, r *http.Request) {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
-	_, claims, err := jwtauth.FromContext(r.Context())
+	_, claims, err := jwtauth.FromContext(c)
 
 	var req models.PostReplyRatingModel
 	if err := s.GetRequestBody(r, &req); err != nil {
@@ -174,7 +174,7 @@ func (s *Server) postReplyRating(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondSuccess(w, r, reply.ID)
+	RespondSuccess(w, reply.ID)
 }
 
 // @Summary Get product ratings
@@ -196,10 +196,10 @@ func (s *Server) getRatingsByProduct(w http.ResponseWriter, r *http.Request) {
 		RespondBadRequest(w, InvalidBodyCode, errors.New("id parameter is required"))
 		return
 	}
-
+	c := r.Context()
 	paginationQuery := ParsePaginationQuery(r)
 
-	ratings, err := s.repo.GetProductRatings(r.Context(), repository.GetProductRatingsParams{
+	ratings, err := s.repo.GetProductRatings(c, repository.GetProductRatingsParams{
 		ProductID: utils.GetPgTypeUUID(uuid.MustParse(idParam)),
 		Limit:     paginationQuery.PageSize,
 		Offset:    (paginationQuery.Page - 1) * paginationQuery.PageSize,
@@ -209,7 +209,7 @@ func (s *Server) getRatingsByProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ratingsCount, err := s.repo.CountProductRatings(r.Context(), utils.GetPgTypeUUID(uuid.MustParse(idParam)))
+	ratingsCount, err := s.repo.CountProductRatings(c, utils.GetPgTypeUUID(uuid.MustParse(idParam)))
 	if err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
@@ -252,7 +252,7 @@ func (s *Server) getRatingsByProduct(w http.ResponseWriter, r *http.Request) {
 		productRatings = append(productRatings, model)
 	}
 
-	RespondSuccessWithPagination(w, r, productRatings, dto.CreatePagination(paginationQuery.Page, paginationQuery.PageSize, ratingsCount))
+	RespondSuccessWithPagination(w, productRatings, dto.CreatePagination(paginationQuery.Page, paginationQuery.PageSize, ratingsCount))
 }
 
 // Setup brand-related routes

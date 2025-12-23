@@ -3,25 +3,25 @@ package repository
 import "github.com/google/uuid"
 
 type ProductAttributesTxParam struct {
-	ID      string `json:"id" binding:"required,uuid"`
-	ValueID int64  `json:"value_id" binding:"required"`
+	ID      string `json:"id" validate:"required,uuid"`
+	ValueID int64  `json:"value_id" validate:"required"`
 }
 
 type CreateProductVariantTxParams struct {
-	Price      float64                    `json:"price" binding:"required,gt=0"`
-	Stock      int32                      `json:"stock_qty" binding:"required,gte=0"`
-	Weight     *float64                   `json:"weight" binding:"omitempty,gte=0"`
-	IsActive   *bool                      `json:"is_active" binding:"omitempty"`
-	Attributes []ProductAttributesTxParam `json:"attributes" binding:"min=1,dive"`
+	Price      float64                    `json:"price" validate:"required,gt=0"`
+	Stock      int32                      `json:"stock_qty" validate:"required,gte=0"`
+	Weight     *float64                   `json:"weight" validate:"omitempty,gte=0"`
+	IsActive   *bool                      `json:"is_active" validate:"omitempty"`
+	Attributes []ProductAttributesTxParam `json:"attributes" validate:"min=1,dive"`
 }
 
 type UpdateProductVariantTxParams struct {
-	ID         *string                    `json:"id" binding:"omitempty,uuid"`
-	Price      *float64                   `json:"price" binding:"required,gt=0"`
-	Stock      *int32                     `json:"stock_qty" binding:"required,gte=0"`
-	Weight     *float64                   `json:"weight" binding:"omitempty,gte=0"`
-	IsActive   *bool                      `json:"is_active" binding:"omitempty"`
-	Attributes []ProductAttributesTxParam `json:"attributes" binding:"min=1,dive"`
+	ID         *string                    `json:"id" validate:"omitempty,uuid"`
+	Price      *float64                   `json:"price" validate:"required,gt=0"`
+	Stock      *int32                     `json:"stock_qty" validate:"required,gte=0"`
+	Weight     *float64                   `json:"weight" validate:"omitempty,gte=0"`
+	IsActive   *bool                      `json:"is_active" validate:"omitempty"`
+	Attributes []ProductAttributesTxParam `json:"attributes" validate:"min=1,dive"`
 }
 
 type ProductTxResult struct {
@@ -48,9 +48,9 @@ type AttributeDataSnapshot struct {
 }
 
 type ShippingAddressSnapshot struct {
-	Street   string `json:"street" binding:"required"`
-	Ward     string `json:"ward" binding:"required"`
-	District string `json:"district" binding:"required"`
-	City     string `json:"city" binding:"required"`
-	Phone    string `json:"phone" binding:"required"`
+	Street   string `json:"street" validate:"required"`
+	Ward     string `json:"ward" validate:"required"`
+	District string `json:"district" validate:"required"`
+	City     string `json:"city" validate:"required"`
+	Phone    string `json:"phone" validate:"required"`
 }

@@ -8,9 +8,9 @@ import (
 )
 
 type VoteHelpfulRatingTxArgs struct {
-	RatingID uuid.UUID `json:"ratingId" binding:"required,uuid"`
-	Helpful  bool      `json:"helpful" binding:"required"`
-	UserID   uuid.UUID `json:"userId" binding:"required,uuid"`
+	RatingID uuid.UUID `json:"ratingId" validate:"required,uuid"`
+	Helpful  bool      `json:"helpful" validate:"required"`
+	UserID   uuid.UUID `json:"userId" validate:"required,uuid"`
 }
 
 func (repo *pgRepo) VoteHelpfulRatingTx(ctx context.Context, arg VoteHelpfulRatingTxArgs) (id uuid.UUID, err error) {
