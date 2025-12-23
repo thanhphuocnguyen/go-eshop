@@ -483,13 +483,6 @@ func (s *Server) adminUploadProductImage(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Parse multipart form
-	err = r.ParseMultipartForm(10 << 20) // 10MB max
-	if err != nil {
-		RespondBadRequest(w, InvalidBodyCode, err)
-		return
-	}
-
 	file, header, err := r.FormFile("file")
 	if err != nil {
 		RespondBadRequest(w, InvalidBodyCode, errors.New("image file is required"))

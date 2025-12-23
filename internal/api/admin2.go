@@ -283,7 +283,7 @@ func (s *Server) adminGetCategoryByID(w http.ResponseWriter, r *http.Request) {
 func (s *Server) adminCreateCategory(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	var req models.CreateCategoryModel
-	if err := s.GetRequestBody(r, &req); err != nil {
+	if err := s.GetFormData(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
@@ -341,7 +341,7 @@ func (s *Server) adminUpdateCategory(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	id, err := GetUrlParam(r, "id")
 	var req models.UpdateCategoryModel
-	if err := s.GetRequestBody(r, &req); err != nil {
+	if err := s.GetFormData(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
@@ -462,7 +462,7 @@ func (s *Server) adminDeleteCategory(w http.ResponseWriter, r *http.Request) {
 func (s *Server) adminCreateBrand(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	var req models.CreateCategoryModel
-	if err := s.GetRequestBody(r, &req); err != nil {
+	if err := s.GetFormData(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
@@ -609,7 +609,7 @@ func (s *Server) adminUpdateBrand(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req models.UpdateCategoryModel
-	if err := s.GetRequestBody(r, &req); err != nil {
+	if err := s.GetFormData(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
@@ -724,7 +724,7 @@ func (s *Server) adminDeleteBrand(w http.ResponseWriter, r *http.Request) {
 func (s *Server) adminCreateCollection(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	var req models.CreateCategoryModel
-	if err := s.GetRequestBody(r, &req); err != nil {
+	if err := s.GetFormData(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
@@ -855,7 +855,7 @@ func (s *Server) adminUpdateCollection(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	id, err := GetUrlParam(r, "id")
 	var req models.UpdateCategoryModel
-	if err := s.GetRequestBody(r, &req); err != nil {
+	if err := s.GetFormData(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}

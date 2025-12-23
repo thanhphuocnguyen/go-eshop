@@ -54,7 +54,7 @@ type CreateProdVariantModel struct {
 	IsActive        bool     `json:"isActive" validate:"required"`
 	AttributeValues []int64  `json:"attributeValues" validate:"required"`
 	Description     *string  `json:"description" validate:"omitempty"`
-	Weight          *float64 `json:"weight" validate:"omitempty,gt=0"`
+	Weight          *float64 `json:"weight" validate:"omitnil,omitempty,gt=0"`
 }
 
 type UpdateProdVariantModel struct {
