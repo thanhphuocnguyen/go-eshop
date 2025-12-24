@@ -96,7 +96,7 @@ type CartItemDetail struct {
 	StockQty       int32             `json:"stock"`
 	Sku            *string           `json:"sku,omitempty"`
 	ImageURL       *string           `json:"imageUrl,omitempty"`
-	Attributes     []AttributeDetail `json:"attributes"`
+	Attributes     []AttributeDetail `json:"attributes,omitempty"`
 }
 
 func MapToProductDetailResponse(row repository.GetProductDetailRow) ProductDetail {

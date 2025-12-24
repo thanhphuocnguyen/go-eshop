@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/jwtauth/v5"
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
@@ -35,12 +34,6 @@ func (s *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 	_, claims, err := jwtauth.FromContext(c)
 	var req models.UpdateUserModel
 	if err := s.GetRequestBody(r, &req); err != nil {
-		RespondBadRequest(w, InvalidEmailCode, err)
-		return
-	}
-
-	validate := validator.New()
-	if err := validate.Struct(&req); err != nil {
 		RespondBadRequest(w, InvalidEmailCode, err)
 		return
 	}
@@ -186,7 +179,7 @@ func (s *Server) sendVerifyEmail(w http.ResponseWriter, r *http.Request) {
 	RespondNoContent(w)
 }
 
-// VerifyEmail godoc
+// verifyEmail godoc
 // @Summary Verify email
 // @Description Verify email
 // @Tags users
@@ -200,7 +193,7 @@ func (s *Server) sendVerifyEmail(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} dto.ErrorResp
 // @Failure 500 {object} dto.ErrorResp
 // @Router /users/verify-email [get]
-func (s *Server) VerifyEmail(w http.ResponseWriter, r *http.Request) {
+func (s *Server) verifyEmail(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	queryParams, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
@@ -213,12 +206,6 @@ func (s *Server) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 		query.VerifyCode = verifyCode
 	} else {
 		RespondBadRequest(w, InvalidEmailCode, fmt.Errorf("verify_code is required"))
-		return
-	}
-
-	validate := validator.New()
-	if err := validate.Struct(&query); err != nil {
-		RespondBadRequest(w, InvalidEmailCode, err)
 		return
 	}
 
@@ -272,12 +259,12 @@ func (s *Server) addUserRoutes(r chi.Router) {
 		r.Post("/send-verify-email", s.sendVerifyEmail)
 
 		// Address routes
-		r.Route("/addresses", func(r chi.Router) {
-			r.Post("/", s.createAddress)
-			r.Patch("/{id}/default", s.setDefaultAddress)
-			r.Get("/", s.getAddresses)
-			r.Patch("/{id}", s.updateAddress)
-			r.Delete("/{id}", s.removeAddress)
+		r.Route("/addresses", func(subR chi.Router) {
+			subR.Get("/", s.getAddresses)
+			subR.Post("/", s.createAddress)
+			subR.Patch("/{id}/default", s.setDefaultAddress)
+			subR.Patch("/{id}", s.updateAddress)
+			subR.Delete("/{id}", s.removeAddress)
 		})
 	})
 }

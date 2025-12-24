@@ -31,13 +31,10 @@ func (s *Server) getCategories(w http.ResponseWriter, r *http.Request) {
 	var query models.PaginationQuery = GetPaginationQuery(r)
 
 	dbParams := repository.GetCategoriesParams{
-		Limit:     10,
-		Offset:    0,
+		Limit:     int64(query.PageSize),
+		Offset:    int64((query.Page - 1) * query.PageSize),
 		Published: utils.BoolPtr(true),
 	}
-	dbParams.Offset = (dbParams.Limit) * int64(query.Page-1)
-	dbParams.Limit = int64(query.PageSize)
-
 	categories, err := s.repo.GetCategories(c, dbParams)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
@@ -82,7 +79,7 @@ func (s *Server) getCategories(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} dto.ApiResponse[dto.CategoryDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /categories/slug/{slug} [get]
+// @Router /categories/{slug} [get]
 func (s *Server) getCategoryBySlug(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	slug, err := GetUrlParam(r, "slug")
@@ -135,8 +132,8 @@ func (s *Server) getCategoryBySlug(w http.ResponseWriter, r *http.Request) {
 func (s *Server) addCategoryRoutes(r chi.Router) {
 	r.Route("/categories", func(r chi.Router) {
 		r.Get("/", s.getCategories)
-		r.Get("/:slug", s.getCategoryBySlug)
-		r.Get("/:slug/products", s.getCategoryBySlug)
+		r.Get("/{slug}", s.getCategoryBySlug)
+		r.Get("/{slug}/products", s.getCategoryBySlug)
 	})
 
 }

@@ -2,7 +2,7 @@ package dto
 
 // Response types - unchanged
 type ApiResponse[T any] struct {
-	Message    string      `json:"message"`
+	Message    string      `json:"message,omitempty"`
 	Data       *T          `json:"data,omitempty,omitzero"`
 	Error      *ApiError   `json:"error,omitempty"`
 	Pagination *Pagination `json:"pagination,omitempty"`

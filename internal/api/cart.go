@@ -190,19 +190,20 @@ func (s *Server) getCartAvailableDiscounts(w http.ResponseWriter, r *http.Reques
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /carts/items/{variant_id} [post]
-func (s *Server) updateCartItemQty(w http.ResponseWriter, r *http.Request) {
-	id, err := GetUrlParam(r, "variant_id")
+func (s *Server) upsertCartItemQty(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
+	_, claims, err := jwtauth.FromContext(c)
 	if err != nil {
-		RespondInternalServerError(w, InternalServerErrorCode, err)
+		RespondUnauthorized(w, UnauthorizedCode, errors.New("user not found"))
 		return
 	}
 
-	_, claims, err := jwtauth.FromContext(c)
+	variantIDParam, err := GetUrlParam(r, "variant_id")
 	if err != nil {
-		RespondInternalServerError(w, InternalServerErrorCode, errors.New("user not found"))
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
+
 	userID := uuid.MustParse(claims["userId"].(string))
 
 	var req models.UpdateCartItemQtyModel
@@ -232,17 +233,14 @@ func (s *Server) updateCartItemQty(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	uuid := uuid.MustParse(id)
-	cartItem, err := s.repo.GetCartItem(c, repository.GetCartItemParams{
-		ID:     uuid,
-		CartID: cart.ID,
-	})
 
+	variantID := uuid.MustParse(variantIDParam)
+	cartItem, err := s.repo.GetCartItemByProductVariantID(c, repository.GetCartItemByProductVariantIDParams{VariantID: variantID, CartID: cart.ID})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			cartItem, err = s.repo.AddCartItem(c, repository.AddCartItemParams{
 				CartID:    cart.ID,
-				VariantID: uuid,
+				VariantID: variantID,
 				Quantity:  req.Quantity,
 			})
 			if err != nil {
@@ -425,7 +423,7 @@ func (s *Server) addCartRoutes(r chi.Router) {
 
 		r.Get("/available-discounts", s.getCartAvailableDiscounts)
 		r.Route("/items", func(r chi.Router) {
-			r.Put("/{id}/quantity", s.updateCartItemQty)
+			r.Put("/{variant_id}/quantity", s.upsertCartItemQty)
 			r.Delete("/{id}", s.removeCartItem)
 		})
 	})

@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/jwtauth/v5"
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
@@ -33,19 +32,15 @@ func (s *Server) createAddress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userID := uuid.MustParse(claims["userId"].(string))
+
 	var req models.CreateAddress
 	if err := s.GetRequestBody(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
-	validate := validator.New()
-	if err := validate.Struct(&req); err != nil {
-		RespondBadRequest(w, InvalidBodyCode, err)
-		return
-	}
-
-	addresses, err := s.repo.GetAddresses(c, claims["user_id"].(uuid.UUID))
+	addresses, err := s.repo.GetAddresses(c, userID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -55,8 +50,6 @@ func (s *Server) createAddress(w http.ResponseWriter, r *http.Request) {
 		RespondBadRequest(w, InvalidBodyCode, fmt.Errorf("maximum number of addresses reached"))
 		return
 	}
-	userID := uuid.MustParse(claims["userId"].(string))
-
 	payload := repository.CreateAddressParams{
 		PhoneNumber: req.Phone,
 		UserID:      userID,
@@ -75,7 +68,7 @@ func (s *Server) createAddress(w http.ResponseWriter, r *http.Request) {
 	if req.IsDefault {
 		err := s.repo.SetPrimaryAddressTx(c, repository.SetPrimaryAddressTxArgs{
 			NewPrimaryID: created.ID,
-			UserID:       claims["user_id"].(uuid.UUID),
+			UserID:       userID,
 		})
 		if err != nil {
 			RespondInternalServerError(w, InternalServerErrorCode, fmt.Errorf("failed to set primary addresses: %w", err))
@@ -112,13 +105,14 @@ func (s *Server) getAddresses(w http.ResponseWriter, r *http.Request) {
 		RespondInternalServerError(w, UnauthorizedCode, fmt.Errorf("authorization payload is not provided"))
 		return
 	}
-	userID := uuid.MustParse(claims["userId"].(string))
 
+	userID := uuid.MustParse(claims["userId"].(string))
 	addresses, err := s.repo.GetAddresses(c, userID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
+
 	addressesResponse := make([]dto.AddressDetail, len(addresses))
 	for i, addresses := range addresses {
 		addressesResponse[i] = dto.MapAddressResponse(addresses)
@@ -152,12 +146,6 @@ func (s *Server) updateAddress(w http.ResponseWriter, r *http.Request) {
 
 	var req models.UpdateAddress
 	if err := s.GetRequestBody(r, &req); err != nil {
-		RespondBadRequest(w, InvalidBodyCode, err)
-		return
-	}
-
-	validate := validator.New()
-	if err := validate.Struct(&req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
@@ -219,12 +207,12 @@ func (s *Server) updateAddress(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	addresses, err := s.repo.UpdateAddress(c, payload)
+	updated, err := s.repo.UpdateAddress(c, payload)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
-	addressDetail := dto.MapAddressResponse(addresses)
+	addressDetail := dto.MapAddressResponse(updated)
 	RespondSuccess(w, addressDetail)
 }
 

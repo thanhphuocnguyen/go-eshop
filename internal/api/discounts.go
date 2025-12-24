@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/jwtauth/v5"
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
@@ -88,11 +87,6 @@ func (s *Server) checkDiscountsApplicability(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	validate := validator.New()
-	if err := validate.Struct(&req); err != nil {
-		RespondBadRequest(w, InvalidBodyCode, err)
-		return
-	}
 	user, err := s.repo.GetUserDetailsByID(c, userID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {

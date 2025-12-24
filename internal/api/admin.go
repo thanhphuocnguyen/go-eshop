@@ -43,8 +43,8 @@ func (s *Server) addAdminRoutes(r chi.Router) {
 
 					r.Route("/variants", func(r chi.Router) {
 						r.Post("/", s.adminAddVariant)
-						r.Get("/", s.adminGetVariants)
-						r.Get("/{variantId}", s.adminGetVariant)
+						r.Get("/", s.getProductVariants)
+						r.Get("/{variantId}", s.getVariantByProductId)
 						r.Put("/{variantId}", s.adminUpdateVariant)
 						r.Post("/{variantId}/images", s.adminUploadVariantImage)
 						r.Delete("/{variantId}", s.adminDeleteVariant)
@@ -650,7 +650,7 @@ func (s *Server) adminAddVariant(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{id}/variants [get]
-func (s *Server) adminGetVariants(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getProductVariants(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	id := chi.URLParam(r, "id")
 	if id == "" {
@@ -689,7 +689,7 @@ func (s *Server) adminGetVariants(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{id}/variants/{variantID} [get]
-func (s *Server) adminGetVariant(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getVariantByProductId(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	id := chi.URLParam(r, "id")
 	variantId := chi.URLParam(r, "variantId")

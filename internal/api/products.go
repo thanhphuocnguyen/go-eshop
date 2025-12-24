@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
@@ -18,12 +17,12 @@ import (
 // @Description get a product detail by ID
 // @Tags products
 // @Accept json
-// @Param productId path int true "Product ID"
+// @Param id path string true "Product ID"
 // @Produce json
 // @Success 200 {object} dto.ApiResponse[dto.ProductDetail]
 // @Failure 404 {object} dto.ErrorResp
 // @Failure 500 {object} dto.ErrorResp
-// @Router /products/{productId} [get]
+// @Router /products/{id} [get]
 func (s *Server) getProductById(w http.ResponseWriter, r *http.Request) {
 	idParam := chi.URLParam(r, "id")
 	if idParam == "" {
@@ -89,8 +88,7 @@ func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 		queries.CategoryIDs = &categoryIDs
 	}
 
-	validate := validator.New()
-	if err := validate.Struct(&queries); err != nil {
+	if err := s.validator.Struct(&queries); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
@@ -148,6 +146,8 @@ func (s *Server) addProductRoutes(r chi.Router) {
 	r.Route("/products", func(r chi.Router) {
 		r.Get("/", s.getProducts)
 		r.Get("/{id}", s.getProductById)
+		r.Get("/{id}/variants", s.getProductVariants)
+		r.Get("/{id}/variants/{variantId}", s.getVariantByProductId)
 		r.Get("/{id}/ratings", s.getRatingsByProduct)
 	})
 }

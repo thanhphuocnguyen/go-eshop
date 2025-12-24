@@ -56,7 +56,7 @@ func (s *Server) initializeRouter() {
 func (s *Server) setupStaticRoutes() {
 	fileServer := http.FileServer(http.Dir("./assets/"))
 	s.router.Handle("/assets/*", http.StripPrefix("/assets/", fileServer))
-	s.router.Get("/verify-email", s.VerifyEmail)
+	s.router.Get("/verify-email", s.verifyEmail)
 }
 
 // setupMainRoutes organizes API routes into public and protected groups

@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/jwtauth/v5"
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
@@ -63,12 +62,6 @@ func (s *Server) getOrders(w http.ResponseWriter, r *http.Request) {
 	}
 	if paymentStatus := queryParams.Get("payment_status"); paymentStatus != "" {
 		orderListQuery.PaymentStatus = &paymentStatus
-	}
-
-	validate := validator.New()
-	if err := validate.Struct(&orderListQuery); err != nil {
-		RespondBadRequest(w, InvalidBodyCode, err)
-		return
 	}
 
 	dbParams := repository.GetOrdersParams{
