@@ -1,14 +1,12 @@
 package api
 
 import (
-	"errors"
+	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-	"github.com/thanhphuocnguyen/go-eshop/internal/constants"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
-	"github.com/thanhphuocnguyen/go-eshop/internal/models"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
 
 // @Summary Get list of product image by ID
@@ -18,18 +16,15 @@ import (
 // @Accept json
 // @Param productId path int true "Product ID"
 // @Produce json
-// @Success 200 {object} ApiResponse[[]ImageResponse]
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[string]
+// @Failure 404 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /images/product/{productId} [get]
-func (sv *Server) getProductImages(c *gin.Context) {
-	var param models.UriIDParam
-	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
-		return
-	}
-
-	c.JSON(http.StatusOK, dto.CreateDataResp(c, []models.ImageModel{}, nil, nil))
+func (s *Server) getProductImages(w http.ResponseWriter, r *http.Request) {
+	userId := r.PathValue("id")
+	fmt.Println(userId)
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Hello world"))
 }
 
 // @Summary Remove a product by external ID
@@ -39,30 +34,27 @@ func (sv *Server) getProductImages(c *gin.Context) {
 // @Accept json
 // @Param publicID path int true "Product ID"
 // @Produce json
-// @Success 200 {object} ApiResponse[bool]
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
-// @Router /images/{publicID} [delete]
-func (sv *Server) removeImageByPublicID(c *gin.Context) {
-	_, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(UnauthorizedCode, errors.New("missing user payload in context")))
-		return
-	}
-	var params models.PublicIDParam
-	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
-		return
-	}
-	_, err := sv.removeImageUtil(c, params.PublicID)
+// @Success 200 {object} dto.ApiResponse[bool]
+// @Failure 404 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
+// @Router /images/{id} [delete]
+func (s *Server) removeImageByPublicID(w http.ResponseWriter, r *http.Request) {
+	publicID, err := GetUrlParam(r, "id")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		w.WriteHeader(http.StatusBadRequest)
+		jsoResp, _ := json.Marshal(dto.CreateErr(InvalidBodyCode, err))
+		w.Write(jsoResp)
+		return
+	}
+	res, err := s.removeImageUtil(r.Context(), publicID)
+	if err != nil {
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	c.Status(http.StatusNoContent)
+	RespondSuccess(w, res)
 }
 
-func (sv *Server) removeImageUtil(c *gin.Context, publicID string) (msg string, err error) {
-	return sv.uploadService.Remove(c, publicID)
+func (s *Server) removeImageUtil(ctx context.Context, publicID string) (msg string, err error) {
+	return s.uploadService.Remove(ctx, publicID)
 }

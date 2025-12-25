@@ -31,7 +31,7 @@ WHERE oi.order_id = $1;
 -- name: GetOrders :many
 SELECT ord.*, pm.status as payment_status, COUNT(oi.id) as total_items
 FROM orders ord
-LEFT JOIN order_items oi ON ord.id = oi.id
+LEFT JOIN order_items oi ON ord.id = oi.order_id
 LEFT JOIN payments pm ON ord.id = pm.order_id
 WHERE
     ord.user_id = COALESCE(sqlc.narg('user_id'), ord.user_id) AND

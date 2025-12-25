@@ -4,17 +4,17 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
-	"github.com/thanhphuocnguyen/go-eshop/internal/constants"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
 
 // updateUser godoc
@@ -23,28 +23,30 @@ import (
 // @Tags users
 // @Accept  json
 // @Produce  json
-// @Param input body UpdateUserRequest true "User info"
-// @Success 200 {object} ApiResponse[repository.UpdateUserRow]
-// @Failure 400 {object} ErrorResp
-// @Failure 401 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Param input body models.UpdateUserModel true "User info"
+// @Success 200 {object} dto.ApiResponse[repository.UpdateUserRow]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 401 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /users/{id} [patch]
-func (sv *Server) updateUser(c *gin.Context) {
-	authPayload := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
+func (s *Server) updateUser(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	_, claims, err := jwtauth.FromContext(c)
 	var req models.UpdateUserModel
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidEmailCode, err))
-		return
-	}
-	userId := uuid.MustParse(req.UserID)
-	user, err := sv.repo.GetUserByID(c, userId)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, dto.CreateErr(UnauthorizedCode, err))
+	if err := s.GetRequestBody(r, &req); err != nil {
+		RespondBadRequest(w, InvalidEmailCode, err)
 		return
 	}
 
-	if authPayload.RoleCode != "admin" && user.ID != userId {
-		c.JSON(http.StatusUnauthorized, dto.CreateErr(UnauthorizedCode, err))
+	userId := uuid.MustParse(req.UserID)
+	user, err := s.repo.GetUserByID(c, userId)
+	if err != nil {
+		RespondUnauthorized(w, UnauthorizedCode, err)
+		return
+	}
+
+	if claims["roleCode"] != "admin" && user.ID != userId {
+		RespondUnauthorized(w, UnauthorizedCode, fmt.Errorf("access denied"))
 		return
 	}
 
@@ -76,13 +78,13 @@ func (sv *Server) updateUser(c *gin.Context) {
 		}
 	}
 
-	updatedUser, err := sv.repo.UpdateUser(c, arg)
+	updatedUser, err := s.repo.UpdateUser(c, arg)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, dto.CreateDataResp(c, updatedUser, nil, nil))
+	RespondSuccess(w, updatedUser)
 }
 
 // getCurrentUser godoc
@@ -91,28 +93,32 @@ func (sv *Server) updateUser(c *gin.Context) {
 // @Tags users
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} ApiResponse[UserDetail]
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[UserDetail]
+// @Failure 404 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /users/me [get]
-func (sv *Server) getCurrentUser(c *gin.Context) {
-	authPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, errors.New("authorization payload is not provided")))
+func (s *Server) getCurrentUser(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	_, claims, err := jwtauth.FromContext(c)
+
+	userID := uuid.MustParse(claims["userId"].(string))
+	roleCode := claims["roleCode"].(string)
+	if err != nil {
+		RespondInternalServerError(w, InternalServerErrorCode, errors.New("authorization payload is not provided"))
 		return
 	}
 
 	var userResp dto.UserDetail
 
-	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
+	user, err := s.repo.GetUserByID(c, userID)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, dto.CreateErr(NotFoundCode, err))
+		RespondNotFound(w, NotFoundCode, err)
 		return
 	}
 
-	userAddress, err := sv.repo.GetAddresses(c, user.ID)
+	userAddress, err := s.repo.GetAddresses(c, user.ID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
@@ -120,10 +126,10 @@ func (sv *Server) getCurrentUser(c *gin.Context) {
 	for _, address := range userAddress {
 		addressResp = append(addressResp, dto.MapAddressResponse(address))
 	}
-	userResp = dto.MapToUserResponse(user, authPayload.RoleCode)
+	userResp = dto.MapToUserResponse(user, roleCode)
 	userResp.Addresses = addressResp
 
-	c.JSON(http.StatusOK, dto.CreateDataResp(c, userResp, nil, nil))
+	RespondSuccess(w, userResp)
 }
 
 // sendVerifyEmail godoc
@@ -133,45 +139,47 @@ func (sv *Server) getCurrentUser(c *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @Success 204 {object} nil
-// @Failure 400 {object} ErrorResp
-// @Failure 401 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 401 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /users/verify-email [post]
 // @Security BearerAuth
-func (sv *Server) sendVerifyEmail(c *gin.Context) {
-	authPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, errors.New("authorization payload is not provided")))
+func (s *Server) sendVerifyEmail(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	_, claims, err := jwtauth.FromContext(c)
+	if err != nil {
+		RespondInternalServerError(w, InternalServerErrorCode, errors.New("authorization payload is not provided"))
 		return
 	}
-	user, err := sv.repo.GetUserByID(c, authPayload.UserID)
+	userID := uuid.MustParse(claims["userId"].(string))
+	user, err := s.repo.GetUserByID(c, userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 	if user.VerifiedEmail {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidEmailCode, fmt.Errorf("email already verified")))
+		RespondBadRequest(w, InvalidEmailCode, fmt.Errorf("email already verified"))
 		return
 	}
 
-	err = sv.taskDistributor.SendVerifyAccountEmail(
+	err = s.taskDistributor.SendVerifyAccountEmail(
 		c,
 		&worker.PayloadVerifyEmail{
-			UserID: authPayload.UserID,
+			UserID: userID,
 		},
 		asynq.MaxRetry(3),
 		asynq.ProcessIn(5*time.Second),
 		asynq.Queue(worker.QueueCritical),
 	)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	c.Status(http.StatusNoContent)
+	RespondNoContent(w)
 }
 
-// VerifyEmail godoc
+// verifyEmail godoc
 // @Summary Verify email
 // @Description Verify email
 // @Tags users
@@ -180,62 +188,83 @@ func (sv *Server) sendVerifyEmail(c *gin.Context) {
 // @Param id query int true "ID"
 // @Param verify_code query string true "Verify code"
 // @Success 200 {object} nil
-// @Failure 400 {object} ErrorResp
-// @Failure 401 {object} ErrorResp
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 401 {object} dto.ErrorResp
+// @Failure 404 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /users/verify-email [get]
-func (sv *Server) VerifyEmail(c *gin.Context) {
-	var query models.VerifyEmailQuery
-	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidEmailCode, err))
+func (s *Server) verifyEmail(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	queryParams, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		RespondBadRequest(w, InvalidEmailCode, err)
 		return
 	}
-	verifyEmail, err := sv.repo.GetVerifyEmailByVerifyCode(c, query.VerifyCode)
+
+	var query models.VerifyEmailQuery
+	if verifyCode := queryParams.Get("verify_code"); verifyCode != "" {
+		query.VerifyCode = verifyCode
+	} else {
+		RespondBadRequest(w, InvalidEmailCode, fmt.Errorf("verify_code is required"))
+		return
+	}
+
+	verifyEmail, err := s.repo.GetVerifyEmailByVerifyCode(c, query.VerifyCode)
 	if err != nil {
-		c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
+		RespondNotFound(w, NotFoundCode, err)
 		return
 	}
 
 	// Create a transaction to ensure both operations succeed or fail together
-	err = sv.repo.VerifyEmailTx(c, repository.VerifyEmailTxArgs{
+	err = s.repo.VerifyEmailTx(c, repository.VerifyEmailTxArgs{
 		VerifyEmail: verifyEmail,
 		VerifyCode:  query.VerifyCode,
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	user, err := sv.repo.GetUserByID(c, verifyEmail.UserID)
+	user, err := s.repo.GetUserByID(c, verifyEmail.UserID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
 	// Render HTML success page
-	c.Header("Content-Type", "text/html")
-	c.HTML(http.StatusOK, "verification-success.html", gin.H{
-		"username": user.Username,
-		"email":    user.Email,
-	})
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	htmlContent := fmt.Sprintf(`
+	<!DOCTYPE html>
+	<html>
+	<head>
+		<title>Email Verification Success</title>
+	</head>
+	<body>
+		<h1>Email Verification Successful</h1>
+		<p>Hello %s,</p>
+		<p>Your email %s has been successfully verified!</p>
+	</body>
+	</html>
+	`, user.Username, user.Email)
+	w.Write([]byte(htmlContent))
 }
 
 // Setup user-related routes
-func (sv *Server) addUserRoutes(rg *gin.RouterGroup) {
-	users := rg.Group("users", authenticateMiddleware(sv.tokenGenerator))
-	{
-		users.GET("me", sv.getCurrentUser)
-		users.PATCH("me", sv.updateUser)
-		users.POST("send-verify-email", sv.sendVerifyEmail)
-		userAddresses := users.Group("addresses")
-		{
-			userAddresses.POST("", sv.createAddress)
-			userAddresses.PATCH(":id/default", sv.setDefaultAddress)
-			userAddresses.GET("", sv.getAddresses)
-			userAddresses.PATCH(":id", sv.updateAddress)
-			userAddresses.DELETE(":id", sv.removeAddress)
-		}
-	}
+func (s *Server) addUserRoutes(r chi.Router) {
+	r.Route("/users", func(r chi.Router) {
+		r.Get("/me", s.getCurrentUser)
+		r.Patch("/me", s.updateUser)
+		r.Post("/send-verify-email", s.sendVerifyEmail)
+
+		// Address routes
+		r.Route("/addresses", func(subR chi.Router) {
+			subR.Get("/", s.getAddresses)
+			subR.Post("/", s.createAddress)
+			subR.Patch("/{id}/default", s.setDefaultAddress)
+			subR.Patch("/{id}", s.updateAddress)
+			subR.Delete("/{id}", s.removeAddress)
+		})
+	})
 }

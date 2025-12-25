@@ -6,12 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
-	"github.com/stripe/stripe-go/v81"
+	"github.com/stripe/stripe-go/v84"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 )
@@ -25,10 +23,11 @@ import (
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /webhook/stripe [post]
-func (server *Server) sendStripeEvent(c *gin.Context) {
+func (s *Server) sendStripeEvent(w http.ResponseWriter, r *http.Request) {
 	var evt stripe.Event
-	if err := c.ShouldBindJSON(&evt); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidEventCode, err))
+	c := r.Context()
+	if err := s.GetRequestBody(r, evt); err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
@@ -51,15 +50,15 @@ func (server *Server) sendStripeEvent(c *gin.Context) {
 
 	if strings.HasPrefix(string(evt.Type), "payment_intent.") {
 		piAmount := evtData["amount"].(float64)
-		payment, err := server.repo.GetPaymentByPaymentIntentID(c, id)
+		payment, err := s.repo.GetPaymentByPaymentIntentID(c, id)
 		if err != nil {
 			if errors.Is(err, repository.ErrRecordNotFound) {
 				// If the payment is not found, we can ignore the event
 				log.Info().Msgf("Payment not found for payment intent ID: %s", *id)
-				c.JSON(http.StatusOK, dto.CreateDataResp(c, true, nil, nil))
+				RespondSuccess(w, nil)
 				return
 			}
-			c.JSON(http.StatusBadRequest, dto.CreateErr(InternalServerErrorCode, err))
+			RespondBadRequest(w, InternalServerErrorCode, err)
 			return
 		}
 		updateTransactionStatus := repository.UpdatePaymentParams{
@@ -80,7 +79,7 @@ func (server *Server) sendStripeEvent(c *gin.Context) {
 			// Safely extract card brand from nested map
 			gateway := evt.GetObjectValue("payment_method_details", "brand")
 			updateTransactionStatus.Gateway = &gateway
-			server.taskDistributor.SendOrderCreatedEmailTask(c,
+			s.taskDistributor.SendOrderCreatedEmailTask(c,
 				&worker.PayloadSendOrderCreatedEmailTask{
 					PaymentID: payment.ID,
 				},
@@ -100,12 +99,12 @@ func (server *Server) sendStripeEvent(c *gin.Context) {
 
 		default:
 			log.Info().Msgf("Unhandled event type: %s", evt.Type)
-			c.JSON(http.StatusOK, dto.CreateDataResp(c, true, nil, nil))
+			RespondSuccess(w, nil)
 			return
 		}
-		err = server.repo.UpdatePayment(c, updateTransactionStatus)
+		err = s.repo.UpdatePayment(c, updateTransactionStatus)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, dto.CreateErr(InternalServerErrorCode, err))
+			RespondBadRequest(w, InternalServerErrorCode, err)
 			return
 		}
 	}
@@ -116,15 +115,15 @@ func (server *Server) sendStripeEvent(c *gin.Context) {
 		if evtData["payment_intent"] != nil {
 			paymentIntentID = utils.StringPtr(evtData["payment_intent"].(string))
 		}
-		payment, err := server.repo.GetPaymentByPaymentIntentID(c, paymentIntentID)
+		payment, err := s.repo.GetPaymentByPaymentIntentID(c, paymentIntentID)
 		if err != nil {
 			if errors.Is(err, repository.ErrRecordNotFound) {
 				// If the payment is not found, we can ignore the event
 				log.Info().Msgf("Payment not found for payment intent ID: %s", *paymentIntentID)
-				c.JSON(http.StatusOK, dto.CreateDataResp(c, true, nil, nil))
+				RespondSuccess(w, nil)
 				return
 			}
-			c.JSON(http.StatusBadRequest, dto.CreateErr(InternalServerErrorCode, err))
+			RespondBadRequest(w, InternalServerErrorCode, err)
 			return
 		}
 		var createPaymentTransactionArg = repository.CreatePaymentTransactionParams{
@@ -143,9 +142,9 @@ func (server *Server) sendStripeEvent(c *gin.Context) {
 				ID:       payment.ID,
 				ChargeID: id,
 			}
-			err = server.repo.UpdatePayment(c, updateTransactionStatus)
+			err = s.repo.UpdatePayment(c, updateTransactionStatus)
 			if err != nil {
-				c.JSON(http.StatusBadRequest, dto.CreateErr(InternalServerErrorCode, err))
+				RespondBadRequest(w, InternalServerErrorCode, err)
 				return
 			}
 		case stripe.EventTypeChargeFailed:
@@ -175,12 +174,12 @@ func (server *Server) sendStripeEvent(c *gin.Context) {
 				}
 			}
 		}
-		_, err = server.repo.CreatePaymentTransaction(c, createPaymentTransactionArg)
+		_, err = s.repo.CreatePaymentTransaction(c, createPaymentTransactionArg)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, dto.CreateErr(InternalServerErrorCode, err))
+			RespondBadRequest(w, InternalServerErrorCode, err)
 			return
 		}
 	}
 
-	c.Status(http.StatusNoContent)
+	RespondSuccess(w, nil)
 }

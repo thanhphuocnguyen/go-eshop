@@ -6,10 +6,9 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"net/http"
 	_ "net/http/pprof"
 	"os"
-	"runtime"
-	"runtime/pprof"
 
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -20,9 +19,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/config"
 	"github.com/thanhphuocnguyen/go-eshop/internal/api"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
-	"github.com/thanhphuocnguyen/go-eshop/internal/processors"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
-	cachesrv "github.com/thanhphuocnguyen/go-eshop/pkg/cache"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/gateways"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/mailer"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
@@ -48,36 +45,36 @@ func Execute(ctx context.Context) int {
 		Use:   "web",
 		Short: "web is a web server",
 		Long:  `web is a web server`,
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			if !profile {
-				return nil
-			}
+		// PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		// 	if !profile {
+		// 		return nil
+		// 	}
 
-			f, pErr := os.Create(("cpu.pprof"))
-			if pErr != nil {
-				return pErr
-			}
-			_ = pprof.StartCPUProfile(f)
+		// 	f, pErr := os.Create(("cpu.pprof"))
+		// 	if pErr != nil {
+		// 		return pErr
+		// 	}
+		// 	_ = pprof.StartCPUProfile(f)
 
-			return nil
-		},
-		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
-			if !profile {
-				return nil
-			}
-			pprof.StopCPUProfile()
+		// 	return nil
+		// },
+		// PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
+		// 	if !profile {
+		// 		return nil
+		// 	}
+		// 	pprof.StopCPUProfile()
 
-			f, pErr := os.Create(("mem.pprof"))
-			if pErr != nil {
-				return pErr
-			}
+		// 	f, pErr := os.Create(("mem.pprof"))
+		// 	if pErr != nil {
+		// 		return pErr
+		// 	}
 
-			defer f.Close()
+		// 	defer f.Close()
 
-			runtime.GC()
-			err := pprof.WriteHeapProfile(f)
-			return err
-		},
+		// 	runtime.GC()
+		// 	err := pprof.WriteHeapProfile(f)
+		// 	return err
+		// },
 	}
 
 	rootCmd.PersistentFlags().StringVarP(&cfg.Domain, "domain", "d", cfg.Domain, "HTTP domain")
@@ -97,7 +94,7 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "api",
 		Args:  cobra.ExactArgs(0),
-		Short: "Run Gin Gonic API server",
+		Short: "Run Eshop API server",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			pgRepo, err := repository.GetPostgresInstance(ctx, cfg)
 			if err != nil {
@@ -111,9 +108,24 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 			}
 
 			taskDistributor := worker.NewRedisTaskDistributor(redisCfg)
+			if taskDistributor == nil {
+				return fmt.Errorf("failed to create task distributor")
+			}
+
 			uploadService := upload.NewCloudinaryUploader(cfg)
+			if uploadService == nil {
+				return fmt.Errorf("failed to create upload service")
+			}
+
 			mailer := mailer.NewEmailSender(cfg.SmtpUsername, cfg.SmtpPassword, cfg.Env)
+			if mailer == nil {
+				return fmt.Errorf("failed to create mailer service")
+			}
+
 			service := payment.NewPaymentService()
+			if service == nil {
+				return fmt.Errorf("failed to create payment service")
+			}
 
 			// Register gateways
 			paymentGateways, err := pgRepo.GetPaymentMethods(ctx)
@@ -142,17 +154,34 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 			}
 
 			taskProcessor := worker.NewRedisTaskProcessor(redisCfg, pgRepo, mailer, cfg)
-			cacheService := cachesrv.NewRedisCache(cfg)
-			discountProcessor := processors.NewDiscountProcessor(pgRepo)
-			api, err := api.NewAPI(cfg, pgRepo, cacheService, taskDistributor, uploadService, service, discountProcessor)
+			if taskProcessor == nil {
+				return fmt.Errorf("failed to create task processor")
+			}
+
+			api, err := api.NewAPI(cfg, pgRepo, taskDistributor, uploadService, service)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to create API server: %w", err)
+			}
+			if api == nil {
+				return fmt.Errorf("API server is nil")
 			}
 
 			server := api.Server(fmt.Sprintf(":%s", cfg.Port))
+			if server == nil {
+				return fmt.Errorf("HTTP server is nil")
+			}
+
+			// Validate all server dependencies before starting
+			if err := api.ValidateServerDependencies(ctx); err != nil {
+				return fmt.Errorf("server dependency validation failed: %w", err)
+			}
+			log.Info().Msg("Server dependency validation completed successfully")
+
 			go func() {
 				log.Info().Str("addr", fmt.Sprintf("http://%s:%s", cfg.Domain, cfg.Port)).Msg("API server started")
-				_ = server.ListenAndServe()
+				if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+					log.Error().Err(err).Msg("HTTP server error")
+				}
 			}()
 
 			go func() {

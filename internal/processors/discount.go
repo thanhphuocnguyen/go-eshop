@@ -1,11 +1,11 @@
 package processors
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/constants"
@@ -26,28 +26,28 @@ func NewDiscountProcessor(repo repository.Store) *DiscountProcessor {
 
 // DiscountContext contains all necessary data for discount processing
 type DiscountContext struct {
-	User      repository.GetUserDetailsByIDRow
-	CartItems []repository.GetCartItemsRow
+	User      repository.GetUserDetailsByIDRow `json:"user"`
+	CartItems []repository.GetCartItemsRow     `json:"cartItems"`
 }
 
 // ItemDiscount represents discount applied to a specific item
 type ItemDiscount struct {
-	ItemIndex      int
-	DiscountAmount float64
-	DiscountID     uuid.UUID
+	ItemIndex      int       `json:"itemIndex"`
+	DiscountAmount float64   `json:"discountAmount"`
+	DiscountID     uuid.UUID `json:"discountId"`
 }
 
 // DiscountResult contains the final discount calculation results
 type DiscountResult struct {
-	ItemDiscounts    []ItemDiscount
-	TotalDiscount    float64
-	AppliedDiscounts []uuid.UUID
+	ItemDiscounts    []ItemDiscount `json:"itemDiscounts"`
+	TotalDiscount    float64        `json:"totalDiscount"`
+	AppliedDiscounts []uuid.UUID    `json:"appliedDiscounts"`
 }
 
 // ------------------------------ Discount Processing Methods ------------------------------
 
 // ProcessDiscounts processes all discount codes and calculates the final discount amounts
-func (dp *DiscountProcessor) ProcessDiscounts(c *gin.Context, ctx DiscountContext, discountCodes []string) (*DiscountResult, error) {
+func (dp *DiscountProcessor) ProcessDiscounts(c context.Context, ctx DiscountContext, discountCodes []string) (*DiscountResult, error) {
 	result := &DiscountResult{
 		ItemDiscounts:    []ItemDiscount{},
 		TotalDiscount:    0,
@@ -94,7 +94,7 @@ func (dp *DiscountProcessor) ProcessDiscounts(c *gin.Context, ctx DiscountContex
 }
 
 // validateDiscountApplicability validates basic discount rules
-func (dp *DiscountProcessor) validateDiscountApplicability(c *gin.Context, ctx DiscountContext, discounts []repository.Discount) error {
+func (dp *DiscountProcessor) validateDiscountApplicability(c context.Context, ctx DiscountContext, discounts []repository.Discount) error {
 	stackCnt := 0
 
 	for _, discount := range discounts {
@@ -124,7 +124,7 @@ func (dp *DiscountProcessor) validateDiscountApplicability(c *gin.Context, ctx D
 }
 
 // validateUsageLimits checks user and global usage limits
-func (dp *DiscountProcessor) validateUsageLimits(c *gin.Context, discount repository.Discount, userID uuid.UUID) error {
+func (dp *DiscountProcessor) validateUsageLimits(c context.Context, discount repository.Discount, userID uuid.UUID) error {
 	if discount.UsagePerUser != nil {
 		usageCount, err := dp.repo.CountDiscountUsageByDiscountAndUser(c, repository.CountDiscountUsageByDiscountAndUserParams{
 			DiscountID: discount.ID,
@@ -146,7 +146,7 @@ func (dp *DiscountProcessor) validateUsageLimits(c *gin.Context, discount reposi
 }
 
 // processDiscountForItems applies discount rules to cart items and calculates discount amounts
-func (dp *DiscountProcessor) processDiscountForItems(c *gin.Context, ctx DiscountContext, discount repository.Discount) ([]ItemDiscount, error) {
+func (dp *DiscountProcessor) processDiscountForItems(c context.Context, ctx DiscountContext, discount repository.Discount) ([]ItemDiscount, error) {
 	ruleRows, err := dp.repo.GetDiscountRules(c, discount.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get discount rules: %w", err)

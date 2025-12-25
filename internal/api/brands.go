@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
@@ -20,16 +20,14 @@ import (
 // @Produce json
 // @Param page query int false "Page number"
 // @Param pageSize query int false "Page size"
-// @Success 200 {object} ApiResponse[[]CategoryDto]
+// @Success 200 {object} dto.ApiResponse[[]dto.CategoryDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /shop/brands [get]
-func (sv *Server) getShopBrands(c *gin.Context) {
-	var queries models.PaginationQuery
-	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
-		return
-	}
+func (s *Server) getShopBrands(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	var queries models.PaginationQuery = ParsePaginationQuery(r)
+
 	var dbQueries repository.GetBrandsParams = repository.GetBrandsParams{
 		Limit:     20,
 		Offset:    0,
@@ -39,16 +37,16 @@ func (sv *Server) getShopBrands(c *gin.Context) {
 	dbQueries.Limit = queries.PageSize
 	dbQueries.Offset = (queries.Page - 1) * queries.PageSize
 
-	rows, err := sv.repo.GetBrands(c, dbQueries)
+	rows, err := s.repo.GetBrands(c, dbQueries)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	cnt, err := sv.repo.CountBrands(c)
+	cnt, err := s.repo.CountBrands(c)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
@@ -68,9 +66,9 @@ func (sv *Server) getShopBrands(c *gin.Context) {
 		data[i] = model
 	}
 
-	resp := dto.CreateDataResp(c, data, dto.CreatePagination(queries.Page, queries.PageSize, cnt), nil)
+	resp := dto.CreateDataResp(data, dto.CreatePagination(queries.Page, queries.PageSize, cnt), nil)
 
-	c.JSON(http.StatusOK, resp)
+	RespondSuccess(w, resp)
 }
 
 // @Summary Get a list of brands for the shop
@@ -80,68 +78,32 @@ func (sv *Server) getShopBrands(c *gin.Context) {
 // @Tags Brands
 // @Produce json
 // @Param slug path string true "Brand slug"
-// @Success 200 {object} ApiResponse[[]CategoryDto]
+// @Success 200 {object} dto.ApiResponse[[]dto.CategoryDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /shop/brands/{slug} [get]
-func (sv *Server) getShopBrandBySlug(c *gin.Context) {
-	var param models.URISlugParam
-	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
-		return
-	}
-	var query models.PaginationQuery
-	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
-		return
-	}
-
-	var queries models.PaginationQuery
-	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
-		return
-	}
-	var dbQueries repository.GetBrandsParams = repository.GetBrandsParams{
-		Limit:  20,
-		Offset: 0,
-	}
-	dbQueries.Limit = queries.PageSize
-	dbQueries.Offset = (queries.Page - 1) * queries.PageSize
-
-	rows, err := sv.repo.GetBrands(c, dbQueries)
+func (s *Server) getShopBrandBySlug(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	slug, err := GetUrlParam(r, "slug")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
-	cnt, err := sv.repo.CountBrands(c)
-
+	brandRow, err := s.repo.GetBrandBySlug(c, slug)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	data := make([]dto.CategoryDetail, len(rows))
-
-	for i, row := range rows {
-		data[i] = dto.CategoryDetail{
-			ID:          row.ID.String(),
-			Name:        row.Name,
-			Description: row.Description,
-			Slug:        row.Slug,
-			ImageUrl:    row.ImageUrl,
-		}
-	}
-
-	resp := dto.CreateDataResp(c, data, dto.CreatePagination(queries.Page, queries.PageSize, cnt), nil)
-	c.JSON(http.StatusOK, resp)
+	resp := dto.CreateDataResp(brandRow, nil, nil)
+	RespondSuccess(w, resp)
 }
 
 // Setup brand-related routes
-func (sv *Server) addBrandRoutes(rg *gin.RouterGroup) {
-	brands := rg.Group("brands")
-	{
-		brands.GET("", sv.getShopBrands)
-		brands.GET(":slug", sv.getShopBrandBySlug)
-	}
+func (s *Server) addBrandRoutes(r chi.Router) {
+	r.Route("/brands", func(r chi.Router) {
+		r.Get("/", s.getShopBrands)
+		r.Get("/{slug}", s.getShopBrandBySlug)
+	})
 }

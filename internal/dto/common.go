@@ -1,20 +1,11 @@
 package dto
 
-// Meta info about the request
-type MetaInfo struct {
-	Timestamp string `json:"timestamp"`
-	RequestID string `json:"requestId"`
-	Path      string `json:"path"`
-	Method    string `json:"method"`
-}
-
 // Response types - unchanged
 type ApiResponse[T any] struct {
-	Message    string      `json:"message"`
+	Message    string      `json:"message,omitempty"`
 	Data       *T          `json:"data,omitempty,omitzero"`
 	Error      *ApiError   `json:"error,omitempty"`
 	Pagination *Pagination `json:"pagination,omitempty"`
-	Meta       *MetaInfo   `json:"meta"`
 }
 
 // Error structure for detailed errors

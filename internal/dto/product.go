@@ -86,9 +86,9 @@ type ProductDetail struct {
 }
 
 type CartItemDetail struct {
-	ID             string            `json:"id" binding:"required,uuid"`
-	ProductID      string            `json:"productId" binding:"required,uuid"`
-	VariantID      string            `json:"variantId" binding:"required,uuid"`
+	ID             string            `json:"id" validate:"required,uuid"`
+	ProductID      string            `json:"productId" validate:"required,uuid"`
+	VariantID      string            `json:"variantId" validate:"required,uuid"`
 	Name           string            `json:"name"`
 	Quantity       int16             `json:"quantity"`
 	DiscountAmount float64           `json:"discountAmount"`
@@ -96,7 +96,7 @@ type CartItemDetail struct {
 	StockQty       int32             `json:"stock"`
 	Sku            *string           `json:"sku,omitempty"`
 	ImageURL       *string           `json:"imageUrl,omitempty"`
-	Attributes     []AttributeDetail `json:"attributes"`
+	Attributes     []AttributeDetail `json:"attributes,omitempty"`
 }
 
 func MapToProductDetailResponse(row repository.GetProductDetailRow) ProductDetail {

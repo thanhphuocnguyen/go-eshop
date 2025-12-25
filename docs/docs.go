@@ -15,9 +15,9 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/address": {
+        "/admin/attributes": {
             "get": {
-                "description": "Get list of addresses",
+                "description": "Get all attributes",
                 "consumes": [
                     "application/json"
                 ],
@@ -25,9 +25,402 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "address"
+                    "attributes"
                 ],
-                "summary": "Get list of addresses",
+                "summary": "Get all attributes",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-array_dto_AttributeDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create an attribute",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "attributes"
+                ],
+                "summary": "Create an attribute",
+                "parameters": [
+                    {
+                        "description": "Attribute name",
+                        "name": "params",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AttributeModel"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-dto_AttributeDetail"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/attributes/product/{id}": {
+            "get": {
+                "description": "Get attributes and their values for a product",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "attributes"
+                ],
+                "summary": "Get attributes and their values by for a product",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-array_dto_AttributeDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/attributes/{id}": {
+            "get": {
+                "description": "Get an attribute",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "attributes"
+                ],
+                "summary": "Get an attribute",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Attribute ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-dto_AttributeDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update an attribute",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "attributes"
+                ],
+                "summary": "Update an attribute",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Attribute ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Attribute name",
+                        "name": "params",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AttributeModel"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-repository_Attribute"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete an attribute",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "attributes"
+                ],
+                "summary": "Delete an attribute",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Attribute ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/attributes/{id}/create": {
+            "post": {
+                "description": "Add new attribute value",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "attributes"
+                ],
+                "summary": "Add new attribute value",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Attribute ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Attribute value",
+                        "name": "params",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AttributeValueModel"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-bool"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/attributes/{id}/remove/{valueId}": {
+            "delete": {
+                "description": "remove an attribute value",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "attributes"
+                ],
+                "summary": "remove an attribute value",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Attribute ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/attributes/{id}/update/{valueId}": {
+            "put": {
+                "description": "update attribute value",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "attributes"
+                ],
+                "summary": "update attribute value",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Attribute ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Attribute value",
+                        "name": "params",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AttributeValueModel"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-bool"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/brands": {
+            "get": {
+                "description": "Get a list of brands",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Get a list of brands",
+                "operationId": "get-brands",
                 "parameters": [
                     {
                         "type": "integer",
@@ -46,226 +439,23 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-array_api_AddressResponse"
+                            "$ref": "#/definitions/dto.ApiResponse-array_dto_CategoryDetail"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
             },
-            "post": {
-                "description": "Create a new address",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "address"
-                ],
-                "summary": "Create a new address",
-                "parameters": [
-                    {
-                        "description": "Create Address",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.CreateAddressRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_AddressResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/address/{id}": {
-            "put": {
-                "description": "Update an address",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "address"
-                ],
-                "summary": "Update an address",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Address ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Update Address",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.UpdateAddressRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_AddressResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "description": "Remove an address",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "address"
-                ],
-                "summary": "Remove an address",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Address ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/address/{id}/default": {
-            "put": {
-                "description": "Set default address",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "address"
-                ],
-                "summary": "Set default address",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Address ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/admin/brands": {
             "post": {
                 "description": "Create a new Brand",
                 "consumes": [
@@ -275,7 +465,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Admin"
+                    "admin"
                 ],
                 "summary": "Create a new Brand",
                 "operationId": "create-Brand",
@@ -286,7 +476,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.CreateCategoryRequest"
+                            "$ref": "#/definitions/models.CreateCategoryModel"
                         }
                     }
                 ],
@@ -294,19 +484,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryDto"
+                            "$ref": "#/definitions/dto.ApiResponse-repository_Brand"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
@@ -322,7 +512,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Admin"
+                    "admin"
                 ],
                 "summary": "Get a Brand by ID",
                 "operationId": "get-Brand-by-id",
@@ -339,19 +529,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryDto"
+                            "$ref": "#/definitions/dto.ApiResponse-dto_CategoryDetail"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
@@ -365,7 +555,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Admin"
+                    "admin"
                 ],
                 "summary": "Update a Brand",
                 "operationId": "update-Brand",
@@ -383,7 +573,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.UpdateCategoryRequest"
+                            "$ref": "#/definitions/models.UpdateCategoryModel"
                         }
                     }
                 ],
@@ -391,19 +581,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryDto"
+                            "$ref": "#/definitions/dto.ApiResponse-dto_CategoryDetail"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
@@ -417,7 +607,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Admin"
+                    "admin"
                 ],
                 "summary": "Delete a Brand",
                 "operationId": "delete-Brand",
@@ -434,19 +624,19 @@ const docTemplate = `{
                     "204": {
                         "description": "No Content",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-bool"
+                            "$ref": "#/definitions/dto.ApiResponse-bool"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
@@ -484,19 +674,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-array_api_CategoryDto"
+                            "$ref": "#/definitions/dto.ApiResponse-array_dto_CategoryDetail"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
@@ -521,7 +711,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.CreateCategoryRequest"
+                            "$ref": "#/definitions/models.CreateCategoryModel"
                         }
                     }
                 ],
@@ -529,19 +719,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryDto"
+                            "$ref": "#/definitions/dto.ApiResponse-dto_CategoryDetail"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
@@ -574,25 +764,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryDto"
+                            "$ref": "#/definitions/dto.ApiResponse-dto_CategoryDetail"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
@@ -606,7 +796,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Admin"
+                    "admin"
                 ],
                 "summary": "Update a Category",
                 "operationId": "update-Category",
@@ -624,7 +814,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.UpdateCategoryRequest"
+                            "$ref": "#/definitions/models.UpdateCategoryModel"
                         }
                     }
                 ],
@@ -632,19 +822,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-repository_Category"
+                            "$ref": "#/definitions/dto.ApiResponse-repository_Category"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
@@ -658,7 +848,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Admin"
+                    "admin"
                 ],
                 "summary": "Delete a Category",
                 "operationId": "delete-Category",
@@ -678,13 +868,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
@@ -700,7 +890,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Admin"
+                    "admin"
                 ],
                 "summary": "Get a list of Collections",
                 "operationId": "get-Collections",
@@ -722,19 +912,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryDto"
+                            "$ref": "#/definitions/dto.ApiResponse-dto_CategoryDetail"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
@@ -748,7 +938,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Admin"
+                    "admin"
                 ],
                 "summary": "Create a new Collection",
                 "operationId": "create-Collection",
@@ -759,7 +949,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.CreateCategoryRequest"
+                            "$ref": "#/definitions/models.CreateCategoryModel"
                         }
                     }
                 ],
@@ -767,19 +957,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryDto"
+                            "$ref": "#/definitions/dto.ApiResponse-dto_CategoryDetail"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
@@ -795,7 +985,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Admin"
+                    "admin"
                 ],
                 "summary": "Get a Collection by ID",
                 "operationId": "get-Collection-by-id",
@@ -812,25 +1002,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryDto"
+                            "$ref": "#/definitions/dto.ApiResponse-dto_CategoryDetail"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
@@ -844,7 +1034,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Admin"
+                    "admin"
                 ],
                 "summary": "Update a Collection",
                 "operationId": "update-Collection",
@@ -862,7 +1052,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.CreateCategoryRequest"
+                            "$ref": "#/definitions/models.CreateCategoryModel"
                         }
                     }
                 ],
@@ -870,19 +1060,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryDto"
+                            "$ref": "#/definitions/dto.ApiResponse-dto_CategoryDetail"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
@@ -896,7 +1086,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Admin"
+                    "admin"
                 ],
                 "summary": "Delete a Collection",
                 "operationId": "delete-Collection",
@@ -916,1483 +1106,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     }
                 }
             }
         },
-        "/admin/orders": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Get all orders with pagination and filtering",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Admin"
-                ],
-                "summary": "Get all orders (Admin endpoint)",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "pageSize",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter by status",
-                        "name": "status",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-array_api_OrderListResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/admin/orders/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Get detailed information about an order by its ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Admin"
-                ],
-                "summary": "Get order details by ID (Admin endpoint)",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Order ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_OrderDetailResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/admin/products": {
-            "get": {
-                "description": "get admin list of products",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "products"
-                ],
-                "summary": "Get admin list of products",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Page number",
-                        "name": "page",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "pageSize",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/api.ApiResponse-array_api_ProductSummary"
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/admin/ratings": {
-            "get": {
-                "description": "Get ratings for a specific product",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "ratings"
-                ],
-                "summary": "Get product ratings",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Product ID",
-                        "name": "productId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "default": 1,
-                        "description": "Page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 10,
-                        "description": "Page size",
-                        "name": "pageSize",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-array_api_ProductRatingModel"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/admin/ratings/{id}": {
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Delete a product rating by ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Admin",
-                    "ratings"
-                ],
-                "summary": "Delete a rating",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Rating ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/admin/ratings/{id}/approve": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Approve a product rating by ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Admin",
-                    "ratings"
-                ],
-                "summary": "Approve a rating",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Rating ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/admin/ratings/{id}/ban": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Ban a user from rating by setting their rating to invisible",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Admin",
-                    "ratings"
-                ],
-                "summary": "Ban a user from rating",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Rating ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/admin/users": {
-            "get": {
-                "description": "List users",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "List users",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Limit",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Offset",
-                        "name": "offset",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-array_api_UserDetail"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/admin/users/{id}": {
-            "get": {
-                "description": "Get user info",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Admin"
-                ],
-                "summary": "Get user info",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_UserDetail"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/attributes": {
-            "get": {
-                "description": "Get all attributes",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "attributes"
-                ],
-                "summary": "Get all attributes",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-array_api_AttributeRespModel"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "Create an attribute",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "attributes"
-                ],
-                "summary": "Create an attribute",
-                "parameters": [
-                    {
-                        "description": "Attribute name",
-                        "name": "params",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.AttributeValuesReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_AttributeRespModel"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/attributes/product/{id}": {
-            "get": {
-                "description": "Get attributes and their values for a product",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "attributes"
-                ],
-                "summary": "Get attributes and their values by for a product",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Product ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-array_api_AttributeRespModel"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/attributes/{id}": {
-            "get": {
-                "description": "Get an attribute",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "attributes"
-                ],
-                "summary": "Get an attribute",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Attribute ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_AttributeRespModel"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "description": "Update an attribute",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "attributes"
-                ],
-                "summary": "Update an attribute",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Attribute ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Attribute name",
-                        "name": "params",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.AttributeRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-repository_Attribute"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "description": "Delete an attribute",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "attributes"
-                ],
-                "summary": "Delete an attribute",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Attribute ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/attributes/{id}/create": {
-            "post": {
-                "description": "Add new attribute value",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "attributes"
-                ],
-                "summary": "Add new attribute value",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Attribute ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Attribute value",
-                        "name": "params",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.AttributeValuesReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-bool"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/attributes/{id}/remove/{valueId}": {
-            "delete": {
-                "description": "remove an attribute value",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "attributes"
-                ],
-                "summary": "remove an attribute value",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Attribute ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/attributes/{id}/update/{valueId}": {
-            "put": {
-                "description": "update attribute value",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "attributes"
-                ],
-                "summary": "update attribute value",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Attribute ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Attribute value",
-                        "name": "params",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.AttributeValuesReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-bool"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/brands": {
-            "get": {
-                "description": "Get a list of brands",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Admin"
-                ],
-                "summary": "Get a list of brands",
-                "operationId": "get-brands",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "pageSize",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-array_api_CategoryDto"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/carts": {
-            "get": {
-                "description": "get cart details by user ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "cart"
-                ],
-                "summary": "Get cart details by user ID",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CartDetailResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "create a new cart for a user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "carts"
-                ],
-                "summary": "Create a new cart",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CartDetailResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/carts/Checkout": {
-            "post": {
-                "description": "update product items in the cart",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "carts"
-                ],
-                "summary": "Update product items in the cart",
-                "parameters": [
-                    {
-                        "description": "Checkout input",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.CheckoutRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-repository_CreatePaymentResult"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/carts/clear": {
-            "put": {
-                "description": "clear the cart",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "carts"
-                ],
-                "summary": "Clear the cart",
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/carts/discounts": {
-            "get": {
-                "description": "get cart discounts",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "carts"
-                ],
-                "summary": "Get cart discounts",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-array_repository_GetAvailableDiscountsForCartRow"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/carts/items/{id}": {
-            "delete": {
-                "description": "remove a product from the cart",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "carts"
-                ],
-                "summary": "Remove a product from the cart",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Product ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/carts/items/{variant_id}": {
-            "post": {
-                "description": "add a product to the cart",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "carts"
-                ],
-                "summary": "update product quantity in the cart",
-                "parameters": [
-                    {
-                        "description": "Add product to cart input",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.UpdateCartItemQtyRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/categories": {
-            "get": {
-                "description": "Get a list of Categories",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Categories"
-                ],
-                "summary": "Get a list of Categories",
-                "operationId": "get-Categories",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "pageSize",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-array_api_AdminCategoryDto"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/categories/slug/{slug}": {
-            "get": {
-                "description": "Get a list of Products by Category Slug",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Categories"
-                ],
-                "summary": "Get a list of Products by Category Slug",
-                "operationId": "get-Products-by-Category-Slug",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Category Slug",
-                        "name": "slug",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page size",
-                        "name": "pageSize",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryDto"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/collections/{slug}": {
-            "get": {
-                "description": "Get a list of Collections",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Collections"
-                ],
-                "summary": "Get a list of Collections",
-                "operationId": "get-Shop-Collection-by-slug",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Collection slug",
-                        "name": "slug",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_CategoryDto"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/discounts": {
+        "/admin/discounts": {
             "get": {
                 "description": "Get all discounts",
                 "consumes": [
@@ -2445,19 +1171,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-array_api_DiscountListItemResponseModel"
+                            "$ref": "#/definitions/dto.ApiResponse-array_dto_DiscountListItem"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     }
                 }
@@ -2481,7 +1207,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.CreateDiscountRequest"
+                            "$ref": "#/definitions/models.AddDiscount"
                         }
                     }
                 ],
@@ -2489,19 +1215,2109 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_DiscountDetailResponseModel"
+                            "$ref": "#/definitions/dto.ApiResponse-uuid_UUID"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/discounts/{id}": {
+            "delete": {
+                "description": "Delete discount by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "discounts"
+                ],
+                "summary": "Delete discount by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Discount ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/discounts/{id}/rules": {
+            "get": {
+                "description": "Get all discount rules for a specific discount",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "discounts"
+                ],
+                "summary": "Get all discount rules for a discount",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Discount ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-array_dto_DiscountRuleDetail"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Add a discount rule to a discount",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "discounts"
+                ],
+                "summary": "Add a discount rule to a discount",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Discount ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Discount rule info",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AddDiscountRule"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/discounts/{id}/rules/{ruleId}": {
+            "get": {
+                "description": "Get a specific discount rule by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "discounts"
+                ],
+                "summary": "Get a specific discount rule by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Discount ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Rule ID",
+                        "name": "ruleId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-dto_DiscountRuleDetail"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update a discount rule",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "discounts"
+                ],
+                "summary": "Update a discount rule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Discount ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Rule ID",
+                        "name": "ruleId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated discount rule info",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateDiscountRule"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a discount rule",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "discounts"
+                ],
+                "summary": "Delete a discount rule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Discount ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Rule ID",
+                        "name": "ruleId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/order/{orderId}/refund": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Refund order by order ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "orders"
+                ],
+                "summary": "Refund order",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Order ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-repository_GetOrderRow"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/orders": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all orders with pagination and filtering",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Get all orders (admin endpoint)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by status",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-array_dto_OrderListItem"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/orders/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get detailed information about an order by its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Get order details by ID (admin endpoint)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Order ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-dto_OrderDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/orders/{orderId}/cancel": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cancel order by order ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "orders"
+                ],
+                "summary": "Cancel order",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Order ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-uuid_UUID"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/orders/{orderId}/status": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Change order status by order ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "orders"
+                ],
+                "summary": "Change order status",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Order ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Status",
+                        "name": "status",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-uuid_UUID"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/products": {
+            "get": {
+                "description": "get admin list of products",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Get admin list of products",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.ApiResponse-array_dto_ProductSummary"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/products/{id}/image": {
+            "post": {
+                "description": "upload product image",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Upload product image",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/products/{id}/variant/{variantID}": {
+            "delete": {
+                "description": "delete a product variant with the input payload",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Delete a product variant",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/products/{id}/variants": {
+            "get": {
+                "description": "get product variants",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Get product variants",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-array_dto_VariantDetail"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "create a new product with the input payload",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Create a new product variant",
+                "parameters": [
+                    {
+                        "description": "Product variant input",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateProdVariantModel"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/products/{id}/variants/{variantID}": {
+            "get": {
+                "description": "get product variant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Get product variant",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Product Variant ID",
+                        "name": "variantID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-dto_VariantDetail"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/products/{id}/variants/{variantId}": {
+            "put": {
+                "description": "update a product with the input payload",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Update a product variant",
+                "parameters": [
+                    {
+                        "description": "Product variant input",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateProdVariantModel"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-repository_ProductVariant"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/products/{id}/variants/{variantId}/images": {
+            "post": {
+                "description": "upload a product variant image with the input payload",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Upload a product variant image",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Product Variant ID",
+                        "name": "variantId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-repository_ProductVariant"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/products/{productId}": {
+            "put": {
+                "description": "update a product by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Update a product by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "productId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Product update input",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateProductModel"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-repository_Product"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "remove a product by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Remove a product by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "productId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/ratings": {
+            "get": {
+                "description": "Get ratings for a specific product",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ratings"
+                ],
+                "summary": "Get product ratings",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product ID",
+                        "name": "productId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-array_dto_ProductRatingDetail"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/ratings/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete a product rating by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin",
+                    "ratings"
+                ],
+                "summary": "Delete a rating",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Rating ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/ratings/{id}/approve": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Approve a product rating by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin",
+                    "ratings"
+                ],
+                "summary": "Approve a rating",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Rating ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/ratings/{id}/ban": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Ban a user from rating by setting their rating to invisible",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin",
+                    "ratings"
+                ],
+                "summary": "Ban a user from rating",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Rating ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/users": {
+            "get": {
+                "description": "List users",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "List users",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-array_dto_UserDetail"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/users/{id}": {
+            "get": {
+                "description": "Get user info",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Get user info",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-dto_UserDetail"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "description": "login to the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "login to the system",
+                "parameters": [
+                    {
+                        "description": "User info",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.LoginModel"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-dto_LoginResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/refresh-token": {
+            "post": {
+                "description": "Refresh token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Refresh token",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-dto_RefreshToken"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/register": {
+            "post": {
+                "description": "Create a new user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Create a new user",
+                "parameters": [
+                    {
+                        "description": "User info",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.RegisterModel"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-dto_UserDetail"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/carts": {
+            "get": {
+                "description": "get cart details by user ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cart"
+                ],
+                "summary": "Get cart details by user ID",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-dto_CartDetail"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "create a new cart for a user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "carts"
+                ],
+                "summary": "Create a new cart",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-dto_CartDetail"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/carts/available-discounts": {
+            "get": {
+                "description": "get cart discounts",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "carts"
+                ],
+                "summary": "Get cart discounts",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-array_repository_GetCartRow"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/carts/checkout": {
+            "post": {
+                "description": "update product items in the cart",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "carts"
+                ],
+                "summary": "Update product items in the cart",
+                "parameters": [
+                    {
+                        "description": "Checkout input",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CheckoutModel"
+                        }
+                    }
+                ],
+                "responses": {
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/carts/clear": {
+            "put": {
+                "description": "clear the cart",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "carts"
+                ],
+                "summary": "Clear the cart",
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/carts/items/{id}": {
+            "delete": {
+                "description": "remove a product from the cart",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "carts"
+                ],
+                "summary": "Remove a product from the cart",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/carts/items/{variant_id}": {
+            "post": {
+                "description": "add a product to the cart",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "carts"
+                ],
+                "summary": "update product quantity in the cart",
+                "parameters": [
+                    {
+                        "description": "Add product to cart input",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateCartItemQtyModel"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/categories": {
+            "get": {
+                "description": "Get a list of Categories",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Get a list of Categories",
+                "operationId": "get-Categories",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-array_dto_AdminCategoryDetail"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/categories/slug/{slug}": {
+            "get": {
+                "description": "Get a list of Products by Category Slug",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Get a list of Products by Category Slug",
+                "operationId": "get-Products-by-Category-Slug",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Category Slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-dto_CategoryDetail"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/collections/{slug}": {
+            "get": {
+                "description": "Get a list of Collections",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Collections"
+                ],
+                "summary": "Get a list of Collections",
+                "operationId": "get-Shop-Collection-by-slug",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Collection slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-dto_CategoryDetail"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/discounts/available": {
+            "get": {
+                "description": "Get a list of available discounts",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "discounts"
+                ],
+                "summary": "Get available discounts",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-array_dto_DiscountListItem"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/discounts/check-applicability": {
+            "post": {
+                "description": "Check if a discount code is applicable to the current cart",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "discounts"
+                ],
+                "summary": "Check discount applicability",
+                "parameters": [
+                    {
+                        "description": "Discount applicability info",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CheckDiscountApplicabilityRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-processors_DiscountResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
@@ -2533,33 +3349,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_DiscountDetailResponseModel"
+                            "$ref": "#/definitions/dto.ApiResponse-dto_DiscountDetail"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
-            }
-        },
-        "/discounts/{id}/categories": {
-            "get": {
-                "description": "Get discount categories by ID",
+            },
+            "put": {
+                "description": "Update discount by ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -2569,7 +3383,7 @@ const docTemplate = `{
                 "tags": [
                     "discounts"
                 ],
-                "summary": "Get discount categories by ID",
+                "summary": "Update discount by ID",
                 "parameters": [
                     {
                         "type": "string",
@@ -2579,171 +3393,32 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "integer",
-                        "default": 1,
-                        "description": "Page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 10,
-                        "description": "Page size",
-                        "name": "pageSize",
-                        "in": "query"
+                        "description": "Discount info",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateDiscount"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_DiscountLinkObject"
+                            "$ref": "#/definitions/dto.ApiResponse-string"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/discounts/{id}/products": {
-            "get": {
-                "description": "Get discount products by ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "discounts"
-                ],
-                "summary": "Get discount products by ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Discount ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "default": 1,
-                        "description": "Page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 10,
-                        "description": "Page size",
-                        "name": "pageSize",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_DiscountLinkObject"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/discounts/{id}/users": {
-            "get": {
-                "description": "Get discount users by ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "discounts"
-                ],
-                "summary": "Get discount users by ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Discount ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "default": 1,
-                        "description": "Page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "default": 10,
-                        "description": "Page size",
-                        "name": "pageSize",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_DiscountLinkObject"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     }
                 }
@@ -2775,25 +3450,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-array_api_ImageResponse"
+                            "$ref": "#/definitions/dto.ApiResponse-string"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
             }
         },
-        "/images/{publicID}": {
+        "/images/{id}": {
             "delete": {
                 "description": "remove a product by external ID",
                 "consumes": [
@@ -2819,25 +3494,135 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-bool"
+                            "$ref": "#/definitions/dto.ApiResponse-bool"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
             }
         },
-        "/order/list": {
+        "/order/{orderId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get order detail by order ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "orders"
+                ],
+                "summary": "Get order detail",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Order ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-dto_OrderDetail"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/order/{orderId}/confirm-received": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "confirm received order payment info",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "orders"
+                ],
+                "summary": "confirm received order payment info",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Order ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-bool"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/orders": {
             "get": {
                 "security": [
                     {
@@ -2885,315 +3670,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-array_api_OrderListResponse"
+                            "$ref": "#/definitions/dto.ApiResponse-array_dto_OrderListItem"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
             }
         },
-        "/order/{orderId}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Get order detail by order ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "orders"
-                ],
-                "summary": "Get order detail",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Order ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.OrderDetailResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/order/{orderId}/cancel": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Cancel order by order ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "orders"
-                ],
-                "summary": "Cancel order",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Order ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_OrderListResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/order/{orderId}/confirm-received": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "confirm received order payment info",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "orders"
-                ],
-                "summary": "confirm received order payment info",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Order ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-bool"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/order/{orderId}/refund": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Refund order by order ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "orders"
-                ],
-                "summary": "Refund order",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Order ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_OrderListResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/order/{orderId}/status": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Change order status by order ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "orders"
-                ],
-                "summary": "Change order status",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Order ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Status",
-                        "name": "status",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_OrderListResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/payment": {
+        "/payments": {
             "post": {
                 "security": [
                     {
@@ -3218,7 +3719,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.PaymentRequest"
+                            "$ref": "#/definitions/models.PaymentModel"
                         }
                     }
                 ],
@@ -3226,43 +3727,95 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_PaymentResponse"
+                            "$ref": "#/definitions/dto.ApiResponse-dto_PaymentIntentSecret"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
             }
         },
-        "/payment/{id}": {
+        "/payments/methods": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get payment methods",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payment"
+                ],
+                "summary": "Get payment methods",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-array_dto_PaymentMethodResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/{id}": {
             "get": {
                 "security": [
                     {
@@ -3293,43 +3846,101 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_PaymentResponse"
+                            "$ref": "#/definitions/dto.ApiResponse-dto_PaymentDetail"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
             }
         },
-        "/payment/{paymentId}": {
+        "/payments/{id}/confirm": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Confirm Payment",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payment"
+                ],
+                "summary": "Confirm Payment",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-payment_PaymentResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/payments/{paymentId}": {
             "get": {
                 "security": [
                     {
@@ -3360,37 +3971,37 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_PaymentResponse"
+                            "$ref": "#/definitions/dto.ApiResponse-dto_PaymentDetail"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
@@ -3431,20 +4042,20 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/api.ApiResponse-array_api_ProductSummary"
+                                "$ref": "#/definitions/dto.ApiResponse-array_dto_ProductSummary"
                             }
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
@@ -3468,7 +4079,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.CreateProductReq"
+                            "$ref": "#/definitions/models.CreateProductModel"
                         }
                     }
                 ],
@@ -3476,325 +4087,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-repository_Product"
+                            "$ref": "#/definitions/dto.ApiResponse-repository_Product"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/products/{id}/image": {
-            "post": {
-                "description": "upload product image",
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "products"
-                ],
-                "summary": "Upload product image",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Product ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/products/{id}/variant/{variantID}": {
-            "delete": {
-                "description": "delete a product variant with the input payload",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "products"
-                ],
-                "summary": "Delete a product variant",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/products/{id}/variants": {
-            "get": {
-                "description": "get product variants",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "products"
-                ],
-                "summary": "Get product variants",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-array_api_VariantModelDto"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "create a new product with the input payload",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "products"
-                ],
-                "summary": "Create a new product variant",
-                "parameters": [
-                    {
-                        "description": "Product variant input",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.CreateProdVariantReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/products/{id}/variants/{variantID}": {
-            "get": {
-                "description": "get product variant",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "products"
-                ],
-                "summary": "Get product variant",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Product ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Product Variant ID",
-                        "name": "variantID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_VariantModelDto"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/products/{id}/variants/{variantId}": {
-            "put": {
-                "description": "update a product with the input payload",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "products"
-                ],
-                "summary": "Update a product variant",
-                "parameters": [
-                    {
-                        "description": "Product variant input",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.UpdateProdVariantReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-repository_ProductVariant"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/products/{id}/variants/{variantId}/images": {
-            "post": {
-                "description": "upload a product variant image with the input payload",
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "products"
-                ],
-                "summary": "Upload a product variant image",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Product ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Product Variant ID",
-                        "name": "variantId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-repository_ProductVariant"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     }
                 }
@@ -3826,112 +4131,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_ProductDetailDto"
+                            "$ref": "#/definitions/dto.ApiResponse-dto_ProductDetail"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "description": "update a product by ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "products"
-                ],
-                "summary": "Update a product by ID",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Product ID",
-                        "name": "productId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Product update input",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.UpdateProductReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-repository_Product"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "description": "remove a product by ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "products"
-                ],
-                "summary": "Remove a product by ID",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Product ID",
-                        "name": "productId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-string"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
@@ -3995,25 +4207,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_ProductRatingModel"
+                            "$ref": "#/definitions/dto.ApiResponse-dto_ProductRatingDetail"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
@@ -4050,31 +4262,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-array_api_ProductRatingModel"
+                            "$ref": "#/definitions/dto.ApiResponse-array_repository_GetProductRatingsByOrderItemIDsRow"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     }
                 }
@@ -4120,31 +4332,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-array_api_ProductRatingModel"
+                            "$ref": "#/definitions/dto.ApiResponse-array_dto_ProductRatingDetail"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
             }
         },
-        "/ratings/{ratingId}/helpful": {
+        "/ratings/{Id}/helpful": {
             "post": {
                 "security": [
                     {
@@ -4186,25 +4398,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-string"
+                            "$ref": "#/definitions/dto.ApiResponse-string"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
@@ -4250,25 +4462,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-string"
+                            "$ref": "#/definitions/dto.ApiResponse-string"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
@@ -4306,19 +4518,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-array_api_CategoryDto"
+                            "$ref": "#/definitions/dto.ApiResponse-array_dto_CategoryDetail"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     }
                 }
@@ -4351,27 +4563,27 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-array_api_CategoryDto"
+                            "$ref": "#/definitions/dto.ApiResponse-array_dto_CategoryDetail"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     }
                 }
             }
         },
-        "/users": {
-            "post": {
-                "description": "Create a new user",
+        "/users/addresses": {
+            "get": {
+                "description": "Get list of addresses",
                 "consumes": [
                     "application/json"
                 ],
@@ -4379,83 +4591,241 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "users"
+                    "addresses"
                 ],
-                "summary": "Create a new user",
+                "summary": "Get list of addresses",
                 "parameters": [
                     {
-                        "description": "User info",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.RegisterRequestBody"
-                        }
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "pageSize",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_UserDetail"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/users/Login": {
-            "post": {
-                "description": "Login to the system",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Login to the system",
-                "parameters": [
-                    {
-                        "description": "User info",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.LoginRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_LoginResponse"
+                            "$ref": "#/definitions/dto.ApiResponse-array_dto_AddressDetail"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new addresses",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "addresses"
+                ],
+                "summary": "Create a new addresses",
+                "parameters": [
+                    {
+                        "description": "Create Address",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateAddress"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-dto_AddressDetail"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/addresses/{id}": {
+            "put": {
+                "description": "Update an addresses",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "addresses"
+                ],
+                "summary": "Update an addresses",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Address ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update Address",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.UpdateAddress"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ApiResponse-dto_AddressDetail"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Remove an addresses",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "addresses"
+                ],
+                "summary": "Remove an addresses",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Address ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/addresses/{id}/default": {
+            "put": {
+                "description": "Set default addresses",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "addresses"
+                ],
+                "summary": "Set default addresses",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Address ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     }
                 }
@@ -4478,54 +4848,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_UserDetail"
+                            "$ref": "#/definitions/dto.ApiResponse-UserDetail"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/users/refresh-token": {
-            "post": {
-                "description": "Refresh token",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Refresh token",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-api_RefreshTokenResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
@@ -4533,11 +4868,6 @@ const docTemplate = `{
         },
         "/users/verify-email": {
             "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
                 "description": "Verify email",
                 "consumes": [
                     "application/json"
@@ -4572,25 +4902,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
@@ -4619,19 +4949,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
@@ -4657,7 +4987,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.UpdateUserRequest"
+                            "$ref": "#/definitions/models.UpdateUserModel"
                         }
                     }
                 ],
@@ -4665,25 +4995,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ApiResponse-repository_UpdateUserRow"
+                            "$ref": "#/definitions/dto.ApiResponse-repository_UpdateUserRow"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/dto.ErrorResp"
                         }
                     }
                 }
@@ -4709,13 +5039,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp"
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     }
                 }
@@ -4723,7 +5053,18 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "api.AddressResponse": {
+        "api.ErrorResp": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "big.Int": {
+            "type": "object"
+        },
+        "dto.AddressDetail": {
             "type": "object",
             "properties": {
                 "city": {
@@ -4752,7 +5093,7 @@ const docTemplate = `{
                 }
             }
         },
-        "api.AdminCategoryDto": {
+        "dto.AdminCategoryDetail": {
             "type": "object",
             "properties": {
                 "createdAt": {
@@ -4773,7 +5114,7 @@ const docTemplate = `{
                 "products": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.ProductListDTO"
+                        "$ref": "#/definitions/dto.ProductListItem"
                     }
                 },
                 "published": {
@@ -4787,7 +5128,7 @@ const docTemplate = `{
                 }
             }
         },
-        "api.ApiError": {
+        "dto.ApiError": {
             "type": "object",
             "properties": {
                 "code": {
@@ -4801,754 +5142,889 @@ const docTemplate = `{
                 }
             }
         },
-        "api.ApiResponse-api_AddressResponse": {
+        "dto.ApiResponse-UserDetail": {
             "type": "object",
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/api.AddressResponse"
+                    "$ref": "#/definitions/dto.UserDetail"
                 },
                 "error": {
-                    "$ref": "#/definitions/api.ApiError"
+                    "$ref": "#/definitions/dto.ApiError"
                 },
                 "message": {
                     "type": "string"
                 },
                 "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
+                    "$ref": "#/definitions/dto.MetaInfo"
                 },
                 "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
+                    "$ref": "#/definitions/dto.Pagination"
                 }
             }
         },
-        "api.ApiResponse-api_AttributeRespModel": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/api.AttributeRespModel"
-                },
-                "error": {
-                    "$ref": "#/definitions/api.ApiError"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
-                },
-                "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
-                }
-            }
-        },
-        "api.ApiResponse-api_CartDetailResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/api.CartDetailResponse"
-                },
-                "error": {
-                    "$ref": "#/definitions/api.ApiError"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
-                },
-                "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
-                }
-            }
-        },
-        "api.ApiResponse-api_CategoryDto": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/api.CategoryDto"
-                },
-                "error": {
-                    "$ref": "#/definitions/api.ApiError"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
-                },
-                "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
-                }
-            }
-        },
-        "api.ApiResponse-api_DiscountDetailResponseModel": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/api.DiscountDetailResponseModel"
-                },
-                "error": {
-                    "$ref": "#/definitions/api.ApiError"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
-                },
-                "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
-                }
-            }
-        },
-        "api.ApiResponse-api_DiscountLinkObject": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/api.DiscountLinkObject"
-                },
-                "error": {
-                    "$ref": "#/definitions/api.ApiError"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
-                },
-                "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
-                }
-            }
-        },
-        "api.ApiResponse-api_LoginResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/api.LoginResponse"
-                },
-                "error": {
-                    "$ref": "#/definitions/api.ApiError"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
-                },
-                "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
-                }
-            }
-        },
-        "api.ApiResponse-api_OrderDetailResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/api.OrderDetailResponse"
-                },
-                "error": {
-                    "$ref": "#/definitions/api.ApiError"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
-                },
-                "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
-                }
-            }
-        },
-        "api.ApiResponse-api_OrderListResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/api.OrderListResponse"
-                },
-                "error": {
-                    "$ref": "#/definitions/api.ApiError"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
-                },
-                "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
-                }
-            }
-        },
-        "api.ApiResponse-api_PaymentResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/api.PaymentResponse"
-                },
-                "error": {
-                    "$ref": "#/definitions/api.ApiError"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
-                },
-                "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
-                }
-            }
-        },
-        "api.ApiResponse-api_ProductDetailDto": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/api.ProductDetailDto"
-                },
-                "error": {
-                    "$ref": "#/definitions/api.ApiError"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
-                },
-                "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
-                }
-            }
-        },
-        "api.ApiResponse-api_ProductRatingModel": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/api.ProductRatingModel"
-                },
-                "error": {
-                    "$ref": "#/definitions/api.ApiError"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
-                },
-                "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
-                }
-            }
-        },
-        "api.ApiResponse-api_RefreshTokenResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/api.RefreshTokenResponse"
-                },
-                "error": {
-                    "$ref": "#/definitions/api.ApiError"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
-                },
-                "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
-                }
-            }
-        },
-        "api.ApiResponse-api_UserDetail": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/api.UserDetail"
-                },
-                "error": {
-                    "$ref": "#/definitions/api.ApiError"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
-                },
-                "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
-                }
-            }
-        },
-        "api.ApiResponse-api_VariantModelDto": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/api.VariantModelDto"
-                },
-                "error": {
-                    "$ref": "#/definitions/api.ApiError"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
-                },
-                "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
-                }
-            }
-        },
-        "api.ApiResponse-array_api_AddressResponse": {
+        "dto.ApiResponse-array_dto_AddressDetail": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.AddressResponse"
+                        "$ref": "#/definitions/dto.AddressDetail"
                     }
                 },
                 "error": {
-                    "$ref": "#/definitions/api.ApiError"
+                    "$ref": "#/definitions/dto.ApiError"
                 },
                 "message": {
                     "type": "string"
                 },
                 "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
+                    "$ref": "#/definitions/dto.MetaInfo"
                 },
                 "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
+                    "$ref": "#/definitions/dto.Pagination"
                 }
             }
         },
-        "api.ApiResponse-array_api_AdminCategoryDto": {
+        "dto.ApiResponse-array_dto_AdminCategoryDetail": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.AdminCategoryDto"
+                        "$ref": "#/definitions/dto.AdminCategoryDetail"
                     }
                 },
                 "error": {
-                    "$ref": "#/definitions/api.ApiError"
+                    "$ref": "#/definitions/dto.ApiError"
                 },
                 "message": {
                     "type": "string"
                 },
                 "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
+                    "$ref": "#/definitions/dto.MetaInfo"
                 },
                 "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
+                    "$ref": "#/definitions/dto.Pagination"
                 }
             }
         },
-        "api.ApiResponse-array_api_AttributeRespModel": {
+        "dto.ApiResponse-array_dto_AttributeDetail": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.AttributeRespModel"
+                        "$ref": "#/definitions/dto.AttributeDetail"
                     }
                 },
                 "error": {
-                    "$ref": "#/definitions/api.ApiError"
+                    "$ref": "#/definitions/dto.ApiError"
                 },
                 "message": {
                     "type": "string"
                 },
                 "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
+                    "$ref": "#/definitions/dto.MetaInfo"
                 },
                 "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
+                    "$ref": "#/definitions/dto.Pagination"
                 }
             }
         },
-        "api.ApiResponse-array_api_CategoryDto": {
+        "dto.ApiResponse-array_dto_CategoryDetail": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.CategoryDto"
+                        "$ref": "#/definitions/dto.CategoryDetail"
                     }
                 },
                 "error": {
-                    "$ref": "#/definitions/api.ApiError"
+                    "$ref": "#/definitions/dto.ApiError"
                 },
                 "message": {
                     "type": "string"
                 },
                 "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
+                    "$ref": "#/definitions/dto.MetaInfo"
                 },
                 "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
+                    "$ref": "#/definitions/dto.Pagination"
                 }
             }
         },
-        "api.ApiResponse-array_api_DiscountListItemResponseModel": {
+        "dto.ApiResponse-array_dto_DiscountListItem": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.DiscountListItemResponseModel"
+                        "$ref": "#/definitions/dto.DiscountListItem"
                     }
                 },
                 "error": {
-                    "$ref": "#/definitions/api.ApiError"
+                    "$ref": "#/definitions/dto.ApiError"
                 },
                 "message": {
                     "type": "string"
                 },
                 "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
+                    "$ref": "#/definitions/dto.MetaInfo"
                 },
                 "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
+                    "$ref": "#/definitions/dto.Pagination"
                 }
             }
         },
-        "api.ApiResponse-array_api_ImageResponse": {
+        "dto.ApiResponse-array_dto_DiscountRuleDetail": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.ImageResponse"
+                        "$ref": "#/definitions/dto.DiscountRuleDetail"
                     }
                 },
                 "error": {
-                    "$ref": "#/definitions/api.ApiError"
+                    "$ref": "#/definitions/dto.ApiError"
                 },
                 "message": {
                     "type": "string"
                 },
                 "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
+                    "$ref": "#/definitions/dto.MetaInfo"
                 },
                 "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
+                    "$ref": "#/definitions/dto.Pagination"
                 }
             }
         },
-        "api.ApiResponse-array_api_OrderListResponse": {
+        "dto.ApiResponse-array_dto_OrderListItem": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.OrderListResponse"
+                        "$ref": "#/definitions/dto.OrderListItem"
                     }
                 },
                 "error": {
-                    "$ref": "#/definitions/api.ApiError"
+                    "$ref": "#/definitions/dto.ApiError"
                 },
                 "message": {
                     "type": "string"
                 },
                 "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
+                    "$ref": "#/definitions/dto.MetaInfo"
                 },
                 "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
+                    "$ref": "#/definitions/dto.Pagination"
                 }
             }
         },
-        "api.ApiResponse-array_api_ProductRatingModel": {
+        "dto.ApiResponse-array_dto_PaymentMethodResponse": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.ProductRatingModel"
+                        "$ref": "#/definitions/dto.PaymentMethodResponse"
                     }
                 },
                 "error": {
-                    "$ref": "#/definitions/api.ApiError"
+                    "$ref": "#/definitions/dto.ApiError"
                 },
                 "message": {
                     "type": "string"
                 },
                 "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
+                    "$ref": "#/definitions/dto.MetaInfo"
                 },
                 "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
+                    "$ref": "#/definitions/dto.Pagination"
                 }
             }
         },
-        "api.ApiResponse-array_api_ProductSummary": {
+        "dto.ApiResponse-array_dto_ProductRatingDetail": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.ProductSummary"
+                        "$ref": "#/definitions/dto.ProductRatingDetail"
                     }
                 },
                 "error": {
-                    "$ref": "#/definitions/api.ApiError"
+                    "$ref": "#/definitions/dto.ApiError"
                 },
                 "message": {
                     "type": "string"
                 },
                 "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
+                    "$ref": "#/definitions/dto.MetaInfo"
                 },
                 "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
+                    "$ref": "#/definitions/dto.Pagination"
                 }
             }
         },
-        "api.ApiResponse-array_api_UserDetail": {
+        "dto.ApiResponse-array_dto_ProductSummary": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.UserDetail"
+                        "$ref": "#/definitions/dto.ProductSummary"
                     }
                 },
                 "error": {
-                    "$ref": "#/definitions/api.ApiError"
+                    "$ref": "#/definitions/dto.ApiError"
                 },
                 "message": {
                     "type": "string"
                 },
                 "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
+                    "$ref": "#/definitions/dto.MetaInfo"
                 },
                 "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
+                    "$ref": "#/definitions/dto.Pagination"
                 }
             }
         },
-        "api.ApiResponse-array_api_VariantModelDto": {
+        "dto.ApiResponse-array_dto_UserDetail": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.VariantModelDto"
+                        "$ref": "#/definitions/dto.UserDetail"
                     }
                 },
                 "error": {
-                    "$ref": "#/definitions/api.ApiError"
+                    "$ref": "#/definitions/dto.ApiError"
                 },
                 "message": {
                     "type": "string"
                 },
                 "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
+                    "$ref": "#/definitions/dto.MetaInfo"
                 },
                 "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
+                    "$ref": "#/definitions/dto.Pagination"
                 }
             }
         },
-        "api.ApiResponse-array_repository_GetAvailableDiscountsForCartRow": {
+        "dto.ApiResponse-array_dto_VariantDetail": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/repository.GetAvailableDiscountsForCartRow"
+                        "$ref": "#/definitions/dto.VariantDetail"
                     }
                 },
                 "error": {
-                    "$ref": "#/definitions/api.ApiError"
+                    "$ref": "#/definitions/dto.ApiError"
                 },
                 "message": {
                     "type": "string"
                 },
                 "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
+                    "$ref": "#/definitions/dto.MetaInfo"
                 },
                 "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
+                    "$ref": "#/definitions/dto.Pagination"
                 }
             }
         },
-        "api.ApiResponse-bool": {
+        "dto.ApiResponse-array_repository_GetCartRow": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/repository.GetCartRow"
+                    }
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ApiError"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/dto.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.Pagination"
+                }
+            }
+        },
+        "dto.ApiResponse-array_repository_GetProductRatingsByOrderItemIDsRow": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/repository.GetProductRatingsByOrderItemIDsRow"
+                    }
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ApiError"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/dto.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.Pagination"
+                }
+            }
+        },
+        "dto.ApiResponse-bool": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "boolean"
                 },
                 "error": {
-                    "$ref": "#/definitions/api.ApiError"
+                    "$ref": "#/definitions/dto.ApiError"
                 },
                 "message": {
                     "type": "string"
                 },
                 "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
+                    "$ref": "#/definitions/dto.MetaInfo"
                 },
                 "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
+                    "$ref": "#/definitions/dto.Pagination"
                 }
             }
         },
-        "api.ApiResponse-repository_Attribute": {
+        "dto.ApiResponse-dto_AddressDetail": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/dto.AddressDetail"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ApiError"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/dto.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.Pagination"
+                }
+            }
+        },
+        "dto.ApiResponse-dto_AttributeDetail": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/dto.AttributeDetail"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ApiError"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/dto.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.Pagination"
+                }
+            }
+        },
+        "dto.ApiResponse-dto_CartDetail": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/dto.CartDetail"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ApiError"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/dto.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.Pagination"
+                }
+            }
+        },
+        "dto.ApiResponse-dto_CategoryDetail": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/dto.CategoryDetail"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ApiError"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/dto.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.Pagination"
+                }
+            }
+        },
+        "dto.ApiResponse-dto_DiscountDetail": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/dto.DiscountDetail"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ApiError"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/dto.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.Pagination"
+                }
+            }
+        },
+        "dto.ApiResponse-dto_DiscountRuleDetail": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/dto.DiscountRuleDetail"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ApiError"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/dto.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.Pagination"
+                }
+            }
+        },
+        "dto.ApiResponse-dto_LoginResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/dto.LoginResponse"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ApiError"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/dto.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.Pagination"
+                }
+            }
+        },
+        "dto.ApiResponse-dto_OrderDetail": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/dto.OrderDetail"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ApiError"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/dto.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.Pagination"
+                }
+            }
+        },
+        "dto.ApiResponse-dto_PaymentDetail": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/dto.PaymentDetail"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ApiError"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/dto.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.Pagination"
+                }
+            }
+        },
+        "dto.ApiResponse-dto_PaymentIntentSecret": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/dto.PaymentIntentSecret"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ApiError"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/dto.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.Pagination"
+                }
+            }
+        },
+        "dto.ApiResponse-dto_ProductDetail": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/dto.ProductDetail"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ApiError"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/dto.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.Pagination"
+                }
+            }
+        },
+        "dto.ApiResponse-dto_ProductRatingDetail": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/dto.ProductRatingDetail"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ApiError"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/dto.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.Pagination"
+                }
+            }
+        },
+        "dto.ApiResponse-dto_RefreshToken": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/dto.RefreshToken"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ApiError"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/dto.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.Pagination"
+                }
+            }
+        },
+        "dto.ApiResponse-dto_UserDetail": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/dto.UserDetail"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ApiError"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/dto.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.Pagination"
+                }
+            }
+        },
+        "dto.ApiResponse-dto_VariantDetail": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/dto.VariantDetail"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ApiError"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/dto.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.Pagination"
+                }
+            }
+        },
+        "dto.ApiResponse-payment_PaymentResult": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/payment.PaymentResult"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ApiError"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/dto.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.Pagination"
+                }
+            }
+        },
+        "dto.ApiResponse-processors_DiscountResult": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/processors.DiscountResult"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ApiError"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/dto.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.Pagination"
+                }
+            }
+        },
+        "dto.ApiResponse-repository_Attribute": {
             "type": "object",
             "properties": {
                 "data": {
                     "$ref": "#/definitions/repository.Attribute"
                 },
                 "error": {
-                    "$ref": "#/definitions/api.ApiError"
+                    "$ref": "#/definitions/dto.ApiError"
                 },
                 "message": {
                     "type": "string"
                 },
                 "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
+                    "$ref": "#/definitions/dto.MetaInfo"
                 },
                 "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
+                    "$ref": "#/definitions/dto.Pagination"
                 }
             }
         },
-        "api.ApiResponse-repository_Category": {
+        "dto.ApiResponse-repository_Brand": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/repository.Brand"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ApiError"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/dto.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.Pagination"
+                }
+            }
+        },
+        "dto.ApiResponse-repository_Category": {
             "type": "object",
             "properties": {
                 "data": {
                     "$ref": "#/definitions/repository.Category"
                 },
                 "error": {
-                    "$ref": "#/definitions/api.ApiError"
+                    "$ref": "#/definitions/dto.ApiError"
                 },
                 "message": {
                     "type": "string"
                 },
                 "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
+                    "$ref": "#/definitions/dto.MetaInfo"
                 },
                 "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
+                    "$ref": "#/definitions/dto.Pagination"
                 }
             }
         },
-        "api.ApiResponse-repository_CreatePaymentResult": {
+        "dto.ApiResponse-repository_GetOrderRow": {
             "type": "object",
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/repository.CreatePaymentResult"
+                    "$ref": "#/definitions/repository.GetOrderRow"
                 },
                 "error": {
-                    "$ref": "#/definitions/api.ApiError"
+                    "$ref": "#/definitions/dto.ApiError"
                 },
                 "message": {
                     "type": "string"
                 },
                 "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
+                    "$ref": "#/definitions/dto.MetaInfo"
                 },
                 "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
+                    "$ref": "#/definitions/dto.Pagination"
                 }
             }
         },
-        "api.ApiResponse-repository_Product": {
+        "dto.ApiResponse-repository_Product": {
             "type": "object",
             "properties": {
                 "data": {
                     "$ref": "#/definitions/repository.Product"
                 },
                 "error": {
-                    "$ref": "#/definitions/api.ApiError"
+                    "$ref": "#/definitions/dto.ApiError"
                 },
                 "message": {
                     "type": "string"
                 },
                 "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
+                    "$ref": "#/definitions/dto.MetaInfo"
                 },
                 "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
+                    "$ref": "#/definitions/dto.Pagination"
                 }
             }
         },
-        "api.ApiResponse-repository_ProductVariant": {
+        "dto.ApiResponse-repository_ProductVariant": {
             "type": "object",
             "properties": {
                 "data": {
                     "$ref": "#/definitions/repository.ProductVariant"
                 },
                 "error": {
-                    "$ref": "#/definitions/api.ApiError"
+                    "$ref": "#/definitions/dto.ApiError"
                 },
                 "message": {
                     "type": "string"
                 },
                 "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
+                    "$ref": "#/definitions/dto.MetaInfo"
                 },
                 "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
+                    "$ref": "#/definitions/dto.Pagination"
                 }
             }
         },
-        "api.ApiResponse-repository_UpdateUserRow": {
+        "dto.ApiResponse-repository_UpdateUserRow": {
             "type": "object",
             "properties": {
                 "data": {
                     "$ref": "#/definitions/repository.UpdateUserRow"
                 },
                 "error": {
-                    "$ref": "#/definitions/api.ApiError"
+                    "$ref": "#/definitions/dto.ApiError"
                 },
                 "message": {
                     "type": "string"
                 },
                 "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
+                    "$ref": "#/definitions/dto.MetaInfo"
                 },
                 "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
+                    "$ref": "#/definitions/dto.Pagination"
                 }
             }
         },
-        "api.ApiResponse-string": {
+        "dto.ApiResponse-string": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "string"
                 },
                 "error": {
-                    "$ref": "#/definitions/api.ApiError"
+                    "$ref": "#/definitions/dto.ApiError"
                 },
                 "message": {
                     "type": "string"
                 },
                 "meta": {
-                    "$ref": "#/definitions/api.MetaInfo"
+                    "$ref": "#/definitions/dto.MetaInfo"
                 },
                 "pagination": {
-                    "$ref": "#/definitions/api.Pagination"
+                    "$ref": "#/definitions/dto.Pagination"
                 }
             }
         },
-        "api.AttributeRequest": {
+        "dto.ApiResponse-uuid_UUID": {
             "type": "object",
-            "required": [
-                "name"
-            ],
             "properties": {
-                "name": {
+                "data": {
                     "type": "string"
+                },
+                "error": {
+                    "$ref": "#/definitions/dto.ApiError"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/dto.MetaInfo"
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.Pagination"
                 }
             }
         },
-        "api.AttributeRespModel": {
+        "dto.AttributeDetail": {
             "type": "object",
             "properties": {
                 "id": {
@@ -5560,12 +6036,12 @@ const docTemplate = `{
                 "values": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.AttributeValue"
+                        "$ref": "#/definitions/dto.AttributeValueDetail"
                     }
                 }
             }
         },
-        "api.AttributeValue": {
+        "dto.AttributeValueDetail": {
             "type": "object",
             "properties": {
                 "id": {
@@ -5579,28 +6055,20 @@ const docTemplate = `{
                 }
             }
         },
-        "api.AttributeValuesReq": {
-            "type": "object",
-            "required": [
-                "value"
-            ],
-            "properties": {
-                "value": {
-                    "type": "string"
-                }
-            }
-        },
-        "api.CartDetailResponse": {
+        "dto.CartDetail": {
             "type": "object",
             "properties": {
                 "cartItems": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.CartItemResponse"
+                        "$ref": "#/definitions/dto.CartItemDetail"
                     }
                 },
                 "createdAt": {
                     "type": "string"
+                },
+                "discountAmount": {
+                    "type": "number"
                 },
                 "id": {
                     "type": "string"
@@ -5613,7 +6081,7 @@ const docTemplate = `{
                 }
             }
         },
-        "api.CartItemResponse": {
+        "dto.CartItemDetail": {
             "type": "object",
             "required": [
                 "id",
@@ -5624,8 +6092,11 @@ const docTemplate = `{
                 "attributes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.ProductAttribute"
+                        "$ref": "#/definitions/dto.AttributeDetail"
                     }
+                },
+                "discountAmount": {
+                    "type": "number"
                 },
                 "id": {
                     "type": "string"
@@ -5656,7 +6127,7 @@ const docTemplate = `{
                 }
             }
         },
-        "api.CategoryDto": {
+        "dto.CategoryDetail": {
             "type": "object",
             "properties": {
                 "createdAt": {
@@ -5677,7 +6148,7 @@ const docTemplate = `{
                 "products": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.ProductSummary"
+                        "$ref": "#/definitions/dto.ProductSummary"
                     }
                 },
                 "published": {
@@ -5688,294 +6159,7 @@ const docTemplate = `{
                 }
             }
         },
-        "api.CheckoutAddress": {
-            "type": "object",
-            "properties": {
-                "city": {
-                    "type": "string"
-                },
-                "district": {
-                    "type": "string"
-                },
-                "phone": {
-                    "type": "string"
-                },
-                "street": {
-                    "type": "string"
-                },
-                "ward": {
-                    "type": "string"
-                }
-            }
-        },
-        "api.CheckoutRequest": {
-            "type": "object",
-            "required": [
-                "paymentMethod"
-            ],
-            "properties": {
-                "address": {
-                    "$ref": "#/definitions/api.CheckoutAddress"
-                },
-                "addressId": {
-                    "type": "string"
-                },
-                "discountCode": {
-                    "type": "string",
-                    "maxLength": 32,
-                    "minLength": 5
-                },
-                "email": {
-                    "type": "string"
-                },
-                "firstName": {
-                    "type": "string",
-                    "maxLength": 32,
-                    "minLength": 3
-                },
-                "lastName": {
-                    "type": "string",
-                    "maxLength": 32,
-                    "minLength": 3
-                },
-                "paymentGateway": {
-                    "type": "string",
-                    "enum": [
-                        "stripe"
-                    ]
-                },
-                "paymentMethod": {
-                    "type": "string",
-                    "enum": [
-                        "cod",
-                        "stripe"
-                    ]
-                }
-            }
-        },
-        "api.CreateAddressRequest": {
-            "type": "object",
-            "required": [
-                "city",
-                "district",
-                "phone",
-                "street"
-            ],
-            "properties": {
-                "city": {
-                    "type": "string"
-                },
-                "district": {
-                    "type": "string"
-                },
-                "isDefault": {
-                    "type": "boolean"
-                },
-                "phone": {
-                    "type": "string",
-                    "maxLength": 15,
-                    "minLength": 10
-                },
-                "street": {
-                    "type": "string"
-                },
-                "ward": {
-                    "type": "string",
-                    "maxLength": 100
-                }
-            }
-        },
-        "api.CreateCategoryRequest": {
-            "type": "object",
-            "required": [
-                "name",
-                "slug"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string",
-                    "maxLength": 1000
-                },
-                "displayOrder": {
-                    "type": "integer"
-                },
-                "image": {
-                    "$ref": "#/definitions/multipart.FileHeader"
-                },
-                "name": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "minLength": 3
-                },
-                "slug": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "minLength": 3
-                }
-            }
-        },
-        "api.CreateDiscountRequest": {
-            "type": "object",
-            "required": [
-                "code",
-                "discountType",
-                "discountValue",
-                "isActive",
-                "startsAt"
-            ],
-            "properties": {
-                "categories": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "code": {
-                    "type": "string",
-                    "maxLength": 32,
-                    "minLength": 5
-                },
-                "description": {
-                    "type": "string",
-                    "maxLength": 1000
-                },
-                "discountType": {
-                    "type": "string",
-                    "enum": [
-                        "percentage",
-                        "fixed_amount"
-                    ]
-                },
-                "discountValue": {
-                    "type": "number"
-                },
-                "expiresAt": {
-                    "type": "string"
-                },
-                "isActive": {
-                    "type": "boolean"
-                },
-                "maxDiscountAmount": {
-                    "type": "number"
-                },
-                "minPurchaseAmount": {
-                    "type": "number"
-                },
-                "products": {
-                    "description": "Related entities",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "startsAt": {
-                    "type": "string"
-                },
-                "usageLimit": {
-                    "type": "integer",
-                    "minimum": 0
-                },
-                "users": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "api.CreateProdVariantReq": {
-            "type": "object",
-            "required": [
-                "attributeValues",
-                "isActive",
-                "price",
-                "stockQty"
-            ],
-            "properties": {
-                "attributeValues": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "description": {
-                    "type": "string"
-                },
-                "isActive": {
-                    "type": "boolean"
-                },
-                "price": {
-                    "type": "number"
-                },
-                "stockQty": {
-                    "type": "integer",
-                    "minimum": 0
-                },
-                "weight": {
-                    "type": "number"
-                }
-            }
-        },
-        "api.CreateProductReq": {
-            "type": "object",
-            "required": [
-                "brandId",
-                "description",
-                "name",
-                "price",
-                "sku",
-                "slug"
-            ],
-            "properties": {
-                "attributes": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "brandId": {
-                    "type": "string"
-                },
-                "categoryIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "collectionIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "description": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "minLength": 3
-                },
-                "price": {
-                    "type": "number"
-                },
-                "shortDescription": {
-                    "type": "string",
-                    "maxLength": 1000
-                },
-                "sku": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 3
-                },
-                "slug": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "minLength": 3
-                }
-            }
-        },
-        "api.DiscountDetailResponseModel": {
+        "dto.DiscountDetail": {
             "type": "object",
             "properties": {
                 "code": {
@@ -5987,14 +6171,17 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
+                "discountRules": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.DiscountRuleDetail"
+                    }
+                },
                 "discountType": {
                     "type": "string"
                 },
                 "discountValue": {
                     "type": "number"
-                },
-                "expiresAt": {
-                    "type": "string"
                 },
                 "id": {
                     "type": "string"
@@ -6008,8 +6195,8 @@ const docTemplate = `{
                 "minPurchase": {
                     "type": "number"
                 },
-                "startsAt": {
-                    "type": "string"
+                "timesUsed": {
+                    "type": "integer"
                 },
                 "updatedAt": {
                     "type": "string"
@@ -6017,32 +6204,21 @@ const docTemplate = `{
                 "usageHistory": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.DiscountUsageHistory"
+                        "$ref": "#/definitions/dto.DiscountUsageHistory"
                     }
                 },
                 "usageLimit": {
                     "type": "integer"
                 },
-                "usedCount": {
-                    "type": "integer"
+                "validFrom": {
+                    "type": "string"
+                },
+                "validUntil": {
+                    "type": "string"
                 }
             }
         },
-        "api.DiscountLinkObject": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "price": {
-                    "type": "number"
-                }
-            }
-        },
-        "api.DiscountListItemResponseModel": {
+        "dto.DiscountListItem": {
             "type": "object",
             "properties": {
                 "code": {
@@ -6060,9 +6236,6 @@ const docTemplate = `{
                 "discountValue": {
                     "type": "number"
                 },
-                "expiresAt": {
-                    "type": "string"
-                },
                 "id": {
                     "type": "string"
                 },
@@ -6075,9 +6248,6 @@ const docTemplate = `{
                 "minPurchase": {
                     "type": "number"
                 },
-                "startsAt": {
-                    "type": "string"
-                },
                 "updatedAt": {
                     "type": "string"
                 },
@@ -6086,10 +6256,31 @@ const docTemplate = `{
                 },
                 "usedCount": {
                     "type": "integer"
+                },
+                "validFrom": {
+                    "type": "string"
+                },
+                "validUntil": {
+                    "type": "string"
                 }
             }
         },
-        "api.DiscountUsageHistory": {
+        "dto.DiscountRuleDetail": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "ruleType": {
+                    "type": "string"
+                },
+                "ruleValue": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "dto.DiscountUsageHistory": {
             "type": "object",
             "properties": {
                 "amount": {
@@ -6113,7 +6304,15 @@ const docTemplate = `{
                 }
             }
         },
-        "api.GeneralCategoryResponse": {
+        "dto.ErrorResp": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "$ref": "#/definitions/dto.ApiError"
+                }
+            }
+        },
+        "dto.GeneralCategory": {
             "type": "object",
             "properties": {
                 "id": {
@@ -6124,54 +6323,48 @@ const docTemplate = `{
                 }
             }
         },
-        "api.ImageResponse": {
+        "dto.LineItem": {
             "type": "object",
             "properties": {
-                "assignments": {
+                "attributesSnapshot": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "$ref": "#/definitions/repository.AttributeDataSnapshot"
                     }
                 },
-                "externalId": {
+                "createdAt": {
                     "type": "string"
                 },
-                "fileSize": {
-                    "type": "integer"
+                "discountAmount": {
+                    "type": "number"
                 },
                 "id": {
                     "type": "string"
                 },
-                "mimeType": {
+                "imageUrl": {
                     "type": "string"
                 },
-                "url": {
+                "lineTotal": {
+                    "type": "number"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "quantity": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "variantId": {
                     "type": "string"
                 }
             }
         },
-        "api.LoginRequest": {
-            "type": "object",
-            "required": [
-                "password"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "maxLength": 255
-                },
-                "password": {
-                    "type": "string",
-                    "maxLength": 32,
-                    "minLength": 6
-                },
-                "username": {
-                    "type": "string",
-                    "maxLength": 32
-                }
-            }
-        },
-        "api.LoginResponse": {
+        "dto.LoginResponse": {
             "type": "object",
             "properties": {
                 "accessToken": {
@@ -6191,7 +6384,7 @@ const docTemplate = `{
                 }
             }
         },
-        "api.MetaInfo": {
+        "dto.MetaInfo": {
             "type": "object",
             "properties": {
                 "method": {
@@ -6208,7 +6401,7 @@ const docTemplate = `{
                 }
             }
         },
-        "api.OrderDetailResponse": {
+        "dto.OrderDetail": {
             "type": "object",
             "properties": {
                 "createdAt": {
@@ -6220,17 +6413,23 @@ const docTemplate = `{
                 "customerName": {
                     "type": "string"
                 },
+                "discounts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.OrderDiscount"
+                    }
+                },
                 "id": {
                     "type": "string"
                 },
-                "paymentInfo": {
-                    "$ref": "#/definitions/api.PaymentInfoModel"
-                },
-                "products": {
+                "lineItems": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.OrderItemResponse"
+                        "$ref": "#/definitions/dto.LineItem"
                     }
+                },
+                "paymentInfo": {
+                    "$ref": "#/definitions/dto.PaymentInfo"
                 },
                 "shippingInfo": {
                     "$ref": "#/definitions/repository.ShippingAddressSnapshot"
@@ -6240,42 +6439,33 @@ const docTemplate = `{
                 },
                 "total": {
                     "type": "number"
+                },
+                "updatedAt": {
+                    "type": "string"
                 }
             }
         },
-        "api.OrderItemResponse": {
+        "dto.OrderDiscount": {
             "type": "object",
             "properties": {
-                "attributesSnapshot": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/repository.AttributeDataSnapshot"
-                    }
+                "code": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "discountType": {
+                    "type": "string"
+                },
+                "discountValue": {
+                    "type": "number"
                 },
                 "id": {
                     "type": "string"
-                },
-                "imageUrl": {
-                    "type": "string"
-                },
-                "lineTotal": {
-                    "type": "number"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "quantity": {
-                    "type": "integer"
-                },
-                "rating": {
-                    "$ref": "#/definitions/api.RatingModel"
-                },
-                "variantId": {
-                    "type": "string"
                 }
             }
         },
-        "api.OrderListResponse": {
+        "dto.OrderListItem": {
             "type": "object",
             "properties": {
                 "createdAt": {
@@ -6307,7 +6497,7 @@ const docTemplate = `{
                 }
             }
         },
-        "api.Pagination": {
+        "dto.Pagination": {
             "type": "object",
             "properties": {
                 "hasNextPage": {
@@ -6330,7 +6520,24 @@ const docTemplate = `{
                 }
             }
         },
-        "api.PaymentInfoModel": {
+        "dto.PaymentDetail": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "description": "Details contains gateway-specific payment information.\nThe type may vary depending on the payment provider, and is typically a struct or map[string]interface{}."
+                },
+                "gateway": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/repository.PaymentStatus"
+                }
+            }
+        },
+        "dto.PaymentInfo": {
             "type": "object",
             "properties": {
                 "amount": {
@@ -6359,26 +6566,37 @@ const docTemplate = `{
                 }
             }
         },
-        "api.PaymentRequest": {
+        "dto.PaymentIntentSecret": {
             "type": "object",
-            "required": [
-                "orderId",
-                "paymentMethodId"
-            ],
             "properties": {
-                "orderId": {
+                "clientSecret": {
                     "type": "string"
                 },
-                "paymentMethodId": {
+                "paymentId": {
                     "type": "string"
                 }
             }
         },
-        "api.PaymentResponse": {
+        "dto.PaymentMethodResponse": {
             "type": "object",
             "properties": {
-                "details": {
-                    "description": "Details contains gateway-specific payment information.\nThe type may vary depending on the payment provider, and is typically a struct or map[string]interface{}."
+                "code": {
+                    "type": "string"
+                },
+                "countriesSupported": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "currencySupported": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "description": {
+                    "type": "string"
                 },
                 "gateway": {
                     "type": "string"
@@ -6386,50 +6604,56 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "status": {
-                    "$ref": "#/definitions/repository.PaymentStatus"
+                "isActive": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "thumbnail": {
+                    "type": "string"
                 }
             }
         },
-        "api.ProductAttribute": {
+        "dto.ProductAttribute": {
             "type": "object",
             "properties": {
-                "attribute_id": {
+                "attributeId": {
                     "type": "integer"
                 },
-                "attribute_name": {
+                "attributeName": {
                     "type": "string"
                 },
-                "attribute_values.": {
+                "attributeValues": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.AttributeValue"
+                        "$ref": "#/definitions/dto.AttributeValueDetail"
                     }
                 }
             }
         },
-        "api.ProductDetailDto": {
+        "dto.ProductDetail": {
             "type": "object",
             "properties": {
                 "attributes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.ProductAttribute"
+                        "$ref": "#/definitions/dto.ProductAttribute"
                     }
                 },
                 "brand": {
-                    "$ref": "#/definitions/api.GeneralCategoryResponse"
+                    "$ref": "#/definitions/dto.GeneralCategory"
                 },
                 "categories": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.GeneralCategoryResponse"
+                        "$ref": "#/definitions/dto.GeneralCategory"
                     }
                 },
                 "collections": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.GeneralCategoryResponse"
+                        "$ref": "#/definitions/dto.GeneralCategory"
                     }
                 },
                 "createdAt": {
@@ -6437,6 +6661,9 @@ const docTemplate = `{
                 },
                 "description": {
                     "type": "string"
+                },
+                "discountPercentage": {
+                    "type": "integer"
                 },
                 "fiveStarCount": {
                     "type": "integer"
@@ -6485,10 +6712,16 @@ const docTemplate = `{
                 },
                 "updatedAt": {
                     "type": "string"
+                },
+                "variants": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.VariantDetail"
+                    }
                 }
             }
         },
-        "api.ProductListDTO": {
+        "dto.ProductListItem": {
             "type": "object",
             "properties": {
                 "avgRating": {
@@ -6502,6 +6735,9 @@ const docTemplate = `{
                 },
                 "description": {
                     "type": "string"
+                },
+                "discountPercentage": {
+                    "type": "integer"
                 },
                 "id": {
                     "type": "string"
@@ -6529,7 +6765,7 @@ const docTemplate = `{
                 }
             }
         },
-        "api.ProductRatingModel": {
+        "dto.ProductRatingDetail": {
             "type": "object",
             "properties": {
                 "count": {
@@ -6544,7 +6780,7 @@ const docTemplate = `{
                 "images": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.RatingImageModel"
+                        "$ref": "#/definitions/dto.RatingImage"
                     }
                 },
                 "isApproved": {
@@ -6576,7 +6812,7 @@ const docTemplate = `{
                 }
             }
         },
-        "api.ProductSummary": {
+        "dto.ProductSummary": {
             "type": "object",
             "properties": {
                 "avgRating": {
@@ -6614,7 +6850,7 @@ const docTemplate = `{
                 }
             }
         },
-        "api.RatingImageModel": {
+        "dto.RatingImage": {
             "type": "object",
             "properties": {
                 "id": {
@@ -6625,27 +6861,7 @@ const docTemplate = `{
                 }
             }
         },
-        "api.RatingModel": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "rating": {
-                    "type": "number"
-                },
-                "title": {
-                    "type": "string"
-                }
-            }
-        },
-        "api.RefreshTokenResponse": {
+        "dto.RefreshToken": {
             "type": "object",
             "properties": {
                 "accessToken": {
@@ -6656,235 +6872,13 @@ const docTemplate = `{
                 }
             }
         },
-        "api.RegisterRequestBody": {
-            "type": "object",
-            "required": [
-                "address",
-                "email",
-                "password",
-                "phone",
-                "username"
-            ],
-            "properties": {
-                "address": {
-                    "$ref": "#/definitions/api.CreateAddressRequest"
-                },
-                "email": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "minLength": 6
-                },
-                "firstName": {
-                    "type": "string",
-                    "maxLength": 32,
-                    "minLength": 3
-                },
-                "lastName": {
-                    "type": "string",
-                    "maxLength": 32,
-                    "minLength": 3
-                },
-                "password": {
-                    "type": "string",
-                    "maxLength": 32,
-                    "minLength": 6
-                },
-                "phone": {
-                    "type": "string",
-                    "maxLength": 15,
-                    "minLength": 10
-                },
-                "username": {
-                    "type": "string",
-                    "maxLength": 32,
-                    "minLength": 3
-                }
-            }
-        },
-        "api.UpdateAddressRequest": {
-            "type": "object",
-            "properties": {
-                "address1": {
-                    "type": "string"
-                },
-                "city": {
-                    "type": "string"
-                },
-                "district": {
-                    "type": "string"
-                },
-                "isDefault": {
-                    "type": "boolean"
-                },
-                "phone": {
-                    "type": "string"
-                },
-                "ward": {
-                    "type": "string"
-                }
-            }
-        },
-        "api.UpdateCartItemQtyRequest": {
-            "type": "object",
-            "required": [
-                "quantity"
-            ],
-            "properties": {
-                "quantity": {
-                    "type": "integer"
-                }
-            }
-        },
-        "api.UpdateCategoryRequest": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string",
-                    "maxLength": 1000
-                },
-                "displayOrder": {
-                    "type": "integer"
-                },
-                "image": {
-                    "$ref": "#/definitions/multipart.FileHeader"
-                },
-                "name": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "minLength": 3
-                },
-                "published": {
-                    "type": "boolean"
-                },
-                "slug": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "minLength": 3
-                }
-            }
-        },
-        "api.UpdateProdVariantReq": {
-            "type": "object",
-            "required": [
-                "attributeValues"
-            ],
-            "properties": {
-                "attributeValues": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "description": {
-                    "type": "string"
-                },
-                "isActive": {
-                    "type": "boolean"
-                },
-                "price": {
-                    "type": "number"
-                },
-                "stockQty": {
-                    "type": "integer",
-                    "minimum": 0
-                },
-                "weight": {
-                    "type": "number"
-                }
-            }
-        },
-        "api.UpdateProductReq": {
-            "type": "object",
-            "properties": {
-                "attributes": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "brandId": {
-                    "type": "string"
-                },
-                "categoryIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "collectionIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "description": {
-                    "type": "string"
-                },
-                "isActive": {
-                    "type": "boolean"
-                },
-                "name": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "minLength": 3
-                },
-                "price": {
-                    "type": "number"
-                },
-                "shortDescription": {
-                    "type": "string",
-                    "maxLength": 1000
-                },
-                "sku": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 3
-                },
-                "slug": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "minLength": 3
-                }
-            }
-        },
-        "api.UpdateUserRequest": {
-            "type": "object",
-            "required": [
-                "userId"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "minLength": 6
-                },
-                "firstName": {
-                    "type": "string",
-                    "maxLength": 32,
-                    "minLength": 3
-                },
-                "lastName": {
-                    "type": "string",
-                    "maxLength": 32,
-                    "minLength": 3
-                },
-                "phone": {
-                    "type": "string",
-                    "maxLength": 15,
-                    "minLength": 8
-                },
-                "userId": {
-                    "type": "string"
-                }
-            }
-        },
-        "api.UserDetail": {
+        "dto.UserDetail": {
             "type": "object",
             "properties": {
                 "addresses": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.AddressResponse"
+                        "$ref": "#/definitions/dto.AddressDetail"
                     }
                 },
                 "avatarId": {
@@ -6921,7 +6915,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "roleCode": {
-                    "$ref": "#/definitions/repository.Role"
+                    "type": "string"
                 },
                 "roleId": {
                     "type": "string"
@@ -6940,13 +6934,13 @@ const docTemplate = `{
                 }
             }
         },
-        "api.VariantModelDto": {
+        "dto.VariantDetail": {
             "type": "object",
             "properties": {
                 "attributeValues": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/api.AttributeValue"
+                        "$ref": "#/definitions/dto.AttributeValueDetail"
                     }
                 },
                 "createdAt": {
@@ -6981,14 +6975,640 @@ const docTemplate = `{
                 }
             }
         },
-        "big.Int": {
-            "type": "object"
+        "models.AddDiscount": {
+            "type": "object",
+            "required": [
+                "code",
+                "discountType",
+                "discountValue",
+                "isActive",
+                "name",
+                "validFrom"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 5
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 1000
+                },
+                "discountType": {
+                    "type": "string"
+                },
+                "discountValue": {
+                    "type": "number"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "isStackable": {
+                    "type": "boolean"
+                },
+                "maxDiscountAmount": {
+                    "type": "number"
+                },
+                "minOrderValue": {
+                    "type": "number"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 3
+                },
+                "priority": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "usageLimit": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "usagePerUser": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "validFrom": {
+                    "type": "string"
+                },
+                "validUntil": {
+                    "type": "string"
+                }
+            }
         },
-        "github_com_thanhphuocnguyen_go-eshop_internal_api.ErrorResp": {
+        "models.AddDiscountRule": {
+            "type": "object",
+            "required": [
+                "ruleType",
+                "ruleValue"
+            ],
+            "properties": {
+                "ruleType": {
+                    "type": "string",
+                    "enum": [
+                        "product",
+                        "category",
+                        "customer_segment",
+                        "brand",
+                        "collection",
+                        "first_time_buyer",
+                        "purchase_quantity"
+                    ]
+                },
+                "ruleValue": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "models.AttributeModel": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.AttributeValueModel": {
+            "type": "object",
+            "required": [
+                "value"
+            ],
+            "properties": {
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.CheckDiscountApplicabilityRequest": {
+            "type": "object",
+            "required": [
+                "cartId",
+                "discountCodes"
+            ],
+            "properties": {
+                "cartId": {
+                    "type": "string"
+                },
+                "discountCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "models.CheckoutModel": {
+            "type": "object",
+            "required": [
+                "paymentMethodId"
+            ],
+            "properties": {
+                "discountCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "paymentMethodId": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.CreateAddress": {
+            "type": "object",
+            "required": [
+                "city",
+                "district",
+                "phone",
+                "street"
+            ],
+            "properties": {
+                "city": {
+                    "type": "string"
+                },
+                "district": {
+                    "type": "string"
+                },
+                "isDefault": {
+                    "type": "boolean"
+                },
+                "phone": {
+                    "type": "string",
+                    "maxLength": 15,
+                    "minLength": 10
+                },
+                "street": {
+                    "type": "string"
+                },
+                "ward": {
+                    "type": "string",
+                    "maxLength": 100
+                }
+            }
+        },
+        "models.CreateCategoryModel": {
+            "type": "object",
+            "required": [
+                "name",
+                "slug"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "maxLength": 1000
+                },
+                "displayOrder": {
+                    "type": "integer"
+                },
+                "image": {
+                    "$ref": "#/definitions/multipart.FileHeader"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 3
+                },
+                "slug": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 3
+                }
+            }
+        },
+        "models.CreateProdVariantModel": {
+            "type": "object",
+            "required": [
+                "attributeValues",
+                "isActive",
+                "price",
+                "stockQty"
+            ],
+            "properties": {
+                "attributeValues": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "stockQty": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "weight": {
+                    "type": "number"
+                }
+            }
+        },
+        "models.CreateProductModel": {
+            "type": "object",
+            "required": [
+                "brandId",
+                "description",
+                "name",
+                "price",
+                "sku",
+                "slug"
+            ],
+            "properties": {
+                "attributes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "brandId": {
+                    "type": "string"
+                },
+                "categoryIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "collectionIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "discountPercentage": {
+                    "type": "integer",
+                    "maximum": 100,
+                    "minimum": 0
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 3
+                },
+                "price": {
+                    "type": "number"
+                },
+                "shortDescription": {
+                    "type": "string",
+                    "maxLength": 1000
+                },
+                "sku": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 3
+                },
+                "slug": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 3
+                }
+            }
+        },
+        "models.LoginModel": {
+            "type": "object",
+            "required": [
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 6
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 32
+                }
+            }
+        },
+        "models.PaymentModel": {
+            "type": "object",
+            "required": [
+                "orderId",
+                "paymentMethodId"
+            ],
+            "properties": {
+                "orderId": {
+                    "type": "string"
+                },
+                "paymentMethodId": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.RegisterModel": {
+            "type": "object",
+            "required": [
+                "address",
+                "email",
+                "password",
+                "phone",
+                "username"
+            ],
+            "properties": {
+                "address": {
+                    "$ref": "#/definitions/models.CreateAddress"
+                },
+                "email": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 6
+                },
+                "firstName": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 3
+                },
+                "lastName": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 3
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 6
+                },
+                "phone": {
+                    "type": "string",
+                    "maxLength": 15,
+                    "minLength": 10
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 3
+                }
+            }
+        },
+        "models.UpdateAddress": {
             "type": "object",
             "properties": {
-                "error": {
-                    "$ref": "#/definitions/api.ApiError"
+                "address1": {
+                    "type": "string"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "district": {
+                    "type": "string"
+                },
+                "isDefault": {
+                    "type": "boolean"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "ward": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.UpdateCartItemQtyModel": {
+            "type": "object",
+            "required": [
+                "quantity"
+            ],
+            "properties": {
+                "quantity": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.UpdateCategoryModel": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "maxLength": 1000
+                },
+                "displayOrder": {
+                    "type": "integer"
+                },
+                "image": {
+                    "$ref": "#/definitions/multipart.FileHeader"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 3
+                },
+                "published": {
+                    "type": "boolean"
+                },
+                "slug": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 3
+                }
+            }
+        },
+        "models.UpdateDiscount": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 5
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 1000
+                },
+                "discountType": {
+                    "type": "string"
+                },
+                "discountValue": {
+                    "type": "number"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "isStackable": {
+                    "type": "boolean"
+                },
+                "maxDiscountAmount": {
+                    "type": "number"
+                },
+                "minOrderValue": {
+                    "type": "number"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 3
+                },
+                "priority": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "usageLimit": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "usagePerUser": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "validFrom": {
+                    "type": "string"
+                },
+                "validUntil": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.UpdateDiscountRule": {
+            "type": "object",
+            "properties": {
+                "ruleType": {
+                    "type": "string",
+                    "enum": [
+                        "condition",
+                        "action"
+                    ]
+                },
+                "ruleValue": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "models.UpdateProdVariantModel": {
+            "type": "object",
+            "required": [
+                "attributeValues"
+            ],
+            "properties": {
+                "attributeValues": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "price": {
+                    "type": "number"
+                },
+                "stockQty": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "weight": {
+                    "type": "number"
+                }
+            }
+        },
+        "models.UpdateProductModel": {
+            "type": "object",
+            "properties": {
+                "attributes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "brandId": {
+                    "type": "string"
+                },
+                "categoryIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "collectionIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "discountPercentage": {
+                    "type": "integer",
+                    "maximum": 100,
+                    "minimum": 0
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 3
+                },
+                "price": {
+                    "type": "number"
+                },
+                "shortDescription": {
+                    "type": "string",
+                    "maxLength": 1000
+                },
+                "sku": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 3
+                },
+                "slug": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 3
+                }
+            }
+        },
+        "models.UpdateUserModel": {
+            "type": "object",
+            "required": [
+                "userId"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 6
+                },
+                "firstName": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 3
+                },
+                "lastName": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 3
+                },
+                "phone": {
+                    "type": "string",
+                    "maxLength": 15,
+                    "minLength": 8
+                },
+                "userId": {
+                    "type": "string"
                 }
             }
         },
@@ -7005,6 +7625,49 @@ const docTemplate = `{
                     "type": "integer"
                 }
             }
+        },
+        "payment.PaymentResult": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "processed_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/payment.PaymentStatus"
+                },
+                "success": {
+                    "type": "boolean"
+                },
+                "transaction_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "payment.PaymentStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "completed",
+                "failed",
+                "refunded",
+                "cancelled"
+            ],
+            "x-enum-varnames": [
+                "StatusPending",
+                "StatusCompleted",
+                "StatusFailed",
+                "StatusRefunded",
+                "StatusCancelled"
+            ]
         },
         "pgtype.InfinityModifier": {
             "type": "integer",
@@ -7053,6 +7716,40 @@ const docTemplate = `{
                 }
             }
         },
+        "processors.DiscountResult": {
+            "type": "object",
+            "properties": {
+                "appliedDiscounts": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "itemDiscounts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/processors.ItemDiscount"
+                    }
+                },
+                "totalDiscount": {
+                    "type": "number"
+                }
+            }
+        },
+        "processors.ItemDiscount": {
+            "type": "object",
+            "properties": {
+                "discountAmount": {
+                    "type": "number"
+                },
+                "discountID": {
+                    "type": "string"
+                },
+                "itemIndex": {
+                    "type": "integer"
+                }
+            }
+        },
         "repository.Attribute": {
             "type": "object",
             "properties": {
@@ -7071,6 +7768,41 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "repository.Brand": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "displayOrder": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "imageId": {
+                    "type": "string"
+                },
+                "imageUrl": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "published": {
+                    "type": "boolean"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "updatedAt": {
                     "type": "string"
                 }
             }
@@ -7110,14 +7842,73 @@ const docTemplate = `{
                 }
             }
         },
-        "repository.CreatePaymentResult": {
+        "repository.GetCartRow": {
             "type": "object",
             "properties": {
-                "clientSecret": {
+                "createdAt": {
                     "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "itemCount": {
+                    "type": "integer"
                 },
                 "orderId": {
                     "type": "string"
+                },
+                "sessionId": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                }
+            }
+        },
+        "repository.GetOrderRow": {
+            "type": "object",
+            "properties": {
+                "cancelledAt": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
+                },
+                "confirmedAt": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "customerEmail": {
+                    "type": "string"
+                },
+                "customerName": {
+                    "type": "string"
+                },
+                "customerPhone": {
+                    "type": "string"
+                },
+                "deliveredAt": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
+                },
+                "estimatedDeliveryDate": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
+                },
+                "gateway": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "orderDate": {
+                    "type": "string"
+                },
+                "paymentAmount": {
+                    "$ref": "#/definitions/pgtype.Numeric"
+                },
+                "paymentCreatedAt": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
                 },
                 "paymentId": {
                     "type": "string"
@@ -7125,49 +7916,82 @@ const docTemplate = `{
                 "paymentIntentId": {
                     "type": "string"
                 },
+                "paymentMethod": {
+                    "type": "string"
+                },
+                "paymentMethodId": {
+                    "type": "string"
+                },
+                "paymentStatus": {
+                    "$ref": "#/definitions/repository.NullPaymentStatus"
+                },
+                "refundedAt": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
+                },
+                "shippingAddress": {
+                    "$ref": "#/definitions/repository.ShippingAddressSnapshot"
+                },
+                "shippingMethod": {
+                    "type": "string"
+                },
+                "shippingMethodId": {
+                    "type": "string"
+                },
+                "shippingNotes": {
+                    "type": "string"
+                },
+                "shippingProvider": {
+                    "type": "string"
+                },
+                "shippingRateId": {
+                    "type": "string"
+                },
                 "status": {
-                    "$ref": "#/definitions/repository.PaymentStatus"
+                    "$ref": "#/definitions/repository.OrderStatus"
                 },
                 "totalPrice": {
-                    "type": "number"
+                    "$ref": "#/definitions/pgtype.Numeric"
+                },
+                "trackingUrl": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
                 }
             }
         },
-        "repository.GetAvailableDiscountsForCartRow": {
+        "repository.GetProductRatingsByOrderItemIDsRow": {
             "type": "object",
             "properties": {
-                "categoryCount": {
-                    "type": "integer"
-                },
-                "categoryId": {
+                "email": {
                     "type": "string"
                 },
-                "code": {
+                "firstName": {
                     "type": "string"
                 },
-                "description": {
+                "lastName": {
                     "type": "string"
                 },
-                "discountType": {
+                "productRating": {
+                    "$ref": "#/definitions/repository.ProductRating"
+                },
+                "userId": {
                     "type": "string"
+                }
+            }
+        },
+        "repository.NullPaymentStatus": {
+            "type": "object",
+            "properties": {
+                "paymentStatus": {
+                    "$ref": "#/definitions/repository.PaymentStatus"
                 },
-                "discountValue": {
-                    "$ref": "#/definitions/pgtype.Numeric"
-                },
-                "expiresAt": {
-                    "$ref": "#/definitions/pgtype.Timestamptz"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "productCount": {
-                    "type": "integer"
-                },
-                "productId": {
-                    "type": "string"
-                },
-                "startsAt": {
-                    "$ref": "#/definitions/pgtype.Timestamptz"
+                "valid": {
+                    "description": "Valid is true if PaymentStatus is not NULL",
+                    "type": "boolean"
                 }
             }
         },
@@ -7176,20 +8000,20 @@ const docTemplate = `{
             "enum": [
                 "pending",
                 "confirmed",
-                "processing",
-                "shipped",
+                "delivering",
                 "delivered",
                 "cancelled",
-                "refunded"
+                "refunded",
+                "completed"
             ],
             "x-enum-varnames": [
                 "OrderStatusPending",
                 "OrderStatusConfirmed",
-                "OrderStatusProcessing",
-                "OrderStatusShipped",
+                "OrderStatusDelivering",
                 "OrderStatusDelivered",
                 "OrderStatusCancelled",
-                "OrderStatusRefunded"
+                "OrderStatusRefunded",
+                "OrderStatusCompleted"
             ]
         },
         "repository.PaymentStatus": {
@@ -7232,6 +8056,9 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
+                "discountPercentage": {
+                    "type": "integer"
+                },
                 "fiveStarCount": {
                     "type": "integer"
                 },
@@ -7256,6 +8083,9 @@ const docTemplate = `{
                 "oneStarCount": {
                     "type": "integer"
                 },
+                "purchasedCount": {
+                    "type": "integer"
+                },
                 "ratingCount": {
                     "type": "integer"
                 },
@@ -7273,6 +8103,47 @@ const docTemplate = `{
                 },
                 "updatedAt": {
                     "type": "string"
+                }
+            }
+        },
+        "repository.ProductRating": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isApproved": {
+                    "type": "boolean"
+                },
+                "isVisible": {
+                    "type": "boolean"
+                },
+                "orderItemId": {
+                    "type": "string"
+                },
+                "productId": {
+                    "type": "string"
+                },
+                "rating": {
+                    "$ref": "#/definitions/pgtype.Numeric"
+                },
+                "reviewContent": {
+                    "type": "string"
+                },
+                "reviewTitle": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                },
+                "verifiedPurchase": {
+                    "type": "boolean"
                 }
             }
         },
@@ -7316,19 +8187,6 @@ const docTemplate = `{
                     "$ref": "#/definitions/pgtype.Numeric"
                 }
             }
-        },
-        "repository.Role": {
-            "type": "string",
-            "enum": [
-                "admin",
-                "user",
-                "moderator"
-            ],
-            "x-enum-varnames": [
-                "UserRoleCodeAdmin",
-                "UserRoleCodeUser",
-                "UserRoleCodeModerator"
-            ]
         },
         "repository.ShippingAddressSnapshot": {
             "type": "object",

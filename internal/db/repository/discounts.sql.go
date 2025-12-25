@@ -676,7 +676,7 @@ WHERE
     AND valid_from >= COALESCE($5, discounts.valid_from)
     AND valid_from <= COALESCE($6, discounts.valid_from)
     AND valid_until >= COALESCE($6, discounts.valid_until)
-    AND code ILIKE '%' || COALESCE($7, discounts.code) || '%'
+    AND code ILIKE COALESCE($7, discounts.code)
 LIMIT $1
 OFFSET $2
 `

@@ -2,15 +2,13 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
-	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 )
 
 // --- Public API ---
@@ -22,47 +20,40 @@ import (
 // @Tags Collections
 // @Produce json
 // @Param slug path string true "Collection slug"
-// @Success 200 {object} ApiResponse[dto.CategoryDetail]
-// @Failure 400 {object} ErrorResp
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[dto.CategoryDetail]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 404 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /collections/{slug} [get]
-func (sv *Server) getCollectionBySlug(c *gin.Context) {
-	var param models.URISlugParam
-	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode,
-			err))
-		return
-	}
-	var query models.PaginationQuery
-	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode,
-			err))
+func (s *Server) getCollectionBySlug(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	slug, err := GetUrlParam(r, "slug")
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
-	collection, err := sv.repo.GetCollectionBySlug(c, param.Slug)
+	query := ParsePaginationQuery(r)
+
+	collection, err := s.repo.GetCollectionBySlug(c, slug)
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode,
-				fmt.Errorf("category with slug %s not found", param.Slug)))
+			RespondNotFound(w, NotFoundCode, err)
 			return
 		}
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode,
-			err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	rows, err := sv.repo.GetProductList(c, repository.GetProductListParams{
+	rows, err := s.repo.GetProductList(c, repository.GetProductListParams{
 		CollectionIds: []uuid.UUID{collection.ID},
 		Limit:         query.PageSize,
 		Offset:        (query.PageSize) * int64(query.Page-1),
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode,
-			err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 	collectionResp := dto.CategoryDetail{
@@ -78,14 +69,13 @@ func (sv *Server) getCollectionBySlug(c *gin.Context) {
 		collectionResp.Products[i] = dto.MapToShopProductResponse(row)
 	}
 
-	c.JSON(http.StatusOK, dto.CreateDataResp(c, collectionResp, nil, nil))
+	RespondSuccess(w, collectionResp)
 }
 
 // Setup collection-related routes
-func (sv *Server) addCollectionRoutes(rg *gin.RouterGroup) {
-	collections := rg.Group("collections")
-	{
-		collections.GET("", sv.adminGetCollections)
-		collections.GET(":slug", sv.getCollectionBySlug)
-	}
+func (s *Server) addCollectionRoutes(r chi.Router) {
+	r.Route("/collections", func(r chi.Router) {
+		r.Get("/", s.getCollections)
+		r.Get("/{slug}", s.getCollectionBySlug)
+	})
 }

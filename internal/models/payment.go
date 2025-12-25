@@ -5,10 +5,10 @@ import (
 )
 
 type PaymentModel struct {
-	OrderID         string `json:"orderId" binding:"required,uuid"`
-	PaymentMethodID string `json:"paymentMethodId" binding:"required,uuid"`
+	OrderID         string `json:"orderId" validate:"required,uuid"`
+	PaymentMethodID string `json:"paymentMethodId" validate:"required,uuid"`
 }
 
 type UpdatePaymentStatusModel struct {
-	Status repository.PaymentStatus `json:"status" binding:"required"`
+	Status repository.PaymentStatus `json:"status" validate:"required"`
 }

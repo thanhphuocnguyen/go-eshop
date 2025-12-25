@@ -9,19 +9,19 @@ import (
 )
 
 type UpdateDiscountTxArgs struct {
-	Description       *string          `json:"description" binding:"omitempty"`
-	DiscountType      NullDiscountType `json:"discount_type" binding:"omitempty,oneof=percentage fixed_amount"`
-	DiscountValue     *float64         `json:"discount_value" binding:"omitempty,gt=0"`
-	MinPurchaseAmount *float64         `json:"min_purchase_amount" binding:"omitempty,gt=0"`
-	MaxDiscountAmount *float64         `json:"max_discount_amount" binding:"omitempty,gt=0"`
-	UsageLimit        *int32           `json:"usage_limit" binding:"omitempty,gte=0"`
-	IsActive          *bool            `json:"is_active" binding:"omitempty"`
-	ValidFrom         *time.Time       `json:"starts_at" binding:"omitempty"`
-	ValidUntil        *time.Time       `json:"expires_at" binding:"omitempty"`
+	Description       *string          `json:"description" validate:"omitempty"`
+	DiscountType      NullDiscountType `json:"discount_type" validate:"omitempty,oneof=percentage fixed_amount"`
+	DiscountValue     *float64         `json:"discount_value" validate:"omitempty,gt=0"`
+	MinPurchaseAmount *float64         `json:"min_purchase_amount" validate:"omitempty,gt=0"`
+	MaxDiscountAmount *float64         `json:"max_discount_amount" validate:"omitempty,gt=0"`
+	UsageLimit        *int32           `json:"usage_limit" validate:"omitempty,gte=0"`
+	IsActive          *bool            `json:"is_active" validate:"omitempty"`
+	ValidFrom         *time.Time       `json:"starts_at" validate:"omitempty"`
+	ValidUntil        *time.Time       `json:"expires_at" validate:"omitempty"`
 	// Related entities
-	Products   []string `json:"products,omitempty" binding:"omitempty,uuidslice"`
-	Categories []string `json:"categories,omitempty" binding:"omitempty,uuidslice"`
-	Users      []string `json:"users,omitempty" binding:"omitempty,uuidslice"`
+	Products   []string `json:"products,omitempty" validate:"omitempty,uuidslice"`
+	Categories []string `json:"categories,omitempty" validate:"omitempty,uuidslice"`
+	Users      []string `json:"users,omitempty" validate:"omitempty,uuidslice"`
 }
 
 func (repo *pgRepo) UpdateDiscountTx(ctx context.Context, id uuid.UUID, arg UpdateDiscountTxArgs) error {

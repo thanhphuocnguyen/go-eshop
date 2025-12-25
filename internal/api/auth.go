@@ -7,8 +7,10 @@ import (
 	"net/netip"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
+	"github.com/lestrrat-go/jwx/v2/jwt"
 	repository "github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
@@ -25,38 +27,39 @@ import (
 // @Tags users
 // @Accept  json
 // @Produce  json
-// @Param input body RegisterRequestBody true "User info"
-// @Success 200 {object} ApiResponse[UserDetail]
+// @Param input body models.RegisterModel true "User info"
+// @Success 200 {object} dto.ApiResponse[dto.UserDetail]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /auth/register [post]
-func (sv *Server) register(c *gin.Context) {
+func (s *Server) register(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
 	var req models.RegisterModel
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
+	if err := s.GetRequestBody(r, &req); err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
-	_, err := sv.repo.GetUserByUsername(c, req.Username)
+	_, err := s.repo.GetUserByUsername(c, req.Username)
 	if err != nil && !errors.Is(err, repository.ErrRecordNotFound) {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
 	if err == nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(UsernameExistedCode, fmt.Errorf("username %s is already taken", req.Username)))
+		RespondBadRequest(w, UsernameExistedCode, fmt.Errorf("username %s is already taken", req.Username))
 		return
 	}
 
 	hashedPassword, err := auth.HashPwd(req.Password)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(HashPasswordCode, err))
+		RespondInternalServerError(w, HashPasswordCode, err)
 		return
 	}
 
-	userRole, err := sv.repo.GetRoleByCode(c, "user")
+	userRole, err := s.repo.GetRoleByCode(c, "user")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 	arg := repository.CreateUserParams{
@@ -70,17 +73,17 @@ func (sv *Server) register(c *gin.Context) {
 	}
 
 	if req.Username == "admin" {
-		adminRole, err := sv.repo.GetRoleByCode(c, "admin")
+		adminRole, err := s.repo.GetRoleByCode(c, "admin")
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+			RespondInternalServerError(w, InternalServerErrorCode, err)
 			return
 		}
 		arg.RoleID = adminRole.ID
 	}
-	user, err := sv.repo.CreateUser(c, arg)
+	user, err := s.repo.CreateUser(c, arg)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
@@ -100,10 +103,10 @@ func (sv *Server) register(c *gin.Context) {
 			createAddressArgs.Ward = req.Address.Ward
 		}
 
-		createdAddress, err := sv.repo.CreateAddress(c, createAddressArgs)
+		createdAddress, err := s.repo.CreateAddress(c, createAddressArgs)
 
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, dto.CreateErr(AddressCodeCode, err))
+			RespondInternalServerError(w, AddressCodeCode, err)
 			return
 		}
 		ward := ""
@@ -123,7 +126,7 @@ func (sv *Server) register(c *gin.Context) {
 	}
 
 	emailPayload := &worker.PayloadVerifyEmail{UserID: user.ID}
-	err = sv.taskDistributor.SendVerifyAccountEmail(
+	err = s.taskDistributor.SendVerifyAccountEmail(
 		c,
 		emailPayload,
 		asynq.MaxRetry(3),
@@ -132,7 +135,7 @@ func (sv *Server) register(c *gin.Context) {
 	)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(ActivateUserCode, err))
+		RespondInternalServerError(w, ActivateUserCode, err)
 		return
 	}
 
@@ -157,7 +160,7 @@ func (sv *Server) register(c *gin.Context) {
 		userResp.Addresses = []dto.AddressDetail{address}
 	}
 
-	c.JSON(http.StatusOK, dto.CreateDataResp(c, userResp, nil, nil))
+	RespondSuccess(w, userResp)
 }
 
 // login godoc
@@ -166,91 +169,92 @@ func (sv *Server) register(c *gin.Context) {
 // @Tags users
 // @Accept  json
 // @Produce  json
-// @Param input body LoginRequest true "User info"
-// @Success 200 {object} ApiResponse[LoginResponse]
+// @Param input body models.LoginModel true "User info"
+// @Success 200 {object} dto.ApiResponse[dto.LoginResponse]
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /auth/login [post]
-func (sv *Server) login(c *gin.Context) {
+func (s *Server) login(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
 	var req models.LoginModel
-	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
+	if err := s.GetRequestBody(r, &req); err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 	if req.Username == nil && req.Email == nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidEmailCode, fmt.Errorf("username or email is required")))
+		RespondBadRequest(w, InvalidEmailCode, fmt.Errorf("username or email is required"))
 		return
 	}
 
 	var user repository.User
 	var err error = nil
 	if req.Username != nil {
-		user, err = sv.repo.GetUserByUsername(c, *req.Username)
+		user, err = s.repo.GetUserByUsername(c, *req.Username)
 	} else {
-		user, err = sv.repo.GetUserByEmail(c, *req.Email)
+		user, err = s.repo.GetUserByEmail(c, *req.Email)
 	}
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusUnauthorized, dto.CreateErr(NotFoundCode, err))
+			RespondUnauthorized(w, NotFoundCode, err)
 			return
 		}
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
 	if err = auth.ComparePwd(req.Password, user.HashedPassword); err != nil {
-		c.JSON(http.StatusUnauthorized, dto.CreateErr(UnauthorizedCode, err))
+		RespondUnauthorized(w, UnauthorizedCode, err)
 		return
 	}
 
-	role, err := sv.repo.GetRoleByID(c, user.RoleID)
+	role, err := s.repo.GetRoleByID(c, user.RoleID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	accessToken, payload, err := sv.tokenGenerator.GenerateToken(user.ID, user.Username, role, sv.config.AccessTokenDuration)
+	payload, accessToken, err := s.generateToken(user.ID, user.Username, role, s.config.AccessTokenDuration)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InvalidTokenCode, err))
+		RespondInternalServerError(w, InvalidTokenCode, err)
 		return
 	}
 
-	refreshToken, rfPayload, err := sv.tokenGenerator.GenerateToken(user.ID, user.Username, role, sv.config.RefreshTokenDuration)
+	rfPayload, refreshToken, err := s.generateToken(user.ID, user.Username, role, s.config.RefreshTokenDuration)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InvalidTokenCode, err))
+		RespondInternalServerError(w, InvalidTokenCode, err)
 		return
 	}
 
-	clientIP, err := netip.ParseAddr(c.ClientIP())
+	clientIP, err := netip.ParseAddr(r.RemoteAddr)
 	if err != nil {
 		// Fallback to localhost if parsing fails
 		clientIP = netip.MustParseAddr("127.0.0.1")
 	}
-
-	session, err := sv.repo.InsertSession(c, repository.InsertSessionParams{
-		ID:           rfPayload.ID,
+	id, _ := rfPayload.Get("id")
+	session, err := s.repo.InsertSession(c, repository.InsertSessionParams{
+		ID:           id.(uuid.UUID),
 		UserID:       user.ID,
 		RefreshToken: refreshToken,
-		UserAgent:    c.GetHeader("User-Agent"),
+		UserAgent:    r.Header.Get("User-Agent"),
 		ClientIp:     clientIP,
 		Blocked:      false,
-		ExpiredAt:    utils.GetPgTypeTimestamp(time.Now().Add(sv.config.RefreshTokenDuration)),
+		ExpiredAt:    utils.GetPgTypeTimestamp(time.Now().Add(s.config.RefreshTokenDuration)),
 	})
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
 	loginResp := dto.LoginResponse{
 		ID:                    session.ID.String(),
 		AccessToken:           accessToken,
-		AccessTokenExpiresAt:  payload.Expires,
+		AccessTokenExpiresAt:  payload.Expiration(),
 		RefreshToken:          refreshToken,
-		RefreshTokenExpiresAt: rfPayload.Expires,
+		RefreshTokenExpiresAt: rfPayload.Expiration(),
 	}
-	c.JSON(http.StatusOK, dto.CreateDataResp(c, loginResp, nil, nil))
+	RespondSuccess(w, loginResp)
 }
 
 // refreshToken godoc
@@ -259,81 +263,101 @@ func (sv *Server) login(c *gin.Context) {
 // @Tags users
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} ApiResponse[RefreshTokenResponse]
+// @Success 200 {object} dto.ApiResponse[dto.RefreshToken]
 // @Failure 401 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /auth/refresh-token [post]
-func (sv *Server) refreshToken(c *gin.Context) {
-	authHeader := c.GetHeader("Authorization")
+func (s *Server) refreshToken(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
-		c.JSON(http.StatusUnauthorized, dto.CreateErr(UnauthorizedCode, fmt.Errorf("refresh token is required")))
+		RespondUnauthorized(w, UnauthorizedCode, fmt.Errorf("refresh token is required"))
 		return
 	}
 
 	refreshToken := authHeader[len("Bearer "):]
-	refreshTokenPayload, err := sv.tokenGenerator.VerifyToken(refreshToken)
+	refreshTokenPayload, err := s.tokenAuth.Decode(refreshToken)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, dto.CreateErr(UnauthorizedCode, err))
+		RespondUnauthorized(w, UnauthorizedCode, err)
 		return
 	}
-
-	session, err := sv.repo.GetSession(c, refreshTokenPayload.ID)
+	id, _ := refreshTokenPayload.Get("id")
+	rfTkUUID := id.(uuid.UUID)
+	session, err := s.repo.GetSession(c, rfTkUUID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound,
-				dto.CreateErr(NotFoundCode, fmt.Errorf("session not found")))
+			RespondNotFound(w, NotFoundCode, fmt.Errorf("session not found"))
 			return
 		}
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	if session.ID != refreshTokenPayload.ID {
+	if session.ID != rfTkUUID {
 		err := errors.New("refresh token is not valid")
-		c.JSON(http.StatusUnauthorized, dto.CreateErr(InvalidTokenCode, err))
+		RespondUnauthorized(w, InvalidTokenCode, err)
 		return
 	}
 
 	if session.RefreshToken != refreshToken {
 		err := errors.New("refresh token is not valid")
-		c.JSON(http.StatusUnauthorized, dto.CreateErr(InvalidTokenCode, err))
+		RespondUnauthorized(w, InvalidTokenCode, err)
 		return
 	}
 
 	if session.Blocked {
 		err := errors.New("session is blocked")
-		c.JSON(http.StatusUnauthorized, dto.CreateErr(InvalidSessionCode, err))
+		RespondUnauthorized(w, InvalidSessionCode, err)
 		return
 	}
 
 	if time.Now().After(session.ExpiredAt) {
 		err := errors.New("refresh token was expired")
-		c.JSON(http.StatusUnauthorized, dto.CreateErr(InvalidSessionCode, err))
+		RespondUnauthorized(w, InvalidSessionCode, err)
 		return
 	}
-
-	role, err := sv.repo.GetRoleByID(c, refreshTokenPayload.RoleID)
+	roleID, _ := refreshTokenPayload.Get("roleID")
+	role, err := s.repo.GetRoleByID(c, roleID.(uuid.UUID))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
-
-	accessToken, _, err := sv.tokenGenerator.GenerateToken(session.UserID, refreshTokenPayload.Username, role, sv.config.AccessTokenDuration)
+	userName, _ := refreshTokenPayload.Get("username")
+	_, accessToken, err := s.generateToken(session.UserID, userName.(string), role, s.config.AccessTokenDuration)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	resp := dto.RefreshToken{AccessToken: accessToken, AccessTokenExpiresAt: time.Now().Add(sv.config.AccessTokenDuration)}
-	c.JSON(http.StatusOK, dto.CreateDataResp(c, resp, nil, nil))
+	resp := dto.RefreshToken{AccessToken: accessToken, AccessTokenExpiresAt: time.Now().Add(s.config.AccessTokenDuration)}
+	RespondSuccess(w, resp)
+}
+
+func (s *Server) generateToken(
+	userID uuid.UUID,
+	username string,
+	role repository.UserRole,
+	duration time.Duration,
+
+) (accessToken jwt.Token, tokenString string, err error) {
+	id, _ := uuid.NewRandom()
+	jwtClaims := map[string]interface{}{
+		"id":       id,
+		"userId":   userID,
+		"username": username,
+		"roleId":   role.ID,
+		"roleCode": role.Code,
+		"exp":      time.Now().Add(duration).Unix(),
+	}
+	accessToken, tokenString, err = s.tokenAuth.Encode(jwtClaims)
+	return
 }
 
 // Setup authentication routes
-func (sv *Server) addAuthRoutes(rg *gin.RouterGroup) {
-	auth := rg.Group("/auth")
-	{
-		auth.POST("register", sv.register)
-		auth.POST("login", sv.login)
-		auth.POST("refresh-token", sv.refreshToken)
-	}
+func (s *Server) addAuthRoutes(r chi.Router) {
+	r.Route("/auth", func(r chi.Router) {
+		r.Post("/register", s.register)
+		r.Post("/login", s.login)
+		r.Post("/refresh-token", s.refreshToken)
+	})
 }
