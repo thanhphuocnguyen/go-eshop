@@ -1,0 +1,92 @@
+[
+  {
+    "shipment_id": "shipment-1",
+    "order_item_id": "order-item-1",
+    "quantity": 2
+  },
+  {
+    "shipment_id": "shipment-1",
+    "order_item_id": "order-item-2",
+    "quantity": 1
+  },
+  {
+    "shipment_id": "shipment-2",
+    "order_item_id": "order-item-3",
+    "quantity": 3
+  },
+  {
+    "shipment_id": "shipment-2",
+    "order_item_id": "order-item-4",
+    "quantity": 1
+  },
+  {
+    "shipment_id": "shipment-2",
+    "order_item_id": "order-item-5",
+    "quantity": 2
+  },
+  {
+    "shipment_id": "shipment-3",
+    "order_item_id": "order-item-6",
+    "quantity": 1
+  },
+  {
+    "shipment_id": "shipment-4",
+    "order_item_id": "order-item-7",
+    "quantity": 4
+  },
+  {
+    "shipment_id": "shipment-4",
+    "order_item_id": "order-item-8",
+    "quantity": 1
+  },
+  {
+    "shipment_id": "shipment-5",
+    "order_item_id": "order-item-9",
+    "quantity": 1
+  },
+  {
+    "shipment_id": "shipment-5",
+    "order_item_id": "order-item-10",
+    "quantity": 2
+  },
+  {
+    "shipment_id": "shipment-6",
+    "order_item_id": "order-item-11",
+    "quantity": 1
+  },
+  {
+    "shipment_id": "shipment-6",
+    "order_item_id": "order-item-12",
+    "quantity": 3
+  },
+  {
+    "shipment_id": "shipment-7",
+    "order_item_id": "order-item-13",
+    "quantity": 2
+  },
+  {
+    "shipment_id": "shipment-8",
+    "order_item_id": "order-item-14",
+    "quantity": 1
+  },
+  {
+    "shipment_id": "shipment-8",
+    "order_item_id": "order-item-15",
+    "quantity": 1
+  },
+  {
+    "shipment_id": "shipment-9",
+    "order_item_id": "order-item-16",
+    "quantity": 5
+  },
+  {
+    "shipment_id": "shipment-10",
+    "order_item_id": "order-item-17",
+    "quantity": 1
+  },
+  {
+    "shipment_id": "shipment-10",
+    "order_item_id": "order-item-18",
+    "quantity": 2
+  }
+]

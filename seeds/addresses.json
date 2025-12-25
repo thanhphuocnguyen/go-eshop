@@ -1,107 +1,182 @@
 [
   {
-    "street": "123 Main St",
-    "city": "New York",
+    "user_email": "admin@eshop.com",
+    "phone_number": "+1234567890",
+    "street": "123 Admin Plaza, Suite 1000",
+    "ward": "Financial District",
     "district": "Manhattan",
+    "city": "New York",
+    "is_default": true
+  },
+  {
+    "user_email": "admin@eshop.com",
+    "phone_number": "+1234567890",
+    "street": "789 Executive Building, Floor 5",
     "ward": "Midtown",
-    "phone": "+1234567890"
+    "district": "Manhattan",
+    "city": "New York",
+    "is_default": false
   },
   {
+    "user_email": "john.doe@email.com",
+    "phone_number": "+1234567891",
     "street": "456 Oak Avenue",
-    "city": "Los Angeles",
-    "district": "Beverly Hills",
     "ward": "West Hollywood",
-    "phone": "+1234567891"
+    "district": "Beverly Hills",
+    "city": "Los Angeles",
+    "is_default": true
   },
   {
+    "user_email": "john.doe@email.com",
+    "phone_number": "+1234567891",
+    "street": "234 Sunset Boulevard",
+    "ward": "Hollywood",
+    "district": "Hollywood",
+    "city": "Los Angeles",
+    "is_default": false
+  },
+  {
+    "user_email": "jane.smith@email.com",
+    "phone_number": "+1234567892",
     "street": "789 Pine Road",
-    "city": "Chicago",
-    "district": "Lincoln Park",
     "ward": "Old Town",
-    "phone": "+1234567892"
+    "district": "Lincoln Park",
+    "city": "Chicago",
+    "is_default": true
   },
   {
+    "user_email": "jane.smith@email.com",
+    "phone_number": "+1312555678",
+    "street": "567 Michigan Avenue",
+    "ward": "The Loop",
+    "district": "Downtown",
+    "city": "Chicago",
+    "is_default": false
+  },
+  {
+    "user_email": "mike.wilson@email.com",
+    "phone_number": "+1234567893",
     "street": "321 Elm Street",
-    "city": "Houston",
-    "district": "Downtown",
     "ward": "Theater District",
-    "phone": "+1234567893"
-  },
-  {
-    "street": "654 Maple Drive",
-    "city": "Phoenix",
-    "district": "Scottsdale",
-    "ward": "Old Town Scottsdale",
-    "phone": "+1234567894"
-  },
-  {
-    "street": "987 Cedar Lane",
-    "city": "Philadelphia",
-    "district": "Center City",
-    "ward": "Rittenhouse Square",
-    "phone": "+1234567895"
-  },
-  {
-    "street": "147 Birch Street",
-    "city": "San Antonio",
-    "district": "Riverwalk",
-    "ward": "Downtown",
-    "phone": "+1234567896"
-  },
-  {
-    "street": "258 Willow Way",
-    "city": "San Diego",
-    "district": "Gaslamp Quarter",
-    "ward": "Downtown",
-    "phone": "+1234567897"
-  },
-  {
-    "street": "369 Spruce Avenue",
-    "city": "Dallas",
-    "district": "Deep Ellum",
-    "ward": "Arts District",
-    "phone": "+1234567898"
-  },
-  {
-    "street": "741 Ash Boulevard",
-    "city": "San Jose",
     "district": "Downtown",
-    "ward": "Santana Row",
-    "phone": "+1234567899"
+    "city": "Houston",
+    "is_default": true
   },
   {
-    "street": "852 Poplar Street",
-    "city": "Austin",
-    "district": "South by Southwest",
-    "ward": "Rainey Street",
-    "phone": "+1234567800"
-  },
-  {
-    "street": "963 Cherry Circle",
-    "city": "Jacksonville",
-    "district": "Riverside",
-    "ward": "Five Points",
-    "phone": "+1234567801"
-  },
-  {
-    "street": "159 Walnut Road",
-    "city": "Fort Worth",
-    "district": "Sundance Square",
-    "ward": "Downtown",
-    "phone": "+1234567802"
-  },
-  {
-    "street": "357 Hickory Lane",
-    "city": "Columbus",
-    "district": "Short North",
-    "ward": "Arena District",
-    "phone": "+1234567803"
-  },
-  {
-    "street": "468 Pecan Drive",
-    "city": "Charlotte",
+    "user_email": "mike.wilson@email.com",
+    "phone_number": "+1713555890",
+    "street": "890 Westheimer Road",
+    "ward": "Galleria",
     "district": "Uptown",
-    "ward": "Fourth Ward",
-    "phone": "+1234567804"
+    "city": "Houston",
+    "is_default": false
+  },
+  {
+    "user_email": "sarah.jones@email.com",
+    "phone_number": "+1234567894",
+    "street": "654 Maple Drive",
+    "ward": "Old Town Scottsdale",
+    "district": "Scottsdale",
+    "city": "Phoenix",
+    "is_default": true
+  },
+  {
+    "user_email": "sarah.jones@email.com",
+    "phone_number": "+1602555345",
+    "street": "123 Desert Ridge Drive",
+    "ward": "Desert Ridge",
+    "district": "North Phoenix",
+    "city": "Phoenix",
+    "is_default": false
+  },
+  {
+    "user_email": "david.brown@email.com",
+    "phone_number": "+1234567895",
+    "street": "987 Cedar Lane",
+    "ward": "Rittenhouse Square",
+    "district": "Center City",
+    "city": "Philadelphia",
+    "is_default": true
+  },
+  {
+    "user_email": "david.brown@email.com",
+    "phone_number": "+1215555234",
+    "street": "456 South Street",
+    "ward": "Queen Village",
+    "district": "South Philadelphia",
+    "city": "Philadelphia",
+    "is_default": false
+  },
+  {
+    "user_email": "emma.davis@email.com",
+    "phone_number": "+1234567896",
+    "street": "147 Birch Street",
+    "ward": "Downtown",
+    "district": "Riverwalk",
+    "city": "San Antonio",
+    "is_default": true
+  },
+  {
+    "user_email": "emma.davis@email.com",
+    "phone_number": "+1210555789",
+    "street": "678 Broadway",
+    "ward": "Southtown",
+    "district": "South Side",
+    "city": "San Antonio",
+    "is_default": false
+  },
+  {
+    "user_email": "alex.garcia@email.com",
+    "phone_number": "+1234567897",
+    "street": "258 Mission Street",
+    "ward": "SOMA",
+    "district": "South of Market",
+    "city": "San Francisco",
+    "is_default": true
+  },
+  {
+    "user_email": "alex.garcia@email.com",
+    "phone_number": "+1415555123",
+    "street": "159 Castro Street",
+    "ward": "Castro District",
+    "district": "Eureka Valley",
+    "city": "San Francisco",
+    "is_default": false
+  },
+  {
+    "user_email": "lisa.martinez@email.com",
+    "phone_number": "+1234567898",
+    "street": "369 Collins Avenue",
+    "ward": "Art Deco District",
+    "district": "South Beach",
+    "city": "Miami",
+    "is_default": true
+  },
+  {
+    "user_email": "lisa.martinez@email.com",
+    "phone_number": "+1305555456",
+    "street": "741 Ocean Drive",
+    "ward": "Beach Front",
+    "district": "Miami Beach",
+    "city": "Miami",
+    "is_default": false
+  },
+  {
+    "user_email": "chris.taylor@email.com",
+    "phone_number": "+1234567899",
+    "street": "852 Pearl Street",
+    "ward": "Downtown",
+    "district": "Central Denver",
+    "city": "Denver",
+    "is_default": true
+  },
+  {
+    "user_email": "chris.taylor@email.com",
+    "phone_number": "+1303555987",
+    "street": "963 16th Street Mall",
+    "ward": "LoDo",
+    "district": "Lower Downtown",
+    "city": "Denver",
+    "is_default": false
   }
 ]

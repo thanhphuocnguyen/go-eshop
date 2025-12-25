@@ -1,0 +1,106 @@
+[
+  {
+    "shipping_rate_name": "US Standard Rate",
+    "condition_type": "weight",
+    "min_value": 0.0,
+    "max_value": 5.0,
+    "additional_fee": 0.00,
+    "category_ids": []
+  },
+  {
+    "shipping_rate_name": "US Standard Rate",
+    "condition_type": "weight",
+    "min_value": 5.01,
+    "max_value": 20.0,
+    "additional_fee": 5.00,
+    "category_ids": []
+  },
+  {
+    "shipping_rate_name": "US Standard Rate",
+    "condition_type": "weight",
+    "min_value": 20.01,
+    "max_value": null,
+    "additional_fee": 10.00,
+    "category_ids": []
+  },
+  {
+    "shipping_rate_name": "US Express Rate",
+    "condition_type": "weight",
+    "min_value": 0.0,
+    "max_value": 10.0,
+    "additional_fee": 0.00,
+    "category_ids": []
+  },
+  {
+    "shipping_rate_name": "US Express Rate",
+    "condition_type": "weight",
+    "min_value": 10.01,
+    "max_value": null,
+    "additional_fee": 10.00,
+    "category_ids": []
+  },
+  {
+    "shipping_rate_name": "US Overnight Rate",
+    "condition_type": "size",
+    "min_value": 0.0,
+    "max_value": 100.0,
+    "additional_fee": 0.00,
+    "category_ids": []
+  },
+  {
+    "shipping_rate_name": "US Overnight Rate",
+    "condition_type": "size",
+    "min_value": 100.01,
+    "max_value": null,
+    "additional_fee": 25.00,
+    "category_ids": []
+  },
+  {
+    "shipping_rate_name": "Canada Standard Rate",
+    "condition_type": "weight",
+    "min_value": 0.0,
+    "max_value": 5.0,
+    "additional_fee": 0.00,
+    "category_ids": []
+  },
+  {
+    "shipping_rate_name": "Canada Standard Rate",
+    "condition_type": "weight",
+    "min_value": 5.01,
+    "max_value": null,
+    "additional_fee": 8.00,
+    "category_ids": []
+  },
+  {
+    "shipping_rate_name": "Europe Standard Rate",
+    "condition_type": "category",
+    "min_value": null,
+    "max_value": null,
+    "additional_fee": 15.00,
+    "category_ids": ["electronics"]
+  },
+  {
+    "shipping_rate_name": "Europe Standard Rate",
+    "condition_type": "category",
+    "min_value": null,
+    "max_value": null,
+    "additional_fee": 5.00,
+    "category_ids": ["clothing", "books"]
+  },
+  {
+    "shipping_rate_name": "Asia Pacific Standard Rate",
+    "condition_type": "weight",
+    "min_value": 0.0,
+    "max_value": 3.0,
+    "additional_fee": 0.00,
+    "category_ids": []
+  },
+  {
+    "shipping_rate_name": "Asia Pacific Standard Rate",
+    "condition_type": "weight",
+    "min_value": 3.01,
+    "max_value": null,
+    "additional_fee": 12.00,
+    "category_ids": []
+  }
+]

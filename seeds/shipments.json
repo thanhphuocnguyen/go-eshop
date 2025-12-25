@@ -1,0 +1,102 @@
+[
+  {
+    "order_id": "example-order-id-1",
+    "status": "pending",
+    "shipped_at": null,
+    "delivered_at": null,
+    "tracking_number": null,
+    "tracking_url": null,
+    "shipping_provider": "UPS",
+    "shipping_notes": "Ready for shipment preparation"
+  },
+  {
+    "order_id": "example-order-id-2",
+    "status": "shipped",
+    "shipped_at": "2025-12-20T10:30:00Z",
+    "delivered_at": null,
+    "tracking_number": "1Z999AA1234567890",
+    "tracking_url": "https://www.ups.com/track?tracknum=1Z999AA1234567890",
+    "shipping_provider": "UPS",
+    "shipping_notes": "Package shipped via UPS Ground"
+  },
+  {
+    "order_id": "example-order-id-3",
+    "status": "delivered",
+    "shipped_at": "2025-12-18T14:15:00Z",
+    "delivered_at": "2025-12-22T16:45:00Z",
+    "tracking_number": "1Z999BB9876543210",
+    "tracking_url": "https://www.ups.com/track?tracknum=1Z999BB9876543210",
+    "shipping_provider": "UPS",
+    "shipping_notes": "Delivered to front door, signed by customer"
+  },
+  {
+    "order_id": "example-order-id-4",
+    "status": "shipped",
+    "shipped_at": "2025-12-23T09:00:00Z",
+    "delivered_at": null,
+    "tracking_number": "1234567890123456",
+    "tracking_url": "https://tools.fedex.com/wtrk/WTRK/index.html?tracknumber=1234567890123456",
+    "shipping_provider": "FedEx",
+    "shipping_notes": "Express shipping via FedEx"
+  },
+  {
+    "order_id": "example-order-id-5",
+    "status": "delivered",
+    "shipped_at": "2025-12-19T11:30:00Z",
+    "delivered_at": "2025-12-21T14:20:00Z",
+    "tracking_number": "9405511899560123456789",
+    "tracking_url": "https://tools.usps.com/go/TrackConfirmAction_input?qtc_tLabels1=9405511899560123456789",
+    "shipping_provider": "USPS",
+    "shipping_notes": "Standard USPS delivery"
+  },
+  {
+    "order_id": "example-order-id-6",
+    "status": "pending",
+    "shipped_at": null,
+    "delivered_at": null,
+    "tracking_number": null,
+    "tracking_url": null,
+    "shipping_provider": "DHL",
+    "shipping_notes": "International shipment, pending customs clearance"
+  },
+  {
+    "order_id": "example-order-id-7",
+    "status": "shipped",
+    "shipped_at": "2025-12-24T08:45:00Z",
+    "delivered_at": null,
+    "tracking_number": "1234567890",
+    "tracking_url": "https://www.dhl.com/us-en/home/tracking/tracking-express.html?submit=1&tracking-id=1234567890",
+    "shipping_provider": "DHL",
+    "shipping_notes": "Express international delivery"
+  },
+  {
+    "order_id": "example-order-id-8",
+    "status": "delivered",
+    "shipped_at": "2025-12-15T13:20:00Z",
+    "delivered_at": "2025-12-17T10:30:00Z",
+    "tracking_number": "CP123456789US",
+    "tracking_url": "https://tools.usps.com/go/TrackConfirmAction_input?qtc_tLabels1=CP123456789US",
+    "shipping_provider": "Canada Post",
+    "shipping_notes": "Cross-border delivery from Canada"
+  },
+  {
+    "order_id": "example-order-id-9",
+    "status": "picked_up",
+    "shipped_at": null,
+    "delivered_at": "2025-12-24T15:00:00Z",
+    "tracking_number": "PICKUP-001",
+    "tracking_url": null,
+    "shipping_provider": "Store Pickup",
+    "shipping_notes": "Customer picked up at store location"
+  },
+  {
+    "order_id": "example-order-id-10",
+    "status": "pending",
+    "shipped_at": null,
+    "delivered_at": null,
+    "tracking_number": null,
+    "tracking_url": null,
+    "shipping_provider": "UPS",
+    "shipping_notes": "Large item requiring special handling"
+  }
+]

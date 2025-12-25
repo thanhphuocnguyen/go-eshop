@@ -652,6 +652,8 @@ CREATE TABLE rating_replies (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), 
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Shipping section
 -- Create shipping tables
 CREATE TABLE IF NOT EXISTS shipping_methods (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), 

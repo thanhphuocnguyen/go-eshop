@@ -1,0 +1,112 @@
+[
+  {
+    "shipping_method_name": "Standard Shipping",
+    "shipping_zone_name": "US Domestic",
+    "name": "US Standard Rate",
+    "base_rate": 9.99,
+    "min_order_amount": 0,
+    "max_order_amount": null,
+    "free_shipping_threshold": 75.00,
+    "is_active": true
+  },
+  {
+    "shipping_method_name": "Express Shipping",
+    "shipping_zone_name": "US Domestic",
+    "name": "US Express Rate",
+    "base_rate": 19.99,
+    "min_order_amount": 0,
+    "max_order_amount": null,
+    "free_shipping_threshold": 150.00,
+    "is_active": true
+  },
+  {
+    "shipping_method_name": "Overnight Shipping",
+    "shipping_zone_name": "US Domestic",
+    "name": "US Overnight Rate",
+    "base_rate": 39.99,
+    "min_order_amount": 0,
+    "max_order_amount": null,
+    "free_shipping_threshold": 300.00,
+    "is_active": true
+  },
+  {
+    "shipping_method_name": "Free Shipping",
+    "shipping_zone_name": "US Domestic",
+    "name": "US Free Shipping",
+    "base_rate": 0.00,
+    "min_order_amount": 75.00,
+    "max_order_amount": null,
+    "free_shipping_threshold": 75.00,
+    "is_active": true
+  },
+  {
+    "shipping_method_name": "Local Pickup",
+    "shipping_zone_name": "Local Metro",
+    "name": "Local Store Pickup",
+    "base_rate": 0.00,
+    "min_order_amount": 0,
+    "max_order_amount": null,
+    "free_shipping_threshold": null,
+    "is_active": true
+  },
+  {
+    "shipping_method_name": "Standard Shipping",
+    "shipping_zone_name": "Canada",
+    "name": "Canada Standard Rate",
+    "base_rate": 14.99,
+    "min_order_amount": 0,
+    "max_order_amount": null,
+    "free_shipping_threshold": 100.00,
+    "is_active": true
+  },
+  {
+    "shipping_method_name": "Express Shipping",
+    "shipping_zone_name": "Canada",
+    "name": "Canada Express Rate",
+    "base_rate": 29.99,
+    "min_order_amount": 0,
+    "max_order_amount": null,
+    "free_shipping_threshold": 200.00,
+    "is_active": true
+  },
+  {
+    "shipping_method_name": "Standard Shipping",
+    "shipping_zone_name": "Europe",
+    "name": "Europe Standard Rate",
+    "base_rate": 24.99,
+    "min_order_amount": 0,
+    "max_order_amount": null,
+    "free_shipping_threshold": 150.00,
+    "is_active": true
+  },
+  {
+    "shipping_method_name": "Express Shipping",
+    "shipping_zone_name": "Europe",
+    "name": "Europe Express Rate",
+    "base_rate": 39.99,
+    "min_order_amount": 0,
+    "max_order_amount": null,
+    "free_shipping_threshold": 250.00,
+    "is_active": true
+  },
+  {
+    "shipping_method_name": "Standard Shipping",
+    "shipping_zone_name": "Asia Pacific",
+    "name": "Asia Pacific Standard Rate",
+    "base_rate": 29.99,
+    "min_order_amount": 0,
+    "max_order_amount": null,
+    "free_shipping_threshold": 200.00,
+    "is_active": true
+  },
+  {
+    "shipping_method_name": "Express Shipping",
+    "shipping_zone_name": "Asia Pacific",
+    "name": "Asia Pacific Express Rate",
+    "base_rate": 49.99,
+    "min_order_amount": 0,
+    "max_order_amount": null,
+    "free_shipping_threshold": 300.00,
+    "is_active": true
+  }
+]
