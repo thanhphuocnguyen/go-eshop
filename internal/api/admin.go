@@ -76,6 +76,7 @@ func (s *Server) addAdminRoutes(r chi.Router) {
 				r.Put("/{id}/status", s.adminChangeOrderStatus)
 				r.Post("/{id}/cancel", s.adminCancelOrder)
 				r.Post("/{id}/refund", s.adminRefundOrder)
+				r.Delete("/{id}", s.adminDeleteOrder)
 			})
 
 			// Category routes
@@ -98,9 +99,9 @@ func (s *Server) addAdminRoutes(r chi.Router) {
 
 			// Collection routes
 			r.Route("/collections", func(r chi.Router) {
-				r.Get("/", s.adminGetCollections)
-				r.Post("/", s.adminCreateCollection)
+				r.Get("/", s.getCollections)
 				r.Get("/{id}", s.adminGetCollectionByID)
+				r.Post("/", s.adminCreateCollection)
 				r.Put("/{id}", s.adminUpdateCollection)
 				r.Delete("/{id}", s.adminDeleteCollection)
 			})

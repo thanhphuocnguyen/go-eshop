@@ -655,7 +655,7 @@ func (s *Server) adminRemoveAttrValue(w http.ResponseWriter, r *http.Request) {
 // @Router /admin/orders [get]
 func (s *Server) adminGetOrders(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
-	var orderListQuery models.PaginationQuery = GetPaginationQuery(r)
+	var orderListQuery models.PaginationQuery = ParsePaginationQuery(r)
 	status := r.URL.Query().Get("status")
 	paymentStatus := r.URL.Query().Get("paymentStatus")
 

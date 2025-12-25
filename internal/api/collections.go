@@ -33,7 +33,7 @@ func (s *Server) getCollectionBySlug(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := GetPaginationQuery(r)
+	query := ParsePaginationQuery(r)
 
 	collection, err := s.repo.GetCollectionBySlug(c, slug)
 
@@ -75,7 +75,7 @@ func (s *Server) getCollectionBySlug(w http.ResponseWriter, r *http.Request) {
 // Setup collection-related routes
 func (s *Server) addCollectionRoutes(r chi.Router) {
 	r.Route("/collections", func(r chi.Router) {
-		r.Get("/", s.adminGetCollections)
+		r.Get("/", s.getCollections)
 		r.Get("/{slug}", s.getCollectionBySlug)
 	})
 }

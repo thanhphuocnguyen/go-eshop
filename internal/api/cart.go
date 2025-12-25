@@ -189,7 +189,7 @@ func (s *Server) getCartAvailableDiscounts(w http.ResponseWriter, r *http.Reques
 // @Success 200 {object} dto.ApiResponse[string]
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
-// @Router /carts/items/{variant_id} [post]
+// @Router /carts/items/{variantId} [post]
 func (s *Server) upsertCartItemQty(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	_, claims, err := jwtauth.FromContext(c)
@@ -198,7 +198,7 @@ func (s *Server) upsertCartItemQty(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	variantIDParam, err := GetUrlParam(r, "variant_id")
+	variantIDParam, err := GetUrlParam(r, "variantId")
 	if err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
@@ -294,10 +294,11 @@ func (s *Server) removeCartItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userID := uuid.MustParse(claims["userId"].(string))
-
 	id, err := GetUrlParam(r, "id")
+	itemId, err := uuid.Parse(id)
+
 	if err != nil {
-		RespondInternalServerError(w, InternalServerErrorCode, err)
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
@@ -323,7 +324,7 @@ func (s *Server) removeCartItem(w http.ResponseWriter, r *http.Request) {
 
 	err = s.repo.RemoveProductFromCart(c, repository.RemoveProductFromCartParams{
 		CartID: cart.ID,
-		ID:     uuid.MustParse(id),
+		ID:     itemId,
 	})
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
@@ -423,8 +424,8 @@ func (s *Server) addCartRoutes(r chi.Router) {
 
 		r.Get("/available-discounts", s.getCartAvailableDiscounts)
 		r.Route("/items", func(r chi.Router) {
-			r.Put("/{variant_id}/quantity", s.upsertCartItemQty)
 			r.Delete("/{id}", s.removeCartItem)
+			r.Put("/{variantId}/quantity", s.upsertCartItemQty)
 		})
 	})
 }

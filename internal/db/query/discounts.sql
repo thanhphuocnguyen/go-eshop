@@ -41,7 +41,7 @@ WHERE
     AND valid_from >= COALESCE(sqlc.narg('from_date'), discounts.valid_from)
     AND valid_from <= COALESCE(sqlc.narg('to_date'), discounts.valid_from)
     AND valid_until >= COALESCE(sqlc.narg('to_date'), discounts.valid_until)
-    AND code ILIKE '%' || COALESCE(sqlc.narg('search'), discounts.code) || '%'
+    AND code ILIKE COALESCE(sqlc.narg('search'), discounts.code)
 LIMIT $1
 OFFSET $2;
 

@@ -26,7 +26,7 @@ import (
 // @Router /shop/brands [get]
 func (s *Server) getShopBrands(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
-	var queries models.PaginationQuery = GetPaginationQuery(r)
+	var queries models.PaginationQuery = ParsePaginationQuery(r)
 
 	var dbQueries repository.GetBrandsParams = repository.GetBrandsParams{
 		Limit:     20,

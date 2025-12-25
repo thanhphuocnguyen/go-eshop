@@ -60,6 +60,7 @@ func (s *Server) getOrders(w http.ResponseWriter, r *http.Request) {
 	if status := queryParams.Get("status"); status != "" {
 		orderListQuery.Status = &status
 	}
+
 	if paymentStatus := queryParams.Get("payment_status"); paymentStatus != "" {
 		orderListQuery.PaymentStatus = &paymentStatus
 	}
@@ -68,6 +69,7 @@ func (s *Server) getOrders(w http.ResponseWriter, r *http.Request) {
 		Limit:  orderListQuery.PageSize,
 		Offset: (orderListQuery.Page - 1) * orderListQuery.PageSize,
 	}
+
 	userID := uuid.MustParse(claims["userId"].(string))
 	if claims["roleCode"] != "admin" {
 		dbParams.UserID = utils.GetPgTypeUUID(userID)
@@ -80,7 +82,6 @@ func (s *Server) getOrders(w http.ResponseWriter, r *http.Request) {
 	}
 
 	count, err := s.repo.CountOrders(c, repository.CountOrdersParams{UserID: utils.GetPgTypeUUID(userID)})
-
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -100,6 +101,8 @@ func (s *Server) getOrders(w http.ResponseWriter, r *http.Request) {
 			Total:         total.Float64,
 			TotalItems:    int32(aggregated.TotalItems),
 			Status:        aggregated.Status,
+			CustomerName:  aggregated.CustomerName,
+			CustomerEmail: aggregated.CustomerEmail,
 			PaymentStatus: paymentStatus,
 			CreatedAt:     aggregated.CreatedAt.UTC(),
 			UpdatedAt:     aggregated.UpdatedAt.UTC(),
@@ -122,15 +125,15 @@ func (s *Server) getOrders(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} dto.ErrorResp
 // @Router /order/{orderId} [get]
 func (s *Server) getOrderDetail(w http.ResponseWriter, r *http.Request) {
-	idParam := chi.URLParam(r, "id")
 	c := r.Context()
+
+	idParam := chi.URLParam(r, "id")
 	if idParam == "" {
 		RespondBadRequest(w, InvalidBodyCode, errors.New("id parameter is required"))
 		return
 	}
 
 	var resp *dto.OrderDetail = nil
-
 	if err := s.cacheSrv.Get(c, "order_detail:"+idParam, &resp); err == nil {
 		if resp != nil {
 			RespondSuccess(w, resp)
@@ -220,6 +223,7 @@ func (s *Server) getOrderDetail(w http.ResponseWriter, r *http.Request) {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
+
 	lineItems := make([]dto.LineItem, 0, len(orderItemRows))
 	for _, item := range orderItemRows {
 		lineTotal, _ := item.LineTotalSnapshot.Float64Value()

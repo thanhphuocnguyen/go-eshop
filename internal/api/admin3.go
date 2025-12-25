@@ -68,7 +68,7 @@ func (s *Server) adminDeleteCollection(w http.ResponseWriter, r *http.Request) {
 // @Router /admin/ratings [get]
 func (s *Server) adminGetRatings(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
-	var queries models.PaginationQuery = GetPaginationQuery(r)
+	var queries models.PaginationQuery = ParsePaginationQuery(r)
 	status := r.URL.Query().Get("status")
 	sqlParams := repository.GetProductRatingsParams{
 		Limit:  queries.PageSize,
@@ -369,7 +369,7 @@ func (s *Server) adminBanUserRating(w http.ResponseWriter, r *http.Request) {
 // @Router /admin/discounts [get]
 func (s *Server) adminGetDiscounts(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
-	var queries models.PaginationQuery = GetPaginationQuery(r)
+	var queries models.PaginationQuery = ParsePaginationQuery(r)
 	discountType := r.URL.Query().Get("discountType")
 	isActive := r.URL.Query().Get("isActive")
 	fromDateQ := r.URL.Query().Get("fromDate")
@@ -377,15 +377,24 @@ func (s *Server) adminGetDiscounts(w http.ResponseWriter, r *http.Request) {
 
 	// Get all discounts
 	sqlParams := repository.GetDiscountsParams{
-		Limit:    queries.PageSize,
-		Offset:   (queries.Page - 1) * queries.PageSize,
-		Search:   queries.Search,
-		IsActive: utils.BoolPtr(isActive == "true"),
+		Limit:  queries.PageSize,
+		Offset: (queries.Page - 1) * queries.PageSize,
+		Search: queries.Search,
 	}
 	var discountTypeEnum repository.NullDiscountType
 
-	if err := discountTypeEnum.Scan(discountType); err == nil {
+	if err := discountTypeEnum.Scan(discountType); discountType != "" && err == nil {
 		sqlParams.DiscountType = discountTypeEnum
+	}
+
+	if isActive != "" {
+		if isActive == "true" || isActive == "false" {
+			isActiveBool := isActive == "true"
+			sqlParams.IsActive = &isActiveBool
+		} else {
+			RespondBadRequest(w, InvalidBodyCode, errors.New("invalid isActive value"))
+			return
+		}
 	}
 
 	fromDate, err := time.Parse("2006-01-02T15:04:05Z07:00", fromDateQ)
@@ -701,13 +710,13 @@ func (s *Server) adminAddDiscountRule(w http.ResponseWriter, r *http.Request) {
 // @Router /admin/discounts/{id}/rules [get]
 func (s *Server) adminGetDiscountRules(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
-	var param models.UriIDParam
-	if err := s.GetRequestBody(r, &param); err != nil {
+	id, err := GetUrlParam(r, "id")
+	if err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
-	rules, err := s.repo.GetDiscountRules(c, uuid.MustParse(param.ID))
+	rules, err := s.repo.GetDiscountRules(c, uuid.MustParse(id))
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return

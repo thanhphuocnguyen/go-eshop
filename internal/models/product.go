@@ -62,6 +62,6 @@ type UpdateProdVariantModel struct {
 	StockQty        *int32   `json:"stockQty" validate:"omitempty,gte=0"`
 	IsActive        *bool    `json:"isActive" validate:"omitempty"`
 	Description     *string  `json:"description" validate:"omitempty"`
-	AttributeValues *[]int64 `json:"attributeValues" validate:"required,omitempty"`
+	AttributeValues *[]int64 `json:"attributeValues" validate:"omitnil,omitempty"`
 	Weight          *float64 `json:"weight" validate:"omitempty,gt=0"`
 }

@@ -26,22 +26,22 @@ func NewDiscountProcessor(repo repository.Store) *DiscountProcessor {
 
 // DiscountContext contains all necessary data for discount processing
 type DiscountContext struct {
-	User      repository.GetUserDetailsByIDRow
-	CartItems []repository.GetCartItemsRow
+	User      repository.GetUserDetailsByIDRow `json:"user"`
+	CartItems []repository.GetCartItemsRow     `json:"cartItems"`
 }
 
 // ItemDiscount represents discount applied to a specific item
 type ItemDiscount struct {
-	ItemIndex      int
-	DiscountAmount float64
-	DiscountID     uuid.UUID
+	ItemIndex      int       `json:"itemIndex"`
+	DiscountAmount float64   `json:"discountAmount"`
+	DiscountID     uuid.UUID `json:"discountId"`
 }
 
 // DiscountResult contains the final discount calculation results
 type DiscountResult struct {
-	ItemDiscounts    []ItemDiscount
-	TotalDiscount    float64
-	AppliedDiscounts []uuid.UUID
+	ItemDiscounts    []ItemDiscount `json:"itemDiscounts"`
+	TotalDiscount    float64        `json:"totalDiscount"`
+	AppliedDiscounts []uuid.UUID    `json:"appliedDiscounts"`
 }
 
 // ------------------------------ Discount Processing Methods ------------------------------

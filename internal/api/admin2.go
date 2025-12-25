@@ -341,6 +341,7 @@ func (s *Server) adminUpdateCategory(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	id, err := GetUrlParam(r, "id")
 	var req models.UpdateCategoryModel
+
 	if err := s.GetFormData(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
@@ -507,7 +508,7 @@ func (s *Server) adminCreateBrand(w http.ResponseWriter, r *http.Request) {
 // @Router /admin/brands [get]
 func (s *Server) adminGetBrands(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
-	var queries models.PaginationQuery = GetPaginationQuery(r)
+	var queries models.PaginationQuery = ParsePaginationQuery(r)
 
 	var dbQueries repository.GetBrandsParams = repository.GetBrandsParams{
 		Limit:  20,
@@ -631,7 +632,6 @@ func (s *Server) adminUpdateBrand(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.Image != nil {
-
 		imgID, imgUrl, err := s.uploadService.Upload(c, req.Image)
 		if err != nil {
 			log.Error().Err(err).Interface("value", req.Image.Header).Msg("error when upload image")
@@ -770,9 +770,9 @@ func (s *Server) adminCreateCollection(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} dto.ErrorResp
 // @Failure 500 {object} dto.ErrorResp
 // @Router /admin/collections [get]
-func (s *Server) adminGetCollections(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getCollections(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
-	var queries models.PaginationQuery = GetPaginationQuery(r)
+	var queries models.PaginationQuery = ParsePaginationQuery(r)
 
 	dbQueries := repository.GetCollectionsParams{
 		Limit:  20,
@@ -810,6 +810,7 @@ func (s *Server) adminGetCollections(w http.ResponseWriter, r *http.Request) {
 // @Router /admin/collections/{id} [get]
 func (s *Server) adminGetCollectionByID(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
+
 	id, err := GetUrlParam(r, "id")
 	if err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
@@ -914,4 +915,21 @@ func (s *Server) adminUpdateCollection(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RespondSuccess(w, col)
+}
+
+func (s *Server) adminDeleteOrder(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	id, err := GetUrlParam(r, "id")
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
+	err = s.repo.DeleteOrder(c, uuid.MustParse(id))
+	if err != nil {
+		RespondInternalServerError(w, InternalServerErrorCode, err)
+		return
+	}
+	s.cacheSrv.Delete(c, "order_detail:"+id)
+	RespondNoContent(w)
 }

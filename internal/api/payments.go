@@ -181,6 +181,7 @@ func (s *Server) getPayment(w http.ResponseWriter, r *http.Request) {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
+
 	resp := dto.PaymentDetail{
 		ID:      payment.ID.String(),
 		Gateway: payment.Gateway,

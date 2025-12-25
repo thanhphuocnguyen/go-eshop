@@ -28,7 +28,7 @@ import (
 // @Router /categories [get]
 func (s *Server) getCategories(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
-	var query models.PaginationQuery = GetPaginationQuery(r)
+	var query models.PaginationQuery = ParsePaginationQuery(r)
 
 	dbParams := repository.GetCategoriesParams{
 		Limit:     int64(query.PageSize),
@@ -87,7 +87,7 @@ func (s *Server) getCategoryBySlug(w http.ResponseWriter, r *http.Request) {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
-	var query models.PaginationQuery = GetPaginationQuery(r)
+	var query models.PaginationQuery = ParsePaginationQuery(r)
 
 	category, err := s.repo.GetCategoryBySlug(c, slug)
 
