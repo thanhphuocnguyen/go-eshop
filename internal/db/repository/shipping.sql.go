@@ -13,6 +13,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countShipments = `-- name: CountShipments :one
+SELECT COUNT(*) FROM shipments
+`
+
+func (q *Queries) CountShipments(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countShipments)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countShippingMethods = `-- name: CountShippingMethods :one
 SELECT COUNT(*) FROM shipping_methods
 `
@@ -44,6 +55,50 @@ func (q *Queries) CountShippingZones(ctx context.Context) (int64, error) {
 	var count int64
 	err := row.Scan(&count)
 	return count, err
+}
+
+const createShipment = `-- name: CreateShipment :one
+INSERT INTO shipments (order_id, status,shipped_at,delivered_at, tracking_number, tracking_url, shipping_provider, shipping_notes) 
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, order_id, status, shipped_at, delivered_at, tracking_number, tracking_url, shipping_provider, shipping_notes, created_at, updated_at
+`
+
+type CreateShipmentParams struct {
+	OrderID          uuid.UUID          `json:"orderId"`
+	Status           string             `json:"status"`
+	ShippedAt        pgtype.Timestamptz `json:"shippedAt"`
+	DeliveredAt      pgtype.Timestamptz `json:"deliveredAt"`
+	TrackingNumber   *string            `json:"trackingNumber"`
+	TrackingUrl      *string            `json:"trackingUrl"`
+	ShippingProvider *string            `json:"shippingProvider"`
+	ShippingNotes    *string            `json:"shippingNotes"`
+}
+
+func (q *Queries) CreateShipment(ctx context.Context, arg CreateShipmentParams) (Shipment, error) {
+	row := q.db.QueryRow(ctx, createShipment,
+		arg.OrderID,
+		arg.Status,
+		arg.ShippedAt,
+		arg.DeliveredAt,
+		arg.TrackingNumber,
+		arg.TrackingUrl,
+		arg.ShippingProvider,
+		arg.ShippingNotes,
+	)
+	var i Shipment
+	err := row.Scan(
+		&i.ID,
+		&i.OrderID,
+		&i.Status,
+		&i.ShippedAt,
+		&i.DeliveredAt,
+		&i.TrackingNumber,
+		&i.TrackingUrl,
+		&i.ShippingProvider,
+		&i.ShippingNotes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const createShippingMethod = `-- name: CreateShippingMethod :one
@@ -193,6 +248,65 @@ DELETE FROM shipping_zones WHERE id = $1
 func (q *Queries) DeleteShippingZone(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteShippingZone, id)
 	return err
+}
+
+const getShipmentByID = `-- name: GetShipmentByID :one
+SELECT id, order_id, status, shipped_at, delivered_at, tracking_number, tracking_url, shipping_provider, shipping_notes, created_at, updated_at FROM shipments WHERE id = $1
+`
+
+func (q *Queries) GetShipmentByID(ctx context.Context, id uuid.UUID) (Shipment, error) {
+	row := q.db.QueryRow(ctx, getShipmentByID, id)
+	var i Shipment
+	err := row.Scan(
+		&i.ID,
+		&i.OrderID,
+		&i.Status,
+		&i.ShippedAt,
+		&i.DeliveredAt,
+		&i.TrackingNumber,
+		&i.TrackingUrl,
+		&i.ShippingProvider,
+		&i.ShippingNotes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getShipmentsByOrderID = `-- name: GetShipmentsByOrderID :many
+SELECT id, order_id, status, shipped_at, delivered_at, tracking_number, tracking_url, shipping_provider, shipping_notes, created_at, updated_at FROM shipments WHERE order_id = $1 ORDER BY created_at DESC
+`
+
+func (q *Queries) GetShipmentsByOrderID(ctx context.Context, orderID uuid.UUID) ([]Shipment, error) {
+	rows, err := q.db.Query(ctx, getShipmentsByOrderID, orderID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Shipment{}
+	for rows.Next() {
+		var i Shipment
+		if err := rows.Scan(
+			&i.ID,
+			&i.OrderID,
+			&i.Status,
+			&i.ShippedAt,
+			&i.DeliveredAt,
+			&i.TrackingNumber,
+			&i.TrackingUrl,
+			&i.ShippingProvider,
+			&i.ShippingNotes,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getShippingMethodByID = `-- name: GetShippingMethodByID :one
@@ -473,6 +587,17 @@ type SeedShippingMethodsParams struct {
 	EstimatedDeliveryTime *string `json:"estimatedDeliveryTime"`
 }
 
+type SeedShippingRatesParams struct {
+	ShippingMethodID      uuid.UUID      `json:"shippingMethodId"`
+	ShippingZoneID        uuid.UUID      `json:"shippingZoneId"`
+	Name                  string         `json:"name"`
+	BaseRate              pgtype.Numeric `json:"baseRate"`
+	MinOrderAmount        pgtype.Numeric `json:"minOrderAmount"`
+	MaxOrderAmount        pgtype.Numeric `json:"maxOrderAmount"`
+	FreeShippingThreshold pgtype.Numeric `json:"freeShippingThreshold"`
+	IsActive              bool           `json:"isActive"`
+}
+
 type SeedShippingZonesParams struct {
 	Name        string   `json:"name"`
 	Description *string  `json:"description"`
@@ -480,6 +605,58 @@ type SeedShippingZonesParams struct {
 	States      []string `json:"states"`
 	ZipCodes    []string `json:"zipCodes"`
 	IsActive    bool     `json:"isActive"`
+}
+
+const updateShipment = `-- name: UpdateShipment :one
+UPDATE shipments SET
+    tracking_number = COALESCE($2, tracking_number),
+    status = COALESCE($3, status),
+    shipped_at = COALESCE($4, shipped_at),
+    delivered_at = COALESCE($5, delivered_at),
+    tracking_url = COALESCE($6, tracking_url),
+    shipping_provider = COALESCE($7, shipping_provider),
+    shipping_notes = COALESCE($8, shipping_notes),
+    updated_at = NOW()
+WHERE id = $1 RETURNING id, order_id, status, shipped_at, delivered_at, tracking_number, tracking_url, shipping_provider, shipping_notes, created_at, updated_at
+`
+
+type UpdateShipmentParams struct {
+	ID               uuid.UUID          `json:"id"`
+	TrackingNumber   *string            `json:"trackingNumber"`
+	Status           *string            `json:"status"`
+	ShippedAt        pgtype.Timestamptz `json:"shippedAt"`
+	DeliveredAt      pgtype.Timestamptz `json:"deliveredAt"`
+	TrackingUrl      *string            `json:"trackingUrl"`
+	ShippingProvider *string            `json:"shippingProvider"`
+	ShippingNotes    *string            `json:"shippingNotes"`
+}
+
+func (q *Queries) UpdateShipment(ctx context.Context, arg UpdateShipmentParams) (Shipment, error) {
+	row := q.db.QueryRow(ctx, updateShipment,
+		arg.ID,
+		arg.TrackingNumber,
+		arg.Status,
+		arg.ShippedAt,
+		arg.DeliveredAt,
+		arg.TrackingUrl,
+		arg.ShippingProvider,
+		arg.ShippingNotes,
+	)
+	var i Shipment
+	err := row.Scan(
+		&i.ID,
+		&i.OrderID,
+		&i.Status,
+		&i.ShippedAt,
+		&i.DeliveredAt,
+		&i.TrackingNumber,
+		&i.TrackingUrl,
+		&i.ShippingProvider,
+		&i.ShippingNotes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const updateShippingMethod = `-- name: UpdateShippingMethod :one

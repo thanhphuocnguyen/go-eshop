@@ -41,6 +41,7 @@ type Querier interface {
 	CountOrders(ctx context.Context, arg CountOrdersParams) (int64, error)
 	CountProductRatings(ctx context.Context, productID pgtype.UUID) (int64, error)
 	CountProducts(ctx context.Context, arg CountProductsParams) (int64, error)
+	CountShipments(ctx context.Context) (int64, error)
 	CountShippingMethods(ctx context.Context) (int64, error)
 	CountShippingRates(ctx context.Context) (int64, error)
 	CountShippingZones(ctx context.Context) (int64, error)
@@ -72,6 +73,7 @@ type Querier interface {
 	CreateProductVariant(ctx context.Context, arg CreateProductVariantParams) (ProductVariant, error)
 	// Product Variant attributes
 	CreateProductVariantAttribute(ctx context.Context, arg CreateProductVariantAttributeParams) (VariantAttributeValue, error)
+	CreateShipment(ctx context.Context, arg CreateShipmentParams) (Shipment, error)
 	CreateShippingMethod(ctx context.Context, arg CreateShippingMethodParams) (ShippingMethod, error)
 	// SHIPPING RATES
 	CreateShippingRate(ctx context.Context, arg CreateShippingRateParams) (ShippingRate, error)
@@ -203,6 +205,8 @@ type Querier interface {
 	GetRoleByID(ctx context.Context, id uuid.UUID) (UserRole, error)
 	GetSession(ctx context.Context, id uuid.UUID) (UserSession, error)
 	GetSessionByRefreshToken(ctx context.Context, refreshToken string) (UserSession, error)
+	GetShipmentByID(ctx context.Context, id uuid.UUID) (Shipment, error)
+	GetShipmentsByOrderID(ctx context.Context, orderID uuid.UUID) ([]Shipment, error)
 	GetShippingMethodByID(ctx context.Context, id uuid.UUID) (ShippingMethod, error)
 	GetShippingMethods(ctx context.Context, isActive *bool) ([]ShippingMethod, error)
 	GetShippingRateByID(ctx context.Context, id uuid.UUID) (GetShippingRateByIDRow, error)
@@ -246,6 +250,7 @@ type Querier interface {
 	SeedCollections(ctx context.Context, arg []SeedCollectionsParams) (int64, error)
 	SeedDiscounts(ctx context.Context, arg []SeedDiscountsParams) (int64, error)
 	SeedShippingMethods(ctx context.Context, arg []SeedShippingMethodsParams) (int64, error)
+	SeedShippingRates(ctx context.Context, arg []SeedShippingRatesParams) (int64, error)
 	SeedShippingZones(ctx context.Context, arg []SeedShippingZonesParams) (int64, error)
 	SeedUsers(ctx context.Context, arg []SeedUsersParams) (int64, error)
 	SetPrimaryAddress(ctx context.Context, arg SetPrimaryAddressParams) error
@@ -271,6 +276,7 @@ type Querier interface {
 	UpdateRatingReplies(ctx context.Context, arg UpdateRatingRepliesParams) (RatingReply, error)
 	UpdateRatingVote(ctx context.Context, arg UpdateRatingVoteParams) (RatingVote, error)
 	UpdateSession(ctx context.Context, arg UpdateSessionParams) (UserSession, error)
+	UpdateShipment(ctx context.Context, arg UpdateShipmentParams) (Shipment, error)
 	UpdateShippingMethod(ctx context.Context, arg UpdateShippingMethodParams) (ShippingMethod, error)
 	UpdateShippingRate(ctx context.Context, arg UpdateShippingRateParams) (ShippingRate, error)
 	UpdateShippingZone(ctx context.Context, arg UpdateShippingZoneParams) (ShippingZone, error)

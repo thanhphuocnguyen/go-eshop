@@ -579,6 +579,45 @@ func (q *Queries) SeedShippingMethods(ctx context.Context, arg []SeedShippingMet
 	return q.db.CopyFrom(ctx, []string{"shipping_methods"}, []string{"name", "description", "is_active", "requires_address", "estimated_delivery_time"}, &iteratorForSeedShippingMethods{rows: arg})
 }
 
+// iteratorForSeedShippingRates implements pgx.CopyFromSource.
+type iteratorForSeedShippingRates struct {
+	rows                 []SeedShippingRatesParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForSeedShippingRates) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForSeedShippingRates) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].ShippingMethodID,
+		r.rows[0].ShippingZoneID,
+		r.rows[0].Name,
+		r.rows[0].BaseRate,
+		r.rows[0].MinOrderAmount,
+		r.rows[0].MaxOrderAmount,
+		r.rows[0].FreeShippingThreshold,
+		r.rows[0].IsActive,
+	}, nil
+}
+
+func (r iteratorForSeedShippingRates) Err() error {
+	return nil
+}
+
+func (q *Queries) SeedShippingRates(ctx context.Context, arg []SeedShippingRatesParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"shipping_rates"}, []string{"shipping_method_id", "shipping_zone_id", "name", "base_rate", "min_order_amount", "max_order_amount", "free_shipping_threshold", "is_active"}, &iteratorForSeedShippingRates{rows: arg})
+}
+
 // iteratorForSeedShippingZones implements pgx.CopyFromSource.
 type iteratorForSeedShippingZones struct {
 	rows                 []SeedShippingZonesParams

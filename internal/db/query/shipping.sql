@@ -104,3 +104,32 @@ DELETE FROM shipping_rates WHERE id = $1;
 
 -- name: CountShippingRates :one
 SELECT COUNT(*) FROM shipping_rates;
+
+-- name: CreateShipment :one
+INSERT INTO shipments (order_id, status,shipped_at,delivered_at, tracking_number, tracking_url, shipping_provider, shipping_notes) 
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *;
+
+-- name: UpdateShipment :one
+UPDATE shipments SET
+    tracking_number = COALESCE(sqlc.narg('tracking_number'), tracking_number),
+    status = COALESCE(sqlc.narg('status'), status),
+    shipped_at = COALESCE(sqlc.narg('shipped_at'), shipped_at),
+    delivered_at = COALESCE(sqlc.narg('delivered_at'), delivered_at),
+    tracking_url = COALESCE(sqlc.narg('tracking_url'), tracking_url),
+    shipping_provider = COALESCE(sqlc.narg('shipping_provider'), shipping_provider),
+    shipping_notes = COALESCE(sqlc.narg('shipping_notes'), shipping_notes),
+    updated_at = NOW()
+WHERE id = $1 RETURNING *;
+
+-- name: GetShipmentByID :one
+SELECT * FROM shipments WHERE id = $1;
+
+-- name: GetShipmentsByOrderID :many
+SELECT * FROM shipments WHERE order_id = $1 ORDER BY created_at DESC;
+
+-- name: CountShipments :one
+SELECT COUNT(*) FROM shipments;
+
+-- name: SeedShippingRates :copyfrom
+INSERT INTO shipping_rates (shipping_method_id, shipping_zone_id, name, base_rate, min_order_amount, max_order_amount, free_shipping_threshold, is_active) 
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
