@@ -1,86 +1,85 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog/log"
-	"github.com/thanhphuocnguyen/go-eshop/internal/constants"
+	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
 
-func authenticateMiddleware(tokenGenerator auth.TokenGenerator) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		authorization := ctx.GetHeader(constants.Authorization)
-		if len(authorization) == 0 {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, dto.CreateErr(UnauthorizedCode, fmt.Errorf("authorization header is not provided")))
-			return
-		}
-		authGroup := strings.Fields(authorization)
-		if len(authGroup) != 2 || authGroup[0] != constants.AuthorizationType {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, dto.CreateErr(UnauthorizedCode, fmt.Errorf("authorization header is not valid format")))
-			return
-		}
-
-		payload, err := tokenGenerator.VerifyToken(authGroup[1])
+func authorizeMiddleware(next http.Handler, roles ...string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		_, claims, err := jwtauth.FromContext(r.Context())
 		if err != nil {
-			log.Error().Err(err).Msg("verify token")
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, dto.CreateErr(UnauthorizedCode, err))
-			return
-		}
-
-		ctx.Set(constants.AuthPayLoad, payload)
-		ctx.Set(constants.UserRole, payload.RoleCode)
-		ctx.Next()
-	}
-}
-
-func authorizeMiddleware(roles ...string) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		authPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
-		if !ok {
-			c.AbortWithStatusJSON(http.StatusForbidden, dto.CreateErr(PermissionDeniedCode, fmt.Errorf("authorization payload is not provided")))
+			err := dto.CreateErr(UnauthorizedCode, fmt.Errorf("unauthorized"))
+			w.WriteHeader(http.StatusUnauthorized)
+			jsoResp, _ := json.Marshal(err)
+			w.Write(jsoResp)
 			return
 		}
 
 		hasRole := false
 		for _, role := range roles {
-			if authPayload.RoleCode == role {
+			if claims["roleCode"] == role {
 				hasRole = true
 				break
 			}
 		}
 		if !hasRole {
-			c.AbortWithStatusJSON(http.StatusForbidden, dto.CreateErr(PermissionDeniedCode, fmt.Errorf("user does not have permission")))
+			err := dto.CreateErr(UnauthorizedCode, fmt.Errorf("forbidden"))
+			w.WriteHeader(http.StatusForbidden)
+			jsoResp, _ := json.Marshal(err)
+			w.Write(jsoResp)
 			return
 		}
-		c.Next()
+		next.ServeHTTP(w, r)
 	}
-}
-
-// Setup CORS configuration
-func corsMiddleware() gin.HandlerFunc {
-	return cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3001", "http://localhost:8080"},
-		AllowHeaders:     []string{"Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With"},
-		AllowFiles:       true,
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowCredentials: true,
-		// AllowAllOrigins:  sv.config.Env == "development",
-	})
 }
 
 // Setup environment mode based on configuration
-func (sv *Server) setEnvModeMiddleware(router *gin.Engine) {
-	router.Use(gin.Recovery())
-	if sv.config.Env == "production" {
-		gin.SetMode(gin.ReleaseMode)
-	}
-	if sv.config.Env == "development" {
-		router.Use(gin.Logger())
-	}
+func (s *Server) registerMiddlewares(r *chi.Mux) {
+	// Add server state validation middleware
+	r.Use(s.serverStateMiddleware)
+	// Add custom panic recovery middleware with better logging
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Compress(5, "text/html", "text/css"))
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "PUT", "POST", "DELETE", "HEAD", "OPTION"},
+		AllowedHeaders:   []string{"User-Agent", "Content-Type", "Accept", "Accept-Encoding", "Accept-Language", "Cache-Control", "Connection", "DNT", "Host", "Origin", "Pragma", "Referer"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	}))
+}
+
+// Middleware to validate server state before processing requests
+func (s *Server) serverStateMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Check for nil server components
+		if s == nil {
+			http.Error(w, "Server instance is nil", http.StatusInternalServerError)
+			return
+		}
+		if s.repo == nil {
+			http.Error(w, "Database repository is not initialized", http.StatusInternalServerError)
+			return
+		}
+		if s.tokenAuth == nil {
+			http.Error(w, "Token authentication is not initialized", http.StatusInternalServerError)
+			return
+		}
+		if s.validator == nil {
+			http.Error(w, "Validator is not initialized", http.StatusInternalServerError)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }

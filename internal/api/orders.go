@@ -5,27 +5,25 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
-	"github.com/thanhphuocnguyen/go-eshop/internal/constants"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
 
 // Setup order-related routes
-func (sv *Server) addOrderRoutes(rg *gin.RouterGroup) {
-	orders := rg.Group("/orders", authenticateMiddleware(sv.tokenGenerator))
-	{
-		orders.GET("", sv.getOrders)
-		orders.GET(":id", sv.getOrderDetail)
-		orders.PUT(":id/confirm-received", sv.confirmOrderPayment)
-		orders.POST(":id/cancel", sv.adminCancelOrder)
-	}
+func (s *Server) addOrderRoutes(r chi.Router) {
+	r.Route("/orders", func(r chi.Router) {
+		r.Get("/", s.getOrders)
+		r.Get("/{id}", s.getOrderDetail)
+		r.Put("/{id}/confirm-received", s.confirmOrderPayment)
+		r.Post("/{id}/cancel", s.adminCancelOrder)
+	})
 }
 
 // @Summary List orders
@@ -38,22 +36,33 @@ func (sv *Server) addOrderRoutes(rg *gin.RouterGroup) {
 // @Param status query string false "Filter by status"
 // @Param payment_status query string false "Filter by payment status"
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[[]OrderListResponse]
-// @Failure 400 {object} ErrorResp
-// @Failure 401 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[[]dto.OrderListItem]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 401 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /orders [get]
-func (sv *Server) getOrders(c *gin.Context) {
-	tokenPayload, ok := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, dto.CreateErr(UnauthorizedCode, errors.New("authorization payload is not provided")))
+func (s *Server) getOrders(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	_, claims, err := jwtauth.FromContext(c)
+	if err != nil {
+		RespondUnauthorized(w, UnauthorizedCode, errors.New("authorization payload is not provided"))
 		return
 	}
 
+	paginationQuery := ParsePaginationQuery(r)
+
+	// Parse additional query parameters
+	queryParams := r.URL.Query()
 	var orderListQuery models.OrderListQuery
-	if err := c.ShouldBindQuery(&orderListQuery); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
-		return
+	orderListQuery.Page = paginationQuery.Page
+	orderListQuery.PageSize = paginationQuery.PageSize
+
+	if status := queryParams.Get("status"); status != "" {
+		orderListQuery.Status = &status
+	}
+
+	if paymentStatus := queryParams.Get("payment_status"); paymentStatus != "" {
+		orderListQuery.PaymentStatus = &paymentStatus
 	}
 
 	dbParams := repository.GetOrdersParams{
@@ -61,20 +70,20 @@ func (sv *Server) getOrders(c *gin.Context) {
 		Offset: (orderListQuery.Page - 1) * orderListQuery.PageSize,
 	}
 
-	if tokenPayload.RoleCode != "admin" {
-		dbParams.UserID = utils.GetPgTypeUUID(tokenPayload.UserID)
+	userID := uuid.MustParse(claims["userId"].(string))
+	if claims["roleCode"] != "admin" {
+		dbParams.UserID = utils.GetPgTypeUUID(userID)
 	}
 
-	fetchedOrderRows, err := sv.repo.GetOrders(c, dbParams)
+	fetchedOrderRows, err := s.repo.GetOrders(c, dbParams)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	count, err := sv.repo.CountOrders(c, repository.CountOrdersParams{UserID: utils.GetPgTypeUUID(tokenPayload.UserID)})
-
+	count, err := s.repo.CountOrders(c, repository.CountOrdersParams{UserID: utils.GetPgTypeUUID(userID)})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
@@ -92,13 +101,15 @@ func (sv *Server) getOrders(c *gin.Context) {
 			Total:         total.Float64,
 			TotalItems:    int32(aggregated.TotalItems),
 			Status:        aggregated.Status,
+			CustomerName:  aggregated.CustomerName,
+			CustomerEmail: aggregated.CustomerEmail,
 			PaymentStatus: paymentStatus,
 			CreatedAt:     aggregated.CreatedAt.UTC(),
 			UpdatedAt:     aggregated.UpdatedAt.UTC(),
 		})
 	}
 
-	c.JSON(http.StatusOK, dto.CreateDataResp(c, orderResponses, dto.CreatePagination(orderListQuery.Page, orderListQuery.PageSize, count), nil))
+	RespondSuccessWithPagination(w, orderResponses, dto.CreatePagination(orderListQuery.Page, orderListQuery.PageSize, count))
 }
 
 // @Summary Get order detail
@@ -108,34 +119,35 @@ func (sv *Server) getOrders(c *gin.Context) {
 // @Produce json
 // @Param id path int true "Order ID"
 // @Security BearerAuth
-// @Success 200 {object} OrderDetailResponse
-// @Failure 400 {object} ErrorResp
-// @Failure 401 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[dto.OrderDetail]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 401 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /order/{orderId} [get]
-func (sv *Server) getOrderDetail(c *gin.Context) {
-	var params models.UriIDParam
-	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
+func (s *Server) getOrderDetail(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+
+	idParam := chi.URLParam(r, "id")
+	if idParam == "" {
+		RespondBadRequest(w, InvalidBodyCode, errors.New("id parameter is required"))
 		return
 	}
 
 	var resp *dto.OrderDetail = nil
-
-	if err := sv.cacheSrv.Get(c, "order_detail:"+params.ID, &resp); err == nil {
+	if err := s.cacheSrv.Get(c, "order_detail:"+idParam, &resp); err == nil {
 		if resp != nil {
-			c.JSON(http.StatusOK, dto.CreateDataResp(c, resp, nil, nil))
+			RespondSuccess(w, resp)
 			return
 		}
 	}
 
-	order, err := sv.repo.GetOrder(c, uuid.MustParse(params.ID))
+	order, err := s.repo.GetOrder(c, uuid.MustParse(idParam))
 	if err != nil {
 		if err == repository.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
+			RespondNotFound(w, NotFoundCode, err)
 			return
 		}
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
@@ -165,9 +177,9 @@ func (sv *Server) getOrderDetail(c *gin.Context) {
 		}
 	}
 
-	paymentInfo, err := sv.repo.GetPaymentByOrderID(c, order.ID)
+	paymentInfo, err := s.repo.GetPaymentByOrderID(c, order.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
@@ -175,7 +187,7 @@ func (sv *Server) getOrderDetail(c *gin.Context) {
 
 	if paymentInfo.Status == repository.PaymentStatusPending &&
 		paymentInfo.PaymentIntentID != nil {
-		paymentDetail, err := sv.paymentSrv.GetPayment(c, *paymentInfo.PaymentIntentID, *paymentInfo.Gateway)
+		paymentDetail, err := s.paymentSrv.GetPayment(c, *paymentInfo.PaymentIntentID, *paymentInfo.Gateway)
 		if err != nil {
 			log.Err(err).Msg("failed to get payment intent")
 			apiErr = &dto.ApiError{
@@ -188,9 +200,9 @@ func (sv *Server) getOrderDetail(c *gin.Context) {
 		}
 	}
 
-	discountRows, err := sv.repo.GetOrderDiscounts(c, order.ID)
+	discountRows, err := s.repo.GetOrderDiscounts(c, order.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 	var discounts []dto.OrderDiscount
@@ -206,11 +218,12 @@ func (sv *Server) getOrderDetail(c *gin.Context) {
 	}
 	resp.Discounts = discounts
 
-	orderItemRows, err := sv.repo.GetOrderItems(c, order.ID)
+	orderItemRows, err := s.repo.GetOrderItems(c, order.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
+
 	lineItems := make([]dto.LineItem, 0, len(orderItemRows))
 	for _, item := range orderItemRows {
 		lineTotal, _ := item.LineTotalSnapshot.Float64Value()
@@ -242,7 +255,8 @@ func (sv *Server) getOrderDetail(c *gin.Context) {
 
 	resp.LineItems = lineItems
 
-	c.JSON(http.StatusOK, dto.CreateDataResp(c, resp, nil, apiErr))
+	response := dto.CreateDataResp(resp, nil, apiErr)
+	RespondJSON(w, http.StatusOK, response)
 }
 
 // @Summary confirm received order payment info
@@ -252,33 +266,42 @@ func (sv *Server) getOrderDetail(c *gin.Context) {
 // @Produce json
 // @Param id path int true "Order ID"
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[bool]
-// @Failure 400 {object} ErrorResp
-// @Failure 401 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[bool]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 401 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /order/{orderId}/confirm-received [put]
-func (sv *Server) confirmOrderPayment(c *gin.Context) {
-	tokenPayload, _ := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
-	var params models.UriIDParam
-	if err := c.ShouldBindUri(&params); err != nil {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidBodyCode, err))
+func (s *Server) confirmOrderPayment(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	_, claims, err := jwtauth.FromContext(c)
+	if err != nil {
+		RespondUnauthorized(w, UnauthorizedCode, errors.New("authorization payload is not provided"))
 		return
 	}
-	order, err := sv.repo.GetOrder(c, uuid.MustParse(params.ID))
+
+	idParam := chi.URLParam(r, "id")
+	if idParam == "" {
+		RespondBadRequest(w, InvalidBodyCode, errors.New("id parameter is required"))
+		return
+	}
+
+	order, err := s.repo.GetOrder(c, uuid.MustParse(idParam))
 	if err != nil {
 		if err == repository.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, dto.CreateErr(NotFoundCode, err))
+			RespondNotFound(w, NotFoundCode, err)
 			return
 		}
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
-	if order.UserID != tokenPayload.UserID {
-		c.JSON(http.StatusForbidden, dto.CreateErr(PermissionDeniedCode, errors.New("you do not have permission to access this order")))
+	userID := uuid.MustParse(claims["userId"].(string))
+
+	if order.UserID != userID {
+		RespondForbidden(w, PermissionDeniedCode, errors.New("you do not have permission to access this order"))
 		return
 	}
 	if order.Status != repository.OrderStatusDelivered {
-		c.JSON(http.StatusBadRequest, dto.CreateErr(InvalidPaymentCode, errors.New("order cannot be confirmed")))
+		RespondBadRequest(w, InvalidPaymentCode, errors.New("order cannot be confirmed"))
 		return
 	}
 
@@ -293,13 +316,13 @@ func (sv *Server) confirmOrderPayment(c *gin.Context) {
 			Valid: true,
 		},
 	}
-	_, err = sv.repo.UpdateOrder(c, orderUpdateParams)
+	_, err = s.repo.UpdateOrder(c, orderUpdateParams)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 	var apiErr *dto.ApiError
-	if err := sv.cacheSrv.Delete(c, "order_detail:"+params.ID); err != nil {
+	if err := s.cacheSrv.Delete(c, "order_detail:"+idParam); err != nil {
 		log.Err(err).Msg("failed to delete order detail cache")
 		apiErr = &dto.ApiError{
 			Code:    InternalServerErrorCode,
@@ -308,5 +331,6 @@ func (sv *Server) confirmOrderPayment(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, dto.CreateDataResp(c, true, nil, apiErr))
+	response := dto.CreateDataResp(true, nil, apiErr)
+	RespondJSON(w, http.StatusOK, response)
 }

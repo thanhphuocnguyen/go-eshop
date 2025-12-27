@@ -394,7 +394,7 @@ func (q *Queries) GetOrderItemsByOrderID(ctx context.Context, orderID uuid.UUID)
 const getOrders = `-- name: GetOrders :many
 SELECT ord.id, ord.user_id, ord.customer_email, ord.customer_name, ord.customer_phone, ord.shipping_address, ord.total_price, ord.status, ord.confirmed_at, ord.delivered_at, ord.cancelled_at, ord.shipping_method, ord.refunded_at, ord.order_date, ord.updated_at, ord.created_at, ord.shipping_method_id, ord.shipping_rate_id, ord.estimated_delivery_date, ord.tracking_url, ord.shipping_provider, ord.shipping_notes, pm.status as payment_status, COUNT(oi.id) as total_items
 FROM orders ord
-LEFT JOIN order_items oi ON ord.id = oi.id
+LEFT JOIN order_items oi ON ord.id = oi.order_id
 LEFT JOIN payments pm ON ord.id = pm.order_id
 WHERE
     ord.user_id = COALESCE($3, ord.user_id) AND

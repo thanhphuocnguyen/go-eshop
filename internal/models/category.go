@@ -5,18 +5,18 @@ import (
 )
 
 type CreateCategoryModel struct {
-	DisplayOrder *int16                `form:"displayOrder" binding:"omitempty"`
-	Description  *string               `form:"description" binding:"omitempty,max=1000"`
-	Name         string                `form:"name" binding:"required,min=3,max=255"`
-	Slug         string                `form:"slug" binding:"required,min=3,max=255"`
-	Image        *multipart.FileHeader `form:"image" binding:"omitempty"`
+	Name         string                `form:"name" validate:"required,min=3,max=255"`
+	Slug         string                `form:"slug" validate:"required,min=3,max=255"`
+	DisplayOrder *int16                `form:"displayOrder" validate:"omitnil,omitempty"`
+	Description  *string               `form:"description" validate:"omitnil,omitempty,max=1000"`
+	Image        *multipart.FileHeader `form:"image" validate:"omitnil,omitempty"`
 }
 
 type UpdateCategoryModel struct {
-	Name         *string               `form:"name" binding:"omitempty,min=3,max=255"`
-	Description  *string               `form:"description" binding:"omitempty,max=1000"`
-	Slug         *string               `form:"slug" binding:"omitempty,min=3,max=255"`
-	Published    *bool                 `form:"published" binding:"omitempty"`
-	DisplayOrder *int16                `form:"displayOrder" binding:"omitempty"`
-	Image        *multipart.FileHeader `form:"image" binding:"omitempty"`
+	Name         *string               `form:"name" validate:"omitnil,omitempty,min=3,max=255"`
+	Description  *string               `form:"description" validate:"omitnil,omitempty,max=1000"`
+	Slug         *string               `form:"slug" validate:"omitnil,omitempty,min=3,max=255"`
+	Published    *bool                 `form:"published" validate:"omitnil,omitempty"`
+	DisplayOrder *int16                `form:"displayOrder" validate:"omitnil,omitempty"`
+	Image        *multipart.FileHeader `form:"image" validate:"omitnil,omitempty"`
 }

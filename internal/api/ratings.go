@@ -1,14 +1,16 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
+	"errors"
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"
-	"github.com/thanhphuocnguyen/go-eshop/internal/constants"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/auth"
 )
 
 // @Summary Post a rating
@@ -22,33 +24,35 @@ import (
 // @Param content formData string true "Review Content"
 // @Param files formData file false "Images"
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[ProductRatingModel]
-// @Failure 400 {object} ErrorResp
-// @Failure 403 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[dto.ProductRatingDetail]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 403 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /ratings [post]
-func (s *Server) postRating(c *gin.Context) {
-	auth, _ := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
-
+func (s *Server) postRating(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	_, claims, err := jwtauth.FromContext(c)
 	var req models.PostRatingFormData
-	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
+	if err := s.GetRequestBody(r, req); err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
 	orderItem, err := s.repo.GetOrderItemByID(c, uuid.MustParse(req.OrderItemID))
 	if err != nil {
-		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
-	if orderItem.UserID != auth.UserID {
-		c.JSON(403, dto.CreateErr(InvalidBodyCode, nil))
+	userID := uuid.MustParse(claims["userId"].(string))
+
+	if orderItem.UserID != userID {
+		RespondUnauthorized(w, UnauthorizedCode, err)
 		return
 	}
 
 	rating, err := s.repo.InsertProductRating(c, repository.InsertProductRatingParams{
 		ProductID:        orderItem.ProductID,
-		UserID:           auth.UserID,
+		UserID:           userID,
 		OrderItemID:      utils.GetPgTypeUUID(orderItem.OrderItemID),
 		Rating:           utils.GetPgNumericFromFloat(req.Rating),
 		ReviewTitle:      &req.Title,
@@ -57,7 +61,7 @@ func (s *Server) postRating(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.JSON(500, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
@@ -71,7 +75,7 @@ func (s *Server) postRating(c *gin.Context) {
 		// Images:           images,
 	}
 
-	c.JSON(200, dto.CreateDataResp(c, resp, nil, nil))
+	RespondSuccess(w, resp)
 }
 
 // @Summary Post a helpful rating
@@ -82,45 +86,48 @@ func (s *Server) postRating(c *gin.Context) {
 // @Param ratingId body string true "Rating ID"
 // @Param helpful body bool true "Helpful"
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[string]
-// @Failure 400 {object} ErrorResp
-// @Failure 403 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
-// @Router /ratings/{ratingId}/helpful [post]
-func (s *Server) postRatingHelpful(c *gin.Context) {
-	var param models.UriIDParam
-	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
-		return
-	}
-	auth, _ := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
-	var req models.PostHelpfulRatingModel
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
+// @Success 200 {object} dto.ApiResponse[string]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 403 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
+// @Router /ratings/{Id}/helpful [post]
+func (s *Server) postRatingHelpful(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	ratingId, err := GetUrlParam(r, "id")
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
-	rating, err := s.repo.GetProductRating(c, uuid.MustParse(param.ID))
-	if err != nil {
-		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
+	_, claims, err := jwtauth.FromContext(c)
+	userID := uuid.MustParse(claims["userId"].(string))
+	var req models.PostHelpfulRatingModel
+	if err := s.GetRequestBody(r, req); err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
-	if rating.UserID == auth.UserID {
-		c.JSON(403, dto.CreateErr(InvalidBodyCode, nil))
+
+	rating, err := s.repo.GetProductRating(c, uuid.MustParse(ratingId))
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+	if rating.UserID == userID {
+		RespondUnauthorized(w, UnauthorizedCode, nil)
 		return
 	}
 
 	id, err := s.repo.VoteHelpfulRatingTx(c, repository.VoteHelpfulRatingTxArgs{
-		UserID:   auth.UserID,
+		UserID:   userID,
 		RatingID: rating.ID,
 		Helpful:  req.Helpful,
 	})
 
 	if err != nil {
-		c.JSON(500, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 	}
 
-	c.JSON(200, dto.CreateDataResp(c, id, nil, nil))
+	RespondCreated(w, id)
 }
 
 // @Summary Post a reply to a rating
@@ -131,41 +138,43 @@ func (s *Server) postRatingHelpful(c *gin.Context) {
 // @Param ratingId path string true "Rating ID"
 // @Param content body string true "Reply Content"
 // @Security BearerAuth
-// @Success 200 {object} ApiResponse[string]
-// @Failure 400 {object} ErrorResp
-// @Failure 403 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[string]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 403 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /ratings/{ratingId}/reply [post]
-func (s *Server) postReplyRating(c *gin.Context) {
-	var param models.UriIDParam
-	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
+func (s *Server) postReplyRating(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	id, err := GetUrlParam(r, "id")
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
-	auth, _ := c.MustGet(constants.AuthPayLoad).(*auth.TokenPayload)
+	_, claims, err := jwtauth.FromContext(c)
 
 	var req models.PostReplyRatingModel
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
+	if err := s.GetRequestBody(r, &req); err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
-	rating, err := s.repo.GetProductRating(c, uuid.MustParse(param.ID))
+	rating, err := s.repo.GetProductRating(c, uuid.MustParse(id))
 	if err != nil {
-		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
+	userID := uuid.MustParse(claims["userId"].(string))
 
 	reply, err := s.repo.InsertRatingReply(c, repository.InsertRatingReplyParams{
 		RatingID: rating.ID,
-		ReplyBy:  auth.UserID,
+		ReplyBy:  userID,
 		Content:  req.Content,
 	})
 	if err != nil {
-		c.JSON(500, dto.CreateErr(InternalServerErrorCode, err))
+		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
 
-	c.JSON(200, dto.CreateDataResp(c, reply.ID, nil, nil))
+	RespondSuccess(w, reply.ID)
 }
 
 // @Summary Get product ratings
@@ -176,36 +185,33 @@ func (s *Server) postReplyRating(c *gin.Context) {
 // @Param productId path string true "Product ID"
 // @Param page query int false "Page number" default(1)
 // @Param pageSize query int false "Page size" default(10)
-// @Success 200 {object} ApiResponse[[]ProductRatingModel]
-// @Failure 400 {object} ErrorResp
-// @Failure 404 {object} ErrorResp
-// @Failure 500 {object} ErrorResp
+// @Success 200 {object} dto.ApiResponse[[]dto.ProductRatingDetail]
+// @Failure 400 {object} dto.ErrorResp
+// @Failure 404 {object} dto.ErrorResp
+// @Failure 500 {object} dto.ErrorResp
 // @Router /ratings/products/{productId} [get]
-func (s *Server) getRatingsByProduct(c *gin.Context) {
-	var param models.UriIDParam
-	if err := c.ShouldBindUri(&param); err != nil {
-		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
+func (s *Server) getRatingsByProduct(w http.ResponseWriter, r *http.Request) {
+	idParam := chi.URLParam(r, "id")
+	if idParam == "" {
+		RespondBadRequest(w, InvalidBodyCode, errors.New("id parameter is required"))
 		return
 	}
-	var queries models.PaginationQuery
-	if err := c.ShouldBindQuery(&queries); err != nil {
-		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
-		return
-	}
+	c := r.Context()
+	paginationQuery := ParsePaginationQuery(r)
 
 	ratings, err := s.repo.GetProductRatings(c, repository.GetProductRatingsParams{
-		ProductID: utils.GetPgTypeUUID(uuid.MustParse(param.ID)),
-		Limit:     queries.PageSize,
-		Offset:    (queries.Page - 1) * queries.PageSize,
+		ProductID: utils.GetPgTypeUUID(uuid.MustParse(idParam)),
+		Limit:     paginationQuery.PageSize,
+		Offset:    (paginationQuery.Page - 1) * paginationQuery.PageSize,
 	})
 	if err != nil {
-		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
-	ratingsCount, err := s.repo.CountProductRatings(c, utils.GetPgTypeUUID(uuid.MustParse(param.ID)))
+	ratingsCount, err := s.repo.CountProductRatings(c, utils.GetPgTypeUUID(uuid.MustParse(idParam)))
 	if err != nil {
-		c.JSON(400, dto.CreateErr(InvalidBodyCode, err))
+		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 	productRatings := make([]dto.ProductRatingDetail, 0)
@@ -246,16 +252,15 @@ func (s *Server) getRatingsByProduct(c *gin.Context) {
 		productRatings = append(productRatings, model)
 	}
 
-	c.JSON(200, dto.CreateDataResp(c, productRatings, dto.CreatePagination(queries.Page, queries.PageSize, ratingsCount), nil))
+	RespondSuccessWithPagination(w, productRatings, dto.CreatePagination(paginationQuery.Page, paginationQuery.PageSize, ratingsCount))
 }
 
 // Setup brand-related routes
-func (sv *Server) addRatingRoutes(rg *gin.RouterGroup) {
-	ratings := rg.Group("ratings", authenticateMiddleware(sv.tokenGenerator))
-	{
-		ratings.POST("", sv.postRating)
-		ratings.GET(":orderId", sv.adminGetOrderRatings)
-		ratings.POST(":id/helpful", sv.postRatingHelpful)
-		ratings.POST(":id/reply", sv.postReplyRating)
-	}
+func (s *Server) addRatingRoutes(r chi.Router) {
+	r.Route("/ratings", func(r chi.Router) {
+		r.Post("/", s.postRating)
+		r.Get("/{orderId}", s.adminGetOrderRatings)
+		r.Post("/{id}/helpful", s.postRatingHelpful)
+		r.Post("/{id}/reply", s.postReplyRating)
+	})
 }

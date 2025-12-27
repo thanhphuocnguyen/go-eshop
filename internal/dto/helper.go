@@ -1,10 +1,7 @@
 package dto
 
 import (
-	"time"
 	"unsafe"
-
-	"github.com/gin-gonic/gin"
 )
 
 type ErrorResp struct {
@@ -21,16 +18,11 @@ func CreateErr(code string, err error) ErrorResp {
 	}
 }
 
-func CreateDataResp[T any](c *gin.Context, data T, pagination *Pagination, err *ApiError) ApiResponse[T] {
+func CreateDataResp[T any](data T, pagination *Pagination, err *ApiError) ApiResponse[T] {
+	// Safe extraction of context values with fallbacks
 	resp := ApiResponse[T]{
 		Data:       &data,
 		Pagination: pagination,
-		Meta: &MetaInfo{
-			Timestamp: time.Now().Format(time.RFC3339),
-			RequestID: c.GetString("RequestID"),
-			Path:      c.FullPath(),
-			Method:    c.Request.Method,
-		},
 	}
 
 	if err != nil {

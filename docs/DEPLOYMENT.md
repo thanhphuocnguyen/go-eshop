@@ -738,7 +738,7 @@ var (
 
 // Middleware for metrics collection
 func PrometheusMiddleware() gin.HandlerFunc {
-    return gin.HandlerFunc(func(c *gin.Context) {
+    return gin.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         start := time.Now()
         
         c.Next()
@@ -906,7 +906,7 @@ sudo crontab -e
 ```go
 // middleware/security.go
 func SecurityHeaders() gin.HandlerFunc {
-    return func(c *gin.Context) {
+    return func(w http.ResponseWriter, r *http.Request) {
         c.Header("X-Frame-Options", "DENY")
         c.Header("X-Content-Type-Options", "nosniff")
         c.Header("X-XSS-Protection", "1; mode=block")
@@ -930,7 +930,7 @@ import (
 
 func RateLimitMiddleware(store limiter.Store, rate limiter.Rate) gin.HandlerFunc {
     middleware := limiter.NewHTTPMiddleware(limiter.New(store, rate))
-    return func(c *gin.Context) {
+    return func(w http.ResponseWriter, r *http.Request) {
         middleware.Handle(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
             c.Next()
         })).ServeHTTP(c.Writer, c.Request)

@@ -9,5 +9,5 @@ type AttributeValueDetail struct {
 type AttributeDetail struct {
 	ID     int32                  `json:"id"`
 	Name   string                 `json:"name"`
-	Values []AttributeValueDetail `json:"values"`
+	Values []AttributeValueDetail `json:"values,omitempty"`
 }
