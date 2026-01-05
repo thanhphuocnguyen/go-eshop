@@ -1,43 +1,51 @@
 package elasticsearch
 
 import (
+	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"time"
 
-	elasticSearchV8 "github.com/elastic/go-elasticsearch/v8"
+	"github.com/elastic/go-elasticsearch/v9"
+	"github.com/elastic/go-elasticsearch/v9/esutil"
 )
 
-type Client struct {
-	es *elasticSearchV8.Client
+type ESStore struct {
+	es *elasticsearch.Client
 }
 
-func NewClient(url string) (*Client, error) {
-	cfg := elasticSearchV8.Config{
+func NewClient(url string) (*ESStore, error) {
+	cfg := elasticsearch.Config{
 		Addresses: []string{
 			url,
 		},
 		RetryOnStatus: []int{http.StatusTooManyRequests},
-		Transport:     &http.Transport{TLSHandshakeTimeout: 10 * time.Second},
+		Transport: &http.Transport{
+			TLSHandshakeTimeout:   10 * time.Second,
+			MaxIdleConnsPerHost:   10,
+			ResponseHeaderTimeout: time.Millisecond,
+			DialContext:           (&net.Dialer{Timeout: time.Nanosecond}).DialContext,
+			TLSClientConfig: &tls.Config{
+				MinVersion: tls.VersionTLS12,
+				// ...
+			},
+		},
 	}
 
-	es, err := elasticSearchV8.NewClient(cfg)
+	es, err := elasticsearch.NewClient(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("error creating the client: %s", err)
 	}
 
-	return &Client{es: es}, nil
+	return &ESStore{es: es}, nil
 }
 
-func (c *Client) CreateIndex(index string, mapping interface{}) error {
-	mappingReader, err := ToReader(mapping)
-	if err != nil {
-		return fmt.Errorf("error converting mapping to reader: %s", err)
-	}
-
-	res, err := c.es.Indices.Create(index, c.es.Indices.Create.WithBody(mappingReader))
+func (c *ESStore) CreateIndex(index string, mapping interface{}) error {
+	res, err := c.es.Indices.Create(index, c.es.Indices.Create.WithBody(esutil.NewJSONReader(&mapping)))
 	if err != nil {
 		return fmt.Errorf("error creating index: %s", err)
 	}
@@ -50,13 +58,9 @@ func (c *Client) CreateIndex(index string, mapping interface{}) error {
 	return nil
 }
 
-func (c *Client) IndexDocument(index string, documentID string, document interface{}) error {
-	documentReader, err := ToReader(document)
-	if err != nil {
-		return fmt.Errorf("error converting document to reader: %s", err)
-	}
+func (c *ESStore) IndexDocument(index string, documentID string, document interface{}) error {
 
-	res, err := c.es.Index(index, documentReader, c.es.Index.WithDocumentID(documentID))
+	res, err := c.es.Index(index, esutil.NewJSONReader(&document), c.es.Index.WithDocumentID(documentID))
 	if err != nil {
 		return fmt.Errorf("error indexing document: %s", err)
 	}
@@ -69,15 +73,11 @@ func (c *Client) IndexDocument(index string, documentID string, document interfa
 	return nil
 }
 
-func (c *Client) QueryDocuments(index string, query interface{}) ([]interface{}, error) {
-	queryReader, err := ToReader(query)
-	if err != nil {
-		return nil, fmt.Errorf("error converting query to reader: %s", err)
-	}
+func (c *ESStore) QueryDocuments(index string, query interface{}) ([]interface{}, error) {
 
 	res, err := c.es.Search(
 		c.es.Search.WithIndex(index),
-		c.es.Search.WithBody(queryReader),
+		c.es.Search.WithBody(esutil.NewJSONReader(&query)),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error searching documents: %s", err)
@@ -113,13 +113,9 @@ func (c *Client) QueryDocuments(index string, query interface{}) ([]interface{},
 	return documents, nil
 }
 
-func (c *Client) UpdateDocument(index string, documentID string, update interface{}) error {
-	updateReader, err := ToReader(update)
-	if err != nil {
-		return fmt.Errorf("error converting update to reader: %s", err)
-	}
+func (c *ESStore) UpdateDocument(index string, documentID string, update interface{}) error {
 
-	res, err := c.es.Update(index, documentID, updateReader)
+	res, err := c.es.Update(index, documentID, esutil.NewJSONReader(&update))
 	if err != nil {
 		return fmt.Errorf("error updating document: %s", err)
 	}
@@ -132,7 +128,7 @@ func (c *Client) UpdateDocument(index string, documentID string, update interfac
 	return nil
 }
 
-func (c *Client) DeleteDocument(index string, documentID string) error {
+func (c *ESStore) DeleteDocument(index string, documentID string) error {
 	res, err := c.es.Delete(index, documentID)
 	if err != nil {
 		return fmt.Errorf("error deleting document: %s", err)
@@ -141,6 +137,44 @@ func (c *Client) DeleteDocument(index string, documentID string) error {
 
 	if res.IsError() {
 		return fmt.Errorf("error deleting document: %s", res.String())
+	}
+
+	return nil
+}
+
+func (c *ESStore) BulkIndexDocuments(index string, request []esutil.BulkIndexerItem) error {
+	bulkIndexer, err := esutil.NewBulkIndexer(esutil.BulkIndexerConfig{
+		Client:     c.es,
+		Index:      index,
+		NumWorkers: 4,
+	})
+
+	if err != nil {
+		return fmt.Errorf("error creating the bulk indexer: %s", err)
+	}
+
+	for _, doc := range request {
+		err = bulkIndexer.Add(context.Background(), doc)
+		if err != nil {
+			return fmt.Errorf("error adding document to the bulk indexer: %s", err)
+		}
+	}
+
+	if err := bulkIndexer.Close(context.Background()); err != nil {
+		return fmt.Errorf("error closing the bulk indexer: %s", err)
+	}
+	return nil
+}
+
+func (c *ESStore) DeleteIndex(index string) error {
+	res, err := c.es.Indices.Delete([]string{index})
+	if err != nil {
+		return fmt.Errorf("error deleting index: %s", err)
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return fmt.Errorf("error deleting index: %s", res.String())
 	}
 
 	return nil
