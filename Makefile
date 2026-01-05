@@ -59,4 +59,4 @@ index-es:
 	@echo "Indexing Elasticsearch..."
 	go run ./cmd/indexer
 
-.PHONY: create-migration migrate-up migrate-up-1 migrate-down migrate-down-1 migrate-drop build-migrate build-server serve-server gen-sqlc gen-swagger build-seed seed serve-worker goto-migration force-migration migrate-version
+.PHONY: create-migration migrate-up migrate-up-1 migrate-down migrate-down-1 migrate-drop build-migrate build-server serve-server gen-sqlc gen-swagger build-seed seed serve-worker goto-migration force-migration migrate-version seed-one listen-stripe index-es

@@ -2,6 +2,9 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
+	"os"
+	"path/filepath"
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -30,6 +33,11 @@ func ExecuteIndexer(ctx context.Context) int {
 			client, err := elasticsearch.NewClient(cfg.EsUrl)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to create elasticsearch client")
+				return err
+			}
+
+			if err := client.Ping(); err != nil {
+				log.Error().Err(err).Msg("failed to ping elasticsearch")
 				return err
 			}
 
@@ -67,30 +75,66 @@ func ExecuteIndexer(ctx context.Context) int {
 }
 
 func indexProducts(ctx context.Context, client *elasticsearch.ESStore, pg repository.Store) error {
-	products, err := pg.GetAdminProductList(ctx, repository.GetAdminProductListParams{
-		Limit:  1000,
-		Offset: 0,
-	})
-	for len(products) > 0 {
+	// Create the products index with mapping first
+	if err := createProductIndex(client); err != nil {
+		log.Error().Err(err).Msg("failed to create product index")
+		return err
+	}
+
+	offset := int64(0)
+	limit := int64(1000)
+
+	for {
+		products, err := pg.GetAdminProductList(ctx, repository.GetAdminProductListParams{
+			Limit:  limit,
+			Offset: offset,
+		})
+
+		if err != nil {
+			log.Error().Err(err).Msg("failed to get products from postgres")
+			return err
+		}
+
+		// Break if no more products
+		if len(products) == 0 {
+			break
+		}
+
 		productIndexer := elasticsearch.NewProductIndexer(client)
-		if _, err := productIndexer.BulkIndexProducts(products); err != nil {
+		if _, err := productIndexer.BulkIndexProducts(ctx, products); err != nil {
 			log.Error().Err(err).Msg("failed to bulk index products")
 			return err
 		}
 
-		offset := len(products)
-		products, err = pg.GetAdminProductList(ctx, repository.GetAdminProductListParams{
-			Limit:  1000,
-			Offset: int64(offset),
-		})
+		log.Info().Int("count", len(products)).Int64("offset", offset).Msg("indexed products batch")
+		offset += int64(len(products))
 	}
 
+	log.Info().Msg("successfully indexed all products")
+	return nil
+}
+
+func createProductIndex(client *elasticsearch.ESStore) error {
+	// Check if index already exists
+	if exists, err := client.IndexExists("products"); err != nil {
+		return err
+	} else if exists {
+		log.Info().Msg("products index already exists, skipping creation")
+		return nil
+	}
+
+	// Read the product mapping from file
+	mappingFile := filepath.Join("elasticsearch", "mappings", "product_mapping.json")
+	mappingData, err := os.ReadFile(mappingFile)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to get products from postgres")
 		return err
 	}
-	productIndexer := elasticsearch.NewProductIndexer(client)
-	productIndexer.BulkDeleteProducts()
-	log.Info().Msg("successfully indexed products")
-	return nil
+
+	var mapping map[string]interface{}
+	if err := json.Unmarshal(mappingData, &mapping); err != nil {
+		return err
+	}
+
+	log.Info().Msg("creating products index")
+	return client.CreateIndex("products", mapping)
 }

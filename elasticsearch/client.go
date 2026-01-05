@@ -24,15 +24,14 @@ func NewClient(url string) (*ESStore, error) {
 			url,
 		},
 		RetryOnStatus: []int{http.StatusTooManyRequests},
+
 		Transport: &http.Transport{
 			TLSHandshakeTimeout:   10 * time.Second,
 			MaxIdleConnsPerHost:   10,
-			ResponseHeaderTimeout: time.Millisecond,
-			DialContext:           (&net.Dialer{Timeout: time.Nanosecond}).DialContext,
+			ResponseHeaderTimeout: 30 * time.Second,
+			DialContext:           (&net.Dialer{Timeout: 10 * time.Second}).DialContext,
 			TLSClientConfig: &tls.Config{
-				MinVersion: tls.VersionTLS12,
-				// ...
-			},
+				MinVersion: tls.VersionTLS12},
 		},
 	}
 
@@ -42,6 +41,20 @@ func NewClient(url string) (*ESStore, error) {
 	}
 
 	return &ESStore{es: es}, nil
+}
+
+func (c *ESStore) Ping() error {
+	res, err := c.es.Ping()
+	if err != nil {
+		return fmt.Errorf("error pinging elasticsearch: %s", err)
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return fmt.Errorf("error pinging elasticsearch: %s", res.String())
+	}
+
+	return nil
 }
 
 func (c *ESStore) CreateIndex(index string, mapping interface{}) error {
@@ -56,6 +69,16 @@ func (c *ESStore) CreateIndex(index string, mapping interface{}) error {
 	}
 
 	return nil
+}
+
+func (c *ESStore) IndexExists(index string) (bool, error) {
+	res, err := c.es.Indices.Exists([]string{index})
+	if err != nil {
+		return false, fmt.Errorf("error checking if index exists: %s", err)
+	}
+	defer res.Body.Close()
+
+	return res.StatusCode == 200, nil
 }
 
 func (c *ESStore) IndexDocument(index string, documentID string, document interface{}) error {
@@ -142,7 +165,7 @@ func (c *ESStore) DeleteDocument(index string, documentID string) error {
 	return nil
 }
 
-func (c *ESStore) BulkIndexDocuments(index string, request []esutil.BulkIndexerItem) error {
+func (c *ESStore) BulkIndexDocuments(ctx context.Context, index string, request []esutil.BulkIndexerItem) error {
 	bulkIndexer, err := esutil.NewBulkIndexer(esutil.BulkIndexerConfig{
 		Client:     c.es,
 		Index:      index,
@@ -154,13 +177,13 @@ func (c *ESStore) BulkIndexDocuments(index string, request []esutil.BulkIndexerI
 	}
 
 	for _, doc := range request {
-		err = bulkIndexer.Add(context.Background(), doc)
+		err = bulkIndexer.Add(ctx, doc)
 		if err != nil {
 			return fmt.Errorf("error adding document to the bulk indexer: %s", err)
 		}
 	}
 
-	if err := bulkIndexer.Close(context.Background()); err != nil {
+	if err := bulkIndexer.Close(ctx); err != nil {
 		return fmt.Errorf("error closing the bulk indexer: %s", err)
 	}
 	return nil

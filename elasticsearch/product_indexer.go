@@ -31,12 +31,13 @@ func (pi *ProductIndexer) DeleteProduct(productID string) error {
 	return pi.esStore.DeleteDocument(PRODUCT_INDEX, productID)
 }
 
-func (pi *ProductIndexer) BulkIndexProducts(products []repository.Product) (uint64, error) {
+func (pi *ProductIndexer) BulkIndexProducts(ctx context.Context, products []repository.Product) (uint64, error) {
 	bulkRequests := make([]esutil.BulkIndexerItem, 0, len(products))
 	countSuccessful := uint64(0)
 	for _, product := range products {
 		body, _ := json.Marshal(product)
 		req := esutil.BulkIndexerItem{
+			Action:     "index",
 			Index:      PRODUCT_INDEX,
 			DocumentID: product.ID.String(),
 			Body:       bytes.NewReader(body),
@@ -56,7 +57,7 @@ func (pi *ProductIndexer) BulkIndexProducts(products []repository.Product) (uint
 		}
 		bulkRequests = append(bulkRequests, req)
 	}
-	err := pi.esStore.BulkIndexDocuments(PRODUCT_INDEX, bulkRequests)
+	err := pi.esStore.BulkIndexDocuments(ctx, PRODUCT_INDEX, bulkRequests)
 
 	return countSuccessful, err
 }
