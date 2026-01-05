@@ -55,4 +55,8 @@ swagger:
 	@echo "Generating swagger..."
 	swag init -d internal/api -g server.go --parseInternal --parseDependency
 
+index-es:
+	@echo "Indexing Elasticsearch..."
+	go run ./cmd/indexer
+
 .PHONY: create-migration migrate-up migrate-up-1 migrate-down migrate-down-1 migrate-drop build-migrate build-server serve-server gen-sqlc gen-swagger build-seed seed serve-worker goto-migration force-migration migrate-version

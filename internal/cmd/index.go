@@ -10,7 +10,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 )
 
-func ExecuteIndexes(ctx context.Context) int {
+func ExecuteIndexer(ctx context.Context) int {
 	cfg, err := config.LoadConfig(".")
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to load config")
@@ -18,9 +18,9 @@ func ExecuteIndexes(ctx context.Context) int {
 	}
 
 	var rootCmd = &cobra.Command{
-		Use:   "seed",
-		Short: "Seed data to database",
-		Long:  "Seed data to database from seed files",
+		Use:   "indexer",
+		Short: "Index data to Elasticsearch from database",
+		Long:  "Index data to Elasticsearch from database",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store, err := repository.GetPostgresInstance(ctx, cfg)
 			if err != nil {
@@ -34,24 +34,24 @@ func ExecuteIndexes(ctx context.Context) int {
 			}
 
 			if len(args) == 0 {
-				log.Info().Msg("Starting comprehensive database seeding with error handling")
-				// Execute all seeding operations with proper error handling
-				var seedingError error
-				// Seed base data first (sequential order matters)
-				if seedingError = indexProducts(ctx, client, store); seedingError != nil {
-					return seedingError
+				log.Info().Msg("Starting comprehensive database indexing with error handling")
+				// Execute all indexing operations with proper error handling
+				var indexingError error
+				// Index base data first (sequential order matters)
+				if indexingError = indexProducts(ctx, client, store); indexingError != nil {
+					return indexingError
 				}
 
-				log.Info().Msg("All seeding operations completed successfully")
+				log.Info().Msg("All indexing operations completed successfully")
 			} else {
-				// Individual seeding commands with error handling
+				// Individual indexing commands with error handling
 				switch args[0] {
 				case "products":
 					if err := indexProducts(ctx, client, store); err != nil {
 						return err
 					}
 				default:
-					log.Error().Msg("invalid seed command")
+					log.Error().Msg("invalid indexer command")
 				}
 			}
 			return nil
@@ -59,7 +59,7 @@ func ExecuteIndexes(ctx context.Context) int {
 	}
 
 	if err := rootCmd.Execute(); err != nil {
-		log.Error().Err(err).Msg("failed to execute seed command")
+		log.Error().Err(err).Msg("failed to execute indexer command")
 		return 1
 	}
 

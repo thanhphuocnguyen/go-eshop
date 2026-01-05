@@ -9,6 +9,6 @@ import (
 
 func main() {
 	ctx := context.Background()
-	ret := cmd.ExecuteMigrate(ctx)
+	ret := cmd.ExecuteIndexer(ctx)
 	os.Exit(ret)
 }
