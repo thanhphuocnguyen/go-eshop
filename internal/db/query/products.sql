@@ -28,9 +28,9 @@ GROUP BY product_variants.id, attribute_values.id;
 
 -- name: GetProductDetail :one
 SELECT p.*,
-    JSON_BUILD_OBJECT('id', b.id, 'name', b.name) AS brand,
-    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', c.id, 'name', c.name)) FILTER (WHERE c.id IS NOT NULL) AS categories,
-    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', cl.id, 'name', cl.name)) FILTER (WHERE cl.id IS NOT NULL) AS collections,
+    JSON_BUILD_OBJECT('id', b.id, 'name', b.name, 'slug', b.slug) AS brand,
+    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', c.id, 'name', c.name, 'slug', c.slug)) FILTER (WHERE c.id IS NOT NULL) AS categories,
+    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', cl.id, 'name', cl.name, 'slug', cl.slug)) FILTER (WHERE cl.id IS NOT NULL) AS collections,
     JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('attributeId', a.id,'attributeName', a.name)) FILTER (WHERE a.id IS NOT NULL) AS attributes,
     JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT(
         'id', pv.id,
@@ -74,7 +74,7 @@ WHERE
 GROUP BY p.id ORDER BY @orderBy::text LIMIT $1 OFFSET $2;
 
 -- name: GetProductList :many
-SELECT p.*, MIN(pv.price) as min_price, COUNT(pv.id) as variant_count FROM products as p
+SELECT p.*, catp.name, catp.slug, b.name, b.slug, MIN(pv.price) as min_price, COUNT(pv.id) as variant_count FROM products as p
 LEFT JOIN collection_products cp ON p.id = cp.product_id
 LEFT JOIN collections c ON cp.collection_id = c.id
 LEFT JOIN category_products catp ON p.id = catp.product_id

@@ -202,3 +202,16 @@ func (c *ESStore) DeleteIndex(index string) error {
 
 	return nil
 }
+
+func (c *ESStore) CreateMapping(index string, mapping interface{}) error {
+	res, err := c.es.Indices.PutMapping([]string{index}, esutil.NewJSONReader(&mapping))
+	if err != nil {
+		return fmt.Errorf("error creating mapping: %s", err)
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return fmt.Errorf("error creating mapping: %s", res.String())
+	}
+	return nil
+}

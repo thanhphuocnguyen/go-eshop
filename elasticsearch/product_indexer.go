@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"os"
 	"sync/atomic"
 
 	"github.com/elastic/go-elasticsearch/v9/esutil"
@@ -17,6 +18,23 @@ type ProductIndexer struct {
 
 func NewProductIndexer(store *ESStore) *ProductIndexer {
 	return &ProductIndexer{esStore: store}
+}
+
+func (pi *ProductIndexer) CreateMappings() error {
+	// read mapping from file
+	mapping, err := readMappingFromFile("mappings/product_mapping.json")
+	if err != nil {
+		return err
+	}
+	return pi.esStore.CreateMapping(PRODUCT_INDEX, mapping)
+}
+
+func readMappingFromFile(filePath string) (string, error) {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }
 
 func (pi *ProductIndexer) IndexProduct(product repository.Product) error {
