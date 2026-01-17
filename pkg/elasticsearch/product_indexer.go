@@ -51,11 +51,11 @@ func readMappingFromFile(path string) (string, error) {
 	return string(data), nil
 }
 
-func (pi *ProductIndexer) IndexProduct(product repository.Product) error {
+func (pi *ProductIndexer) IndexProduct(product repository.GetProductsForIndexingRow) error {
 	return pi.esStore.IndexDocument(PRODUCT_INDEX, product.ID.String(), product)
 }
 
-func (pi *ProductIndexer) UpdateProduct(productID string, updatedProduct repository.Product) error {
+func (pi *ProductIndexer) UpdateProduct(productID string, updatedProduct repository.GetProductsForIndexingRow) error {
 	return pi.esStore.UpdateDocument(PRODUCT_INDEX, productID, updatedProduct)
 }
 

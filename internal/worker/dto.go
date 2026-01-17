@@ -28,3 +28,7 @@ type OrderCreatedEmailData struct {
 	FullName string              `json:"fullName"`
 	Items    []OrderCreatedItems `json:"items"`
 }
+
+type PayloadIndexProduct struct {
+	ProductID uuid.UUID `json:"product_id"`
+}

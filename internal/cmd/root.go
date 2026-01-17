@@ -153,17 +153,16 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 			if err := service.AddGateway(stripeConfig); err != nil {
 				log.Fatal().Err(err).Msg("failed to add stripe gateway")
 			}
-
-			taskProcessor := worker.NewRedisTaskProcessor(redisCfg, pgRepo, mailer, cfg)
-			if taskProcessor == nil {
-				return fmt.Errorf("failed to create task processor")
-			}
-
 			esStore, err := elasticsearch.NewClient(cfg.EsUrl)
 			if err != nil {
 				log.Error().Msg("Cannot access Elastic client")
 			}
 			productIndexer := elasticsearch.NewProductIndexer(esStore)
+
+			taskProcessor := worker.NewRedisTaskProcessor(redisCfg, pgRepo, mailer, productIndexer, cfg)
+			if taskProcessor == nil {
+				return fmt.Errorf("failed to create task processor")
+			}
 
 			api, err := api.NewAPI(cfg, pgRepo, taskDistributor, uploadService, service, productIndexer)
 			if err != nil {
