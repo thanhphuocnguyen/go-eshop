@@ -2,15 +2,12 @@ package cmd
 
 import (
 	"context"
-	"encoding/json"
-	"os"
-	"path/filepath"
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/thanhphuocnguyen/go-eshop/config"
-	"github.com/thanhphuocnguyen/go-eshop/elasticsearch"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/elasticsearch"
 )
 
 func ExecuteIndexer(ctx context.Context) int {
@@ -41,12 +38,14 @@ func ExecuteIndexer(ctx context.Context) int {
 				return err
 			}
 
+			productIndexer := elasticsearch.NewProductIndexer(client)
+
 			if len(args) == 0 {
 				log.Info().Msg("Starting comprehensive database indexing with error handling")
 				// Execute all indexing operations with proper error handling
 				var indexingError error
 				// Index base data first (sequential order matters)
-				if indexingError = indexProducts(ctx, client, store); indexingError != nil {
+				if indexingError = indexProducts(ctx, productIndexer, store); indexingError != nil {
 					return indexingError
 				}
 
@@ -54,8 +53,12 @@ func ExecuteIndexer(ctx context.Context) int {
 			} else {
 				// Individual indexing commands with error handling
 				switch args[0] {
-				case "products":
-					if err := indexProducts(ctx, client, store); err != nil {
+				case "index-products":
+					if err := indexProducts(ctx, productIndexer, store); err != nil {
+						return err
+					}
+				case "create-product-index":
+					if err := createProductIndex(productIndexer); err != nil {
 						return err
 					}
 				default:
@@ -74,18 +77,12 @@ func ExecuteIndexer(ctx context.Context) int {
 	return 0
 }
 
-func indexProducts(ctx context.Context, client *elasticsearch.ESStore, pg repository.Store) error {
-	// Create the products index with mapping first
-	if err := createProductIndex(client); err != nil {
-		log.Error().Err(err).Msg("failed to create product index")
-		return err
-	}
-
+func indexProducts(ctx context.Context, client *elasticsearch.ProductIndexer, pg repository.Store) error {
 	offset := int64(0)
 	limit := int64(1000)
 
 	for {
-		products, err := pg.GetAdminProductList(ctx, repository.GetAdminProductListParams{
+		products, err := pg.GetProductsForIndexing(ctx, repository.GetProductsForIndexingParams{
 			Limit:  limit,
 			Offset: offset,
 		})
@@ -100,8 +97,7 @@ func indexProducts(ctx context.Context, client *elasticsearch.ESStore, pg reposi
 			break
 		}
 
-		productIndexer := elasticsearch.NewProductIndexer(client)
-		if _, err := productIndexer.BulkIndexProducts(ctx, products); err != nil {
+		if _, err := client.BulkIndexProducts(ctx, products); err != nil {
 			log.Error().Err(err).Msg("failed to bulk index products")
 			return err
 		}
@@ -114,27 +110,6 @@ func indexProducts(ctx context.Context, client *elasticsearch.ESStore, pg reposi
 	return nil
 }
 
-func createProductIndex(client *elasticsearch.ESStore) error {
-	// Check if index already exists
-	if exists, err := client.IndexExists("products"); err != nil {
-		return err
-	} else if exists {
-		log.Info().Msg("products index already exists, skipping creation")
-		return nil
-	}
-
-	// Read the product mapping from file
-	mappingFile := filepath.Join("elasticsearch", "mappings", "product_mapping.json")
-	mappingData, err := os.ReadFile(mappingFile)
-	if err != nil {
-		return err
-	}
-
-	var mapping map[string]interface{}
-	if err := json.Unmarshal(mappingData, &mapping); err != nil {
-		return err
-	}
-
-	log.Info().Msg("creating products index")
-	return client.CreateIndex("products", mapping)
+func createProductIndex(client *elasticsearch.ProductIndexer) error {
+	return client.CreateIndex()
 }

@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/elastic/go-elasticsearch/v9"
@@ -57,8 +58,8 @@ func (c *ESStore) Ping() error {
 	return nil
 }
 
-func (c *ESStore) CreateIndex(index string, mapping interface{}) error {
-	res, err := c.es.Indices.Create(index, c.es.Indices.Create.WithBody(esutil.NewJSONReader(&mapping)))
+func (c *ESStore) CreateIndex(index string, mapping string) error {
+	res, err := c.es.Indices.Create(index, c.es.Indices.Create.WithBody(strings.NewReader(mapping)))
 	if err != nil {
 		return fmt.Errorf("error creating index: %s", err)
 	}
@@ -190,7 +191,12 @@ func (c *ESStore) BulkIndexDocuments(ctx context.Context, index string, request 
 }
 
 func (c *ESStore) DeleteIndex(index string) error {
-	res, err := c.es.Indices.Delete([]string{index})
+	res, err := c.es.Indices.Exists([]string{index})
+	if res.StatusCode == 404 {
+		// Index does not exist, nothing to delete
+		return nil
+	}
+	res, err = c.es.Indices.Delete([]string{index})
 	if err != nil {
 		return fmt.Errorf("error deleting index: %s", err)
 	}
@@ -203,8 +209,8 @@ func (c *ESStore) DeleteIndex(index string) error {
 	return nil
 }
 
-func (c *ESStore) CreateMapping(index string, mapping interface{}) error {
-	res, err := c.es.Indices.PutMapping([]string{index}, esutil.NewJSONReader(&mapping))
+func (c *ESStore) CreateMapping(index string, mapping string) error {
+	res, err := c.es.Indices.PutMapping([]string{index}, strings.NewReader(mapping))
 	if err != nil {
 		return fmt.Errorf("error creating mapping: %s", err)
 	}
@@ -214,4 +220,23 @@ func (c *ESStore) CreateMapping(index string, mapping interface{}) error {
 		return fmt.Errorf("error creating mapping: %s", res.String())
 	}
 	return nil
+}
+
+func (c *ESStore) GetMapping(index string) (map[string]interface{}, error) {
+	res, err := c.es.Indices.GetMapping(c.es.Indices.GetMapping.WithIndex([]string{index}...))
+	if err != nil {
+		return nil, fmt.Errorf("error getting mapping: %s", err)
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return nil, fmt.Errorf("error getting mapping: %s", res.String())
+	}
+
+	var mapping map[string]interface{}
+	if err := json.NewDecoder(res.Body).Decode(&mapping); err != nil {
+		return nil, fmt.Errorf("error parsing the response body: %s", err)
+	}
+
+	return mapping, nil
 }

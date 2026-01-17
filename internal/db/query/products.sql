@@ -74,7 +74,7 @@ WHERE
 GROUP BY p.id ORDER BY @orderBy::text LIMIT $1 OFFSET $2;
 
 -- name: GetProductList :many
-SELECT p.*, catp.name, catp.slug, b.name, b.slug, MIN(pv.price) as min_price, COUNT(pv.id) as variant_count FROM products as p
+SELECT p.*, cat.name, cat.slug, b.name, b.slug, MIN(pv.price) as min_price, COUNT(pv.id) as variant_count FROM products as p
 LEFT JOIN collection_products cp ON p.id = cp.product_id
 LEFT JOIN collections c ON cp.collection_id = c.id
 LEFT JOIN category_products catp ON p.id = catp.product_id
@@ -88,7 +88,7 @@ WHERE
     AND (sqlc.narg('collection_ids')::uuid[] is null or c.id = ANY(sqlc.narg('collection_ids')::uuid[]))
     AND (sqlc.narg('category_ids')::uuid[] is null or cat.id = ANY(sqlc.narg('category_ids')::uuid[]))
     AND pv.stock > 0
-GROUP BY p.id
+GROUP BY p.id, cat.id, b.id
 ORDER BY @orderBy::text LIMIT $1 OFFSET $2;
 
 -- name: CountProducts :one
@@ -153,3 +153,21 @@ INSERT INTO products (brand_id, name, description) VALUES ($1, $2, $3);
 
 -- name: UpdateProductStock :one
 UPDATE product_variants SET stock = stock - $1 WHERE id = $2 RETURNING *;
+
+-- name: GetProductsForIndexing :many
+SELECT p.*, b.name as brand,
+    ARRAY_AGG(DISTINCT c.name) FILTER (WHERE c.id IS NOT NULL) AS categories,
+    ARRAY_AGG(DISTINCT cl.name) FILTER (WHERE cl.id IS NOT NULL) AS collections,
+    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('attributeId', a.id,'attributeName', a.name)) FILTER (WHERE a.id IS NOT NULL) AS attributes
+FROM products p
+JOIN brands AS b ON p.brand_id = b.id
+LEFT JOIN category_products AS cp ON p.id = cp.product_id
+LEFT JOIN collection_products AS colp ON p.id = colp.product_id
+LEFT JOIN categories as c ON cp.category_id = c.id
+LEFT JOIN collections as cl ON colp.collection_id = cl.id
+LEFT JOIN product_attributes pa ON p.id = pa.product_id
+LEFT JOIN attributes a ON pa.attribute_id = a.id
+LEFT JOIN product_variants pv ON pv.product_id = p.id
+GROUP BY p.id, b.id
+ORDER BY p.updated_at DESC
+LIMIT $1 OFFSET $2;

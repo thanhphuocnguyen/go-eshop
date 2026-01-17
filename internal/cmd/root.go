@@ -20,6 +20,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/api"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/elasticsearch"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/gateways"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/mailer"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
@@ -158,7 +159,13 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 				return fmt.Errorf("failed to create task processor")
 			}
 
-			api, err := api.NewAPI(cfg, pgRepo, taskDistributor, uploadService, service)
+			esStore, err := elasticsearch.NewClient(cfg.EsUrl)
+			if err != nil {
+				log.Error().Msg("Cannot access Elastic client")
+			}
+			productIndexer := elasticsearch.NewProductIndexer(esStore)
+
+			api, err := api.NewAPI(cfg, pgRepo, taskDistributor, uploadService, service, productIndexer)
 			if err != nil {
 				return fmt.Errorf("failed to create API server: %w", err)
 			}

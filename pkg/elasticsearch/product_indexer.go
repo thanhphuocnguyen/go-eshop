@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"sync/atomic"
 
 	"github.com/elastic/go-elasticsearch/v9/esutil"
@@ -20,17 +22,29 @@ func NewProductIndexer(store *ESStore) *ProductIndexer {
 	return &ProductIndexer{esStore: store}
 }
 
-func (pi *ProductIndexer) CreateMappings() error {
+func (pi *ProductIndexer) CreateIndex() error {
+	// remove index first
+	err := pi.esStore.DeleteIndex(PRODUCT_INDEX)
+	if err != nil {
+		return err
+	}
 	// read mapping from file
 	mapping, err := readMappingFromFile("mappings/product_mapping.json")
 	if err != nil {
 		return err
 	}
-	return pi.esStore.CreateMapping(PRODUCT_INDEX, mapping)
+	// res, err := pi.esStore.CreateIndex()
+	return pi.esStore.CreateIndex(PRODUCT_INDEX, mapping)
 }
 
-func readMappingFromFile(filePath string) (string, error) {
-	data, err := os.ReadFile(filePath)
+func readMappingFromFile(path string) (string, error) {
+	absPath, err := filepath.Abs("pkg/elasticsearch/" + path)
+	if err != nil {
+		return "", err
+	}
+
+	fmt.Println(absPath)
+	data, err := os.ReadFile(absPath)
 	if err != nil {
 		return "", err
 	}
@@ -49,11 +63,30 @@ func (pi *ProductIndexer) DeleteProduct(productID string) error {
 	return pi.esStore.DeleteDocument(PRODUCT_INDEX, productID)
 }
 
-func (pi *ProductIndexer) BulkIndexProducts(ctx context.Context, products []repository.Product) (uint64, error) {
+func (pi *ProductIndexer) BulkIndexProducts(ctx context.Context, products []repository.GetProductsForIndexingRow) (uint64, error) {
 	bulkRequests := make([]esutil.BulkIndexerItem, 0, len(products))
+
 	countSuccessful := uint64(0)
 	for _, product := range products {
-		body, _ := json.Marshal(product)
+		productIndexBody := map[string]interface{}{
+			"id":                product.ID,
+			"name":              product.Name,
+			"description":       product.Description,
+			"short_description": product.ShortDescription,
+			"is_active":         product.IsActive,
+			"slug":              product.Slug,
+			"sku":               product.BaseSku,
+			"price":             product.BasePrice,
+			"categories":        product.Categories,
+			"brand":             product.Brand,
+			"rating":            product.AvgRating,
+			"in_stock":          true,
+			"created_at":        product.CreatedAt,
+			"attributes":        product.Attributes,
+		}
+
+		// Marshal the product index body to JSON
+		body, _ := json.Marshal(productIndexBody)
 		req := esutil.BulkIndexerItem{
 			Action:     "index",
 			Index:      PRODUCT_INDEX,
@@ -82,4 +115,8 @@ func (pi *ProductIndexer) BulkIndexProducts(ctx context.Context, products []repo
 
 func (pi *ProductIndexer) BulkDeleteProducts() error {
 	return pi.esStore.DeleteIndex(PRODUCT_INDEX)
+}
+
+func (pi *ProductIndexer) GetMapping() (map[string]interface{}, error) {
+	return pi.esStore.GetMapping(PRODUCT_INDEX)
 }

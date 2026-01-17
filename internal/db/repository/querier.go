@@ -189,6 +189,7 @@ type Querier interface {
 	GetProductVariantByID(ctx context.Context, arg GetProductVariantByIDParams) (ProductVariant, error)
 	GetProductVariantList(ctx context.Context, arg GetProductVariantListParams) ([]GetProductVariantListRow, error)
 	GetProductVariantsByProductID(ctx context.Context, arg GetProductVariantsByProductIDParams) ([]ProductVariant, error)
+	GetProductsForIndexing(ctx context.Context, arg GetProductsForIndexingParams) ([]GetProductsForIndexingRow, error)
 	GetRatingReplies(ctx context.Context, id uuid.UUID) (RatingReply, error)
 	GetRatingRepliesByRatingID(ctx context.Context, ratingID uuid.UUID) ([]GetRatingRepliesByRatingIDRow, error)
 	GetRatingRepliesByUserID(ctx context.Context, replyBy uuid.UUID) ([]GetRatingRepliesByUserIDRow, error)

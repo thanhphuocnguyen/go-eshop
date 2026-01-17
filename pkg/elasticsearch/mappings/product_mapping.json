@@ -35,6 +35,17 @@
       "short_description": {
         "type": "text"
       },
+      "is_active": {
+        "type": "boolean"
+      },
+      "slug": {
+        "type": "keyword",
+        "index": false
+      },
+      "sku": {
+        "type": "keyword",
+        "index": false
+      },
       "price": {
         "type": "double"
       },
