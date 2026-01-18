@@ -158,7 +158,10 @@ UPDATE product_variants SET stock = stock - $1 WHERE id = $2 RETURNING *;
 SELECT p.*, b.name as brand,
     ARRAY_AGG(DISTINCT c.name) FILTER (WHERE c.id IS NOT NULL) AS categories,
     ARRAY_AGG(DISTINCT cl.name) FILTER (WHERE cl.id IS NOT NULL) AS collections,
-    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('attributeId', a.id,'attributeName', a.name)) FILTER (WHERE a.id IS NOT NULL) AS attributes
+    ARRAY_AGG(DISTINCT av.value) FILTER (WHERE av.id IS NOT NULL) AS attribute_values,
+    MIN(pv.price) as min_price,
+    COUNT(pv.id) as variant_count,
+    SUM(pv.stock) as total_stock
 FROM products p
 JOIN brands AS b ON p.brand_id = b.id
 LEFT JOIN category_products AS cp ON p.id = cp.product_id
@@ -168,6 +171,30 @@ LEFT JOIN collections as cl ON colp.collection_id = cl.id
 LEFT JOIN product_attributes pa ON p.id = pa.product_id
 LEFT JOIN attributes a ON pa.attribute_id = a.id
 LEFT JOIN product_variants pv ON pv.product_id = p.id
+LEFT JOIN variant_attribute_values vav ON pv.id = vav.variant_id
+LEFT JOIN attribute_values av ON vav.attribute_value_id = av.id
 GROUP BY p.id, b.id
-ORDER BY p.updated_at DESC
 LIMIT $1 OFFSET $2;
+
+-- name: GetProductForIndexingById :one
+SELECT p.*, b.name as brand,
+    ARRAY_AGG(DISTINCT c.name) FILTER (WHERE c.id IS NOT NULL) AS categories,
+    ARRAY_AGG(DISTINCT cl.name) FILTER (WHERE cl.id IS NOT NULL) AS collections,
+    ARRAY_AGG(DISTINCT av.value) FILTER (WHERE av.id IS NOT NULL) AS attribute_values,
+    MIN(pv.price) as min_price,
+    COUNT(pv.id) as variant_count,
+    SUM(pv.stock) as total_stock
+FROM products p
+JOIN brands AS b ON p.brand_id = b.id
+LEFT JOIN category_products AS cp ON p.id = cp.product_id
+LEFT JOIN collection_products AS colp ON p.id = colp.product_id
+LEFT JOIN categories as c ON cp.category_id = c.id
+LEFT JOIN collections as cl ON colp.collection_id = cl.id
+LEFT JOIN product_attributes pa ON p.id = pa.product_id
+LEFT JOIN attributes a ON pa.attribute_id = a.id
+LEFT JOIN product_variants pv ON pv.product_id = p.id
+LEFT JOIN variant_attribute_values vav ON pv.id = vav.variant_id
+LEFT JOIN attribute_values av ON vav.attribute_value_id = av.id
+WHERE p.id = $1
+GROUP BY p.id, b.id
+LIMIT 1;

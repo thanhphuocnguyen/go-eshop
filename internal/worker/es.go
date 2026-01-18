@@ -81,7 +81,6 @@ func (p *RedisTaskProcessor) ProcessIndexProduct(ctx context.Context, task *asyn
 		Collections:      collections,
 		Brand:            brand.Name,
 		UpdatedAt:        product.UpdatedAt,
-		Attributes:       product.Attributes,
 		CreatedAt:        product.CreatedAt,
 	})
 	return nil

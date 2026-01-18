@@ -477,6 +477,99 @@ func (q *Queries) GetProductDetail(ctx context.Context, arg GetProductDetailPara
 	return i, err
 }
 
+const getProductForIndexingById = `-- name: GetProductForIndexingById :one
+SELECT p.id, p.name, p.description, p.short_description, p.base_price, p.base_sku, p.slug, p.is_active, p.image_url, p.image_id, p.discount_percentage, p.purchased_count, p.avg_rating, p.rating_count, p.one_star_count, p.two_star_count, p.three_star_count, p.four_star_count, p.five_star_count, p.created_at, p.updated_at, p.brand_id, b.name as brand,
+    ARRAY_AGG(DISTINCT c.name) FILTER (WHERE c.id IS NOT NULL) AS categories,
+    ARRAY_AGG(DISTINCT cl.name) FILTER (WHERE cl.id IS NOT NULL) AS collections,
+    ARRAY_AGG(DISTINCT av.value) FILTER (WHERE av.id IS NOT NULL) AS attribute_values,
+    MIN(pv.price) as min_price,
+    COUNT(pv.id) as variant_count,
+    SUM(pv.stock) as total_stock
+FROM products p
+JOIN brands AS b ON p.brand_id = b.id
+LEFT JOIN category_products AS cp ON p.id = cp.product_id
+LEFT JOIN collection_products AS colp ON p.id = colp.product_id
+LEFT JOIN categories as c ON cp.category_id = c.id
+LEFT JOIN collections as cl ON colp.collection_id = cl.id
+LEFT JOIN product_attributes pa ON p.id = pa.product_id
+LEFT JOIN attributes a ON pa.attribute_id = a.id
+LEFT JOIN product_variants pv ON pv.product_id = p.id
+LEFT JOIN variant_attribute_values vav ON pv.id = vav.variant_id
+LEFT JOIN attribute_values av ON vav.attribute_value_id = av.id
+WHERE p.id = $1
+GROUP BY p.id, b.id
+LIMIT 1
+`
+
+type GetProductForIndexingByIdRow struct {
+	ID                 uuid.UUID      `json:"id"`
+	Name               string         `json:"name"`
+	Description        string         `json:"description"`
+	ShortDescription   *string        `json:"shortDescription"`
+	BasePrice          pgtype.Numeric `json:"basePrice"`
+	BaseSku            string         `json:"baseSku"`
+	Slug               string         `json:"slug"`
+	IsActive           *bool          `json:"isActive"`
+	ImageUrl           *string        `json:"imageUrl"`
+	ImageID            *string        `json:"imageId"`
+	DiscountPercentage *int16         `json:"discountPercentage"`
+	PurchasedCount     *int32         `json:"purchasedCount"`
+	AvgRating          pgtype.Numeric `json:"avgRating"`
+	RatingCount        int32          `json:"ratingCount"`
+	OneStarCount       int32          `json:"oneStarCount"`
+	TwoStarCount       int32          `json:"twoStarCount"`
+	ThreeStarCount     int32          `json:"threeStarCount"`
+	FourStarCount      int32          `json:"fourStarCount"`
+	FiveStarCount      int32          `json:"fiveStarCount"`
+	CreatedAt          time.Time      `json:"createdAt"`
+	UpdatedAt          time.Time      `json:"updatedAt"`
+	BrandID            pgtype.UUID    `json:"brandId"`
+	Brand              string         `json:"brand"`
+	Categories         []string       `json:"categories"`
+	Collections        []string       `json:"collections"`
+	AttributeValues    []string       `json:"attributeValues"`
+	MinPrice           pgtype.Numeric `json:"minPrice"`
+	VariantCount       int64          `json:"variantCount"`
+	TotalStock         int64          `json:"totalStock"`
+}
+
+func (q *Queries) GetProductForIndexingById(ctx context.Context, id uuid.UUID) (GetProductForIndexingByIdRow, error) {
+	row := q.db.QueryRow(ctx, getProductForIndexingById, id)
+	var i GetProductForIndexingByIdRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.ShortDescription,
+		&i.BasePrice,
+		&i.BaseSku,
+		&i.Slug,
+		&i.IsActive,
+		&i.ImageUrl,
+		&i.ImageID,
+		&i.DiscountPercentage,
+		&i.PurchasedCount,
+		&i.AvgRating,
+		&i.RatingCount,
+		&i.OneStarCount,
+		&i.TwoStarCount,
+		&i.ThreeStarCount,
+		&i.FourStarCount,
+		&i.FiveStarCount,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.BrandID,
+		&i.Brand,
+		&i.Categories,
+		&i.Collections,
+		&i.AttributeValues,
+		&i.MinPrice,
+		&i.VariantCount,
+		&i.TotalStock,
+	)
+	return i, err
+}
+
 const getProductList = `-- name: GetProductList :many
 SELECT p.id, p.name, p.description, p.short_description, p.base_price, p.base_sku, p.slug, p.is_active, p.image_url, p.image_id, p.discount_percentage, p.purchased_count, p.avg_rating, p.rating_count, p.one_star_count, p.two_star_count, p.three_star_count, p.four_star_count, p.five_star_count, p.created_at, p.updated_at, p.brand_id, cat.name, cat.slug, b.name, b.slug, MIN(pv.price) as min_price, COUNT(pv.id) as variant_count FROM products as p
 LEFT JOIN collection_products cp ON p.id = cp.product_id
@@ -740,7 +833,10 @@ const getProductsForIndexing = `-- name: GetProductsForIndexing :many
 SELECT p.id, p.name, p.description, p.short_description, p.base_price, p.base_sku, p.slug, p.is_active, p.image_url, p.image_id, p.discount_percentage, p.purchased_count, p.avg_rating, p.rating_count, p.one_star_count, p.two_star_count, p.three_star_count, p.four_star_count, p.five_star_count, p.created_at, p.updated_at, p.brand_id, b.name as brand,
     ARRAY_AGG(DISTINCT c.name) FILTER (WHERE c.id IS NOT NULL) AS categories,
     ARRAY_AGG(DISTINCT cl.name) FILTER (WHERE cl.id IS NOT NULL) AS collections,
-    JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('attributeId', a.id,'attributeName', a.name)) FILTER (WHERE a.id IS NOT NULL) AS attributes
+    ARRAY_AGG(DISTINCT av.value) FILTER (WHERE av.id IS NOT NULL) AS attribute_values,
+    MIN(pv.price) as min_price,
+    COUNT(pv.id) as variant_count,
+    SUM(pv.stock) as total_stock
 FROM products p
 JOIN brands AS b ON p.brand_id = b.id
 LEFT JOIN category_products AS cp ON p.id = cp.product_id
@@ -750,8 +846,9 @@ LEFT JOIN collections as cl ON colp.collection_id = cl.id
 LEFT JOIN product_attributes pa ON p.id = pa.product_id
 LEFT JOIN attributes a ON pa.attribute_id = a.id
 LEFT JOIN product_variants pv ON pv.product_id = p.id
+LEFT JOIN variant_attribute_values vav ON pv.id = vav.variant_id
+LEFT JOIN attribute_values av ON vav.attribute_value_id = av.id
 GROUP BY p.id, b.id
-ORDER BY p.updated_at DESC
 LIMIT $1 OFFSET $2
 `
 
@@ -786,7 +883,10 @@ type GetProductsForIndexingRow struct {
 	Brand              string         `json:"brand"`
 	Categories         []string       `json:"categories"`
 	Collections        []string       `json:"collections"`
-	Attributes         []byte         `json:"attributes"`
+	AttributeValues    []string       `json:"attributeValues"`
+	MinPrice           pgtype.Numeric `json:"minPrice"`
+	VariantCount       int64          `json:"variantCount"`
+	TotalStock         int64          `json:"totalStock"`
 }
 
 func (q *Queries) GetProductsForIndexing(ctx context.Context, arg GetProductsForIndexingParams) ([]GetProductsForIndexingRow, error) {
@@ -824,7 +924,10 @@ func (q *Queries) GetProductsForIndexing(ctx context.Context, arg GetProductsFor
 			&i.Brand,
 			&i.Categories,
 			&i.Collections,
-			&i.Attributes,
+			&i.AttributeValues,
+			&i.MinPrice,
+			&i.VariantCount,
+			&i.TotalStock,
 		); err != nil {
 			return nil, err
 		}

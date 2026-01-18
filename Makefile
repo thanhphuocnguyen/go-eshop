@@ -48,6 +48,9 @@ seed-one:
 create-product-index:
 	@echo "Running application..."
 	go run ./cmd/indexer create-product-index
+index-products:
+	@echo "Indexing products..."
+	go run ./cmd/indexer index-products
 listen-stripe:
 	@echo "Listening to Stripe events..."
 	stripe listen --forward-to localhost:4000/webhook/v1/stripe
@@ -60,10 +63,10 @@ swagger:
 
 index-es:
 	@echo "Indexing Elasticsearch..."
-	go run ./cmd/indexer
+	go run ./cmd/indexer index-es
 
 .PHONY: create-migration migrate-up migrate-up-1 migrate-down \
 migrate-down-1 migrate-drop build-migrate build-server \
 serve-server gen-sqlc gen-swagger build-seed seed serve-worker \
 goto-migration force-migration migrate-version seed-one listen-stripe index-es \
-create-product-index
+create-product-index index-products

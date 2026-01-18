@@ -9,6 +9,7 @@ import (
 )
 
 // Elastic search re-index api util
+// FOR DEBUG ONLY
 func (s *Server) addEsRoutes(r chi.Router) {
 	r.Group(func(r chi.Router) {
 		r.Use(func(h http.Handler) http.Handler {
@@ -18,6 +19,7 @@ func (s *Server) addEsRoutes(r chi.Router) {
 			r.Post("/product-mappings", s.createProductIndex)
 			r.Get("/product-mappings", s.getProductMappings)
 			r.Get("/indexing-products", s.getIndexingProducts)
+			r.Get("/es-products", s.getEsProducts)
 		})
 	})
 }
@@ -57,6 +59,16 @@ func (s *Server) getIndexingProducts(w http.ResponseWriter, r *http.Request) {
 		Limit:  int64(perPage),
 		Offset: int64((page - 1) * perPage),
 	})
+	if err != nil {
+		RespondInternalServerError(w, InternalServerErrorCode, err)
+		return
+	}
+
+	RespondJSON(w, http.StatusOK, products)
+}
+
+func (s *Server) getEsProducts(w http.ResponseWriter, r *http.Request) {
+	products, err := s.elasticClient.GetProducts()
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return

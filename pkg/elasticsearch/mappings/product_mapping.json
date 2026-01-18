@@ -66,12 +66,9 @@
         "format": "strict_date_optional_time||epoch_millis"
       },
       "attributes": {
-        "type": "nested",
-        "properties": {
-          "name": {
-            "type": "keyword"
-          },
-          "value": {
+        "type": "text",
+        "fields": {
+          "keyword": {
             "type": "keyword"
           }
         }

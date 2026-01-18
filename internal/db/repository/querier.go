@@ -177,6 +177,7 @@ type Querier interface {
 	GetProductBySku(ctx context.Context, arg GetProductBySkuParams) (Product, error)
 	GetProductBySlug(ctx context.Context, arg GetProductBySlugParams) (Product, error)
 	GetProductDetail(ctx context.Context, arg GetProductDetailParams) (GetProductDetailRow, error)
+	GetProductForIndexingById(ctx context.Context, id uuid.UUID) (GetProductForIndexingByIdRow, error)
 	GetProductImages(ctx context.Context, productIds []uuid.UUID) ([]GetProductImagesRow, error)
 	GetProductList(ctx context.Context, arg GetProductListParams) ([]GetProductListRow, error)
 	GetProductRating(ctx context.Context, id uuid.UUID) (ProductRating, error)
