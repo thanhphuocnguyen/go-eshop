@@ -7,158 +7,12 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
-	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
 )
-
-// @Summary Cancel order
-// @Description Cancel order by order ID
-// @Tags orders
-// @Accept json
-// @Produce json
-// @Param id path int true "Order ID"
-// @Security BearerAuth
-// @Success 200 {object} dto.ApiResponse[uuid.UUID]
-// @Failure 400 {object} dto.ErrorResp
-// @Failure 401 {object} dto.ErrorResp
-// @Failure 500 {object} dto.ErrorResp
-// @Router /admin/orders/{orderId}/cancel [put]
-func (s *Server) adminCancelOrder(w http.ResponseWriter, r *http.Request) {
-	c := r.Context()
-	_, claims, err := jwtauth.FromContext(c)
-	if err != nil {
-		RespondInternalServerError(w, UnauthorizedCode, fmt.Errorf("authorization payload is not provided"))
-		return
-	}
-
-	id, err := GetUrlParam(r, "id")
-	if err != nil {
-		RespondBadRequest(w, InvalidBodyCode, err)
-		return
-	}
-	var req models.CancelOrderModel
-	if err := s.GetRequestBody(r, &req); err != nil {
-		RespondBadRequest(w, InvalidBodyCode, err)
-		return
-	}
-
-	order, err := s.repo.GetOrder(c, uuid.MustParse(id))
-	if err != nil {
-		RespondInternalServerError(w, InternalServerErrorCode, err)
-		return
-	}
-
-	if order.Status == repository.OrderStatusCancelled || order.Status == repository.OrderStatusRefunded {
-		RespondBadRequest(w, InvalidPaymentCode, errors.New("order is already cancelled or refunded"))
-		return
-	}
-
-	userRole := claims["role"].(string)
-	userID := uuid.MustParse(claims["userId"].(string))
-
-	if order.UserID != userID && userRole != "admin" {
-		RespondForbidden(w, PermissionDeniedCode, errors.New("you do not have permission to access this order"))
-		return
-	}
-
-	paymentRow, err := s.repo.GetPaymentByOrderID(c, order.ID)
-	if err != nil && !errors.Is(err, repository.ErrRecordNotFound) {
-		RespondInternalServerError(w, InternalServerErrorCode, err)
-		return
-	}
-
-	// if order status is not pending or user is not admin
-	if order.Status != repository.OrderStatusPending || (!errors.Is(err, repository.ErrRecordNotFound) && paymentRow.Status != repository.PaymentStatusPending) {
-		RespondBadRequest(w, PermissionDeniedCode, errors.New("order cannot be cancelled"))
-		return
-	}
-
-	// if order
-	cancelOrderTxParams := repository.CancelOrderTxArgs{
-		OrderID: uuid.MustParse(id),
-		CancelPaymentFromMethod: func(paymentID string, method string) error {
-			req := payment.RefundRequest{
-				TransactionID: paymentID,
-				Amount:        paymentRow.Amount.Int.Int64(),
-			}
-			_, err = s.paymentSrv.RefundPayment(c, req, *paymentRow.Gateway)
-			return err
-		},
-	}
-	ordId, err := s.repo.CancelOrderTx(c, cancelOrderTxParams)
-
-	if err != nil {
-		RespondInternalServerError(w, InternalServerErrorCode, err)
-		return
-	}
-	s.cacheSrv.Delete(c, "order_detail:"+id)
-	RespondSuccess(w, ordId)
-}
-
-// @Summary Refund order
-// @Description Refund order by order ID
-// @Tags orders
-// @Accept json
-// @Produce json
-// @Param id path int true "Order ID"
-// @Security BearerAuth
-// @Success 200 {object} dto.ApiResponse[repository.GetOrderRow]
-// @Failure 400 {object} dto.ErrorResp
-// @Failure 401 {object} dto.ErrorResp
-// @Failure 500 {object} dto.ErrorResp
-// @Router /admin/order/{orderId}/refund [put]
-func (s *Server) adminRefundOrder(w http.ResponseWriter, r *http.Request) {
-	c := r.Context()
-	id, err := GetUrlParam(r, "id")
-	if err != nil {
-		RespondBadRequest(w, InvalidBodyCode, err)
-		return
-	}
-	var req models.RefundOrderModel
-	if err := s.GetRequestBody(r, &req); err != nil {
-		RespondBadRequest(w, InvalidBodyCode, err)
-		return
-	}
-	order, err := s.repo.GetOrder(c, uuid.MustParse(id))
-	if err != nil {
-		if err == repository.ErrRecordNotFound {
-			RespondNotFound(w, NotFoundCode, fmt.Errorf("order with ID %s not found", id))
-		}
-		RespondInternalServerError(w, InternalServerErrorCode, err)
-		return
-	}
-
-	if order.Status != repository.OrderStatusDelivered {
-		RespondBadRequest(w, InvalidPaymentCode, errors.New("order cannot be refunded"))
-		return
-	}
-
-	err = s.repo.RefundOrderTx(c, repository.RefundOrderTxArgs{
-		OrderID: uuid.MustParse(id),
-		RefundPaymentFromMethod: func(paymentID string, method string) (string, error) {
-			req := payment.RefundRequest{
-				TransactionID: paymentID,
-				Amount:        order.TotalPrice.Int.Int64(),
-				Reason:        req.Reason,
-			}
-			rs, err := s.paymentSrv.RefundPayment(c, req, method)
-			return rs.Reason, err
-		},
-	})
-
-	if err != nil {
-		RespondInternalServerError(w, InternalServerErrorCode, err)
-		return
-	}
-	s.cacheSrv.Delete(c, "order_detail:"+id)
-
-	RespondSuccess(w, order)
-}
 
 // adminGetCategories retrieves a list of Categories.
 // @Summary Get a list of Categories
@@ -931,5 +785,42 @@ func (s *Server) adminDeleteOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.cacheSrv.Delete(c, "order_detail:"+id)
+	RespondNoContent(w)
+}
+
+// @Summary Delete a Collection
+// @Description Delete a Collection
+// @ID delete-Collection
+// @Accept json
+// @Tags admin
+// @Produce json
+// @Param id path int true "Collection ID"
+// @Success 204 {object} nil
+// @Failure 400 {object} ErrorResp
+// @Failure 500 {object} ErrorResp
+// @Router /admin/collections/{id} [delete]
+func (s *Server) adminDeleteCollection(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	id, err := GetUrlParam(r, "id")
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
+	_, err = s.repo.GetCollectionByID(c, uuid.MustParse(id))
+	if err != nil {
+		if errors.Is(err, repository.ErrRecordNotFound) {
+			RespondNotFound(w, NotFoundCode, err)
+			return
+		}
+		RespondInternalServerError(w, InternalServerErrorCode, err)
+		return
+	}
+
+	err = s.repo.DeleteCollection(c, uuid.MustParse(id))
+	if err != nil {
+		RespondInternalServerError(w, InternalServerErrorCode, err)
+		return
+	}
 	RespondNoContent(w)
 }

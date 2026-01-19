@@ -19,7 +19,11 @@ const (
 )
 
 type TaskProcessor interface {
+	ProcessSendVerifyEmail(ctx context.Context, task *asynq.Task) error
 	ProcessSendOrderCreatedEmail(ctx context.Context, task *asynq.Task) error
+	ProcessIndexProduct(ctx context.Context, task *asynq.Task) error
+	ProcessUpdateIndexProduct(ctx context.Context, task *asynq.Task) error
+	ProcessDeleteIndexProduct(ctx context.Context, task *asynq.Task) error
 	Start() error
 	Shutdown()
 }
@@ -68,6 +72,9 @@ func (p *RedisTaskProcessor) Start() error {
 	// register task handlers
 	mux.HandleFunc(OrderCreatedEmailTaskType, p.ProcessSendOrderCreatedEmail)
 	mux.HandleFunc(VerifyEmailTaskType, p.ProcessSendVerifyEmail)
+	mux.HandleFunc(DeleteIndexProductTaskType, p.ProcessDeleteIndexProduct)
+	mux.HandleFunc(IndexProductTaskType, p.ProcessIndexProduct)
+	mux.HandleFunc(UpdateIndexProductTaskType, p.ProcessUpdateIndexProduct)
 
 	return p.asynqServer.Start(mux)
 }

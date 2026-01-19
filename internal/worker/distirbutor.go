@@ -10,6 +10,9 @@ import (
 type TaskDistributor interface {
 	SendOrderCreatedEmailTask(ctx context.Context, payload *PayloadSendOrderCreatedEmailTask, options ...asynq.Option) error
 	SendVerifyAccountEmail(ctx context.Context, payload *PayloadVerifyEmail, options ...asynq.Option) error
+	SendIndexProductTask(ctx context.Context, payload *PayloadIndexProduct, options ...asynq.Option) error
+	SendUpdateIndexProductTask(ctx context.Context, payload *PayloadIndexProduct, options ...asynq.Option) error
+	SendDeleteIndexProductTask(ctx context.Context, payload *PayloadIndexProduct, options ...asynq.Option) error
 	Shutdown() error
 }
 
