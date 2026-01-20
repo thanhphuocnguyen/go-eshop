@@ -12,6 +12,10 @@ import (
 	"time"
 
 	"github.com/elastic/go-elasticsearch/v9/esutil"
+	"github.com/elastic/go-elasticsearch/v9/typedapi/core/search"
+	"github.com/elastic/go-elasticsearch/v9/typedapi/indices/getmapping"
+	"github.com/elastic/go-elasticsearch/v9/typedapi/types"
+	"github.com/elastic/go-elasticsearch/v9/typedapi/types/enums/dynamicmapping"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 )
 
@@ -42,19 +46,63 @@ func NewProductIndexer(store *ESStore) *ProductIndexer {
 	return &ProductIndexer{esStore: store}
 }
 
-func (pi *ProductIndexer) CreateIndex() error {
-	// remove index first
-	err := pi.esStore.DeleteIndex(PRODUCT_INDEX)
-	if err != nil {
-		return err
+func (pi *ProductIndexer) CreateIndex(ctx context.Context) error {
+	numberOfShard := "1"
+	analyzer := types.CustomAnalyzer{
+		Type:      "custom",
+		Tokenizer: "standard",
+		Filter:    []string{"lowercase", "asciifolding"},
 	}
-	// read mapping from file
-	mapping, err := readMappingFromFile("mappings/product_mapping.json")
-	if err != nil {
-		return err
+	settings := &types.IndexSettings{
+		NumberOfShards: &numberOfShard,
+		Analysis: &types.IndexSettingsAnalysis{
+			Analyzer: map[string]types.Analyzer{
+				"custom_analyzer": &analyzer,
+			},
+		},
+	}
+	nameAnalyzer := "custom_analyzer"
+	mappings := &types.TypeMapping{
+		Dynamic: &dynamicmapping.Strict,
+		Properties: map[string]types.Property{
+			"id": types.NewKeywordProperty(),
+			"name": types.TextProperty{
+				Analyzer: &nameAnalyzer,
+				Fields: map[string]types.Property{
+					"keyword": types.NewKeywordProperty(),
+				},
+			},
+			"description":       types.NewTextProperty(),
+			"short_description": types.NewTextProperty(),
+			"is_active":         types.NewBooleanProperty(),
+			"slug":              types.NewKeywordProperty(),
+			"sku":               types.NewKeywordProperty(),
+			"price":             types.NewDoubleNumberProperty(),
+			"categories": types.TextProperty{
+				Analyzer: &nameAnalyzer,
+				Fields: map[string]types.Property{
+					"keyword": types.NewKeywordProperty(),
+				},
+			},
+			"brand": types.TextProperty{
+				Analyzer: &nameAnalyzer,
+				Fields: map[string]types.Property{
+					"keyword": types.NewKeywordProperty(),
+				},
+			},
+			"rating":     types.NewFloatNumberProperty(),
+			"in_stock":   types.NewBooleanProperty(),
+			"created_at": types.NewDateProperty(),
+			"attributes": types.TextProperty{
+				Analyzer: &nameAnalyzer,
+				Fields: map[string]types.Property{
+					"keyword": types.NewKeywordProperty(),
+				},
+			},
+		},
 	}
 	// res, err := pi.esStore.CreateIndex()
-	return pi.esStore.CreateIndex(PRODUCT_INDEX, mapping)
+	return pi.esStore.CreateIndex(ctx, PRODUCT_INDEX, mappings, settings)
 }
 
 func readMappingFromFile(path string) (string, error) {
@@ -71,18 +119,22 @@ func readMappingFromFile(path string) (string, error) {
 	return string(data), nil
 }
 
-func (pi *ProductIndexer) IndexProduct(product repository.GetProductsForIndexingRow) error {
+func (pi *ProductIndexer) IndexProduct(ctx context.Context, product repository.GetProductsForIndexingRow) error {
 	indexDoc := pi.convertToIndexDocument(product)
-	return pi.esStore.IndexDocument(PRODUCT_INDEX, product.ID.String(), indexDoc)
+	return pi.esStore.IndexDocument(ctx, PRODUCT_INDEX, product.ID.String(), indexDoc)
 }
 
-func (pi *ProductIndexer) UpdateProduct(productID string, updatedProduct repository.GetProductsForIndexingRow) error {
+func (pi *ProductIndexer) UpdateProduct(ctx context.Context, productID string, updatedProduct repository.GetProductsForIndexingRow) error {
 	indexDoc := pi.convertToIndexDocument(updatedProduct)
-	return pi.esStore.UpdateDocument(PRODUCT_INDEX, productID, indexDoc)
+	jsonData, err := json.Marshal(indexDoc)
+	if err != nil {
+		return err
+	}
+	return pi.esStore.UpdateDocument(ctx, PRODUCT_INDEX, productID, jsonData)
 }
 
-func (pi *ProductIndexer) DeleteProduct(productID string) error {
-	return pi.esStore.DeleteDocument(PRODUCT_INDEX, productID)
+func (pi *ProductIndexer) DeleteProduct(ctx context.Context, productID string) error {
+	return pi.esStore.DeleteDocument(ctx, PRODUCT_INDEX, productID)
 }
 
 // convertToIndexDocument converts database row to Elasticsearch index document
@@ -99,7 +151,7 @@ func (pi *ProductIndexer) convertToIndexDocument(row repository.GetProductsForIn
 		Sku:              row.BaseSku,
 		Categories:       row.Categories,
 		Brand:            row.Brand,
-		InStock:          row.TotalStock > 0,
+		InStock:          row.TotalStock != nil && *row.TotalStock > 0,
 		CreatedAt:        row.CreatedAt,
 		Attributes:       row.AttributeValues,
 		Price:            price.Float64,
@@ -145,6 +197,7 @@ func (pi *ProductIndexer) BulkIndexProducts(ctx context.Context, products []repo
 			// OnSuccess is called for each successful operation
 			OnSuccess: func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem) {
 				atomic.AddUint64(&countSuccessful, 1)
+				fmt.Printf("[%d] %s test/%s", res.Status, res.Result, item.DocumentID)
 			},
 			// OnFailure is called for each failed operation
 			OnFailure: func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem, err error) {
@@ -162,22 +215,23 @@ func (pi *ProductIndexer) BulkIndexProducts(ctx context.Context, products []repo
 	return countSuccessful, err
 }
 
-func (pi *ProductIndexer) BulkDeleteProducts() error {
-	return pi.esStore.DeleteIndex(PRODUCT_INDEX)
+func (pi *ProductIndexer) BulkDeleteProducts(ctx context.Context) error {
+	return pi.esStore.DeleteIndex(ctx, PRODUCT_INDEX)
 }
 
-func (pi *ProductIndexer) GetMapping() (map[string]interface{}, error) {
-	return pi.esStore.GetMapping(PRODUCT_INDEX)
+func (pi *ProductIndexer) GetMapping(ctx context.Context) (getmapping.Response, error) {
+	return pi.esStore.GetMapping(ctx, PRODUCT_INDEX)
 }
 
-func (pi *ProductIndexer) GetProducts() ([]interface{}, error) {
-	query := map[string]interface{}{
-		"size": 1000,
-		"query": map[string]interface{}{
-			"match_all": map[string]interface{}{},
+func (pi *ProductIndexer) GetProducts(ctx context.Context) ([]interface{}, error) {
+	sz := 1000
+	query := &search.Request{
+		Size: &sz,
+		Query: &types.Query{
+			MatchAll: types.NewMatchAllQuery(),
 		},
 	}
-	res, err := pi.esStore.QueryDocuments(PRODUCT_INDEX, query)
+	res, err := pi.esStore.QueryDocuments(ctx, PRODUCT_INDEX, query)
 	if err != nil {
 		return nil, err
 	}

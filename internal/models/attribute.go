@@ -10,7 +10,8 @@ type ProductAttributeValue struct {
 }
 
 type AttributeModel struct {
-	Name string `json:"name" validate:"required"`
+	Name   string   `json:"name" validate:"required"`
+	Values []string `json:"values" validate:"omitempty,dive,required"`
 }
 
 type AttributeValueModel struct {

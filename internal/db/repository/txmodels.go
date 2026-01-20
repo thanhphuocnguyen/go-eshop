@@ -8,11 +8,11 @@ type ProductAttributesTxParam struct {
 }
 
 type CreateProductVariantTxParams struct {
-	Price      float64                    `json:"price" validate:"required,gt=0"`
-	Stock      int32                      `json:"stock_qty" validate:"required,gte=0"`
-	Weight     *float64                   `json:"weight" validate:"omitempty,gte=0"`
-	IsActive   *bool                      `json:"is_active" validate:"omitempty"`
-	Attributes []ProductAttributesTxParam `json:"attributes" validate:"min=1,dive"`
+	Description     string   `json:"description"`
+	Price           float64  `json:"price" validate:"required,gt=0"`
+	Stock           int32    `json:"stock_qty" validate:"required,gte=0"`
+	Weight          *float64 `json:"weight" validate:"omitempty,gte=0"`
+	AttributeValues []int64  `json:"attribute_values" validate:"min=1,dive"`
 }
 
 type UpdateProductVariantTxParams struct {
@@ -33,6 +33,7 @@ type CreateProductTxArgs struct {
 	Attributes    []int32
 	CategoryIDs   []string
 	CollectionIDs []string
+	Variants      []CreateProductVariantTxParams
 }
 
 type UpdateProductTxArgs struct {
@@ -40,6 +41,11 @@ type UpdateProductTxArgs struct {
 	Attributes    *[]int32
 	CategoryIDs   *[]string
 	CollectionIDs *[]string
+}
+
+type CreateProductVariantTxArgs struct {
+	Variant         CreateProductVariantParams
+	AttributeValues []int64
 }
 
 type AttributeDataSnapshot struct {

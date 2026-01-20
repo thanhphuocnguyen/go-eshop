@@ -33,7 +33,7 @@ func ExecuteIndexer(ctx context.Context) int {
 				return err
 			}
 
-			if err := client.Ping(); err != nil {
+			if err := client.Ping(ctx); err != nil {
 				log.Error().Err(err).Msg("failed to ping elasticsearch")
 				return err
 			}
@@ -58,7 +58,7 @@ func ExecuteIndexer(ctx context.Context) int {
 						return err
 					}
 				case "create-product-index":
-					if err := createProductIndex(productIndexer); err != nil {
+					if err := createProductIndex(ctx, productIndexer); err != nil {
 						return err
 					}
 				default:
@@ -109,6 +109,6 @@ func indexProducts(ctx context.Context, client *elasticsearch.ProductIndexer, pg
 	return nil
 }
 
-func createProductIndex(client *elasticsearch.ProductIndexer) error {
-	return client.CreateIndex()
+func createProductIndex(ctx context.Context, client *elasticsearch.ProductIndexer) error {
+	return client.CreateIndex(ctx)
 }

@@ -35,18 +35,18 @@ func (s *Server) addAdminRoutes(r chi.Router) {
 			// Product routes
 			r.Route("/products", func(r chi.Router) {
 				r.Get("/", s.adminGetProducts)
-				r.Post("/", s.adminAddProduct)
+				r.Post("/", s.createProduct)
 
 				r.Route("/{id}", func(r chi.Router) {
-					r.Put("/", s.adminUpdateProduct)
+					r.Put("/", s.updateProduct)
 					r.Delete("/", s.adminDeleteProduct)
 					r.Post("/images", s.adminUploadProductImage)
 
 					r.Route("/variants", func(r chi.Router) {
-						r.Post("/", s.adminAddVariant)
+						r.Post("/", s.createVariant)
 						r.Get("/", s.getProductVariants)
 						r.Get("/{variantId}", s.getVariantByProductId)
-						r.Put("/{variantId}", s.adminUpdateVariant)
+						r.Put("/{variantId}", s.updateVariant)
 						r.Post("/{variantId}/images", s.adminUploadVariantImage)
 						r.Delete("/{variantId}", s.adminDeleteVariant)
 					})
@@ -55,11 +55,11 @@ func (s *Server) addAdminRoutes(r chi.Router) {
 
 			// Attribute routes
 			r.Route("/attributes", func(r chi.Router) {
-				r.Post("/", s.adminCreateAttribute)
+				r.Post("/", s.createAttribute)
 				r.Get("/", s.adminGetAttributes)
 				r.Get("/{id}", s.adminGetAttributeByID)
-				r.Put("/{id}", s.adminUpdateAttribute)
-				r.Delete("/{id}", s.adminRemoveAttribute)
+				r.Put("/{id}", s.updateAttribute)
+				r.Delete("/{id}", s.removeAttribute)
 
 				r.Get("/product/{id}", s.adminGetAttributeValuesForProduct)
 
@@ -215,7 +215,7 @@ func (s *Server) adminGetProducts(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /products [post]
-func (s *Server) adminAddProduct(w http.ResponseWriter, r *http.Request) {
+func (s *Server) createProduct(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	var req models.CreateProductModel
 	if err := s.GetRequestBody(r, &req); err != nil {
@@ -235,12 +235,37 @@ func (s *Server) adminAddProduct(w http.ResponseWriter, r *http.Request) {
 	createParams.BaseSku = req.BaseSku
 	createParams.BrandID = utils.GetPgTypeUUIDFromString(req.BrandID)
 
+	// Convert variants if provided
+	variants := make([]repository.CreateProductVariantTxParams, 0, len(req.Variants))
+	for _, variantReq := range req.Variants {
+		// Convert int64 to int32 for AttributeValues
+		attributeValues := make([]int64, len(variantReq.AttributeValues))
+		copy(attributeValues, variantReq.AttributeValues)
+
+		variant := repository.CreateProductVariantTxParams{
+			Description:     variantReq.Description,
+			Price:           variantReq.Price,
+			Stock:           variantReq.StockQty,
+			AttributeValues: attributeValues,
+		}
+
+		if variantReq.Description != "" {
+			variant.Description = variantReq.Description
+		}
+		if variantReq.Weight != nil {
+			variant.Weight = variantReq.Weight
+		}
+
+		variants = append(variants, variant)
+	}
+
 	// Use transaction to ensure all operations succeed or fail together
 	txArgs := repository.CreateProductTxArgs{
 		Product:       createParams,
 		Attributes:    req.Attributes,
 		CategoryIDs:   req.CategoryIDs,
 		CollectionIDs: req.CollectionIDs,
+		Variants:      variants,
 	}
 
 	product, err := s.repo.CreateProductTx(c, txArgs)
@@ -271,7 +296,7 @@ func (s *Server) adminAddProduct(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{productId} [put]
-func (s *Server) adminUpdateProduct(w http.ResponseWriter, r *http.Request) {
+func (s *Server) updateProduct(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	id, err := GetUrlParam(r, "id")
 	if err != nil {
@@ -476,7 +501,7 @@ func (s *Server) adminUploadProductImage(w http.ResponseWriter, r *http.Request)
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{id}/variants [post]
-func (s *Server) adminAddVariant(w http.ResponseWriter, r *http.Request) {
+func (s *Server) createVariant(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	id := chi.URLParam(r, "id")
 	if id == "" {
@@ -537,7 +562,7 @@ func (s *Server) adminAddVariant(w http.ResponseWriter, r *http.Request) {
 
 	createParams := repository.CreateProductVariantParams{
 		ProductID:   prod.ID,
-		Description: req.Description,
+		Description: &req.Description,
 		Sku:         variantSku,
 		Price:       utils.GetPgNumericFromFloat(req.Price),
 		Stock:       req.StockQty,
@@ -546,23 +571,15 @@ func (s *Server) adminAddVariant(w http.ResponseWriter, r *http.Request) {
 		createParams.Weight = utils.GetPgNumericFromFloat(*req.Weight)
 	}
 
-	variant, err := s.repo.CreateProductVariant(c, createParams)
-	if err != nil {
-		log.Error().Err(err).Timestamp().Msg("CreateProduct")
-		RespondInternalServerError(w, InternalServerErrorCode, err)
-		return
+	// Use transaction to ensure all operations succeed or fail together
+	txArgs := repository.CreateProductVariantTxArgs{
+		Variant:         createParams,
+		AttributeValues: req.AttributeValues,
 	}
-	variantAttrParams := make([]repository.CreateBulkProductVariantAttributeParams, len(req.AttributeValues))
 
-	for i, attrValID := range req.AttributeValues {
-		variantAttrParams[i] = repository.CreateBulkProductVariantAttributeParams{
-			VariantID:        variant.ID,
-			AttributeValueID: attrValID,
-		}
-	}
-	_, err = s.repo.CreateBulkProductVariantAttribute(c, variantAttrParams)
+	variant, err := s.repo.CreateProductVariantTx(c, txArgs)
 	if err != nil {
-		log.Error().Err(err).Msg("CreateBulkProductVariantAttribute")
+		log.Error().Err(err).Timestamp().Msg("CreateProductVariantTx")
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
@@ -694,7 +711,7 @@ func (s *Server) getVariantByProductId(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{id}/variants/{variantId} [put]
-func (s *Server) adminUpdateVariant(w http.ResponseWriter, r *http.Request) {
+func (s *Server) updateVariant(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	id := chi.URLParam(r, "id")
 	variantId := chi.URLParam(r, "variantId")

@@ -160,8 +160,8 @@ SELECT p.*, b.name as brand,
     ARRAY_AGG(DISTINCT cl.name) FILTER (WHERE cl.id IS NOT NULL) AS collections,
     ARRAY_AGG(DISTINCT av.value) FILTER (WHERE av.id IS NOT NULL) AS attribute_values,
     MIN(pv.price) as min_price,
-    COUNT(pv.id) as variant_count,
-    SUM(pv.stock) as total_stock
+    COALESCE(COUNT(pv.id), 0) as variant_count,
+    COALESCE(SUM(pv.stock), 0) as total_stock
 FROM products p
 JOIN brands AS b ON p.brand_id = b.id
 LEFT JOIN category_products AS cp ON p.id = cp.product_id
@@ -182,8 +182,8 @@ SELECT p.*, b.name as brand,
     ARRAY_AGG(DISTINCT cl.name) FILTER (WHERE cl.id IS NOT NULL) AS collections,
     ARRAY_AGG(DISTINCT av.value) FILTER (WHERE av.id IS NOT NULL) AS attribute_values,
     MIN(pv.price) as min_price,
-    COUNT(pv.id) as variant_count,
-    SUM(pv.stock) as total_stock
+    COALESCE(COUNT(pv.id), 0) as variant_count,
+    COALESCE(SUM(pv.stock), 0) as total_stock
 FROM products p
 JOIN brands AS b ON p.brand_id = b.id
 LEFT JOIN category_products AS cp ON p.id = cp.product_id

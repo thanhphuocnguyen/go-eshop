@@ -23,7 +23,7 @@ import (
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/attributes [post]
-func (s *Server) adminCreateAttribute(w http.ResponseWriter, r *http.Request) {
+func (s *Server) createAttribute(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	var req models.AttributeModel
 	if err := s.GetRequestBody(r, &req); err != nil {
@@ -35,6 +35,22 @@ func (s *Server) adminCreateAttribute(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
+	}
+
+	if len(req.Values) > 0 {
+		params := make([]repository.CreateAttributeValuesParams, len(req.Values))
+		for i, val := range req.Values {
+			params[i] = repository.CreateAttributeValuesParams{
+				AttributeID: attribute.ID,
+				Value:       val,
+			}
+		}
+
+		_, err = s.repo.CreateAttributeValues(c, params)
+		if err != nil {
+			RespondInternalServerError(w, InternalServerErrorCode, err)
+			return
+		}
 	}
 
 	attributeResp := dto.AttributeDetail{
@@ -161,7 +177,7 @@ func (s *Server) adminGetAttributeByID(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/attributes/{id} [put]
-func (s *Server) adminUpdateAttribute(w http.ResponseWriter, r *http.Request) {
+func (s *Server) updateAttribute(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	idParam, err := GetUrlParam(r, "id")
 	if err != nil {
@@ -204,7 +220,7 @@ func (s *Server) adminUpdateAttribute(w http.ResponseWriter, r *http.Request) {
 // @Success 204 {object} nil
 // @Failure 500 {object} ErrorResp
 // @Router /admin/attributes/{id} [delete]
-func (s *Server) adminRemoveAttribute(w http.ResponseWriter, r *http.Request) {
+func (s *Server) removeAttribute(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	idParam, err := GetUrlParam(r, "id")
 	if err != nil {

@@ -8,15 +8,19 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/elastic/go-elasticsearch/v9"
 	"github.com/elastic/go-elasticsearch/v9/esutil"
+	"github.com/elastic/go-elasticsearch/v9/typedapi/core/search"
+	"github.com/elastic/go-elasticsearch/v9/typedapi/core/update"
+	"github.com/elastic/go-elasticsearch/v9/typedapi/indices/create"
+	"github.com/elastic/go-elasticsearch/v9/typedapi/indices/getmapping"
+	"github.com/elastic/go-elasticsearch/v9/typedapi/types"
 )
 
 type ESStore struct {
-	es *elasticsearch.Client
+	es *elasticsearch.TypedClient
 }
 
 func NewClient(url string) (*ESStore, error) {
@@ -36,7 +40,7 @@ func NewClient(url string) (*ESStore, error) {
 		},
 	}
 
-	es, err := elasticsearch.NewClient(cfg)
+	es, err := elasticsearch.NewTypedClient(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("error creating the client: %s", err)
 	}
@@ -44,90 +48,65 @@ func NewClient(url string) (*ESStore, error) {
 	return &ESStore{es: es}, nil
 }
 
-func (c *ESStore) Ping() error {
-	res, err := c.es.Ping()
+func (c *ESStore) Ping(ctx context.Context) error {
+	res, err := c.es.Ping().Do(ctx)
 	if err != nil {
 		return fmt.Errorf("error pinging elasticsearch: %s", err)
 	}
-	defer res.Body.Close()
 
-	if res.IsError() {
-		return fmt.Errorf("error pinging elasticsearch: %s", res.String())
+	if !res {
+		return fmt.Errorf("error pinging elasticsearch: no response")
 	}
 
 	return nil
 }
 
-func (c *ESStore) CreateIndex(index string, mapping string) error {
-	res, err := c.es.Indices.Create(index, c.es.Indices.Create.WithBody(strings.NewReader(mapping)))
+func (c *ESStore) CreateIndex(ctx context.Context, index string, mapping *types.TypeMapping, setting *types.IndexSettings) error {
+	res, err := c.es.Indices.Create(index).Request(&create.Request{
+		Mappings: mapping,
+		Settings: setting,
+	}).Do(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating index: %s", err)
 	}
-	defer res.Body.Close()
 
-	if res.IsError() {
-		return fmt.Errorf("error creating index: %s", res.String())
+	if !res.Acknowledged {
+		return fmt.Errorf("error creating index: not acknowledged")
 	}
 
 	return nil
 }
 
-func (c *ESStore) IndexExists(index string) (bool, error) {
-	res, err := c.es.Indices.Exists([]string{index})
+func (c *ESStore) IndexExists(ctx context.Context, index string) (bool, error) {
+	res, err := c.es.Indices.Exists(index).Do(ctx)
 	if err != nil {
 		return false, fmt.Errorf("error checking if index exists: %s", err)
 	}
-	defer res.Body.Close()
 
-	return res.StatusCode == 200, nil
+	return res, nil
 }
 
-func (c *ESStore) IndexDocument(index string, documentID string, document interface{}) error {
+func (c *ESStore) IndexDocument(ctx context.Context, index string, documentID string, document interface{}) error {
 
-	res, err := c.es.Index(index, esutil.NewJSONReader(&document), c.es.Index.WithDocumentID(documentID))
+	_, err := c.es.Index(index).Request(document).Id(documentID).Do(ctx)
 	if err != nil {
 		return fmt.Errorf("error indexing document: %s", err)
-	}
-	defer res.Body.Close()
-
-	if res.IsError() {
-		return fmt.Errorf("error indexing document: %s", res.String())
 	}
 
 	return nil
 }
 
-func (c *ESStore) QueryDocuments(index string, query interface{}) ([]interface{}, error) {
+func (c *ESStore) QueryDocuments(ctx context.Context, index string, query *search.Request) ([]interface{}, error) {
 
-	res, err := c.es.Search(
-		c.es.Search.WithIndex(index),
-		c.es.Search.WithBody(esutil.NewJSONReader(&query)),
-	)
+	res, err := c.es.Search().Index(index).Request(query).Do(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error searching documents: %s", err)
 	}
-	defer res.Body.Close()
-
-	if res.IsError() {
-		return nil, fmt.Errorf("error searching documents: %s", res.String())
-	}
-
-	var result struct {
-		Hits struct {
-			Hits []struct {
-				Source json.RawMessage `json:"_source"`
-			} `json:"hits"`
-		} `json:"hits"`
-	}
-
-	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("error parsing the response body: %s", err)
-	}
 
 	var documents []interface{}
-	for _, hit := range result.Hits.Hits {
+	for _, hit := range res.Hits.Hits {
 		var doc interface{}
-		if err := json.Unmarshal(hit.Source, &doc); err != nil {
+		if err := json.Unmarshal(hit.Source_, &doc); err != nil {
 			log.Printf("error unmarshaling document: %s", err)
 			continue
 		}
@@ -137,30 +116,23 @@ func (c *ESStore) QueryDocuments(index string, query interface{}) ([]interface{}
 	return documents, nil
 }
 
-func (c *ESStore) UpdateDocument(index string, documentID string, update interface{}) error {
+func (c *ESStore) UpdateDocument(ctx context.Context, index string, documentID string, updateDoc json.RawMessage) error {
 
-	res, err := c.es.Update(index, documentID, esutil.NewJSONReader(&update))
+	_, err := c.es.Update(index, documentID).Request(&update.Request{
+		Upsert: updateDoc,
+		Doc:    updateDoc,
+	}).Do(ctx)
 	if err != nil {
 		return fmt.Errorf("error updating document: %s", err)
-	}
-	defer res.Body.Close()
-
-	if res.IsError() {
-		return fmt.Errorf("error updating document: %s", res.String())
 	}
 
 	return nil
 }
 
-func (c *ESStore) DeleteDocument(index string, documentID string) error {
-	res, err := c.es.Delete(index, documentID)
+func (c *ESStore) DeleteDocument(ctx context.Context, index string, documentID string) error {
+	_, err := c.es.Delete(index, documentID).Do(ctx)
 	if err != nil {
 		return fmt.Errorf("error deleting document: %s", err)
-	}
-	defer res.Body.Close()
-
-	if res.IsError() {
-		return fmt.Errorf("error deleting document: %s", res.String())
 	}
 
 	return nil
@@ -190,53 +162,37 @@ func (c *ESStore) BulkIndexDocuments(ctx context.Context, index string, request 
 	return nil
 }
 
-func (c *ESStore) DeleteIndex(index string) error {
-	res, err := c.es.Indices.Exists([]string{index})
-	if res.StatusCode == 404 {
+func (c *ESStore) DeleteIndex(ctx context.Context, index string) error {
+	res, err := c.es.Indices.Exists(index).Do(ctx)
+	if res {
 		// Index does not exist, nothing to delete
 		return nil
 	}
-	res, err = c.es.Indices.Delete([]string{index})
+	delRs, err := c.es.Indices.Delete(index).Do(ctx)
 	if err != nil {
 		return fmt.Errorf("error deleting index: %s", err)
 	}
-	defer res.Body.Close()
 
-	if res.IsError() {
-		return fmt.Errorf("error deleting index: %s", res.String())
+	if !delRs.Acknowledged {
+		return fmt.Errorf("error deleting index: %s", "not acknowledged")
 	}
 
 	return nil
 }
 
-func (c *ESStore) CreateMapping(index string, mapping string) error {
-	res, err := c.es.Indices.PutMapping([]string{index}, strings.NewReader(mapping))
+func (c *ESStore) CreateMapping(ctx context.Context, index string, mapping map[string]types.Property) error {
+	_, err := c.es.Indices.PutMapping(index).Properties(mapping).Do(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating mapping: %s", err)
 	}
-	defer res.Body.Close()
 
-	if res.IsError() {
-		return fmt.Errorf("error creating mapping: %s", res.String())
-	}
 	return nil
 }
 
-func (c *ESStore) GetMapping(index string) (map[string]interface{}, error) {
-	res, err := c.es.Indices.GetMapping(c.es.Indices.GetMapping.WithIndex([]string{index}...))
+func (c *ESStore) GetMapping(ctx context.Context, index string) (getmapping.Response, error) {
+	res, err := c.es.Indices.GetMapping().Index(index).Do(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error getting mapping: %s", err)
 	}
-	defer res.Body.Close()
-
-	if res.IsError() {
-		return nil, fmt.Errorf("error getting mapping: %s", res.String())
-	}
-
-	var mapping map[string]interface{}
-	if err := json.NewDecoder(res.Body).Decode(&mapping); err != nil {
-		return nil, fmt.Errorf("error parsing the response body: %s", err)
-	}
-
-	return mapping, nil
+	return res, nil
 }

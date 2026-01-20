@@ -30,6 +30,8 @@ type CreateProductModel struct {
 	Attributes    []int32  `json:"attributes" validate:"omitempty"`
 	CategoryIDs   []string `json:"categoryIds" validate:"omitempty,uuidslice"`
 	CollectionIDs []string `json:"collectionIds" validate:"omitempty,uuidslice"`
+
+	Variants []CreateProdVariantModel `json:"variants" validate:"omitempty,dive,required"`
 }
 
 type UpdateProductModel struct {
@@ -53,7 +55,7 @@ type CreateProdVariantModel struct {
 	StockQty        int32    `json:"stockQty" validate:"required,gte=0"`
 	IsActive        bool     `json:"isActive" validate:"required"`
 	AttributeValues []int64  `json:"attributeValues" validate:"required"`
-	Description     *string  `json:"description" validate:"omitempty"`
+	Description     string   `json:"description" validate:"omitempty"`
 	Weight          *float64 `json:"weight" validate:"omitnil,omitempty,gt=0"`
 }
 

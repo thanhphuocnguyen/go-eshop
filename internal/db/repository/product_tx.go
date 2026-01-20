@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
+	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
 // CreateProductTx creates a product with its attributes, categories, and collections
@@ -63,6 +64,53 @@ func (repo *pgRepo) CreateProductTx(ctx context.Context, arg CreateProductTxArgs
 			if err != nil {
 				log.Error().Err(err).Msg("AddProductsToCollection failed in transaction")
 				return err
+			}
+		}
+
+		// Create product variants if provided
+		if len(arg.Variants) > 0 {
+			// Get attribute values to generate SKU
+			for _, variantParam := range arg.Variants {
+				attributeValues, err := q.GetAttributeValuesByIDs(ctx, variantParam.AttributeValues)
+				if err != nil {
+					log.Error().Err(err).Msg("GetAttributeValuesByIDs failed in transaction")
+					return err
+				}
+
+				variantSku := GetVariantSKUWithAttributeNames(result.BaseSku, attributeValues)
+
+				createVariantParams := CreateProductVariantParams{
+					ProductID:   result.ID,
+					Description: &variantParam.Description,
+					Sku:         variantSku,
+					Price:       utils.GetPgNumericFromFloat(variantParam.Price),
+					Stock:       variantParam.Stock,
+				}
+				if variantParam.Weight != nil {
+					createVariantParams.Weight = utils.GetPgNumericFromFloat(*variantParam.Weight)
+				}
+
+				variant, err := q.CreateProductVariant(ctx, createVariantParams)
+				if err != nil {
+					log.Error().Err(err).Msg("CreateProductVariant failed in transaction")
+					return err
+				}
+
+				// Create variant attribute associations
+				if len(variantParam.AttributeValues) > 0 {
+					variantAttrParams := make([]CreateBulkProductVariantAttributeParams, len(variantParam.AttributeValues))
+					for i, attrValID := range variantParam.AttributeValues {
+						variantAttrParams[i] = CreateBulkProductVariantAttributeParams{
+							VariantID:        variant.ID,
+							AttributeValueID: attrValID,
+						}
+					}
+					_, err = q.CreateBulkProductVariantAttribute(ctx, variantAttrParams)
+					if err != nil {
+						log.Error().Err(err).Msg("CreateBulkProductVariantAttribute failed in transaction")
+						return err
+					}
+				}
 			}
 		}
 
@@ -162,6 +210,43 @@ func (repo *pgRepo) UpdateProductTx(ctx context.Context, arg UpdateProductTxArgs
 					log.Error().Err(err).Msg("AddProductsToCollection failed in transaction")
 					return err
 				}
+			}
+		}
+
+		return nil
+	})
+
+	return result, err
+}
+
+// CreateProductVariantTx creates a product variant with its attribute values
+// within a single database transaction to ensure consistency
+func (repo *pgRepo) CreateProductVariantTx(ctx context.Context, arg CreateProductVariantTxArgs) (ProductVariant, error) {
+	var result ProductVariant
+
+	err := repo.execTx(ctx, func(q *Queries) error {
+		var err error
+
+		// Create the product variant first
+		result, err = q.CreateProductVariant(ctx, arg.Variant)
+		if err != nil {
+			log.Error().Err(err).Msg("CreateProductVariant failed in transaction")
+			return err
+		}
+
+		// Create variant attribute associations
+		if len(arg.AttributeValues) > 0 {
+			variantAttrParams := make([]CreateBulkProductVariantAttributeParams, len(arg.AttributeValues))
+			for i, attrValID := range arg.AttributeValues {
+				variantAttrParams[i] = CreateBulkProductVariantAttributeParams{
+					VariantID:        result.ID,
+					AttributeValueID: attrValID,
+				}
+			}
+			_, err = q.CreateBulkProductVariantAttribute(ctx, variantAttrParams)
+			if err != nil {
+				log.Error().Err(err).Msg("CreateBulkProductVariantAttribute failed in transaction")
+				return err
 			}
 		}
 

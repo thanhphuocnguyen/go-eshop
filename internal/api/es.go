@@ -25,7 +25,8 @@ func (s *Server) addEsRoutes(r chi.Router) {
 }
 
 func (s *Server) createProductIndex(w http.ResponseWriter, r *http.Request) {
-	err := s.elasticClient.CreateIndex()
+	ctx := r.Context()
+	err := s.elasticClient.CreateIndex(ctx)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -35,7 +36,8 @@ func (s *Server) createProductIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) getProductMappings(w http.ResponseWriter, r *http.Request) {
-	mappings, err := s.elasticClient.GetMapping()
+	ctx := r.Context()
+	mappings, err := s.elasticClient.GetMapping(ctx)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -45,6 +47,7 @@ func (s *Server) getProductMappings(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) getIndexingProducts(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	pageQ := r.URL.Query().Get("page")
 	perPageQ := r.URL.Query().Get("per_page")
 	var page int = 1
@@ -55,7 +58,7 @@ func (s *Server) getIndexingProducts(w http.ResponseWriter, r *http.Request) {
 	if perPageQ != "" {
 		perPage, _ = strconv.Atoi(perPageQ)
 	}
-	products, err := s.repo.GetProductsForIndexing(r.Context(), repository.GetProductsForIndexingParams{
+	products, err := s.repo.GetProductsForIndexing(ctx, repository.GetProductsForIndexingParams{
 		Limit:  int64(perPage),
 		Offset: int64((page - 1) * perPage),
 	})
@@ -68,7 +71,8 @@ func (s *Server) getIndexingProducts(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) getEsProducts(w http.ResponseWriter, r *http.Request) {
-	products, err := s.elasticClient.GetProducts()
+	ctx := r.Context()
+	products, err := s.elasticClient.GetProducts(ctx)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return

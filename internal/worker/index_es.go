@@ -84,7 +84,7 @@ func (p *RedisTaskProcessor) ProcessIndexProduct(ctx context.Context, task *asyn
 		return fmt.Errorf("could not get product: %w", asynq.SkipRetry)
 	}
 
-	err = p.esClient.IndexProduct(repository.GetProductsForIndexingRow{
+	err = p.esClient.IndexProduct(ctx, repository.GetProductsForIndexingRow{
 		ID:               product.ID,
 		Name:             product.Name,
 		Description:      product.Description,
@@ -126,7 +126,7 @@ func (p *RedisTaskProcessor) ProcessUpdateIndexProduct(ctx context.Context, task
 		return fmt.Errorf("could not get product: %w", asynq.SkipRetry)
 	}
 
-	err = p.esClient.UpdateProduct(product.ID.String(), repository.GetProductsForIndexingRow{
+	err = p.esClient.UpdateProduct(ctx, product.ID.String(), repository.GetProductsForIndexingRow{
 		ID:               product.ID,
 		Name:             product.Name,
 		Description:      product.Description,
@@ -168,7 +168,7 @@ func (p *RedisTaskProcessor) ProcessDeleteIndexProduct(ctx context.Context, task
 		return fmt.Errorf("could not get product: %w", asynq.SkipRetry)
 	}
 
-	err = p.esClient.DeleteProduct(product.ID.String())
+	err = p.esClient.DeleteProduct(ctx, product.ID.String())
 	log.Info().Msgf("Deleted indexed product with ID: %s", product.ID.String())
 	return err
 }

@@ -483,8 +483,8 @@ SELECT p.id, p.name, p.description, p.short_description, p.base_price, p.base_sk
     ARRAY_AGG(DISTINCT cl.name) FILTER (WHERE cl.id IS NOT NULL) AS collections,
     ARRAY_AGG(DISTINCT av.value) FILTER (WHERE av.id IS NOT NULL) AS attribute_values,
     MIN(pv.price) as min_price,
-    COUNT(pv.id) as variant_count,
-    SUM(pv.stock) as total_stock
+    COALESCE(COUNT(pv.id), 0) as variant_count,
+    COALESCE(SUM(pv.stock), 0) as total_stock
 FROM products p
 JOIN brands AS b ON p.brand_id = b.id
 LEFT JOIN category_products AS cp ON p.id = cp.product_id
@@ -529,8 +529,8 @@ type GetProductForIndexingByIdRow struct {
 	Collections        []string       `json:"collections"`
 	AttributeValues    []string       `json:"attributeValues"`
 	MinPrice           pgtype.Numeric `json:"minPrice"`
-	VariantCount       int64          `json:"variantCount"`
-	TotalStock         int64          `json:"totalStock"`
+	VariantCount       *int64         `json:"variantCount"`
+	TotalStock         *int64         `json:"totalStock"`
 }
 
 func (q *Queries) GetProductForIndexingById(ctx context.Context, id uuid.UUID) (GetProductForIndexingByIdRow, error) {
@@ -835,8 +835,8 @@ SELECT p.id, p.name, p.description, p.short_description, p.base_price, p.base_sk
     ARRAY_AGG(DISTINCT cl.name) FILTER (WHERE cl.id IS NOT NULL) AS collections,
     ARRAY_AGG(DISTINCT av.value) FILTER (WHERE av.id IS NOT NULL) AS attribute_values,
     MIN(pv.price) as min_price,
-    COUNT(pv.id) as variant_count,
-    SUM(pv.stock) as total_stock
+    COALESCE(COUNT(pv.id), 0) as variant_count,
+    COALESCE(SUM(pv.stock), 0) as total_stock
 FROM products p
 JOIN brands AS b ON p.brand_id = b.id
 LEFT JOIN category_products AS cp ON p.id = cp.product_id
@@ -885,8 +885,8 @@ type GetProductsForIndexingRow struct {
 	Collections        []string       `json:"collections"`
 	AttributeValues    []string       `json:"attributeValues"`
 	MinPrice           pgtype.Numeric `json:"minPrice"`
-	VariantCount       int64          `json:"variantCount"`
-	TotalStock         int64          `json:"totalStock"`
+	VariantCount       *int64         `json:"variantCount"`
+	TotalStock         *int64         `json:"totalStock"`
 }
 
 func (q *Queries) GetProductsForIndexing(ctx context.Context, arg GetProductsForIndexingParams) ([]GetProductsForIndexingRow, error) {
