@@ -122,7 +122,7 @@ func (s *Server) adminGetCategoryByID(w http.ResponseWriter, r *http.Request) {
 	RespondSuccess(w, resp)
 }
 
-// adminCreateCategory creates a new Category.
+// createCategory creates a new Category.
 // @Summary Create a new Category
 // @Description Create a new Category
 // @ID create-Category
@@ -134,7 +134,7 @@ func (s *Server) adminGetCategoryByID(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} dto.ErrorResp
 // @Failure 500 {object} dto.ErrorResp
 // @Router /admin/categories [post]
-func (s *Server) adminCreateCategory(w http.ResponseWriter, r *http.Request) {
+func (s *Server) createCategory(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	var req models.CreateCategoryModel
 	if err := s.GetFormData(r, &req); err != nil {
@@ -178,7 +178,7 @@ func (s *Server) adminCreateCategory(w http.ResponseWriter, r *http.Request) {
 	RespondSuccess(w, resp)
 }
 
-// adminUpdateCategory updates a Category.
+// updateCategory updates a Category.
 // @Summary Update a Category
 // @Description Update a Category
 // @ID update-Category
@@ -191,7 +191,7 @@ func (s *Server) adminCreateCategory(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} dto.ErrorResp
 // @Failure 500 {object} dto.ErrorResp
 // @Router /admin/categories/{id} [put]
-func (s *Server) adminUpdateCategory(w http.ResponseWriter, r *http.Request) {
+func (s *Server) updateCategory(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	id, err := GetUrlParam(r, "id")
 	var req models.UpdateCategoryModel
@@ -265,7 +265,7 @@ func (s *Server) adminUpdateCategory(w http.ResponseWriter, r *http.Request) {
 	RespondSuccessWithError(w, col, apiErr)
 }
 
-// adminDeleteCategory delete a Category.
+// deleteCategory delete a Category.
 // @Summary Delete a Category
 // @Description Delete a Category
 // @ID delete-Category
@@ -277,7 +277,7 @@ func (s *Server) adminUpdateCategory(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} dto.ErrorResp
 // @Failure 500 {object} dto.ErrorResp
 // @Router /admin/categories/{id} [delete]
-func (s *Server) adminDeleteCategory(w http.ResponseWriter, r *http.Request) {
+func (s *Server) deleteCategory(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	id, err := GetUrlParam(r, "id")
 	if err != nil {
@@ -314,7 +314,7 @@ func (s *Server) adminDeleteCategory(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} dto.ErrorResp
 // @Failure 500 {object} dto.ErrorResp
 // @Router /admin/brands [post]
-func (s *Server) adminCreateBrand(w http.ResponseWriter, r *http.Request) {
+func (s *Server) createBrand(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	var req models.CreateCategoryModel
 	if err := s.GetFormData(r, &req); err != nil {
@@ -456,7 +456,7 @@ func (s *Server) adminGetBrandByID(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} dto.ErrorResp
 // @Failure 500 {object} dto.ErrorResp
 // @Router /admin/brands/{id} [put]
-func (s *Server) adminUpdateBrand(w http.ResponseWriter, r *http.Request) {
+func (s *Server) updateBrand(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	id, err := GetUrlParam(r, "id")
 	if err != nil {
@@ -538,7 +538,7 @@ func (s *Server) adminUpdateBrand(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} dto.ErrorResp
 // @Failure 500 {object} dto.ErrorResp
 // @Router /admin/brands/{id} [delete]
-func (s *Server) adminDeleteBrand(w http.ResponseWriter, r *http.Request) {
+func (s *Server) deleteBrand(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	id, err := GetUrlParam(r, "id")
 	if err != nil {

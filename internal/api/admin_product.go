@@ -18,123 +18,6 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 )
 
-// Setup admin-related routes
-func (s *Server) addAdminRoutes(r chi.Router) {
-	r.Group(func(r chi.Router) {
-		r.Use(func(h http.Handler) http.Handler {
-			return authorizeMiddleware(h, "admin")
-		})
-		r.Route("/admin", func(r chi.Router) {
-			// Apply authentication and authorization middleware
-			// User routes
-			r.Route("/users", func(r chi.Router) {
-				r.Get("/", s.adminGetUsers)
-				r.Get("/{id}", s.adminGetUser)
-			})
-
-			// Product routes
-			r.Route("/products", func(r chi.Router) {
-				r.Get("/", s.adminGetProducts)
-				r.Post("/", s.createProduct)
-
-				r.Route("/{id}", func(r chi.Router) {
-					r.Put("/", s.updateProduct)
-					r.Delete("/", s.adminDeleteProduct)
-					r.Post("/images", s.adminUploadProductImage)
-
-					r.Route("/variants", func(r chi.Router) {
-						r.Post("/", s.createVariant)
-						r.Get("/", s.getProductVariants)
-						r.Get("/{variantId}", s.getVariantByProductId)
-						r.Put("/{variantId}", s.updateVariant)
-						r.Post("/{variantId}/images", s.adminUploadVariantImage)
-						r.Delete("/{variantId}", s.adminDeleteVariant)
-					})
-				})
-			})
-
-			// Attribute routes
-			r.Route("/attributes", func(r chi.Router) {
-				r.Post("/", s.createAttribute)
-				r.Get("/", s.adminGetAttributes)
-				r.Get("/{id}", s.adminGetAttributeByID)
-				r.Put("/{id}", s.updateAttribute)
-				r.Delete("/{id}", s.removeAttribute)
-
-				r.Get("/product/{id}", s.adminGetAttributeValuesForProduct)
-
-				r.Route("/{id}", func(r chi.Router) {
-					r.Post("/create", s.adminAddAttributeValue)
-					r.Put("/update/{valueId}", s.adminUpdateAttrValue)
-					r.Delete("/remove/{valueId}", s.adminRemoveAttrValue)
-				})
-			})
-
-			// Order routes
-			r.Route("/orders", func(r chi.Router) {
-				r.Get("/", s.adminGetOrders)
-				r.Get("/{id}", s.adminGetOrderDetail)
-				r.Put("/{id}/status", s.adminChangeOrderStatus)
-				r.Post("/{id}/cancel", s.adminCancelOrder)
-				r.Post("/{id}/refund", s.adminRefundOrder)
-				r.Delete("/{id}", s.adminDeleteOrder)
-			})
-
-			// Category routes
-			r.Route("/categories", func(r chi.Router) {
-				r.Get("/", s.adminGetCategories)
-				r.Get("/{id}", s.adminGetCategoryByID)
-				r.Post("/", s.adminCreateCategory)
-				r.Put("/{id}", s.adminUpdateCategory)
-				r.Delete("/{id}", s.adminDeleteCategory)
-			})
-
-			// Brand routes
-			r.Route("/brands", func(r chi.Router) {
-				r.Get("/", s.adminGetBrands)
-				r.Get("/{id}", s.adminGetBrandByID)
-				r.Post("/", s.adminCreateBrand)
-				r.Put("/{id}", s.adminUpdateBrand)
-				r.Delete("/{id}", s.adminDeleteBrand)
-			})
-
-			// Collection routes
-			r.Route("/collections", func(r chi.Router) {
-				r.Get("/", s.getCollections)
-				r.Get("/{id}", s.adminGetCollectionByID)
-				r.Post("/", s.adminCreateCollection)
-				r.Put("/{id}", s.adminUpdateCollection)
-				r.Delete("/{id}", s.adminDeleteCollection)
-			})
-
-			// Rating routes
-			r.Route("/ratings", func(r chi.Router) {
-				r.Get("/", s.adminGetRatings)
-				r.Delete("/{id}", s.adminDeleteRating)
-				r.Put("/{id}/approve", s.adminApproveRating)
-				r.Put("/{id}/ban", s.adminBanUserRating)
-			})
-
-			// Discount routes
-			r.Route("/discounts", func(r chi.Router) {
-				r.Post("/", s.adminCreateDiscount)
-				r.Get("/", s.adminGetDiscounts)
-				r.Get("/{id}", s.getDiscountByID)
-				r.Put("/{id}", s.adminUpdateDiscount)
-				r.Delete("/{id}", s.adminDeleteDiscount)
-
-				r.Route("/{id}/rules", func(r chi.Router) {
-					r.Post("/", s.adminAddDiscountRule)
-					r.Get("/", s.adminGetDiscountRules)
-					r.Get("/{ruleId}", s.adminGetDiscountRuleByID)
-					r.Put("/{ruleId}", s.adminUpdateDiscountRule)
-					r.Delete("/{ruleId}", s.adminDeleteDiscountRule)
-				})
-			})
-		})
-	})
-}
-
 // adminGetProducts godoc
 // @Summary Get admin list of products
 // @Schemes http
@@ -274,7 +157,7 @@ func (s *Server) createProduct(w http.ResponseWriter, r *http.Request) {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
-	err = s.taskDistributor.SendIndexProductTask(c, &worker.PayloadIndexProduct{
+	err = s.taskDistributor.SendIndexProductTask(c, worker.PayloadIndexProduct{
 		ProductID: product.ID,
 	})
 	if err != nil {
@@ -366,8 +249,9 @@ func (s *Server) updateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.taskDistributor.SendUpdateIndexProductTask(c, &worker.PayloadIndexProduct{
+	err = s.taskDistributor.SendUpdateIndexProductTask(c, worker.PayloadUpdateProductIndex{
 		ProductID: updated.ID,
+		Data:      req,
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("SendUpdateIndexProductTask")
@@ -387,7 +271,7 @@ func (s *Server) updateProduct(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{productId} [delete]
-func (s *Server) adminDeleteProduct(w http.ResponseWriter, r *http.Request) {
+func (s *Server) deleteProduct(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	id, err := GetUrlParam(r, "id")
 	if err != nil {
@@ -410,7 +294,7 @@ func (s *Server) adminDeleteProduct(w http.ResponseWriter, r *http.Request) {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
-	err = s.taskDistributor.SendDeleteIndexProductTask(c, &worker.PayloadIndexProduct{
+	err = s.taskDistributor.SendDeleteIndexProductTask(c, worker.PayloadIndexProduct{
 		ProductID: product.ID,
 	})
 	if err != nil {
@@ -430,7 +314,7 @@ func (s *Server) adminDeleteProduct(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{id}/image [post]
-func (s *Server) adminUploadProductImage(w http.ResponseWriter, r *http.Request) {
+func (s *Server) uploadProductImage(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	id, err := GetUrlParam(r, "id")
 	if err != nil {
@@ -584,7 +468,7 @@ func (s *Server) createVariant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.taskDistributor.SendIndexProductTask(c, &worker.PayloadIndexProduct{
+	err = s.taskDistributor.SendIndexProductTask(c, worker.PayloadIndexProduct{
 		ProductID: prod.ID,
 	})
 	if err != nil {
@@ -772,7 +656,7 @@ func (s *Server) updateVariant(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{id}/variants/{variantId}/images [post]
-func (s *Server) adminUploadVariantImage(w http.ResponseWriter, r *http.Request) {
+func (s *Server) uploadVariantImage(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	id := chi.URLParam(r, "id")
 	variantId := chi.URLParam(r, "variantId")
@@ -865,7 +749,7 @@ func (s *Server) adminUploadVariantImage(w http.ResponseWriter, r *http.Request)
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/products/{id}/variant/{variantID} [delete]
-func (s *Server) adminDeleteVariant(w http.ResponseWriter, r *http.Request) {
+func (s *Server) deleteVariant(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	id := chi.URLParam(r, "id")
 	variantId := chi.URLParam(r, "variantId")

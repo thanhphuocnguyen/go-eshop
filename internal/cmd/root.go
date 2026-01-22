@@ -153,7 +153,7 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 			if err := service.AddGateway(stripeConfig); err != nil {
 				log.Fatal().Err(err).Msg("failed to add stripe gateway")
 			}
-			esStore, err := elasticsearch.NewClient(cfg.EsUrl)
+			esStore, err := elasticsearch.NewClient(cfg.EsUrl, cfg.EsUserName, cfg.EsPassword)
 			if err != nil {
 				log.Error().Msg("Cannot access Elastic client")
 			}

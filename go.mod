@@ -4,7 +4,7 @@ go 1.24.2
 
 require (
 	github.com/cloudinary/cloudinary-go/v2 v2.9.0
-	github.com/elastic/go-elasticsearch/v9 v9.2.1
+	github.com/elastic/go-elasticsearch/v8 v8.19.1
 	github.com/go-chi/chi v1.5.5
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/go-chi/cors v1.2.2

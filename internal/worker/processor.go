@@ -29,7 +29,7 @@ type TaskProcessor interface {
 }
 type RedisTaskProcessor struct {
 	asynqServer *asynq.Server
-	repo        repository.Store
+	store       repository.Store
 	mailer      mailer.EmailSender
 	esClient    *elasticsearch.ProductIndexer
 	cfg         config.Config

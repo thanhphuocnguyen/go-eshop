@@ -6,16 +6,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
-	"path/filepath"
 	"sync/atomic"
 	"time"
 
-	"github.com/elastic/go-elasticsearch/v9/esutil"
-	"github.com/elastic/go-elasticsearch/v9/typedapi/core/search"
-	"github.com/elastic/go-elasticsearch/v9/typedapi/indices/getmapping"
-	"github.com/elastic/go-elasticsearch/v9/typedapi/types"
-	"github.com/elastic/go-elasticsearch/v9/typedapi/types/enums/dynamicmapping"
+	"github.com/elastic/go-elasticsearch/v8/esutil"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/indices/getmapping"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/indices/getsettings"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/dynamicmapping"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 )
 
@@ -23,26 +22,30 @@ import (
 // It matches the product_mapping.json schema
 type ProductIndexDocument struct {
 	ID               string    `json:"id"`
-	Name             string    `json:"name"`
-	Description      string    `json:"description"`
-	ShortDescription *string   `json:"short_description,omitempty"`
-	IsActive         bool      `json:"is_active"`
-	Slug             string    `json:"slug"`
-	Sku              string    `json:"sku"`
-	Price            float64   `json:"price"`
-	Categories       []string  `json:"categories"`
-	Brand            string    `json:"brand"`
-	Rating           *float64  `json:"rating,omitempty"`
-	InStock          bool      `json:"in_stock"`
-	CreatedAt        time.Time `json:"created_at"`
-	Attributes       []string  `json:"attributes"`
+	Name             string    `json:"name,omitempty"`
+	Description      string    `json:"description,omitempty"`
+	ShortDescription *string   `json:"shortDescription,omitempty"`
+	IsActive         bool      `json:"isActive"`
+	Slug             string    `json:"slug,omitempty"`
+	Sku              string    `json:"sku,omitempty"`
+	Price            float64   `json:"price,omitzero"`
+	BasePrice        float64   `json:"basePrice,omitzero"`
+	Brand            string    `json:"brand,omitempty"`
+	ImageUrl         *string   `json:"imageUrl,omitempty"`
+	AvgRating        *float64  `json:"avgRating,omitempty,omitzero"`
+	InStock          bool      `json:"inStock"`
+	RatingCount      int       `json:"ratingCount,omitempty,omitzero"`
+	CreatedAt        time.Time `json:"createdAt,omitempty"`
+	Attributes       []string  `json:"attributes,omitempty"`
+	Categories       []string  `json:"categories,omitempty"`
+	Collections      []string  `json:"collections,omitempty"`
 }
 
 type ProductIndexer struct {
-	esStore *ESStore
+	esStore *ESClient
 }
 
-func NewProductIndexer(store *ESStore) *ProductIndexer {
+func NewProductIndexer(store *ESClient) *ProductIndexer {
 	return &ProductIndexer{esStore: store}
 }
 
@@ -72,13 +75,26 @@ func (pi *ProductIndexer) CreateIndex(ctx context.Context) error {
 					"keyword": types.NewKeywordProperty(),
 				},
 			},
-			"description":       types.NewTextProperty(),
-			"short_description": types.NewTextProperty(),
-			"is_active":         types.NewBooleanProperty(),
-			"slug":              types.NewKeywordProperty(),
-			"sku":               types.NewKeywordProperty(),
-			"price":             types.NewDoubleNumberProperty(),
+			"description":      types.NewTextProperty(),
+			"shortDescription": types.NewTextProperty(),
+			"isActive":         types.NewBooleanProperty(),
+			"slug":             types.NewKeywordProperty(),
+			"sku":              types.NewKeywordProperty(),
+			"price":            types.NewDoubleNumberProperty(),
+			"imageUrl":         types.NewKeywordProperty(),
+			"ratingCount":      types.NewIntegerNumberProperty(),
+
+			"avgRating": types.NewFloatNumberProperty(),
+			"basePrice": types.NewDoubleNumberProperty(),
+			"inStock":   types.NewBooleanProperty(),
+			"createdAt": types.NewDateProperty(),
 			"categories": types.TextProperty{
+				Analyzer: &nameAnalyzer,
+				Fields: map[string]types.Property{
+					"keyword": types.NewKeywordProperty(),
+				},
+			},
+			"collections": types.TextProperty{
 				Analyzer: &nameAnalyzer,
 				Fields: map[string]types.Property{
 					"keyword": types.NewKeywordProperty(),
@@ -90,9 +106,6 @@ func (pi *ProductIndexer) CreateIndex(ctx context.Context) error {
 					"keyword": types.NewKeywordProperty(),
 				},
 			},
-			"rating":     types.NewFloatNumberProperty(),
-			"in_stock":   types.NewBooleanProperty(),
-			"created_at": types.NewDateProperty(),
 			"attributes": types.TextProperty{
 				Analyzer: &nameAnalyzer,
 				Fields: map[string]types.Property{
@@ -105,28 +118,27 @@ func (pi *ProductIndexer) CreateIndex(ctx context.Context) error {
 	return pi.esStore.CreateIndex(ctx, PRODUCT_INDEX, mappings, settings)
 }
 
-func readMappingFromFile(path string) (string, error) {
-	absPath, err := filepath.Abs("pkg/elasticsearch/" + path)
-	if err != nil {
-		return "", err
-	}
+// func readMappingFromFile(path string) (string, error) {
+// 	absPath, err := filepath.Abs("pkg/elasticsearch/" + path)
+// 	if err != nil {
+// 		return "", err
+// 	}
 
-	fmt.Println(absPath)
-	data, err := os.ReadFile(absPath)
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
-}
+// 	fmt.Println(absPath)
+// 	data, err := os.ReadFile(absPath)
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	return string(data), nil
+// }
 
 func (pi *ProductIndexer) IndexProduct(ctx context.Context, product repository.GetProductsForIndexingRow) error {
 	indexDoc := pi.convertToIndexDocument(product)
 	return pi.esStore.IndexDocument(ctx, PRODUCT_INDEX, product.ID.String(), indexDoc)
 }
 
-func (pi *ProductIndexer) UpdateProduct(ctx context.Context, productID string, updatedProduct repository.GetProductsForIndexingRow) error {
-	indexDoc := pi.convertToIndexDocument(updatedProduct)
-	jsonData, err := json.Marshal(indexDoc)
+func (pi *ProductIndexer) UpdateProduct(ctx context.Context, productID string, updatedProduct ProductIndexDocument) error {
+	jsonData, err := json.Marshal(updatedProduct)
 	if err != nil {
 		return err
 	}
@@ -139,8 +151,6 @@ func (pi *ProductIndexer) DeleteProduct(ctx context.Context, productID string) e
 
 // convertToIndexDocument converts database row to Elasticsearch index document
 func (pi *ProductIndexer) convertToIndexDocument(row repository.GetProductsForIndexingRow) ProductIndexDocument {
-	price, _ := row.MinPrice.Float64Value()
-	rating, _ := row.AvgRating.Float64Value()
 	doc := ProductIndexDocument{
 		ID:               row.ID.String(),
 		Name:             row.Name,
@@ -153,9 +163,10 @@ func (pi *ProductIndexer) convertToIndexDocument(row repository.GetProductsForIn
 		Brand:            row.Brand,
 		InStock:          row.TotalStock != nil && *row.TotalStock > 0,
 		CreatedAt:        row.CreatedAt,
+		RatingCount:      int(row.RatingCount),
+		ImageUrl:         row.ImageUrl,
+		Collections:      row.Collections,
 		Attributes:       row.AttributeValues,
-		Price:            price.Float64,
-		Rating:           &rating.Float64,
 	}
 
 	// Convert price from pgtype.Numeric to float64
@@ -163,11 +174,14 @@ func (pi *ProductIndexer) convertToIndexDocument(row repository.GetProductsForIn
 		price, _ := row.BasePrice.Float64Value()
 		doc.Price = price.Float64
 	}
-
+	if row.MinPrice.Valid {
+		price, _ := row.MinPrice.Float64Value()
+		doc.Price = price.Float64
+	}
 	// Convert rating from pgtype.Numeric to float64
 	if row.AvgRating.Valid {
 		rating, _ := row.AvgRating.Float64Value()
-		doc.Rating = &rating.Float64
+		doc.AvgRating = &rating.Float64
 	}
 
 	// Parse attributes from JSON bytes
@@ -197,7 +211,7 @@ func (pi *ProductIndexer) BulkIndexProducts(ctx context.Context, products []repo
 			// OnSuccess is called for each successful operation
 			OnSuccess: func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem) {
 				atomic.AddUint64(&countSuccessful, 1)
-				fmt.Printf("[%d] %s test/%s", res.Status, res.Result, item.DocumentID)
+				fmt.Printf("[%d] %s test/%s \n", res.Status, res.Result, item.DocumentID)
 			},
 			// OnFailure is called for each failed operation
 			OnFailure: func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem, err error) {
@@ -221,6 +235,13 @@ func (pi *ProductIndexer) BulkDeleteProducts(ctx context.Context) error {
 
 func (pi *ProductIndexer) GetMapping(ctx context.Context) (getmapping.Response, error) {
 	return pi.esStore.GetMapping(ctx, PRODUCT_INDEX)
+}
+func (pi *ProductIndexer) GetSettings(ctx context.Context) (getsettings.Response, error) {
+	return pi.esStore.GetSetting(ctx, PRODUCT_INDEX)
+}
+
+func (pi *ProductIndexer) IndexExists(ctx context.Context) (bool, error) {
+	return pi.esStore.IndexExists(ctx, PRODUCT_INDEX)
 }
 
 func (pi *ProductIndexer) GetProducts(ctx context.Context) ([]interface{}, error) {

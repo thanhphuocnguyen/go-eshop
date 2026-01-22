@@ -18,6 +18,7 @@ func (s *Server) addEsRoutes(r chi.Router) {
 		r.Route("/es", func(r chi.Router) {
 			r.Post("/product-mappings", s.createProductIndex)
 			r.Get("/product-mappings", s.getProductMappings)
+			r.Get("/product-settings", s.getEsSettings)
 			r.Get("/indexing-products", s.getIndexingProducts)
 			r.Get("/es-products", s.getEsProducts)
 		})
@@ -79,4 +80,15 @@ func (s *Server) getEsProducts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RespondJSON(w, http.StatusOK, products)
+}
+
+func (s *Server) getEsSettings(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	settings, err := s.elasticClient.GetSettings(ctx)
+	if err != nil {
+		RespondInternalServerError(w, InternalServerErrorCode, err)
+		return
+	}
+
+	RespondJSON(w, http.StatusOK, settings)
 }

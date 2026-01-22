@@ -38,7 +38,7 @@ func (processor *RedisTaskProcessor) ProcessSendVerifyEmail(ctx context.Context,
 		return fmt.Errorf("could not unmarshal payload: %w", asynq.SkipRetry)
 	}
 
-	user, err := processor.repo.GetUserByID(ctx, payload.UserID)
+	user, err := processor.store.GetUserByID(ctx, payload.UserID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			return fmt.Errorf("could not find user: %w", asynq.SkipRetry)
@@ -48,7 +48,7 @@ func (processor *RedisTaskProcessor) ProcessSendVerifyEmail(ctx context.Context,
 
 	verifyCode := utils.RandomString(32)
 
-	_, err = processor.repo.CreateVerifyEmail(ctx, repository.CreateVerifyEmailParams{
+	_, err = processor.store.CreateVerifyEmail(ctx, repository.CreateVerifyEmailParams{
 		UserID:     user.ID,
 		Email:      user.Email,
 		VerifyCode: verifyCode,

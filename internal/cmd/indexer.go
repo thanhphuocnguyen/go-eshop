@@ -27,16 +27,16 @@ func ExecuteIndexer(ctx context.Context) int {
 				log.Error().Err(err).Msg("failed to connect to postgres")
 				return err
 			}
-			client, err := elasticsearch.NewClient(cfg.EsUrl)
+			client, err := elasticsearch.NewClient(cfg.EsUrl, cfg.EsUserName, cfg.EsPassword)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to create elasticsearch client")
 				return err
 			}
 
-			if err := client.Ping(ctx); err != nil {
-				log.Error().Err(err).Msg("failed to ping elasticsearch")
-				return err
-			}
+			// if err := client.Ping(ctx); err != nil {
+			// 	log.Error().Err(err).Msg("failed to ping elasticsearch")
+			// 	return err
+			// }
 
 			productIndexer := elasticsearch.NewProductIndexer(client)
 
@@ -58,13 +58,17 @@ func ExecuteIndexer(ctx context.Context) int {
 						return err
 					}
 				case "create-product-index":
+					client.DeleteIndex(ctx, elasticsearch.PRODUCT_INDEX)
+					log.Info().Msg("Existing product index deleted")
 					if err := createProductIndex(ctx, productIndexer); err != nil {
 						return err
 					}
+					log.Info().Msg("Product index created successfully")
 				default:
 					log.Error().Msg("invalid indexer command")
 				}
 			}
+			client.Close(ctx)
 			return nil
 		},
 	}

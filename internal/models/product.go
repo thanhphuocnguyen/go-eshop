@@ -35,19 +35,19 @@ type CreateProductModel struct {
 }
 
 type UpdateProductModel struct {
-	IsActive           *bool    `json:"isActive" validate:"omitempty"`
-	BasePrice          *float64 `json:"price" validate:"omitempty,gt=0"`
-	DiscountPercentage *int16   `json:"discountPercentage" validate:"omitempty,gte=0,lte=100"`
-	Name               *string  `json:"name" validate:"omitempty,min=3,max=255"`
-	Description        *string  `json:"description" validate:"omitempty"`
-	ShortDescription   *string  `json:"shortDescription" validate:"omitempty,max=1000"`
-	BaseSku            *string  `json:"sku" validate:"omitempty,min=3,max=100"`
-	Slug               *string  `json:"slug" validate:"omitempty,min=3,max=255"`
-	BrandID            *string  `json:"brandId" validate:"omitempty,uuid"`
+	IsActive           *bool    `json:"isActive,omitempty" validate:"omitempty"`
+	BasePrice          *float64 `json:"price,omitempty" validate:"omitempty,gt=0"`
+	DiscountPercentage *int16   `json:"discountPercentage,omitempty" validate:"omitempty,gte=0,lte=100"`
+	Name               *string  `json:"name,omitempty" validate:"omitempty,min=3,max=255"`
+	Description        *string  `json:"description,omitempty" validate:"omitempty"`
+	ShortDescription   *string  `json:"shortDescription,omitempty" validate:"omitempty,max=1000"`
+	BaseSku            *string  `json:"sku,omitempty" validate:"omitempty,min=3,max=100"`
+	Slug               *string  `json:"slug,omitempty" validate:"omitempty,min=3,max=255"`
+	BrandID            *string  `json:"brandId,omitempty" validate:"omitempty,uuid"`
 
-	Attributes    *[]int32  `json:"attributes" validate:"omitempty"`
-	CategoryIDs   *[]string `json:"categoryIds" validate:"omitnil,omitempty,uuidslice"`
-	CollectionIDs *[]string `json:"collectionIds" validate:"omitnil,omitempty,uuidslice"`
+	Attributes    *[]int32  `json:"attributes,omitempty" validate:"omitempty"`
+	CategoryIDs   *[]string `json:"categoryIds,omitempty" validate:"omitnil,omitempty,uuidslice"`
+	CollectionIDs *[]string `json:"collectionIds,omitempty" validate:"omitnil,omitempty,uuidslice"`
 }
 
 type CreateProdVariantModel struct {

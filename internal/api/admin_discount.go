@@ -113,7 +113,7 @@ func (s *Server) adminGetDiscounts(w http.ResponseWriter, r *http.Request) {
 	RespondSuccessWithPagination(w, listData, pagination)
 }
 
-// adminCreateDiscount godoc
+// createDiscount godoc
 // @Summary Create a new discount
 // @Description Create a new discount
 // @Tags discounts
@@ -124,7 +124,7 @@ func (s *Server) adminGetDiscounts(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/discounts [post]
-func (s *Server) adminCreateDiscount(w http.ResponseWriter, r *http.Request) {
+func (s *Server) createDiscount(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	// Create a new discount
 	var req models.AddDiscount
@@ -163,7 +163,7 @@ func (s *Server) adminCreateDiscount(w http.ResponseWriter, r *http.Request) {
 	RespondSuccess(w, discount.String())
 }
 
-// adminUpdateDiscount godoc
+// updateDiscount godoc
 // @Summary Update discount by ID
 // @Description Update discount by ID
 // @Tags discounts
@@ -175,7 +175,7 @@ func (s *Server) adminCreateDiscount(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /discounts/{id} [put]
-func (s *Server) adminUpdateDiscount(w http.ResponseWriter, r *http.Request) {
+func (s *Server) updateDiscount(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	// Update discount by ID
 	var param models.UriIDParam
@@ -264,7 +264,7 @@ func (s *Server) adminDeleteDiscount(w http.ResponseWriter, r *http.Request) {
 	RespondNoContent(w)
 }
 
-// adminAddDiscountRule godoc
+// createDiscountRule godoc
 // @Summary Add a discount rule to a discount
 // @Description Add a discount rule to a discount
 // @Tags discounts
@@ -276,7 +276,7 @@ func (s *Server) adminDeleteDiscount(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/discounts/{id}/rules [post]
-func (s *Server) adminAddDiscountRule(w http.ResponseWriter, r *http.Request) {
+func (s *Server) createDiscountRule(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	// Add a discount rule to a discount
 	var param models.UriIDParam
@@ -431,7 +431,7 @@ func (s *Server) adminGetDiscountRuleByID(w http.ResponseWriter, r *http.Request
 	RespondSuccess(w, dto.CreateDataResp(ruleDetail, nil, nil))
 }
 
-// adminUpdateDiscountRule godoc
+// updateDiscountRule godoc
 // @Summary Update a discount rule
 // @Description Update a discount rule
 // @Tags discounts
@@ -444,7 +444,7 @@ func (s *Server) adminGetDiscountRuleByID(w http.ResponseWriter, r *http.Request
 // @Failure 400 {object} ErrorResp
 // @Failure 500 {object} ErrorResp
 // @Router /admin/discounts/{id}/rules/{ruleId} [put]
-func (s *Server) adminUpdateDiscountRule(w http.ResponseWriter, r *http.Request) {
+func (s *Server) updateDiscountRule(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	ruleId, err := GetUrlParam(r, "ruleId")
 	if err != nil {
