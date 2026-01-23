@@ -266,8 +266,13 @@ func (s *Server) adminGetAttributeValuesForProduct(w http.ResponseWriter, r *htt
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
 
-	attrs, err := s.repo.GetProductAttributeValuesByProductID(c, uuid.MustParse(idParam))
+	attrs, err := s.repo.GetProductAttributeValuesByProductID(c, id)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return

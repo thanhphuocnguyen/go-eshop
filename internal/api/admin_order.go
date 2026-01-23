@@ -41,13 +41,20 @@ func (s *Server) adminCancelOrder(w http.ResponseWriter, r *http.Request) {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
+
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
 	var req models.CancelOrderModel
 	if err := s.GetRequestBody(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
-	order, err := s.repo.GetOrder(c, uuid.MustParse(id))
+	order, err := s.repo.GetOrder(c, parsedID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -59,7 +66,12 @@ func (s *Server) adminCancelOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userRole := claims["role"].(string)
-	userID := uuid.MustParse(claims["userId"].(string))
+	userIDStr := claims["userId"].(string)
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		RespondInternalServerError(w, UnauthorizedCode, fmt.Errorf("invalid user ID in token"))
+		return
+	}
 
 	if order.UserID != userID && userRole != "admin" {
 		RespondForbidden(w, PermissionDeniedCode, errors.New("you do not have permission to access this order"))
@@ -80,7 +92,7 @@ func (s *Server) adminCancelOrder(w http.ResponseWriter, r *http.Request) {
 
 	// if order
 	cancelOrderTxParams := repository.CancelOrderTxArgs{
-		OrderID: uuid.MustParse(id),
+		OrderID: parsedID,
 		CancelPaymentFromMethod: func(paymentID string, method string) error {
 			req := payment.RefundRequest{
 				TransactionID: paymentID,
@@ -119,12 +131,19 @@ func (s *Server) adminRefundOrder(w http.ResponseWriter, r *http.Request) {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
+
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
 	var req models.RefundOrderModel
 	if err := s.GetRequestBody(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
-	order, err := s.repo.GetOrder(c, uuid.MustParse(id))
+	order, err := s.repo.GetOrder(c, parsedID)
 	if err != nil {
 		if err == repository.ErrRecordNotFound {
 			RespondNotFound(w, NotFoundCode, fmt.Errorf("order with ID %s not found", id))
@@ -139,7 +158,7 @@ func (s *Server) adminRefundOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = s.repo.RefundOrderTx(c, repository.RefundOrderTxArgs{
-		OrderID: uuid.MustParse(id),
+		OrderID: parsedID,
 		RefundPaymentFromMethod: func(paymentID string, method string) (string, error) {
 			req := payment.RefundRequest{
 				TransactionID: paymentID,
@@ -279,12 +298,23 @@ func (s *Server) adminGetOrderDetail(w http.ResponseWriter, r *http.Request) {
 func (s *Server) adminChangeOrderStatus(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	id, err := GetUrlParam(r, "id")
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
 	var req models.OrderStatusModel
 	if err := s.GetRequestBody(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
-	order, err := s.repo.GetOrder(c, uuid.MustParse(id))
+	order, err := s.repo.GetOrder(c, parsedID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			RespondNotFound(w, NotFoundCode, err)

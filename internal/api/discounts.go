@@ -133,8 +133,13 @@ func (s *Server) getDiscountByID(w http.ResponseWriter, r *http.Request) {
 		RespondBadRequest(w, InvalidBodyCode, errors.New("id parameter is required"))
 		return
 	}
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, errors.New("invalid discount ID"))
+		return
+	}
 
-	discount, err := s.repo.GetDiscountByID(c, uuid.MustParse(id))
+	discount, err := s.repo.GetDiscountByID(c, parsedID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return

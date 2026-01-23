@@ -120,10 +120,24 @@ func (s *Server) adminGetRatings(w http.ResponseWriter, r *http.Request) {
 func (s *Server) adminGetOrderRatings(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	_, claims, err := jwtauth.FromContext(c)
+	if err != nil {
+		RespondUnauthorized(w, UnauthorizedCode, err)
+		return
+	}
 
 	orderId, err := GetUrlParam(r, "orderId")
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
 
-	orderItems, err := s.repo.GetOrderItemsByOrderID(c, uuid.MustParse(orderId))
+	parsedOrderID, err := uuid.Parse(orderId)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, errors.New("invalid order ID"))
+		return
+	}
+
+	orderItems, err := s.repo.GetOrderItemsByOrderID(c, parsedOrderID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -132,7 +146,13 @@ func (s *Server) adminGetOrderRatings(w http.ResponseWriter, r *http.Request) {
 		RespondNotFound(w, NotFoundCode, nil)
 		return
 	}
-	userID := uuid.MustParse(claims["userId"].(string))
+
+	userIDStr := claims["userId"].(string)
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		RespondUnauthorized(w, UnauthorizedCode, errors.New("invalid user ID in token"))
+		return
+	}
 
 	if orderItems[0].UserID != userID {
 		RespondForbidden(w, PermissionDeniedCode, nil)

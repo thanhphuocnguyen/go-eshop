@@ -189,7 +189,14 @@ func (s *Server) updateDiscount(w http.ResponseWriter, r *http.Request) {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
-	discount, err := s.repo.GetDiscountByID(c, uuid.MustParse(param.ID))
+
+	parsedID, err := uuid.Parse(param.ID)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, errors.New("invalid discount ID"))
+		return
+	}
+
+	discount, err := s.repo.GetDiscountByID(c, parsedID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -255,7 +262,13 @@ func (s *Server) adminDeleteDiscount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := s.repo.DeleteDiscount(c, uuid.MustParse(param.ID))
+	parsedID, err := uuid.Parse(param.ID)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, errors.New("invalid discount ID"))
+		return
+	}
+
+	err = s.repo.DeleteDiscount(c, parsedID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -344,8 +357,14 @@ func (s *Server) createDiscountRule(w http.ResponseWriter, r *http.Request) {
 		ruleVal = bs
 	}
 
+	parsedDiscountID, err := uuid.Parse(param.ID)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, errors.New("invalid discount ID"))
+		return
+	}
+
 	sqlParams := repository.InsertDiscountRuleParams{
-		DiscountID: uuid.MustParse(param.ID),
+		DiscountID: parsedDiscountID,
 		RuleType:   req.RuleType,
 		RuleValue:  ruleVal,
 	}
@@ -378,7 +397,13 @@ func (s *Server) adminGetDiscountRules(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rules, err := s.repo.GetDiscountRules(c, uuid.MustParse(id))
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, errors.New("invalid discount ID"))
+		return
+	}
+
+	rules, err := s.repo.GetDiscountRules(c, parsedID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -417,7 +442,13 @@ func (s *Server) adminGetDiscountRuleByID(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	rule, err := s.repo.GetDiscountRuleByID(c, uuid.MustParse(ruleId))
+	parsedRuleID, err := uuid.Parse(ruleId)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, errors.New("invalid rule ID"))
+		return
+	}
+
+	rule, err := s.repo.GetDiscountRuleByID(c, parsedRuleID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -452,6 +483,12 @@ func (s *Server) updateDiscountRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	parsedRuleID, err := uuid.Parse(ruleId)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, errors.New("invalid rule ID"))
+		return
+	}
+
 	var req models.UpdateDiscountRule
 	if err := s.GetRequestBody(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
@@ -459,7 +496,7 @@ func (s *Server) updateDiscountRule(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sqlParams := repository.UpdateDiscountRuleParams{
-		ID: uuid.MustParse(ruleId),
+		ID: parsedRuleID,
 	}
 
 	if req.RuleType != nil {
@@ -503,7 +540,13 @@ func (s *Server) adminDeleteDiscountRule(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = s.repo.DeleteDiscountRule(c, uuid.MustParse(ruleId))
+	parsedRuleID, err := uuid.Parse(ruleId)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, errors.New("invalid rule ID"))
+		return
+	}
+
+	err = s.repo.DeleteDiscountRule(c, parsedRuleID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return

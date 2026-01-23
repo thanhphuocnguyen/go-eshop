@@ -93,13 +93,14 @@ func (s *Server) adminGetCategories(w http.ResponseWriter, r *http.Request) {
 // @Router /admin/categories/{id} [get]
 func (s *Server) adminGetCategoryByID(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
-	id := chi.URLParam(r, "id")
-	if id == "" {
+	param := chi.URLParam(r, "id")
+	if param == "" {
 		RespondBadRequest(w, InvalidBodyCode, errors.New("id parameter is required"))
 		return
 	}
+	id, err := uuid.Parse(param)
 
-	category, err := s.repo.GetCategoryByID(c, uuid.MustParse(id))
+	category, err := s.repo.GetCategoryByID(c, id)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			RespondNotFound(w, InvalidBodyCode, fmt.Errorf("category with ID %s not found", id))
@@ -193,7 +194,16 @@ func (s *Server) createCategory(w http.ResponseWriter, r *http.Request) {
 // @Router /admin/categories/{id} [put]
 func (s *Server) updateCategory(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
-	id, err := GetUrlParam(r, "id")
+	param, err := GetUrlParam(r, "id")
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+	id, err := uuid.Parse(param)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
 	var req models.UpdateCategoryModel
 
 	if err := s.GetFormData(r, &req); err != nil {
@@ -201,7 +211,7 @@ func (s *Server) updateCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	category, err := s.repo.GetCategoryByID(c, uuid.MustParse(id))
+	category, err := s.repo.GetCategoryByID(c, id)
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
@@ -279,13 +289,18 @@ func (s *Server) updateCategory(w http.ResponseWriter, r *http.Request) {
 // @Router /admin/categories/{id} [delete]
 func (s *Server) deleteCategory(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
-	id, err := GetUrlParam(r, "id")
+	param, err := GetUrlParam(r, "id")
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+	id, err := uuid.Parse(param)
 	if err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
-	_, err = s.repo.GetCategoryByID(c, uuid.MustParse(id))
+	_, err = s.repo.GetCategoryByID(c, id)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			RespondNotFound(w, NotFoundCode, fmt.Errorf("category with ID %s not found", id))
@@ -295,7 +310,7 @@ func (s *Server) deleteCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.repo.DeleteCategory(c, uuid.MustParse(id))
+	err = s.repo.DeleteCategory(c, id)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -415,12 +430,17 @@ func (s *Server) adminGetBrands(w http.ResponseWriter, r *http.Request) {
 // @Router /admin/brands/{id} [get]
 func (s *Server) adminGetBrandByID(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
-	id, err := GetUrlParam(r, "id")
+	param, err := GetUrlParam(r, "id")
 	if err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
-	result, err := s.repo.GetBrandByID(c, uuid.MustParse(id))
+	id, err := uuid.Parse(param)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+	result, err := s.repo.GetBrandByID(c, id)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			RespondNotFound(w, NotFoundCode, fmt.Errorf("brand with ID %s not found", id))
@@ -458,7 +478,12 @@ func (s *Server) adminGetBrandByID(w http.ResponseWriter, r *http.Request) {
 // @Router /admin/brands/{id} [put]
 func (s *Server) updateBrand(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
-	id, err := GetUrlParam(r, "id")
+	param, err := GetUrlParam(r, "id")
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+	id, err := uuid.Parse(param)
 	if err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
@@ -469,7 +494,7 @@ func (s *Server) updateBrand(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	brand, err := s.repo.GetBrandByID(c, uuid.MustParse(id))
+	brand, err := s.repo.GetBrandByID(c, id)
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
@@ -546,7 +571,13 @@ func (s *Server) deleteBrand(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = s.repo.GetBrandByID(c, uuid.MustParse(id))
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
+	_, err = s.repo.GetBrandByID(c, parsedID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			RespondNotFound(w, NotFoundCode, fmt.Errorf("brand with ID %s not found", id))
@@ -556,7 +587,7 @@ func (s *Server) deleteBrand(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.repo.DeleteBrand(c, uuid.MustParse(id))
+	err = s.repo.DeleteBrand(c, parsedID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -671,7 +702,13 @@ func (s *Server) adminGetCollectionByID(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	collection, err := s.repo.GetCollectionByID(c, uuid.MustParse(id))
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
+	collection, err := s.repo.GetCollectionByID(c, parsedID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			RespondNotFound(w, NotFoundCode, fmt.Errorf("collection with ID %s not found", id))
@@ -709,13 +746,24 @@ func (s *Server) adminGetCollectionByID(w http.ResponseWriter, r *http.Request) 
 func (s *Server) adminUpdateCollection(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	id, err := GetUrlParam(r, "id")
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
 	var req models.UpdateCategoryModel
 	if err := s.GetFormData(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
-	collection, err := s.repo.GetCollectionByID(c, uuid.MustParse(id))
+	collection, err := s.repo.GetCollectionByID(c, parsedID)
 
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
@@ -779,7 +827,13 @@ func (s *Server) adminDeleteOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.repo.DeleteOrder(c, uuid.MustParse(id))
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
+	err = s.repo.DeleteOrder(c, parsedID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -807,7 +861,13 @@ func (s *Server) adminDeleteCollection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = s.repo.GetCollectionByID(c, uuid.MustParse(id))
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
+	_, err = s.repo.GetCollectionByID(c, parsedID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			RespondNotFound(w, NotFoundCode, err)
@@ -817,7 +877,7 @@ func (s *Server) adminDeleteCollection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.repo.DeleteCollection(c, uuid.MustParse(id))
+	err = s.repo.DeleteCollection(c, parsedID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return

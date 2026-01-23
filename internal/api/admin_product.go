@@ -279,7 +279,13 @@ func (s *Server) deleteProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	product, err := s.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(id)})
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
+	product, err := s.repo.GetProductByID(c, repository.GetProductByIDParams{ID: parsedID})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			RespondNotFound(w, NotFoundCode, err)
@@ -322,6 +328,12 @@ func (s *Server) uploadProductImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
 	file, header, err := r.FormFile("file")
 	if err != nil {
 		RespondBadRequest(w, InvalidBodyCode, errors.New("image file is required"))
@@ -329,7 +341,7 @@ func (s *Server) uploadProductImage(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	prod, err := s.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(id)})
+	prod, err := s.repo.GetProductByID(c, repository.GetProductByIDParams{ID: parsedID})
 	if err != nil {
 		RespondNotFound(w, NotFoundCode, err)
 		return
@@ -364,7 +376,7 @@ func (s *Server) uploadProductImage(w http.ResponseWriter, r *http.Request) {
 	updated, err := s.repo.UpdateProduct(c, repository.UpdateProductParams{
 		ImageUrl: &url,
 		ImageID:  &uploadID,
-		ID:       uuid.MustParse(id),
+		ID:       parsedID,
 	})
 	if err != nil {
 		log.Error().Err(err).Timestamp().Msg("CreateProduct")
@@ -393,6 +405,12 @@ func (s *Server) createVariant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
 	var req models.CreateProdVariantModel
 	if err := s.GetRequestBody(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
@@ -403,7 +421,7 @@ func (s *Server) createVariant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	prod, err := s.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(id)})
+	prod, err := s.repo.GetProductByID(c, repository.GetProductByIDParams{ID: parsedID})
 	if err != nil {
 		RespondNotFound(w, NotFoundCode, err)
 		return
@@ -496,7 +514,13 @@ func (s *Server) getProductVariants(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	prod, err := s.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(id)})
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
+	prod, err := s.repo.GetProductByID(c, repository.GetProductByIDParams{ID: parsedID})
 	if err != nil {
 		RespondNotFound(w, NotFoundCode, err)
 		return
@@ -536,14 +560,26 @@ func (s *Server) getVariantByProductId(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	prod, err := s.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(id)})
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
+	parsedVariantID, err := uuid.Parse(variantId)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
+	prod, err := s.repo.GetProductByID(c, repository.GetProductByIDParams{ID: parsedID})
 	if err != nil {
 		RespondNotFound(w, NotFoundCode, err)
 		return
 	}
 
 	rows, err := s.repo.GetVariantDetailByID(c, repository.GetVariantDetailByIDParams{
-		ID:        uuid.MustParse(variantId),
+		ID:        parsedVariantID,
 		ProductID: prod.ID,
 	})
 
@@ -604,13 +640,25 @@ func (s *Server) updateVariant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
+	parsedVariantID, err := uuid.Parse(variantId)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
 	var req models.UpdateProdVariantModel
 	if err := s.GetRequestBody(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
-	prod, err := s.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(id)})
+	prod, err := s.repo.GetProductByID(c, repository.GetProductByIDParams{ID: parsedID})
 	if err != nil {
 		RespondNotFound(w, NotFoundCode, err)
 		return
@@ -618,7 +666,7 @@ func (s *Server) updateVariant(w http.ResponseWriter, r *http.Request) {
 
 	updateParams := repository.UpdateProductVariantParams{
 		ProductID: prod.ID,
-		ID:        uuid.MustParse(variantId),
+		ID:        parsedVariantID,
 	}
 
 	if req.Price != nil {
@@ -665,8 +713,20 @@ func (s *Server) uploadVariantImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
+	parsedVariantID, err := uuid.Parse(variantId)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
 	// Parse multipart form
-	err := r.ParseMultipartForm(10 << 20) // 10MB max
+	err = r.ParseMultipartForm(10 << 20) // 10MB max
 	if err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
@@ -679,7 +739,7 @@ func (s *Server) uploadVariantImage(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	prod, err := s.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(id)})
+	prod, err := s.repo.GetProductByID(c, repository.GetProductByIDParams{ID: parsedID})
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
@@ -688,7 +748,7 @@ func (s *Server) uploadVariantImage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	variant, err := s.repo.GetProductVariantByID(c, repository.GetProductVariantByIDParams{
-		ID:        uuid.MustParse(variantId),
+		ID:        parsedVariantID,
 		ProductID: prod.ID,
 	})
 
@@ -758,7 +818,19 @@ func (s *Server) deleteVariant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	prod, err := s.repo.GetProductByID(c, repository.GetProductByIDParams{ID: uuid.MustParse(id)})
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
+	parsedVariantID, err := uuid.Parse(variantId)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
+	prod, err := s.repo.GetProductByID(c, repository.GetProductByIDParams{ID: parsedID})
 	if err != nil {
 		RespondNotFound(w, NotFoundCode, err)
 		return
@@ -766,7 +838,7 @@ func (s *Server) deleteVariant(w http.ResponseWriter, r *http.Request) {
 
 	err = s.repo.DeleteProductVariant(c, repository.DeleteProductVariantParams{
 		ProductID: prod.ID,
-		ID:        uuid.MustParse(variantId),
+		ID:        parsedVariantID,
 	})
 
 	if err != nil {

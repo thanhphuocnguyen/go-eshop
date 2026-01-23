@@ -56,7 +56,14 @@ func (s *Server) createPaymentIntent(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		RespondUnauthorized(w, UnauthorizedCode, err)
 	}
-	userID := uuid.MustParse(claims["userId"].(string))
+
+	userIDStr := claims["userId"].(string)
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		RespondUnauthorized(w, UnauthorizedCode, errors.New("invalid user ID in token"))
+		return
+	}
+
 	user, err := s.repo.GetUserByID(c, userID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
@@ -72,7 +79,13 @@ func (s *Server) createPaymentIntent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ord, err := s.repo.GetOrder(c, uuid.MustParse(req.OrderID))
+	orderID, err := uuid.Parse(req.OrderID)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, errors.New("invalid order ID"))
+		return
+	}
+
+	ord, err := s.repo.GetOrder(c, orderID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			RespondNotFound(w, NotFoundCode, err)
@@ -99,7 +112,13 @@ func (s *Server) createPaymentIntent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	total, _ := ord.TotalPrice.Float64Value()
-	paymentMethodId := uuid.MustParse(req.PaymentMethodID)
+
+	paymentMethodId, err := uuid.Parse(req.PaymentMethodID)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, errors.New("invalid payment method ID"))
+		return
+	}
+
 	// create new payment
 	createPaymentParams := repository.CreatePaymentParams{
 		OrderID:         ord.ID,
@@ -164,7 +183,13 @@ func (s *Server) getPayment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payment, err := s.repo.GetPaymentByID(c, uuid.MustParse(id))
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, errors.New("invalid payment ID"))
+		return
+	}
+
+	payment, err := s.repo.GetPaymentByID(c, parsedID)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
@@ -213,12 +238,19 @@ func (s *Server) changePaymentStatus(w http.ResponseWriter, r *http.Request) {
 		RespondBadRequest(w, InvalidBodyCode, errors.New("missing orderId parameter"))
 		return
 	}
+
+	parsedOrderID, err := uuid.Parse(orderId)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, errors.New("invalid order ID"))
+		return
+	}
+
 	var req models.UpdatePaymentStatusModel
 	if err := s.GetRequestBody(r, &req); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, errors.New("invalid request body"))
 		return
 	}
-	payment, err := s.repo.GetPaymentByID(c, uuid.MustParse(orderId))
+	payment, err := s.repo.GetPaymentByID(c, parsedOrderID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			RespondNotFound(w, NotFoundCode, errors.New("order not found"))
@@ -340,7 +372,13 @@ func (s *Server) confirmPayment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payment, err := s.repo.GetPaymentByID(c, uuid.MustParse(id))
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, errors.New("invalid payment ID"))
+		return
+	}
+
+	payment, err := s.repo.GetPaymentByID(c, parsedID)
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			RespondNotFound(w, NotFoundCode, err)

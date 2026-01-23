@@ -155,9 +155,13 @@ func (s *Server) updateAddress(w http.ResponseWriter, r *http.Request) {
 		RespondBadRequest(w, InvalidBodyCode, fmt.Errorf("id parameter is required"))
 		return
 	}
-
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, fmt.Errorf("invalid id parameter"))
+		return
+	}
 	_, err = s.repo.GetAddress(c, repository.GetAddressParams{
-		ID:     uuid.MustParse(idParam),
+		ID:     id,
 		UserID: userID,
 	})
 	if err != nil {
@@ -170,7 +174,7 @@ func (s *Server) updateAddress(w http.ResponseWriter, r *http.Request) {
 	}
 
 	payload := repository.UpdateAddressParams{
-		ID:     uuid.MustParse(idParam),
+		ID:     id,
 		UserID: userID,
 	}
 
@@ -197,7 +201,7 @@ func (s *Server) updateAddress(w http.ResponseWriter, r *http.Request) {
 	if req.IsDefault != nil {
 		if *req.IsDefault {
 			err := s.repo.SetPrimaryAddressTx(c, repository.SetPrimaryAddressTxArgs{
-				NewPrimaryID: uuid.MustParse(idParam),
+				NewPrimaryID: id,
 				UserID:       userID,
 			})
 			if err != nil {
@@ -242,9 +246,14 @@ func (s *Server) removeAddress(w http.ResponseWriter, r *http.Request) {
 		RespondBadRequest(w, InvalidBodyCode, fmt.Errorf("id parameter is required"))
 		return
 	}
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, fmt.Errorf("invalid id parameter"))
+		return
+	}
 
 	addresses, err := s.repo.GetAddress(c, repository.GetAddressParams{
-		ID:     uuid.MustParse(idParam),
+		ID:     id,
 		UserID: userID,
 	})
 
@@ -300,8 +309,14 @@ func (s *Server) setDefaultAddress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, fmt.Errorf("invalid id parameter"))
+		return
+	}
+
 	_, err = s.repo.GetAddress(c, repository.GetAddressParams{
-		ID:     uuid.MustParse(idParam),
+		ID:     id,
 		UserID: userID,
 	})
 
@@ -315,7 +330,7 @@ func (s *Server) setDefaultAddress(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = s.repo.SetPrimaryAddressTx(c, repository.SetPrimaryAddressTxArgs{
-		NewPrimaryID: uuid.MustParse(idParam),
+		NewPrimaryID: id,
 		UserID:       userID,
 	})
 	if err != nil {
