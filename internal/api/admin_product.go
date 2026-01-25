@@ -7,9 +7,11 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
@@ -157,9 +159,8 @@ func (s *Server) createProduct(w http.ResponseWriter, r *http.Request) {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
-	err = s.taskDistributor.SendIndexProductTask(c, worker.PayloadIndexProduct{
-		ProductID: product.ID,
-	})
+
+	err = s.taskDistributor.SendIndexProductTask(c, worker.PayloadIndexProduct{ProductID: product.ID}, asynq.Deadline(time.Now().Add(3*time.Hour)))
 	if err != nil {
 		log.Error().Err(err).Msg("SendIndexProductTask")
 	}
@@ -252,7 +253,9 @@ func (s *Server) updateProduct(w http.ResponseWriter, r *http.Request) {
 	err = s.taskDistributor.SendUpdateIndexProductTask(c, worker.PayloadUpdateProductIndex{
 		ProductID: updated.ID,
 		Data:      req,
-	})
+	}, asynq.Deadline(
+		time.Now().Add(3*time.Hour),
+	))
 	if err != nil {
 		log.Error().Err(err).Msg("SendUpdateIndexProductTask")
 	}
@@ -300,6 +303,7 @@ func (s *Server) deleteProduct(w http.ResponseWriter, r *http.Request) {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
+
 	err = s.taskDistributor.SendDeleteIndexProductTask(c, worker.PayloadIndexProduct{
 		ProductID: product.ID,
 	})
@@ -378,6 +382,7 @@ func (s *Server) uploadProductImage(w http.ResponseWriter, r *http.Request) {
 		ImageID:  &uploadID,
 		ID:       parsedID,
 	})
+
 	if err != nil {
 		log.Error().Err(err).Timestamp().Msg("CreateProduct")
 		RespondInternalServerError(w, InternalServerErrorCode, err)

@@ -30,17 +30,19 @@ type ProductListItem struct {
 }
 
 type ProductSummary struct {
-	ID           string   `json:"id"`
-	Name         string   `json:"name"`
-	Price        float64  `json:"price,omitzero"`
-	Slug         string   `json:"slug,omitempty"`
-	ImageUrl     *string  `json:"imageUrl,omitempty"`
-	AvgRating    *float64 `json:"avgRating,omitempty"`
-	VariantCount int16    `json:"variantCount,omitzero"`
-	ReviewCount  *int32   `json:"reviewCount,omitempty"`
-	ImageID      *string  `json:"imageId,omitempty"`
-	CreatedAt    string   `json:"createdAt,omitempty"`
-	UpdatedAt    string   `json:"updatedAt,omitempty"`
+	ID               string   `json:"id"`
+	Name             string   `json:"name"`
+	BasePrice        float64  `json:"basePrice,omitzero"`
+	Slug             string   `json:"slug,omitempty"`
+	ImageUrl         *string  `json:"imageUrl,omitempty"`
+	AvgRating        *float64 `json:"avgRating,omitempty"`
+	VariantCount     int16    `json:"variantCount,omitzero"`
+	Description      string   `json:"description,omitempty"`
+	ShortDescription *string  `json:"shortDescription,omitempty"`
+	ReviewCount      *int32   `json:"reviewCount,omitempty"`
+	ImageID          *string  `json:"imageId,omitempty"`
+	CreatedAt        string   `json:"createdAt,omitempty"`
+	UpdatedAt        string   `json:"updatedAt,omitempty"`
 }
 type VariantDetail struct {
 	ID         string                 `json:"id"`
@@ -55,12 +57,13 @@ type VariantDetail struct {
 	CreatedAt  string                 `json:"createdAt,omitempty"`
 	UpdatedAt  string                 `json:"updatedAt,omitempty"`
 }
+
 type ProductDetail struct {
 	ID                 string  `json:"id"`
 	Name               string  `json:"name"`
 	Description        string  `json:"description"`
 	ShortDescription   *string `json:"shortDescription"`
-	BasePrice          float64 `json:"price,omitzero"`
+	BasePrice          float64 `json:"basePrice,omitzero"`
 	BaseSku            string  `json:"sku"`
 	IsActive           bool    `json:"isActive"`
 	Slug               string  `json:"slug"`
@@ -195,17 +198,19 @@ func MapToShopProductResponse(productRow repository.GetProductListRow) ProductSu
 	)
 
 	product := ProductSummary{
-		ID:           productRow.ID.String(),
-		Name:         productRow.Name,
-		Price:        price.Float64,
-		VariantCount: int16(productRow.VariantCount),
-		Slug:         productRow.Slug,
-		AvgRating:    &avgRating,
-		ImageUrl:     productRow.ImageUrl,
-		ImageID:      productRow.ImageID,
-		ReviewCount:  &productRow.RatingCount,
-		CreatedAt:    productRow.CreatedAt.String(),
-		UpdatedAt:    productRow.UpdatedAt.String(),
+		ID:               productRow.ID.String(),
+		Name:             productRow.Name,
+		BasePrice:        price.Float64,
+		ShortDescription: productRow.ShortDescription,
+		VariantCount:     int16(productRow.VariantCount),
+		Slug:             productRow.Slug,
+		AvgRating:        &avgRating,
+		Description:      productRow.Description,
+		ImageUrl:         productRow.ImageUrl,
+		ImageID:          productRow.ImageID,
+		ReviewCount:      &productRow.RatingCount,
+		CreatedAt:        productRow.CreatedAt.String(),
+		UpdatedAt:        productRow.UpdatedAt.String(),
 	}
 
 	return product

@@ -259,3 +259,13 @@ func (pi *ProductIndexer) GetProducts(ctx context.Context) ([]interface{}, error
 	fmt.Println(len(res))
 	return res, nil
 }
+
+func (pi *ProductIndexer) SearchProducts(ctx context.Context, query *search.Request) ([]interface{}, error) {
+
+	res, err := pi.esStore.QueryDocuments(ctx, PRODUCT_INDEX, query)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(len(res))
+	return res, nil
+}
