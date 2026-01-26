@@ -70,7 +70,13 @@ func (s *Server) getOrders(w http.ResponseWriter, r *http.Request) {
 		Offset: (orderListQuery.Page - 1) * orderListQuery.PageSize,
 	}
 
-	userID := uuid.MustParse(claims["userId"].(string))
+	userIDStr := claims["userId"].(string)
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		RespondUnauthorized(w, UnauthorizedCode, errors.New("invalid user ID in token"))
+		return
+	}
+
 	if claims["roleCode"] != "admin" {
 		dbParams.UserID = utils.GetPgTypeUUID(userID)
 	}
@@ -133,6 +139,12 @@ func (s *Server) getOrderDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	parsedID, err := uuid.Parse(idParam)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, errors.New("invalid order ID"))
+		return
+	}
+
 	var resp *dto.OrderDetail = nil
 	if err := s.cacheSrv.Get(c, "order_detail:"+idParam, &resp); err == nil {
 		if resp != nil {
@@ -141,7 +153,7 @@ func (s *Server) getOrderDetail(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	order, err := s.repo.GetOrder(c, uuid.MustParse(idParam))
+	order, err := s.repo.GetOrder(c, parsedID)
 	if err != nil {
 		if err == repository.ErrRecordNotFound {
 			RespondNotFound(w, NotFoundCode, err)
@@ -285,7 +297,13 @@ func (s *Server) confirmOrderPayment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	order, err := s.repo.GetOrder(c, uuid.MustParse(idParam))
+	parsedID, err := uuid.Parse(idParam)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, errors.New("invalid order ID"))
+		return
+	}
+
+	order, err := s.repo.GetOrder(c, parsedID)
 	if err != nil {
 		if err == repository.ErrRecordNotFound {
 			RespondNotFound(w, NotFoundCode, err)
@@ -294,7 +312,13 @@ func (s *Server) confirmOrderPayment(w http.ResponseWriter, r *http.Request) {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
 	}
-	userID := uuid.MustParse(claims["userId"].(string))
+
+	userIDStr := claims["userId"].(string)
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		RespondUnauthorized(w, UnauthorizedCode, errors.New("invalid user ID in token"))
+		return
+	}
 
 	if order.UserID != userID {
 		RespondForbidden(w, PermissionDeniedCode, errors.New("you do not have permission to access this order"))

@@ -16,9 +16,7 @@ SELECT
 FROM collections AS c
 LEFT JOIN collection_products AS cp ON c.id = cp.collection_id
 LEFT JOIN products AS p ON cp.product_id = p.id
-WHERE c.id = ANY(sqlc.narg('ids')::UUID[])
-GROUP BY c.id, p.id
-LIMIT $1 OFFSET $2;
+WHERE c.id = ANY($1);
 
 -- name: GetCollections :many
 SELECT * FROM collections WHERE  published = COALESCE(sqlc.narg('published'), published) ORDER BY display_order LIMIT $1 OFFSET $2;

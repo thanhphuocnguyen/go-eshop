@@ -168,16 +168,8 @@ SELECT
 FROM collections AS c
 LEFT JOIN collection_products AS cp ON c.id = cp.collection_id
 LEFT JOIN products AS p ON cp.product_id = p.id
-WHERE c.id = ANY($3::UUID[])
-GROUP BY c.id, p.id
-LIMIT $1 OFFSET $2
+WHERE c.id = ANY($1)
 `
-
-type GetCollectionsByIDsParams struct {
-	Limit  int64       `json:"limit"`
-	Offset int64       `json:"offset"`
-	Ids    []uuid.UUID `json:"ids"`
-}
 
 type GetCollectionsByIDsRow struct {
 	ID            uuid.UUID      `json:"id"`
@@ -198,8 +190,8 @@ type GetCollectionsByIDsRow struct {
 	ProductSlug   *string        `json:"productSlug"`
 }
 
-func (q *Queries) GetCollectionsByIDs(ctx context.Context, arg GetCollectionsByIDsParams) ([]GetCollectionsByIDsRow, error) {
-	rows, err := q.db.Query(ctx, getCollectionsByIDs, arg.Limit, arg.Offset, arg.Ids)
+func (q *Queries) GetCollectionsByIDs(ctx context.Context, id []uuid.UUID) ([]GetCollectionsByIDsRow, error) {
+	rows, err := q.db.Query(ctx, getCollectionsByIDs, id)
 	if err != nil {
 		return nil, err
 	}

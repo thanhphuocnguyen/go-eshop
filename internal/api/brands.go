@@ -10,8 +10,6 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
 )
 
-// --- Public API ---
-
 // @Summary Get a list of brands for the shop
 // @Description Get a list of brands for the shop
 // @ID get-shop-brands

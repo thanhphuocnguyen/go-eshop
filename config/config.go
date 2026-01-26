@@ -24,6 +24,9 @@ type Config struct {
 	SmtpUsername         string        `mapstructure:"SMTP_USERNAME"`
 	SmtpPassword         string        `mapstructure:"SMTP_PASSWORD"`
 	SymmetricKey         string        `mapstructure:"SYMMETRIC_KEY"`
+	EsUrl                string        `mapstructure:"ES_URL"`
+	EsUserName           string        `mapstructure:"ES_USERNAME"`
+	EsPassword           string        `mapstructure:"ES_PASSWORD"`
 }
 
 func LoadConfig(path string) (cfg Config, err error) {

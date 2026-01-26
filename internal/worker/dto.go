@@ -1,6 +1,9 @@
 package worker
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+	"github.com/thanhphuocnguyen/go-eshop/internal/models"
+)
 
 type PayloadVerifyEmail struct {
 	UserID uuid.UUID `json:"user_id"`
@@ -27,4 +30,13 @@ type OrderCreatedEmailData struct {
 	Total    float64             `json:"total"`
 	FullName string              `json:"fullName"`
 	Items    []OrderCreatedItems `json:"items"`
+}
+
+type PayloadIndexProduct struct {
+	ProductID uuid.UUID `json:"product_id"`
+}
+
+type PayloadUpdateProductIndex struct {
+	ProductID uuid.UUID                 `json:"product_id"`
+	Data      models.UpdateProductModel `json:"data"`
 }

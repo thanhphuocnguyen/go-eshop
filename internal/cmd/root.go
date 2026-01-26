@@ -20,6 +20,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/api"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/elasticsearch"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/gateways"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/mailer"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
@@ -152,13 +153,18 @@ func apiCmd(ctx context.Context, cfg config.Config) *cobra.Command {
 			if err := service.AddGateway(stripeConfig); err != nil {
 				log.Fatal().Err(err).Msg("failed to add stripe gateway")
 			}
+			esStore, err := elasticsearch.NewClient(cfg.EsUrl, cfg.EsUserName, cfg.EsPassword)
+			if err != nil {
+				log.Error().Msg("Cannot access Elastic client")
+			}
+			productIndexer := elasticsearch.NewProductIndexer(esStore)
 
-			taskProcessor := worker.NewRedisTaskProcessor(redisCfg, pgRepo, mailer, cfg)
+			taskProcessor := worker.NewRedisTaskProcessor(redisCfg, pgRepo, mailer, productIndexer, cfg)
 			if taskProcessor == nil {
 				return fmt.Errorf("failed to create task processor")
 			}
 
-			api, err := api.NewAPI(cfg, pgRepo, taskDistributor, uploadService, service)
+			api, err := api.NewAPI(cfg, pgRepo, taskDistributor, uploadService, service, productIndexer)
 			if err != nil {
 				return fmt.Errorf("failed to create API server: %w", err)
 			}

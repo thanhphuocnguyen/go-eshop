@@ -7,6 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/config"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/elasticsearch"
 	app_logger "github.com/thanhphuocnguyen/go-eshop/pkg/logger"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/mailer"
 )
@@ -18,14 +19,19 @@ const (
 )
 
 type TaskProcessor interface {
+	ProcessSendVerifyEmail(ctx context.Context, task *asynq.Task) error
 	ProcessSendOrderCreatedEmail(ctx context.Context, task *asynq.Task) error
+	ProcessIndexProduct(ctx context.Context, task *asynq.Task) error
+	ProcessUpdateIndexProduct(ctx context.Context, task *asynq.Task) error
+	ProcessDeleteIndexProduct(ctx context.Context, task *asynq.Task) error
 	Start() error
 	Shutdown()
 }
 type RedisTaskProcessor struct {
 	asynqServer *asynq.Server
-	repo        repository.Store
+	store       repository.Store
 	mailer      mailer.EmailSender
+	esClient    *elasticsearch.ProductIndexer
 	cfg         config.Config
 }
 
@@ -33,6 +39,7 @@ func NewRedisTaskProcessor(
 	redisOtp asynq.RedisClientOpt,
 	postgres repository.Store,
 	mailer mailer.EmailSender,
+	esClient *elasticsearch.ProductIndexer,
 	cfg config.Config,
 ) TaskProcessor {
 	logger := app_logger.NewLogger(nil)
@@ -57,7 +64,7 @@ func NewRedisTaskProcessor(
 				Msg("error processing task")
 		}),
 	})
-	return &RedisTaskProcessor{server, postgres, mailer, cfg}
+	return &RedisTaskProcessor{server, postgres, mailer, esClient, cfg}
 }
 
 func (p *RedisTaskProcessor) Start() error {
@@ -65,6 +72,9 @@ func (p *RedisTaskProcessor) Start() error {
 	// register task handlers
 	mux.HandleFunc(OrderCreatedEmailTaskType, p.ProcessSendOrderCreatedEmail)
 	mux.HandleFunc(VerifyEmailTaskType, p.ProcessSendVerifyEmail)
+	mux.HandleFunc(DeleteIndexProductTaskType, p.ProcessDeleteIndexProduct)
+	mux.HandleFunc(IndexProductTaskType, p.ProcessIndexProduct)
+	mux.HandleFunc(UpdateIndexProductTaskType, p.ProcessUpdateIndexProduct)
 
 	return p.asynqServer.Start(mux)
 }

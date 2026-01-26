@@ -1,0 +1,78 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "analysis": {
+      "analyzer": {
+        "name_analyzer": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": [
+            "lowercase",
+            "asciifolding"
+          ]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "id": {
+        "type": "keyword"
+      },
+      "name": {
+        "type": "text",
+        "analyzer": "name_analyzer",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
+      "description": {
+        "type": "text"
+      },
+      "short_description": {
+        "type": "text"
+      },
+      "is_active": {
+        "type": "boolean"
+      },
+      "slug": {
+        "type": "keyword",
+        "index": false
+      },
+      "sku": {
+        "type": "keyword",
+        "index": false
+      },
+      "price": {
+        "type": "double"
+      },
+      "categories": {
+        "type": "keyword"
+      },
+      "brand": {
+        "type": "keyword"
+      },
+      "rating": {
+        "type": "float"
+      },
+      "in_stock": {
+        "type": "boolean"
+      },
+      "created_at": {
+        "type": "date",
+        "format": "strict_date_optional_time||epoch_millis"
+      },
+      "attributes": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      }
+    }
+  }
+}

@@ -36,3 +36,6 @@ INSERT INTO category_products (category_id, product_id) VALUES ($1, $2);
 
 -- name: RemoveProductsFromCategory :exec
 DELETE FROM category_products WHERE product_id = $1;
+
+-- name: GetCategoriesByIDs :many
+SELECT * FROM categories WHERE id = ANY($1);

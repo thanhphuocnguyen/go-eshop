@@ -233,14 +233,17 @@ func (s *Server) upsertCartItemQty(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-
-	variantID := uuid.MustParse(variantIDParam)
-	cartItem, err := s.repo.GetCartItemByProductVariantID(c, repository.GetCartItemByProductVariantIDParams{VariantID: variantID, CartID: cart.ID})
+	parsedVId, err := uuid.Parse(variantIDParam)
+	if err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+	cartItem, err := s.repo.GetCartItemByProductVariantID(c, repository.GetCartItemByProductVariantIDParams{VariantID: parsedVId, CartID: cart.ID})
 	if err != nil {
 		if errors.Is(err, repository.ErrRecordNotFound) {
 			cartItem, err = s.repo.AddCartItem(c, repository.AddCartItemParams{
 				CartID:    cart.ID,
-				VariantID: variantID,
+				VariantID: parsedVId,
 				Quantity:  req.Quantity,
 			})
 			if err != nil {

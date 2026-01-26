@@ -14,6 +14,7 @@ import (
 	"github.com/thanhphuocnguyen/go-eshop/internal/processors"
 	"github.com/thanhphuocnguyen/go-eshop/internal/worker"
 	cache "github.com/thanhphuocnguyen/go-eshop/pkg/cache"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/elasticsearch"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/payment"
 	"github.com/thanhphuocnguyen/go-eshop/pkg/upload"
 )
@@ -37,6 +38,7 @@ type Server struct {
 	taskDistributor   worker.TaskDistributor
 	discountProcessor *processors.DiscountProcessor
 	validator         *validator.Validate
+	elasticClient     *elasticsearch.ProductIndexer
 }
 
 func NewAPI(
@@ -45,6 +47,7 @@ func NewAPI(
 	taskDistributor worker.TaskDistributor,
 	uploadService upload.CdnUploader,
 	paymentSrv *payment.PaymentManager,
+	elasticClient *elasticsearch.ProductIndexer,
 ) (*Server, error) {
 	// Add nil checks for critical dependencies
 	if repo == nil {
@@ -87,6 +90,7 @@ func NewAPI(
 		tokenAuth:         tokenAuth,
 		paymentSrv:        paymentSrv,
 		discountProcessor: discountProcessor,
+		elasticClient:     elasticClient,
 	}
 
 	// Setup validator (consider moving to server initialization if used elsewhere)

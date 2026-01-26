@@ -614,6 +614,16 @@ type ShippingZone struct {
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
+type TaskMessage struct {
+	ID           int32              `json:"id"`
+	TaskID       int32              `json:"taskId"`
+	MsgType      string             `json:"msgType"`
+	Body         []byte             `json:"body"`
+	ErrorDetails []byte             `json:"errorDetails"`
+	Status       string             `json:"status"`
+	CreatedAt    pgtype.Timestamptz `json:"createdAt"`
+}
+
 type User struct {
 	ID                uuid.UUID `json:"id"`
 	RoleID            uuid.UUID `json:"roleId"`

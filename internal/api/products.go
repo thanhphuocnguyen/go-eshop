@@ -3,14 +3,32 @@ package api
 import (
 	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 
+	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/textquerytype"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
 )
+
+// parseFloatParam parses a string parameter into a float64 pointer
+func parseFloatParam(param string) (*float64, error) {
+	if param == "" {
+		return nil, nil
+	}
+
+	value, err := strconv.ParseFloat(param, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	return &value, nil
+}
 
 // @Summary Get a product detail by ID
 // @Schemes http
@@ -77,25 +95,139 @@ func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 	if search := queryParams.Get("search"); search != "" {
 		queries.Search = &search
 	}
+	if brand := queryParams.Get("brand"); brand != "" {
+		queries.Brand = &brand
+	}
+	if priceFrom := queryParams.Get("priceFrom"); priceFrom != "" {
 
-	// Parse brandIds parameter
-	if brandIDs := queryParams["brandIds"]; len(brandIDs) > 0 {
-		queries.BrandIDs = &brandIDs
+		if pf, err := parseFloatParam(priceFrom); err == nil {
+			queries.PriceFrom = pf
+		}
+	}
+	if priceTo := queryParams.Get("priceTo"); priceTo != "" {
+		if pt, err := parseFloatParam(priceTo); err == nil {
+			queries.PriceTo = pt
+		}
+	}
+	if categories := queryParams["categories"]; len(categories) > 0 {
+		queries.Categories = categories
+	}
+	if collections := queryParams["collections"]; len(collections) > 0 {
+		queries.Collections = collections
+	}
+	if brand := queryParams["brand"]; len(brand) > 0 {
+		queries.Brand = &brand[0]
+	}
+	// Parse attributes parameter
+	attributes := make([]string, 0)
+	if attrs := queryParams["attributes"]; len(attrs) > 0 {
+		for _, attr := range attrs {
+			attributes = append(attributes, attr)
+		}
+		queries.Attributes = attributes
+	}
+	from := (queries.Page - 1) * queries.PageSize
+	rangeQuery := map[string]types.RangeQuery{
+		"price": &types.NumberRangeQuery{
+			Gte: (*types.Float64)(queries.PriceFrom),
+			Lte: (*types.Float64)(queries.PriceTo),
+		},
+	}
+	mustQuery := []types.Query{}
+	if queries.Search != nil && len(*queries.Search) > 0 {
+		mustQuery = append(mustQuery, types.Query{
+			MultiMatch: &types.MultiMatchQuery{
+				Query:     *queries.Search,
+				Fields:    []string{"name^4", "brand^2", "description", "shortDescription"},
+				Type:      &textquerytype.Bestfields,
+				Fuzziness: "AUTO",
+			},
+		})
 	}
 
-	// Parse categoryIds parameter
-	if categoryIDs := queryParams["categoryIds"]; len(categoryIDs) > 0 {
-		queries.CategoryIDs = &categoryIDs
+	filterQuery := []types.Query{
+		{
+			Term: map[string]types.TermQuery{
+				"inStock": {
+					Value: true,
+				},
+			},
+		},
+		{
+			Range: rangeQuery,
+		},
+	}
+	if len(queries.Attributes) > 0 {
+		filterQuery = append(filterQuery, types.Query{
+			Terms: &types.TermsQuery{
+				TermsQuery: map[string]types.TermsQueryField{
+					"attributes": queries.Attributes,
+				},
+			},
+		})
+	}
+	if len(queries.Categories) > 0 {
+		filterQuery = append(filterQuery, types.Query{
+			Terms: &types.TermsQuery{
+				TermsQuery: map[string]types.TermsQueryField{
+					"categories": queries.Categories,
+				},
+			},
+		})
+	}
+	if len(queries.Collections) > 0 {
+		filterQuery = append(filterQuery, types.Query{
+			Terms: &types.TermsQuery{
+				TermsQuery: map[string]types.TermsQueryField{
+					"collections": queries.Collections,
+				},
+			},
+		})
 	}
 
+	var boostFeature float32 = 1.5
+	shouldQuery := []types.Query{{RankFeature: &types.RankFeatureQuery{Boost: &boostFeature, Field: "popularity_score"}}}
+	if queries.Brand != nil && len(*queries.Brand) > 0 {
+		var boostBrand float32 = 3.0
+		shouldQuery = append(shouldQuery, types.Query{
+			Term: map[string]types.TermQuery{
+				"brand": {
+					Value: queries.Brand,
+					Boost: &boostBrand,
+				},
+			},
+		})
+	}
+
+	searchSize := int(queries.PageSize)
+	searchFrom := int(from)
+	q := &search.Request{
+		Size: &searchSize,
+		From: &searchFrom,
+		Query: &types.Query{
+			Bool: &types.BoolQuery{
+				Must:               mustQuery,
+				Filter:             filterQuery,
+				Should:             shouldQuery,
+				MinimumShouldMatch: 0,
+			},
+		},
+	}
+	esProducts, err := s.elasticClient.SearchProducts(c, q) // Parse categoryIds parameter
+	if err == nil {
+		RespondSuccessWithPagination(w, esProducts, dto.CreatePagination(queries.Page, queries.PageSize, 0))
+		return
+	}
+
+	// Fallback to DB search
 	if err := s.validator.Struct(&queries); err != nil {
 		RespondBadRequest(w, InvalidBodyCode, err)
 		return
 	}
 
 	dbParams := repository.GetProductListParams{
-		Limit:  queries.PageSize,
-		Offset: (queries.Page - 1) * queries.PageSize,
+		Limit:  int64(queries.PageSize),
+		Offset: int64((queries.Page - 1) * queries.PageSize),
 	}
 
 	if queries.Search != nil && len(*queries.Search) > 0 {
@@ -105,20 +237,6 @@ func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 		search = strings.ReplaceAll(search, ":", "%")
 		search = "%" + search + "%"
 		dbParams.Search = &search
-	}
-
-	if queries.BrandIDs != nil {
-		dbParams.BrandIds = make([]uuid.UUID, 0)
-		for _, id := range *queries.BrandIDs {
-			dbParams.BrandIds = append(dbParams.BrandIds, uuid.MustParse(id))
-		}
-	}
-
-	if queries.CategoryIDs != nil {
-		dbParams.CategoryIds = make([]uuid.UUID, len(*queries.CategoryIDs))
-		for i, id := range *queries.CategoryIDs {
-			dbParams.CategoryIds[i] = uuid.MustParse(id)
-		}
 	}
 
 	products, err := s.repo.GetProductList(c, dbParams)

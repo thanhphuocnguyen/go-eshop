@@ -113,6 +113,41 @@ func (q *Queries) GetCategories(ctx context.Context, arg GetCategoriesParams) ([
 	return items, nil
 }
 
+const getCategoriesByIDs = `-- name: GetCategoriesByIDs :many
+SELECT id, name, description, image_url, image_id, published, slug, display_order, created_at, updated_at FROM categories WHERE id = ANY($1)
+`
+
+func (q *Queries) GetCategoriesByIDs(ctx context.Context, id []uuid.UUID) ([]Category, error) {
+	rows, err := q.db.Query(ctx, getCategoriesByIDs, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Category{}
+	for rows.Next() {
+		var i Category
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.ImageUrl,
+			&i.ImageID,
+			&i.Published,
+			&i.Slug,
+			&i.DisplayOrder,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getCategoryByID = `-- name: GetCategoryByID :one
 SELECT id, name, description, image_url, image_id, published, slug, display_order, created_at, updated_at FROM categories WHERE id = $1 LIMIT 1
 `

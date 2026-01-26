@@ -403,7 +403,7 @@ CREATE TABLE products (
   rating_count INT NOT NULL DEFAULT 0, 
   one_star_count INT NOT NULL DEFAULT 0, 
   two_star_count INT NOT NULL DEFAULT 0, 
-  three_star_count INT NOT NULL DEFAULT 0, 
+  three_star_count INT NOT NULL DEFAULT 0,
   four_star_count INT NOT NULL DEFAULT 0, 
   five_star_count INT NOT NULL DEFAULT 0, 
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), 

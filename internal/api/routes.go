@@ -82,6 +82,7 @@ func (s *Server) setupMainRoutes() {
 			s.addPaymentRoutes(protected)
 			s.addRatingRoutes(protected)
 			s.addDiscountRoutes(protected)
+			s.addEsRoutes(protected)
 			protected.Delete("/images/remove-external/{id}", s.removeImageByPublicID)
 		})
 	})
