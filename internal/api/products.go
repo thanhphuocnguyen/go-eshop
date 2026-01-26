@@ -161,7 +161,7 @@ func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 		filterQuery = append(filterQuery, types.Query{
 			Terms: &types.TermsQuery{
 				TermsQuery: map[string]types.TermsQueryField{
-					"attributes": queries.Attributes,
+					"attributes.keyword": queries.Attributes,
 				},
 			},
 		})
@@ -170,7 +170,7 @@ func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 		filterQuery = append(filterQuery, types.Query{
 			Terms: &types.TermsQuery{
 				TermsQuery: map[string]types.TermsQueryField{
-					"categories": queries.Categories,
+					"categories.keyword": queries.Categories,
 				},
 			},
 		})
@@ -179,7 +179,7 @@ func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 		filterQuery = append(filterQuery, types.Query{
 			Terms: &types.TermsQuery{
 				TermsQuery: map[string]types.TermsQueryField{
-					"collections": queries.Collections,
+					"collections.keyword": queries.Collections,
 				},
 			},
 		})
@@ -191,7 +191,7 @@ func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 		var boostBrand float32 = 3.0
 		shouldQuery = append(shouldQuery, types.Query{
 			Term: map[string]types.TermQuery{
-				"brand": {
+				"brand.keyword": {
 					Value: queries.Brand,
 					Boost: &boostBrand,
 				},
