@@ -4,13 +4,13 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/textquerytype"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
@@ -88,8 +88,6 @@ func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 	paginationQuery := ParsePaginationQuery(r)
 	queryParams := r.URL.Query()
 	var queries models.ProductQuery
-	queries.Page = paginationQuery.Page
-	queries.PageSize = paginationQuery.PageSize
 
 	// Parse search parameter
 	if search := queryParams.Get("search"); search != "" {
@@ -126,13 +124,17 @@ func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 		}
 		queries.Attributes = attributes
 	}
-	from := (queries.Page - 1) * queries.PageSize
-	rangeQuery := map[string]types.RangeQuery{
-		"price": &types.NumberRangeQuery{
-			Gte: (*types.Float64)(queries.PriceFrom),
-			Lte: (*types.Float64)(queries.PriceTo),
-		},
+
+	if err := s.validator.Struct(&queries); err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
 	}
+
+	from := (paginationQuery.Page - 1) * paginationQuery.PageSize
+	rangeQuery := map[string]types.RangeQuery{
+		"price": &types.NumberRangeQuery{Gte: (*types.Float64)(queries.PriceFrom), Lte: (*types.Float64)(queries.PriceTo)},
+	}
+
 	mustQuery := []types.Query{}
 	if queries.Search != nil && len(*queries.Search) > 0 {
 		mustQuery = append(mustQuery, types.Query{
@@ -146,62 +148,41 @@ func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	filterQuery := []types.Query{
-		{
-			Term: map[string]types.TermQuery{
-				"inStock": {
-					Value: true,
-				},
-			},
-		},
-		{
-			Range: rangeQuery,
-		},
+		{Term: map[string]types.TermQuery{"inStock": {Value: true}}},
+		{Range: rangeQuery},
 	}
 	if len(queries.Attributes) > 0 {
 		filterQuery = append(filterQuery, types.Query{
 			Terms: &types.TermsQuery{
-				TermsQuery: map[string]types.TermsQueryField{
-					"attributes.keyword": queries.Attributes,
-				},
+				TermsQuery: map[string]types.TermsQueryField{"attributes.keyword": queries.Attributes},
 			},
 		})
 	}
 	if len(queries.Categories) > 0 {
 		filterQuery = append(filterQuery, types.Query{
 			Terms: &types.TermsQuery{
-				TermsQuery: map[string]types.TermsQueryField{
-					"categories.keyword": queries.Categories,
-				},
+				TermsQuery: map[string]types.TermsQueryField{"categories.keyword": queries.Categories},
 			},
 		})
 	}
 	if len(queries.Collections) > 0 {
 		filterQuery = append(filterQuery, types.Query{
 			Terms: &types.TermsQuery{
-				TermsQuery: map[string]types.TermsQueryField{
-					"collections.keyword": queries.Collections,
-				},
-			},
-		})
+				TermsQuery: map[string]types.TermsQueryField{"collections.keyword": queries.Collections},
+			}})
 	}
 
 	var boostFeature float32 = 1.5
 	shouldQuery := []types.Query{{RankFeature: &types.RankFeatureQuery{Boost: &boostFeature, Field: "popularity_score"}}}
+
 	if queries.Brand != nil && len(*queries.Brand) > 0 {
 		var boostBrand float32 = 3.0
-		shouldQuery = append(shouldQuery, types.Query{
-			Term: map[string]types.TermQuery{
-				"brand.keyword": {
-					Value: queries.Brand,
-					Boost: &boostBrand,
-				},
-			},
-		})
+		shouldQuery = append(shouldQuery, types.Query{Term: map[string]types.TermQuery{"brand.keyword": {Value: queries.Brand, Boost: &boostBrand}}})
 	}
 
-	searchSize := int(queries.PageSize)
+	searchSize := int(paginationQuery.PageSize)
 	searchFrom := int(from)
-	q := &search.Request{
+	query := &search.Request{
 		Size: &searchSize,
 		From: &searchFrom,
 		Query: &types.Query{
@@ -213,36 +194,44 @@ func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 			},
 		},
 	}
-	esProducts, err := s.elasticClient.SearchProducts(c, q) // Parse categoryIds parameter
+	esProducts, err := s.elasticClient.SearchProducts(c, query) // Parse categoryIds parameter
 	if err == nil {
-		RespondSuccessWithPagination(w, esProducts, dto.CreatePagination(queries.Page, queries.PageSize, 0))
+		esProductResponses := make([]dto.ProductSummary, 0)
+		for _, product := range esProducts {
+			esProductResponses = append(esProductResponses, dto.MapToShopProductResponseFromES(product))
+		}
+		RespondSuccessWithPagination(w, esProductResponses, dto.CreatePagination(paginationQuery.Page, paginationQuery.PageSize, 0))
 		return
 	}
 
 	// Fallback to DB search
-	if err := s.validator.Struct(&queries); err != nil {
-		RespondBadRequest(w, InvalidBodyCode, err)
-		return
-	}
-
-	dbParams := repository.GetProductListParams{
-		Limit:  int64(queries.PageSize),
-		Offset: int64((queries.Page - 1) * queries.PageSize),
+	dbParams := repository.SearchProductsParams{
+		Limit:  int64(paginationQuery.PageSize),
+		Offset: int64((paginationQuery.Page - 1) * paginationQuery.PageSize),
 	}
 
 	if queries.Search != nil && len(*queries.Search) > 0 {
-		search := *queries.Search
-		search = strings.ReplaceAll(search, " ", "%")
-		search = strings.ReplaceAll(search, ",", "%")
-		search = strings.ReplaceAll(search, ":", "%")
-		search = "%" + search + "%"
-		dbParams.Search = &search
+		dbParams.Search = queries.Search
 	}
 
-	products, err := s.repo.GetProductList(c, dbParams)
+	if queries.Brand != nil && len(*queries.Brand) > 0 {
+		dbParams.Brand = queries.Brand
+	}
+
+	if len(queries.Categories) > 0 {
+		dbParams.Categories = queries.Categories
+	}
+
+	if len(queries.Collections) > 0 {
+		dbParams.Collections = queries.Collections
+	}
+
+	products, err := s.repo.SearchProducts(c, dbParams)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
+	} else {
+		log.Error().Err(err).Msg("Elasticsearch search error, fallback to DB search")
 	}
 
 	productCnt, err := s.repo.CountProducts(c, repository.CountProductsParams{})
@@ -256,7 +245,7 @@ func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 		productResponses = append(productResponses, dto.MapToShopProductResponse(product))
 	}
 
-	RespondSuccessWithPagination(w, productResponses, dto.CreatePagination(queries.Page, queries.PageSize, productCnt))
+	RespondSuccessWithPagination(w, productResponses, dto.CreatePagination(paginationQuery.Page, paginationQuery.PageSize, productCnt))
 }
 
 // Setup product-related routes

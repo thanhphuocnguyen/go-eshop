@@ -180,7 +180,6 @@ type Querier interface {
 	GetProductDetail(ctx context.Context, arg GetProductDetailParams) (GetProductDetailRow, error)
 	GetProductForIndexingById(ctx context.Context, id uuid.UUID) (GetProductForIndexingByIdRow, error)
 	GetProductImages(ctx context.Context, productIds []uuid.UUID) ([]GetProductImagesRow, error)
-	GetProductList(ctx context.Context, arg GetProductListParams) ([]GetProductListRow, error)
 	GetProductRating(ctx context.Context, id uuid.UUID) (ProductRating, error)
 	GetProductRatings(ctx context.Context, arg GetProductRatingsParams) ([]GetProductRatingsRow, error)
 	GetProductRatingsByOrderItemIDs(ctx context.Context, ids []uuid.UUID) ([]GetProductRatingsByOrderItemIDsRow, error)
@@ -243,6 +242,7 @@ type Querier interface {
 	RemoveProductsFromCategory(ctx context.Context, productID uuid.UUID) error
 	RemoveProductsFromCollection(ctx context.Context, productID uuid.UUID) error
 	ResetPrimaryAddress(ctx context.Context, userID uuid.UUID) error
+	SearchProducts(ctx context.Context, arg SearchProductsParams) ([]SearchProductsRow, error)
 	SeedAddresses(ctx context.Context, arg []SeedAddressesParams) (int64, error)
 	SeedBrands(ctx context.Context, arg []SeedBrandsParams) (int64, error)
 	SeedCategories(ctx context.Context, arg []SeedCategoriesParams) (int64, error)

@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
@@ -46,10 +45,10 @@ func (s *Server) getCollectionBySlug(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := s.repo.GetProductList(c, repository.GetProductListParams{
-		CollectionIds: []uuid.UUID{collection.ID},
-		Limit:         query.PageSize,
-		Offset:        (query.PageSize) * int64(query.Page-1),
+	rows, err := s.repo.SearchProducts(c, repository.SearchProductsParams{
+		Collections: []string{collection.Name},
+		Limit:       query.PageSize,
+		Offset:      (query.PageSize) * int64(query.Page-1),
 	})
 
 	if err != nil {

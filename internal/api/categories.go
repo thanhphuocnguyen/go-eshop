@@ -110,10 +110,10 @@ func (s *Server) getCategoryBySlug(w http.ResponseWriter, r *http.Request) {
 		ImageUrl:    category.ImageUrl,
 	}
 
-	products, err := s.repo.GetProductList(c, repository.GetProductListParams{
-		CategoryIds: []uuid.UUID{category.ID},
-		Limit:       query.PageSize,
-		Offset:      (query.PageSize) * int64(query.Page-1),
+	products, err := s.repo.SearchProducts(c, repository.SearchProductsParams{
+		Categories: []string{category.Name},
+		Limit:      query.PageSize,
+		Offset:     (query.PageSize) * int64(query.Page-1),
 	})
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)

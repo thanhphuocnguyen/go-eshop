@@ -73,7 +73,7 @@ WHERE
     AND p.slug ILIKE COALESCE(sqlc.narg('slug'), p.slug)
 GROUP BY p.id ORDER BY @orderBy::text LIMIT $1 OFFSET $2;
 
--- name: GetProductList :many
+-- name: SearchProducts :many
 SELECT p.*, cat.name, cat.slug, b.name, b.slug, MIN(pv.price) as min_price, COUNT(pv.id) as variant_count FROM products as p
 LEFT JOIN collection_products cp ON p.id = cp.product_id
 LEFT JOIN collections c ON cp.collection_id = c.id
@@ -83,12 +83,17 @@ LEFT JOIN brands b ON p.brand_id = b.id
 LEFT JOIN product_variants pv ON pv.product_id = p.id
 WHERE
     p.is_active = COALESCE(sqlc.narg('is_active'), p.is_active) 
-    AND p.name ILIKE COALESCE(sqlc.narg('search'), '%')
-    AND (sqlc.narg('brand_ids')::uuid[] is null or p.brand_id = ANY(sqlc.narg('brand_ids')::uuid[]))
-    AND (sqlc.narg('collection_ids')::uuid[] is null or c.id = ANY(sqlc.narg('collection_ids')::uuid[]))
-    AND (sqlc.narg('category_ids')::uuid[] is null or cat.id = ANY(sqlc.narg('category_ids')::uuid[]))
-    AND pv.stock > 0
+    AND (
+        sqlc.narg('search')::text IS NULL 
+        OR p.name ILIKE '%' || sqlc.narg('search') || '%'
+        OR p.description ILIKE '%' || sqlc.narg('search') || '%'
+        OR p.short_description ILIKE '%' || sqlc.narg('search') || '%'
+    )
+    AND (sqlc.narg('brand')::text IS NULL OR b.name = sqlc.narg('brand'))
+    AND (sqlc.narg('categories')::text[] IS NULL OR cat.name = ANY(sqlc.narg('categories')::text[]))
+    AND (sqlc.narg('collections')::text[] IS NULL OR c.name = ANY(sqlc.narg('collections')::text[]))
 GROUP BY p.id, cat.id, b.id
+HAVING SUM(COALESCE(pv.stock, 0)) > 0
 ORDER BY @orderBy::text LIMIT $1 OFFSET $2;
 
 -- name: CountProducts :one

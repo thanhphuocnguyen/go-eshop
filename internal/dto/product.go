@@ -6,6 +6,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/elasticsearch"
 )
 
 type ProductAttribute struct {
@@ -34,13 +35,14 @@ type ProductSummary struct {
 	Name             string   `json:"name"`
 	BasePrice        float64  `json:"basePrice,omitzero"`
 	Slug             string   `json:"slug,omitempty"`
-	ImageUrl         *string  `json:"imageUrl,omitempty"`
-	AvgRating        *float64 `json:"avgRating,omitempty"`
-	VariantCount     int16    `json:"variantCount,omitzero"`
+	Brand            string   `json:"brand,omitempty"`
 	Description      string   `json:"description,omitempty"`
 	ShortDescription *string  `json:"shortDescription,omitempty"`
-	ReviewCount      *int32   `json:"reviewCount,omitempty"`
+	VariantCount     int16    `json:"variantCount,omitzero"`
 	ImageID          *string  `json:"imageId,omitempty"`
+	ImageUrl         *string  `json:"imageUrl,omitempty"`
+	AvgRating        *float64 `json:"avgRating,omitempty"`
+	ReviewCount      *int32   `json:"reviewCount,omitempty"`
 	CreatedAt        string   `json:"createdAt,omitempty"`
 	UpdatedAt        string   `json:"updatedAt,omitempty"`
 }
@@ -51,8 +53,8 @@ type VariantDetail struct {
 	IsActive   bool                   `json:"isActive"`
 	Sku        string                 `json:"sku,omitempty"`
 	Weight     *float64               `json:"weight,omitempty"`
-	ImageUrl   *string                `json:"imageUrl,omitempty"`
 	ImageID    *string                `json:"imageId,omitempty"`
+	ImageUrl   *string                `json:"imageUrl,omitempty"`
 	Attributes []AttributeValueDetail `json:"attributeValues,omitempty"`
 	CreatedAt  string                 `json:"createdAt,omitempty"`
 	UpdatedAt  string                 `json:"updatedAt,omitempty"`
@@ -186,7 +188,7 @@ func MapToAdminProductResponse(productRow repository.Product) ProductListItem {
 	return product
 }
 
-func MapToShopProductResponse(productRow repository.GetProductListRow) ProductSummary {
+func MapToShopProductResponse(productRow repository.SearchProductsRow) ProductSummary {
 	price, _ := productRow.MinPrice.Float64Value()
 	avgRating := utils.GetAvgRating(
 		productRow.RatingCount,
@@ -237,4 +239,24 @@ func MapToVariantListModelDto(row repository.GetProductVariantListRow) VariantDe
 	}
 
 	return variant
+}
+
+// MapToShopProductResponse converts Elasticsearch ProductIndexDocument to ProductSummary
+func MapToShopProductResponseFromES(esProduct elasticsearch.ProductIndexDocument) ProductSummary {
+	ratingCount := int32(esProduct.RatingCount)
+	product := ProductSummary{
+		ID:               esProduct.ID,
+		Name:             esProduct.Name,
+		BasePrice:        esProduct.BasePrice,
+		Slug:             esProduct.Slug,
+		AvgRating:        esProduct.AvgRating,
+		Description:      esProduct.Description,
+		ShortDescription: esProduct.ShortDescription,
+		ImageUrl:         esProduct.ImageUrl,
+		ReviewCount:      &ratingCount,
+		CreatedAt:        esProduct.CreatedAt.String(),
+		UpdatedAt:        esProduct.CreatedAt.String(), // ES document doesn't have updatedAt, using createdAt
+	}
+
+	return product
 }
