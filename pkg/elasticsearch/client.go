@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/esutil"
@@ -97,21 +96,16 @@ func (c *ESClient) IndexDocument(ctx context.Context, index string, documentID s
 	return nil
 }
 
-func (c *ESClient) QueryDocuments(ctx context.Context, index string, query *search.Request) ([]interface{}, error) {
+func (c *ESClient) QueryDocuments(ctx context.Context, index string, query *search.Request) ([]json.RawMessage, error) {
 
 	res, err := c.es.Search().Index(index).Request(query).Do(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error searching documents: %s", err)
 	}
 
-	var documents []interface{}
+	var documents []json.RawMessage
 	for _, hit := range res.Hits.Hits {
-		var doc interface{}
-		if err := json.Unmarshal(hit.Source_, &doc); err != nil {
-			log.Printf("error unmarshaling document: %s", err)
-			continue
-		}
-		documents = append(documents, doc)
+		documents = append(documents, hit.Source_)
 	}
 
 	return documents, nil

@@ -55,6 +55,9 @@ func (pi *ProductIndexer) CreateIndex(ctx context.Context) error {
 		Type:      "custom",
 		Tokenizer: "standard",
 		Filter:    []string{"lowercase", "asciifolding"},
+		CharFilter: []string{
+			"html_strip",
+		},
 	}
 	settings := &types.IndexSettings{
 		NumberOfShards: &numberOfShard,
@@ -83,31 +86,26 @@ func (pi *ProductIndexer) CreateIndex(ctx context.Context) error {
 			"price":            types.NewDoubleNumberProperty(),
 			"imageUrl":         types.NewKeywordProperty(),
 			"ratingCount":      types.NewIntegerNumberProperty(),
-
-			"avgRating": types.NewFloatNumberProperty(),
-			"basePrice": types.NewDoubleNumberProperty(),
-			"inStock":   types.NewBooleanProperty(),
-			"createdAt": types.NewDateProperty(),
+			"avgRating":        types.NewFloatNumberProperty(),
+			"basePrice":        types.NewDoubleNumberProperty(),
+			"inStock":          types.NewBooleanProperty(),
+			"createdAt":        types.NewDateProperty(),
 			"categories": types.TextProperty{
-				Analyzer: &nameAnalyzer,
 				Fields: map[string]types.Property{
 					"keyword": types.NewKeywordProperty(),
 				},
 			},
 			"collections": types.TextProperty{
-				Analyzer: &nameAnalyzer,
 				Fields: map[string]types.Property{
 					"keyword": types.NewKeywordProperty(),
 				},
 			},
 			"brand": types.TextProperty{
-				Analyzer: &nameAnalyzer,
 				Fields: map[string]types.Property{
 					"keyword": types.NewKeywordProperty(),
 				},
 			},
 			"attributes": types.TextProperty{
-				Analyzer: &nameAnalyzer,
 				Fields: map[string]types.Property{
 					"keyword": types.NewKeywordProperty(),
 				},
@@ -244,7 +242,7 @@ func (pi *ProductIndexer) IndexExists(ctx context.Context) (bool, error) {
 	return pi.esStore.IndexExists(ctx, PRODUCT_INDEX)
 }
 
-func (pi *ProductIndexer) GetProducts(ctx context.Context) ([]interface{}, error) {
+func (pi *ProductIndexer) GetProducts(ctx context.Context) ([]json.RawMessage, error) {
 	sz := 1000
 	query := &search.Request{
 		Size: &sz,
@@ -256,16 +254,22 @@ func (pi *ProductIndexer) GetProducts(ctx context.Context) ([]interface{}, error
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(len(res))
 	return res, nil
 }
 
-func (pi *ProductIndexer) SearchProducts(ctx context.Context, query *search.Request) ([]interface{}, error) {
+func (pi *ProductIndexer) SearchProducts(ctx context.Context, query *search.Request) ([]ProductIndexDocument, error) {
 
 	res, err := pi.esStore.QueryDocuments(ctx, PRODUCT_INDEX, query)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(len(res))
-	return res, nil
+	var products []ProductIndexDocument
+	for _, doc := range res {
+		var product ProductIndexDocument
+		if err := json.Unmarshal(doc, &product); err != nil {
+			return nil, err
+		}
+		products = append(products, product)
+	}
+	return products, nil
 }
