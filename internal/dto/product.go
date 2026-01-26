@@ -6,6 +6,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/utils"
+	"github.com/thanhphuocnguyen/go-eshop/pkg/elasticsearch"
 )
 
 type ProductAttribute struct {
@@ -237,4 +238,24 @@ func MapToVariantListModelDto(row repository.GetProductVariantListRow) VariantDe
 	}
 
 	return variant
+}
+
+// MapToShopProductResponse converts Elasticsearch ProductIndexDocument to ProductSummary
+func MapToShopProductResponseFromES(esProduct elasticsearch.ProductIndexDocument) ProductSummary {
+	ratingCount := int32(esProduct.RatingCount)
+	product := ProductSummary{
+		ID:               esProduct.ID,
+		Name:             esProduct.Name,
+		BasePrice:        esProduct.BasePrice,
+		Slug:             esProduct.Slug,
+		AvgRating:        esProduct.AvgRating,
+		Description:      esProduct.Description,
+		ShortDescription: esProduct.ShortDescription,
+		ImageUrl:         esProduct.ImageUrl,
+		ReviewCount:      &ratingCount,
+		CreatedAt:        esProduct.CreatedAt.String(),
+		UpdatedAt:        esProduct.CreatedAt.String(), // ES document doesn't have updatedAt, using createdAt
+	}
+
+	return product
 }

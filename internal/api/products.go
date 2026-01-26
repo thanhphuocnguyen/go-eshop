@@ -126,13 +126,12 @@ func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 		}
 		queries.Attributes = attributes
 	}
+
 	from := (queries.Page - 1) * queries.PageSize
 	rangeQuery := map[string]types.RangeQuery{
-		"price": &types.NumberRangeQuery{
-			Gte: (*types.Float64)(queries.PriceFrom),
-			Lte: (*types.Float64)(queries.PriceTo),
-		},
+		"price": &types.NumberRangeQuery{Gte: (*types.Float64)(queries.PriceFrom), Lte: (*types.Float64)(queries.PriceTo)},
 	}
+
 	mustQuery := []types.Query{}
 	if queries.Search != nil && len(*queries.Search) > 0 {
 		mustQuery = append(mustQuery, types.Query{
@@ -146,57 +145,36 @@ func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	filterQuery := []types.Query{
-		{
-			Term: map[string]types.TermQuery{
-				"inStock": {
-					Value: true,
-				},
-			},
-		},
-		{
-			Range: rangeQuery,
-		},
+		{Term: map[string]types.TermQuery{"inStock": {Value: true}}},
+		{Range: rangeQuery},
 	}
 	if len(queries.Attributes) > 0 {
 		filterQuery = append(filterQuery, types.Query{
 			Terms: &types.TermsQuery{
-				TermsQuery: map[string]types.TermsQueryField{
-					"attributes.keyword": queries.Attributes,
-				},
+				TermsQuery: map[string]types.TermsQueryField{"attributes.keyword": queries.Attributes},
 			},
 		})
 	}
 	if len(queries.Categories) > 0 {
 		filterQuery = append(filterQuery, types.Query{
 			Terms: &types.TermsQuery{
-				TermsQuery: map[string]types.TermsQueryField{
-					"categories.keyword": queries.Categories,
-				},
+				TermsQuery: map[string]types.TermsQueryField{"categories.keyword": queries.Categories},
 			},
 		})
 	}
 	if len(queries.Collections) > 0 {
 		filterQuery = append(filterQuery, types.Query{
 			Terms: &types.TermsQuery{
-				TermsQuery: map[string]types.TermsQueryField{
-					"collections.keyword": queries.Collections,
-				},
-			},
-		})
+				TermsQuery: map[string]types.TermsQueryField{"collections.keyword": queries.Collections},
+			}})
 	}
 
 	var boostFeature float32 = 1.5
 	shouldQuery := []types.Query{{RankFeature: &types.RankFeatureQuery{Boost: &boostFeature, Field: "popularity_score"}}}
+
 	if queries.Brand != nil && len(*queries.Brand) > 0 {
 		var boostBrand float32 = 3.0
-		shouldQuery = append(shouldQuery, types.Query{
-			Term: map[string]types.TermQuery{
-				"brand.keyword": {
-					Value: queries.Brand,
-					Boost: &boostBrand,
-				},
-			},
-		})
+		shouldQuery = append(shouldQuery, types.Query{Term: map[string]types.TermQuery{"brand.keyword": {Value: queries.Brand, Boost: &boostBrand}}})
 	}
 
 	searchSize := int(queries.PageSize)
@@ -215,7 +193,11 @@ func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 	}
 	esProducts, err := s.elasticClient.SearchProducts(c, q) // Parse categoryIds parameter
 	if err == nil {
-		RespondSuccessWithPagination(w, esProducts, dto.CreatePagination(queries.Page, queries.PageSize, 0))
+		esProductResponses := make([]dto.ProductSummary, 0)
+		for _, product := range esProducts {
+			esProductResponses = append(esProductResponses, dto.MapToShopProductResponseFromES(product))
+		}
+		RespondSuccessWithPagination(w, esProductResponses, dto.CreatePagination(queries.Page, queries.PageSize, 0))
 		return
 	}
 

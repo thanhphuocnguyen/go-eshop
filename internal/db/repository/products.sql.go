@@ -902,9 +902,9 @@ WHERE
         OR p.description ILIKE '%' || $4 || '%'
         OR p.short_description ILIKE '%' || $4 || '%'
     )
-    AND ($5::text IS NULL OR b.name = $5 OR b.slug = $5)
-    AND ($6::text[] IS NULL OR cat.name = ANY($6::text[]) OR cat.slug = ANY($6::text[]))
-    AND ($7::text[] IS NULL OR c.name = ANY($7::text[]) OR c.slug = ANY($7::text[]))
+    AND ($5::text IS NULL OR b.name = $5)
+    AND ($6::text[] IS NULL OR cat.name = ANY($6::text[]))
+    AND ($7::text[] IS NULL OR c.name = ANY($7::text[]))
 GROUP BY p.id, cat.id, b.id
 HAVING SUM(COALESCE(pv.stock, 0)) > 0
 ORDER BY $8::text LIMIT $1 OFFSET $2

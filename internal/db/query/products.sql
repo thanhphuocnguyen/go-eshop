@@ -89,9 +89,9 @@ WHERE
         OR p.description ILIKE '%' || sqlc.narg('search') || '%'
         OR p.short_description ILIKE '%' || sqlc.narg('search') || '%'
     )
-    AND (sqlc.narg('brand')::text IS NULL OR b.name = sqlc.narg('brand') OR b.slug = sqlc.narg('brand'))
-    AND (sqlc.narg('categories')::text[] IS NULL OR cat.name = ANY(sqlc.narg('categories')::text[]) OR cat.slug = ANY(sqlc.narg('categories')::text[]))
-    AND (sqlc.narg('collections')::text[] IS NULL OR c.name = ANY(sqlc.narg('collections')::text[]) OR c.slug = ANY(sqlc.narg('collections')::text[]))
+    AND (sqlc.narg('brand')::text IS NULL OR b.name = sqlc.narg('brand'))
+    AND (sqlc.narg('categories')::text[] IS NULL OR cat.name = ANY(sqlc.narg('categories')::text[]))
+    AND (sqlc.narg('collections')::text[] IS NULL OR c.name = ANY(sqlc.narg('collections')::text[]))
 GROUP BY p.id, cat.id, b.id
 HAVING SUM(COALESCE(pv.stock, 0)) > 0
 ORDER BY @orderBy::text LIMIT $1 OFFSET $2;
