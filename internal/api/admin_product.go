@@ -36,18 +36,17 @@ import (
 func (s *Server) adminGetProducts(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	// Parse query parameters
+	paginationQuery := ParsePaginationQuery(r)
 	var queries models.ProductQuery
-	queries.Page = 1
-	queries.PageSize = 10
 
 	if page := r.URL.Query().Get("page"); page != "" {
 		if p, err := strconv.Atoi(page); err == nil {
-			queries.Page = int64(p)
+			paginationQuery.Page = int64(p)
 		}
 	}
 	if pageSize := r.URL.Query().Get("pageSize"); pageSize != "" {
 		if ps, err := strconv.Atoi(pageSize); err == nil {
-			queries.PageSize = int64(ps)
+			paginationQuery.PageSize = int64(ps)
 		}
 	}
 	if search := r.URL.Query().Get("search"); search != "" {
@@ -55,8 +54,8 @@ func (s *Server) adminGetProducts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dbParams := repository.GetAdminProductListParams{
-		Limit:  queries.PageSize,
-		Offset: (queries.Page - 1) * queries.PageSize,
+		Limit:  paginationQuery.PageSize,
+		Offset: (paginationQuery.Page - 1) * paginationQuery.PageSize,
 	}
 
 	if queries.Search != nil && len(*queries.Search) > 0 {
@@ -85,7 +84,7 @@ func (s *Server) adminGetProducts(w http.ResponseWriter, r *http.Request) {
 		productResponses = append(productResponses, dto.MapToAdminProductResponse(product))
 	}
 
-	pagination := dto.CreatePagination(queries.Page, queries.PageSize, productCnt)
+	pagination := dto.CreatePagination(paginationQuery.Page, paginationQuery.PageSize, productCnt)
 	RespondSuccessWithPagination(w, productResponses, pagination)
 }
 

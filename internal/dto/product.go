@@ -35,13 +35,14 @@ type ProductSummary struct {
 	Name             string   `json:"name"`
 	BasePrice        float64  `json:"basePrice,omitzero"`
 	Slug             string   `json:"slug,omitempty"`
-	ImageUrl         *string  `json:"imageUrl,omitempty"`
-	AvgRating        *float64 `json:"avgRating,omitempty"`
-	VariantCount     int16    `json:"variantCount,omitzero"`
+	Brand            string   `json:"brand,omitempty"`
 	Description      string   `json:"description,omitempty"`
 	ShortDescription *string  `json:"shortDescription,omitempty"`
-	ReviewCount      *int32   `json:"reviewCount,omitempty"`
+	VariantCount     int16    `json:"variantCount,omitzero"`
 	ImageID          *string  `json:"imageId,omitempty"`
+	ImageUrl         *string  `json:"imageUrl,omitempty"`
+	AvgRating        *float64 `json:"avgRating,omitempty"`
+	ReviewCount      *int32   `json:"reviewCount,omitempty"`
 	CreatedAt        string   `json:"createdAt,omitempty"`
 	UpdatedAt        string   `json:"updatedAt,omitempty"`
 }
@@ -52,8 +53,8 @@ type VariantDetail struct {
 	IsActive   bool                   `json:"isActive"`
 	Sku        string                 `json:"sku,omitempty"`
 	Weight     *float64               `json:"weight,omitempty"`
-	ImageUrl   *string                `json:"imageUrl,omitempty"`
 	ImageID    *string                `json:"imageId,omitempty"`
+	ImageUrl   *string                `json:"imageUrl,omitempty"`
 	Attributes []AttributeValueDetail `json:"attributeValues,omitempty"`
 	CreatedAt  string                 `json:"createdAt,omitempty"`
 	UpdatedAt  string                 `json:"updatedAt,omitempty"`

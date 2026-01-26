@@ -9,15 +9,13 @@ type URIVariantParam struct {
 }
 
 type ProductQuery struct {
-	Page        int64    `form:"page,default=1" validate:"omitempty,min=1"`
-	PageSize    int64    `form:"pageSize,default=20" validate:"omitempty,min=1,max=100"`
-	Search      *string  `form:"search" validate:"omitempty,max=1000"`
-	Brand       *string  `form:"brand" validate:"omitnil,omitempty,uuidslice"`
-	PriceFrom   *float64 `form:"priceFrom" validate:"omitempty,gt=0"`
+	Search      *string  `form:"search" validate:"omitnil,omitempty,max=1000"`
+	Brand       *string  `form:"brand" validate:"omitnil,omitempty"`
+	PriceFrom   *float64 `form:"priceFrom" validate:"omitnil,omitempty,gt=0"`
 	PriceTo     *float64 `form:"priceTo" validate:"omitempty,gt=0,gtfield=PriceFrom"`
-	Attributes  []string `form:"attributes" validate:"omitnil,omitempty,intslice"`
-	Categories  []string `form:"categories" validate:"omitnil,omitempty,uuidslice"`
-	Collections []string `form:"collections" validate:"omitnil,omitempty,uuidslice"`
+	Attributes  []string `form:"attributes" validate:"omitempty"`
+	Categories  []string `form:"categories" validate:"omitempty"`
+	Collections []string `form:"collections" validate:"omitempty"`
 }
 
 type CreateProductModel struct {

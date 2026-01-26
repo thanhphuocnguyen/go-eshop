@@ -88,8 +88,6 @@ func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 	paginationQuery := ParsePaginationQuery(r)
 	queryParams := r.URL.Query()
 	var queries models.ProductQuery
-	queries.Page = paginationQuery.Page
-	queries.PageSize = paginationQuery.PageSize
 
 	// Parse search parameter
 	if search := queryParams.Get("search"); search != "" {
@@ -127,7 +125,12 @@ func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 		queries.Attributes = attributes
 	}
 
-	from := (queries.Page - 1) * queries.PageSize
+	if err := s.validator.Struct(&queries); err != nil {
+		RespondBadRequest(w, InvalidBodyCode, err)
+		return
+	}
+
+	from := (paginationQuery.Page - 1) * paginationQuery.PageSize
 	rangeQuery := map[string]types.RangeQuery{
 		"price": &types.NumberRangeQuery{Gte: (*types.Float64)(queries.PriceFrom), Lte: (*types.Float64)(queries.PriceTo)},
 	}
@@ -177,9 +180,9 @@ func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 		shouldQuery = append(shouldQuery, types.Query{Term: map[string]types.TermQuery{"brand.keyword": {Value: queries.Brand, Boost: &boostBrand}}})
 	}
 
-	searchSize := int(queries.PageSize)
+	searchSize := int(paginationQuery.PageSize)
 	searchFrom := int(from)
-	q := &search.Request{
+	query := &search.Request{
 		Size: &searchSize,
 		From: &searchFrom,
 		Query: &types.Query{
@@ -191,25 +194,20 @@ func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 			},
 		},
 	}
-	esProducts, err := s.elasticClient.SearchProducts(c, q) // Parse categoryIds parameter
+	esProducts, err := s.elasticClient.SearchProducts(c, query) // Parse categoryIds parameter
 	if err == nil {
 		esProductResponses := make([]dto.ProductSummary, 0)
 		for _, product := range esProducts {
 			esProductResponses = append(esProductResponses, dto.MapToShopProductResponseFromES(product))
 		}
-		RespondSuccessWithPagination(w, esProductResponses, dto.CreatePagination(queries.Page, queries.PageSize, 0))
+		RespondSuccessWithPagination(w, esProductResponses, dto.CreatePagination(paginationQuery.Page, paginationQuery.PageSize, 0))
 		return
 	}
 
 	// Fallback to DB search
-	if err := s.validator.Struct(&queries); err != nil {
-		RespondBadRequest(w, InvalidBodyCode, err)
-		return
-	}
-
 	dbParams := repository.SearchProductsParams{
-		Limit:  int64(queries.PageSize),
-		Offset: int64((queries.Page - 1) * queries.PageSize),
+		Limit:  int64(paginationQuery.PageSize),
+		Offset: int64((paginationQuery.Page - 1) * paginationQuery.PageSize),
 	}
 
 	if queries.Search != nil && len(*queries.Search) > 0 {
@@ -247,7 +245,7 @@ func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 		productResponses = append(productResponses, dto.MapToShopProductResponse(product))
 	}
 
-	RespondSuccessWithPagination(w, productResponses, dto.CreatePagination(queries.Page, queries.PageSize, productCnt))
+	RespondSuccessWithPagination(w, productResponses, dto.CreatePagination(paginationQuery.Page, paginationQuery.PageSize, productCnt))
 }
 
 // Setup product-related routes
