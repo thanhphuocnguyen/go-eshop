@@ -4,13 +4,13 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/textquerytype"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"github.com/thanhphuocnguyen/go-eshop/internal/db/repository"
 	"github.com/thanhphuocnguyen/go-eshop/internal/dto"
 	"github.com/thanhphuocnguyen/go-eshop/internal/models"
@@ -225,24 +225,33 @@ func (s *Server) getProducts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dbParams := repository.GetProductListParams{
+	dbParams := repository.SearchProductsParams{
 		Limit:  int64(queries.PageSize),
 		Offset: int64((queries.Page - 1) * queries.PageSize),
 	}
 
 	if queries.Search != nil && len(*queries.Search) > 0 {
-		search := *queries.Search
-		search = strings.ReplaceAll(search, " ", "%")
-		search = strings.ReplaceAll(search, ",", "%")
-		search = strings.ReplaceAll(search, ":", "%")
-		search = "%" + search + "%"
-		dbParams.Search = &search
+		dbParams.Search = queries.Search
 	}
 
-	products, err := s.repo.GetProductList(c, dbParams)
+	if queries.Brand != nil && len(*queries.Brand) > 0 {
+		dbParams.Brand = queries.Brand
+	}
+
+	if len(queries.Categories) > 0 {
+		dbParams.Categories = queries.Categories
+	}
+
+	if len(queries.Collections) > 0 {
+		dbParams.Collections = queries.Collections
+	}
+
+	products, err := s.repo.SearchProducts(c, dbParams)
 	if err != nil {
 		RespondInternalServerError(w, InternalServerErrorCode, err)
 		return
+	} else {
+		log.Error().Err(err).Msg("Elasticsearch search error, fallback to DB search")
 	}
 
 	productCnt, err := s.repo.CountProducts(c, repository.CountProductsParams{})

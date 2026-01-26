@@ -186,7 +186,7 @@ func MapToAdminProductResponse(productRow repository.Product) ProductListItem {
 	return product
 }
 
-func MapToShopProductResponse(productRow repository.GetProductListRow) ProductSummary {
+func MapToShopProductResponse(productRow repository.SearchProductsRow) ProductSummary {
 	price, _ := productRow.MinPrice.Float64Value()
 	avgRating := utils.GetAvgRating(
 		productRow.RatingCount,
